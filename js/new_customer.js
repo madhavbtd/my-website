@@ -1,228 +1,160 @@
-// js/customer_management.js
+// js/new_customer.js
 
 // Firestore फंक्शन्स window ऑब्जेक्ट से उपलब्ध हैं
-const { db, collection, onSnapshot, doc, deleteDoc, query, where, getDocs } = window;
+const { db, collection, addDoc, doc, getDocs, query, where, getDoc, updateDoc } = window;
 
 // --- DOM एलिमेंट रेफरेंस ---
-let customerTableBody;
-let filterNameInput;
-let filterCityInput;
-let filterMobileInput;
-let customerOrdersDiv;
-let ordersForCustomerTableBody;
-let customerDetailsDiv;
+const customerForm = document.getElementById('newCustomerForm');
+const saveButton = document.getElementById('saveCustomerBtn');
+const formHeader = document.getElementById('formHeader');
+const hiddenEditIdInput = document.getElementById('editCustomerId');
 
-// --- ग्लोबल वेरिएबल्स ---
-let allCustomers = [];
-let currentUnsub = null;
-
-// --- फंक्शन परिभाषाएं ---
-
-// टेबल में कस्टमर्स दिखाने का फंक्शन (अपडेटेड: displayCustomerId दिखाने के लिए)
-function displayCustomers(customersToDisplay) {
-    if (!customerTableBody) { console.error("displayCustomers: customerTableBody not ready!"); return; }
-    customerTableBody.innerHTML = '';
-
-    if (customersToDisplay.length === 0) {
-        customerTableBody.innerHTML = '<tr><td colspan="7" style="text-align:center;">No customers found matching filters.</td></tr>';
-        return;
-    }
-
-    customersToDisplay.forEach((customer) => {
-        const row = customerTableBody.insertRow();
-
-        // === कॉलम 1: Customer ID (अब displayCustomerId दिखाएगा, अगर मौजूद है) ===
-        const idCell = row.insertCell();
-        // अगर displayCustomerId है तो उसे दिखाएं, वरना Firestore ID दिखाएं (Fallback)
-        const displayIdToShow = customer.displayCustomerId || customer.id;
-        // क्लिक करने पर अभी भी Firestore ID (customer.id) का उपयोग करें
-        idCell.innerHTML = `<a href="#" onclick="event.preventDefault(); showCustomerOrderHistory('${customer.id}', this)">${displayIdToShow}</a>`;
-        idCell.classList.add('customer-id-cell');
-        idCell.title = `Click to view order history (Internal ID: ${customer.id})`; // टूलटिप में ओरिजिनल ID दिखाएं
-        // ==================================================================
-
-        // बाकी कॉलम्स
-        row.insertCell().textContent = customer.fullName || '-';
-        row.insertCell().textContent = customer.emailId || '-';
-        row.insertCell().textContent = customer.billingAddress || '-';
-        row.insertCell().textContent = customer.whatsappNo || '-';
-        row.insertCell().textContent = customer.city || '-';
-
-        // Actions कॉलम
-        const actionsCell = row.insertCell();
-        actionsCell.classList.add('actions');
-        actionsCell.innerHTML = `
-            <button class="action-btn edit-btn" data-id="${customer.id}" title="Edit"><i class="fas fa-edit"></i></button>
-            <button class="action-btn delete-btn" data-id="${customer.id}" title="Delete"><i class="fas fa-trash"></i></button>
-        `;
-
-        // एडिट/डिलीट बटन लॉजिक (पहले जैसा)
-        const editBtn = actionsCell.querySelector('.edit-btn');
-        if (editBtn) { editBtn.addEventListener('click', () => { window.location.href = `new_customer.html?editId=${customer.id}`; }); }
-        const deleteBtn = actionsCell.querySelector('.delete-btn');
-        if (deleteBtn) { deleteBtn.addEventListener('click', () => deleteCustomer(customer.id, customer.fullName)); }
-    });
-    addCustomStyles(); // स्टाइलिंग जोड़ें (ID सेल के लिए भी)
-}
-
-// कस्टमर डिलीट फंक्शन (पहले जैसा)
-async function deleteCustomer(id, name) {
-     if (!id) { console.error("Delete failed: Invalid ID."); return; }
-     if (confirm(`Are you sure you want to delete customer "${name || 'this customer'}"?`)) {
-        try {
-            if (!window.db || !window.doc || !window.deleteDoc) throw new Error("Firestore functions not available.");
-            await window.deleteDoc(window.doc(window.db, "customers", id));
-            alert("Customer deleted successfully!");
-            if(customerOrdersDiv) customerOrdersDiv.style.display = 'none';
-        } catch (error) { console.error("Error deleting customer: ", error); alert("Error deleting customer: " + error.message); }
-     }
-}
-
-// फ़िल्टरिंग लॉजिक (पहले जैसा)
-function applyFilters() {
-    if (!filterNameInput || !filterCityInput || !filterMobileInput || !allCustomers) { return; }
-    const nameFilter = filterNameInput.value.toLowerCase().trim() || '';
-    const cityFilter = filterCityInput.value.toLowerCase().trim() || '';
-    const mobileFilter = filterMobileInput.value.trim() || '';
-    const filteredCustomers = allCustomers.filter(customer => {
-        const nameMatch = !nameFilter || (customer.fullName && customer.fullName.toLowerCase().includes(nameFilter));
-        const cityMatch = !cityFilter || (customer.city && customer.city.toLowerCase().includes(cityFilter));
-        const mobileMatch = !mobileFilter || (customer.whatsappNo && customer.whatsappNo.includes(mobileFilter));
-        return nameMatch && cityMatch && mobileMatch;
-    });
-    displayCustomers(filteredCustomers);
-}
-
-// Order History दिखाने का फंक्शन (पहले जैसा, order.orderId इस्तेमाल करेगा)
-window.showCustomerOrderHistory = async function(customerId, clickedElement) {
-    console.log("Fetching order history for customer:", customerId);
-    customerOrdersDiv = customerOrdersDiv || document.querySelector('#customer-orders');
-    ordersForCustomerTableBody = ordersForCustomerTableBody || document.querySelector('#orders-for-customer tbody');
-    customerDetailsDiv = customerDetailsDiv || document.querySelector('#customer-details');
-    customerTableBody = customerTableBody || document.querySelector('#customer-table tbody');
-
-    if (!customerOrdersDiv || !ordersForCustomerTableBody || !customerTableBody) { return; }
-    if (!window.db || !window.collection || !window.query || !window.where || !window.getDocs) { return; }
-
-    // Highlight row
-    const allRows = customerTableBody.querySelectorAll('tr');
-    allRows.forEach(row => row.style.backgroundColor = '');
-    if (clickedElement) { const parentRow = clickedElement.closest('tr'); if(parentRow) parentRow.style.backgroundColor = '#f0f0f0'; }
-
-    if (customerDetailsDiv) customerDetailsDiv.style.display = 'none';
-    ordersForCustomerTableBody.innerHTML = '<tr><td colspan="3" style="text-align:center;">Loading orders...</td></tr>';
-    customerOrdersDiv.style.display = 'block';
-
-    try {
-        const ordersRef = collection(db, "orders");
-        const q = query(ordersRef, where("customerId", "==", customerId)); // Use customerId from argument
-        const querySnapshot = await getDocs(q);
-        ordersForCustomerTableBody.innerHTML = '';
-
-        if (querySnapshot.empty) {
-            ordersForCustomerTableBody.innerHTML = '<tr><td colspan="3" style="text-align:center;">No orders found.</td></tr>';
-        } else {
-            querySnapshot.forEach((orderDoc) => {
-                const order = orderDoc.data();
-                const row = ordersForCustomerTableBody.insertRow();
-                // ऑर्डर ID के लिए order.orderId दिखाएं (जो new_order.js में सेव हुआ था)
-                row.insertCell().textContent = order.orderId || orderDoc.id; // Fallback to Firestore ID if orderId missing
-                row.insertCell().textContent = order.orderDate || '-';
-                row.insertCell().textContent = order.status || '-';
-            });
-        }
-    } catch (error) {
-        console.error("Error fetching order history:", error);
-        ordersForCustomerTableBody.innerHTML = `<tr><td colspan="3" style="text-align:center; color: red;">Error loading orders.</td></tr>`;
-    }
-}
-
-// कस्टम स्टाइलिंग फंक्शन (ID सेल स्टाइल अपडेट किया)
-function addCustomStyles() {
-    const styleId = 'customer-page-styles';
-    if (!document.getElementById(styleId)) {
-        const styleSheet = document.createElement("style");
-        styleSheet.id = styleId;
-        styleSheet.innerHTML = `
-        td a.customer-id-link { /* क्लास का उपयोग करें */
-             font-weight: bold;
-             color: #007bff; /* Blue color */
-             text-decoration: none;
-             cursor: pointer;
-             display: inline-block; /* टूलटिप के लिए */
-             max-width: 150px; /* लम्बे ID के लिए चौड़ाई सीमित करें */
-             overflow: hidden;
-             text-overflow: ellipsis;
-             white-space: nowrap;
-             vertical-align: middle;
-        }
-        td a.customer-id-link:hover {
-            text-decoration: underline;
-        }
-        .action-btn { background: none; border: none; cursor: pointer; padding: 2px 5px; margin: 0 2px; font-size: 14px; }
-        .action-btn i { pointer-events: none; }
-        .action-btn.edit-btn { color: #0d6efd; }
-        .action-btn.delete-btn { color: #dc3545; }
-        .action-btn:hover { opacity: 0.7; }
-        td.actions { text-align: center; }
-        `;
-        document.head.appendChild(styleSheet);
-    }
-     // क्लास को td > a पर लागू करें
-     const idCells = customerTableBody?.querySelectorAll('td:first-child a'); // पहले सेल के लिंक पर क्लास लगाएं
-     idCells?.forEach(a => a.classList.add('customer-id-link'));
-}
-
-// Firestore Listener सेट अप फंक्शन (पहले जैसा)
-function setupSnapshotListener(){
-     if (!window.db) { console.error("DB not available"); return; }
-     const customersCollectionRef = window.collection(db, "customers");
-     currentUnsub = window.onSnapshot(customersCollectionRef, (snapshot) => {
-            allCustomers = [];
-            snapshot.forEach((doc) => { allCustomers.push({ id: doc.id, ...doc.data() }); });
-            allCustomers.sort((a, b) => (a.fullName || '').localeCompare(b.fullName || ''));
-            applyFilters();
-        }, (error) => { console.error("Error listening: ", error); /* ... Error handling ... */ });
-}
-
-// Firestore listener शुरू करने का फंक्शन (पहले जैसा)
-function listenToCustomers() {
-    if (currentUnsub) { currentUnsub(); currentUnsub = null; }
-    setupSnapshotListener();
-}
-
-
-// --- मुख्य लॉजिक (DOM लोड होने के बाद) ---
+// --- पेज लोड होने पर एडिट मोड चेक करें ---
 document.addEventListener('DOMContentLoaded', () => {
-    console.log("DOM loaded: customer_management.js");
-    // DOM रेफेरेंसेस प्राप्त करें
-    customerTableBody = document.querySelector('#customer-table tbody');
-    filterNameInput = document.querySelector('#filter-name-input');
-    filterCityInput = document.querySelector('#filter-city-input');
-    filterMobileInput = document.querySelector('#filter-mobile-input');
-    customerOrdersDiv = document.querySelector('#customer-orders');
-    ordersForCustomerTableBody = document.querySelector('#orders-for-customer tbody');
-    customerDetailsDiv = document.querySelector('#customer-details');
+    const urlParams = new URLSearchParams(window.location.search);
+    const customerIdToEdit = urlParams.get('editId');
 
-    if (!customerTableBody) { console.error("CRITICAL: customerTableBody not found!"); return; }
-    else { customerTableBody.innerHTML = '<tr><td colspan="7" style="text-align: center;">Initializing...</td></tr>'; }
-
-    // इवेंट लिसनर लगाएं
-    if (filterNameInput) filterNameInput.addEventListener('input', applyFilters);
-    if (filterCityInput) filterCityInput.addEventListener('input', applyFilters);
-    if (filterMobileInput) filterMobileInput.addEventListener('input', applyFilters);
-
-    // स्टाइल जोड़ें
-    addCustomStyles();
-
-    // Firebase तैयार होने का इंतज़ार करें और Listener शुरू करें
     const checkDbInterval = setInterval(() => {
         if (window.db) {
             clearInterval(checkDbInterval);
-            console.log("DB ready, starting customer listener.");
-            listenToCustomers();
-        } else { console.log("Waiting for DB..."); }
+            console.log("DB ready for new_customer.js");
+            if (customerIdToEdit) {
+                console.log("Edit mode detected. Customer ID:", customerIdToEdit);
+                hiddenEditIdInput.value = customerIdToEdit;
+                loadCustomerDataForEdit(customerIdToEdit);
+                if(formHeader) formHeader.textContent = "Edit Customer Information";
+                if(saveButton) saveButton.innerHTML = '<i class="fas fa-sync-alt"></i> Update';
+            } else {
+                console.log("Add mode detected.");
+                if(formHeader) formHeader.textContent = "New Customer Information";
+                if(saveButton) saveButton.innerHTML = '<i class="fas fa-save"></i> Save';
+            }
+        } else { console.log("Waiting for DB initialization..."); }
     }, 100);
 
-    console.log("customer_management.js initialization setup complete.");
+    if (customerForm) {
+        customerForm.addEventListener('submit', handleFormSubmit);
+    } else { console.error("Customer form not found!"); }
 });
+
+// --- एडिट के लिए डेटा लोड करने का फंक्शन ---
+async function loadCustomerDataForEdit(customerId) {
+     if (!db || !doc || !getDoc) { alert("Database functions not available."); return; }
+     console.log(`Attempting to load data for customer ID: ${customerId}`);
+     try {
+        const customerRef = doc(db, "customers", customerId);
+        const docSnap = await getDoc(customerRef);
+        if (docSnap.exists()) {
+            const customerData = docSnap.data();
+            console.log("Customer data loaded for edit:", customerData);
+            // फॉर्म फ़ील्ड्स भरें (सभी फ़ील्ड्स)
+            customerForm.full_name.value = customerData.fullName || '';
+            customerForm.billing_address.value = customerData.billingAddress || '';
+            customerForm.city.value = customerData.city || '';
+            customerForm.state.value = customerData.state || '';
+            customerForm.pin_code.value = customerData.pinCode || '';
+            customerForm.email_id.value = customerData.emailId || '';
+            customerForm.whatsapp_no.value = customerData.whatsappNo || '';
+            customerForm.contact_no.value = customerData.contactNo || '';
+            customerForm.pan_no.value = customerData.panNo || '';
+            customerForm.gstin.value = customerData.gstin || '';
+            customerForm.composite_trade_name.value = customerData.compositeTradeName || '';
+            if (customerData.gstType) {
+                const gstRadio = customerForm.querySelector(`input[name="gst_type"][value="${customerData.gstType}"]`);
+                if (gstRadio) gstRadio.checked = true;
+                else customerForm.querySelectorAll('input[name="gst_type"]').forEach(r => r.checked = false);
+            } else { customerForm.querySelectorAll('input[name="gst_type"]').forEach(r => r.checked = false); }
+        } else {
+            console.error("No such customer document for editing!");
+            alert("Could not find customer data to edit.");
+            window.location.href = 'customer_management.html';
+        }
+    } catch (error) {
+        console.error("Error loading customer data for edit: ", error);
+        alert("Error loading customer data: " + error.message);
+        window.location.href = 'customer_management.html';
+    }
+}
+
+
+// --- फॉर्म सबमिट हैंडलर (ऐड और अपडेट दोनों के लिए) ---
+async function handleFormSubmit(event) {
+    event.preventDefault();
+    if (saveButton) { saveButton.disabled = true; saveButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...'; }
+
+    const formData = new FormData(customerForm);
+    const customerId = formData.get('editCustomerId');
+    const fullName = formData.get('full_name')?.trim() || '';
+    const whatsappNo = formData.get('whatsapp_no')?.trim() || '';
+
+    if (!fullName || !whatsappNo) {
+        alert('Please enter Full Name and WhatsApp No.');
+        if (saveButton) { saveButton.disabled = false; saveButton.innerHTML = customerId ? '<i class="fas fa-sync-alt"></i> Update' : '<i class="fas fa-save"></i> Save'; }
+        return;
+    }
+    if (!db) {
+        alert("Database connection not found.");
+        if (saveButton) { saveButton.disabled = false; saveButton.innerHTML = customerId ? '<i class="fas fa-sync-alt"></i> Update' : '<i class="fas fa-save"></i> Save'; }
+        return;
+    }
+
+    const customerDataPayload = {
+        fullName: fullName,
+        billingAddress: formData.get('billing_address')?.trim() || '',
+        city: formData.get('city')?.trim() || '',
+        state: formData.get('state')?.trim() || '',
+        pinCode: formData.get('pin_code')?.trim() || '',
+        country: formData.get('country') || 'India',
+        emailId: formData.get('email_id')?.trim() || '',
+        whatsappNo: whatsappNo,
+        contactNo: formData.get('contact_no')?.trim() || '',
+        panNo: formData.get('pan_no')?.trim() || '',
+        gstin: formData.get('gstin')?.trim() || '',
+        gstType: formData.get('gst_type') || '',
+        compositeTradeName: formData.get('composite_trade_name')?.trim() || '',
+    };
+
+    try {
+        const customersRef = collection(db, "customers");
+        if (customerId) {
+            // --- अपडेट मोड ---
+             console.log("Updating customer with ID:", customerId);
+             customerDataPayload.updatedAt = new Date(); // अपडेट का समय
+             const customerRef = doc(db, "customers", customerId);
+             await updateDoc(customerRef, customerDataPayload);
+             alert('Customer updated successfully!');
+             window.location.href = 'customer_management.html';
+
+        } else {
+            // --- ऐड मोड (डुप्लीकेट चेक और नया displayCustomerId जोड़ें) ---
+            console.log("Adding new customer. Checking for duplicates...");
+            const q = query(customersRef, where("whatsappNo", "==", whatsappNo));
+            const querySnapshot = await getDocs(q);
+
+            if (querySnapshot.empty) {
+                // === नया न्यूमेरिकल ID यहाँ जेनरेट करें ===
+                customerDataPayload.displayCustomerId = Date.now().toString(); // टाइमस्टैम्प को स्ट्रिंग के रूप में सेव करें
+                // ========================================
+                customerDataPayload.createdAt = new Date();
+                const customerDocRef = await addDoc(customersRef, customerDataPayload);
+                console.log("New customer added with ID: ", customerDocRef.id, "and Display ID:", customerDataPayload.displayCustomerId);
+                alert('Customer saved successfully!');
+                window.location.href = 'customer_management.html';
+
+            } else {
+                // डुप्लीकेट मिला
+                const existingCustomerId = querySnapshot.docs[0].id;
+                console.log("Duplicate found with ID: ", existingCustomerId);
+                alert(`Customer with WhatsApp number ${whatsappNo} already exists.`);
+                // बटन री-इनेबल करें
+                if (saveButton) { saveButton.disabled = false; saveButton.innerHTML = '<i class="fas fa-save"></i> Save'; }
+                return; // सेविंग रोकें
+            }
+        }
+    } catch (error) {
+        console.error("Error saving customer: ", error);
+        alert('Error saving customer: ' + error.message);
+        if (saveButton) { saveButton.disabled = false; saveButton.innerHTML = customerId ? '<i class="fas fa-sync-alt"></i> Update' : '<i class="fas fa-save"></i> Save'; }
+    }
+}
+console.log("new_customer.js loaded.");
