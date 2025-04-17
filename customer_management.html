@@ -6,32 +6,58 @@
     <title>Customer Management</title>
     <link rel="stylesheet" href="css/customer_management.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" integrity="sha512-9usAa10IRO0HhonpyAIVpjrylPvoDwiPUiKdWk5t3PyolY1cOd4DSE0Ga+ri4AuTroPR5aQvXU9xC6qOPnzFeg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
-    <style>
-        /* यहाँ इनलाइन स्टाइलिंग है, आप इसे css/customer_management.css में डाल सकते हैं */
-        body { font-family: 'Segoe UI Emoji', sans-serif; margin: 0; background-color: #f8f9fa; }
-        .container { max-width: 100%; margin: 20px; background-color: #fff; padding: 20px; border-radius: 5px; box-shadow: 0 0 10px rgba(0,0,0,.1); }
-        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 1px solid #eee; }
-        .header h2 { margin: 0; font-size: 24px; color: #333; }
-        .header .btn-group a, .header .btn-group button { background-color: #007bff; color: white; border: none; padding: 8px 12px; border-radius: 5px; cursor: pointer; margin-left: 5px; font-size: 14px; text-decoration: none; }
-        .header .btn-group button i, .header .btn-group a i { margin-right: 5px; }
-        .filter-section { display: flex; align-items: center; margin-bottom: 20px; }
-        .filter-item { display: flex; align-items: center; margin-right: 15px; }
-        .filter-item label { margin-right: 5px; font-size: 14px; color: #555; cursor: pointer; }
-        .filter-item input[type="text"], .filter-item select { padding: 6px 8px; border-radius: 3px; border: 1px solid #ccc; font-size: 14px; }
-        .filter-button { background-color: #007bff; color: white; border: none; padding: 6px 10px; border-radius: 3px; cursor: pointer; font-size: 14px; margin-left: 10px; }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; font-size: 12px; }
-        th { background-color: #f8f9fa; font-weight: bold; color: #333; }
-        tbody tr:nth-child(even) { background-color: #f9f9f9; }
-        .customer-details { margin-top: 20px; border: 1px solid #ddd; padding: 15px; border-radius: 5px; background-color: #f9f9f9; }
-        .customer-details h3 { margin-top: 0; color: #333; }
-        .customer-orders { margin-top: 20px; border: 1px solid #ddd; padding: 15px; border-radius: 5px; background-color: #f9f9f9; }
-        .customer-orders h3 { margin-top: 0; color: #333; }
-        .edit-button { background-color: #ffc107; color: #333; border: none; padding: 6px 10px; border-radius: 3px; cursor: pointer; font-size: 12px; margin-left: 5px; }
-        .edit-button:hover { background-color: #e0a800; }
-    </style>
-</head>
+    </head>
 <body>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+        import { getFirestore, collection, addDoc, doc, updateDoc, deleteDoc, onSnapshot, getDocs, query, where } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+        // === अपना Firebase कॉन्फ़िगरेशन यहाँ डालें ===
+        const firebaseConfig = {
+          apiKey: "AIzaSyBQj5rQmE77kKKGYixP8y3Hcimz8tiAqzQ", // सुरक्षा नोट!
+          authDomain: "madhav-multyprint.firebaseapp.com",
+          projectId: "madhav-multyprint",
+          storageBucket: "madhav-multyprint.firebasestorage.app",
+          messagingSenderId: "104988349637",
+          appId: "1:104988349637:web:faf045b77c6786a4e70cac"
+        };
+        // ========================================
+
+        try {
+            let app;
+            // Check if Firebase app is already initialized
+            if (!window.firebaseAppInitialized) {
+                 app = initializeApp(firebaseConfig);
+                 window.firebaseAppInitialized = true; // Set flag
+                 console.log("Firebase initialized on customer_management page.");
+            } else {
+                 console.log("Firebase already initialized.");
+            }
+            // Get Firestore instance (or use existing one if app was already initialized)
+            const db = window.db || getFirestore(app || undefined); // Use existing app if available
+
+            // Make functions globally available
+            window.db = db;
+            window.collection = collection;
+            window.addDoc = addDoc;
+            window.doc = doc;
+            window.updateDoc = updateDoc;
+            window.deleteDoc = deleteDoc;
+            window.onSnapshot = onSnapshot;
+            window.getDocs = getDocs;
+            window.query = query;
+            window.where = where;
+            console.log("Firebase functions are available globally.");
+
+        } catch (e) {
+            console.error("Firebase initialization error:", e);
+             if (!window.db) {
+                 console.error("Critical: Firebase could not be initialized.");
+                 alert("Database connection error!");
+             }
+        }
+    </script>
+
     <div class="container">
         <div class="header">
             <h2>Customer Management</h2>
@@ -42,33 +68,33 @@
 
         <div class="filter-section">
             <div class="filter-item">
-                <label for="filter-name">Filter by Name:</label>
-                <input type="text" id="filter-name-input" onkeyup="filterTable('fullName', this.value)" placeholder="Enter Name">
+                <label for="filter-name-input">Filter by Name:</label>
+                <input type="text" id="filter-name-input" placeholder="Enter Name">
             </div>
             <div class="filter-item">
-                <label for="filter-city">Filter by City:</label>
-                <input type="text" id="filter-city-input" onkeyup="filterTable('city', this.value)" placeholder="Enter City">
+                <label for="filter-city-input">Filter by City:</label>
+                <input type="text" id="filter-city-input" placeholder="Enter City">
             </div>
             <div class="filter-item">
-                <label for="filter-mobile">Filter by Mobile No:</label>
-                <input type="text" id="filter-mobile-input" onkeyup="filterTable('whatsappNo', this.value)" placeholder="Enter Mobile No">
+                <label for="filter-mobile-input">Filter by Mobile No:</label>
+                <input type="text" id="filter-mobile-input" placeholder="Enter Mobile No">
             </div>
-            <button class="filter-button" onclick="applyFilters()">Apply Filters</button>
-        </div>
+            </div>
 
         <table id="customer-table">
             <thead>
                 <tr>
-                    <th>Customer ID</th>
-                    <th>Full Name</th>
+                    <th>S.No.</th> <th>Full Name</th>
                     <th>Email ID</th>
                     <th>Billing Address</th>
                     <th>WhatsApp No</th>
                     <th>City</th>
-                    <th>Edit</th>
-                </tr>
+                    <th>Actions</th> </tr>
             </thead>
             <tbody>
+                <tr>
+                    <td colspan="7" style="text-align: center;">Loading customers...</td>
+                </tr>
             </tbody>
         </table>
 
@@ -93,139 +119,7 @@
         </div>
     </div>
 
-    <script>
-        const customerTableBody = document.querySelector('#customer-table tbody');
-        const customerDetailsDiv = document.querySelector('#customer-details');
-        const customerInfoDiv = document.querySelector('#customer-info');
-        const customerOrdersDiv = document.querySelector('#customer-orders');
-        const ordersForCustomerTableBody = document.querySelector('#orders-for-customer tbody');
-        const filterNameInput = document.querySelector('#filter-name-input');
-        const filterCityInput = document.querySelector('#filter-city-input');
-        const filterMobileInput = document.querySelector('#filter-mobile-input');
+    <script src="js/customer_management.js" type="module"></script>
 
-        let allCustomers = [];
-        let allOrders = [];
-        let filteredCustomers = [];
-        let selectedCustomerId = null;
-        let nameFilter = '';
-        let cityFilter = '';
-        let mobileFilter = '';
-
-        function loadCustomers() {
-            const storedCustomers = localStorage.getItem('customers');
-            allCustomers = storedCustomers ? JSON.parse(storedCustomers) : [];
-            applyFilters(); // Initial load with no filters
-        }
-
-        function loadOrders() {
-            const storedOrders = localStorage.getItem('orders');
-            allOrders = storedOrders ? JSON.parse(storedOrders) : [];
-        }
-
-        function displayCustomers(customers) {
-            customerTableBody.innerHTML = '';
-            customers.forEach(customer => {
-                const row = customerTableBody.insertRow();
-                row.insertCell().textContent = customer.customerId;
-                row.insertCell().textContent = customer.fullName;
-                row.insertCell().textContent = customer.emailId;
-                row.insertCell().textContent = customer.billingAddress;
-                row.insertCell().textContent = customer.whatsappNo;
-                row.insertCell().textContent = customer.city;
-
-                // "Edit" बटन के लिए सेल
-                const editCell = row.insertCell();
-                const editButton = document.createElement('button');
-                editButton.textContent = 'Edit';
-                editButton.classList.add('edit-button');
-                editButton.onclick = () => openEditForm(customer.customerId);
-                editCell.appendChild(editButton);
-
-                row.style.cursor = 'pointer';
-                row.onclick = (event) => {
-                    // सुनिश्चित करें कि क्लिक "Edit" बटन पर नहीं था
-                    if (!event.target.classList.contains('edit-button')) {
-                        showCustomerDetails(customer.customerId);
-                    }
-                };
-            });
-        }
-
-        function showCustomerDetails(customerId) {
-            selectedCustomerId = customerId;
-            const customer = allCustomers.find(c => c.customerId === customerId);
-            if (customer) {
-                customerInfoDiv.innerHTML = `
-                    <p><strong>Customer ID:</strong> ${customer.customerId}</p>
-                    <p><strong>Full Name:</strong> ${customer.fullName}</p>
-                    <p><strong>Billing Address:</strong> ${customer.billingAddress}</p>
-                    <p><strong>City:</strong> ${customer.city}</p>
-                    <p><strong>State:</strong> ${customer.state}</p>
-                    <p><strong>PIN Code:</strong> ${customer.pinCode}</p>
-                    <p><strong>Country:</strong> ${customer.country}</p>
-                    <p><strong>Email ID:</strong> ${customer.emailId}</p>
-                    <p><strong>WhatsApp No:</strong> ${customer.whatsappNo}</p>
-                    <p><strong>Contact No:</strong> ${customer.contactNo}</p>
-                    <p><strong>PAN No.:</strong> ${customer.panNo || 'N/A'}</p>
-                    <p><strong>GSTIN:</strong> ${customer.gstin || 'N/A'}</p>
-                    <p><strong>GST Type:</strong> ${customer.gstType || 'N/A'}</p>
-                    <p><strong>Composite Trade Name:</strong> ${customer.compositeTradeName || 'N/A'}</p>
-                `;
-                customerDetailsDiv.style.display = 'block';
-                showCustomerOrders(customer.whatsappNo); // Changed to filter by WhatsApp No
-            } else {
-                customerDetailsDiv.style.display = 'none';
-                customerOrdersDiv.style.display = 'none';
-            }
-        }
-
-        function showCustomerOrders(whatsappNo) {
-            const orders = allOrders.filter(order => order.whatsappNo === whatsappNo);
-            ordersForCustomerTableBody.innerHTML = '';
-            customerOrdersDiv.style.display = orders.length > 0 ? 'block' : 'none';
-            orders.forEach(order => {
-                const row = ordersForCustomerTableBody.insertRow();
-                row.insertCell().textContent = order.orderId;
-                row.insertCell().textContent = order.orderDate;
-                row.insertCell().textContent = order.status ? order.status.join(', ') : '';
-            });
-        }
-
-        function openEditForm(customerId) {
-            // यहाँ ग्राहक संपादन फॉर्म खोलने का लॉजिक आएगा
-            alert(`Edit customer with ID: ${customerId}`);
-            // अगले चरण में हम संपादन फॉर्म बनाएंगे और यहाँ उसका लॉजिक लिखेंगे
-        }
-
-        function filterTable(column, searchTerm) {
-            searchTerm = searchTerm ? searchTerm.toLowerCase() : '';
-            switch (column) {
-                case 'fullName':
-                    nameFilter = searchTerm;
-                    break;
-                case 'city':
-                    cityFilter = searchTerm;
-                    break;
-                case 'whatsappNo':
-                    mobileFilter = searchTerm;
-                    break;
-            }
-        }
-
-        function applyFilters() {
-            filteredCustomers = allCustomers.filter(customer => {
-                const nameMatch = customer.fullName.toLowerCase().includes(nameFilter);
-                const cityMatch = customer.city.toLowerCase().includes(cityFilter);
-                const mobileMatch = customer.whatsappNo.includes(mobileFilter);
-                return nameMatch && cityMatch && mobileMatch;
-            });
-            displayCustomers(filteredCustomers);
-            if (selectedCustomerId) showCustomerDetails(selectedCustomerId);
-        }
-
-        // Load customer data on page load
-        loadCustomers();
-        loadOrders();
-    </script>
 </body>
 </html>
