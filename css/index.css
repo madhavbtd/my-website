@@ -1,0 +1,283 @@
+/* यहाँ CSS स्टाइलिंग होगी */
+body {
+  font-family: 'Segoe UI Emoji', sans-serif;
+  margin: 0;
+  padding: 0;
+  background-color: #f4f6f8;
+  /* हल्का ग्रे बैकग्राउंड */
+}
+
+.container {
+  display: flex;
+  padding: 20px;
+}
+
+.sidebar {
+  width: 200px;
+  background-color: #2c3e50;
+  height: auto;
+  /* कंटेंट के अनुसार हाइट */
+  min-height: 100vh;
+  /* कम से कम पूरी स्क्रीन की हाइट */
+  color: white;
+  padding-top: 20px;
+}
+
+.sidebar h2 {
+  text-align: center;
+  margin-bottom: 20px;
+  background-color: white;
+  padding: 10px;
+}
+
+.sidebar h2 img {
+  max-width: 100%;
+  height: auto;
+}
+
+.sidebar ul {
+  list-style-type: none;
+  padding: 0;
+  margin: 0;
+}
+
+.sidebar ul li a {
+  display: block;
+  padding: 10px;
+  text-decoration: none;
+  color: white;
+  display: flex;
+  align-items: center;
+}
+
+.sidebar ul li a i {
+  margin-right: 10px;
+}
+
+.sidebar ul li a:hover {
+  background-color: #34495e;
+}
+
+.main-content {
+  flex: 1;
+  padding: 20px;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  background-color: white;
+  /* हेडर का बैकग्राउंड */
+  padding: 15px;
+  border-radius: 5px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.header-buttons {
+  display: flex;
+  margin-right: 10px;
+  /* तारीख से थोड़ी दूरी */
+}
+
+.header-buttons button {
+  color: white;
+  border: none;
+  padding: 8px 12px;
+  margin-left: 10px;
+  cursor: pointer;
+  border-radius: 5px;
+  font-family: 'Poppins', sans-serif;
+  font-size: 0.9em;
+}
+
+.header-buttons button:first-child {
+  background-color: #28a745;
+  /* हरा */
+}
+
+.header-buttons button:nth-child(2) {
+  background-color: #17a2b8;
+  /* टील */
+}
+
+.header-buttons button:nth-child(3) {
+  background-color: #dc3545;
+  /* लाल */
+}
+
+.welcome-text {
+  font-family: 'Poppins', sans-serif;
+  color: #495057;
+  font-weight: bold;
+  margin-right: auto;
+  /* बटनों को दूसरी तरफ धकेलने के लिए */
+}
+
+.date-time-container {
+  background-color: #ffc107;
+  color: #212529;
+  padding: 8px 12px;
+  border-radius: 5px;
+  font-family: 'Poppins', sans-serif;
+  font-size: 0.9em;
+}
+
+.date-time-container .date-day {
+  font-weight: bold;
+}
+
+.date-time-container .day-name {
+  font-weight: bold;
+}
+
+.order-control-panel {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 15px;
+  margin-bottom: 20px;
+}
+
+.panel-item {
+  background-color: #fff;
+  /* हल्का बैकग्राउंड */
+  border: 1px solid #e0e0e0;
+  /* हल्की बॉर्डर */
+  padding: 15px;
+  /* थोड़ी कम पैडिंग */
+  text-align: center;
+  border-radius: 5px;
+  font-size: 0.9em;
+  /* थोड़ा छोटा फ़ॉन्ट */
+  color: #495057;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  font-weight: bold;
+  /* टेक्स्ट को बोल्ड किया */
+  font-family: 'Poppins', sans-serif;
+  /* पॉपिंग फ़ॉन्ट */
+  text-transform: uppercase;
+  /* कैपिटल लेटर */
+  line-height: 1.2;
+  /* लाइन की ऊंचाई थोड़ी कम */
+}
+
+.panel-count {
+  font-size: 3em;
+  /* क्वांटिटी का साइज़ 1.5 गुना बढ़ाया */
+  font-weight: bolder;
+  /* और भी ज्यादा बोल्ड */
+  display: block;
+  margin-bottom: 5px;
+  font-family: 'Poppins', sans-serif;
+  /* पॉपिंग फ़ॉन्ट */
+}
+
+.panel-item button {
+  background-color: #007bff;
+  color: white;
+  border: none;
+  padding: 8px 12px;
+  cursor: pointer;
+  border-radius: 3px;
+  font-size: 0.8em;
+  /* बटन का फ़ॉन्ट भी थोड़ा छोटा */
+  margin-top: 5px;
+  /* बटन का मार्जिन भी थोड़ा कम */
+  font-weight: normal;
+  /* बटन का टेक्स्ट बोल्ड नहीं रहेगा */
+  font-family: 'Poppins', sans-serif;
+  /* पॉपिंग फ़ॉन्ट */
+  text-transform: capitalize;
+  /* बटन टेक्स्ट कैपिटलाइज */
+}
+
+.panel-item button:hover {
+  background-color: #0056b3;
+}
+
+/* हल्के रंग और आइकन के लिए नई क्लासेस */
+.panel-item.light-blue {
+  background-color: #e1f5fe;
+  color: #1976d2;
+}
+
+.panel-item.light-orange {
+  background-color: #fff3e0;
+  color: #e65100;
+}
+
+.panel-item.light-green {
+  background-color: #e8f5e9;
+  color: #388e3c;
+}
+
+.panel-item.light-red {
+  background-color: #ffebee;
+  color: #d32f2f;
+}
+
+.panel-icon {
+  font-size: 2em;
+  margin-bottom: 5px;
+  /* आइकन का मार्जिन भी थोड़ा कम */
+}
+
+.search-bar {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  margin-bottom: 20px;
+  background-color: white;
+  padding: 15px;
+  border-radius: 5px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.search-bar label {
+  margin-right: 10px;
+  color: #495057;
+  font-size: 0.9em;
+}
+
+.search-bar input[type="text"] {
+  padding: 8px;
+  border: 1px solid #ced4da;
+  border-radius: 4px;
+  font-size: 0.9em;
+}
+
+.search-bar button {
+  background-color: #28a745;
+  color: white;
+  border: none;
+  padding: 8px 12px;
+  cursor: pointer;
+  border-radius: 4px;
+  font-size: 0.9em;
+  margin-left: 10px;
+}
+
+.search-bar button:hover {
+  background-color: #1e7e34;
+}
+
+.reminder-section {
+  background-color: white;
+  padding: 15px;
+  border: 1px solid #dee2e6;
+  border-radius: 5px;
+  font-size: 0.9em;
+  color: #495057;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.reminder-section h3 {
+  margin-top: 0;
+  margin-bottom: 10px;
+  font-size: 1.1em;
+}

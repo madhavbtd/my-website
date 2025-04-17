@@ -1,0 +1,151 @@
+body {
+    font-family: 'Segoe UI Emoji', sans-serif;
+    margin: 0;
+    background-color: #f8f9fa;
+}
+
+.container {
+    max-width: 100%;
+    margin: 20px;
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 5px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #eee;
+}
+
+.header h2 {
+    margin: 0;
+    font-size: 24px;
+    color: #333;
+}
+
+.header .btn-group {
+    display: flex;
+}
+
+.header .btn-group a,
+.header .btn-group button {
+    background-color: #007bff;
+    color: white;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 5px;
+    cursor: pointer;
+    margin-left: 5px;
+    font-size: 14px;
+    text-decoration: none;
+}
+
+.header .btn-group a i,
+.header .btn-group button i {
+    margin-right: 5px;
+}
+
+.filter-section {
+    display: flex;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.filter-item {
+    display: flex;
+    align-items: center;
+    margin-right: 15px;
+}
+
+.filter-item label {
+    margin-right: 5px;
+    font-size: 14px;
+    color: #555;
+    cursor: pointer;
+}
+
+.filter-item input[type="text"],
+.filter-item select {
+    padding: 6px 8px;
+    border-radius: 3px;
+    border: 1px solid #ccc;
+    font-size: 14px;
+}
+
+.filter-button {
+    background-color: #007bff;
+    color: white;
+    border: none;
+    padding: 6px 10px;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 14px;
+    margin-left: 10px;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+}
+
+th,
+td {
+    border: 1px solid #ddd;
+    padding: 8px;
+    text-align: left;
+    font-size: 12px; /* फ़ॉन्ट साइज़ थोड़ा छोटा किया ताकि अधिक कॉलम फिट हो सकें */
+}
+
+th {
+    background-color: #f8f9fa;
+    font-weight: bold;
+    color: #333;
+}
+
+tbody tr:nth-child(even) {
+    background-color: #f9f9f9;
+}
+
+.customer-details {
+    margin-top: 20px;
+    border: 1px solid #ddd;
+    padding: 15px;
+    border-radius: 5px;
+    background-color: #f9f9f9;
+}
+
+.customer-details h3 {
+    margin-top: 0;
+    color: #333;
+}
+
+.customer-orders {
+    margin-top: 20px;
+    border: 1px solid #ddd;
+    padding: 15px;
+    border-radius: 5px;
+    background-color: #f9f9f9;
+}
+
+.customer-orders h3 {
+    margin-top: 0;
+    color: #333;
+}
+
+#orders-for-customer th,
+#orders-for-customer td {
+    border: 1px solid #ddd;
+    padding: 8px;
+    text-align: left;
+    font-size: 14px;
+}
+
+#orders-for-customer th {
+    background-color: #eee;
+    font-weight: bold;

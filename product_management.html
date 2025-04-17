@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Product Management</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/product_management.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" integrity="sha512-9usAa10IRO0HhonpyAIVpjrylPvoDwiPUiKdWk5t3PyolY1cOd4DSE0Ga+ri4AuTroPR5aQvXU9xC6qOPnzFeg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <style>
+        body {
+            font-family: 'Segoe UI Emoji', sans-serif;
+            margin: 0;
+            background-color: #f4f6f8; /* Light grey background */
+        }
+        .container {
+            max-width: 1200px;
+            margin: 20px auto;
+            background-color: #fff;
+            padding: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1); /* Light shadow */
+            border-radius: 8px; /* Slightly rounded corners */
+        }
+        .header-section {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .header-section h2 {
+            margin: 0;
+            font-size: 24px;
+            color: #333;
+            display: flex;
+            align-items: center; /* Align icon with text */
+        }
+        .header-section h2 i {
+            margin-right: 8px; /* Space between icon and text */
+        }
+        .add-new-button {
+            background-color: #28a745; /* Green color */
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            box-shadow: 0 2px 2px rgba(0,0,0,0.1);
+        }
+        .add-new-button i {
+            margin-right: 5px;
+        }
+        .add-product-modal {
+            display: none; /* Initially hidden */
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            z-index: 1000;
+            width: 80%; /* Adjust as needed */
+            max-width: 600px; /* Limit maximum width */
+            max-height: 90vh; /* Increased max height */
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            color: #333;
+        }
+        .modal-header h2 {
+            margin: 0;
+            font-size: 20px;
+        }
+        .modal-header .close-button {
+            background: none;
+            border: none;
+            color: #aaa;
+            font-size: 20px;
+            cursor: pointer;
+        }
+        .modal-header .close-button:hover {
+            color: #333;
+        }
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 12px;
+            margin-bottom: 15px;
+            overflow: auto;
+            flex-grow: 1;
+        }
+        .form-group {
+            margin-bottom: 12px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #555;
+            font-size: 14px;
+        }
+        .form-group input[type="text"],
+        .form-group input[type="number"],
+        .form-group textarea,
+        .form-group select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+            font-size: 14px;
+        }
+        .gst-rates {
+            display: none; /* Hide GST Rates section */
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+        .gst-rates label {
+            font-weight: normal;
+            font-size: 14px;
+            margin-right: 5px;
+        }
+        .gst-rates input[type="number"] {
+            width: 60px;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+            font-size: 14px;
+        }
+        .product-settings label {
+            font-weight: normal;
+            margin-right: 10px;
+            font-size: 14px;
+        }
+        .modal-actions {
+            margin-top: 20px;
+            text-align: right;
+            flex-shrink: 0;
+        }
+        .modal-actions button {
+            background-color: #007bff; /* Blue color */
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-left: 10px;
+            box-shadow: 0 2px 2px rgba(0,0,0,0.1);
+        }
+        .modal-actions button:hover {
+            background-color: #0056b3;
+        }
+        .product-list-section {
+            overflow-x: auto;
+            margin-top: 20px;
+        }
+        #productListTable {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        #productListTable th, #productListTable td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+            white-space: nowrap;
+            font-size: 14px;
+        }
+        #productListTable th {
+            background-color: #f8f9fa;
+            font-weight: bold;
+            color: #333;
+        }
+        #productListTable tbody tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        #productListTable .actions button {
+            background-color: #28a745; /* Green color */
+            color: white;
+            border: none;
+            padding: 6px 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            margin-right: 5px;
+            box-shadow: 0 1px 1px rgba(0,0,0,0.1);
+        }
+        #productListTable .actions button:last-child {
+            background-color: #dc3545; /* Red color */
+        }
+        #productListTable .actions button:hover {
+            opacity: 0.8;
+        }
+        .overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5); /* Dim background */
+            z-index: 999;
+        }
+        .back-to-tools {
+            margin-top: 20px;
+            font-size: 14px;
+        }
+        .back-to-tools a {
+            text-decoration: none;
+            color: #007bff;
+        }
+        .back-to-tools a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header-section">
+            <h2><i class="fas fa-box-open"></i> Product List</h2>
+            <button class="add-new-button" onclick="showAddProductForm()">
+                <i class="fas fa-plus"></i> Add New Product
+            </button>
+        </div>
+
+        <div class="add-product-modal" id="addProductModal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>Add New Product</h2>
+                    <button type="button" class="close-button" onclick="hideAddProductForm()">×</button>
+                </div>
+                <form id="addProductForm">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="productName">Product Name*:</label>
+                            <input type="text" id="productName" name="productName" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="printName">Print Name:</label>
+                            <input type="text" id="printName" name="printName">
+                        </div>
+                        <div class="form-group">
+                            <label for="purchasePrice">Purchase Price*:</label>
+                            <input type="number" id="purchasePrice" name="purchasePrice" min="0" step="0.01" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="salePrice">Sale Price* (Excluding Tax):</label>
+                            <input type="number" id="salePrice" name="salePrice" min="0" step="0.01" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="minSalePrice">Min. Sale Price:</label>
+                            <input type="number" id="minSalePrice" name="minSalePrice" min="0" step="0.01">
+                        </div>
+                        <div class="form-group">
+                            <label for="mrp">MRP:</label>
+                            <input type="number" id="mrp" name="mrp" min="0" step="0.01">
+                        </div>
+                        <div class="form-group">
+                            <label for="unit">Unit*:</label>
+                            <select id="unit" name="unit" required>
+                                <option value="NOS">NOS</option>
+                                <option value="SQ Feet">SQ Feet</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="saleDiscount">Sale Discount %:</label>
+                            <input type="number" id="saleDiscount" name="saleDiscount" min="0" step="0.01">
+                        </div>
+                        <div class="form-group">
+                            <label for="lowLevelLimit">Low Level Limit:</label>
+                            <input type="number" id="lowLevelLimit" name="lowLevelLimit" min="0">
+                        </div>
+                        <div class="form-group">
+                            <label for="productDescription">Product Description:</label>
+                            <textarea id="productDescription" name="productDescription" rows="3" maxlength="250"></textarea>
+                            <small id="descriptionCount">0 / 250</small>
+                        </div>
+                        <div class="form-group product-settings">
+                            <label><input type="checkbox" id="printDescription" name="printDescription"> Print Description</label>
+                            <label><input type="checkbox" id="printSerialNo" name="printSerialNo"> Print Serial No</label>
+                            <label><input type="checkbox" id="oneClickSale" name="oneClickSale"> One Click Sale</label>
+                            <label><input type="checkbox" id="notForSale" name="notForSale"> Not For Sale</label>
+                            <label><input type="checkbox" id="enableTracking" name="enableTracking"> Enable Tracking</label>
+                        </div>
+                    </div>
+                    <div class="modal-actions">
+                        <button type="submit">Save Product</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div class="product-list-section">
+            <table id="productListTable">
+                <thead>
+                    <tr>
+                        <th>S.No.</th>
+                        <th>Item Name</th>
+                        <th>Print Name</th>
+                        <th>Purchase Price</th>
+                        <th>Sale Price</th>
+                        <th>UoM</th>
+                        <th>Stock</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="overlay" id="modalOverlay"></div>
+
+        <div class="back-to-tools">
+            <a href="#"><i class="fas fa-arrow-left"></i> Back to Tools</a>
+        </div>
+    </div>
+
+    <script src="js/product_management.js"></script>
+    <script>
+        const descriptionInput = document.getElementById('productDescription');
+        const descriptionCount = document.getElementById('descriptionCount');
+        const addProductModal = document.getElementById('addProductModal');
+        const modalOverlay = document.getElementById('modalOverlay');
+
+        // Initially hide the add product form
+        addProductModal.style.display = 'none';
+        modalOverlay.style.display = 'none';
+
+        descriptionInput.addEventListener('input', function() {
+            const currentLength = this.value.length;
+            descriptionCount.textContent = currentLength + ' / 250';
+        });
+
+        function showAddProductForm() {
+            addProductModal.style.display = 'block';
+            modalOverlay.style.display = 'block';
+        }
+
+        function hideAddProductForm() {
+            addProductModal.style.display = 'none';
+            modalOverlay.style.display = 'none';
+            document.getElementById('addProductForm').reset();
+            editingIndex = -1; // Cancel edit mode
+            const submitButton = document.querySelector('#addProductForm button[type="submit"]');
+            submitButton.textContent = 'Save Product';
+        }
+    </script>
+</body>
+</html>

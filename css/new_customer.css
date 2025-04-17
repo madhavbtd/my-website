@@ -1,0 +1,94 @@
+body {
+    font-family: 'Segoe UI Emoji', sans-serif;
+    margin: 0;
+    background-color: #f8f9fa;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+}
+
+.container {
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+    width: 400px;
+    max-height: 70vh; /* कंटेनर की अधिकतम ऊँचाई सेट करें (आप इसे समायोजित कर सकते हैं) */
+    overflow-y: auto; /* वर्टिकल स्क्रॉल बार जोड़ें यदि सामग्री ज़्यादा हो */
+}
+
+.header {
+    background-color: #ffc107;
+    color: #333;
+    padding: 15px;
+    border-radius: 8px 8px 0 0;
+    font-size: 18px;
+    font-weight: bold;
+    margin-bottom: 15px;
+    flex-shrink: 0; /* हेडर को स्क्रॉल न होने दें */
+}
+
+.section-title {
+    font-size: 16px;
+    font-weight: bold;
+    color: #333;
+    margin-top: 15px;
+    margin-bottom: 10px;
+    flex-shrink: 0; /* सेक्शन टाइटल को स्क्रॉल न होने दें */
+}
+
+.form-group {
+    margin-bottom: 15px;
+    flex-shrink: 0; /* फॉर्म ग्रुप को स्क्रॉल न होने दें (उनकी सामग्री स्क्रॉल होगी) */
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 5px;
+    color: #555;
+    font-size: 14px;
+    flex-shrink: 0; /* लेबल को स्क्रॉल न होने दें */
+}
+
+.form-group input[type="text"],
+.form-group input[type="email"],
+.form-group input[type="number"] {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 14px;
+    box-sizing: border-box;
+    flex-shrink: 0; /* इनपुट फ़ील्ड को स्क्रॉल न होने दें */
+}
+
+.form-group .gst-type-group {
+    flex-shrink: 0; /* जीएसटी टाइप ग्रुप को स्क्रॉल न होने दें */
+}
+
+.form-group .gst-type-group label {
+    display: inline-block;
+    margin-right: 10px;
+    flex-shrink: 0; /* जीएसटी टाइप लेबल को स्क्रॉल न होने दें */
+}
+
+.button-container {
+    text-align: right;
+    margin-top: 20px;
+    flex-shrink: 0; /* बटन कंटेनर को स्क्रॉल न होने दें */
+}
+
+.save-button {
+    background-color: #007bff;
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+.save-button i {
+    margin-right: 5px;
+}

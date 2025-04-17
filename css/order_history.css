@@ -1,0 +1,255 @@
+/* css/order_history.css */
+
+body {
+    font-family: 'Segoe UI Emoji', sans-serif;
+    margin: 0;
+    background-color: #f8f9fa;
+}
+
+.container {
+    max-width: 100%; /* फुल विड्थ */
+    margin: 0; /* कोई मार्जिन नहीं */
+    background-color: #fff;
+    padding: 20px;
+    box-shadow: 0 0 10px rgba(0,0,0,.1);
+}
+
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #eee;
+}
+
+.header h2 {
+    margin: 0;
+    font-size: 24px;
+    color: #333;
+}
+
+.header .btn-group {
+    display: flex;
+    align-items: center;
+}
+
+.header .btn-group a {
+    text-decoration: none; /* लिंक के डिफ़ॉल्ट अंडरलाइन को हटाता है */
+    margin-right: 5px; /* बटनों के बीच थोड़ी सी स्पेसिंग */
+    background-color: transparent; /* लिंक का बैकग्राउंड ट्रांसपेरेंट करें */
+    padding: 0; /* लिंक की पैडिंग हटाएं */
+    display: inline-block; /* यदि आवश्यक हो तो */
+}
+
+.header .btn-group a:last-child {
+    margin-right: 0; /* आखिरी बटन से मार्जिन हटाता है */
+}
+
+.header .btn-group a button {
+    background-color: #007bff; /* डिफ़ॉल्ट नीला रंग */
+    color: white;
+    border: none;
+    padding: 5px 10px; /* कम पैडिंग */
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 12px; /* छोटा फ़ॉन्ट */
+    line-height: 1.2; /* टेक्स्ट की लाइन ऊंचाई एडजस्ट करें */
+    display: inline-flex; /* आइकन और टेक्स्ट को अलाइन करने के लिए */
+    align-items: center; /* आइकन और टेक्स्ट को वर्टिकली अलाइन करें */
+}
+
+.header .btn-group a:first-child button {
+    background-color: #28a745; /* होम बटन के लिए हरा रंग */
+    padding: 5px 10px; /* कम पैडिंग */
+}
+
+.header .btn-group button i,
+.header .btn-group a i {
+    margin-right: 5px;
+}
+
+.filter-section {
+    display: flex;
+    align-items: center;
+    margin-bottom: 20px;
+    justify-content: flex-start; /* तत्वों को बाईं ओर से शुरू करें */
+}
+
+.filter-section > div {
+    margin-right: 15px;
+}
+
+.entries-filter,
+.search-filter,
+.date-filter,
+.status-filter {
+    display: flex;
+    align-items: center;
+    margin-right: 15px;
+}
+
+.entries-filter label,
+.search-filter label,
+.date-filter label,
+.status-filter label {
+    margin-right: 5px;
+    font-size: 14px;
+    color: #555;
+}
+
+.entries-filter select,
+.search-filter input[type="text"],
+.date-filter input[type="date"],
+.status-filter select {
+    padding: 6px 8px;
+    border-radius: 3px;
+    border: 1px solid #ccc;
+    font-size: 14px;
+}
+
+.filter-button-container {
+    display: flex;
+    align-items: center;
+}
+
+.filter-button {
+    background-color: #28a745;
+    color: white;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    margin-left: 10px; /* स्टेटस फिल्टर से गैप */
+}
+
+.filter-button i {
+    margin-right: 5px;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+}
+
+th, td {
+    border: 1px solid #ddd;
+    padding: 10px;
+    text-align: left;
+    font-size: 14px;
+}
+
+th {
+    background-color: #f8f9fa;
+    font-weight: bold;
+    color: #333;
+}
+
+tbody tr:nth-child(even) {
+    background-color: #f9f9f9;
+}
+
+.pagination {
+    margin-top: 10px;
+    font-size: 14px;
+    color: #555;
+}
+
+.pagination button {
+    padding: 6px 10px;
+    margin-right: 5px;
+    border-radius: 3px;
+    border: 1px solid #ccc;
+    cursor: pointer;
+    background-color: #fff;
+    color: #333;
+}
+
+.pagination button:disabled {
+    color: #ccc;
+    cursor: not-allowed;
+}
+
+.pagination span {
+    margin-right: 10px;
+}
+
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0,0,0,0.4);
+}
+
+.modal-content {
+    background-color: #fefefe;
+    margin: 15% auto;
+    padding: 20px;
+    border: 1px solid #888;
+    width: 80%;
+    max-width: 500px;
+    border-radius: 5px;
+}
+
+.modal-content .close {
+    color: #aaa;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.modal-content h2 {
+    margin-top: 0;
+    color: #333;
+}
+
+.modal-content #modal-body p {
+    margin-bottom: 10px;
+    color: #555;
+}
+
+.modal-content .modal-buttons {
+    text-align: right;
+    margin-top: 20px;
+}
+
+.modal-content .modal-buttons button {
+    background-color: #dc3545;
+    color: white;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 14px;
+    margin-left: 10px;
+}
+
+.edit-button {
+    background-color: #007bff;
+    color: white;
+    border: none;
+    padding: 6px 10px;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.send-wtsp-cell {
+    text-align: center;
+}
+
+.whatsapp-icon {
+    font-size: 20px;
+    color: #25d366;
+    cursor: pointer;
+}

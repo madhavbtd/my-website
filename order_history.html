@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Daily Report Order Management</title>
+    <link rel="stylesheet" href="css/order_history.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" integrity="sha512-9usAa10IRO0HhonpyAIVpjrylPvoDwiPUiKdWk5t3PyolY1cOd4DSE0Ga+ri4AuTroPR5aQvXU9xC6qOPnzFeg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <style>
+        /* यहाँ इनलाइन स्टाइलिंग है, आप इसे css/order_history.css में डाल सकते हैं */
+        body { font-family: 'Segoe UI Emoji', sans-serif; margin: 0; background-color: #f8f9fa; }
+        .container { max-width: 100%; margin: 0; background-color: #fff; padding: 20px; box-shadow: 0 0 10px rgba(0,0,0,.1); }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 1px solid #eee; }
+        .header h2 { margin: 0; font-size: 24px; color: #333; }
+        .header .btn-group a, .header .btn-group button { background-color: #007bff; color: white; border: none; padding: 8px 12px; border-radius: 5px; cursor: pointer; margin-left: 5px; font-size: 14px; text-decoration: none; }
+        .header .btn-group button i, .header .btn-group a i { margin-right: 5px; }
+        .filter-section { display: flex; align-items: center; margin-bottom: 20px; }
+        .entries-filter { display: flex; align-items: center; margin-right: 20px; }
+        .entries-filter label { margin-right: 5px; font-size: 14px; color: #555; }
+        .entries-filter select { padding: 6px 8px; border-radius: 3px; border: 1px solid #ccc; font-size: 14px; }
+        .search-filter { display: flex; align-items: center; margin-right: 20px; }
+        .search-filter label { margin-right: 5px; font-size: 14px; color: #555; }
+        .search-filter input[type="text"] { padding: 6px 8px; border-radius: 3px; border: 1px solid #ccc; font-size: 14px; }
+        .date-filter { display: flex; align-items: center; margin-right: 20px; }
+        .date-filter label { margin-right: 5px; font-size: 14px; color: #555; }
+        .date-filter input[type="date"] { padding: 6px 8px; border-radius: 3px; border: 1px solid #ccc; font-size: 14px; }
+        .status-filter { display: flex; align-items: center; margin-right: 20px; }
+        .status-filter label { margin-right: 5px; font-size: 14px; color: #555; }
+        .status-filter select { padding: 6px 8px; border-radius: 3px; border: 1px solid #ccc; font-size: 14px; }
+        .filter-button { background-color: #28a745; color: white; border: none; padding: 8px 12px; border-radius: 5px; cursor: pointer; font-size: 14px; display: flex; align-items: center; margin-left: 10px; }
+        .filter-button i { margin-right: 5px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid #ddd; padding: 10px; text-align: left; font-size: 14px; }
+        th { background-color: #f8f9fa; font-weight: bold; color: #333; }
+        tbody tr:nth-child(even) { background-color: #f9f9f9; }
+        .pagination { margin-top: 10px; font-size: 14px; color: #555; }
+        .pagination button { padding: 6px 10px; margin-right: 5px; border-radius: 3px; border: 1px solid #ccc; cursor: pointer; background-color: #fff; color: #333; }
+        .pagination button:disabled { color: #ccc; cursor: not-allowed; }
+        .pagination span { margin-right: 10px; }
+        .modal { display: none; position: fixed; z-index: 1; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.4); }
+        .modal-content { background-color: #fefefe; margin: 15% auto; padding: 20px; border: 1px solid #888; width: 80%; max-width: 500px; border-radius: 5px; }
+        .modal-content .close { color: #aaa; float: right; font-size: 28px; font-weight: bold; cursor: pointer; }
+        .modal-content h2 { margin-top: 0; color: #333; }
+        .modal-content #modal-body p { margin-bottom: 10px; color: #555; }
+        .modal-content .modal-buttons { text-align: right; margin-top: 20px; }
+        .modal-content .modal-buttons button { background-color: #dc3545; color: white; border: none; padding: 8px 12px; border-radius: 5px; cursor: pointer; font-size: 14px; margin-left: 10px; }
+        .edit-button { background-color: #007bff; color: white; border: none; padding: 6px 10px; border-radius: 3px; cursor: pointer; font-size: 14px; }
+        .send-wtsp-cell { text-align: center; }
+        .whatsapp-icon { font-size: 20px; color: #25d366; cursor: pointer; }
+
+        /* Specific alignment and sizing */
+        .filter-section {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+            justify-content: flex-start; /* तत्वों को बाईं ओर से शुरू करें */
+        }
+
+        .filter-section > div {
+            margin-right: 15px;
+        }
+
+        /* फ़िल्टर बटन को स्टेटस फ़िल्टर के पास रखें */
+        .status-filter {
+            display: flex;
+            align-items: center;
+            margin-right: 10px; /* थोड़ा सा गैप */
+        }
+
+        .filter-button-container {
+            display: flex;
+            align-items: center;
+        }
+
+        .header .btn-group {
+            display: flex;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h2>Daily Report Order Management</h2>
+            <div class="btn-group">
+                <a href="index.html"><button style="background-color: #28a745;"><i class="fas fa-home"></i> Dashboard</button></a>
+                <a href="new_order.html"><button><i class="fas fa-plus"></i> New Order</button></a>
+                <a href="new_customer.html"><button><i class="fas fa-user-plus"></i> New Customer</button></a>
+            </div>
+        </div>
+
+        <div class="filter-section">
+            <div class="entries-filter">
+                <label for="show-entries">Show</label>
+                <select id="show-entries">
+                    <option value="10">10</option>
+                    <option value="25">25</option>
+                    <option value="50">50</option>
+                    <option value="100">100</option>
+                </select>
+                <label for="show-entries">entries</label>
+            </div>
+            <div class="search-filter">
+                <label for="search-order">Search:</label>
+                <input type="text" id="search-order" placeholder="Search Order ID">
+            </div>
+            <div class="date-filter">
+                <label for="filter-date">Filter by Date:</label>
+                <input type="date" id="filter-date">
+            </div>
+            <div class="status-filter">
+                <label for="filter-status">Filter by Status:</label>
+                <select id="filter-status">
+                    <option value="">All</option>
+                    <option value="Pending">Pending</option>
+                    <option value="In Progress">In Progress</option>
+                    <option value="Completed">Completed</option>
+                </select>
+            </div>
+            <div class="filter-button-container">
+                <button class="filter-button"><i class="fas fa-filter"></i> Filter</button>
+            </div>
+        </div>
+
+        <table id="order-table">
+            <thead>
+                <tr>
+                    <th>Order ID</th>
+                    <th>Customer Name</th>
+                    <th>Order Date</th>
+                    <th>Delivery Date</th>
+                    <th>Order Priority</th>
+                    <th>Order Status</th>
+                    <th>Action</th>
+                    <th>Send Wtsp</th>
+                </tr>
+            </thead>
+            <tbody>
+            </tbody>
+        </table>
+
+        <div class="pagination">
+            <button id="prev-page">Previous</button>
+            <span id="page-info">Page 1 of 1</span>
+            <button id="next-page">Next</button>
+        </div>
+
+        <div id="editModal" class="modal">
+            <div class="modal-content">
+                <span class="close">&times;</span>
+                <h2>Edit Order</h2>
+                <div id="modal-body">
+                </div>
+                <div class="modal-buttons">
+                    <button class="delete-button" onclick="deleteOrder()">Delete Order</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // आपका जावास्क्रिप्ट कोड यहाँ (लेटेस्ट कोड जो मैंने आपको भेजा था)
+        const tableBody = document.querySelector('#order-table tbody');
+        const prevPageButton = document.querySelector('#prev-page');
+        const nextPageButton = document.querySelector('#next-page');
+        const pageInfoSpan = document.querySelector('#page-info');
+        const searchInput = document.querySelector('#search-order');
+        const filterDateInput = document.querySelector('#filter-date');
+        const filterStatusSelect = document.querySelector('#filter-status');
+        const filterButton = document.querySelector('#filter-button');
+        const showEntriesSelect = document.querySelector('#show-entries');
+
+        let currentPage = 1;
+        let rowsPerPage = parseInt(showEntriesSelect.value);
+        let allOrders = JSON.parse(localStorage.getItem('orders')) || [];
+        let filteredOrders = [...allOrders];
+
+        function displayOrders(orders, page) {
+            tableBody.innerHTML = '';
+            const startIndex = (page - 1) * rowsPerPage;
+            const endIndex = startIndex + rowsPerPage;
+            const pageOrders = orders.slice(startIndex, endIndex);
+
+            pageOrders.forEach(order => {
+                const row = tableBody.insertRow();
+                row.insertCell().textContent = order.orderId;
+                row.insertCell().textContent = order.fullName;
+                row.insertCell().textContent = order.orderDate;
+                row.insertCell().textContent = order.deliveryDate;
+                row.insertCell().textContent = order.urgent;
+                row.insertCell().textContent = order.status ? order.status.join(', ') : '';
+                const actionsCell = row.insertCell();
+                actionsCell.innerHTML = `<button class="edit-button" onclick="editOrder(${order.orderId})">Edit</button>`;
+                const whatsappCell = row.insertCell();
+                whatsappCell.classList.add('send-wtsp-cell');
+                whatsappCell.innerHTML = `<i class="fab fa-whatsapp whatsapp-icon" onclick="sendWhatsApp('<span class="math-inline">\{order\.whatsappNo\}', '</span>{order.remarks}')"></i>`;
+            });
+            updatePagination(orders.length, page);
+        }
+
+        function updatePagination(totalRows, page) {
+            const totalPages = Math.ceil(totalRows / rowsPerPage);
+            pageInfoSpan.textContent = `Page ${page} of ${totalPages}`;
+            prevPageButton.disabled = page === 1;
+            nextPageButton.disabled = page === totalPages || totalPages === 0;
+        }
+
+        function changePage(newPage) {
+            currentPage = newPage;
+            displayOrders(filteredOrders, currentPage);
+        }
+
+        prevPageButton.addEventListener('click', () => { if (currentPage > 1) changePage(currentPage - 1); });
+        nextPageButton.addEventListener('click', () => { const totalPages = Math.ceil(filteredOrders.length / rowsPerPage); if (currentPage < totalPages) changePage(currentPage + 1); });
+        showEntriesSelect.addEventListener('change', (event) => { rowsPerPage = parseInt(event.target.value); currentPage = 1; displayOrders(filteredOrders, currentPage); });
+        searchInput.addEventListener('input', (event) => { const searchTerm = event.target.value.toLowerCase(); filteredOrders = allOrders.filter(order => String(order.orderId).toLowerCase().includes(searchTerm) || order.fullName.toLowerCase().includes(searchTerm)); currentPage = 1; displayOrders(filteredOrders, currentPage); });
+        filterButton.addEventListener('click', () => { const filterStatus = filterStatusSelect.value; filteredOrders = allOrders.filter(order => !filterStatus || (order.status && order.status.includes(filterStatus))); currentPage = 1; displayOrders(filteredOrders, currentPage); });
+
+        const modal = document.getElementById("editModal");
+        const closeBtn = document.querySelector(".close");
+
+        function editOrder(orderId) {
+            const order = allOrders.find(o => o.orderId === orderId);
+            if (order) {
+                const modalBody = document.getElementById("modal-body");
+                modalBody.innerHTML = `
+                    <p>Order ID: ${order.orderId}</p>
+                    <p>Customer Name: ${order.fullName}</p>
+                    <p>Address: ${order.address}</p>
+                    <p>WhatsApp No: ${order.whatsappNo}</p>
+                    <p>Contact No: ${order.contactNo}</p>
+                    <p>Order Date: ${order.orderDate}</p>
+                    <p>Delivery Date: ${order.deliveryDate}</p>
+                    <p>Urgent: ${order.urgent}</p>
+                    <p>Remarks: ${order.remarks}</p>
+                    <h3>Products:</h3>
+                    <ul>
+                        ${order.products ? order.products.map(product => `<li>${product.name} - Qty: ${product.quantity}</li>`).join('') : ''}
+                    </ul>
+                    <p>Status: ${order.status ? order.status.join(', ') : ''}</p>
+                    `;
+                modal.style.display = "block";
+            }
+        }
+
+        closeBtn.addEventListener('click', () => { modal.style.display = "none"; });
+        window.addEventListener('click', (event) => { if (event.target === modal) modal.style.display = "none"; });
+
+        function deleteOrder() {
+            const orderIdToDelete = parseInt(document.querySelector('#modal-body p:first-child').textContent.split(': ')[1]);
+            const indexToDelete = allOrders.findIndex(order => order.orderId === orderIdToDelete);
+            if (indexToDelete > -1) {
+                allOrders.splice(indexToDelete, 1);
+                localStorage.setItem('orders', JSON.stringify(allOrders));
+                displayOrders(allOrders, currentPage);
+                modal.style.display = "none";
+            } else {
+                alert('Order not found for deletion.');
+            }
+        }
+
+        function sendWhatsApp(phoneNumber, message) {
+            const whatsappUrl =
