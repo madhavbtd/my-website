@@ -214,15 +214,15 @@
             background-color: rgba(0,0,0,0.5); /* Dim background */
             z-index: 999;
         }
-        .back-to-tools {
+        .back-to-dashboard {
             margin-top: 20px;
             font-size: 14px;
         }
-        .back-to-tools a {
+        .back-to-dashboard a {
             text-decoration: none;
             color: #007bff;
         }
-        .back-to-tools a:hover {
+        .back-to-dashboard a:hover {
             text-decoration: underline;
         }
     </style>
@@ -324,12 +324,12 @@
 
         <div class="overlay" id="modalOverlay"></div>
 
-        <div class="back-to-tools">
-            <a href="#"><i class="fas fa-arrow-left"></i> Back to Tools</a>
+        <div class="back-to-dashboard">
+            <a href="index.html"><i class="fas fa-arrow-left"></i> Back to Dashboard</a>
         </div>
     </div>
 
-    <script src="js/product_management.js"></script>
+    <script src="js/product_management.js" type="module"></script>
     <script>
         const descriptionInput = document.getElementById('productDescription');
         const descriptionCount = document.getElementById('descriptionCount');
@@ -354,7 +354,7 @@
             addProductModal.style.display = 'none';
             modalOverlay.style.display = 'none';
             document.getElementById('addProductForm').reset();
-            editingIndex = -1; // Cancel edit mode
+            editingIndex = -1; // Cancel edit mode (assuming this variable is in your JS)
             const submitButton = document.querySelector('#addProductForm button[type="submit"]');
             submitButton.textContent = 'Save Product';
         }
