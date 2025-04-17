@@ -6,37 +6,32 @@
     <title>Customer Management</title>
     <link rel="stylesheet" href="css/customer_management.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" integrity="sha512-9usAa10IRO0HhonpyAIVpjrylPvoDwiPUiKdWk5t3PyolY1cOd4DSE0Ga+ri4AuTroPR5aQvXU9xC6qOPnzFeg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
-    </head>
+</head>
 <body>
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-        import { getFirestore, collection, addDoc, doc, updateDoc, deleteDoc, onSnapshot, getDocs, query, where } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, doc, updateDoc, deleteDoc, onSnapshot, getDocs, query, where, getDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-        // === अपना Firebase कॉन्फ़िगरेशन यहाँ डालें ===
         const firebaseConfig = {
-          apiKey: "AIzaSyBQj5rQmE77kKKGYixP8y3Hcimz8tiAqzQ", // सुरक्षा नोट!
+          apiKey: "AIzaSyBQj5rQmE77kKKGYixP8y3Hcimz8tiAqzQ",
           authDomain: "madhav-multyprint.firebaseapp.com",
           projectId: "madhav-multyprint",
           storageBucket: "madhav-multyprint.firebasestorage.app",
           messagingSenderId: "104988349637",
           appId: "1:104988349637:web:faf045b77c6786a4e70cac"
         };
-        // ========================================
 
         try {
             let app;
-            // Check if Firebase app is already initialized
             if (!window.firebaseAppInitialized) {
                  app = initializeApp(firebaseConfig);
-                 window.firebaseAppInitialized = true; // Set flag
+                 window.firebaseAppInitialized = true;
                  console.log("Firebase initialized on customer_management page.");
             } else {
                  console.log("Firebase already initialized.");
             }
-            // Get Firestore instance (or use existing one if app was already initialized)
-            const db = window.db || getFirestore(app || undefined); // Use existing app if available
+            const db = window.db || getFirestore(app || undefined);
 
-            // Make functions globally available
             window.db = db;
             window.collection = collection;
             window.addDoc = addDoc;
@@ -47,6 +42,7 @@
             window.getDocs = getDocs;
             window.query = query;
             window.where = where;
+            window.getDoc = getDoc;
             console.log("Firebase functions are available globally.");
 
         } catch (e) {
@@ -66,6 +62,11 @@
             </div>
         </div>
 
+        <div class="breadcrumbs" style="margin-bottom: 15px; font-size: 14px; color: #555;">
+            <a href="index.html" style="text-decoration: none; color: #007bff;">Home</a> /
+            <span>Customer Management</span>
+            </div>
+
         <div class="filter-section">
             <div class="filter-item">
                 <label for="filter-name-input">Filter by Name:</label>
@@ -79,17 +80,19 @@
                 <label for="filter-mobile-input">Filter by Mobile No:</label>
                 <input type="text" id="filter-mobile-input" placeholder="Enter Mobile No">
             </div>
-            </div>
+        </div>
 
         <table id="customer-table">
             <thead>
                 <tr>
-                    <th>S.No.</th> <th>Full Name</th>
+                    <th>Customer ID</th>
+                    <th>Full Name</th>
                     <th>Email ID</th>
                     <th>Billing Address</th>
                     <th>WhatsApp No</th>
                     <th>City</th>
-                    <th>Actions</th> </tr>
+                    <th>Actions</th>
+                </tr>
             </thead>
             <tbody>
                 <tr>
@@ -98,13 +101,8 @@
             </tbody>
         </table>
 
-        <div id="customer-details" class="customer-details" style="display: none;">
-            <h3>Customer Details</h3>
-            <div id="customer-info"></div>
-        </div>
-
-        <div id="customer-orders" class="customer-orders" style="display: none;">
-            <h3>Customer Orders</h3>
+        <div id="customer-orders" class="customer-orders" style="display: none; margin-top: 30px;">
+            <h3>Customer Order History</h3>
             <table id="orders-for-customer">
                 <thead>
                     <tr>
@@ -114,7 +112,7 @@
                     </tr>
                 </thead>
                 <tbody>
-                </tbody>
+                     </tbody>
             </table>
         </div>
     </div>
