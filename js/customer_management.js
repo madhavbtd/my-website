@@ -1,6 +1,6 @@
 // js/customer_management.js
 
-// Firestore फंक्शन्स window ऑब्जेक्ट से उपलब्ध हैं
+// Firestore फंक्शन्स window ऑब्जेक्ट से उपलब्ध होने चाहिए
 const { db, collection, onSnapshot, doc, deleteDoc, query, where, getDocs } = window;
 
 // --- DOM एलिमेंट रेफरेंस ---
@@ -24,21 +24,20 @@ function displayCustomers(customersToDisplay) {
     customerTableBody.innerHTML = '';
 
     if (customersToDisplay.length === 0) {
-        customerTableBody.innerHTML = '<tr><td colspan="7" style="text-align:center;">No customers found matching filters.</td></tr>';
+        customerTableBody.innerHTML = '<tr><td colspan="7" style="text-align:center;">No customers found.</td></tr>';
         return;
     }
 
     customersToDisplay.forEach((customer) => {
         const row = customerTableBody.insertRow();
 
-        // === कॉलम 1: Customer ID (अब displayCustomerId दिखाएगा, अगर मौजूद है) ===
+        // === कॉलम 1: Customer ID (displayCustomerId या Firestore ID दिखाएगा) ===
         const idCell = row.insertCell();
-        // अगर displayCustomerId है तो उसे दिखाएं, वरना Firestore ID दिखाएं (Fallback)
+        // अगर displayCustomerId है तो उसे दिखाएं, वरना Firestore ID दिखाएं
         const displayIdToShow = customer.displayCustomerId || customer.id;
-        // क्लिक करने पर अभी भी Firestore ID (customer.id) का उपयोग करें
-        idCell.innerHTML = `<a href="#" onclick="event.preventDefault(); showCustomerOrderHistory('${customer.id}', this)">${displayIdToShow}</a>`;
-        idCell.classList.add('customer-id-cell');
-        idCell.title = `Click to view order history (Internal ID: ${customer.id})`; // टूलटिप में ओरिजिनल ID दिखाएं
+        // क्लिक करने पर हमेशा Firestore ID (customer.id) का उपयोग करें
+        idCell.innerHTML = `<a href="#" class="customer-id-link" onclick="event.preventDefault(); showCustomerOrderHistory('${customer.id}', this)" title="Click for history (ID: ${customer.id})">${displayIdToShow}</a>`;
+        // idCell.classList.add('customer-id-cell'); // स्टाइल नीचे addCustomStyles से लगेगी
         // ==================================================================
 
         // बाकी कॉलम्स
@@ -56,16 +55,16 @@ function displayCustomers(customersToDisplay) {
             <button class="action-btn delete-btn" data-id="${customer.id}" title="Delete"><i class="fas fa-trash"></i></button>
         `;
 
-        // एडिट/डिलीट बटन लॉजिक (पहले जैसा)
+        // एडिट/डिलीट बटन लॉजिक
         const editBtn = actionsCell.querySelector('.edit-btn');
         if (editBtn) { editBtn.addEventListener('click', () => { window.location.href = `new_customer.html?editId=${customer.id}`; }); }
         const deleteBtn = actionsCell.querySelector('.delete-btn');
         if (deleteBtn) { deleteBtn.addEventListener('click', () => deleteCustomer(customer.id, customer.fullName)); }
     });
-    addCustomStyles(); // स्टाइलिंग जोड़ें (ID सेल के लिए भी)
+    addCustomStyles(); // स्टाइलिंग लागू करें
 }
 
-// कस्टमर डिलीट फंक्शन (पहले जैसा)
+// कस्टमर डिलीट फंक्शन
 async function deleteCustomer(id, name) {
      if (!id) { console.error("Delete failed: Invalid ID."); return; }
      if (confirm(`Are you sure you want to delete customer "${name || 'this customer'}"?`)) {
@@ -78,7 +77,7 @@ async function deleteCustomer(id, name) {
      }
 }
 
-// फ़िल्टरिंग लॉजिक (पहले जैसा)
+// फ़िल्टरिंग लॉजिक
 function applyFilters() {
     if (!filterNameInput || !filterCityInput || !filterMobileInput || !allCustomers) { return; }
     const nameFilter = filterNameInput.value.toLowerCase().trim() || '';
@@ -93,7 +92,7 @@ function applyFilters() {
     displayCustomers(filteredCustomers);
 }
 
-// Order History दिखाने का फंक्शन (पहले जैसा, order.orderId इस्तेमाल करेगा)
+// Order History दिखाने का फंक्शन
 window.showCustomerOrderHistory = async function(customerId, clickedElement) {
     console.log("Fetching order history for customer:", customerId);
     customerOrdersDiv = customerOrdersDiv || document.querySelector('#customer-orders');
@@ -115,7 +114,7 @@ window.showCustomerOrderHistory = async function(customerId, clickedElement) {
 
     try {
         const ordersRef = collection(db, "orders");
-        const q = query(ordersRef, where("customerId", "==", customerId)); // Use customerId from argument
+        const q = query(ordersRef, where("customerId", "==", customerId));
         const querySnapshot = await getDocs(q);
         ordersForCustomerTableBody.innerHTML = '';
 
@@ -125,8 +124,7 @@ window.showCustomerOrderHistory = async function(customerId, clickedElement) {
             querySnapshot.forEach((orderDoc) => {
                 const order = orderDoc.data();
                 const row = ordersForCustomerTableBody.insertRow();
-                // ऑर्डर ID के लिए order.orderId दिखाएं (जो new_order.js में सेव हुआ था)
-                row.insertCell().textContent = order.orderId || orderDoc.id; // Fallback to Firestore ID if orderId missing
+                row.insertCell().textContent = order.orderId || orderDoc.id; // Use custom orderId if available
                 row.insertCell().textContent = order.orderDate || '-';
                 row.insertCell().textContent = order.status || '-';
             });
@@ -137,20 +135,21 @@ window.showCustomerOrderHistory = async function(customerId, clickedElement) {
     }
 }
 
-// कस्टम स्टाइलिंग फंक्शन (ID सेल स्टाइल अपडेट किया)
+// कस्टम स्टाइलिंग फंक्शन
 function addCustomStyles() {
     const styleId = 'customer-page-styles';
     if (!document.getElementById(styleId)) {
         const styleSheet = document.createElement("style");
         styleSheet.id = styleId;
         styleSheet.innerHTML = `
-        td a.customer-id-link { /* क्लास का उपयोग करें */
+        /* Style for the clickable customer ID */
+        td a.customer-id-link {
              font-weight: bold;
              color: #007bff; /* Blue color */
              text-decoration: none;
              cursor: pointer;
-             display: inline-block; /* टूलटिप के लिए */
-             max-width: 150px; /* लम्बे ID के लिए चौड़ाई सीमित करें */
+             display: inline-block;
+             max-width: 150px; /* Adjust width as needed */
              overflow: hidden;
              text-overflow: ellipsis;
              white-space: nowrap;
@@ -159,6 +158,7 @@ function addCustomStyles() {
         td a.customer-id-link:hover {
             text-decoration: underline;
         }
+        /* Styles for action buttons */
         .action-btn { background: none; border: none; cursor: pointer; padding: 2px 5px; margin: 0 2px; font-size: 14px; }
         .action-btn i { pointer-events: none; }
         .action-btn.edit-btn { color: #0d6efd; }
@@ -168,12 +168,13 @@ function addCustomStyles() {
         `;
         document.head.appendChild(styleSheet);
     }
-     // क्लास को td > a पर लागू करें
-     const idCells = customerTableBody?.querySelectorAll('td:first-child a'); // पहले सेल के लिंक पर क्लास लगाएं
-     idCells?.forEach(a => a.classList.add('customer-id-link'));
+    // क्लास को td > a पर लागू करें (हर बार डिस्प्ले होने पर)
+     const idLinks = customerTableBody?.querySelectorAll('td:first-child a');
+     idLinks?.forEach(a => a.classList.add('customer-id-link'));
 }
 
-// Firestore Listener सेट अप फंक्शन (पहले जैसा)
+
+// Firestore Listener सेट अप फंक्शन
 function setupSnapshotListener(){
      if (!window.db) { console.error("DB not available"); return; }
      const customersCollectionRef = window.collection(db, "customers");
@@ -182,15 +183,14 @@ function setupSnapshotListener(){
             snapshot.forEach((doc) => { allCustomers.push({ id: doc.id, ...doc.data() }); });
             allCustomers.sort((a, b) => (a.fullName || '').localeCompare(b.fullName || ''));
             applyFilters();
-        }, (error) => { console.error("Error listening: ", error); /* ... Error handling ... */ });
+        }, (error) => { console.error("Error listening: ", error); /* ... */ });
 }
 
-// Firestore listener शुरू करने का फंक्शन (पहले जैसा)
+// Firestore listener शुरू करने का फंक्शन
 function listenToCustomers() {
     if (currentUnsub) { currentUnsub(); currentUnsub = null; }
     setupSnapshotListener();
 }
-
 
 // --- मुख्य लॉजिक (DOM लोड होने के बाद) ---
 document.addEventListener('DOMContentLoaded', () => {

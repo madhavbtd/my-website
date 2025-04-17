@@ -37,6 +37,7 @@ document.addEventListener('DOMContentLoaded', () => {
     } else { console.error("Customer form not found!"); }
 });
 
+
 // --- एडिट के लिए डेटा लोड करने का फंक्शन ---
 async function loadCustomerDataForEdit(customerId) {
      if (!db || !doc || !getDoc) { alert("Database functions not available."); return; }
@@ -119,7 +120,7 @@ async function handleFormSubmit(event) {
         if (customerId) {
             // --- अपडेट मोड ---
              console.log("Updating customer with ID:", customerId);
-             customerDataPayload.updatedAt = new Date(); // अपडेट का समय
+             customerDataPayload.updatedAt = new Date();
              const customerRef = doc(db, "customers", customerId);
              await updateDoc(customerRef, customerDataPayload);
              alert('Customer updated successfully!');
@@ -132,9 +133,9 @@ async function handleFormSubmit(event) {
             const querySnapshot = await getDocs(q);
 
             if (querySnapshot.empty) {
-                // === नया न्यूमेरिकल ID यहाँ जेनरेट करें ===
-                customerDataPayload.displayCustomerId = Date.now().toString(); // टाइमस्टैम्प को स्ट्रिंग के रूप में सेव करें
-                // ========================================
+                // === नया न्यूमेरिकल ID यहाँ जोड़ा जा रहा है ===
+                customerDataPayload.displayCustomerId = Date.now().toString();
+                // ==========================================
                 customerDataPayload.createdAt = new Date();
                 const customerDocRef = await addDoc(customersRef, customerDataPayload);
                 console.log("New customer added with ID: ", customerDocRef.id, "and Display ID:", customerDataPayload.displayCustomerId);
@@ -142,13 +143,11 @@ async function handleFormSubmit(event) {
                 window.location.href = 'customer_management.html';
 
             } else {
-                // डुप्लीकेट मिला
                 const existingCustomerId = querySnapshot.docs[0].id;
                 console.log("Duplicate found with ID: ", existingCustomerId);
                 alert(`Customer with WhatsApp number ${whatsappNo} already exists.`);
-                // बटन री-इनेबल करें
                 if (saveButton) { saveButton.disabled = false; saveButton.innerHTML = '<i class="fas fa-save"></i> Save'; }
-                return; // सेविंग रोकें
+                return;
             }
         }
     } catch (error) {
