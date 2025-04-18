@@ -5,254 +5,58 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>माधव मल्टीप्रिन्ट डैशबोर्ड</title>
     <style>
-    /* यहाँ CSS स्टाइलिंग होगी */
+    /* CSS स्टाइलिंग */
     body {
         font-family: 'Segoe UI Emoji', sans-serif;
         margin: 0;
         padding: 0;
-        background-color: #f4f6f8; /* हल्का ग्रे बैकग्राउंड */
+        background-color: #f4f6f8;
     }
-
-    .container {
-        display: flex;
-        /* padding: 20px; */ /* कंटेनर से पैडिंग हटाई */
+    .container { display: flex; }
+    .sidebar { width: 200px; background-color: #2c3e50; min-height: 100vh; color: white; padding-top: 0; }
+    .sidebar h2 { text-align: center; margin-bottom: 0px; background-color: white; padding: 10px; margin-top: 0; }
+    .sidebar h2 img { max-width: 100%; height: auto; }
+    .sidebar ul { list-style-type: none; padding: 0; margin: 0; }
+    .sidebar ul li a { padding: 10px 15px; text-decoration: none; color: white; display: flex; align-items: center; transition: background-color 0.2s ease, padding-left 0.2s ease; border-left: 3px solid transparent; }
+    .sidebar ul li a i { margin-right: 10px; width: 20px; text-align: center; }
+    .sidebar ul li a:hover { background-color: #34495e; padding-left: 18px; }
+    .sidebar ul li a.active { background-color: #1abc9c; border-left: 3px solid #f1c40f; font-weight: 600; }
+    .main-content { flex: 1; padding: 20px; overflow-y: auto; height: 100vh; box-sizing: border-box; }
+    .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; background-color: white; padding: 15px; border-radius: 5px; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05); }
+    .header-buttons { display: flex; gap: 10px; }
+    .header-buttons a { text-decoration: none; }
+    .header-buttons button, .header-buttons a.button-link { /* स्टाइल अब बटन और लिंक दोनों पर लागू होगी */
+        color: white; border: none; padding: 8px 12px; cursor: pointer; border-radius: 5px; font-family: 'Poppins', sans-serif; font-size: 0.9em; display: inline-flex; align-items: center; gap: 5px; text-decoration: none; /* लिंक के लिए अंडरलाइन हटाएं */
     }
-
-    .sidebar {
-        width: 200px;
-        background-color: #2c3e50;
-        height: auto; /* कंटेंट के अनुसार हाइट */
-        min-height: 100vh; /* कम से कम पूरी स्क्रीन की हाइट */
-        color: white;
-        padding-top: 0; /* टॉप पैडिंग हटाई */
+    .header-buttons a:nth-child(1) button, .header-buttons a:nth-child(1).button-link { background-color: #28a745; } /* Add Customer */
+    .header-buttons a:nth-child(2) button, .header-buttons a:nth-child(2).button-link { background-color: #17a2b8; } /* Add Supplier */
+    .header-buttons a:nth-child(3) button, .header-buttons a:nth-child(3).button-link { background-color: #007bff; } /* New Order */
+    .welcome-text { font-family: 'Poppins', sans-serif; color: #495057; font-weight: bold; margin-right: auto; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 200px; }
+    .date-time-container { background-color: #ffc107; color: #212529; padding: 8px 12px; border-radius: 5px; font-family: 'Poppins', sans-serif; font-size: 0.9em; white-space: nowrap; }
+    .date-time-container .date-day, .date-time-container .day-name { font-weight: bold; }
+    .order-control-panel { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; margin-bottom: 20px; }
+    .panel-item { background-color: #fff; border: 1px solid #e0e0e0; padding: 15px; text-align: center; border-radius: 5px; font-size: 0.9em; color: #495057; box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05); display: flex; flex-direction: column; justify-content: center; align-items: center; font-weight: bold; font-family: 'Poppins', sans-serif; text-transform: uppercase; line-height: 1.2; }
+    .panel-count { font-size: 2.5em; font-weight: bolder; display: block; margin-bottom: 5px; font-family: 'Poppins', sans-serif; }
+    /* स्टाइल अब लिंक पर लागू होगी जिसे बटन जैसा दिखना है */
+    .panel-item a.button-link {
+        background-color: #007bff; color: white; border: none; padding: 8px 12px; cursor: pointer; border-radius: 3px; font-size: 0.8em; margin-top: 5px; font-weight: normal; font-family: 'Poppins', sans-serif; text-transform: capitalize; text-decoration: none; display: inline-block; /* Ensure it behaves like a block for margin */
     }
-
-    .sidebar h2 {
-        text-align: center;
-        margin-bottom: 0px; /* मार्जिन बॉटम हटाई */
-        background-color: white;
-        padding: 10px;
-        margin-top: 0; /* टॉप मार्जिन हटाई */
-    }
-
-    .sidebar h2 img {
-        max-width: 100%;
-        height: auto;
-    }
-
-    .sidebar ul {
-        list-style-type: none;
-        padding: 0;
-        margin: 0;
-    }
-
-    .sidebar ul li a {
-        /* display: block; */ /* ब्लॉक हटाया */
-        padding: 10px 15px; /* पैडिंग एडजस्ट की */
-        text-decoration: none;
-        color: white;
-        display: flex;
-        align-items: center;
-        transition: background-color 0.2s ease, padding-left 0.2s ease; /* ट्रांजीशन जोड़ा */
-        border-left: 3px solid transparent; /* एक्टिव स्थिति के लिए बॉर्डर */
-    }
-
-    .sidebar ul li a i {
-        margin-right: 10px;
-        width: 20px; /* आइकन के लिए निश्चित चौड़ाई */
-        text-align: center; /* आइकन को सेंटर करें */
-    }
-
-    .sidebar ul li a:hover {
-        background-color: #34495e;
-        padding-left: 18px; /* होवर पर थोड़ी पैडिंग बढ़ाएं */
-    }
-
-     /* Active link styling */
-    .sidebar ul li a.active {
-         background-color: #1abc9c; /* एक्टिव लिंक का रंग */
-         border-left: 3px solid #f1c40f; /* एक्टिव बॉर्डर का रंग */
-         font-weight: 600; /* थोड़ा बोल्ड */
-    }
-
-    .main-content {
-        flex: 1;
-        padding: 20px;
-        overflow-y: auto; /* स्क्रॉल जोड़ा अगर कंटेंट ज्यादा हो */
-        height: 100vh; /* ताकि स्क्रॉल काम करे */
-        box-sizing: border-box; /* पैडिंग शामिल करें */
-    }
-
-    .header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 20px;
-        background-color: white; /* हेडर का बैकग्राउंड */
-        padding: 15px;
-        border-radius: 5px;
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-    }
-
-    .header-buttons {
-        display: flex;
-        gap: 10px; /* बटन के बीच गैप */
-        /* margin-right: 10px; */ /* हटाया */
-    }
-
-    .header-buttons a { /* एंकर टैग के लिए डिफ़ॉल्ट मार्जिन हटाएँ */
-        text-decoration: none;
-    }
-
-    .header-buttons button { /* सीधा बटन को स्टाइल करें */
-        color: white;
-        border: none;
-        padding: 8px 12px;
-        cursor: pointer;
-        border-radius: 5px;
-        font-family: 'Poppins', sans-serif;
-        font-size: 0.9em;
-        display: inline-flex; /* आइकन और टेक्स्ट के लिए */
-        align-items: center;
-        gap: 5px; /* आइकन और टेक्स्ट के बीच गैप */
-    }
-     .header-buttons a:nth-child(1) button { background-color: #28a745; } /* Add Customer */
-     .header-buttons a:nth-child(2) button { background-color: #17a2b8; } /* Add Supplier - रंग बदला */
-     .header-buttons a:nth-child(3) button { background-color: #007bff; } /* New Order - रंग बदला */
-
-
-    .welcome-text {
-        font-family: 'Poppins', sans-serif;
-        color: #495057;
-        font-weight: bold;
-        margin-right: auto; /* बटनों को दूसरी तरफ धकेलने के लिए */
-        white-space: nowrap; /* नाम को रैप होने से रोकें */
-        overflow: hidden; /* ओवरफ्लो छिपाएं */
-        text-overflow: ellipsis; /* ओवरफ्लो पर ... दिखाएं */
-        max-width: 200px; /* अधिकतम चौड़ाई ताकि यह बटनों में न घुसे */
-    }
-
-    .date-time-container {
-        background-color: #ffc107;
-        color: #212529;
-        padding: 8px 12px;
-        border-radius: 5px;
-        font-family: 'Poppins', sans-serif;
-        font-size: 0.9em;
-        white-space: nowrap; /* तारीख को रैप न होने दें */
-    }
-
-    .date-time-container .date-day { font-weight: bold; }
-    .date-time-container .day-name { font-weight: bold; }
-
-    .order-control-panel {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-        gap: 15px;
-        margin-bottom: 20px;
-    }
-
-    .panel-item {
-        background-color: #fff; /* हल्का बैकग्राउंड */
-        border: 1px solid #e0e0e0; /* हल्की बॉर्डर */
-        padding: 15px; /* थोड़ी कम पैडिंग */
-        text-align: center;
-        border-radius: 5px;
-        font-size: 0.9em; /* थोड़ा छोटा फ़ॉन्ट */
-        color: #495057;
-        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
-        font-weight: bold; /* टेक्स्ट को बोल्ड किया */
-        font-family: 'Poppins', sans-serif; /* पॉपिंग फ़ॉन्ट */
-        text-transform: uppercase; /* कैपिटल लेटर */
-        line-height: 1.2; /* लाइन की ऊंचाई थोड़ी कम */
-    }
-
-    .panel-count {
-        font-size: 2.5em; /* थोड़ा कम किया */
-        font-weight: bolder; /* और भी ज्यादा बोल्ड */
-        display: block;
-        margin-bottom: 5px;
-        font-family: 'Poppins', sans-serif; /* पॉपिंग फ़ॉन्ट */
-    }
-
-    .panel-item button {
-        background-color: #007bff;
-        color: white;
-        border: none;
-        padding: 8px 12px;
-        cursor: pointer;
-        border-radius: 3px;
-        font-size: 0.8em; /* बटन का फ़ॉन्ट भी थोड़ा छोटा */
-        margin-top: 5px; /* बटन का मार्जिन भी थोड़ा कम */
-        font-weight: normal; /* बटन का टेक्स्ट बोल्ड नहीं रहेगा */
-        font-family: 'Poppins', sans-serif; /* पॉपिंग फ़ॉन्ट */
-        text-transform: capitalize; /* बटन टेक्स्ट कैपिटलाइज */
-    }
-    .panel-item button:hover { background-color: #0056b3; }
-
-    /* हल्के रंग और आइकन */
+    .panel-item a.button-link:hover { background-color: #0056b3; }
     .panel-item.light-blue { background-color: #e1f5fe; color: #1976d2; }
     .panel-item.light-orange { background-color: #fff3e0; color: #e65100; }
     .panel-item.light-green { background-color: #e8f5e9; color: #388e3c; }
     .panel-item.light-red { background-color: #ffebee; color: #d32f2f; }
     .panel-icon { font-size: 2em; margin-bottom: 5px; }
-
-    .search-bar {
-        display: flex;
-        align-items: center;
-        justify-content: flex-end;
-        margin-bottom: 20px;
-        background-color: white;
-        padding: 15px;
-        border-radius: 5px;
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-    }
+    .search-bar { display: flex; align-items: center; justify-content: flex-end; margin-bottom: 20px; background-color: white; padding: 15px; border-radius: 5px; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05); }
     .search-bar label { margin-right: 10px; color: #495057; font-size: 0.9em; }
-    .search-bar input[type="text"] { padding: 8px; border: 1px solid #ced4da; border-radius: 4px 0 0 4px; /* राइट साइड से रेडियस हटाया */ font-size: 0.9em; border-right: none; /* बटन से मिलने वाली बॉर्डर हटाई */ }
-    .search-bar button { background-color: #28a745; color: white; border: none; padding: 8px 12px; cursor: pointer; border-radius: 0 4px 4px 0; /* लेफ्ट साइड से रेडियस हटाया */ font-size: 0.9em; margin-left: 0; /* मार्जिन हटाया */ height: 35px; /* इनपुट के समान ऊंचाई */ }
+    .search-bar input[type="text"] { padding: 8px; border: 1px solid #ced4da; border-radius: 4px 0 0 4px; font-size: 0.9em; border-right: none; }
+    .search-bar button { background-color: #28a745; color: white; border: none; padding: 8px 12px; cursor: pointer; border-radius: 0 4px 4px 0; font-size: 0.9em; margin-left: 0; height: 35px; }
     .search-bar button:hover { background-color: #1e7e34; }
-
-    .reminder-section {
-        background-color: white;
-        padding: 15px;
-        border: 1px solid #dee2e6;
-        border-radius: 5px;
-        font-size: 0.9em;
-        color: #495057;
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-        min-height: 100px; /* थोड़ी न्यूनतम ऊंचाई */
-    }
+    .reminder-section { background-color: white; padding: 15px; border: 1px solid #dee2e6; border-radius: 5px; font-size: 0.9em; color: #495057; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05); min-height: 100px; }
     .reminder-section h3 { margin-top: 0; margin-bottom: 10px; font-size: 1.1em; }
-
-    /* Responsive */
-     @media (max-width: 768px) {
-         .container { flex-direction: column; padding: 0; } /* कॉलम और पैडिंग हटाई */
-         .sidebar { width: 100%; min-height: auto; /* ऊंचाई ऑटो */ display: flex; flex-direction: column; }
-         .sidebar h2 { text-align: left; padding-left: 15px; } /* लोगो लेफ्ट में */
-         .sidebar ul { display: flex; overflow-x: auto; /* हॉरिजॉन्टल स्क्रॉल */ background-color: #2c3e50; padding: 5px 0; }
-         .sidebar ul li { flex-shrink: 0; /* आइटम्स को सिकुड़ने से रोकें */ }
-         .sidebar ul li a { padding: 8px 10px; border-left: none; /* बॉर्डर हटाया */ white-space: nowrap; }
-         .sidebar ul li a:hover { padding-left: 10px; } /* होवर पैडिंग हटाई */
-         .sidebar ul li a.active { border-left: none; border-bottom: 3px solid #f1c40f; background-color: transparent; } /* नीचे बॉर्डर */
-
-         .main-content { padding: 15px; height: auto; min-height: calc(100vh - 50px); /* साइडबार हाइट घटाएं */ }
-         .header { flex-direction: column; gap: 10px; align-items: stretch; }
-         .welcome-text { text-align: center; margin-right: 0; max-width: none; }
-         .header-buttons { justify-content: center; }
-         .date-time-container { text-align: center; }
-         .search-bar { justify-content: stretch; }
-         .search-bar input[type="text"] { flex-grow: 1; }
-    }
-     @media (max-width: 480px) {
-        .header-buttons a button { font-size: 0.8em; padding: 6px 8px; }
-        .panel-item { font-size: 0.8em; }
-        .panel-count { font-size: 2em; }
-    }
-
+     /* Responsive Styles */
+     @media (max-width: 768px) { .container { flex-direction: column; padding: 0; } .sidebar { width: 100%; min-height: auto; display: flex; flex-direction: column; } .sidebar h2 { text-align: left; padding-left: 15px; } .sidebar ul { display: flex; overflow-x: auto; background-color: #2c3e50; padding: 5px 0; } .sidebar ul li { flex-shrink: 0; } .sidebar ul li a { padding: 8px 10px; border-left: none; white-space: nowrap; } .sidebar ul li a:hover { padding-left: 10px; } .sidebar ul li a.active { border-left: none; border-bottom: 3px solid #f1c40f; background-color: transparent; } .main-content { padding: 15px; height: auto; min-height: calc(100vh - 50px); } .header { flex-direction: column; gap: 10px; align-items: stretch; } .welcome-text { text-align: center; margin-right: 0; max-width: none; } .header-buttons { justify-content: center; } .date-time-container { text-align: center; } .search-bar { justify-content: stretch; } .search-bar input[type="text"] { flex-grow: 1; } }
+     @media (max-width: 480px) { .header-buttons a button, .header-buttons a.button-link { font-size: 0.8em; padding: 6px 8px; } .panel-item { font-size: 0.8em; } .panel-count { font-size: 2em; } }
     </style>
     <link rel="stylesheet"
         href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
@@ -270,11 +74,13 @@
             <ul>
                 <li><a href="index.html" class="active"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
                 <li><a href="order_history.html"><i class="fas fa-history"></i> Order History</a></li>
-                <li><a href="customer_management.html"><i class="fas fa-users"></i> Customers</a></li> <li><a href="#"><i class="fas fa-truck"></i> Suppliers</a></li>
+                <li><a href="customer_management.html"><i class="fas fa-users"></i> Customers</a></li>
+                <li><a href="#"><i class="fas fa-truck"></i> Suppliers</a></li>
                 <li><a href="#"><i class="fas fa-chart-bar"></i> Report</a></li>
                 <li><a href="#"><i class="fas fa-code-branch"></i> Branch Manage</a></li>
                 <li><a href="#"><i class="fas fa-cog"></i> Settings</a></li>
-                <li><a href="product_management.html"><i class="fas fa-box-open"></i> Product Management</a></li> <li><a href="#"><i class="fas fa-tools"></i> Tools</a></li>
+                <li><a href="product_management.html"><i class="fas fa-box-open"></i> Product Management</a></li>
+                <li><a href="#"><i class="fas fa-tools"></i> Tools</a></li>
                 <li><a href="#"><i class="fas fa-sign-out-alt"></i> LOGOUT</a></li>
             </ul>
         </div>
@@ -283,25 +89,38 @@
             <div class="header">
                 <span class="welcome-text">Welcome Devendra Choudhary</span>
                 <div class="header-buttons">
-                     <a href="customer_management.html?action=add"><button><i class="fas fa-user-plus"></i> Add Customer</button></a>
-                    <a href="#"><button><i class="fas fa-truck"></i> Add Supplier</button></a>
-                    <a href="new_order.html"><button><i class="fas fa-plus-circle"></i> New Order</button></a>
-                </div>
+                    <a href="customer_management.html?action=add" class="button-link"><i class="fas fa-user-plus"></i> Add Customer</a> <a href="#" class="button-link"><i class="fas fa-truck"></i> Add Supplier</a> <a href="new_order.html" class="button-link"><i class="fas fa-plus-circle"></i> New Order</a> </div>
                 <div class="date-time-container">
                     <span id="currentDateTime">Loading date...</span>
                 </div>
             </div>
 
             <div class="order-control-panel">
-                <div class="panel-item light-blue"> <i class="fas fa-shopping-bag panel-icon"></i> Order Received <span class="panel-count">01</span> <button>Click to View</button> </div>
-                <div class="panel-item light-orange"> <i class="fas fa-hourglass-half panel-icon"></i> Designing <span class="panel-count">01</span> <button>Click to View</button> </div>
-                <div class="panel-item light-green"> <i class="fas fa-check-circle panel-icon"></i> Verification <span class="panel-count">01</span> <button>Click to View</button> </div>
-                <div class="panel-item light-red"> <i class="fas fa-thumbs-up panel-icon"></i> Design Approved <span class="panel-count">01</span> <button>Click to View</button> </div>
-                <div class="panel-item light-blue"> <i class="fas fa-print panel-icon"></i> Printing <span class="panel-count">01</span> <button>Click to View</button> </div>
-                <div class="panel-item light-orange"> <i class="fas fa-cog panel-icon"></i> Ready For Working <span class="panel-count">01</span> <button>Click to View</button> </div>
-                <div class="panel-item light-green"> <i class="fas fa-truck panel-icon"></i> Delivered <span class="panel-count">01</span> <button>Click to View</button> </div>
-                <div class="panel-item light-red"> <i class="fas fa-check-double panel-icon"></i> Completed <span class="panel-count">01</span> <button>Click to View</button> </div>
-            </div>
+                <div class="panel-item light-blue">
+                    <i class="fas fa-shopping-bag panel-icon"></i> Order Received
+                    <span class="panel-count" id="count-order-received">00</span> <a href="order_history.html" class="button-link">Click to View</a> </div>
+                <div class="panel-item light-orange">
+                    <i class="fas fa-hourglass-half panel-icon"></i> Designing
+                    <span class="panel-count" id="count-designing">00</span> <a href="order_history.html" class="button-link">Click to View</a> </div>
+                 <div class="panel-item light-green">
+                    <i class="fas fa-check-circle panel-icon"></i> Verification
+                    <span class="panel-count" id="count-verification">00</span> <a href="order_history.html" class="button-link">Click to View</a> </div>
+                 <div class="panel-item light-red">
+                     <i class="fas fa-thumbs-up panel-icon"></i> Design Approved
+                     <span class="panel-count" id="count-design-approved">00</span> <a href="order_history.html" class="button-link">Click to View</a> </div>
+                 <div class="panel-item light-blue">
+                     <i class="fas fa-print panel-icon"></i> Printing
+                     <span class="panel-count" id="count-printing">00</span> <a href="order_history.html" class="button-link">Click to View</a> </div>
+                 <div class="panel-item light-orange">
+                     <i class="fas fa-cog panel-icon"></i> Ready For Working
+                     <span class="panel-count" id="count-ready-for-working">00</span> <a href="order_history.html" class="button-link">Click to View</a> </div>
+                 <div class="panel-item light-green">
+                     <i class="fas fa-truck panel-icon"></i> Delivered
+                     <span class="panel-count" id="count-delivered">00</span> <a href="order_history.html" class="button-link">Click to View</a> </div>
+                 <div class="panel-item light-red">
+                     <i class="fas fa-check-double panel-icon"></i> Completed
+                     <span class="panel-count" id="count-completed">00</span> <a href="order_history.html" class="button-link">Click to View</a> </div>
+                 </div>
 
             <div class="search-bar">
                 <label for="customer-search">Search in Customer:</label>
@@ -311,50 +130,63 @@
 
             <div class="reminder-section">
                 <h3>Reminder</h3>
-                 <p>No reminders currently.</p> </div>
+                 <p>No reminders currently.</p>
+            </div>
         </div>
     </div>
 
-    <script>
-        // Simple script to update date/time and active link
-        function updateDateTime() {
-            const now = new Date();
-            const optionsDate = { year: 'numeric', month: 'long', day: 'numeric' };
-             const optionsDay = { weekday: 'long' };
-             const formattedDate = now.toLocaleDateString('hi-IN', optionsDate);
-             const formattedDay = now.toLocaleDateString('hi-IN', optionsDay);
-             const dateTimeString = `${formattedDate}, ${formattedDay}`;
-             const dateTimeElement = document.getElementById('currentDateTime');
-             if (dateTimeElement) dateTimeElement.textContent = dateTimeString;
+    <script type="module">
+        // Import necessary Firebase functions
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+        import { getFirestore, collection, onSnapshot, query, where } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js"; // Added where
+
+        // --- PASTE YOUR firebaseConfig HERE ---
+        const firebaseConfig = {
+          apiKey: "AIzaSyBQj5rQmE77kKKGYixP8y3Hcimz8tiAqzQ", // YOUR CONFIG
+          authDomain: "madhav-multyprint.firebaseapp.com", // YOUR CONFIG
+          projectId: "madhav-multyprint", // YOUR CONFIG
+          storageBucket: "madhav-multyprint.appspot.com", // YOUR CONFIG
+          messagingSenderId: "104988349637", // YOUR CONFIG
+          appId: "1:104988349637:web:faf045b77c6786a4e70cac" // YOUR CONFIG
+        };
+        // --- END OF PASTE ---
+
+        // Initialize Firebase and make functions globally available for dashboard.js
+         try {
+            let app;
+            if (!window.firebaseAppInitialized) {
+                 app = initializeApp(firebaseConfig);
+                 window.firebaseAppInitialized = true;
+                 console.log("Firebase initialized on Dashboard page.");
+            } else {
+                 console.log("Firebase already initialized (Dashboard).");
+            }
+            const db = window.db || getFirestore(app || undefined);
+            window.db = db;
+
+            // Make needed Firestore functions global for dashboard.js
+            window.collection = collection;
+            window.onSnapshot = onSnapshot;
+            window.query = query;
+            window.where = where; // Needed if filtering by status later
+
+            console.log("Firebase functions available globally for dashboard.");
+
+        } catch (e) {
+            console.error("Firebase initialization error (Dashboard):", e);
+            if (!window.db) { alert("Database connection error on dashboard!"); }
         }
+    </script>
 
-        function setActiveLink() {
-             const path = window.location.pathname;
-             // Handle cases where the path might be just '/' or include 'index.html'
-             const page = path === '/' ? 'index.html' : path.split('/').pop();
-             const sidebarLinks = document.querySelectorAll('.sidebar ul li a');
-
-             sidebarLinks.forEach(link => {
-                 const linkHref = link.getAttribute('href');
-                 link.classList.remove('active'); // Remove active from all first
-
-                 if (linkHref && page === linkHref) {
-                     // Exact match found
-                     link.classList.add('active');
-                 } else if ((page === 'index.html' || page === '') && linkHref === 'index.html') {
-                     // Explicitly activate index.html link if on root or index.html
-                     link.classList.add('active');
-                 } else if ((page === 'index.html' || page === '') && link.getAttribute('href') === '#' && link.querySelector('.fa-tachometer-alt')) {
-                    // Activate dashboard link if href is '#' and it has the dashboard icon, only when on the root page
-                    link.classList.add('active');
-                 }
-             });
+    <script src="js/dashboard.js" type="module" defer></script> <script>
+        function updateDateTime() { /* ... (same as before) ... */
+             const now=new Date(); const optsDate={year:'numeric',month:'long',day:'numeric'}; const optsDay={weekday:'long'}; const date=now.toLocaleDateString('hi-IN',optsDate); const day=now.toLocaleDateString('hi-IN',optsDay); const elem=document.getElementById('currentDateTime'); if(elem) elem.textContent=`${date}, ${day}`;
          }
-
-         updateDateTime();
-         setInterval(updateDateTime, 60000);
-         setActiveLink();
-
+        function setActiveLink() { /* ... (same as before) ... */
+             const path=window.location.pathname; const page=path==='/'?'index.html':path.split('/').pop(); const links=document.querySelectorAll('.sidebar ul li a'); links.forEach(l=>{const h=l.getAttribute('href');l.classList.remove('active'); if(h&&page===h){l.classList.add('active');} else if((page==='index.html'||page==='')&&h==='index.html'){l.classList.add('active');} else if((page==='index.html'||page==='')&&l.getAttribute('href')==='#'&&l.querySelector('.fa-tachometer-alt')){l.classList.add('active');}});
+         }
+         updateDateTime(); setInterval(updateDateTime, 60000); setActiveLink();
     </script>
 </body>
+
 </html>
