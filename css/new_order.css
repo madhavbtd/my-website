@@ -1,209 +1,434 @@
+/* General Body Styles */
 body {
-  font-family: 'Segoe UI Emoji', sans-serif;
-  margin: 20px;
-  background-color: #f4f4f4;
+  font-family: Arial, sans-serif;
+  margin: 0; /* मार्जिन हटाया */
+  padding: 20px;
+  background-color: #f4f7f6;
+  color: #333;
   display: flex;
   justify-content: center;
+  line-height: 1.6;
 }
 
+/* Container */
 .container {
   background-color: #fff;
-  padding: 20px;
+  padding: 25px 30px;
   border-radius: 8px;
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  width: 700px;
-  overflow-x: auto;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  width: 100%;
+  max-width: 850px; /* थोड़ी चौड़ाई बढ़ाई */
+  box-sizing: border-box;
 }
 
+/* Header */
 .header {
-  background-color: #ffc107;
-  color: #000;
-  padding: 10px;
+  background-color: #0056b3;
+  color: white;
+  padding: 12px 20px;
   border-radius: 6px 6px 0 0;
+  margin: -25px -30px 25px -30px;
+  font-size: 1.4em;
+  font-weight: bold;
+  text-align: center;
+}
+
+/* Section Titles */
+.section-title {
+  font-size: 1.2em;
+  color: #0056b3;
+  margin-top: 25px;
   margin-bottom: 15px;
   font-weight: bold;
-  width: 100%;
-  box-sizing: border-box;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 5px;
 }
 
-.section-title {
-  font-size: 1.1em;
-  color: #000080;
-  margin-top: 15px;
-  margin-bottom: 10px;
-  font-weight: bold;
-  padding-left: 20px;
-}
-
+/* Form Groups */
 .form-group {
-  margin-bottom: 10px;
+  margin-bottom: 15px;
   display: flex;
-  align-items: center;
-  padding-left: 20px;
   flex-wrap: wrap;
+  align-items: flex-start; /* टॉप अलाइन करें */
+  gap: 10px;
+  position: relative; /* सुझाव बॉक्स के लिए */
 }
 
-label {
-  display: inline-block;
-  width: 150px;
-  margin-right: 10px;
-  font-size: 0.9em;
-  font-weight: normal;
+.form-group label {
+  flex-basis: 160px; /* लेबल की चौड़ाई थोड़ी बढ़ाई */
+  flex-shrink: 0;
+  font-size: 0.95em;
+  text-align: right;
+  padding-right: 10px;
+  padding-top: 8px; /* इनपुट के साथ अलाइन करने के लिए */
 }
 
-input[type="text"],
-input[type="date"],
-select {
-  width: calc(100% - 160px);
-  padding: 8px;
+.form-group input[type="text"],
+.form-group input[type="date"],
+.form-group input[type="number"],
+.form-group select,
+.form-group textarea {
+  flex-grow: 1;
+  padding: 8px 12px;
   border: 1px solid #ccc;
   border-radius: 4px;
   box-sizing: border-box;
-  margin-bottom: 5px;
-  height: 30px;
+  font-size: 1em;
+  height: 38px;
+}
+.form-group input[readonly] { /* Readonly फ़ील्ड का स्टाइल */
+    background-color: #e9ecef;
+    cursor: not-allowed;
+}
+.form-group textarea {
+    height: 80px;
+    resize: vertical;
+}
+.info-text { /* सूचना टेक्स्ट का स्टाइल */
+    flex-basis: 100%;
+    font-size: 0.85em;
+    color: #777;
+    margin-left: 170px; /* लेबल के बाद अलाइन करें */
+    margin-top: -10px; /* थोड़ा ऊपर */
+    margin-bottom: 10px;
 }
 
+/* Specific Group Adjustments */
+.remarks-group label {
+    flex-basis: 100%;
+    text-align: left;
+    margin-bottom: 5px;
+    padding-top: 0;
+}
+.radio-group {
+    display: flex;
+    gap: 15px;
+    align-items: center;
+    padding-top: 8px; /* लेबल के साथ अलाइन */
+}
+.radio-group label {
+    flex-basis: auto;
+    text-align: left;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-weight: normal;
+}
+
+/* Order Status Group */
 .order-status-group {
   display: grid;
-  grid-template-columns: repeat(3, auto);
-  gap: 10px;
-  padding-left: 20px;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); /* कॉलम चौड़ाई */
+  gap: 10px 15px; /* रो और कॉलम गैप */
+  padding-left: 170px; /* इनपुट के साथ अलाइन */
+  align-items: center;
 }
-
 .order-status-group label {
-  width: auto;
-  margin-right: 10px;
-  font-size: 0.85em;
-}
-
-.product-detail-group {
+  flex-basis: auto;
+  text-align: left;
+  padding: 0;
+  font-size: 0.9em;
   display: flex;
   align-items: center;
-  padding-left: 20px;
-  margin-bottom: 10px;
-}
-
-.product-detail-group label {
-  width: auto;
-  margin-right: 10px;
-  font-size: 0.9em;
+  gap: 5px;
   font-weight: normal;
+  cursor: pointer;
+}
+.order-status-group label.disabled { /* डिसेबल लेबल का स्टाइल */
+    color: #999;
+    cursor: not-allowed;
+}
+.order-status-group input[type="checkbox"] {
+    margin: 0;
+    cursor: pointer;
+}
+.order-status-group input[type="checkbox"]:disabled {
+    cursor: not-allowed;
 }
 
-.product-detail-group input[type="text"] {
-  width: 150px;
-  margin-right: 10px;
-  height: 30px;
+/* Product Input Area */
+.product-input-area {
+    border: 1px dashed #ccc;
+    padding: 15px;
+    margin-bottom: 15px;
+    border-radius: 5px;
+    background-color: #fdfdfd;
 }
-
-.product-detail-group input[type="number"] {
-  width: 100px;
-  height: 30px;
+.product-entry-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    align-items: flex-end;
 }
-
+.product-name-group {
+    flex: 3;
+    min-width: 250px;
+    position: relative; /* सुझाव बॉक्स के लिए */
+}
+.product-qty-group {
+    flex: 1;
+    min-width: 100px;
+}
+.product-name-group label,
+.product-qty-group label {
+    flex-basis: 100%;
+    text-align: left;
+    padding: 0;
+    margin-bottom: 5px;
+    display: block;
+    width: 100%;
+    font-weight: bold; /* थोड़ा बोल्ड */
+}
 .add-product-button {
-  background-color: #4CAF50;
-  color: white;
+  padding: 8px 15px;
   border: none;
-  padding: 5px 10px;
   border-radius: 4px;
   cursor: pointer;
-  font-weight: bold;
-  display: flex;
+  font-size: 0.95em;
+  background-color: #28a745;
+  color: white;
+  height: 38px;
+  white-space: nowrap;
+  display: inline-flex; /* आइकन के लिए */
   align-items: center;
-  justify-content: center;
-  height: 30px;
+  gap: 5px;
+}
+.add-product-button:hover {
+  background-color: #218838;
+}
+.add-product-button i {
+    font-size: 0.9em;
 }
 
-.add-product-button::before {
-  content: "+";
-  margin-right: 5px;
+/* Product List Container */
+.product-list-container {
+    margin-top: 15px;
+    border-top: 1px solid #eee;
+    padding-top: 15px;
+}
+.product-list-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #f8f9fa;
+    padding: 8px 12px;
+    border-radius: 4px;
+    margin-bottom: 8px;
+    font-size: 0.95em;
+    border: 1px solid #eee;
+}
+.product-list-item span {
+    flex-grow: 1;
+    margin-right: 10px;
+    word-break: break-all; /* लंबा नाम हो तो तोड़ें */
+}
+.product-list-item .delete-product-btn {
+    background: none;
+    border: none;
+    color: #dc3545;
+    cursor: pointer;
+    font-size: 1.1em;
+    padding: 0 5px;
+    line-height: 1; /* अलाइनमेंट के लिए */
+}
+.product-list-item .delete-product-btn:hover {
+    color: #a71d2a;
+}
+.empty-list-message { /* खाली लिस्ट का संदेश */
+    color: #777;
+    font-style: italic;
+    text-align: center;
+    padding: 10px 0;
 }
 
-.remarks-group {
-  padding-left: 20px;
-  margin-bottom: 10px;
-}
 
-.remarks-group label {
-  display: block;
-  margin-bottom: 5px;
-  font-size: 0.9em;
-  font-weight: bold;
-  width: 100%;
+/* Autocomplete Suggestions Box */
+.suggestions-box {
+  /* स्थिति पहले से ही .form-group या .product-name-group पर relative है */
+  width: 100%; /* इनपुट की पूरी चौड़ाई ले */
 }
-
-.remarks-group textarea {
-  width: 100%;
-  height: 60px;
-  padding: 8px;
+.suggestions-box ul {
+  position: absolute; /* फ्लोट करने के लिए */
+  list-style: none;
+  margin: 0;
+  padding: 0;
   border: 1px solid #ccc;
-  border-radius: 4px;
-  box-sizing: border-box;
-  resize: vertical;
-  overflow: auto;
+  border-top: none;
+  background-color: white;
+  width: 100%; /* कंटेनर की चौड़ाई */
+  max-height: 150px;
+  overflow-y: auto;
+  z-index: 10; /* दूसरे एलिमेंट्स के ऊपर दिखे */
+  border-radius: 0 0 4px 4px;
+  box-shadow: 0 3px 5px rgba(0,0,0,0.1); /* हल्की छाया */
+  /* यह सुनिश्चित करने के लिए कि यह लेबल के नीचे से शुरू हो */
+  top: 100%;
+  left: 0;
+}
+/* विशेष रूप से कस्टमर फ़ील्ड्स के लिए */
+.form-group .suggestions-box ul {
+    left: 170px; /* लेबल की चौड़ाई + गैप */
+    width: calc(100% - 170px); /* शेष चौड़ाई */
+}
+/* विशेष रूप से प्रोडक्ट फ़ील्ड के लिए */
+.product-name-group .suggestions-box ul {
+    left: 0; /* उत्पाद फ़ील्ड के नीचे सीधे */
+    width: 100%;
 }
 
+.suggestions-box li {
+  padding: 8px 12px;
+  cursor: pointer;
+  font-size: 0.9em;
+}
+.suggestions-box li:hover, .suggestions-box li.selected { /* होवर और चयनित स्टाइल */
+  background-color: #eee;
+}
+.suggestions-box li strong { /* मैचिंग टेक्स्ट को बोल्ड करें (JS द्वारा जोड़ा जाएगा) */
+    font-weight: bold;
+}
+
+
+/* Buttons Container */
 .button-container {
   display: flex;
   justify-content: flex-end;
-  padding: 20px;
+  gap: 10px;
+  padding-top: 20px;
+  margin-top: 20px;
+  border-top: 1px solid #eee;
 }
-
-.save-button,
-.send-button {
-  background-color: #1e88e5;
-  color: white;
-  padding: 10px 15px;
+.save-button, .cancel-button {
+  padding: 10px 20px;
   border: none;
   border-radius: 4px;
   cursor: pointer;
   font-weight: bold;
-  margin-left: 10px;
+  font-size: 1em;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: background-color 0.2s ease, opacity 0.2s ease;
+}
+.save-button {
+  background-color: #007bff;
+  color: white;
+}
+.save-button:hover {
+  background-color: #0056b3;
+}
+.save-button:disabled {
+    background-color: #a0cfff;
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+.cancel-button {
+    background-color: #6c757d;
+    color: white;
+}
+.cancel-button:hover {
+    background-color: #5a6268;
 }
 
-.save-button:hover,
-.send-button:hover {
-  background-color: #1565c0;
+
+/* WhatsApp Reminder Popup */
+.popup-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.6);
+    z-index: 1050;
+    justify-content: center;
+    align-items: center;
+    padding: 15px; /* थोड़ा पैडिंग दें */
+    box-sizing: border-box;
+}
+.popup-overlay.active {
+    display: flex;
+}
+.popup-content {
+    background-color: #fff;
+    padding: 25px 30px;
+    border-radius: 8px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    text-align: center;
+    position: relative;
+    max-width: 450px; /* थोड़ी चौड़ाई बढ़ाई */
+    width: 100%;
+}
+.popup-close {
+    position: absolute;
+    top: 8px;
+    right: 12px;
+    font-size: 26px;
+    color: #aaa;
+    background: none;
+    border: none;
+    cursor: pointer;
+    line-height: 1;
+}
+.popup-close:hover {
+    color: #333;
+}
+.popup-content h4 {
+    margin-top: 0;
+    margin-bottom: 10px;
+    color: #28a745;
+    font-size: 1.3em;
+}
+.popup-content p {
+    margin-bottom: 15px;
+    color: #555;
+}
+.message-preview { /* बदला हुआ नाम और स्टाइल */
+    margin-top: 15px;
+    margin-bottom: 20px;
+    font-size: 0.95em;
+    background-color: #e9f5ff; /* हल्का नीला बैकग्राउंड */
+    padding: 12px;
+    border-radius: 5px;
+    text-align: left;
+    border: 1px solid #bde0ff;
+    white-space: pre-wrap; /* संदेश में लाइन ब्रेक दिखाएं */
+    word-wrap: break-word;
+}
+.whatsapp-send-btn {
+    background-color: #25d366;
+    color: white;
+    text-decoration: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    display: inline-flex; /* आइकन के लिए */
+    align-items: center;
+    gap: 8px;
+    font-weight: bold;
+    transition: background-color 0.2s ease;
+}
+.whatsapp-send-btn:hover {
+    background-color: #1ebe57;
 }
 
 /* Responsive Styles */
 @media (max-width: 768px) {
-  .container {
-    width: 95%;
-  }
-
-  .form-group {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  label {
-    width: 100%;
-    margin-bottom: 5px;
-  }
-
-  input[type="text"],
-  input[type="date"],
-  select {
-    width: 100%;
-  }
-
-  .product-detail-group {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .product-detail-group input[type="text"],
-  .product-detail-group input[type="number"] {
-    width: 100%;
-    margin-bottom: 5px;
-  }
-
-  .order-status-group {
-    grid-template-columns: repeat(2, auto);
-  }
+  body { padding: 10px; }
+  .container { padding: 20px 15px; }
+  .header { margin: -20px -15px 20px -15px; font-size: 1.2em; }
+  .form-group { flex-direction: column; align-items: stretch; gap: 5px; }
+  .form-group label { text-align: left; padding-top: 0; margin-bottom: 3px; flex-basis: auto; }
+  .form-group input[type="text"],
+  .form-group input[type="date"],
+  .form-group input[type="number"],
+  .form-group select,
+  .form-group textarea { width: 100%; }
+  .order-status-group { padding-left: 0; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); }
+  .product-entry-group { flex-direction: column; align-items: stretch; }
+  .info-text { margin-left: 0; }
+  .suggestions-box { margin-left: 0; }
+  .form-group .suggestions-box ul { left: 0; width: 100%; }
+  .button-container { flex-direction: column; gap: 10px; align-items: stretch;}
+  .save-button, .cancel-button { justify-content: center; }
 }
