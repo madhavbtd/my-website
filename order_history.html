@@ -4,7 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Order History & Management</title>
-    <link rel="stylesheet" href="css/order_history.css"> <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" integrity="sha512-9usAa10IRO0HhonpyAIVpjrylPvoDwiPUiKdWk5t3PyolY1cOd4DSE0Ga+ri4AuTroPR5aQvXU9xC6qOPnzFeg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link rel="stylesheet" href="css/order_history.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" integrity="sha512-9usAa10IRO0HhonpyAIVpjrylPvoDwiPUiKdWk5t3PyolY1cOd4DSE0Ga+ri4AuTroPR5aQvXU9xC6qOPnzFeg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
 </head>
 <body>
     <script type="module">
@@ -38,7 +39,7 @@
             window.where = where; window.getDoc = getDoc; window.orderBy = orderBy;
             window.limit = limit; window.startAfter = startAfter; window.endBefore = endBefore;
             window.getCountFromServer = getCountFromServer;
-            console.log("Firebase functions are available globally.");
+            console.log("Firebase functions available globally.");
 
         } catch (e) {
             console.error("Firebase initialization error:", e);
@@ -52,27 +53,27 @@
              <div class="btn-group">
                  <a href="new_order.html"><button><i class="fas fa-plus"></i> New Order</button></a>
                  <a href="new_customer.html"><button><i class="fas fa-user-plus"></i> New Customer</button></a>
-                 <a href="customer_management.html"><button style="background-color:#ffc107; color:#333;"><i class="fas fa-users"></i> Customers</button></a> </div>
+                 <a href="customer_management.html"><button style="background-color:#ffc107; color:#333;"><i class="fas fa-users"></i> Customers</button></a>
+             </div>
         </div>
 
          <div class="breadcrumbs" style="margin-bottom: 15px; font-size: 14px; color: #555;">
             <a href="index.html" style="text-decoration: none; color: #007bff;">Home</a> /
             <span>Order Management</span>
-             </div>
+        </div>
 
         <div class="filter-section">
             <div class="entries-filter">
                 <label for="show-entries">Show</label>
                 <select id="show-entries">
-                    <option value="10" selected>10</option>
-                    <option value="25">25</option>
-                    <option value="50">50</option>
-                    <option value="100">100</option>
+                    <option value="10" selected>10</option> <option value="25">25</option> <option value="50">50</option> <option value="100">100</option>
                 </select>
                 <label>entries</label>
             </div>
             <div class="search-filter">
-                <label for="search-input">Search:</label> <input type="text" id="search-input" placeholder="Order ID / Customer Name"> </div>
+                <label for="search-input">Search:</label>
+                <input type="text" id="search-input" placeholder="Order ID / Customer Name">
+            </div>
             <div class="date-filter">
                 <label for="filter-date">Order Date:</label>
                 <input type="date" id="filter-date">
@@ -80,15 +81,7 @@
             <div class="status-filter">
                 <label for="filter-status">Status:</label>
                 <select id="filter-status">
-                    <option value="">All</option>
-                    <option value="Order Received">Order Received</option>
-                    <option value="Designing">Designing</option>
-                    <option value="Verification">Verification</option>
-                    <option value="Design Approved">Design Approved</option>
-                    <option value="Ready for Working">Ready for Working</option>
-                    <option value="Printing">Printing</option>
-                    <option value="Delivered">Delivered</option>
-                    <option value="Completed">Completed</option>
+                    <option value="">All</option> <option value="Order Received">Order Received</option> <option value="Designing">Designing</option> <option value="Verification">Verification</option> <option value="Design Approved">Design Approved</option> <option value="Ready for Working">Ready for Working</option> <option value="Printing">Printing</option> <option value="Delivered">Delivered</option> <option value="Completed">Completed</option>
                 </select>
             </div>
         </div>
@@ -96,14 +89,7 @@
         <table id="order-table">
             <thead>
                 <tr>
-                    <th>Order ID</th>
-                    <th>Customer Name</th>
-                    <th>Order Date</th>
-                    <th>Delivery Date</th>
-                    <th>Priority</th>
-                    <th>Status</th>
-                    <th>Action</th>
-                    <th>Send Wtsp</th>
+                    <th>Order ID</th> <th>Customer Name</th> <th>Order Date</th> <th>Delivery Date</th> <th>Priority</th> <th>Status</th> <th>Action</th> <th>Send Wtsp</th>
                 </tr>
             </thead>
             <tbody>
@@ -121,12 +107,11 @@
              <div class="modal-content">
                 <span class="close" id="modalCloseBtn" style="cursor:pointer; font-size: 25px;" title="Close">&times;</span>
                 <h2>Order Details</h2>
-                <div id="modal-body">
-                     <p>Loading details...</p>
-                </div>
+                <div id="modal-body"> <p>Loading details...</p> </div>
                 <div class="modal-buttons">
                      <button class="delete-button" id="modalDeleteBtn" disabled>Delete Order</button>
-                     <button type="button" id="modalGoToEditBtn" style="background-color:#007bff;">Edit Full Order</button> </div>
+                     <button type="button" id="modalGoToEditBtn" style="background-color:#007bff;">Edit Full Order</button>
+                </div>
              </div>
         </div>
     </div>
