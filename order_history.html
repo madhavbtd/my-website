@@ -1,3 +1,4 @@
+[Filename: order_history.html]
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -9,44 +10,40 @@
 </head>
 <body>
     <script type="module">
-        // Firebase SDKs आयात करें
+        // Firebase SDKs आयात करें (updateDoc शामिल करें)
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-        import { getFirestore, collection, addDoc, doc, updateDoc, deleteDoc, onSnapshot, getDocs, query, where, getDoc, orderBy, limit, startAfter, endBefore, getCountFromServer } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-
+        import { getFirestore, collection, addDoc, doc, updateDoc, deleteDoc, onSnapshot, getDocs, query, where, getDoc, orderBy, limit, startAfter, endBefore, getCountFromServer } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js"; // Added updateDoc
         // आपका Firebase कॉन्फ़िगरेशन
         const firebaseConfig = {
           apiKey: "AIzaSyBQj5rQmE77kKKGYixP8y3Hcimz8tiAqzQ", // अपना API Key डालें
           authDomain: "madhav-multyprint.firebaseapp.com",
           projectId: "madhav-multyprint",
-          storageBucket: "madhav-multyprint.firebasestorage.app",
+          storageBucket: "madhav-multyprint.firebasestorage.app", // Your provided bucket
           messagingSenderId: "104988349637",
           appId: "1:104988349637:web:faf045b77c6786a4e70cac"
         };
-
         try {
             let app;
             // Initialize Firebase सिर्फ एक बार करें
             if (!window.firebaseAppInitialized) {
                  app = initializeApp(firebaseConfig);
                  window.firebaseAppInitialized = true;
+                 window.firebaseApp = app;
                  console.log("Firebase initialized on order_history page.");
             } else {
-                app = window.firebaseApp; // पहले से initialized ऐप का उपयोग करें (यदि आवश्यक हो)
+                app = window.firebaseApp;
                 console.log("Firebase already initialized.");
             }
             // Firestore इंस्टेंस प्राप्त करें
             const db = getFirestore(app);
-
-            // Firestore फंक्शन्स को ग्लोबल बनाएं ताकि दूसरी स्क्रिप्ट उपयोग कर सके
-            window.db = db;
-            window.collection = collection; window.addDoc = addDoc;
-            window.doc = doc; window.updateDoc = updateDoc; window.deleteDoc = deleteDoc;
+            // Firestore फंक्शन्स को ग्लोबल बनाएं
+            window.db = db; window.collection = collection; window.addDoc = addDoc;
+            window.doc = doc; window.updateDoc = updateDoc; window.deleteDoc = deleteDoc; // updateDoc is now global
             window.onSnapshot = onSnapshot; window.getDocs = getDocs; window.query = query;
             window.where = where; window.getDoc = getDoc; window.orderBy = orderBy;
             window.limit = limit; window.startAfter = startAfter; window.endBefore = endBefore;
             window.getCountFromServer = getCountFromServer;
             console.log("Firebase functions available globally.");
-
         } catch (e) {
             console.error("Firebase initialization error:", e);
             alert("Database connection error! Check console (F12).");
@@ -68,7 +65,7 @@
         </div>
 
         <div class="filter-controls">
-            <div class="filter-item">
+             <div class="filter-item">
                 <label for="show-entries">Show:</label>
                 <select id="show-entries">
                     <option value="10" selected>10</option>
@@ -80,13 +77,13 @@
             </div>
             <div class="filter-item">
                 <label for="search-input">Search:</label>
-                <input type="text" id="search-input" placeholder="Order ID / Customer Name">
+                 <input type="text" id="search-input" placeholder="Order ID / Customer Name">
             </div>
             <div class="filter-item">
                 <label for="filter-date">Order Date:</label>
                 <input type="date" id="filter-date">
             </div>
-            <div class="filter-item">
+             <div class="filter-item">
                 <label for="filter-status">Status:</label>
                 <select id="filter-status">
                     <option value="">All</option>
@@ -104,50 +101,79 @@
 
         <div class="table-container">
             <table id="order-table">
-                <thead>
+                 <thead>
                     <tr>
                         <th>Order ID</th>
                         <th>Customer Name</th>
-                        <th>Order Date</th>
+                         <th>Order Date</th>
                         <th>Delivery Date</th>
                         <th>Priority</th>
                         <th>Status</th>
-                        <th>Action</th>
-                        <th>Send Wtsp</th>
+                        <th>Manage Status</th> <th>Send Wtsp</th>
                     </tr>
                 </thead>
                 <tbody>
                     <tr>
-                        <td colspan="8" class="loading-message">Loading orders... Please wait.</td>
+                         <td colspan="8" class="loading-message">Loading orders... Please wait.</td>
                     </tr>
                 </tbody>
             </table>
         </div>
 
         <div class="pagination-controls">
-            <button id="prev-page" disabled>Previous</button>
+             <button id="prev-page" disabled>Previous</button>
             <span id="page-info">Page 1 of 1</span>
             <button id="next-page" disabled>Next</button>
         </div>
 
-    </div> <div id="detailsModal" class="modal-overlay">
+    </div>
+
+    <div id="detailsModal" class="modal-overlay">
          <div class="modal-content">
             <button id="modalCloseBtn" class="modal-close-btn" title="Close">&times;</button>
-            <h2>Order Details</h2>
-            <div id="modalBody" class="modal-body">
-                <p class="loading-message">Loading details...</p>
+            <h2>Manage Order Status / View Details</h2> <div id="modalBody" class="modal-body">
+                <div id="modalOrderInfo">
+                     <p class="loading-message">Loading details...</p>
+                     </div>
+                 <hr>
+                 <div class="modal-status-update" style="margin-top: 15px; padding-top: 10px;">
+                     <label for="modalStatusSelect" style="font-weight: bold; margin-right: 10px; display: block; margin-bottom: 5px;">Update Status:</label>
+                     <select id="modalStatusSelect" name="modal_status" style="width: 100%; padding: 5px; border: 1px solid #ccc; border-radius: 3px;" disabled> <option value="Order Received">Order Received</option>
+                         <option value="Designing">Designing</option>
+                         <option value="Verification">Verification</option>
+                         <option value="Design Approved">Design Approved</option>
+                         <option value="Ready for Working">Ready for Working</option>
+                         <option value="Printing">Printing</option>
+                         <option value="Delivered">Delivered</option>
+                         <option value="Completed">Completed</option>
+                     </select>
+                 </div>
+                 <hr>
+                 <div id="modalProductInfo" style="margin-top: 15px;">
+                     <strong>Products:</strong>
+                     <ul id="modalProductList" style="list-style: disc; margin-left: 20px; padding-left: 5px;">
+                        <li>Loading products...</li>
+                     </ul>
+                 </div>
+                  <hr>
+                  <div id="modalRemarksInfo" style="margin-top:15px;">
+                     <strong>Remarks:</strong>
+                     <p id="modalRemarksText" style="margin-top: 5px; white-space: pre-wrap;">N/A</p>
+                  </div>
+
             </div>
             <div class="modal-actions">
-                 <button id="modalDeleteBtn" class="button delete-button" disabled>
-                     <i class="fas fa-trash-alt"></i> Delete Order
+                 <button id="modalSaveStatusBtn" class="button save-button" style="background-color: #28a745;" disabled> <i class="fas fa-save"></i> Save Status
                  </button>
                  <button id="modalGoToEditBtn" class="button edit-button">
                      <i class="fas fa-edit"></i> Edit Full Order
                  </button>
+                 <button id="modalDeleteBtn" class="button delete-button" disabled>
+                     <i class="fas fa-trash-alt"></i> Delete Order
+                 </button>
             </div>
          </div>
     </div>
-
     <script src="js/order_history.js" type="module" defer></script>
 
 </body>
