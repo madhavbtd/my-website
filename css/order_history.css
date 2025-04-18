@@ -1,327 +1,308 @@
-// js/order_history.js
+/* General Body Styles */
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 20px;
+    background-color: #f4f7f6;
+    color: #333;
+    line-height: 1.6;
+}
 
-// Firestore फंक्शन्स window ऑब्जेक्ट से उपलब्ध होने चाहिए
-const { db, collection, onSnapshot, doc, getDoc, deleteDoc, query, where, orderBy } = window;
+/* Container */
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
 
-// --- DOM एलिमेंट रेफरेंस ---
-let tableBody;
-let prevPageButton;
-let nextPageButton;
-let pageInfoSpan;
-let searchInput;
-let filterDateInput;
-let filterStatusSelect;
-let showEntriesSelect;
-let editModal;
-let modalCloseBtn;
-let modalBody;
-let modalDeleteBtn;
-let modalGoToEditBtn; // नया बटन
+/* Header */
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 15px;
+    margin-bottom: 15px;
+    border-bottom: 1px solid #eee;
+}
 
-// --- ग्लोबल वेरिएबल्स ---
-let currentPage = 1;
-let rowsPerPage = 10;
-let allOrders = []; // Firestore से आए सभी ऑर्डर्स
-let filteredOrders = []; // फ़िल्टर के बाद बचे ऑर्डर्स
-let currentOrderListenerUnsub = null;
-let orderIdForModal = null; // Modal में इस्तेमाल के लिए Firestore Order ID
+.header h2 {
+    margin: 0;
+    color: #0056b3;
+}
 
-// --- फंक्शन परिभाषाएं ---
+.header-buttons {
+    display: flex;
+    gap: 10px; /* Buttons के बीच गैप */
+}
 
-// टेबल में ऑर्डर दिखाने का फंक्शन
-function renderTableRows(ordersForPage) {
-    if (!tableBody) return;
-    tableBody.innerHTML = '';
+/* General Button Styles */
+.button {
+    padding: 8px 15px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    text-decoration: none; /* लिंक के लिए */
+    color: white;
+    display: inline-flex; /* आइकन और टेक्स्ट को अलाइन करने के लिए */
+    align-items: center;
+    gap: 5px; /* आइकन और टेक्स्ट के बीच गैप */
+    transition: background-color 0.2s ease;
+}
+.button:hover {
+    opacity: 0.9;
+}
+.button i { /* आइकन स्टाइल */
+    font-size: 1em;
+}
 
-    if (ordersForPage.length === 0) {
-        tableBody.innerHTML = `<tr><td colspan="8" style="text-align: center;">No orders found matching criteria.</td></tr>`;
-        return;
+/* Specific Header Buttons */
+.new-order-btn { background-color: #28a745; }
+.new-order-btn:hover { background-color: #218838; }
+.new-customer-btn { background-color: #17a2b8; }
+.new-customer-btn:hover { background-color: #138496; }
+.customers-btn { background-color: #ffc107; color: #333; }
+.customers-btn:hover { background-color: #e0a800; }
+
+/* Breadcrumbs */
+.breadcrumbs {
+    font-size: 14px;
+    color: #666;
+    margin-bottom: 20px;
+}
+.breadcrumbs a {
+    color: #007bff;
+    text-decoration: none;
+}
+.breadcrumbs a:hover {
+    text-decoration: underline;
+}
+
+/* Filter Controls */
+.filter-controls {
+    display: flex;
+    flex-wrap: wrap; /* छोटी स्क्रीन पर नीचे आ जाएं */
+    gap: 15px; /* फिल्टर आइटम्स के बीच गैप */
+    margin-bottom: 20px;
+    padding: 15px;
+    background-color: #f8f9fa;
+    border-radius: 5px;
+}
+.filter-item {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+.filter-item label {
+    font-weight: bold;
+    font-size: 14px;
+}
+.filter-item input[type="text"],
+.filter-item input[type="date"],
+.filter-item select {
+    padding: 6px 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+/* Table Styles */
+.table-container {
+    overflow-x: auto; /* यदि टेबल बहुत चौड़ी हो */
+}
+#order-table {
+    width: 100%;
+    border-collapse: collapse; /* बॉर्डर मिलाएं */
+    margin-bottom: 20px;
+}
+#order-table th,
+#order-table td {
+    border: 1px solid #ddd;
+    padding: 10px 12px; /* पैडिंग बढ़ाएं */
+    text-align: left;
+    white-space: nowrap; /* टेक्स्ट को एक लाइन में रखें */
+    overflow: hidden;
+    text-overflow: ellipsis; /* लंबा टेक्स्ट होने पर ... दिखाएं */
+}
+#order-table th {
+    background-color: #e9ecef;
+    font-weight: bold;
+    color: #495057;
+}
+#order-table tbody tr:nth-child(even) {
+    background-color: #f9f9f9; /* वैकल्पिक रो कलर */
+}
+#order-table tbody tr:hover {
+    background-color: #f1f1f1; /* होवर इफेक्ट */
+}
+.loading-message,
+.no-results-message { /* क्लास जोड़ा गया */
+    text-align: center;
+    color: #777;
+    font-style: italic;
+}
+
+/* Table Action/Wtsp Cell Styles */
+#order-table td.actions,
+#order-table td.send-wtsp-cell { /* क्लास जोड़ा गया */
+    text-align: center;
+    white-space: nowrap;
+}
+.edit-details-button { /* क्लास बदला गया */
+    background-color: #007bff;
+    color: white;
+    border: none;
+    padding: 5px 10px;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 12px;
+}
+.edit-details-button:hover {
+    background-color: #0056b3;
+}
+.whatsapp-icon {
+    font-size: 20px;
+    color: #25d366;
+    cursor: pointer;
+    vertical-align: middle;
+    text-decoration: none; /* लिंक का अंडरलाइन हटाएं */
+}
+.whatsapp-icon:hover {
+    opacity: 0.8;
+}
+
+/* Pagination */
+.pagination-controls {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 10px;
+    margin-top: 20px;
+}
+.pagination-controls button {
+    padding: 6px 12px;
+    border: 1px solid #ccc;
+    background-color: #fff;
+    border-radius: 4px;
+    cursor: pointer;
+}
+.pagination-controls button:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+.pagination-controls span {
+    font-size: 14px;
+    color: #555;
+}
+
+/* Modal Styles */
+.modal-overlay {
+    display: none; /* डिफ़ॉल्ट रूप से छिपा हुआ */
+    position: fixed; /* स्क्रीन पर फिक्स */
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.6); /* पृष्ठभूमि को धुंधला करें */
+    z-index: 1000; /* सबसे ऊपर दिखाएं */
+    justify-content: center;
+    align-items: center;
+}
+/* जब मोडाल दिखाना हो तो इस क्लास को JS से जोड़ें */
+.modal-overlay.active {
+    display: flex;
+}
+
+.modal-content {
+    background-color: #fff;
+    padding: 25px 30px;
+    border-radius: 8px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+    width: 90%;
+    max-width: 600px; /* मोडाल की अधिकतम चौड़ाई */
+    position: relative;
+    max-height: 80vh; /* ऊंचाई सीमित करें */
+    overflow-y: auto; /* यदि कंटेंट लंबा हो तो स्क्रॉल करें */
+}
+.modal-close-btn {
+    position: absolute;
+    top: 10px;
+    right: 15px;
+    font-size: 28px;
+    color: #aaa;
+    background: none;
+    border: none;
+    cursor: pointer;
+    line-height: 1;
+}
+.modal-close-btn:hover {
+    color: #333;
+}
+.modal-content h2 {
+    margin-top: 0;
+    margin-bottom: 20px;
+    color: #0056b3;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 10px;
+}
+.modal-body hr {
+    border: none;
+    border-top: 1px solid #eee;
+    margin: 15px 0;
+}
+.modal-body strong {
+    color: #555;
+}
+.modal-body ul {
+    list-style: disc;
+    margin-left: 20px;
+    padding-left: 10px;
+}
+.modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 25px;
+    padding-top: 15px;
+    border-top: 1px solid #eee;
+}
+.delete-button { background-color: #dc3545; }
+.delete-button:hover { background-color: #c82333; }
+.edit-button { background-color: #007bff; } /* पहले से स्टाइल है */
+.edit-button:hover { background-color: #0056b3; }
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+    .header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
     }
-
-    ordersForPage.forEach(order => {
-        const row = tableBody.insertRow();
-        const customerName = order.customerDetails?.fullName || 'N/A';
-        const whatsappNo = order.customerDetails?.whatsappNo || '';
-        const firestoreOrderId = order.id; // Firestore Document ID
-
-        row.insertCell().textContent = order.orderId || firestoreOrderId; // Custom ID या Firestore ID
-        row.insertCell().textContent = customerName;
-        row.insertCell().textContent = order.orderDate || '-';
-        row.insertCell().textContent = order.deliveryDate || '-';
-        row.insertCell().textContent = order.urgent || 'No';
-        row.insertCell().textContent = order.status || '-';
-
-        // Actions सेल
-        const actionsCell = row.insertCell();
-        actionsCell.classList.add('actions');
-        // Edit बटन अब Modal खोलेगा
-        actionsCell.innerHTML = `<button class="edit-button" data-id="${firestoreOrderId}">Details/Edit</button>`;
-
-        // WhatsApp सेल
-        const whatsappCell = row.insertCell();
-        whatsappCell.classList.add('send-wtsp-cell');
-        if (whatsappNo) {
-            const message = encodeURIComponent(`Regarding your order ${order.orderId || firestoreOrderId}...`);
-            whatsappCell.innerHTML = `<a href="https://wa.me/${whatsappNo}?text=${message}" target="_blank" title="Send WhatsApp to ${customerName}"><i class="fab fa-whatsapp whatsapp-icon"></i></a>`;
-        } else {
-            whatsappCell.innerHTML = '-';
-        }
-
-        // Edit बटन के लिए Event Listener
-        const editBtn = actionsCell.querySelector('.edit-button');
-        if(editBtn) {
-            editBtn.addEventListener('click', () => {
-                openEditModal(firestoreOrderId); // Modal खोलने के लिए Firestore ID पास करें
-            });
-        }
-    });
-    addCustomStyles(); // स्टाइलिंग लागू करें
-}
-
-// पेजिनेशन अपडेट फंक्शन
-function updatePagination(totalFilteredRows) {
-    if (!pageInfoSpan || !prevPageButton || !nextPageButton || !showEntriesSelect) return;
-    rowsPerPage = parseInt(showEntriesSelect.value || '10');
-    const totalPages = Math.ceil(totalFilteredRows / rowsPerPage);
-    // currentPage को वैलिड रेंज में रखें
-    currentPage = Math.max(1, Math.min(currentPage, totalPages || 1));
-
-    pageInfoSpan.textContent = `Page ${currentPage} of ${Math.max(totalPages, 1)}`;
-    prevPageButton.disabled = currentPage === 1;
-    nextPageButton.disabled = currentPage === totalPages || totalPages === 0;
-}
-
-// पेज बदलने का फंक्शन
-function goToPage(page) {
-    const totalPages = Math.ceil(filteredOrders.length / rowsPerPage);
-    if (page >= 1 && page <= Math.max(totalPages, 1)) {
-        currentPage = page;
-        displayPaginatedOrders();
+    .filter-controls {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    .filter-item input[type="text"],
+    .filter-item input[type="date"],
+    .filter-item select {
+        width: 100%;
+        box-sizing: border-box; /* पैडिंग और बॉर्डर को चौड़ाई में शामिल करें */
+    }
+    .pagination-controls {
+        justify-content: center;
+    }
+    .modal-content {
+        width: 95%;
+        padding: 20px;
+    }
+    .modal-actions {
+        flex-direction: column;
+        gap: 10px;
+    }
+     .modal-actions button {
+        width: 100%; /* बटन पूरी चौड़ाई लें */
     }
 }
-
-// फ़िल्टर और पेजिनेशन लागू करने का फंक्शन
-function applyFiltersAndPagination() {
-    // 1. फ़िल्टर करें
-    const searchTerm = searchInput?.value.toLowerCase().trim() || '';
-    const filterDate = filterDateInput?.value || '';
-    const filterStatus = filterStatusSelect?.value || '';
-
-    filteredOrders = allOrders.filter(order => {
-        const searchMatch = !searchTerm ||
-                            (order.orderId && String(order.orderId).toLowerCase().includes(searchTerm)) ||
-                            (order.customerDetails?.fullName && order.customerDetails.fullName.toLowerCase().includes(searchTerm));
-        const dateMatch = !filterDate || order.orderDate === filterDate;
-        const statusMatch = !filterStatus || order.status === filterStatus;
-        return searchMatch && dateMatch && statusMatch;
-    });
-
-    // 2. पेजिनेशन अपडेट करें और दिखाएं
-    currentPage = 1; // फ़िल्टर बदलने पर पहले पेज पर जाएं
-    displayPaginatedOrders();
-}
-
-// वर्तमान पेज के लिए ऑर्डर दिखाने का फंक्शन
-function displayPaginatedOrders() {
-    if(!tableBody) return;
-    rowsPerPage = parseInt(showEntriesSelect?.value || '10');
-    const startIndex = (currentPage - 1) * rowsPerPage;
-    const endIndex = startIndex + rowsPerPage;
-    const pageOrders = filteredOrders.slice(startIndex, endIndex);
-
-    renderTableRows(pageOrders);
-    updatePagination(filteredOrders.length);
-}
-
-// Edit Modal खोलने और डेटा भरने का फंक्शन
-async function openEditModal(orderDocId) {
-    if (!editModal || !modalBody || !modalDeleteBtn || !modalGoToEditBtn) { console.error("Modal elements not found!"); return; }
-    if (!db || !doc || !getDoc) { alert("Database functions not available."); return; }
-
-    modalBody.innerHTML = '<p>Loading order details...</p>';
-    editModal.style.display = "block";
-    orderIdForModal = null; // Clear previous ID
-    modalDeleteBtn.disabled = true; // Disable delete initially
-    modalGoToEditBtn.onclick = null; // Clear previous edit link
-
-    try {
-        const orderRef = doc(db, "orders", orderDocId);
-        const docSnap = await getDoc(orderRef);
-
-        if (docSnap.exists()) {
-            const order = docSnap.data();
-            orderIdForModal = orderDocId; // Store Firestore ID for delete action
-
-            // Populate modal body
-            let productsHtml = '<ul>';
-            if (order.products && order.products.length > 0) {
-                order.products.forEach(p => { productsHtml += `<li>${p.name || 'N/A'} - Qty: ${p.quantity || 'N/A'}</li>`; });
-            } else { productsHtml += '<li>No products listed</li>'; }
-            productsHtml += '</ul>';
-
-            modalBody.innerHTML = `
-                <p><strong>Order ID:</strong> ${order.orderId || orderDocId}</p>
-                <p><strong>Customer Name:</strong> ${order.customerDetails?.fullName || 'N/A'}</p>
-                <p><strong>WhatsApp No:</strong> ${order.customerDetails?.whatsappNo || 'N/A'}</p>
-                <p><strong>Address:</strong> ${order.customerDetails?.address || 'N/A'}</p>
-                <hr>
-                <p><strong>Order Date:</strong> ${order.orderDate || 'N/A'}</p>
-                <p><strong>Delivery Date:</strong> ${order.deliveryDate || 'N/A'}</p>
-                <p><strong>Priority:</strong> ${order.urgent || 'N/A'}</p>
-                <p><strong>Status:</strong> ${order.status || 'N/A'}</p>
-                <p><strong>Remarks:</strong> ${order.remarks || 'N/A'}</p>
-                <hr>
-                <strong>Products:</strong> ${productsHtml}
-            `;
-             modalDeleteBtn.disabled = false; // Enable delete button
-             // Setup Go To Edit Page button link
-             modalGoToEditBtn.onclick = () => { window.location.href = `new_order.html?editOrderId=${orderDocId}`; };
-
-        } else {
-            console.error("Order document not found in modal!");
-            modalBody.innerHTML = '<p style="color:red;">Error: Order details not found.</p>';
-        }
-    } catch (error) {
-        console.error("Error fetching order details for modal:", error);
-        modalBody.innerHTML = '<p style="color:red;">Error loading order details.</p>';
-    }
-}
-
-// Modal बंद करने का फंक्शन
-function closeModal() {
-    if (editModal) { editModal.style.display = "none"; orderIdForModal = null; }
-}
-
-// Firestore से ऑर्डर डिलीट करने का फंक्शन
-async function deleteOrderFromFirestore() {
-    if (!orderIdForModal) { alert("No order selected for deletion."); return; }
-    if (!db || !doc || !deleteDoc) { alert("Database delete function not available."); return; }
-
-    if (confirm(`Are you sure you want to delete order ID ${orderIdForModal}? This cannot be undone.`)) {
-        try {
-             modalDeleteBtn.disabled = true; modalDeleteBtn.textContent = 'Deleting...';
-             await deleteDoc(doc(db, "orders", orderIdForModal));
-             alert("Order deleted successfully!");
-             closeModal();
-             // List will update via onSnapshot
-        } catch (error) {
-            console.error("Error deleting order:", error);
-            alert("Error deleting order: " + error.message);
-        } finally {
-             modalDeleteBtn.disabled = false; modalDeleteBtn.textContent = 'Delete Order';
-        }
-    }
-}
-
-// --- Firestore Listener सेट अप ---
-function listenToOrders() {
-    if (currentOrderListenerUnsub) { currentOrderListenerUnsub(); currentOrderListenerUnsub = null; }
-    try {
-        if (!db) throw new Error("Firestore not initialized");
-        const ordersRef = collection(db, "orders");
-        const q = query(ordersRef, orderBy("createdAt", "desc")); // Sort by creation time, newest first
-
-        currentOrderListenerUnsub = onSnapshot(q, (snapshot) => {
-            console.log("Order snapshot received");
-            allOrders = [];
-            snapshot.forEach((doc) => { allOrders.push({ id: doc.id, ...doc.data() }); });
-            console.log("Total orders fetched:", allOrders.length);
-            applyFiltersAndPagination(); // Initial display and filter application
-        }, (error) => {
-            console.error("Error listening to order updates: ", error);
-            if(tableBody) tableBody.innerHTML = `<tr><td colspan="8" style="text-align:center; color:red;">Error loading orders. Check console.</td></tr>`;
-        });
-    } catch (e) {
-        console.error("Error setting up Firestore listener: ", e);
-         if(tableBody) tableBody.innerHTML = `<tr><td colspan="8" style="text-align:center; color:red;">Database connection error. Check console.</td></tr>`;
-    }
-}
-
-// --- कस्टम स्टाइलिंग --- (CSS क्लास और स्टाइल जोड़ने का फंक्शन)
-function addCustomStyles() {
-    const styleId = 'order-history-styles';
-    if (document.getElementById(styleId)) return; // पहले से है तो दोबारा न जोड़ें
-
-    const styleSheet = document.createElement("style");
-    styleSheet.id = styleId;
-    styleSheet.innerHTML = `
-        /* Action buttons styles */
-        .action-btn { background: none; border: none; cursor: pointer; padding: 2px 5px; margin: 0 2px; font-size: 14px; }
-        .action-btn i { pointer-events: none; }
-        .action-btn.edit-btn { color: #0d6efd; }
-        .action-btn.delete-btn { color: #dc3545; }
-        .action-btn:hover { opacity: 0.7; }
-        td.actions { text-align: center; }
-        /* WhatsApp icon style */
-        .whatsapp-icon { font-size: 20px; color: #25d366; cursor: pointer; vertical-align: middle; }
-        .whatsapp-icon:hover { opacity: 0.8; }
-        td.send-wtsp-cell { text-align: center; }
-        /* Edit button in table */
-        button.edit-button { background-color: #007bff; color: white; border: none; padding: 4px 8px; border-radius: 3px; cursor: pointer; font-size: 12px; }
-        button.edit-button:hover { background-color: #0056b3; }
-        /* Ensure table layout is fixed if needed */
-        #order-table { table-layout: fixed; word-wrap: break-word; }
-        #order-table td { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-        #order-table td:nth-child(1) { width: 15%; } /* Order ID width */
-        #order-table td:nth-child(2) { width: 20%; } /* Customer Name width */
-        /* Adjust other column widths as needed */
-    `;
-    document.head.appendChild(styleSheet);
-}
-
-// --- इवेंट लिसनर्स ---
-document.addEventListener('DOMContentLoaded', () => {
-    console.log("DOM loaded: order_history.js");
-
-    // DOM एलिमेंट्स प्राप्त करें
-    tableBody = document.querySelector('#order-table tbody');
-    prevPageButton = document.querySelector('#prev-page');
-    nextPageButton = document.querySelector('#next-page');
-    pageInfoSpan = document.querySelector('#page-info');
-    searchInput = document.querySelector('#search-input'); // <<< ID अपडेट की गई
-    filterDateInput = document.querySelector('#filter-date');
-    filterStatusSelect = document.querySelector('#filter-status');
-    showEntriesSelect = document.querySelector('#show-entries');
-    editModal = document.getElementById("editModal");
-    modalCloseBtn = editModal?.querySelector("#modalCloseBtn"); // <<< ID अपडेट की गई
-    modalBody = document.getElementById("modal-body");
-    modalDeleteBtn = document.getElementById("modalDeleteBtn");
-    modalGoToEditBtn = document.getElementById("modalGoToEditBtn"); // <<< नया बटन
-
-    // जांचें कि सभी ज़रूरी एलिमेंट्स मौजूद हैं
-    if (!tableBody || !prevPageButton || !nextPageButton || !pageInfoSpan || !searchInput || !filterDateInput || !filterStatusSelect || !showEntriesSelect || !editModal || !modalCloseBtn || !modalBody || !modalDeleteBtn || !modalGoToEditBtn) {
-        console.error("One or more essential page elements are missing! Check IDs.");
-        if(tableBody) tableBody.innerHTML = `<tr><td colspan="8" style="text-align:center; color:red;">Page Error: Elements missing.</td></tr>`;
-        return;
-    } else {
-         tableBody.innerHTML = '<tr><td colspan="8" style="text-align: center;">Initializing...</td></tr>';
-    }
-
-    // इवेंट लिसनर्स लगाएं
-    prevPageButton.addEventListener('click', () => goToPage(currentPage - 1));
-    nextPageButton.addEventListener('click', () => goToPage(currentPage + 1));
-    showEntriesSelect.addEventListener('change', () => { currentPage = 1; applyFiltersAndPagination(); });
-    searchInput.addEventListener('input', applyFiltersAndPagination);
-    filterDateInput.addEventListener('change', applyFiltersAndPagination);
-    filterStatusSelect.addEventListener('change', applyFiltersAndPagination);
-
-    // Modal इवेंट्स
-    modalCloseBtn.addEventListener('click', closeModal);
-    window.addEventListener('click', (event) => { if (event.target === editModal) closeModal(); });
-    modalDeleteBtn.addEventListener('click', deleteOrderFromFirestore);
-    // modalGoToEditBtn का onclick लॉजिक editOrder फंक्शन में सेट होगा
-
-    // स्टाइल जोड़ें
-    addCustomStyles();
-
-    // Firebase तैयार होने का इंतज़ार करें और Listener शुरू करें
-    const checkDbInterval = setInterval(() => {
-        if (window.db) {
-            clearInterval(checkDbInterval);
-            console.log("DB ready, starting order listener.");
-            listenToOrders();
-        } else { console.log("Waiting for DB..."); }
-    }, 100);
-
-    console.log("order_history.js initialization setup complete.");
-});
