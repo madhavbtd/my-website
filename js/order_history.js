@@ -1,18 +1,20 @@
 // js/order_history.js
 
 // --- Ensure Firestore functions are available globally ---
-// These should be populated by the inline script in HTML
 const { db, collection, onSnapshot, query, orderBy, doc, deleteDoc, updateDoc } = window;
 
 // --- DOM Elements ---
 const orderTableBody = document.getElementById('orderTableBody');
 const loadingRow = document.getElementById('loadingMessage'); // Cell inside the loading row
 const sortSelect = document.getElementById('sort-orders');
+const filterDateInput = document.getElementById('filterDate');
+const filterSearchInput = document.getElementById('filterSearch');
+const clearFiltersBtn = document.getElementById('clearFiltersBtn');
 
 // Modal 1: Details/Edit Elements
 const detailsModal = document.getElementById('detailsModal');
 const closeModalBtn = document.getElementById('closeDetailsModal');
-const modalOrderIdInput = document.getElementById('modalOrderId'); // Hidden input for Firestore ID
+const modalOrderIdInput = document.getElementById('modalOrderId');
 const modalDisplayOrderIdSpan = document.getElementById('modalDisplayOrderId');
 const modalCustomerNameSpan = document.getElementById('modalCustomerName');
 const modalOrderStatusSelect = document.getElementById('modalOrderStatus');
@@ -22,7 +24,7 @@ const modalEditFullBtn = document.getElementById('modalEditFullBtn');
 
 // Modal 2: WhatsApp Reminder Elements
 const whatsappReminderPopup = document.getElementById('whatsapp-reminder-popup');
-const whatsappPopupCloseBtn = document.getElementById('popup-close-btn'); // Close button for WhatsApp popup
+const whatsappPopupCloseBtn = document.getElementById('popup-close-btn');
 const whatsappMsgPreview = document.getElementById('whatsapp-message-preview');
 const whatsappSendLink = document.getElementById('whatsapp-send-link');
 
@@ -30,50 +32,49 @@ const whatsappSendLink = document.getElementById('whatsapp-send-link');
 let currentSortField = 'createdAt'; // Default sort field
 let currentSortDirection = 'desc'; // Default sort direction
 let unsubscribeOrders = null; // Firestore listener cleanup function
-let currentOrderDataCache = {}; // Cache order data {firestoreId: data} for modal/actions
+let allOrdersCache = []; // Stores ALL orders fetched from Firestore
+let currentOrderDataCache = {}; // Stores data for orders currently displayed {firestoreId: data}
+
+// Debounce timer for search input
+let searchDebounceTimer;
 
 // --- Initialization ---
 document.addEventListener('DOMContentLoaded', () => {
-    console.log("[DEBUG] Order History DOM Loaded (v3 - Table/Dual Modal).");
+    console.log("[DEBUG] Order History DOM Loaded (v4 - Filters Added).");
 
-    // Wait for DB connection established by inline script
     waitForDbConnection(() => {
         console.log("[DEBUG] DB connection confirmed. Initializing listener.");
         listenForOrders(); // Start listening with default sort
 
         // --- Event Listeners ---
         // Sorting Dropdown
-        if (sortSelect) {
-            sortSelect.addEventListener('change', handleSortChange);
-        }
+        if (sortSelect) sortSelect.addEventListener('change', handleSortChange);
+
+        // Filter Inputs
+        if (filterDateInput) filterDateInput.addEventListener('change', handleFilterChange);
+        if (filterSearchInput) filterSearchInput.addEventListener('input', handleSearchInput); // Use input for instant feedback
+        if (clearFiltersBtn) clearFiltersBtn.addEventListener('click', clearFilters);
 
         // Modal 1 (Details/Edit) Listeners
         if (closeModalBtn) closeModalBtn.addEventListener('click', closeDetailsModal);
         if (detailsModal) detailsModal.addEventListener('click', (event) => {
-            if (event.target === detailsModal) closeDetailsModal(); // Close if clicking overlay
+            if (event.target === detailsModal) closeDetailsModal();
         });
         if (modalUpdateStatusBtn) modalUpdateStatusBtn.addEventListener('click', handleUpdateStatus);
         if (modalDeleteBtn) modalDeleteBtn.addEventListener('click', handleDeleteFromModal);
         if (modalEditFullBtn) modalEditFullBtn.addEventListener('click', handleEditFullFromModal);
 
         // Modal 2 (WhatsApp Reminder) Listeners
-        if (whatsappPopupCloseBtn) {
-             whatsappPopupCloseBtn.addEventListener('click', closeWhatsAppPopup);
-        }
-        if (whatsappReminderPopup) {
-            whatsappReminderPopup.addEventListener('click', (event) => {
-                if (event.target === whatsappReminderPopup) { // Click on overlay
-                    closeWhatsAppPopup();
-                }
-            });
-        }
-         console.log("[DEBUG] All event listeners set up.");
+        if (whatsappPopupCloseBtn) whatsappPopupCloseBtn.addEventListener('click', closeWhatsAppPopup);
+        if (whatsappReminderPopup) whatsappReminderPopup.addEventListener('click', (event) => {
+            if (event.target === whatsappReminderPopup) closeWhatsAppPopup();
+        });
+        console.log("[DEBUG] All event listeners set up.");
     });
 });
 
-// --- DB Connection Wait ---
-// Waits for the inline script in HTML to make window.db available
-function waitForDbConnection(callback) {
+// --- DB Connection Wait (No changes needed) ---
+function waitForDbConnection(callback) { /* ... (same as before) ... */
     if (window.db) {
         console.log("[DEBUG] DB connection confirmed immediately.");
         callback();
@@ -89,7 +90,8 @@ function waitForDbConnection(callback) {
             } else if (attempts >= maxAttempts) {
                 clearInterval(intervalId);
                 console.error("[DEBUG] DB connection timeout.");
-                if(loadingRow) loadingRow.textContent = 'Database connection failed.';
+                const loadingCell = document.getElementById('loadingMessage');
+                if(loadingCell) loadingCell.textContent = 'Database connection failed.';
                 alert("Database connection failed. Please refresh the page.");
             }
         }, 250);
@@ -104,94 +106,206 @@ function handleSortChange() {
     const [field, direction] = selectedValue.split('_');
 
     if (field && direction) {
-        // Prevent re-listening if selection hasn't actually changed
-        if (field === currentSortField && direction === currentSortDirection) {
-            console.log("[DEBUG] Sort selection unchanged.");
-            return;
-        }
+        if (field === currentSortField && direction === currentSortDirection) return; // No change
         currentSortField = field;
         currentSortDirection = direction;
         console.log(`[DEBUG] Sort changed to: Field=${currentSortField}, Direction=${currentSortDirection}`);
-        listenForOrders(); // Re-attach listener with new sorting
+        // Re-apply filters and render, which now includes sorting
+        applyFiltersAndRender();
+        // Note: We don't re-attach the Firestore listener just for sorting changes anymore
     }
 }
 
+// --- Filter Change Handlers ---
+function handleFilterChange() {
+    console.log("[DEBUG] Filter input changed.");
+    applyFiltersAndRender();
+}
+
+function handleSearchInput() {
+    // Debounce the search input to avoid filtering on every keystroke
+    clearTimeout(searchDebounceTimer);
+    searchDebounceTimer = setTimeout(() => {
+        console.log("[DEBUG] Search input processed (debounced).");
+        applyFiltersAndRender();
+    }, 300); // Wait 300ms after last keystroke
+}
+
+function clearFilters() {
+    console.log("[DEBUG] Clearing filters.");
+    if(filterDateInput) filterDateInput.value = '';
+    if(filterSearchInput) filterSearchInput.value = '';
+    // Optionally reset sort dropdown? Decide based on desired UX.
+    // if(sortSelect) sortSelect.value = 'createdAt_desc';
+    // currentSortField = 'createdAt';
+    // currentSortDirection = 'desc';
+    applyFiltersAndRender(); // Re-render with cleared filters
+}
+
+
 // --- Firestore Listener Setup ---
+// This function now ONLY fetches the initial data and stores it.
+// Filtering and rendering happen separately.
 function listenForOrders() {
-    // Cleanup previous listener if it exists
     if (unsubscribeOrders) {
         console.log("[DEBUG] Unsubscribing previous order listener.");
         unsubscribeOrders();
         unsubscribeOrders = null;
     }
-
-    // Check if Firestore functions are available
     if (!db || !collection || !query || !orderBy || !onSnapshot) {
         console.error("[DEBUG] Firestore functions not available!");
         orderTableBody.innerHTML = `<tr><td colspan="8" style="color: red; text-align: center;">Error: Cannot connect to database functions.</td></tr>`;
         return;
     }
 
-    // Show loading state
+    // Show loading state in table
     orderTableBody.innerHTML = `<tr><td colspan="8" id="loadingMessage" style="text-align: center; color: #666;">Loading orders...</td></tr>`;
 
     try {
-        console.log(`[DEBUG] Setting up Firestore listener for 'orders'. Sorting by ${currentSortField} ${currentSortDirection}...`);
+        console.log(`[DEBUG] Setting up Firestore listener for ALL orders (initial fetch)...`);
         const ordersRef = collection(db, "orders");
-        // Create the query based on selected sorting
-        const q = query(ordersRef, orderBy(currentSortField, currentSortDirection));
+        // Fetch initial data sorted by default (e.g., createdAt desc)
+        // Note: This initial sort only affects the first display if no filters are set.
+        // The actual display sort is handled client-side in applyFiltersAndRender.
+        const initialQuery = query(ordersRef, orderBy(currentSortField, currentSortDirection));
 
-        // Attach the real-time listener
-        unsubscribeOrders = onSnapshot(q, (snapshot) => {
-            console.log(`[DEBUG] Received ${snapshot.docs.length} orders from Firestore snapshot.`);
-            orderTableBody.innerHTML = ''; // Clear loading message/previous orders
-            currentOrderDataCache = {}; // Reset cache on new data
+        unsubscribeOrders = onSnapshot(initialQuery, (snapshot) => {
+            console.log(`[DEBUG] Received ${snapshot.docs.length} total orders from Firestore snapshot.`);
+            // Store ALL orders in the global cache
+            allOrdersCache = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            console.log(`[DEBUG] Stored ${allOrdersCache.length} orders in allOrdersCache.`);
 
-            if (snapshot.empty) {
-                orderTableBody.innerHTML = `<tr><td colspan="8" id="noOrdersMessage" style="text-align: center; color: #666;">No orders found.</td></tr>`;
-                return;
-            }
-
-            // Process and display each order
-            snapshot.forEach(doc => {
-                currentOrderDataCache[doc.id] = doc.data(); // Cache the data using Firestore ID as key
-                displayOrderRow(doc.id, doc.data()); // Render the table row
-            });
+            // Apply current filters (if any) and render the table
+            applyFiltersAndRender();
 
         }, (error) => {
-            // Handle errors during listening
             console.error("[DEBUG] Error fetching orders snapshot:", error);
             orderTableBody.innerHTML = `<tr><td colspan="8" style="color: red; text-align: center;">Error loading orders: ${error.message}. Please check console.</td></tr>`;
-            unsubscribeOrders = null; // Reset listener state on error
+            unsubscribeOrders = null;
         });
 
     } catch (error) {
-        // Handle errors setting up the listener
         console.error("[DEBUG] Error setting up Firestore listener:", error);
          orderTableBody.innerHTML = `<tr><td colspan="8" style="color: red; text-align: center;">Error setting up listener: ${error.message}.</td></tr>`;
          unsubscribeOrders = null;
     }
 }
 
-// --- Display Single Order Row in Table ---
-function displayOrderRow(firestoreId, data) {
-    const tableRow = document.createElement('tr');
-    tableRow.setAttribute('data-id', firestoreId); // Store Firestore ID on the row
 
-    // Extract data safely, providing defaults
+// --- Filter, Sort, and Render Function ---
+function applyFiltersAndRender() {
+    if (!allOrdersCache) {
+        console.warn("[DEBUG] applyFiltersAndRender called before allOrdersCache is populated.");
+        return;
+    }
+    console.log("[DEBUG] Applying filters and rendering...");
+
+    // 1. Get current filter values
+    const filterDateValue = filterDateInput ? filterDateInput.value : ''; // YYYY-MM-DD
+    const filterSearchValue = filterSearchInput ? filterSearchInput.value.trim().toLowerCase() : '';
+
+    // 2. Filter the cached data
+    let filteredOrders = allOrdersCache.filter(order => {
+        // Date Filter
+        if (filterDateValue) {
+            // Ensure order.orderDate exists and matches the filter date
+            // Note: Firestore date might be string or Timestamp. Handle accordingly.
+            // Assuming order.orderDate is stored as "YYYY-MM-DD" string matching the input.
+             if (!order.orderDate || order.orderDate !== filterDateValue) {
+                 return false; // Doesn't match date filter
+             }
+        }
+
+        // Search Filter (Order ID or Customer Name)
+        if (filterSearchValue) {
+            const orderIdString = order.orderId || ''; // Use saved orderId field
+            const customerNameString = order.customerDetails?.fullName || '';
+            const firestoreIdString = order.id || ''; // Include Firestore ID in search
+
+             if (!(orderIdString.toLowerCase().includes(filterSearchValue) ||
+                   customerNameString.toLowerCase().includes(filterSearchValue) ||
+                   firestoreIdString.toLowerCase().includes(filterSearchValue) // Search Firestore ID too
+                 )) {
+                 return false; // Doesn't match search filter
+             }
+        }
+
+        return true; // Passes all filters
+    });
+    console.log(`[DEBUG] Filtered down to ${filteredOrders.length} orders.`);
+
+
+    // 3. Sort the filtered data
+    // Sorting logic needs careful handling of data types (dates, numbers, strings)
+    filteredOrders.sort((a, b) => {
+        let valA = a[currentSortField];
+        let valB = b[currentSortField];
+
+        // Handle nested properties like customerDetails.fullName if needed
+        // if (currentSortField === 'customerName') { // Example
+        //     valA = a.customerDetails?.fullName || '';
+        //     valB = b.customerDetails?.fullName || '';
+        // }
+
+        // Handle Timestamps (createdAt, updatedAt)
+        if (valA && typeof valA.toDate === 'function') valA = valA.toDate();
+        if (valB && typeof valB.toDate === 'function') valB = valB.toDate();
+
+        // Handle Dates (orderDate, deliveryDate - assuming YYYY-MM-DD strings)
+        if (currentSortField === 'orderDate' || currentSortField === 'deliveryDate') {
+            // Convert valid date strings to Date objects for comparison
+             valA = valA ? new Date(valA) : null;
+             valB = valB ? new Date(valB) : null;
+             // Handle cases where one date is null/invalid
+             if (!valA && !valB) return 0;
+             if (!valA) return currentSortDirection === 'asc' ? 1 : -1; // Nulls last in asc, first in desc? Adjust as needed.
+             if (!valB) return currentSortDirection === 'asc' ? -1 : 1;
+        }
+
+
+        let comparison = 0;
+        if (valA > valB) {
+            comparison = 1;
+        } else if (valA < valB) {
+            comparison = -1;
+        }
+
+        return currentSortDirection === 'desc' ? comparison * -1 : comparison;
+    });
+     console.log(`[DEBUG] Sorted ${filteredOrders.length} orders.`);
+
+
+    // 4. Render the filtered and sorted data
+    orderTableBody.innerHTML = ''; // Clear the table body
+    currentOrderDataCache = {}; // Reset display cache
+
+    if (filteredOrders.length === 0) {
+        orderTableBody.innerHTML = `<tr><td colspan="8" id="noOrdersMessage" style="text-align: center; color: #666;">No orders found matching filters.</td></tr>`;
+    } else {
+        filteredOrders.forEach(order => {
+            currentOrderDataCache[order.id] = order; // Add to display cache
+            displayOrderRow(order.id, order); // Render row
+        });
+    }
+    console.log("[DEBUG] Rendering complete.");
+}
+
+
+// --- Display Single Order Row in Table (No changes needed from previous version) ---
+function displayOrderRow(firestoreId, data) { /* ... (same as before) ... */
+    const tableRow = document.createElement('tr');
+    tableRow.setAttribute('data-id', firestoreId);
+
     const customerName = data.customerDetails?.fullName || 'N/A';
     const orderDate = data.orderDate ? new Date(data.orderDate).toLocaleDateString() : '-';
     const deliveryDate = data.deliveryDate ? new Date(data.deliveryDate).toLocaleDateString() : '-';
-    // Use the orderId field if available, otherwise show part of Firestore ID
-    const displayId = data.orderId || `(Sys: ${firestoreId.substring(0, 6)}...)`;
+    const displayId = data.orderId || `(Sys: ${firestoreId.substring(0,6)}...)`;
     const status = data.status || 'Unknown';
-    const priority = data.urgent || 'No'; // 'urgent' field maps to Priority
+    const priority = data.urgent || 'No';
 
-    // Determine CSS classes for status and priority for styling
-    const statusClass = `status-${status.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`; // Sanitize status for CSS class
+    const statusClass = `status-${status.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`;
     const priorityClass = priority === 'Yes' ? 'priority-yes' : 'priority-no';
 
-    // Populate table cells (ensure order matches <thead>)
     tableRow.innerHTML = `
         <td>${displayId}</td>
         <td>${customerName}</td>
@@ -211,260 +325,151 @@ function displayOrderRow(firestoreId, data) {
         </td>
     `;
 
-    // Add event listener for the "Details/Edit" button in this row
     const detailsButton = tableRow.querySelector('.details-edit-button');
     if (detailsButton) {
         detailsButton.addEventListener('click', (e) => {
-             e.stopPropagation(); // Prevent potential row click events if added later
-            openDetailsModal(firestoreId); // Pass the Firestore ID to the modal opener
+             e.stopPropagation();
+            openDetailsModal(firestoreId);
         });
     }
 
-     // Add event listener for the WhatsApp button in this row
     const whatsappButton = tableRow.querySelector('.whatsapp-button');
     if (whatsappButton) {
         whatsappButton.addEventListener('click', (e) => {
              e.stopPropagation();
-            sendWhatsAppMessage(firestoreId); // Pass Firestore ID to WhatsApp function
+            sendWhatsAppMessage(firestoreId);
         });
     }
 
-    // Append the completed row to the table body
     orderTableBody.appendChild(tableRow);
 }
 
-// --- Modal 1 (Details/Edit) Handling ---
-function openDetailsModal(firestoreId) {
-    // Retrieve the cached data for this order
+// --- Modal 1 (Details/Edit) Handling (No changes needed) ---
+function openDetailsModal(firestoreId) { /* ... (same as before) ... */
     const orderData = currentOrderDataCache[firestoreId];
-
-    // Ensure data and modal exist
     if (!orderData || !detailsModal) {
         console.error("[DEBUG] Cannot open modal, order data not found in cache for ID:", firestoreId);
         alert("Could not load order details. Please refresh the page.");
         return;
     }
-
     console.log("[DEBUG] Opening details modal for Firestore ID:", firestoreId);
-
-    // Populate Modal Fields
-    modalOrderIdInput.value = firestoreId; // Store Firestore ID in hidden input
-    modalDisplayOrderIdSpan.textContent = orderData.orderId || `(Sys: ${firestoreId.substring(0, 6)}...)`;
+    modalOrderIdInput.value = firestoreId;
+    modalDisplayOrderIdSpan.textContent = orderData.orderId || `(Sys: ${firestoreId.substring(0,6)}...)`;
     modalCustomerNameSpan.textContent = orderData.customerDetails?.fullName || 'N/A';
-    // Set the dropdown to the order's current status
     modalOrderStatusSelect.value = orderData.status || '';
-
-    // Display the modal
-    detailsModal.style.display = 'flex'; // Use 'flex' to enable alignment styles
+    detailsModal.style.display = 'flex';
 }
-
-function closeDetailsModal() {
+function closeDetailsModal() { /* ... (same as before) ... */
     if (detailsModal) {
         detailsModal.style.display = 'none';
          console.log("[DEBUG] Details modal closed.");
     }
 }
 
-// --- Modal 1 Action Handlers ---
-
-// Handle Status Update Button Click
-async function handleUpdateStatus() {
+// --- Modal 1 Action Handlers (No changes needed) ---
+async function handleUpdateStatus() { /* ... (same as before, triggers WhatsApp popup) ... */
     const firestoreId = modalOrderIdInput.value;
     const newStatus = modalOrderStatusSelect.value;
-
-    // Validations
-    if (!firestoreId || !newStatus) {
-         alert("Error: Missing order ID or status for update.");
-         return;
-    }
-    if (!db || !doc || !updateDoc) {
-         alert("Error: Database update function not available.");
-         return;
-    }
-
+    if (!firestoreId || !newStatus) { alert("Error: Missing order ID or status for update."); return; }
+    if (!db || !doc || !updateDoc) { alert("Error: Database update function not available."); return; }
     console.log(`[DEBUG] Attempting to update status for ${firestoreId} to ${newStatus}`);
-    // Disable button to prevent multiple clicks
     modalUpdateStatusBtn.disabled = true;
     modalUpdateStatusBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Updating...';
-
     try {
         const orderRef = doc(db, "orders", firestoreId);
-        // Update only the status and the updatedAt timestamp in Firestore
-        await updateDoc(orderRef, {
-            status: newStatus,
-            updatedAt: new Date() // Use server timestamp if preferred: firebase.firestore.FieldValue.serverTimestamp()
-        });
+        await updateDoc(orderRef, { status: newStatus, updatedAt: new Date() });
         console.log(`[DEBUG] Status updated successfully in Firestore for ${firestoreId}`);
-
-        // --- Trigger WhatsApp Popup ---
-        const orderData = currentOrderDataCache[firestoreId]; // Get data again (or ensure it's up-to-date)
+        const orderData = currentOrderDataCache[firestoreId];
         if (orderData && orderData.customerDetails) {
              const displayId = orderData.orderId || `(Sys: ${firestoreId.substring(0,6)}...)`;
-             // Show the WhatsApp prompt with the NEW status
              showStatusUpdateWhatsAppReminder(orderData.customerDetails, displayId, newStatus);
         } else {
             console.warn("[DEBUG] Could not show WhatsApp reminder post-update: Customer details missing.");
             alert("Status updated, but couldn't prepare WhatsApp message.");
-            closeDetailsModal(); // Close details modal if WhatsApp can't be shown
+            closeDetailsModal();
         }
-        // --- End Trigger ---
-
     } catch (error) {
         console.error(`[DEBUG] Error updating status for ${firestoreId}:`, error);
         alert(`Failed to update status: ${error.message}`);
     } finally {
-        // Re-enable the button regardless of success or failure
         modalUpdateStatusBtn.disabled = false;
         modalUpdateStatusBtn.innerHTML = '<i class="fas fa-sync-alt"></i> Update Status';
     }
 }
-
-// Handle Delete Button Click in Modal
-function handleDeleteFromModal() {
+function handleDeleteFromModal() { /* ... (same as before) ... */
     const firestoreId = modalOrderIdInput.value;
-    // Retrieve the display ID shown in the modal for the confirmation message
     const displayId = modalDisplayOrderIdSpan.textContent;
-    if (!firestoreId) {
-         alert("Error: Could not find Order ID to delete.");
-         return;
-    }
+    if (!firestoreId) { alert("Error: Could not find Order ID to delete."); return; }
     console.log(`[DEBUG] Delete initiated from modal for Firestore ID: ${firestoreId}`);
-    // Close the details modal *before* showing the confirmation dialog
     closeDetailsModal();
-    // Call the main delete handler function
     handleDeleteOrder(firestoreId, displayId);
 }
-
-// Handle Edit Full Order Button Click in Modal
-function handleEditFullFromModal() {
+function handleEditFullFromModal() { /* ... (same as before) ... */
     const firestoreId = modalOrderIdInput.value;
-    if (!firestoreId) {
-         alert("Error: Could not find Order ID to edit.");
-         return;
-    }
+    if (!firestoreId) { alert("Error: Could not find Order ID to edit."); return; }
     console.log(`[DEBUG] Redirecting to full edit page for Firestore ID: ${firestoreId}`);
-    // Redirect to the new_order page, passing the Firestore ID as a URL parameter
     window.location.href = `new_order.html?editOrderId=${firestoreId}`;
 }
 
-
-// --- Main Delete Order Function (Called from Modal) ---
-async function handleDeleteOrder(firestoreId, orderDisplayId) {
+// --- Main Delete Order Function (No changes needed) ---
+async function handleDeleteOrder(firestoreId, orderDisplayId) { /* ... (same as before) ... */
     console.log(`[DEBUG] handleDeleteOrder called for Firestore ID: ${firestoreId}`);
-    // Check if delete function is available
-    if (!db || !doc || !deleteDoc) {
-         alert("Error: Delete function not available. Database connection issue.");
-         return;
-    }
-
-    // Confirmation dialog
+    if (!db || !doc || !deleteDoc) { alert("Error: Delete function not available."); return; }
     if (confirm(`Are you sure you want to permanently delete Order ID: ${orderDisplayId}? This action cannot be undone.`)) {
         console.log(`[DEBUG] User confirmed deletion for ${firestoreId}.`);
         try {
             const orderRef = doc(db, "orders", firestoreId);
-            // Perform the delete operation in Firestore
             await deleteDoc(orderRef);
             console.log(`[DEBUG] Order deleted successfully from Firestore: ${firestoreId}`);
-            // UI automatically updates because of the onSnapshot listener.
-            // Optionally, show a brief success message here if desired.
         } catch (error) {
             console.error(`[DEBUG] Error deleting order ${firestoreId}:`, error);
             alert(`Failed to delete order: ${error.message}`);
         }
     } else {
-        // User cancelled deletion
         console.log("[DEBUG] Deletion cancelled by user.");
     }
 }
 
-// --- Modal 2 (WhatsApp Reminder) Handling ---
-
-// Shows the WhatsApp popup after status update
-function showStatusUpdateWhatsAppReminder(customer, orderId, updatedStatus) {
-    // Ensure WhatsApp popup elements are available
-    if (!whatsappReminderPopup || !whatsappMsgPreview || !whatsappSendLink) {
-        console.error("[DEBUG] WhatsApp popup elements missing.");
-        // Close details modal as WhatsApp popup cannot be shown
-        closeDetailsModal();
-        alert("Status Updated, but failed to show WhatsApp prompt.");
-        return;
-    }
-
+// --- Modal 2 (WhatsApp Reminder) Handling (No changes needed) ---
+function showStatusUpdateWhatsAppReminder(customer, orderId, updatedStatus) { /* ... (same as before) ... */
+    if (!whatsappReminderPopup || !whatsappMsgPreview || !whatsappSendLink) { console.error("[DEBUG] WhatsApp popup elements missing."); closeDetailsModal(); alert("Status Updated, but failed to show WhatsApp prompt."); return; }
     const customerName = customer.fullName || 'Customer';
-    const customerNumber = customer.whatsappNo?.replace(/[^0-9]/g, ''); // Clean number
-
-    // Don't show popup if WhatsApp number is missing
-    if (!customerNumber) {
-        console.warn("[DEBUG] WhatsApp No missing for status update reminder. Skipping popup.");
-         // Close details modal as WhatsApp popup won't show
-        closeDetailsModal();
-        alert("Status Updated! (Customer WhatsApp number missing for sending update).");
-        return;
-    }
-
-    // Construct the WhatsApp message for status update
-    let message = `Hello ${customerName},\n\n`;
-    message += `Update for your order (ID: ${orderId}):\n`;
-    message += `The status has been updated to: *${updatedStatus}*.\n\n`; // Use Markdown for bold
-    message += `Thank you!`;
-
-    // Display the message preview
+    const customerNumber = customer.whatsappNo?.replace(/[^0-9]/g, '');
+    if (!customerNumber) { console.warn("[DEBUG] WhatsApp No missing for status update reminder. Skipping popup."); closeDetailsModal(); alert("Status Updated! (Customer WhatsApp number missing for sending update)."); return; }
+    let message = `Hello ${customerName},\n\nUpdate for your order (ID: ${orderId}):\nThe status has been updated to: *${updatedStatus}*.\n\nThank you!`;
     whatsappMsgPreview.innerText = message;
-
-    // Create the WhatsApp URL
     const encodedMessage = encodeURIComponent(message);
     const whatsappUrl = `https://wa.me/${customerNumber}?text=${encodedMessage}`;
-    whatsappSendLink.href = whatsappUrl; // Set the link on the button
-
-    // Show the WhatsApp popup
-    whatsappReminderPopup.classList.add('active'); // Use 'active' class to display
+    whatsappSendLink.href = whatsappUrl;
+    whatsappReminderPopup.classList.add('active');
     console.log("[DEBUG] Status update WhatsApp reminder shown.");
 }
-
-// Closes the WhatsApp popup
-function closeWhatsAppPopup() {
-    if (whatsappReminderPopup) {
+function closeWhatsAppPopup() { /* ... (same as before) ... */
+     if (whatsappReminderPopup) {
         whatsappReminderPopup.classList.remove('active');
         console.log("[DEBUG] WhatsApp reminder popup closed.");
         // Decide whether to close the details modal too
-        // closeDetailsModal(); // Uncomment this line if you want Modal 1 to close when Modal 2 closes
+        // closeDetailsModal(); // Uncomment if desired
     }
 }
 
-// --- Table Row WhatsApp Button Handler ---
-// Sends a generic message or current status via WhatsApp from the table row button
-function sendWhatsAppMessage(firestoreId) {
-    const orderData = currentOrderDataCache[firestoreId]; // Get data from cache
-
-    if (!orderData) {
-        console.error("[DEBUG] Cannot send WhatsApp from table, order data missing for ID:", firestoreId);
-        alert("Could not load order details for WhatsApp. Please refresh.");
-        return;
-    }
-
+// --- Table Row WhatsApp Button Handler (No changes needed) ---
+function sendWhatsAppMessage(firestoreId) { /* ... (same as before) ... */
+     const orderData = currentOrderDataCache[firestoreId];
+    if (!orderData) { console.error("[DEBUG] Cannot send WhatsApp from table, order data missing for ID:", firestoreId); alert("Could not load order details for WhatsApp. Please refresh."); return; }
      const customer = orderData.customerDetails;
      const orderId = orderData.orderId || `(Sys: ${firestoreId.substring(0,6)}...)`;
-     const status = orderData.status; // Get current status
-
-    if (!customer || !customer.whatsappNo) {
-        alert("Customer WhatsApp number is missing for this order.");
-        return;
-    }
-
+     const status = orderData.status;
+    if (!customer || !customer.whatsappNo) { alert("Customer WhatsApp number is missing for this order."); return; }
     const customerName = customer.fullName || 'Customer';
     const customerNumber = customer.whatsappNo.replace(/[^0-9]/g, '');
-
-    // Construct a generic message or current status message
-    // You can customize this message
     let message = `Hello ${customerName},\nRegarding your order (ID: ${orderId}).\nCurrent Status: *${status}*.\n\nThank you!`;
-
     const encodedMessage = encodeURIComponent(message);
     const whatsappUrl = `https://wa.me/${customerNumber}?text=${encodedMessage}`;
-
     console.log(`[DEBUG] Opening WhatsApp URL from table button: ${whatsappUrl}`);
-    window.open(whatsappUrl, '_blank'); // Open WhatsApp in a new tab
+    window.open(whatsappUrl, '_blank');
 }
 
 
 // --- Final Log ---
-console.log("order_history.js script fully loaded and initialized (v3).");
+console.log("order_history.js script fully loaded and initialized (v4 - Filters Added).");

@@ -18,8 +18,19 @@
              <a href="new_order.html" class="button add-new-button">
                 <i class="fas fa-plus"></i> Add New Order
             </a>
-             <div class="filter-sort">
-                <label for="sort-orders">Sort by:</label>
+             </div>
+
+        <div class="filter-bar">
+            <div class="filter-group">
+                <label for="filterDate"><i class="fas fa-calendar-alt"></i> Order Date:</label>
+                <input type="date" id="filterDate">
+            </div>
+            <div class="filter-group">
+                <label for="filterSearch"><i class="fas fa-search"></i> Search:</label>
+                <input type="text" id="filterSearch" placeholder="Order ID or Customer Name...">
+            </div>
+             <div class="filter-group filter-sort">
+                <label for="sort-orders"><i class="fas fa-sort"></i> Sort by:</label>
                 <select id="sort-orders">
                     <option value="createdAt_desc">Newest First (Created)</option>
                     <option value="createdAt_asc">Oldest First (Created)</option>
@@ -28,7 +39,12 @@
                     <option value="orderDate_desc">Order Date (Newest)</option>
                     <option value="orderDate_asc">Order Date (Oldest)</option>
                  </select>
-                 </div>
+            </div>
+            <div class="filter-group">
+                 <button id="clearFiltersBtn" class="button clear-filters-button" title="Clear all filters">
+                    <i class="fas fa-times"></i> Clear Filters
+                 </button>
+            </div>
         </div>
 
         <div class="table-container">
@@ -60,11 +76,11 @@
         <div class="modal-content">
             <span class="close-btn" id="closeDetailsModal" title="Close">&times;</span>
             <h2>Order Details & Actions</h2>
-            <input type="hidden" id="modalOrderId"> <div class="modal-info">
+            <input type="hidden" id="modalOrderId">
+            <div class="modal-info">
                  <p><strong>Order ID:</strong> <span id="modalDisplayOrderId"></span></p>
                  <p><strong>Customer:</strong> <span id="modalCustomerName"></span></p>
             </div>
-
             <div class="modal-section">
                 <label for="modalOrderStatus">Update Status:</label>
                 <select id="modalOrderStatus">
@@ -76,12 +92,11 @@
                     <option value="Printing">Printing</option>
                     <option value="Delivered">Delivered</option>
                     <option value="Completed">Completed</option>
-                    </select>
+                </select>
                 <button id="modalUpdateStatusBtn" class="button update-status-button">
                     <i class="fas fa-sync-alt"></i> Update Status
                 </button>
             </div>
-
             <div class="modal-section modal-actions">
                  <button id="modalEditFullBtn" class="button edit-full-button">
                      <i class="fas fa-edit"></i> Edit Full Order
@@ -107,12 +122,11 @@
 
 
     <script type="module">
-        // Import necessary Firebase functions
+        // Firebase Imports
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
         import { getFirestore, collection, doc, deleteDoc, updateDoc, onSnapshot, query, orderBy } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
         // --- PASTE YOUR firebaseConfig HERE ---
-        // Replace with your actual Firebase project configuration
         const firebaseConfig = {
           apiKey: "AIzaSyBQj5rQmE77kKKGYixP8y3Hcimz8tiAqzQ", // Your config
           authDomain: "madhav-multyprint.firebaseapp.com",
@@ -123,26 +137,24 @@
         };
         // --- END OF PASTE ---
 
-        // Initialize Firebase and make functions globally available
+        // Initialize Firebase and make functions global
          try {
             let app;
-            // Prevent re-initialization if already done (useful for single-page apps, good practice anyway)
             if (!window.firebaseAppInitialized) {
                  app = initializeApp(firebaseConfig);
-                 window.firebaseAppInitialized = true; // Mark as initialized
+                 window.firebaseAppInitialized = true;
                  console.log("Firebase initialized on order_history page.");
             } else {
                  console.log("Firebase already initialized (order_history).");
             }
-            // Ensure db is globally available or passed correctly
-            const db = window.db || getFirestore(app || undefined); // Get existing or new instance
-            window.db = db; // Make db global if needed by script.js
+            const db = window.db || getFirestore(app || undefined);
+            window.db = db;
 
-            // Make Firestore functions globally available for order_history.js
+            // Make Firestore functions globally available
             window.collection = collection;
             window.doc = doc;
             window.deleteDoc = deleteDoc;
-            window.updateDoc = updateDoc; // Make sure updateDoc is global
+            window.updateDoc = updateDoc;
             window.onSnapshot = onSnapshot;
             window.query = query;
             window.orderBy = orderBy;
@@ -151,7 +163,6 @@
 
         } catch (e) {
             console.error("Firebase initialization error (order_history):", e);
-            // Display error message to the user if connection fails
             if (!window.db) {
                 alert("Database connection error on history page!");
                  const loadingCell = document.getElementById('loadingMessage');
