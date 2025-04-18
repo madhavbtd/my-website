@@ -8,101 +8,154 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" integrity="sha512-9usAa10IRO0HhonpyAIVpjrylPvoDwiPUiKdWk5t3PyolY1cOd4DSE0Ga+ri4AuTroPR5aQvXU9xC6qOPnzFeg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
 </head>
 <body>
+    <div class="container">
+        <div class="header">
+            <i class="fas fa-users header-icon"></i>
+            <h1>Customer Management</h1>
+        </div>
+
+        <div class="filter-bar">
+             <div class="filter-group">
+                 <button id="addNewCustomerBtn" class="button add-new-button">
+                    <i class="fas fa-user-plus"></i> Add New Customer
+                </button>
+            </div>
+             <div class="filter-group">
+                <label for="filterSearch"><i class="fas fa-search"></i> Search:</label>
+                <input type="text" id="filterSearch" placeholder="ID, Name, WhatsApp...">
+            </div>
+             <div class="filter-group filter-sort">
+                <label for="sort-customers"><i class="fas fa-sort"></i> Sort by:</label>
+                <select id="sort-customers">
+                    <option value="createdAt_desc">Newest First</option>
+                    <option value="createdAt_asc">Oldest First</option>
+                    <option value="fullName_asc">Name (A-Z)</option>
+                    <option value="fullName_desc">Name (Z-A)</option>
+                    <option value="customCustomerId_asc">ID (Low-High)</option> <option value="customCustomerId_desc">ID (High-Low)</option> </select>
+            </div>
+            <div class="filter-group">
+                 <button id="clearFiltersBtn" class="button clear-filters-button" title="Clear search and reset sort">
+                    <i class="fas fa-times"></i> Clear
+                 </button>
+            </div>
+        </div>
+
+        <div class="table-container">
+            <table id="customerTable">
+                <thead>
+                    <tr>
+                        <th>Cust. ID</th> <th>Full Name</th>
+                        <th>WhatsApp No</th>
+                        <th>Contact No</th>
+                        <th>Address</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="customerTableBody">
+                    <tr>
+                        <td colspan="6" id="loadingMessage">Loading customers...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div id="customerModal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" id="closeCustomerModal" title="Close">&times;</span>
+            <h2 id="modalTitle">Add New Customer</h2>
+            <form id="customerForm">
+                <input type="hidden" id="editCustomerId"> <div class="form-group">
+                    <label for="customerFullName">Full Name <span class="required">*</span>:</label>
+                    <input type="text" id="customerFullName" required>
+                </div>
+                <div class="form-group">
+                     <label for="customerWhatsApp">WhatsApp No <span class="required">*</span>:</label>
+                    <input type="tel" id="customerWhatsApp" required placeholder="e.g., 91XXXXXXXXXX">
+                </div>
+                <div class="form-group">
+                    <label for="customerContact">Contact No:</label>
+                    <input type="tel" id="customerContact" placeholder="Optional alternate number">
+                </div>
+                <div class="form-group">
+                    <label for="customerAddress">Address:</label>
+                    <textarea id="customerAddress" rows="3" placeholder="Optional address details"></textarea>
+                </div>
+                <div class="form-group" id="customIdDisplayArea" style="display: none;">
+                     <label>Customer ID:</label>
+                     <input type="text" id="generatedCustomId" readonly>
+                 </div>
+
+
+                <div class="modal-actions">
+                    <button type="submit" id="saveCustomerBtn" class="button save-button">
+                        <i class="fas fa-save"></i> <span>Save Customer</span> </button>
+                     <button type="button" id="cancelCustomerBtn" class="button cancel-button">
+                        Cancel
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+
     <script type="module">
+        // Import necessary Firebase functions
+        // Added runTransaction, getDoc, serverTimestamp
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-        import { getFirestore } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js"; // Only import getFirestore here
+        import { getFirestore, collection, doc, addDoc, updateDoc, deleteDoc, onSnapshot, query, orderBy, serverTimestamp, runTransaction, getDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
+        // --- PASTE YOUR firebaseConfig HERE ---
+        // Use the exact same config as new_order.html and order_history.html
         const firebaseConfig = {
-          apiKey: "AIzaSyBQj5rQmE77kKKGYixP8y3Hcimz8tiAqzQ",
-          authDomain: "madhav-multyprint.firebaseapp.com",
-          projectId: "madhav-multyprint",
-          storageBucket: "madhav-multyprint.appspot.com", // Verify bucket name
-          messagingSenderId: "104988349637",
-          appId: "1:104988349637:web:faf045b77c6786a4e70cac"
+          apiKey: "AIzaSyBQj5rQmE77kKKGYixP8y3Hcimz8tiAqzQ", // YOUR CONFIG
+          authDomain: "madhav-multyprint.firebaseapp.com", // YOUR CONFIG
+          projectId: "madhav-multyprint", // YOUR CONFIG
+          storageBucket: "madhav-multyprint.appspot.com", // YOUR CONFIG
+          messagingSenderId: "104988349637", // YOUR CONFIG
+          appId: "1:104988349637:web:faf045b77c6786a4e70cac" // YOUR CONFIG
         };
+        // --- END OF PASTE ---
 
-        try {
+        // Initialize Firebase and make functions globally available
+         try {
             let app;
-            // Initialize Firebase only once
             if (!window.firebaseAppInitialized) {
                  app = initializeApp(firebaseConfig);
                  window.firebaseAppInitialized = true;
                  console.log("Firebase initialized on customer_management page.");
             } else {
-                 // If already initialized, maybe get the existing app instance?
-                 // For simplicity, we assume the init script runs only once per page load.
-                 console.log("Firebase already initialized (should ideally not happen if script runs once).");
+                 console.log("Firebase already initialized (customer_management).");
             }
-            // Get Firestore instance and ONLY expose db globally if needed by JS module
-            const db = getFirestore(app || undefined); // Pass app instance if available
-            window.db = db; // Make db available globally for the JS module
-            console.log("Firestore DB instance available globally as window.db");
+            const db = window.db || getFirestore(app || undefined);
+            window.db = db;
 
-            // === Firestore functions are NOT assigned to window anymore ===
-            // window.collection = collection;
-            // window.addDoc = addDoc;
-            // ... etc ...
+            // Make Firestore functions globally available
+            window.collection = collection;
+            window.doc = doc;
+            window.addDoc = addDoc;
+            window.updateDoc = updateDoc;
+            window.deleteDoc = deleteDoc;
+            window.onSnapshot = onSnapshot;
+            window.query = query;
+            window.orderBy = orderBy;
+            window.serverTimestamp = serverTimestamp;
+            window.runTransaction = runTransaction; // Make transaction function available
+            window.getDoc = getDoc; // Needed for transaction
+
+            console.log("Firebase functions available globally for customer_management.");
 
         } catch (e) {
-            console.error("Firebase initialization error:", e);
-            if (!window.db) { // Check if db failed to initialize
-                 console.error("Critical: Firestore DB could not be initialized.");
-                 alert("Database connection error!");
-             }
+            console.error("Firebase initialization error (customer_management):", e);
+            if (!window.db) {
+                alert("Database connection error on customer page!");
+                 const loadingCell = document.getElementById('loadingMessage');
+                 if(loadingCell) loadingCell.textContent = 'Database connection error!';
+            }
         }
     </script>
-    <div class="container">
-        <div class="header">
-            <h2>Customer Management</h2>
-            <div class="btn-group">
-                <a href="new_customer.html"><i class="fas fa-user-plus"></i> New Customer</a>
-            </div>
-        </div>
 
-        <div class="breadcrumbs" style="margin-bottom: 15px; font-size: 14px; color: #555;">
-            <a href="index.html" style="text-decoration: none; color: #007bff;">Home</a> /
-            <span>Customer Management</span>
-            </div>
-
-        <div class="filter-section">
-            <div class="filter-item">
-                <label for="filter-name-input">Filter by Name:</label>
-                <input type="text" id="filter-name-input" placeholder="Enter Name">
-            </div>
-            <div class="filter-item">
-                <label for="filter-city-input">Filter by City:</label>
-                <input type="text" id="filter-city-input" placeholder="Enter City">
-            </div>
-            <div class="filter-item">
-                <label for="filter-mobile-input">Filter by Mobile No:</label>
-                <input type="text" id="filter-mobile-input" placeholder="Enter Mobile No">
-            </div>
-        </div>
-
-        <table id="customer-table">
-            <thead>
-                <tr>
-                    <th>Customer ID</th>
-                    <th>Full Name</th>
-                    <th>Email ID</th>
-                    <th>Billing Address</th>
-                    <th>WhatsApp No</th>
-                    <th>City</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td colspan="7" style="text-align: center;">Loading customers...</td>
-                </tr>
-            </tbody>
-        </table>
-
-        <div id="customer-orders" class="customer-orders" style="display: none; margin-top: 30px;">
-             </div>
-    </div>
-
-    <script src="js/customer_management.js" type="module"></script>
+    <script src="js/customer_management.js" type="module" defer></script>
 
 </body>
 </html>

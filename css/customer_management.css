@@ -1,151 +1,224 @@
+/* General Body Styles */
 body {
-    font-family: 'Segoe UI Emoji', sans-serif;
+    font-family: "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
     margin: 0;
-    background-color: #f8f9fa;
+    padding: 15px;
+    background-color: #f0f2f5;
+    color: #333;
+    line-height: 1.45;
 }
 
+/* Container */
 .container {
-    max-width: 100%;
-    margin: 20px;
     background-color: #fff;
-    padding: 20px;
+    padding: 20px 25px;
     border-radius: 5px;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-}
-
-.header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 20px;
-    padding-bottom: 10px;
-    border-bottom: 1px solid #eee;
-}
-
-.header h2 {
-    margin: 0;
-    font-size: 24px;
-    color: #333;
-}
-
-.header .btn-group {
-    display: flex;
-}
-
-.header .btn-group a,
-.header .btn-group button {
-    background-color: #007bff;
-    color: white;
-    border: none;
-    padding: 8px 12px;
-    border-radius: 5px;
-    cursor: pointer;
-    margin-left: 5px;
-    font-size: 14px;
-    text-decoration: none;
-}
-
-.header .btn-group a i,
-.header .btn-group button i {
-    margin-right: 5px;
-}
-
-.filter-section {
-    display: flex;
-    align-items: center;
-    margin-bottom: 20px;
-}
-
-.filter-item {
-    display: flex;
-    align-items: center;
-    margin-right: 15px;
-}
-
-.filter-item label {
-    margin-right: 5px;
-    font-size: 14px;
-    color: #555;
-    cursor: pointer;
-}
-
-.filter-item input[type="text"],
-.filter-item select {
-    padding: 6px 8px;
-    border-radius: 3px;
-    border: 1px solid #ccc;
-    font-size: 14px;
-}
-
-.filter-button {
-    background-color: #007bff;
-    color: white;
-    border: none;
-    padding: 6px 10px;
-    border-radius: 3px;
-    cursor: pointer;
-    font-size: 14px;
-    margin-left: 10px;
-}
-
-table {
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
     width: 100%;
-    border-collapse: collapse;
-    margin-top: 20px;
+    max-width: 1000px;
+    margin: 20px auto;
+    box-sizing: border-box;
 }
 
-th,
-td {
-    border: 1px solid #ddd;
-    padding: 8px;
-    text-align: left;
-    font-size: 12px; /* फ़ॉन्ट साइज़ थोड़ा छोटा किया ताकि अधिक कॉलम फिट हो सकें */
+/* Header */
+.header {
+    background-color: #17a2b8; /* Customer Management color - teal */
+    color: white;
+    padding: 10px 15px;
+    border-radius: 4px 4px 0 0;
+    margin: -20px -25px 20px -25px;
+    font-size: 1.15em;
+    font-weight: 600;
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
 }
+.header-icon { font-size: 1em; }
+h1 { margin: 0; font-size: 1.2em; }
 
-th {
+/* Filter Bar */
+.filter-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    padding: 15px;
     background-color: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 4px;
+    margin-bottom: 20px;
+    align-items: flex-end;
+}
+
+.filter-group {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    flex-grow: 1;
+    min-width: 150px;
+}
+.filter-group.filter-sort {
+    min-width: 180px;
+}
+.filter-group label {
+    font-size: 0.85em;
+    font-weight: 500;
+    color: #495057;
+    white-space: nowrap;
+}
+.filter-group label i {
+    margin-right: 4px;
+    color: #17a2b8; /* Match header color */
+}
+.filter-group input[type="text"],
+.filter-group select {
+    padding: 6px 9px;
+    border: 1px solid #ced4da;
+    border-radius: 3px;
+    font-size: 0.9em;
+    height: 34px;
+    background-color: #fff;
+    box-sizing: border-box;
+    width: 100%;
+}
+/* Add New Customer button specific styling */
+.filter-group .add-new-button {
+    height: 34px;
+    align-self: flex-end;
+    background-color: #28a745;
+    color: white;
+    flex-grow: 0;
+}
+.filter-group .add-new-button:hover { background-color: #218838; }
+
+
+/* Clear Filters Button */
+.clear-filters-button {
+    background-color: #6c757d;
+    color: white;
+    padding: 6px 12px;
+    height: 34px;
+    align-self: flex-end;
+    flex-grow: 0;
+}
+.clear-filters-button:hover { background-color: #5a6268; }
+
+
+/* General Button Styles (if needed beyond filter bar) */
+.button {
+    padding: 8px 15px;
+    font-size: 0.9em;
+    border: none;
+    border-radius: 3px;
+    cursor: pointer;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    text-decoration: none;
+    transition: background-color 0.2s ease;
+    white-space: nowrap;
+}
+.button:disabled { opacity: 0.6; cursor: not-allowed; }
+.button i { margin-right: 3px; }
+
+
+/* Table Styles */
+.table-container { width: 100%; overflow-x: auto; }
+#customerTable { width: 100%; border-collapse: collapse; margin-top: 0; font-size: 0.9em; }
+#customerTable thead { background-color: #e9ecef; }
+#customerTable th, #customerTable td { border: 1px solid #dee2e6; padding: 10px 12px; text-align: left; vertical-align: middle; white-space: nowrap; }
+#customerTable td:nth-child(2), /* Name */
+#customerTable td:nth-child(5)  /* Address */
+{ white-space: normal; } /* Allow wrapping */
+#customerTable th { font-weight: 600; color: #495057; }
+#customerTable tbody tr:nth-child(even) { background-color: #f8f9fa; }
+#customerTable tbody tr:hover { background-color: #f1f1f1; }
+#customerTable td { color: #212529; }
+#customerTable td:nth-child(1), /* Cust ID */
+#customerTable th:nth-child(1) {
+    text-align: right;
     font-weight: bold;
-    color: #333;
+    width: 80px; /* Fixed width for ID column */
 }
+#loadingMessage, #noCustomersMessage { text-align: center; color: #666; font-style: italic; padding: 20px !important; }
 
-tbody tr:nth-child(even) {
-    background-color: #f9f9f9;
+/* Action Buttons within Table */
+.action-button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 5px;
+    font-size: 1.1em;
+    margin: 0 4px;
+    vertical-align: middle;
 }
+.edit-button { color: #ffc107; /* Yellow/Orange */ }
+.edit-button:hover { color: #e0a800; }
+.delete-button { color: #dc3545; /* Red */ }
+.delete-button:hover { color: #c82333; }
 
-.customer-details {
+
+/* --- Modal Styles (Add/Edit Customer) --- */
+.modal { display: none; position: fixed; z-index: 1050; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.5); align-items: center; justify-content: center; padding: 15px; box-sizing: border-box; }
+.modal.active { display: flex; }
+
+.modal-content { background-color: #fefefe; margin: auto; padding: 25px 30px; border: 1px solid #ccc; width: 90%; max-width: 500px; border-radius: 8px; position: relative; box-shadow: 0 5px 15px rgba(0,0,0,0.2); z-index: 1051; }
+
+.close-btn { color: #aaa; position: absolute; top: 10px; right: 15px; font-size: 28px; font-weight: bold; cursor: pointer; line-height: 1; background: none; border: none; padding: 0; }
+.close-btn:hover, .close-btn:focus { color: black; text-decoration: none; }
+
+.modal h2 { margin-top: 0; margin-bottom: 20px; font-size: 1.3em; color: #333; text-align: center; border-bottom: 1px solid #eee; padding-bottom: 10px; }
+
+/* Form Styles within Modal */
+#customerForm .form-group { margin-bottom: 15px; }
+#customerForm label { display: block; margin-bottom: 5px; font-weight: 600; font-size: 0.9em; color: #495057; }
+#customerForm input[type="text"],
+#customerForm input[type="tel"],
+#customerForm textarea {
+    width: 100%;
+    padding: 8px 10px;
+    border: 1px solid #ced4da;
+    border-radius: 3px;
+    font-size: 0.95em;
+    box-sizing: border-box;
+}
+#customerForm input[readonly] {
+    background-color: #e9ecef;
+    cursor: not-allowed;
+}
+#customerForm textarea { resize: vertical; min-height: 60px; }
+#customerForm .required { color: #dc3545; margin-left: 2px; font-weight: bold; }
+
+
+.modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
     margin-top: 20px;
-    border: 1px solid #ddd;
-    padding: 15px;
-    border-radius: 5px;
-    background-color: #f9f9f9;
+    padding-top: 15px;
+    border-top: 1px solid #eee;
+}
+.save-button { background-color: #28a745; color: white; }
+.save-button:hover { background-color: #218838; }
+.cancel-button { background-color: #6c757d; color: white; }
+.cancel-button:hover { background-color: #5a6268; }
+
+
+/* --- Responsive Adjustments --- */
+@media (max-width: 768px) {
+    .container { max-width: 95%; padding: 15px; }
+    .filter-bar { flex-direction: column; align-items: stretch; }
+    #customerTable { font-size: 0.85em; }
+    #customerTable th, #customerTable td { padding: 8px; white-space: normal; }
+    #customerTable td:nth-child(1), #customerTable th:nth-child(1) { text-align: left; width: auto; } /* Adjust ID column alignment */
+
+    .button { font-size: 0.85em; padding: 7px 12px; }
+    .modal-content { width: 95%; padding: 20px; }
 }
 
-.customer-details h3 {
-    margin-top: 0;
-    color: #333;
+@media (max-width: 480px) {
+    .modal-actions { flex-direction: column; }
+    .modal-actions .button { width: 100%; justify-content: center; }
 }
-
-.customer-orders {
-    margin-top: 20px;
-    border: 1px solid #ddd;
-    padding: 15px;
-    border-radius: 5px;
-    background-color: #f9f9f9;
-}
-
-.customer-orders h3 {
-    margin-top: 0;
-    color: #333;
-}
-
-#orders-for-customer th,
-#orders-for-customer td {
-    border: 1px solid #ddd;
-    padding: 8px;
-    text-align: left;
-    font-size: 14px;
-}
-
-#orders-for-customer th {
-    background-color: #eee;
-    font-weight: bold;
