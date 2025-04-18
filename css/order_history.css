@@ -1,7 +1,6 @@
-[Filename: order_history.css]
-/* General Body Styles (Your Original) */
+/* General Body Styles */
 body {
-    font-family: Arial, sans-serif; /* <<< Your original font setting */
+    font-family: Arial, sans-serif;
     margin: 0;
     padding: 20px;
     background-color: #f4f7f6;
@@ -9,7 +8,7 @@ body {
     line-height: 1.6;
 }
 
-/* Container (Your Original) */
+/* Container */
 .container {
     max-width: 1200px;
     margin: 0 auto;
@@ -19,7 +18,7 @@ body {
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
 }
 
-/* Header (Your Original) */
+/* Header */
 .header {
     display: flex;
     justify-content: space-between;
@@ -36,31 +35,31 @@ body {
 
 .header-buttons {
     display: flex;
-    gap: 10px;
+    gap: 10px; /* Buttons के बीच गैप */
 }
 
-/* General Button Styles (Your Original) */
+/* General Button Styles */
 .button {
     padding: 8px 15px;
     border: none;
     border-radius: 4px;
     cursor: pointer;
     font-size: 14px;
-    text-decoration: none;
+    text-decoration: none; /* लिंक के लिए */
     color: white;
-    display: inline-flex;
+    display: inline-flex; /* आइकन और टेक्स्ट को अलाइन करने के लिए */
     align-items: center;
-    gap: 5px;
+    gap: 5px; /* आइकन और टेक्स्ट के बीच गैप */
     transition: background-color 0.2s ease;
 }
 .button:hover {
     opacity: 0.9;
 }
-.button i {
+.button i { /* आइकन स्टाइल */
     font-size: 1em;
 }
 
-/* Specific Header Buttons (Your Original) */
+/* Specific Header Buttons */
 .new-order-btn { background-color: #28a745; }
 .new-order-btn:hover { background-color: #218838; }
 .new-customer-btn { background-color: #17a2b8; }
@@ -68,7 +67,7 @@ body {
 .customers-btn { background-color: #ffc107; color: #333; }
 .customers-btn:hover { background-color: #e0a800; }
 
-/* Breadcrumbs (Your Original) */
+/* Breadcrumbs */
 .breadcrumbs {
     font-size: 14px;
     color: #666;
@@ -82,11 +81,11 @@ body {
     text-decoration: underline;
 }
 
-/* Filter Controls (Your Original) */
+/* Filter Controls */
 .filter-controls {
     display: flex;
-    flex-wrap: wrap;
-    gap: 15px;
+    flex-wrap: wrap; /* छोटी स्क्रीन पर नीचे आ जाएं */
+    gap: 15px; /* फिल्टर आइटम्स के बीच गैप */
     margin-bottom: 20px;
     padding: 15px;
     background-color: #f8f9fa;
@@ -110,23 +109,23 @@ body {
     font-size: 14px;
 }
 
-/* Table Styles (Your Original) */
+/* Table Styles */
 .table-container {
-    overflow-x: auto;
+    overflow-x: auto; /* यदि टेबल बहुत चौड़ी हो */
 }
 #order-table {
     width: 100%;
-    border-collapse: collapse;
+    border-collapse: collapse; /* बॉर्डर मिलाएं */
     margin-bottom: 20px;
 }
 #order-table th,
 #order-table td {
     border: 1px solid #ddd;
-    padding: 10px 12px;
+    padding: 10px 12px; /* पैडिंग बढ़ाएं */
     text-align: left;
-    white-space: nowrap;
+    white-space: nowrap; /* टेक्स्ट को एक लाइन में रखें */
     overflow: hidden;
-    text-overflow: ellipsis;
+    text-overflow: ellipsis; /* लंबा टेक्स्ट होने पर ... दिखाएं */
 }
 #order-table th {
     background-color: #e9ecef;
@@ -134,26 +133,25 @@ body {
     color: #495057;
 }
 #order-table tbody tr:nth-child(even) {
-    background-color: #f9f9f9;
+    background-color: #f9f9f9; /* वैकल्पिक रो कलर */
 }
 #order-table tbody tr:hover {
-    background-color: #f1f1f1;
+    background-color: #f1f1f1; /* होवर इफेक्ट */
 }
 .loading-message,
-.no-results-message {
+.no-results-message { /* क्लास जोड़ा गया */
     text-align: center;
     color: #777;
     font-style: italic;
 }
 
-/* Table Action/Wtsp Cell Styles (Your Original) */
+/* Table Action/Wtsp Cell Styles */
 #order-table td.actions,
-#order-table td.send-wtsp-cell {
+#order-table td.send-wtsp-cell { /* क्लास जोड़ा गया */
     text-align: center;
     white-space: nowrap;
 }
-/* This class is used for the "Manage Status" button */
-.edit-details-button {
+.edit-details-button { /* क्लास बदला गया */
     background-color: #007bff;
     color: white;
     border: none;
@@ -170,13 +168,13 @@ body {
     color: #25d366;
     cursor: pointer;
     vertical-align: middle;
-    text-decoration: none;
+    text-decoration: none; /* लिंक का अंडरलाइन हटाएं */
 }
 .whatsapp-icon:hover {
     opacity: 0.8;
 }
 
-/* Pagination (Your Original) */
+/* Pagination */
 .pagination-controls {
     display: flex;
     justify-content: flex-end;
@@ -200,36 +198,34 @@ body {
     color: #555;
 }
 
-/* Modal Styles (Your Original) */
+/* Modal Styles */
 .modal-overlay {
-    display: none;
-    position: fixed;
+    display: none; /* डिफ़ॉल्ट रूप से छिपा हुआ */
+    position: fixed; /* स्क्रीन पर फिक्स */
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(0, 0, 0, 0.6);
-    z-index: 1000;
+    background-color: rgba(0, 0, 0, 0.6); /* पृष्ठभूमि को धुंधला करें */
+    z-index: 1000; /* सबसे ऊपर दिखाएं */
     justify-content: center;
     align-items: center;
-    padding: 15px;
-    box-sizing: border-box;
 }
+/* जब मोडाल दिखाना हो तो इस क्लास को JS से जोड़ें */
 .modal-overlay.active {
     display: flex;
 }
+
 .modal-content {
     background-color: #fff;
     padding: 25px 30px;
     border-radius: 8px;
     box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
     width: 90%;
-    max-width: 600px;
+    max-width: 600px; /* मोडाल की अधिकतम चौड़ाई */
     position: relative;
-    max-height: 85vh;
-    overflow-y: auto;
-    display: flex;
-    flex-direction: column;
+    max-height: 80vh; /* ऊंचाई सीमित करें */
+    overflow-y: auto; /* यदि कंटेंट लंबा हो तो स्क्रॉल करें */
 }
 .modal-close-btn {
     position: absolute;
@@ -251,12 +247,6 @@ body {
     color: #0056b3;
     border-bottom: 1px solid #eee;
     padding-bottom: 10px;
-    flex-shrink: 0;
-}
-.modal-body {
-    overflow-y: auto;
-    margin-bottom: 15px;
-    flex-grow: 1;
 }
 .modal-body hr {
     border: none;
@@ -270,43 +260,27 @@ body {
     list-style: disc;
     margin-left: 20px;
     padding-left: 10px;
-    margin-top: 5px;
 }
 .modal-actions {
     display: flex;
     justify-content: flex-end;
-    flex-wrap: wrap;
     gap: 10px;
-    margin-top: 15px;
+    margin-top: 25px;
     padding-top: 15px;
     border-top: 1px solid #eee;
-    flex-shrink: 0;
-}
-.modal-actions .button {
-    /* Inherits base button styles */
-}
-.save-button {
-    background-color: #28a745;
-}
-.save-button:hover {
-    background-color: #218838;
 }
 .delete-button { background-color: #dc3545; }
 .delete-button:hover { background-color: #c82333; }
-.edit-button { background-color: #007bff; } /* For Edit Full Order */
+.edit-button { background-color: #007bff; } /* पहले से स्टाइल है */
 .edit-button:hover { background-color: #0056b3; }
 
-
-/* Responsive Adjustments (Your Original) */
+/* Responsive Adjustments */
 @media (max-width: 768px) {
-    body { padding: 10px; }
-    .container { padding: 15px; }
     .header {
         flex-direction: column;
         align-items: flex-start;
         gap: 10px;
     }
-     .header-buttons { width: 100%; justify-content: space-around;}
     .filter-controls {
         flex-direction: column;
         align-items: stretch;
@@ -315,123 +289,20 @@ body {
     .filter-item input[type="date"],
     .filter-item select {
         width: 100%;
-        box-sizing: border-box;
+        box-sizing: border-box; /* पैडिंग और बॉर्डर को चौड़ाई में शामिल करें */
     }
-     #order-table th,
-     #order-table td { padding: 8px 6px; }
-
     .pagination-controls {
         justify-content: center;
-        margin-top: 15px;
     }
     .modal-content {
         width: 95%;
         padding: 20px;
-        max-height: 90vh;
     }
     .modal-actions {
-        justify-content: center;
+        flex-direction: column;
+        gap: 10px;
     }
-     .modal-actions .button {
-        flex-grow: 1;
-        min-width: 120px;
-        justify-content: center;
+     .modal-actions button {
+        width: 100%; /* बटन पूरी चौड़ाई लें */
     }
 }
-@media (max-width: 480px) {
-     .header h2 { font-size: 1.2em; }
-     .header-buttons .button { font-size: 13px; padding: 6px 10px; }
-     #order-table th,
-     #order-table td { font-size: 13px; }
-     .edit-details-button { font-size: 11px; padding: 4px 8px;}
-     .whatsapp-icon { font-size: 18px;}
-     .pagination-controls button, .pagination-controls span { font-size: 13px;}
-     .modal-content h2 { font-size: 1.1em;}
-     .modal-actions .button { font-size: 14px;}
-
-}
-
-
-/* === ADDED CSS FOR WHATSAPP POPUP === */
-/* Styles for #whatsapp-reminder-popup-history */
-#whatsapp-reminder-popup-history.popup-overlay {
-    display: none; /* Hidden by default */
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0,0,0,.6); /* Dim background */
-    z-index: 1050; /* Ensure it's on top */
-    justify-content: center;
-    align-items: center;
-    padding: 15px;
-    box-sizing: border-box;
-}
-#whatsapp-reminder-popup-history.popup-overlay.active {
-    display: flex; /* Show when active */
-}
-#whatsapp-reminder-popup-history .popup-content {
-    background-color:#fff;
-    padding:25px 30px;
-    border-radius:8px;
-    box-shadow:0 4px 15px rgba(0,0,0,.2);
-    text-align:center;
-    position:relative;
-    max-width:450px; /* Limit width */
-    width:100%;
-}
-#whatsapp-reminder-popup-history .popup-close {
-    position:absolute;
-    top:8px;
-    right:12px;
-    font-size:26px;
-    color:#aaa;
-    background:none;
-    border:none;
-    cursor:pointer;
-    line-height:1;
-}
-#whatsapp-reminder-popup-history .popup-close:hover {
-    color:#333;
-}
-#whatsapp-reminder-popup-history .popup-content h4 {
-    margin-top:0;
-    margin-bottom:10px;
-    color:#28a745; /* Green title */
-    font-size:1.3em;
-}
-#whatsapp-reminder-popup-history .popup-content p {
-    margin-bottom:15px;
-    color:#555;
-}
-#whatsapp-reminder-popup-history .message-preview {
-    margin-top:15px;
-    margin-bottom:20px;
-    font-size:.95em;
-    background-color:#e9f5ff; /* Light blue background */
-    padding:12px;
-    border-radius:5px;
-    text-align:left;
-    border:1px solid #bde0ff;
-    white-space:pre-wrap; /* Preserve line breaks */
-    word-wrap:break-word; /* Wrap long words */
-    max-height: 150px; /* Limit height and add scroll if needed */
-    overflow-y: auto;
-}
-#whatsapp-reminder-popup-history .whatsapp-send-btn {
-    background-color:#25d366; /* WhatsApp green */
-    color:#fff;
-    text-decoration:none;
-    padding:10px 20px;
-    border-radius:5px;
-    display:inline-flex;
-    align-items:center;
-    gap:8px;
-    font-weight:700;
-    transition:background-color .2s ease;
-}
-#whatsapp-reminder-popup-history .whatsapp-send-btn:hover {
-    background-color:#1ebe57; /* Darker green on hover */
-}
-/* === END ADDED CSS === */
