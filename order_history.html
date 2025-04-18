@@ -3,22 +3,24 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Order History & Management</title> <link rel="stylesheet" href="css/order_history.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" integrity="sha512-9usAa10IRO0HhonpyAIVpjrylPvoDwiPUiKdWk5t3PyolY1cOd4DSE0Ga+ri4AuTroPR5aQvXU9xC6qOPnzFeg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <title>Order History & Management</title>
+    <link rel="stylesheet" href="css/order_history.css"> <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" integrity="sha512-9usAa10IRO0HhonpyAIVpjrylPvoDwiPUiKdWk5t3PyolY1cOd4DSE0Ga+ri4AuTroPR5aQvXU9xC6qOPnzFeg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
 </head>
 <body>
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
         import { getFirestore, collection, addDoc, doc, updateDoc, deleteDoc, onSnapshot, getDocs, query, where, getDoc, orderBy, limit, startAfter, endBefore, getCountFromServer } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
+        // === अपना Firebase कॉन्फ़िगरेशन यहाँ डालें ===
         const firebaseConfig = {
-          apiKey: "AIzaSyBQj5rQmE77kKKGYixP8y3Hcimz8tiAqzQ",
+          apiKey: "AIzaSyBQj5rQmE77kKKGYixP8y3Hcimz8tiAqzQ", // सुरक्षा नोट!
           authDomain: "madhav-multyprint.firebaseapp.com",
           projectId: "madhav-multyprint",
           storageBucket: "madhav-multyprint.firebasestorage.app",
           messagingSenderId: "104988349637",
           appId: "1:104988349637:web:faf045b77c6786a4e70cac"
         };
+        // ========================================
 
         try {
             let app;
@@ -35,8 +37,8 @@
             window.onSnapshot = onSnapshot; window.getDocs = getDocs; window.query = query;
             window.where = where; window.getDoc = getDoc; window.orderBy = orderBy;
             window.limit = limit; window.startAfter = startAfter; window.endBefore = endBefore;
-            window.getCountFromServer = getCountFromServer; // Pagination के लिए
-            console.log("Firebase functions (incl. pagination/query) are available globally.");
+            window.getCountFromServer = getCountFromServer;
+            console.log("Firebase functions are available globally.");
 
         } catch (e) {
             console.error("Firebase initialization error:", e);
@@ -46,22 +48,23 @@
 
     <div class="container">
         <div class="header">
-            <h2>Order History & Management</h2> <div class="btn-group">
+            <h2>Order History & Management</h2>
+             <div class="btn-group">
                  <a href="new_order.html"><button><i class="fas fa-plus"></i> New Order</button></a>
                  <a href="new_customer.html"><button><i class="fas fa-user-plus"></i> New Customer</button></a>
-             </div>
+                 <a href="customer_management.html"><button style="background-color:#ffc107; color:#333;"><i class="fas fa-users"></i> Customers</button></a> </div>
         </div>
 
          <div class="breadcrumbs" style="margin-bottom: 15px; font-size: 14px; color: #555;">
             <a href="index.html" style="text-decoration: none; color: #007bff;">Home</a> /
             <span>Order Management</span>
-        </div>
+             </div>
 
         <div class="filter-section">
             <div class="entries-filter">
                 <label for="show-entries">Show</label>
                 <select id="show-entries">
-                    <option value="10">10</option>
+                    <option value="10" selected>10</option>
                     <option value="25">25</option>
                     <option value="50">50</option>
                     <option value="100">100</option>
@@ -69,9 +72,7 @@
                 <label>entries</label>
             </div>
             <div class="search-filter">
-                <label for="search-order">Search:</label>
-                <input type="text" id="search-order" placeholder="Order ID / Customer Name">
-            </div>
+                <label for="search-input">Search:</label> <input type="text" id="search-input" placeholder="Order ID / Customer Name"> </div>
             <div class="date-filter">
                 <label for="filter-date">Order Date:</label>
                 <input type="date" id="filter-date">
@@ -88,10 +89,8 @@
                     <option value="Printing">Printing</option>
                     <option value="Delivered">Delivered</option>
                     <option value="Completed">Completed</option>
-                    </select>
+                </select>
             </div>
-            <div class="filter-button-container">
-                </div>
         </div>
 
         <table id="order-table">
@@ -120,13 +119,14 @@
 
         <div id="editModal" class="modal">
              <div class="modal-content">
-                <span class="close" id="modalCloseBtn" style="cursor:pointer; font-size: 25px;">&times;</span>
-                <h2>Order Details</h2> <div id="modal-body">
+                <span class="close" id="modalCloseBtn" style="cursor:pointer; font-size: 25px;" title="Close">&times;</span>
+                <h2>Order Details</h2>
+                <div id="modal-body">
                      <p>Loading details...</p>
                 </div>
                 <div class="modal-buttons">
-                     <button class="delete-button" id="modalDeleteBtn">Delete Order</button>
-                </div>
+                     <button class="delete-button" id="modalDeleteBtn" disabled>Delete Order</button>
+                     <button type="button" id="modalGoToEditBtn" style="background-color:#007bff;">Edit Full Order</button> </div>
              </div>
         </div>
     </div>

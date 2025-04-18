@@ -7,16 +7,16 @@ const { db, collection, addDoc, doc, getDoc, updateDoc, getDocs, query, where } 
 const orderForm = document.getElementById('newOrderForm');
 const saveButton = document.getElementById('saveOrderBtn');
 const formHeader = document.getElementById('formHeader');
-const hiddenEditOrderIdInput = document.getElementById('editOrderId'); // Hidden input for Firestore Doc ID
-const displayOrderIdInput = document.getElementById('display_order_id'); // Input to show custom order ID
+const hiddenEditOrderIdInput = document.getElementById('editOrderId');
+const displayOrderIdInput = document.getElementById('display_order_id');
+const productDetailsContainer = document.getElementById('product-details-container');
 
 // --- हेल्पर फंक्शन्स ---
 
 // प्रोडक्ट रो जोड़ने का फंक्शन
 window.addProductRow = function() {
     let productRowCount = document.querySelectorAll('.product-detail-group').length + 1;
-    const container = document.getElementById('product-details-container');
-    if (!container) return;
+    if (!productDetailsContainer) return;
     const newRow = document.createElement('div');
     newRow.classList.add('product-detail-group');
     const newProductId = `product_name_${Date.now()}_${productRowCount}`;
@@ -28,7 +28,7 @@ window.addProductRow = function() {
         <input type="number" id="${newQuantityId}" name="quantity[]" placeholder="Enter Quantity">
         <button type="button" class="remove-product-button" onclick="removeProductRow(this)">Remove</button>
     `;
-    container.appendChild(newRow);
+    productDetailsContainer.appendChild(newRow);
 }
 
 // प्रोडक्ट रो हटाने का फंक्शन
@@ -53,7 +53,7 @@ orderStatusCheckboxes.forEach((checkbox) => {
 
 // --- एडिट मोड के लिए डेटा लोड करना ---
 async function loadOrderForEdit(orderDocId) {
-     if (!db || !doc || !getDoc) { alert("Database functions not available."); return; }
+     if (!db || !doc || !getDoc || !orderForm) { alert("Core components missing. Cannot load data."); return; }
      console.log(`Loading order data for edit. ID: ${orderDocId}`);
      try {
         const orderRef = doc(db, "orders", orderDocId);
@@ -68,32 +68,34 @@ async function loadOrderForEdit(orderDocId) {
             orderForm.whatsapp_no.value = orderData.customerDetails?.whatsappNo || '';
             orderForm.contact_no.value = orderData.customerDetails?.contactNo || '';
 
-            orderForm.display_order_id.value = orderData.orderId || orderDocId; // कस्टम ID या Firestore ID दिखाएं
+            orderForm.display_order_id.value = orderData.orderId || orderDocId; // कस्टम ID दिखाएं
             orderForm.order_date.value = orderData.orderDate || '';
             orderForm.delivery_date.value = orderData.deliveryDate || '';
             orderForm.remarks.value = orderData.remarks || '';
 
             // Urgent रेडियो बटन
-            const urgentRadio = orderForm.querySelector(`input[name="urgent"][value="${orderData.urgent || 'No'}"]`);
-            if (urgentRadio) urgentRadio.checked = true;
+            const urgentVal = orderData.urgent || 'No';
+            orderForm.querySelector(`input[name="urgent"][value="${urgentVal}"]`)?.setAttribute('checked', 'checked');
+
 
             // Status चेकबॉक्स
-            orderStatusCheckboxes.forEach(cb => cb.checked = false); // पहले सब अनचेक करें
+            orderStatusCheckboxes.forEach(cb => cb.checked = false);
             if (orderData.status) {
                  const statusCheckbox = orderForm.querySelector(`input[name="order_status"][value="${orderData.status}"]`);
                  if (statusCheckbox) statusCheckbox.checked = true;
+            } else { // डिफ़ॉल्ट रूप से Order Received चेक करें अगर कोई स्टेटस नहीं है
+                 orderForm.querySelector('input[name="order_status"][value="Order Received"]')?.setAttribute('checked', 'checked');
             }
 
+
             // प्रोडक्ट डिटेल्स भरें
-            const productContainer = document.getElementById('product-details-container');
-            productContainer.innerHTML = ''; // पुरानी रो हटाएं
+            productDetailsContainer.innerHTML = ''; // पुरानी रो हटाएं
             if (orderData.products && orderData.products.length > 0) {
                 orderData.products.forEach((product, index) => {
-                     productRowCount = index + 1; // rowCount अपडेट करें
                      const newRow = document.createElement('div');
                      newRow.classList.add('product-detail-group');
-                     const newProductId = `product_name_${Date.now()}_${productRowCount}`;
-                     const newQuantityId = `quantity_${Date.now()}_${productRowCount}`;
+                     const newProductId = `product_name_${index}`; // सरल ID
+                     const newQuantityId = `quantity_${index}`;
                      newRow.innerHTML = `
                         <label for="${newProductId}">Product Name:</label>
                         <input type="text" id="${newProductId}" name="product_name[]" placeholder="Enter Product Name" autocomplete="off" value="${product.name || ''}">
@@ -101,17 +103,11 @@ async function loadOrderForEdit(orderDocId) {
                         <input type="number" id="${newQuantityId}" name="quantity[]" placeholder="Enter Quantity" value="${product.quantity || ''}">
                         <button type="button" class="remove-product-button" onclick="removeProductRow(this)">Remove</button>
                      `;
-                     container.appendChild(newRow);
+                     productDetailsContainer.appendChild(newRow);
                 });
-            } else {
-                // अगर कोई प्रोडक्ट नहीं है, तो एक खाली रो जोड़ें
-                 addProductRow(); // यह पहली खाली रो जोड़ देगा
             }
-             // Ensure at least one empty row if container is empty after loading
-             if (productContainer.children.length === 0) {
-                  addProductRow();
-             }
-
+             // Add बटन के साथ एक अतिरिक्त खाली रो जोड़ें
+             addProductRow();
 
         } else {
             console.error("Order document not found for editing!");
@@ -131,9 +127,9 @@ async function handleFormSubmit(event) {
     event.preventDefault();
     if (saveButton) { saveButton.disabled = true; saveButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...'; }
 
-    // 1. फॉर्म डेटा और एडिट ID प्राप्त करें
+    // 1. फॉर्म डेटा प्राप्त करें
     const formData = new FormData(orderForm);
-    const orderDocIdToEdit = formData.get('editOrderId'); // Firestore Doc ID for editing
+    const orderDocIdToEdit = formData.get('editOrderId'); // Firestore Doc ID
     const fullName = formData.get('full_name')?.trim() || '';
     const whatsappNo = formData.get('whatsapp_no')?.trim() || '';
 
@@ -149,16 +145,15 @@ async function handleFormSubmit(event) {
     const productNames = formData.getAll('product_name[]');
     const quantities = formData.getAll('quantity[]');
     productNames.forEach((name, index) => {
-        if (name.trim() !== '') {
+        if (name.trim() !== '') { // केवल वही प्रोडक्ट जोड़ें जिनका नाम खाली न हो
             products.push({ name: name.trim(), quantity: quantities[index] || '0' });
         }
     });
-     if (products.length === 0 && !orderDocIdToEdit) { // Add मोड में कम से कम एक प्रोडक्ट ज़रूरी है
-         alert('Please add at least one product.');
-         if (saveButton) { saveButton.disabled = false; saveButton.innerHTML = '<i class="fas fa-save"></i> Save Order'; }
+     if (products.length === 0) { // कम से कम एक प्रोडक्ट ज़रूरी है
+         alert('Please add at least one product with a name.');
+         if (saveButton) { saveButton.disabled = false; saveButton.innerHTML = orderDocIdToEdit ? '<i class="fas fa-sync-alt"></i> Update' : '<i class="fas fa-save"></i> Save Order'; }
          return;
      }
-
 
     // 3. DB जांचें
     if (!db) {
@@ -167,15 +162,15 @@ async function handleFormSubmit(event) {
         return;
     }
 
-    let customerIdToUse; // कस्टमर का Firestore Doc ID
+    let customerIdToUse;
 
     try {
-        // 4. कस्टमर को ढूंढें या बनाएं (Add/Edit दोनों मोड में)
+        // 4. कस्टमर ढूंढें या बनाएं
         const customersRef = collection(db, "customers");
         const q = query(customersRef, where("whatsappNo", "==", whatsappNo));
         const querySnapshot = await getDocs(q);
 
-        const customerData = { /* ... पूरा कस्टमर डेटा फॉर्म से ... */
+        const customerDataForSave = { /* ... कस्टमर का पूरा डेटा फॉर्म से ... */
             fullName: fullName, billingAddress: formData.get('address')?.trim() || '',
             city: formData.get('city')?.trim() || '', state: formData.get('state')?.trim() || '',
             pinCode: formData.get('pin_code')?.trim() || '', country: 'India',
@@ -188,43 +183,42 @@ async function handleFormSubmit(event) {
         if (querySnapshot.empty) {
             // नया कस्टमर
             console.log("Adding new customer from order form.");
-            customerData.createdAt = new Date();
-            customerData.displayCustomerId = Date.now().toString(); // डिस्प्ले ID
-            const customerDocRef = await addDoc(customersRef, customerData);
+            customerDataForSave.createdAt = new Date();
+            customerDataForSave.displayCustomerId = Date.now().toString();
+            const customerDocRef = await addDoc(customersRef, customerDataForSave);
             customerIdToUse = customerDocRef.id;
         } else {
             // मौजूदा कस्टमर
             customerIdToUse = querySnapshot.docs[0].id;
             console.log("Found existing customer:", customerIdToUse);
-            // वैकल्पिक: यहाँ मौजूदा कस्टमर को अपडेट भी कर सकते हैं
-            // const customerRef = doc(db, "customers", customerIdToUse);
-            // await updateDoc(customerRef, { ...customerData, updatedAt: new Date() });
+            // मौजूदा कस्टमर को अपडेट करें (अगर डिटेल्स बदली हैं)
+            const customerRef = doc(db, "customers", customerIdToUse);
+            customerDataForSave.updatedAt = new Date(); // अपडेट समय जोड़ें
+            await updateDoc(customerRef, customerDataForSave);
+            console.log("Existing customer details updated (if changed).");
         }
 
         // 5. ऑर्डर डेटा पेलोड बनाएं
-         const orderDataPayload = {
-            customerDetails: { fullName: fullName, address: customerData.billingAddress, whatsappNo: whatsappNo, contactNo: customerData.contactNo },
+        const orderDataPayload = {
+            customerDetails: { fullName: fullName, address: customerDataForSave.billingAddress, whatsappNo: whatsappNo, contactNo: customerDataForSave.contactNo },
             customerId: customerIdToUse,
             orderDate: formData.get('order_date') || '',
             deliveryDate: formData.get('delivery_date') || '',
             urgent: formData.get('urgent') || 'No',
             remarks: formData.get('remarks')?.trim() || '',
-            products: products,
-            status: formData.get('order_status') || 'Order Received', // डिफ़ॉल्ट स्टेटस
-            // createdAt/updatedAt नीचे जोड़ा जाएगा
-            // orderId (कस्टम वाला) नीचे जोड़ा जाएगा (ऐड मोड में)
+            products: products, // अपडेटेड प्रोडक्ट लिस्ट
+            status: formData.get('order_status') || 'Order Received',
         };
-
 
         if (orderDocIdToEdit) {
             // --- अपडेट मोड ---
             console.log("Updating order with Firestore ID:", orderDocIdToEdit);
             orderDataPayload.updatedAt = new Date();
-            // कस्टम orderId को अपडेट न करें, केवल अन्य फ़ील्ड्स करें
+            // कस्टम orderId को अपडेट करते समय न बदलें
             const orderRef = doc(db, "orders", orderDocIdToEdit);
             await updateDoc(orderRef, orderDataPayload);
             alert('Order updated successfully!');
-            window.location.href = 'order_history.html'; // हिस्ट्री पेज पर वापस
+            window.location.href = 'order_history.html';
 
         } else {
             // --- ऐड मोड ---
@@ -234,17 +228,15 @@ async function handleFormSubmit(event) {
             const orderDocRef = await addDoc(collection(db, "orders"), orderDataPayload);
             console.log("New order added with Firestore ID:", orderDocRef.id);
             alert('Order saved successfully!');
-            orderForm.reset(); // फॉर्म रीसेट
-            // तारीख रीसेट करें
+            orderForm.reset();
+            // तारीख और प्रोडक्ट रो रीसेट करें
             const orderDateInput = document.getElementById('order_date');
             if(orderDateInput) orderDateInput.value = new Date().toISOString().split('T')[0];
-            // प्रोडक्ट रो रीसेट करें
-            const productContainer = document.getElementById('product-details-container');
-             if(productContainer){
-                 while(productContainer.children.length > 1){ productContainer.removeChild(productContainer.lastChild); }
-             }
-
-            // आप चाहें तो यहाँ व्हाट्सएप रिमाइंडर पॉपअप दिखा सकते हैं (भविष्य में)
+            productDetailsContainer.innerHTML = ''; // सभी रो हटाएं
+            addProductRow(); // पहली खाली रो जोड़ें
+             // डिफ़ॉल्ट स्टेटस को चेक करें
+             const defaultStatusCheckbox = orderForm.querySelector('input[name="order_status"][value="Order Received"]');
+             if(defaultStatusCheckbox) defaultStatusCheckbox.checked = true;
         }
 
     } catch (error) {
@@ -253,10 +245,52 @@ async function handleFormSubmit(event) {
     } finally {
         if (saveButton) {
              saveButton.disabled = false;
-             // मोड के अनुसार बटन टेक्स्ट सही करें
-              saveButton.innerHTML = orderDocIdToEdit ? '<i class="fas fa-sync-alt"></i> Update' : '<i class="fas fa-save"></i> Save Order';
+             saveButton.innerHTML = orderDocIdToEdit ? '<i class="fas fa-sync-alt"></i> Update' : '<i class="fas fa-save"></i> Save Order';
         }
     }
 }
+
+// --- DOMContentLoaded Listener ---
+document.addEventListener('DOMContentLoaded', () => {
+    // Firebase लोड होने का इंतज़ार करें
+    const checkDbInterval = setInterval(() => {
+        if (window.db) {
+            clearInterval(checkDbInterval);
+            console.log("DB ready for new_order.js");
+
+            // एडिट मोड चेक करें
+            const urlParams = new URLSearchParams(window.location.search);
+            const orderIdToEdit = urlParams.get('editOrderId'); // Parameter name for order edit
+
+            if (orderIdToEdit) {
+                console.log("Edit mode detected. Order Firestore ID:", orderIdToEdit);
+                hiddenEditOrderIdInput.value = orderIdToEdit; // हिडन फ़ील्ड में Firestore ID स्टोर करें
+                loadOrderForEdit(orderIdToEdit); // डेटा लोड करें
+                if(formHeader) formHeader.textContent = "Edit Order";
+                if(saveButton) saveButton.innerHTML = '<i class="fas fa-sync-alt"></i> Update';
+            } else {
+                console.log("Add mode detected.");
+                if(formHeader) formHeader.textContent = "New Order";
+                if(saveButton) saveButton.innerHTML = '<i class="fas fa-save"></i> Save Order';
+                 // Add mode में पहली प्रोडक्ट रो सुनिश्चित करें
+                 if (productDetailsContainer && productDetailsContainer.children.length === 0) {
+                     addProductRow();
+                 }
+                 // Add mode में डिफ़ॉल्ट तारीख और स्टेटस सेट करें
+                 const orderDateInput = document.getElementById('order_date');
+                 if(orderDateInput && !orderDateInput.value) orderDateInput.value = new Date().toISOString().split('T')[0];
+                 const defaultStatusCheckbox = orderForm?.querySelector('input[name="order_status"][value="Order Received"]');
+                 if(defaultStatusCheckbox) defaultStatusCheckbox.checked = true;
+
+            }
+
+            // फॉर्म सबमिशन लिसनर लगाएं
+            if (orderForm) {
+                orderForm.addEventListener('submit', handleFormSubmit);
+            } else { console.error("Order Form (#newOrderForm) not found!"); }
+
+        } else { console.log("Waiting for DB initialization in new_order.js..."); }
+    }, 100);
+});
 
 console.log("new_order.js loaded.");

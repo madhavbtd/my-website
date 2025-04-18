@@ -7,13 +7,12 @@
     <title>New/Edit Order</title>
     <link rel="stylesheet" href="css/new_order.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" integrity="sha512-9usAa10IRO0HhonpyAIVpjrylPvoDwiPUiKdWk5t3PyolY1cOd4DSE0Ga+ri4AuTroPR5aQvXU9xC6qOPnzFeg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
-
 </head>
 
 <body>
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-        import { getFirestore, collection, addDoc, doc, updateDoc, deleteDoc, onSnapshot, getDocs, query, where, getDoc, orderBy, limit, startAfter, endBefore, getCountFromServer } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js"; // सभी ज़रूरी फंक्शन
+        import { getFirestore, collection, addDoc, doc, updateDoc, deleteDoc, onSnapshot, getDocs, query, where, getDoc, orderBy, limit, startAfter, endBefore, getCountFromServer } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
         const firebaseConfig = { /* ... आपका कॉन्फ़िगरेशन ... */
           apiKey: "AIzaSyBQj5rQmE77kKKGYixP8y3Hcimz8tiAqzQ",
@@ -46,7 +45,8 @@
     </script>
 
     <div class="container">
-        <div class="header" id="formHeader"> New Order
+        <div class="header" id="formHeader">
+            New Order
         </div>
 
         <form id="newOrderForm">
@@ -72,7 +72,9 @@
 
             <div class="section-title">2. Order Details</div>
             <div class="form-group">
-                <label for="display_order_id">Order ID:</label> <input type="text" id="display_order_id" name="display_order_id" placeholder="Auto-generated" readonly> </div>
+                <label for="display_order_id">Order ID:</label>
+                <input type="text" id="display_order_id" name="display_order_id" placeholder="Auto-generated" readonly>
+            </div>
             <div class="form-group">
                 <label for="order_date">Order Date:</label>
                 <input type="date" id="order_date" name="order_date" required>
@@ -103,7 +105,7 @@
                     <input type="number" id="quantity_1" name="quantity[]" placeholder="Enter Quantity">
                     <button type="button" class="add-product-button" onclick="addProductRow()">Add</button>
                 </div>
-            </div>
+                 </div>
 
             <div class="section-title">5. Reminder & Priority</div>
             <div class="form-group">
@@ -120,10 +122,11 @@
 
             <div class="button-container">
                 <button type="button" class="send-button" disabled title="Functionality not implemented">Send</button>
-                <button type="submit" class="save-button" id="saveOrderBtn">Save Order</button>
+                <button type="submit" class="save-button" id="saveOrderBtn"><i class="fas fa-save"></i> Save Order</button>
                  <button type="button" onclick="window.location.href='order_history.html'" style="background-color:#6c757d; margin-left: 10px;">Cancel</button>
             </div>
-        </form> </div>
+        </form>
+    </div>
 
     <script src="js/new_order.js" type="module"></script>
 
