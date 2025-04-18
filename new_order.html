@@ -11,12 +11,31 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
         import { getFirestore, collection, addDoc, doc, updateDoc, deleteDoc, onSnapshot, getDocs, query, where, getDoc, orderBy, limit } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-        const firebaseConfig = { /* ... Your Config ... */ };
-        try { /* ... Initialization logic ... */ } catch (e) { /* ... Error handling ... */ }
+        const firebaseConfig = {
+          apiKey: "AIzaSyBQj5rQmE77kKKGYixP8y3Hcimz8tiAqzQ", // Your config
+          authDomain: "madhav-multyprint.firebaseapp.com",
+          projectId: "madhav-multyprint",
+          storageBucket: "madhav-multyprint.appspot.com", // Check storage bucket name
+          messagingSenderId: "104988349637",
+          appId: "1:104988349637:web:faf045b77c6786a4e70cac"
+        };
+        try {
+            let app;
+            if (!window.firebaseAppInitialized) {
+                 app = initializeApp(firebaseConfig);
+                 window.firebaseAppInitialized = true; console.log("Firebase initialized on new_order page.");
+            } else { console.log("Firebase already initialized."); }
+            const db = window.db || getFirestore(app || undefined);
+            // Make functions global
+            window.db = db; window.collection = collection; window.addDoc = addDoc; window.doc = doc;
+            window.updateDoc = updateDoc; window.deleteDoc = deleteDoc; window.onSnapshot = onSnapshot;
+            window.getDocs = getDocs; window.query = query; window.where = where; window.getDoc = getDoc;
+            window.orderBy = orderBy; window.limit = limit;
+            console.log("Firebase functions available globally.");
+        } catch (e) { console.error("Firebase initialization error:", e); if (!window.db) { alert("Database connection error!"); } }
     </script>
 
     <div class="container">
-        <button type="button" id="closeFormBtn" class="close-form-button" title="Close Form">&times;</button>
         <div class="header" id="formHeader">
              <i class="fas fa-file-alt header-icon"></i>
              <span id="headerText">New Order</span>
@@ -26,45 +45,75 @@
             <input type="hidden" id="selectedCustomerId" name="selectedCustomerId">
 
             <div class="section-title">1. Customer Details</div>
-            <div class="form-row">
-                <div class="form-group form-group-half"> <label for="full_name">Full Name:</label> <input type="text" id="full_name" name="full_name" required autocomplete="off" placeholder="Enter customer name..."> <div id="customer-suggestions-name" class="suggestions-box"></div> </div>
-                <div class="form-group form-group-half"> <label for="address">Address:</label> <input type="text" id="address" name="address" readonly placeholder="Autofills when customer selected"> </div>
+            <div class="form-row"> <div class="form-group form-group-half">
+                    <label for="full_name">Full Name:</label>
+                    <input type="text" id="full_name" name="full_name" required autocomplete="off" placeholder="Enter customer name...">
+                    <div id="customer-suggestions-name" class="suggestions-box"></div>
+                </div>
+                <div class="form-group form-group-half">
+                    <label for="address">Address:</label>
+                    <input type="text" id="address" name="address" readonly placeholder="Autofills when customer selected">
+                </div>
             </div>
-            <div class="form-row">
-                <div class="form-group form-group-half"> <label for="whatsapp_no">WhatsApp No:</label> <input type="text" id="whatsapp_no" name="whatsapp_no" required autocomplete="off" placeholder="Enter WhatsApp number..."> <div id="customer-suggestions-whatsapp" class="suggestions-box"></div> </div>
-                <div class="form-group form-group-half"> <label for="contact_no">Contact No:</label> <input type="text" id="contact_no" name="contact_no" readonly placeholder="Autofills when customer selected"> </div>
+            <div class="form-row"> <div class="form-group form-group-half">
+                    <label for="whatsapp_no">WhatsApp No:</label>
+                    <input type="text" id="whatsapp_no" name="whatsapp_no" required autocomplete="off" placeholder="Enter WhatsApp number...">
+                    <div id="customer-suggestions-whatsapp" class="suggestions-box"></div>
+                </div>
+                <div class="form-group form-group-half">
+                    <label for="contact_no">Contact No:</label>
+                    <input type="text" id="contact_no" name="contact_no" readonly placeholder="Autofills when customer selected">
+                </div>
             </div>
              <p class="info-text">*New customer cannot be added here, only select an existing one.</p>
 
             <div class="section-title">2. Order Details</div>
-            <div class="form-row">
-                <div class="form-group form-group-half"> <label for="manual_order_id">Order ID (Manual):</label> <input type="text" id="manual_order_id" name="manual_order_id" placeholder="Optional - Auto-generated if empty"> </div>
-                 <div class="form-group form-group-half"> <label for="display_order_id">Order ID (System):</label> <input type="text" id="display_order_id" name="display_order_id" readonly placeholder="Auto-generated or Existing"> </div>
+            <div class="form-row"> <div class="form-group form-group-half">
+                    <label for="manual_order_id">Order ID (Manual):</label>
+                    <input type="text" id="manual_order_id" name="manual_order_id" placeholder="Optional - Auto-generated if empty">
+                </div>
+                 <div class="form-group form-group-half">
+                    <label for="display_order_id">Order ID (System):</label>
+                    <input type="text" id="display_order_id" name="display_order_id" readonly placeholder="Auto-generated or Existing">
+                </div>
             </div>
-             <div class="form-row">
-                 <div class="form-group form-group-half"> <label for="order_date">Order Date:</label> <input type="date" id="order_date" name="order_date" required> </div>
-                <div class="form-group form-group-half"> <label for="delivery_date">Delivery Date:</label> <input type="date" id="delivery_date" name="delivery_date"> </div>
+             <div class="form-row"> <div class="form-group form-group-half">
+                    <label for="order_date">Order Date:</label>
+                    <input type="date" id="order_date" name="order_date" required>
+                </div>
+                <div class="form-group form-group-half">
+                    <label for="delivery_date">Delivery Date:</label>
+                    <input type="date" id="delivery_date" name="delivery_date">
+                </div>
             </div>
 
             <div class="section-title">3. Order Status</div>
-            <div class="form-group"> <label for="order_status_select">Status:</label>
-                 <select id="order_status_select" name="order_status">
-                     <option value="Order Received">Order Received</option>
-                     <option value="Designing">Designing</option>
-                     <option value="Verification">Verification</option>
-                     <option value="Design Approved">Design Approved</option>
-                     <option value="Ready for Working">Ready for Working</option>
-                     <option value="Printing">Printing</option>
-                     <option value="Delivered">Delivered</option>
-                     <option value="Completed">Completed</option>
-                 </select>
-             </div>
-             <div class="section-title">4. Product & Job Details</div>
+            <div id="order-status-group" class="form-group order-status-group">
+                <label><input type="checkbox" name="order_status" value="Order Received"><span>Order Received</span></label>
+                <label><input type="checkbox" name="order_status" value="Designing"><span>Designing</span></label>
+                <label><input type="checkbox" name="order_status" value="Verification"><span>Verification</span></label>
+                <label><input type="checkbox" name="order_status" value="Design Approved"><span>Design Approved</span></label>
+                <label><input type="checkbox" name="order_status" value="Ready for Working"><span>Ready for Working</span></label>
+                <label><input type="checkbox" name="order_status" value="Printing"><span>Printing</span></label>
+                <label><input type="checkbox" name="order_status" value="Delivered"><span>Delivered</span></label>
+                <label><input type="checkbox" name="order_status" value="Completed"><span>Completed</span></label>
+            </div>
+
+            <div class="section-title">4. Product & Job Details</div>
             <div class="product-input-area">
-                 <div class="product-entry-group">
-                    <div class="form-group product-name-group"> <label for="product_name_input">Product Name:</label> <input type="text" id="product_name_input" name="product_name_input" placeholder="Enter product name..." autocomplete="off"> <div id="product-suggestions" class="suggestions-box"></div> </div>
-                     <div class="form-group product-qty-group"> <label for="quantity_input">Qty:</label> <input type="number" id="quantity_input" name="quantity_input" placeholder="Qty"> </div>
-                    <button type="button" id="add-product-btn" class="add-product-button"> <i class="fas fa-plus"></i> Add Product </button>
+                <div class="product-entry-group">
+                    <div class="form-group product-name-group">
+                        <label for="product_name_input">Product Name:</label>
+                        <input type="text" id="product_name_input" name="product_name_input" placeholder="Enter product name..." autocomplete="off">
+                        <div id="product-suggestions" class="suggestions-box"></div>
+                    </div>
+                     <div class="form-group product-qty-group">
+                        <label for="quantity_input">Qty:</label>
+                        <input type="number" id="quantity_input" name="quantity_input" placeholder="Qty">
+                    </div>
+                    <button type="button" id="add-product-btn" class="add-product-button">
+                        <i class="fas fa-plus"></i> Add Product
+                    </button>
                 </div>
                  <p class="info-text">*New product cannot be added here, only select an existing one.</p>
             </div>
@@ -72,13 +121,26 @@
 
             <div class="section-title">5. Priority & Remarks</div>
              <div class="form-row">
-                <div class="form-group priority-group"> <label>Urgent?</label> <div class="radio-group"> <label><input type="radio" name="urgent" value="Yes"> Yes</label> <label><input type="radio" name="urgent" value="No" checked> No</label> </div> </div>
-                <div class="form-group remarks-group"> <label for="remarks">Remarks:</label> <textarea id="remarks" name="remarks" placeholder="Any specific notes..."></textarea> </div>
+                <div class="form-group priority-group">
+                    <label>Urgent?</label>
+                    <div class="radio-group">
+                         <label><input type="radio" name="urgent" value="Yes"> Yes</label>
+                         <label><input type="radio" name="urgent" value="No" checked> No</label>
+                     </div>
+                </div>
+                <div class="form-group remarks-group">
+                    <label for="remarks">Remarks:</label>
+                    <textarea id="remarks" name="remarks" placeholder="Any specific notes..."></textarea>
+                </div>
             </div>
 
             <div class="button-container">
-                <button type="submit" class="save-button" id="saveOrderBtn"> <i class="fas fa-save"></i> <span>Save Order</span> </button>
-                <button type="button" onclick="window.location.href='order_history.html'" class="cancel-button"> Cancel </button>
+                <button type="submit" class="save-button" id="saveOrderBtn">
+                    <i class="fas fa-save"></i> <span>Save Order</span>
+                </button>
+                <button type="button" onclick="window.location.href='order_history.html'" class="cancel-button">
+                    Cancel
+                </button>
             </div>
         </form>
     </div>
