@@ -11,8 +11,28 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
         import { getFirestore, collection, addDoc, doc, updateDoc, deleteDoc, onSnapshot, getDocs, query, where, getDoc, orderBy, limit } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-        const firebaseConfig = { /* ... Your Config ... */ };
-        try { /* ... Initialization logic ... */ } catch (e) { /* ... Error handling ... */ }
+        const firebaseConfig = {
+          apiKey: "AIzaSyBQj5rQmE77kKKGYixP8y3Hcimz8tiAqzQ", // Your config
+          authDomain: "madhav-multyprint.firebaseapp.com",
+          projectId: "madhav-multyprint",
+          storageBucket: "madhav-multyprint.appspot.com", // Check storage bucket name
+          messagingSenderId: "104988349637",
+          appId: "1:104988349637:web:faf045b77c6786a4e70cac"
+        };
+        try {
+            let app;
+            if (!window.firebaseAppInitialized) {
+                 app = initializeApp(firebaseConfig);
+                 window.firebaseAppInitialized = true; console.log("Firebase initialized on new_order page.");
+            } else { console.log("Firebase already initialized."); }
+            const db = window.db || getFirestore(app || undefined);
+            // Make functions global
+            window.db = db; window.collection = collection; window.addDoc = addDoc; window.doc = doc;
+            window.updateDoc = updateDoc; window.deleteDoc = deleteDoc; window.onSnapshot = onSnapshot;
+            window.getDocs = getDocs; window.query = query; window.where = where; window.getDoc = getDoc;
+            window.orderBy = orderBy; window.limit = limit;
+            console.log("Firebase functions available globally.");
+        } catch (e) { console.error("Firebase initialization error:", e); if (!window.db) { alert("Database connection error!"); } }
     </script>
 
     <div class="container">
