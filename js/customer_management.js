@@ -11,6 +11,7 @@ let filterMobileInput;
 let customerOrdersDiv;
 let ordersForCustomerTableBody;
 let customerDetailsDiv;
+let searchInput; // << searchInput यहाँ डिफाइन करें
 
 // --- ग्लोबल वेरिएबल्स ---
 let allCustomers = []; // Firestore से आए सभी कस्टमर्स
@@ -96,6 +97,7 @@ function applyFilters() {
     // Ensure DOM elements are ready
     if (!filterNameInput || !filterCityInput || !filterMobileInput || !allCustomers) {
         // console.warn("Filter inputs or customer data not ready yet.");
+        // If elements aren't ready, don't filter yet. displayCustomers will be called when data arrives.
         return;
     }
     const nameFilter = filterNameInput.value.toLowerCase().trim() || '';
@@ -108,7 +110,7 @@ function applyFilters() {
         const mobileMatch = !mobileFilter || (customer.whatsappNo && customer.whatsappNo.includes(mobileFilter));
         return nameMatch && cityMatch && mobileMatch;
     });
-    displayCustomers(filteredCustomers); // फ़िल्टर की हुई लिस्ट दिखाएं
+    displayCustomers(filteredCustomers); // Display the filtered list
 }
 
 
@@ -182,9 +184,9 @@ function addCustomStyles() {
     `;
     document.head.appendChild(styleSheet);
 
-    // Apply class after styles are potentially added (might be redundant if styles always present)
-    const idLinks = customerTableBody?.querySelectorAll('td:first-child a');
-    idLinks?.forEach(a => a.classList.add('customer-id-link'));
+    // Apply class after styles are potentially added
+     const idLinks = customerTableBody?.querySelectorAll('td:first-child a');
+     idLinks?.forEach(a => a.classList.add('customer-id-link'));
 }
 
 
@@ -196,8 +198,8 @@ function setupSnapshotListener(){
          return;
      }
      const customersCollectionRef = collection(db, "customers");
-     // Sort by name directly in Firestore query if desired, or keep client-side sort
-     const q = query(customersCollectionRef, orderBy("fullName", "asc")); // Sort by name ascending
+     // Sort by name directly in Firestore query
+     const q = query(customersCollectionRef, orderBy("fullName", "asc"));
 
      currentUnsub = onSnapshot(q, (snapshot) => {
             console.log("Customer snapshot received");
@@ -205,10 +207,8 @@ function setupSnapshotListener(){
             snapshot.forEach((doc) => {
                 allCustomers.push({ id: doc.id, ...doc.data() });
             });
-            // Client-side sort might still be useful if Firestore sort isn't perfect for locale
-            // allCustomers.sort((a, b) => (a.fullName || '').localeCompare(b.fullName || ''));
             console.log("Customers fetched:", allCustomers.length);
-            applyFilters(); // फ़िल्टर लागू करें
+            applyFilters(); // फ़िल्टर लागू करें (यह displayCustomers कॉल करेगा)
 
         }, (error) => {
             console.error("Error listening to customer updates: ", error);
@@ -237,25 +237,33 @@ document.addEventListener('DOMContentLoaded', () => {
     customerDetailsDiv = document.querySelector('#customer-details');
 
     // === यहाँ सेलेक्टर ठीक किया गया है ===
-    searchInput = document.querySelector('#search-order'); // <<< पहले #search-input था
+    searchInput = document.querySelector('#search-order'); // <<< HTML में ID search-order थी
     // ==================================
 
     // जांचें कि क्या सभी ज़रूरी एलिमेंट्स मौजूद हैं
-    if (!customerTableBody || !filterNameInput || !filterCityInput || !filterMobileInput || !customerOrdersDiv || !ordersForCustomerTableBody || !customerDetailsDiv) {
-        console.error("One or more essential page elements are missing! Check IDs in HTML and JS selectors.");
+    // searchInput को भी चेक करें
+    if (!customerTableBody || !filterNameInput || !filterCityInput || !filterMobileInput || !customerOrdersDiv || !ordersForCustomerTableBody || !customerDetailsDiv /*|| !searchInput*/) {
+        // Note: searchInput is not strictly essential for the page to load initially
+         console.warn("One or more page elements might be missing! Check IDs in HTML and JS selectors. SearchInput ref:", searchInput);
+        // Display initial message even if some filter inputs are missing
         if(customerTableBody) {
-            // Display error in table body if possible
-            customerTableBody.innerHTML = `<tr><td colspan="7" style="text-align:center; color:red;">Page Error: UI Elements missing. Check console.</td></tr>`;
+            customerTableBody.innerHTML = `<tr><td colspan="7" style="text-align: center;">Initializing...</td></tr>`;
+        } else {
+             console.error("CRITICAL: customerTableBody not found after DOM loaded!");
+             return; // Stop if table body is missing
         }
-        return; // Stop further execution
     } else {
          customerTableBody.innerHTML = '<tr><td colspan="7" style="text-align: center;">Initializing...</td></tr>';
     }
 
-    // फ़िल्टर इनपुट पर इवेंट लिसनर लगाएं
-    filterNameInput.addEventListener('input', applyFilters);
-    filterCityInput.addEventListener('input', applyFilters);
-    filterMobileInput.addEventListener('input', applyFilters);
+
+    // फ़िल्टर इनपुट पर इवेंट लिसनर लगाएं (null चेक के साथ)
+    if (filterNameInput) filterNameInput.addEventListener('input', applyFilters);
+    if (filterCityInput) filterCityInput.addEventListener('input', applyFilters);
+    if (filterMobileInput) filterMobileInput.addEventListener('input', applyFilters);
+    // Search input listener (using the correct variable now)
+    if (searchInput) searchInput.addEventListener('input', applyFilters);
+
 
     // स्टाइल जोड़ें
     addCustomStyles();
