@@ -1,10 +1,11 @@
-[Filename: order_history.js]
+
+[Filename: order_history.js - Attempt 2]
 // js/order_history.js
 
 document.addEventListener('DOMContentLoaded', () => {
     console.log("DOM fully loaded and parsed for Order History.");
 
-    // --- ग्लोबल वेरिएबल्स (Original + New for modal data) ---
+    // --- ग्लोबल वेरिएबल्स ---
     let currentPage = 1;
     let rowsPerPage = 10;
     let allOrders = [];
@@ -14,7 +15,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let orderDisplayIdForModal = null; // Manual/System ID for display
     let customerDetailsForModal = null; // Store customer details for WhatsApp
 
-    // --- DOM एलिमेंट रेफरेंस (Add new modal & popup elements) ---
+    // --- DOM एलिमेंट रेफरेंस (Ensure IDs match HTML exactly) ---
     const elements = {
         tableBody: document.querySelector('#order-table tbody'),
         prevPageButton: document.getElementById('prev-page'),
@@ -27,36 +28,36 @@ document.addEventListener('DOMContentLoaded', () => {
         // Modal Elements
         modalOverlay: document.getElementById('detailsModal'),
         modalBody: document.getElementById('modalBody'),
-        modalOrderInfo: document.getElementById('modalOrderInfo'), // Div for basic info (Needs to exist in HTML)
-        modalProductInfo: document.getElementById('modalProductInfo'), // Div for products (Needs to exist in HTML)
-        modalProductList: document.getElementById('modalProductList'), // UL for products (Needs to exist in HTML)
-        modalRemarksInfo: document.getElementById('modalRemarksInfo'), // Div for remarks (Needs to exist in HTML)
-        modalRemarksText: document.getElementById('modalRemarksText'), // P for remarks text (Needs to exist in HTML)
+        // Specific divs within modal body (Ensure these exist in HTML)
+        modalOrderInfo: document.getElementById('modalOrderInfo'),
+        modalProductList: document.getElementById('modalProductList'),
+        modalRemarksText: document.getElementById('modalRemarksText'),
+        // Modal Buttons & Controls
         modalCloseBtn: document.getElementById('modalCloseBtn'),
         modalDeleteBtn: document.getElementById('modalDeleteBtn'),
         modalGoToEditBtn: document.getElementById('modalGoToEditBtn'),
-        modalStatusSelect: document.getElementById('modalStatusSelect'), // *** ADDED Dropdown ref ***
-        modalSaveStatusBtn: document.getElementById('modalSaveStatusBtn'), // *** ADDED Save button ref ***
-        // WhatsApp Popup Elements (History specific IDs from HTML)
+        modalStatusSelect: document.getElementById('modalStatusSelect'),
+        modalSaveStatusBtn: document.getElementById('modalSaveStatusBtn'),
+        // WhatsApp Popup Elements (History specific IDs)
         whatsappReminderPopupHistory: document.getElementById('whatsapp-reminder-popup-history'),
         whatsappMsgPreviewHistory: document.getElementById('history-whatsapp-message-preview'),
         whatsappSendLinkHistory: document.getElementById('history-whatsapp-send-link'),
         popupCloseBtnHistory: document.getElementById('historyPopupCloseBtn')
     };
 
-    // --- एलिमेंट वेरिफिकेशन (Check all, warn for optional popup ones) ---
+    // --- एलिमेंट वेरिफिकेशन ---
     let allElementsFound = true;
     const missingElements = [];
     for (const key in elements) {
         if (!elements[key]) {
-             if (key.startsWith('whatsapp') || key.startsWith('popupCloseBtnHistory') || key.startsWith('modalOrderInfo') || key.startsWith('modalProduct') || key.startsWith('modalRemarks')) {
-                 console.warn(`Element "${key}" not found. Check HTML structure for modal details/WhatsApp popup. Functionality might be limited.`);
-                 // Allow script to continue but warn user
+            // Allow optional elements but warn
+             if (key.startsWith('whatsapp') || key.startsWith('popupCloseBtnHistory') || key.startsWith('modalOrderInfo') || key.startsWith('modalProductList') || key.startsWith('modalRemarksText') ) {
+                 console.warn(`Element reference missing or null for "${key}". Check HTML ID. Dependent features might fail.`);
              } else {
-                // Critical elements like table, pagination, core modal parts
-                allElementsFound = false;
-                missingElements.push(key);
-                console.error(`Initialization failed: Essential element "${key}" not found.`);
+                 // Consider these critical
+                 allElementsFound = false;
+                 missingElements.push(key);
+                 console.error(`Initialization failed: Essential element "${key}" not found or null.`);
              }
         }
     }
@@ -69,15 +70,13 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         return; // Stop execution
     }
-    console.log("All essential page elements verified (with potential warnings for optional elements).");
+    console.log("All essential page elements referenced (check warnings for optional elements).");
 
-    // --- Firestore फंक्शन्स (Ensure updateDoc is included) ---
-    const { db, collection, onSnapshot, doc, getDoc, deleteDoc, updateDoc, query, where, orderBy } = window; // Added updateDoc
+    // --- Firestore फंक्शन्स (Ensure updateDoc is available) ---
+    const { db, collection, onSnapshot, doc, getDoc, deleteDoc, updateDoc, query, where, orderBy } = window;
 
-    // जांचें कि क्या Firestore फंक्शन्स उपलब्ध हैं
-    if (!db || !collection || !onSnapshot || !doc || !getDoc || !deleteDoc || !updateDoc || !query || !where || !orderBy) { // Added updateDoc check
+    if (!db || !collection || !onSnapshot || !doc || !getDoc || !deleteDoc || !updateDoc || !query || !where || !orderBy) {
         console.error("Firestore functions are not available on the window object.");
-        alert("Database functions error. Check console (F12).");
         if (elements.tableBody) {
              elements.tableBody.innerHTML = `<tr><td colspan="8" class="loading-message" style="color:red;">Database connection error!</td></tr>`;
         }
@@ -88,7 +87,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- फंक्शन परिभाषाएं ---
 
-    // टेबल में ऑर्डर दिखाने का फंक्शन (UPDATED button text and modal call)
+    // टेबल में ऑर्डर दिखाने का फंक्शन (Original structure, updated button text/modal call)
     function renderTableRows(ordersForPage) {
         if (!elements.tableBody) return;
         elements.tableBody.innerHTML = '';
@@ -102,10 +101,9 @@ document.addEventListener('DOMContentLoaded', () => {
             const row = elements.tableBody.insertRow();
             const customerName = order.customerDetails?.fullName || 'N/A';
             const whatsappNo = order.customerDetails?.whatsappNo || '';
-            const firestoreOrderId = order.id; // Firestore Document ID
-            const displayOrderId = order.orderId || firestoreOrderId; // Use Manual/System ID or fallback to Firestore ID
+            const firestoreOrderId = order.id;
+            const displayOrderId = order.orderId || firestoreOrderId;
 
-            // Cells Data (Original)
             row.insertCell().textContent = displayOrderId;
             row.insertCell().textContent = customerName;
             row.insertCell().textContent = order.orderDate || '-';
@@ -113,24 +111,23 @@ document.addEventListener('DOMContentLoaded', () => {
             row.insertCell().textContent = order.urgent || 'No';
             row.insertCell().textContent = order.status || '-';
 
-            // *** Action Cell (Manage Status) ***
+            // Action Cell
             const actionsCell = row.insertCell();
             actionsCell.classList.add('actions');
             const manageButton = document.createElement('button');
-            manageButton.textContent = 'Manage Status'; // *** Changed Text ***
-            manageButton.classList.add('edit-details-button'); // Use existing class for style
-            manageButton.dataset.id = firestoreOrderId; // Store Firestore Doc ID
-            // *** Pass both IDs to modal function ***
-            manageButton.addEventListener('click', () => openDetailsModal(firestoreOrderId, displayOrderId));
+            manageButton.textContent = 'Manage Status'; // Changed Text
+            manageButton.classList.add('edit-details-button');
+            manageButton.dataset.id = firestoreOrderId;
+            manageButton.addEventListener('click', () => openDetailsModal(firestoreOrderId, displayOrderId)); // Pass both IDs
             actionsCell.appendChild(manageButton);
 
-            // WhatsApp Cell (Original)
+            // WhatsApp Cell
             const whatsappCell = row.insertCell();
             whatsappCell.classList.add('send-wtsp-cell');
             if (whatsappNo) {
                 const cleanWhatsAppNo = String(whatsappNo).replace(/[^0-9]/g, '');
                 if (cleanWhatsAppNo) {
-                    const message = encodeURIComponent(`Regarding your order ${displayOrderId}...`); // Use display ID
+                    const message = encodeURIComponent(`Regarding your order ${displayOrderId}...`);
                     whatsappCell.innerHTML = `<a href="https://wa.me/${cleanWhatsAppNo}?text=${message}" target="_blank" title="Send WhatsApp to ${customerName}" class="whatsapp-icon"><i class="fab fa-whatsapp"></i></a>`;
                 } else { whatsappCell.innerHTML = '-'; }
             } else { whatsappCell.innerHTML = '-'; }
@@ -139,6 +136,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // पेजिनेशन अपडेट फंक्शन (Original - UNTOUCHED)
     function updatePagination(totalFilteredRows) {
+        if (!elements.showEntriesSelect || !elements.pageInfoSpan || !elements.prevPageButton || !elements.nextPageButton) return; // Safety check
         rowsPerPage = parseInt(elements.showEntriesSelect.value || '10');
         const totalPages = Math.ceil(totalFilteredRows / rowsPerPage);
         currentPage = Math.max(1, Math.min(currentPage, totalPages || 1));
@@ -149,6 +147,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // पेज बदलने का फंक्शन (Original - UNTOUCHED)
     function goToPage(page) {
+        if (!filteredOrders) return;
         const totalPages = Math.ceil(filteredOrders.length / rowsPerPage);
         if (page >= 1 && page <= Math.max(totalPages, 1)) {
             currentPage = page;
@@ -158,6 +157,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // फ़िल्टर और पेजिनेशन लागू करने का फंक्शन (Original - UNTOUCHED)
     function applyFiltersAndPagination() {
+        if (!allOrders || !elements.searchInput || !elements.filterDateInput || !elements.filterStatusSelect) return; // Safety check
         const searchTerm = elements.searchInput.value.toLowerCase().trim();
         const filterDate = elements.filterDateInput.value;
         const filterStatus = elements.filterStatusSelect.value;
@@ -177,7 +177,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // वर्तमान पेज के लिए ऑर्डर दिखाने का फंक्शन (Original - UNTOUCHED)
     function displayPaginatedOrders() {
-        if (!elements.tableBody) return;
+        if (!filteredOrders || !elements.tableBody || !elements.showEntriesSelect) return; // Safety check
         rowsPerPage = parseInt(elements.showEntriesSelect.value || '10');
         const startIndex = (currentPage - 1) * rowsPerPage;
         const endIndex = startIndex + rowsPerPage;
@@ -188,25 +188,24 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // *** MODIFIED: मोडाल खोलने, डिटेल्स भरने, और स्टेटस ड्रॉपडाउन सेट करने का फंक्शन ***
     async function openDetailsModal(orderDocId, displayId) {
-        // Ensure all required modal elements exist (check critical ones)
+        // Check critical modal elements again before proceeding
         if (!elements.modalOverlay || !elements.modalOrderInfo || !elements.modalStatusSelect || !elements.modalProductList || !elements.modalRemarksText || !elements.modalDeleteBtn || !elements.modalSaveStatusBtn || !elements.modalGoToEditBtn) {
-             console.error("Modal elements missing! Cannot open modal correctly.");
-             alert("Error: Modal structure incomplete.");
+             console.error("Modal elements missing inside openDetailsModal!");
              return;
         }
         console.log("Opening modal for order Firestore ID:", orderDocId, "Display ID:", displayId);
-        orderIdForModal = orderDocId; // Store Firestore ID for actions
-        orderDisplayIdForModal = displayId; // Store display ID for WhatsApp msg
-        customerDetailsForModal = null; // Reset customer details
+        orderIdForModal = orderDocId;
+        orderDisplayIdForModal = displayId;
+        customerDetailsForModal = null;
 
-        // Reset modal content to loading state & disable controls
+        // Reset UI
         elements.modalOrderInfo.innerHTML = '<p class="loading-message">Loading details...</p>';
         elements.modalProductList.innerHTML = '<li>Loading products...</li>';
         elements.modalRemarksText.textContent = 'Loading...';
         elements.modalStatusSelect.disabled = true;
         elements.modalDeleteBtn.disabled = true;
         elements.modalSaveStatusBtn.disabled = true;
-        elements.modalOverlay.classList.add('active'); // Show modal
+        elements.modalOverlay.classList.add('active');
 
         try {
             const orderRef = doc(db, "orders", orderDocId);
@@ -215,50 +214,58 @@ document.addEventListener('DOMContentLoaded', () => {
             if (docSnap.exists()) {
                 const order = { id: docSnap.id, ...docSnap.data() };
                 console.log("Order details fetched for modal:", order);
-                customerDetailsForModal = order.customerDetails; // Store for WhatsApp
+                customerDetailsForModal = order.customerDetails;
 
-                // --- Populate Modal Sections ---
-                elements.modalOrderInfo.innerHTML = `
-                    <p><strong>Order ID:</strong> ${order.orderId || order.id}</p>
-                    <p><strong>Customer Name:</strong> ${order.customerDetails?.fullName || 'N/A'}</p>
-                    <p><strong>WhatsApp No:</strong> ${order.customerDetails?.whatsappNo || 'N/A'}</p>
-                    <p><strong>Order Date:</strong> ${order.orderDate || 'N/A'}</p>
-                    <p><strong>Delivery Date:</strong> ${order.deliveryDate || 'N/A'}</p>
-                     <p><strong>Priority:</strong> ${order.urgent || 'N/A'}</p>
-                `;
-
-                elements.modalStatusSelect.value = order.status || 'Order Received';
-                elements.modalStatusSelect.disabled = false; // Enable dropdown
-
-                elements.modalProductList.innerHTML = ''; // Clear loading message
-                if (order.products && Array.isArray(order.products) && order.products.length > 0) {
-                    order.products.forEach(p => {
-                        const li = document.createElement('li');
-                        li.textContent = `${p.name || 'N/A'} - Qty: ${p.quantity || 'N/A'}`;
-                        elements.modalProductList.appendChild(li);
-                    });
-                } else {
-                    elements.modalProductList.innerHTML = '<li>No products listed</li>';
+                // Populate Modal Sections (Check if elements exist before setting innerHTML/textContent)
+                if (elements.modalOrderInfo) {
+                    elements.modalOrderInfo.innerHTML = `
+                        <p><strong>Order ID:</strong> ${order.orderId || order.id}</p>
+                        <p><strong>Customer Name:</strong> ${order.customerDetails?.fullName || 'N/A'}</p>
+                        <p><strong>WhatsApp No:</strong> ${order.customerDetails?.whatsappNo || 'N/A'}</p>
+                        <p><strong>Order Date:</strong> ${order.orderDate || 'N/A'}</p>
+                        <p><strong>Delivery Date:</strong> ${order.deliveryDate || 'N/A'}</p>
+                         <p><strong>Priority:</strong> ${order.urgent || 'N/A'}</p>
+                    `;
                 }
 
-                 elements.modalRemarksText.textContent = order.remarks || 'N/A';
+                if (elements.modalStatusSelect) {
+                    elements.modalStatusSelect.value = order.status || 'Order Received';
+                    elements.modalStatusSelect.disabled = false;
+                }
+
+                if (elements.modalProductList) {
+                    elements.modalProductList.innerHTML = '';
+                    if (order.products && Array.isArray(order.products) && order.products.length > 0) {
+                        order.products.forEach(p => {
+                            const li = document.createElement('li');
+                            li.textContent = `${p.name || 'N/A'} - Qty: ${p.quantity || 'N/A'}`;
+                            elements.modalProductList.appendChild(li);
+                        });
+                    } else {
+                        elements.modalProductList.innerHTML = '<li>No products listed</li>';
+                    }
+                }
+
+                 if (elements.modalRemarksText) {
+                    elements.modalRemarksText.textContent = order.remarks || 'N/A';
+                 }
 
                 // Enable action buttons
-                elements.modalDeleteBtn.disabled = false;
-                elements.modalSaveStatusBtn.disabled = false;
+                if (elements.modalDeleteBtn) elements.modalDeleteBtn.disabled = false;
+                if (elements.modalSaveStatusBtn) elements.modalSaveStatusBtn.disabled = false;
 
             } else {
                 console.error("Order document not found in modal! ID:", orderDocId);
-                elements.modalOrderInfo.innerHTML = '<p class="loading-message" style="color:red;">Error: Order details not found.</p>';
-                 elements.modalProductList.innerHTML = '';
-                 elements.modalRemarksText.textContent = 'Error';
+                if(elements.modalOrderInfo) elements.modalOrderInfo.innerHTML = '<p class="loading-message" style="color:red;">Error: Order details not found.</p>';
+                if(elements.modalProductList) elements.modalProductList.innerHTML = '';
+                if(elements.modalRemarksText) elements.modalRemarksText.textContent = 'Error';
             }
         } catch (error) {
             console.error("Error fetching order details for modal:", error);
-            elements.modalOrderInfo.innerHTML = `<p class="loading-message" style="color:red;">Error loading details.</p>`;
-            elements.modalProductList.innerHTML = '';
-            elements.modalRemarksText.textContent = 'Error';
-            orderIdForModal = null; // Clear ID on error
+            if(elements.modalOrderInfo) elements.modalOrderInfo.innerHTML = `<p class="loading-message" style="color:red;">Error loading details.</p>`;
+            if(elements.modalProductList) elements.modalProductList.innerHTML = '';
+            if(elements.modalRemarksText) elements.modalRemarksText.textContent = 'Error';
+            orderIdForModal = null;
             orderDisplayIdForModal = null;
         }
     }
@@ -277,20 +284,18 @@ document.addEventListener('DOMContentLoaded', () => {
     // *** NEW: मोडाल से स्टेटस सेव करने का फंक्शन ***
     async function saveStatusFromModal() {
         if (!orderIdForModal) { alert("Error: No order selected."); return; }
-        if (!elements.modalStatusSelect || !elements.modalSaveStatusBtn) { alert("Error: Modal elements missing."); return; }
+        // Check required elements exist before using them
+        if (!elements.modalStatusSelect || !elements.modalSaveStatusBtn) { alert("Error: Modal save elements missing."); return; }
         if (!db || !doc || !updateDoc) { alert("Database update function not available."); return; }
 
         const newStatus = elements.modalStatusSelect.value;
-        // Find the original status from the currently displayed *filtered* data to check if changed
-        const currentOrderData = filteredOrders.find(o => o.id === orderIdForModal);
+        // Find original status carefully, handle case where order might have been removed from filtered list
+        const currentOrderData = allOrders.find(o => o.id === orderIdForModal); // Check against allOrders as filteredOrders might change
         const originalStatus = currentOrderData?.status;
 
-        // Optional: Only proceed if status has actually changed
         if(newStatus === originalStatus){
             alert("Status has not changed.");
-            // Maybe close the modal or just do nothing
-            // closeModal();
-            return;
+            return; // No need to save if status is the same
         }
 
         console.log(`Attempting to update status for order ${orderIdForModal} from '${originalStatus}' to '${newStatus}'`);
@@ -302,36 +307,29 @@ document.addEventListener('DOMContentLoaded', () => {
             const orderRef = doc(db, "orders", orderIdForModal);
             await updateDoc(orderRef, {
                 status: newStatus,
-                updatedAt: new Date() // Always update timestamp
+                updatedAt: new Date()
             });
 
             console.log(`Order ${orderIdForModal} status updated to ${newStatus}`);
             alert("Order status updated successfully!");
 
             // --- Trigger WhatsApp Popup if applicable ---
-            // Confirm which statuses trigger popup from history
             const statusesForPopup = ['Verification', 'Ready for Working', 'Delivered'];
-            // Use stored customer details and display ID
             if (customerDetailsForModal && orderDisplayIdForModal && statusesForPopup.includes(newStatus)) {
                  console.log(`Status '${newStatus}' triggers WhatsApp popup from history.`);
                  triggerWhatsAppPopupHistory(customerDetailsForModal, orderDisplayIdForModal, newStatus); // Call the new function
             }
 
-            // Close modal after successful save
-            closeModal();
+            closeModal(); // Close modal after success
 
         } catch (error) {
              console.error("Error updating order status:", error);
              alert("Error updating status: " + error.message);
-             elements.modalSaveStatusBtn.disabled = false; // Re-enable button on error
+             // Re-enable button only if it still exists
+             if (elements.modalSaveStatusBtn) elements.modalSaveStatusBtn.disabled = false;
         } finally {
-             // Restore button text safely
              if (elements.modalSaveStatusBtn) {
                  elements.modalSaveStatusBtn.innerHTML = '<i class="fas fa-save"></i> Save Status';
-                 // Re-enable button if modal is still open after error
-                 if (elements.modalOverlay.classList.contains('active')) {
-                     elements.modalSaveStatusBtn.disabled = false;
-                 }
              }
         }
     }
@@ -357,7 +355,7 @@ document.addEventListener('DOMContentLoaded', () => {
             } catch (error) {
                 console.error("Error deleting order:", error);
                 alert("Error deleting order: " + error.message);
-                elements.modalDeleteBtn.disabled = false;
+                if (elements.modalDeleteBtn) elements.modalDeleteBtn.disabled = false; // Check existence
             } finally {
                  if (elements.modalDeleteBtn){
                      elements.modalDeleteBtn.innerHTML = '<i class="fas fa-trash-alt"></i> Delete Order';
@@ -370,7 +368,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function redirectToEditPage() {
         if (orderIdForModal) {
             console.log("Redirecting to edit page for order:", orderIdForModal);
-            window.location.href = `new_order.html?editOrderId=${orderIdForModal}`; // Pass Firestore ID
+            window.location.href = `new_order.html?editOrderId=${orderIdForModal}`;
         } else {
             alert("Could not determine which order to edit.");
             console.warn("redirectToEditPage called without orderIdForModal set.");
@@ -387,16 +385,16 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             console.log("Setting up Firestore listener for 'orders' collection...");
             const ordersRef = collection(db, "orders");
-            const q = query(ordersRef, orderBy("createdAt", "desc")); // Assumes 'createdAt' field exists
+            const q = query(ordersRef, orderBy("createdAt", "desc")); // Requires index
 
             currentOrderListenerUnsub = onSnapshot(q, (snapshot) => {
                 console.log(`Snapshot received: ${snapshot.size} documents.`);
-                allOrders = [];
+                allOrders = []; // Reset allOrders array
                 snapshot.forEach((doc) => {
                      allOrders.push({ id: doc.id, ...doc.data() });
                 });
                 console.log("Total orders processed:", allOrders.length);
-                // Apply filters and pagination whenever data changes
+                // Apply filters and pagination AFTER new data is loaded
                 applyFiltersAndPagination();
 
             }, (error) => {
@@ -414,9 +412,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- WhatsApp Popup Functions (ADDED for History Page) ---
     function triggerWhatsAppPopupHistory(customer, orderId, status) {
         // Use history-specific element IDs from `elements` object
+        // Add checks to ensure elements exist before using them
         if (!elements.whatsappReminderPopupHistory || !elements.whatsappMsgPreviewHistory || !elements.whatsappSendLinkHistory) {
             console.error("[DEBUG] WhatsApp popup elements missing in history page HTML or elements object.");
-            // alert("Error: Could not find WhatsApp popup elements."); // Avoid alert
             return;
         }
 
@@ -425,23 +423,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (!customerNumber) {
             console.warn("[DEBUG] WhatsApp No missing or invalid for triggering popup:", customerName);
-            return; // Cannot send without number
+            return;
         }
 
         let message = '';
-        const signature = "\n\n*Madhav Multy Print*\n9549116541"; // Ensure correct number
+        const signature = "\n\n*Madhav Multy Print*\n9549116541";
 
         // Generate message based on status
-        // ** Confirm the exact statuses and messages needed **
         switch (status) {
             case 'Verification':
                 message = `नमस्ते *${customerName}*,\n\nआपके ऑर्डर (ID: *${orderId}*) का डिज़ाइन वेरिफिकेशन के लिए तैयार है।`;
                 message += `\nकृपया डिज़ाइन को ध्यानपूर्वक चेक करें। *OK* का जवाब देने के बाद कोई बदलाव संभव नहीं होगा।`;
                 message += `\n\nधन्यवाद!`;
                 break;
-            case 'Ready for Working': // Assuming this is the 'Ready' status mentioned
+            case 'Ready for Working': // Assuming this is the 'Ready' status
                  message = `नमस्ते *${customerName}*,\n\nआपका ऑर्डर (ID: *${orderId}*) अब प्रिंटिंग/वर्किंग के लिए तैयार है।`;
-                 // Add delivery estimate if available?
                  message += `\n\nधन्यवाद!`;
                  break;
             case 'Delivered':
@@ -450,7 +446,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 break;
             default:
                 console.log(`[DEBUG] WhatsApp popup trigger called for unhandled status from history: ${status}`);
-                return; // Don't show for other statuses
+                return;
         }
         message += signature;
 
@@ -471,21 +467,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
     // --- इवेंट लिसनर्स जोड़ें (Original + New Modal/Popup Listeners) ---
-    // Ensure original listeners point to correct elements if IDs haven't changed
-    elements.prevPageButton.addEventListener('click', () => goToPage(currentPage - 1));
-    elements.nextPageButton.addEventListener('click', () => goToPage(currentPage + 1));
-    elements.showEntriesSelect.addEventListener('change', () => { currentPage = 1; applyFiltersAndPagination(); });
-    elements.searchInput.addEventListener('input', applyFiltersAndPagination);
-    elements.filterDateInput.addEventListener('change', applyFiltersAndPagination);
-    elements.filterStatusSelect.addEventListener('change', applyFiltersAndPagination);
+    // Check if elements exist before adding listeners
+    if(elements.prevPageButton) elements.prevPageButton.addEventListener('click', () => goToPage(currentPage - 1));
+    if(elements.nextPageButton) elements.nextPageButton.addEventListener('click', () => goToPage(currentPage + 1));
+    if(elements.showEntriesSelect) elements.showEntriesSelect.addEventListener('change', () => { currentPage = 1; applyFiltersAndPagination(); });
+    if(elements.searchInput) elements.searchInput.addEventListener('input', applyFiltersAndPagination);
+    if(elements.filterDateInput) elements.filterDateInput.addEventListener('change', applyFiltersAndPagination);
+    if(elements.filterStatusSelect) elements.filterStatusSelect.addEventListener('change', applyFiltersAndPagination);
 
     // मोडाल इवेंट्स
-    elements.modalCloseBtn.addEventListener('click', closeModal);
-    elements.modalOverlay.addEventListener('click', (event) => {
-        if (event.target === elements.modalOverlay) { closeModal(); } // Close on overlay click
+    if(elements.modalCloseBtn) elements.modalCloseBtn.addEventListener('click', closeModal);
+    if(elements.modalOverlay) elements.modalOverlay.addEventListener('click', (event) => {
+        if (event.target === elements.modalOverlay) { closeModal(); }
     });
-    elements.modalDeleteBtn.addEventListener('click', deleteOrderFromFirestore); // Keep original delete
-    elements.modalGoToEditBtn.addEventListener('click', redirectToEditPage); // Keep original edit redirect
+    if(elements.modalDeleteBtn) elements.modalDeleteBtn.addEventListener('click', deleteOrderFromFirestore);
+    if(elements.modalGoToEditBtn) elements.modalGoToEditBtn.addEventListener('click', redirectToEditPage);
     // *** ADDED Listener for new Save Status button ***
     if (elements.modalSaveStatusBtn) {
         elements.modalSaveStatusBtn.addEventListener('click', saveStatusFromModal);
@@ -504,15 +500,14 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- इनिशियलाइज़ेशन (Original - UNTOUCHED logic) ---
     console.log("Starting listener to wait for DB connection and fetch initial data...");
     const checkDbInterval = setInterval(() => {
-        // Ensure db AND key Firestore functions are loaded globally before proceeding
-        if (window.db && typeof window.onSnapshot === 'function' && typeof window.query === 'function' && typeof window.orderBy === 'function' && typeof window.collection === 'function' && typeof window.doc === 'function' && typeof window.getDoc === 'function' && typeof window.updateDoc === 'function' && typeof window.deleteDoc === 'function') {
+        if (window.db && typeof window.onSnapshot === 'function' && typeof window.updateDoc === 'function') { // Check for functions needed early
             clearInterval(checkDbInterval);
             console.log("DB connection and functions ready. Initializing order listener...");
             listenToOrders(); // Start listening for orders
         } else {
             console.log("Waiting for DB connection and functions...");
         }
-    }, 200); // Check slightly more often
+    }, 200); // Check slightly faster
 
     console.log("Order History page script initialization complete.");
 
