@@ -10,50 +10,47 @@
 <body>
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-        import { getFirestore, collection, addDoc, doc, updateDoc, deleteDoc, onSnapshot, getDocs, query, where, getDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+        import { getFirestore } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js"; // Only import getFirestore here
 
         const firebaseConfig = {
           apiKey: "AIzaSyBQj5rQmE77kKKGYixP8y3Hcimz8tiAqzQ",
           authDomain: "madhav-multyprint.firebaseapp.com",
           projectId: "madhav-multyprint",
-          storageBucket: "madhav-multyprint.firebasestorage.app",
+          storageBucket: "madhav-multyprint.appspot.com", // Verify bucket name
           messagingSenderId: "104988349637",
           appId: "1:104988349637:web:faf045b77c6786a4e70cac"
         };
 
         try {
             let app;
+            // Initialize Firebase only once
             if (!window.firebaseAppInitialized) {
                  app = initializeApp(firebaseConfig);
                  window.firebaseAppInitialized = true;
                  console.log("Firebase initialized on customer_management page.");
             } else {
-                 console.log("Firebase already initialized.");
+                 // If already initialized, maybe get the existing app instance?
+                 // For simplicity, we assume the init script runs only once per page load.
+                 console.log("Firebase already initialized (should ideally not happen if script runs once).");
             }
-            const db = window.db || getFirestore(app || undefined);
+            // Get Firestore instance and ONLY expose db globally if needed by JS module
+            const db = getFirestore(app || undefined); // Pass app instance if available
+            window.db = db; // Make db available globally for the JS module
+            console.log("Firestore DB instance available globally as window.db");
 
-            window.db = db;
-            window.collection = collection;
-            window.addDoc = addDoc;
-            window.doc = doc;
-            window.updateDoc = updateDoc;
-            window.deleteDoc = deleteDoc;
-            window.onSnapshot = onSnapshot;
-            window.getDocs = getDocs;
-            window.query = query;
-            window.where = where;
-            window.getDoc = getDoc;
-            console.log("Firebase functions are available globally.");
+            // === Firestore functions are NOT assigned to window anymore ===
+            // window.collection = collection;
+            // window.addDoc = addDoc;
+            // ... etc ...
 
         } catch (e) {
             console.error("Firebase initialization error:", e);
-             if (!window.db) {
-                 console.error("Critical: Firebase could not be initialized.");
+            if (!window.db) { // Check if db failed to initialize
+                 console.error("Critical: Firestore DB could not be initialized.");
                  alert("Database connection error!");
              }
         }
     </script>
-
     <div class="container">
         <div class="header">
             <h2>Customer Management</h2>
@@ -102,19 +99,7 @@
         </table>
 
         <div id="customer-orders" class="customer-orders" style="display: none; margin-top: 30px;">
-            <h3>Customer Order History</h3>
-            <table id="orders-for-customer">
-                <thead>
-                    <tr>
-                        <th>Order ID</th>
-                        <th>Order Date</th>
-                        <th>Order Status</th>
-                    </tr>
-                </thead>
-                <tbody>
-                     </tbody>
-            </table>
-        </div>
+             </div>
     </div>
 
     <script src="js/customer_management.js" type="module"></script>
