@@ -1,3 +1,4 @@
+[Filename: new_order.js]
 // js/new_order.js
 
 // Firestore functions
@@ -6,7 +7,7 @@ const { db, collection, addDoc, doc, getDoc, updateDoc, getDocs, query, where, l
 // --- Global Variables ---
 let addedProducts = [];
 let isEditMode = false;
-let orderIdToEdit = null;
+let orderIdToEdit = null; // Firestore document ID for editing
 let selectedCustomerId = null;
 let productCache = []; // Cache for product names
 let customerCache = []; // Cache for customer names/numbers
@@ -19,10 +20,10 @@ const saveButton = document.getElementById('saveOrderBtn');
 const saveButtonText = saveButton ? saveButton.querySelector('span') : null;
 const formHeader = document.getElementById('formHeader');
 const headerText = document.getElementById('headerText');
-const hiddenEditOrderIdInput = document.getElementById('editOrderId');
-const selectedCustomerIdInput = document.getElementById('selectedCustomerId');
-const displayOrderIdInput = document.getElementById('display_order_id');
-const manualOrderIdInput = document.getElementById('manual_order_id');
+const hiddenEditOrderIdInput = document.getElementById('editOrderId'); // Stores Firestore Doc ID
+const selectedCustomerIdInput = document.getElementById('selectedCustomerId'); // Stores selected Customer Doc ID
+const displayOrderIdInput = document.getElementById('display_order_id'); // Shows Manual/System ID
+const manualOrderIdInput = document.getElementById('manual_order_id'); // Input for Manual ID
 const customerNameInput = document.getElementById('full_name');
 const customerWhatsAppInput = document.getElementById('whatsapp_no');
 const customerAddressInput = document.getElementById('address');
@@ -34,8 +35,7 @@ const quantityInput = document.getElementById('quantity_input');
 const addProductBtn = document.getElementById('add-product-btn');
 const productListContainer = document.getElementById('product-list');
 const productSuggestionsBox = document.getElementById('product-suggestions');
-const orderStatusCheckboxes = document.querySelectorAll('input[name="order_status"]');
-const orderStatusGroup = document.getElementById('order-status-group');
+const orderStatusSelect = document.getElementById('order_status'); // Reference to the status SELECT element
 const whatsappReminderPopup = document.getElementById('whatsapp-reminder-popup');
 const whatsappMsgPreview = document.getElementById('whatsapp-message-preview');
 const whatsappSendLink = document.getElementById('whatsapp-send-link');
@@ -66,16 +66,17 @@ function waitForDbConnection(callback) {
 // --- Initialize Form ---
 function initializeForm() {
     const urlParams = new URLSearchParams(window.location.search);
-    orderIdToEdit = urlParams.get('editOrderId');
+    orderIdToEdit = urlParams.get('editOrderId'); // Get Firestore Doc ID from URL
     if (orderIdToEdit) {
         isEditMode = true;
         console.log("[DEBUG] Edit Mode Initializing. Order Firestore ID:", orderIdToEdit);
         if(headerText) headerText.textContent = "Edit Order"; else if(formHeader) formHeader.textContent = "Edit Order";
         if(saveButtonText) saveButtonText.textContent = "Update Order";
         if(hiddenEditOrderIdInput) hiddenEditOrderIdInput.value = orderIdToEdit;
-        if(manualOrderIdInput) manualOrderIdInput.readOnly = true;
+        if(manualOrderIdInput) manualOrderIdInput.readOnly = true; // Don't allow changing manual ID in edit mode easily
         loadOrderForEdit(orderIdToEdit);
-        handleStatusCheckboxes(true);
+        // Status dropdown enabled in edit mode
+        if(orderStatusSelect) orderStatusSelect.disabled = false;
     } else {
         isEditMode = false;
         console.log("[DEBUG] Add Mode Initializing.");
@@ -84,7 +85,11 @@ function initializeForm() {
         if(manualOrderIdInput) manualOrderIdInput.readOnly = false;
         const orderDateInput = document.getElementById('order_date');
         if (orderDateInput && !orderDateInput.value) { orderDateInput.value = new Date().toISOString().split('T')[0]; }
-        handleStatusCheckboxes(false);
+        // Status dropdown set to default and disabled for new orders
+        if(orderStatusSelect) {
+            orderStatusSelect.value = "Order Received";
+            orderStatusSelect.disabled = true; // Status is managed automatically initially or in history
+        }
         renderProductList();
         resetCustomerSelection();
     }
@@ -99,7 +104,8 @@ async function loadOrderForEdit(docId) {
         if (docSnap.exists()) {
             const data = docSnap.data();
             console.log("[DEBUG] Order data for edit:", data);
-            // Fill form (customer, order details, urgent, status)
+
+            // Fill customer details
             customerNameInput.value = data.customerDetails?.fullName || '';
             customerAddressInput.value = data.customerDetails?.address || '';
             customerWhatsAppInput.value = data.customerDetails?.whatsappNo || '';
@@ -108,31 +114,38 @@ async function loadOrderForEdit(docId) {
             if (selectedCustomerIdInput) selectedCustomerIdInput.value = selectedCustomerId;
             customerAddressInput.readOnly = true; customerContactInput.readOnly = true; // Lock after load
 
-            displayOrderIdInput.value = data.orderId || docId;
-            manualOrderIdInput.value = data.orderId || '';
+            // Fill order details
+            displayOrderIdInput.value = data.orderId || docId; // Show Manual/System ID or Firestore ID as fallback
+            manualOrderIdInput.value = data.orderId || ''; // Fill manual ID field too
             orderForm.order_date.value = data.orderDate || '';
             orderForm.delivery_date.value = data.deliveryDate || '';
             orderForm.remarks.value = data.remarks || '';
             const urgentVal = data.urgent || 'No';
             const urgentRadio = orderForm.querySelector(`input[name="urgent"][value="${urgentVal}"]`);
             if (urgentRadio) urgentRadio.checked = true;
-            orderStatusCheckboxes.forEach(cb => cb.checked = false);
-            if (data.status) {
-                const statusCheckbox = orderForm.querySelector(`input[name="order_status"][value="${data.status}"]`);
-                if (statusCheckbox) statusCheckbox.checked = true;
+
+            // --- Set Status Dropdown ---
+            if (orderStatusSelect && data.status) {
+                orderStatusSelect.value = data.status;
+            } else if (orderStatusSelect) {
+                 orderStatusSelect.value = "Order Received"; // Default if status missing
             }
+            orderStatusSelect.disabled = false; // Ensure it's enabled in edit mode
+
             // Fill product list
             addedProducts = data.products || [];
             renderProductList();
         } else {
-            console.error("[DEBUG] Order document not found for editing!"); alert("Error: Cannot find the order to edit."); window.location.href = 'order_history.html';
+            console.error("[DEBUG] Order document not found for editing!");
+            alert("Error: Cannot find the order to edit."); window.location.href = 'order_history.html';
         }
     } catch (error) {
-        console.error("[DEBUG] Error loading order for edit:", error); alert("Error loading order data: " + error.message); window.location.href = 'order_history.html';
+        console.error("[DEBUG] Error loading order for edit:", error);
+        alert("Error loading order data: " + error.message); window.location.href = 'order_history.html';
     }
 }
 
-// --- Product Handling ---
+// --- Product Handling (Same as before) ---
 function handleAddProduct() {
      const name = productNameInput.value.trim();
     const quantity = quantityInput.value.trim();
@@ -144,10 +157,10 @@ function handleAddProduct() {
     productNameInput.value = ''; quantityInput.value = ''; productNameInput.focus();
     if (productSuggestionsBox) productSuggestionsBox.innerHTML = '';
     productNameInput.readOnly = false;
- }
+}
 function renderProductList() {
      if (!productListContainer) return; productListContainer.innerHTML = '';
-    if (addedProducts.length === 0) { productListContainer.innerHTML = '<p class="empty-list-message">No products added yet.</p>'; return; }
+     if (addedProducts.length === 0) { productListContainer.innerHTML = '<p class="empty-list-message">No products added yet.</p>'; return; }
     addedProducts.forEach((product, index) => {
         const listItem = document.createElement('div'); listItem.classList.add('product-list-item');
         listItem.innerHTML = `<span>${index + 1}. ${product.name} - Qty: ${product.quantity}</span><button type="button" class="delete-product-btn" data-index="${index}" title="Delete Product"><i class="fas fa-trash-alt"></i></button>`;
@@ -159,23 +172,16 @@ function handleDeleteProduct(event) {
     if (deleteButton) { const indexToDelete = parseInt(deleteButton.dataset.index, 10); if (!isNaN(indexToDelete) && indexToDelete >= 0 && indexToDelete < addedProducts.length) { addedProducts.splice(indexToDelete, 1); console.log("[DEBUG] Product deleted:", addedProducts); renderProductList(); } }
 }
 
-// --- Status Checkbox Handling ---
-function handleStatusCheckboxes(isEditing) {
-    const defaultStatus = "Order Received"; let defaultCheckbox = null;
-    orderStatusCheckboxes.forEach(checkbox => { if (checkbox.value === defaultStatus) defaultCheckbox = checkbox; checkbox.disabled = !isEditing; checkbox.closest('label').classList.toggle('disabled', !isEditing); checkbox.removeEventListener('change', handleStatusChange); checkbox.addEventListener('change', handleStatusChange); });
-    if (!isEditing && defaultCheckbox) { defaultCheckbox.checked = true; /* defaultCheckbox.closest('label').classList.remove('disabled'); */ }
-}
-function handleStatusChange(event) { const changedCheckbox = event.target; if (changedCheckbox.checked) { orderStatusCheckboxes.forEach(otherCb => { if (otherCb !== changedCheckbox) otherCb.checked = false; }); } }
 
-// --- Autocomplete V2: Client-Side Filtering ---
-
-// --- Customer Autocomplete ---
+// --- Autocomplete Functions (Same as before) ---
+// Customer Autocomplete
 let customerSearchTimeout;
 function handleCustomerInput(event, type) {
     const searchTerm = event.target.value.trim();
-    // console.log(`[DEBUG] Customer Input (${type}): "${searchTerm}"`);
     const suggestionBox = type === 'name' ? customerSuggestionsNameBox : customerSuggestionsWhatsAppBox;
-    if (!suggestionBox) return; resetCustomerSelection(); suggestionBox.innerHTML = '';
+    if (!suggestionBox) return;
+    if (!selectedCustomerId || searchTerm === '') { resetCustomerSelection(); }
+    suggestionBox.innerHTML = '';
     if (searchTerm.length < 2) { clearTimeout(customerSearchTimeout); return; }
     clearTimeout(customerSearchTimeout);
     customerSearchTimeout = setTimeout(() => {
@@ -213,8 +219,9 @@ function renderCustomerSuggestions(suggestions, term, box) {
      if (suggestions.length === 0) { box.innerHTML = `<ul><li>No results matching '${term}'</li></ul>`; return; }
     const ul = document.createElement('ul');
     suggestions.forEach(cust => {
-        const li = document.createElement('li'); const dName = `${cust.fullName} (${cust.whatsappNo})`;
-        try { li.innerHTML = dName.replace(new RegExp(`(${term.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')})`, 'gi'), '<strong>$1</strong>'); } catch { li.textContent = dName; }
+        const li = document.createElement('li');
+        const displayName = `${cust.fullName} (${cust.whatsappNo})`;
+        try { li.innerHTML = displayName.replace(new RegExp(`(${term.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')})`, 'gi'), '<strong>$1</strong>'); } catch { li.textContent = displayName; }
         li.dataset.customer = JSON.stringify(cust);
         li.addEventListener('click', () => { fillCustomerData(cust); box.innerHTML = ''; });
         ul.appendChild(li);
@@ -224,24 +231,36 @@ function renderCustomerSuggestions(suggestions, term, box) {
 function fillCustomerData(customer) {
     if (!customer) { resetCustomerSelection(); return; }
     console.log("[DEBUG] Filling customer data:", customer);
-    customerNameInput.value = customer.fullName || ''; customerWhatsAppInput.value = customer.whatsappNo || '';
-    customerAddressInput.value = customer.billingAddress || customer.address || ''; customerContactInput.value = customer.contactNo || '';
-    selectedCustomerId = customer.id; if(selectedCustomerIdInput) selectedCustomerIdInput.value = selectedCustomerId; // Store ID
-    if (customerSuggestionsNameBox) customerSuggestionsNameBox.innerHTML = ''; if (customerSuggestionsWhatsAppBox) customerSuggestionsWhatsAppBox.innerHTML = '';
-    customerAddressInput.readOnly = true; customerContactInput.readOnly = true; // Make readonly
+    customerNameInput.value = customer.fullName || '';
+    customerWhatsAppInput.value = customer.whatsappNo || '';
+    customerAddressInput.value = customer.billingAddress || customer.address || ''; // Prefer billing address
+    customerContactInput.value = customer.contactNo || '';
+    selectedCustomerId = customer.id;
+    if(selectedCustomerIdInput) selectedCustomerIdInput.value = selectedCustomerId; // Store ID
+    if (customerSuggestionsNameBox) customerSuggestionsNameBox.innerHTML = '';
+    if (customerSuggestionsWhatsAppBox) customerSuggestionsWhatsAppBox.innerHTML = '';
+    customerAddressInput.readOnly = true;
+    customerContactInput.readOnly = true;
 }
 function resetCustomerSelection() {
-     selectedCustomerId = null; if(selectedCustomerIdInput) selectedCustomerIdInput.value = '';
-     customerAddressInput.readOnly = false; customerContactInput.readOnly = false; // Make editable again
+     selectedCustomerId = null;
+     if(selectedCustomerIdInput) selectedCustomerIdInput.value = '';
+     customerAddressInput.readOnly = false;
+     customerContactInput.readOnly = false;
+     customerAddressInput.value = ''; // Clear previously filled data
+     customerContactInput.value = ''; // Clear previously filled data
+     customerNameInput.value = ''; // Clear name input on reset
+     customerWhatsAppInput.value = ''; // Clear whatsapp input on reset
      console.log("[DEBUG] Customer selection reset.");
 }
 
-// --- Product Autocomplete ---
+// Product Autocomplete (Same as before)
 let productSearchTimeout;
 function handleProductInput(event) {
     const searchTerm = event.target.value.trim();
-     // console.log(`[DEBUG] Product Input: "${searchTerm}"`);
-    if (!productSuggestionsBox) return; productNameInput.readOnly = false; productSuggestionsBox.innerHTML = '';
+    if (!productSuggestionsBox) return;
+    productNameInput.readOnly = false; // Ensure it's editable
+    productSuggestionsBox.innerHTML = '';
     if (searchTerm.length < 2) { clearTimeout(productSearchTimeout); return; }
     clearTimeout(productSearchTimeout);
     productSearchTimeout = setTimeout(() => {
@@ -256,8 +275,7 @@ async function getOrFetchProductCache() {
     try {
         if (!db || !collection || !query || !getDocs || !orderBy) { throw new Error("Firestore query functions unavailable for products."); }
         const productsRef = collection(db, "products");
-        // ** Fetching based on printName, Index on printName (Asc) REQUIRED **
-        const q = query(productsRef, orderBy("printName"));
+        const q = query(productsRef, orderBy("printName")); // Index on printName (Asc) REQUIRED
         console.log("[DEBUG] Product Fetch Query:", q);
         productFetchPromise = getDocs(q).then(snapshot => {
             productCache = [];
@@ -282,58 +300,262 @@ function renderProductSuggestions(suggestions, term, box) {
         const li = document.createElement('li');
         try { li.innerHTML = prod.name.replace(new RegExp(`(${term.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')})`, 'gi'), '<strong>$1</strong>'); } catch { li.textContent = prod.name; }
         li.dataset.name = prod.name; // Store printName
-        li.addEventListener('click', () => { productNameInput.value = prod.name; box.innerHTML = ''; quantityInput.focus(); });
+        li.addEventListener('click', () => {
+            productNameInput.value = prod.name;
+            box.innerHTML = '';
+            quantityInput.focus();
+        });
         ul.appendChild(li);
     });
     box.innerHTML = ''; box.appendChild(ul);
 }
 // --- End Autocomplete ---
 
+
 // --- Form Submit Handler ---
 async function handleFormSubmit(event) {
-    event.preventDefault(); console.log("[DEBUG] Form submission initiated...");
+    event.preventDefault();
+    console.log("[DEBUG] Form submission initiated...");
     if (!db || !collection || !addDoc || !doc || !updateDoc || !getDoc ) { alert("Database functions unavailable."); return; }
-    if (!saveButton) return; saveButton.disabled = true; saveButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+    if (!saveButton) return;
+    saveButton.disabled = true; saveButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+
     try {
         // Get data
         const formData = new FormData(orderForm);
-        const customerFullNameFromInput = customerNameInput.value.trim(); // Read direct value
+        const customerFullNameFromInput = customerNameInput.value.trim();
         console.log("[DEBUG] Reading Full Name directly from input:", customerFullNameFromInput);
-        const customerData = { fullName: customerFullNameFromInput, address: formData.get('address')?.trim() || '', whatsappNo: formData.get('whatsapp_no')?.trim() || '', contactNo: formData.get('contact_no')?.trim() || '' };
-        const orderDetails = { manualOrderId: formData.get('manual_order_id')?.trim() || '', orderDate: formData.get('order_date') || '', deliveryDate: formData.get('delivery_date') || '', urgent: formData.get('urgent') || 'No', remarks: formData.get('remarks')?.trim() || '' };
-        const statusCheckbox = orderForm.querySelector('input[name="order_status"]:checked'); const selectedStatus = statusCheckbox ? statusCheckbox.value : (isEditMode ? null : 'Order Received');
+
+        // Get customer details directly from potentially locked inputs
+        const customerData = {
+            fullName: customerFullNameFromInput,
+            address: customerAddressInput.value.trim() || '',
+            whatsappNo: customerWhatsAppInput.value.trim() || '',
+            contactNo: customerContactInput.value.trim() || ''
+        };
+
+        const orderDetails = {
+            manualOrderId: formData.get('manual_order_id')?.trim() || '',
+            orderDate: formData.get('order_date') || '',
+            deliveryDate: formData.get('delivery_date') || '',
+            urgent: formData.get('urgent') || 'No',
+            remarks: formData.get('remarks')?.trim() || ''
+        };
+
+        // --- Get Status from Dropdown ---
+        const selectedStatus = orderStatusSelect ? orderStatusSelect.value : 'Order Received'; // Default if element fails
+
         // ** Validation **
-        if (!selectedCustomerId) throw new Error("Please select an existing customer from the suggestions.");
-        if (!customerData.fullName) { console.error("[DEBUG] Validation failed: Full Name value is empty."); throw new Error("Full Name is required. Please select the customer again."); }
+        if (!selectedCustomerId) {
+            throw new Error("Please select an existing customer from the suggestions.");
+        }
+        if (!customerData.fullName) {
+            console.error("[DEBUG] Validation failed: Full Name value is empty.");
+            throw new Error("Full Name is required. Please select the customer again.");
+        }
         if (!customerData.whatsappNo) throw new Error("WhatsApp No required.");
         if (addedProducts.length === 0) throw new Error("Add at least one product.");
         if (!orderDetails.orderDate) throw new Error("Order Date required.");
-        if (!selectedStatus) throw new Error("Select order status.");
+        if (!selectedStatus) throw new Error("Select order status."); // Should always have a value from dropdown
+
         // Use selected Customer ID
         const customerIdToUse = selectedCustomerId;
+
         // Determine Order ID
-        let orderIdToUse; const existingSystemId = displayOrderIdInput.value;
-        if (isEditMode) { orderIdToUse = existingSystemId; } else { orderIdToUse = orderDetails.manualOrderId || Date.now().toString(); }
+        let orderIdToUse;
+        if (isEditMode && orderIdToEdit) { // Use the Firestore Doc ID for updates
+             // Use the Manual ID field's current value if it has one, otherwise use the hidden display ID (which might be the Firestore ID or original manual ID)
+             orderIdToUse = manualOrderIdInput.value.trim() || displayOrderIdInput.value || orderIdToEdit;
+             console.log("[DEBUG] Using Order ID for update:", orderIdToUse, " (Firestore Doc ID:", orderIdToEdit, ")");
+        } else { // New order
+             orderIdToUse = orderDetails.manualOrderId || Date.now().toString(); // Use manual or generate timestamp
+             console.log("[DEBUG] Using Order ID for new order:", orderIdToUse, " (Manual:", orderDetails.manualOrderId, ")");
+        }
+
+
         // Prepare Payload
-        const orderDataPayload = { orderId: orderIdToUse, customerId: customerIdToUse, customerDetails: customerData, orderDate: orderDetails.orderDate, deliveryDate: orderDetails.deliveryDate, urgent: orderDetails.urgent, remarks: orderDetails.remarks, status: selectedStatus, products: addedProducts, updatedAt: new Date() };
+        const orderDataPayload = {
+            orderId: orderIdToUse, // This is the display/manual ID
+            customerId: customerIdToUse,
+            customerDetails: customerData,
+            orderDate: orderDetails.orderDate,
+            deliveryDate: orderDetails.deliveryDate,
+            urgent: orderDetails.urgent,
+            remarks: orderDetails.remarks,
+            status: selectedStatus, // Get from dropdown
+            products: addedProducts,
+            updatedAt: new Date()
+        };
+
         // Save/Update
         let orderDocRefPath;
-        if (isEditMode) { if (!orderIdToEdit) throw new Error("Missing ID for update."); const orderRef = doc(db, "orders", orderIdToEdit); await updateDoc(orderRef, orderDataPayload); orderDocRefPath = orderRef.path; console.log("[DEBUG] Order updated:", orderIdToEdit); alert('Order updated successfully!'); }
-        else { orderDataPayload.createdAt = new Date(); const newOrderRef = await addDoc(collection(db, "orders"), orderDataPayload); orderDocRefPath = newOrderRef.path; console.log("[DEBUG] New order saved:", newOrderRef.id); alert('New order saved successfully!'); displayOrderIdInput.value = orderIdToUse; }
-        // Post-save actions
-        await saveToDailyReport(orderDataPayload, orderDocRefPath);
-        showWhatsAppReminder(customerData, orderIdToUse, orderDetails.deliveryDate);
-        if (!isEditMode) { resetNewOrderForm(); }
-    } catch (error) { console.error("Error saving/updating order:", error); alert("Error: " + error.message);
-    } finally { saveButton.disabled = false; const btnTxt = isEditMode ? "Update Order" : "Save Order"; saveButton.innerHTML = `<i class="fas fa-save"></i> <span>${btnTxt}</span>`; }
+        if (isEditMode && orderIdToEdit) { // Check orderIdToEdit (Firestore doc ID)
+            if (!orderIdToEdit) throw new Error("Missing Firestore document ID for update.");
+            const orderRef = doc(db, "orders", orderIdToEdit);
+            await updateDoc(orderRef, orderDataPayload);
+            orderDocRefPath = orderRef.path;
+            console.log("[DEBUG] Order updated:", orderIdToEdit);
+            alert('Order updated successfully!');
+        }
+        else { // New order
+            orderDataPayload.createdAt = new Date(); // Add createdAt for new orders
+            orderDataPayload.status = "Order Received"; // Ensure status is 'Order Received' for new saves
+            const newOrderRef = await addDoc(collection(db, "orders"), orderDataPayload);
+            orderDocRefPath = newOrderRef.path;
+            // Update display fields after successful save
+            displayOrderIdInput.value = orderIdToUse; // Show the used order ID
+            manualOrderIdInput.value = orderIdToUse; // Reflect the ID used
+            orderIdToEdit = newOrderRef.id; // Store Firestore ID
+            console.log("[DEBUG] New order saved:", newOrderRef.id, "Assigned Order ID:", orderIdToUse);
+            alert('New order saved successfully!');
+        }
+
+        // --- Post-save actions ---
+        // await saveToDailyReport(orderDataPayload, orderDocRefPath); // Placeholder
+
+        // *** MODIFIED: Show WhatsApp popup only for specific statuses ***
+        const statusesForPopup = ['Order Received', 'Verification', 'Delivered'];
+        const finalStatus = orderDataPayload.status; // Use status from payload (handles new order default)
+        if (finalStatus && statusesForPopup.includes(finalStatus)) {
+            console.log(`[DEBUG] Status '${finalStatus}' triggers WhatsApp popup.`);
+            // Pass the final status to the reminder function
+            showWhatsAppReminder(customerData, orderIdToUse, orderDetails.deliveryDate, finalStatus);
+        } else {
+             console.log(`[DEBUG] Status '${finalStatus}' does not trigger WhatsApp popup.`);
+             // If not showing popup, reset form immediately for new orders
+             if (!isEditMode) {
+                 resetNewOrderForm();
+             } else {
+                  // Optional: Redirect after edit if no popup shown?
+                  // window.location.href = 'order_history.html';
+             }
+        }
+
+        // Reset form for new orders is handled within closeWhatsAppPopup or above if no popup shown.
+
+    } catch (error) {
+        console.error("Error saving/updating order:", error);
+        alert("Error: " + error.message);
+    } finally {
+        saveButton.disabled = false;
+        const btnTxt = isEditMode ? "Update Order" : "Save Order";
+        if (saveButtonText) saveButtonText.textContent = btnTxt;
+        else if (saveButton) saveButton.innerHTML = `<i class="fas fa-save"></i> <span>${btnTxt}</span>`;
+    }
 }
 
 // --- Reset Form ---
-function resetNewOrderForm() { console.log("[DEBUG] Resetting form."); resetCustomerSelection(); customerNameInput.value = ''; customerWhatsAppInput.value = ''; customerAddressInput.value = ''; customerContactInput.value = ''; manualOrderIdInput.value = ''; displayOrderIdInput.value = ''; orderForm.delivery_date.value = ''; orderForm.remarks.value = ''; addedProducts = []; renderProductList(); handleStatusCheckboxes(false); const urgentNoRadio = orderForm.querySelector('input[name="urgent"][value="No"]'); if (urgentNoRadio) urgentNoRadio.checked = true; const orderDateInput = document.getElementById('order_date'); if (orderDateInput) orderDateInput.value = new Date().toISOString().split('T')[0]; }
+function resetNewOrderForm() {
+    console.log("[DEBUG] Resetting form for new order entry.");
+    orderForm.reset(); // Reset all standard form fields
+    resetCustomerSelection(); // Clear customer details and unlock fields
+    addedProducts = []; // Clear product array
+    renderProductList(); // Update product list display
+
+    // --- Reset Status Dropdown ---
+    if(orderStatusSelect) {
+        orderStatusSelect.value = "Order Received"; // Set default
+        orderStatusSelect.disabled = true; // Disable for new orders
+    }
+
+    // Explicitly set date to today after reset
+    const orderDateInput = document.getElementById('order_date');
+    if (orderDateInput) orderDateInput.value = new Date().toISOString().split('T')[0];
+
+    // Clear any generated/displayed IDs
+    displayOrderIdInput.value = '';
+    manualOrderIdInput.value = '';
+    if(hiddenEditOrderIdInput) hiddenEditOrderIdInput.value = '';
+    if(selectedCustomerIdInput) selectedCustomerIdInput.value = '';
+
+    // Reset edit mode flag
+    isEditMode = false;
+    orderIdToEdit = null;
+
+    // Reset header and button text
+    if(headerText) headerText.textContent = "New Order"; else if(formHeader) formHeader.textContent = "New Order";
+    if(saveButtonText) saveButtonText.textContent = "Save Order";
+    manualOrderIdInput.readOnly = false; // Ensure manual ID is editable
+    console.log("[DEBUG] Form reset complete.");
+}
 
 // --- Post-Save Functions ---
-async function saveToDailyReport(orderData, orderPath) { console.log(`[DEBUG] Placeholder: Saving to daily_reports (Path: ${orderPath})`, orderData); try { /* ... */ console.log("[DEBUG] Placeholder: Called saveToDailyReport."); } catch (error) { console.error("[DEBUG] Placeholder: Error saving to daily_reports:", error); } }
-function showWhatsAppReminder(customer, orderId, deliveryDate) { if (!whatsappReminderPopup || !whatsappMsgPreview || !whatsappSendLink) { console.error("[DEBUG] WhatsApp popup elements missing."); return; } const customerName = customer.fullName || 'Customer'; const customerNumber = customer.whatsappNo?.replace(/[^0-9]/g, ''); if (!customerNumber) { console.warn("[DEBUG] WhatsApp No missing."); alert("Cust WhatsApp No missing."); return; } let message = `Hello ${customerName},\nYour order (ID: ${orderId}) has been received successfully.\n`; if (deliveryDate) { message += `Est delivery date is ${deliveryDate}.\n`; } message += `Thank you!`; whatsappMsgPreview.innerText = message; const encodedMessage = encodeURIComponent(message); const whatsappUrl = `https://wa.me/${customerNumber}?text=${encodedMessage}`; whatsappSendLink.href = whatsappUrl; whatsappReminderPopup.classList.add('active'); console.log("[DEBUG] WhatsApp reminder shown."); }
-function closeWhatsAppPopup() { if (whatsappReminderPopup) whatsappReminderPopup.classList.remove('active'); }
+async function saveToDailyReport(orderData, orderPath) {
+    // Placeholder for future implementation
+    console.log(`[DEBUG] Placeholder: Would save to daily_reports (Path: ${orderPath})`, orderData);
+}
 
-console.log("new_order.js script loaded (Client-Side Filtering + Save Fix + Debug Logs).");
+// *** MODIFIED: WhatsApp Reminder Function (Accepts status) ***
+function showWhatsAppReminder(customer, orderId, deliveryDate, status) {
+    if (!whatsappReminderPopup || !whatsappMsgPreview || !whatsappSendLink) {
+        console.error("[DEBUG] WhatsApp popup elements missing.");
+        return;
+    }
+
+    const customerName = customer.fullName ? customer.fullName.trim() : 'Customer';
+    const customerNumber = customer.whatsappNo?.replace(/[^0-9]/g, '');
+
+    if (!customerNumber) {
+        console.warn("[DEBUG] WhatsApp No missing or invalid for customer:", customerName);
+        return; // Don't show popup if no number
+    }
+
+    let message = ''; // Initialize empty message
+    const signature = "\n\n*Madhav Multy Print*\nMob. 9549116541";
+
+    switch (status) {
+        case 'Order Received':
+            message = `नमस्ते *${customerName}*,\n\nआपका ऑर्डर (ID: *${orderId}*) हमें सफलतापूर्वक मिल गया है।`;
+            if (deliveryDate) {
+                try {
+                     const dateObj = new Date(deliveryDate + 'T00:00:00'); // Treat as local date
+                     const formattedDate = dateObj.toLocaleDateString('en-GB'); // dd/mm/yyyy
+                     message += `\nअनुमानित डिलीवरी दिनांक *${formattedDate}* तक है।`;
+                } catch (e) {
+                     message += `\nअनुमानित डिलीवरी दिनांक *${deliveryDate}* तक है।`; // Fallback
+                }
+            }
+            message += `\n\nसेवा का मौका देने के लिए धन्यवाद!`;
+            break;
+
+        case 'Verification':
+            message = `नमस्ते *${customerName}*,\n\nआपके ऑर्डर (ID: *${orderId}*) का डिज़ाइन वेरिफिकेशन के लिए तैयार है।`;
+            message += `\nकृपया डिज़ाइन को ध्यानपूर्वक चेक करें। *OK* का जवाब देने के बाद कोई बदलाव संभव नहीं होगा।`;
+            message += `\n\nधन्यवाद!`;
+            break;
+
+        case 'Delivered':
+            message = `नमस्ते *${customerName}*,\n\nआपका ऑर्डर (ID: *${orderId}*) सफलतापूर्वक डिलीवर कर दिया गया है।`;
+            message += `\n\nहमें सेवा का अवसर देने के लिए धन्यवाद!`;
+            break;
+
+        default:
+            // This case should not be reached due to the check in handleFormSubmit
+            console.log(`[DEBUG] WhatsApp popup requested for unhandled status: ${status}`);
+            return; // Don't show popup for other statuses from this form
+    }
+
+    message += signature; // Add signature
+
+    whatsappMsgPreview.innerText = message; // Show plain text in preview
+    const encodedMessage = encodeURIComponent(message);
+    const whatsappUrl = `https://wa.me/${customerNumber}?text=${encodedMessage}`;
+    whatsappSendLink.href = whatsappUrl;
+    whatsappReminderPopup.classList.add('active');
+    console.log("[DEBUG] WhatsApp reminder shown for status:", status);
+}
+
+function closeWhatsAppPopup() {
+    if (whatsappReminderPopup) whatsappReminderPopup.classList.remove('active');
+     // Reset the form after closing the popup *if* it was a new order.
+     if (!isEditMode) {
+        console.log("[DEBUG] Resetting form after closing WhatsApp popup for new order.");
+        resetNewOrderForm();
+     }
+     // Optionally redirect after closing popup for edit mode
+     // if (isEditMode) {
+     //    window.location.href = 'order_history.html';
+     // }
+}
+
+console.log("new_order.js script loaded (Dropdown Status + Conditional WhatsApp Logic).");
