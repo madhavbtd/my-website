@@ -1,66 +1,81 @@
 /* General Body Styles */
 body {
-  font-family: Arial, sans-serif;
-  margin: 0; /* मार्जिन हटाया */
+  /* Clean sans-serif font stack */
+  font-family: "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
+  margin: 0;
   padding: 20px;
-  background-color: #f4f7f6;
+  background-color: #f0f2f5; /* Lighter grey background */
   color: #333;
   display: flex;
   justify-content: center;
-  line-height: 1.6;
+  line-height: 1.5;
 }
 
 /* Container */
 .container {
   background-color: #fff;
-  padding: 25px 30px;
-  border-radius: 8px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  padding: 20px 25px;
+  border-radius: 6px; /* Slightly less rounded */
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1); /* Softer shadow */
   width: 100%;
-  max-width: 850px; /* थोड़ी चौड़ाई बढ़ाई */
+  max-width: 750px; /* Reduced max-width for compactness */
   box-sizing: border-box;
 }
 
 /* Header */
 .header {
-  background-color: #0056b3;
+  background-color: #0062cc; /* Standard blue */
   color: white;
   padding: 12px 20px;
-  border-radius: 6px 6px 0 0;
-  margin: -25px -30px 25px -30px;
-  font-size: 1.4em;
-  font-weight: bold;
+  border-radius: 5px 5px 0 0; /* Match container radius */
+  margin: -20px -25px 20px -25px;
+  font-size: 1.2em; /* Reduced size */
+  font-weight: 600;
   text-align: center;
+  display: flex; /* For icon */
+  align-items: center;
+  justify-content: center;
+  gap: 8px; /* Space between icon and text */
+}
+.header-icon {
+    font-size: 1em; /* Match text size */
 }
 
 /* Section Titles */
 .section-title {
-  font-size: 1.2em;
-  color: #0056b3;
-  margin-top: 25px;
-  margin-bottom: 15px;
-  font-weight: bold;
-  border-bottom: 1px solid #eee;
-  padding-bottom: 5px;
+  font-size: 1.05em; /* Reduced size */
+  color: #0062cc;
+  margin-top: 18px; /* Reduced margin */
+  margin-bottom: 12px;
+  font-weight: 600;
+  border-bottom: 1px solid #e5e5e5; /* Lighter border */
+  padding-bottom: 4px;
 }
+/* First section title no top margin */
+.container > .section-title:first-of-type {
+    margin-top: 0;
+}
+
 
 /* Form Groups */
 .form-group {
-  margin-bottom: 15px;
+  margin-bottom: 10px; /* Reduced margin */
   display: flex;
   flex-wrap: wrap;
-  align-items: flex-start; /* टॉप अलाइन करें */
-  gap: 10px;
-  position: relative; /* सुझाव बॉक्स के लिए */
+  align-items: flex-start;
+  gap: 5px 10px; /* Reduced gap */
+  position: relative;
 }
 
 .form-group label {
-  flex-basis: 160px; /* लेबल की चौड़ाई थोड़ी बढ़ाई */
+  flex-basis: 130px; /* Reduced label width */
   flex-shrink: 0;
-  font-size: 0.95em;
+  font-size: 0.88em; /* Reduced size */
   text-align: right;
   padding-right: 10px;
-  padding-top: 8px; /* इनपुट के साथ अलाइन करने के लिए */
+  padding-top: 7px;
+  color: #454545; /* Darker grey */
+  font-weight: 500; /* Medium weight */
 }
 
 .form-group input[type="text"],
@@ -69,366 +84,267 @@ body {
 .form-group select,
 .form-group textarea {
   flex-grow: 1;
-  padding: 8px 12px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
+  padding: 6px 10px; /* Reduced padding */
+  border: 1px solid #ced4da; /* Standard border color */
+  border-radius: 3px; /* Slightly less rounded */
   box-sizing: border-box;
-  font-size: 1em;
-  height: 38px;
+  font-size: 0.9em; /* Reduced input font size */
+  height: 34px; /* Reduced height */
 }
-.form-group input[readonly] { /* Readonly फ़ील्ड का स्टाइल */
+.form-group input[readonly] {
     background-color: #e9ecef;
     cursor: not-allowed;
 }
 .form-group textarea {
-    height: 80px;
+    height: 65px; /* Reduced textarea height */
     resize: vertical;
 }
-.info-text { /* सूचना टेक्स्ट का स्टाइल */
+/* Specific input sizing */
+#display_order_id, #manual_order_id {
+    /* Maybe make IDs slightly less prominent */
+     background-color: #f8f9fa;
+}
+#order_date, #delivery_date {
+    /* Ensure date inputs don't grow too large */
+    flex-grow: 0;
+    width: 150px; /* Fixed width for date inputs */
+}
+
+
+.info-text {
     flex-basis: 100%;
-    font-size: 0.85em;
-    color: #777;
-    margin-left: 170px; /* लेबल के बाद अलाइन करें */
-    margin-top: -10px; /* थोड़ा ऊपर */
-    margin-bottom: 10px;
+    font-size: 0.78em; /* Smaller */
+    color: #888;
+    margin-left: 140px; /* Label width + gap */
+    margin-top: -5px; /* Pull up slightly */
+    margin-bottom: 8px;
 }
 
 /* Specific Group Adjustments */
 .remarks-group label {
     flex-basis: 100%;
     text-align: left;
-    margin-bottom: 5px;
+    margin-bottom: 4px;
     padding-top: 0;
 }
 .radio-group {
     display: flex;
     gap: 15px;
     align-items: center;
-    padding-top: 8px; /* लेबल के साथ अलाइन */
+    padding-top: 7px;
 }
 .radio-group label {
     flex-basis: auto;
     text-align: left;
     padding: 0;
-    display: flex;
-    align-items: center;
-    gap: 5px;
     font-weight: normal;
+    font-size: 0.9em; /* Match input size */
 }
 
 /* Order Status Group */
 .order-status-group {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); /* कॉलम चौड़ाई */
-  gap: 10px 15px; /* रो और कॉलम गैप */
-  padding-left: 170px; /* इनपुट के साथ अलाइन */
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); /* Adjust minmax */
+  gap: 6px 10px; /* Reduced gap */
+  padding-left: 140px; /* Align after label */
   align-items: center;
 }
 .order-status-group label {
   flex-basis: auto;
   text-align: left;
   padding: 0;
-  font-size: 0.9em;
+  font-size: 0.8em; /* Smaller font */
   display: flex;
   align-items: center;
-  gap: 5px;
+  gap: 4px;
   font-weight: normal;
   cursor: pointer;
 }
-.order-status-group label.disabled { /* डिसेबल लेबल का स्टाइल */
-    color: #999;
-    cursor: not-allowed;
-}
-.order-status-group input[type="checkbox"] {
-    margin: 0;
-    cursor: pointer;
-}
-.order-status-group input[type="checkbox"]:disabled {
-    cursor: not-allowed;
-}
+.order-status-group label.disabled { color: #999; cursor: not-allowed; }
+.order-status-group input[type="checkbox"] { margin: 0; cursor: pointer; width: 14px; height: 14px; }
+.order-status-group input[type="checkbox"]:disabled { cursor: not-allowed; }
 
 /* Product Input Area */
 .product-input-area {
-    border: 1px dashed #ccc;
-    padding: 15px;
-    margin-bottom: 15px;
-    border-radius: 5px;
-    background-color: #fdfdfd;
+    border: 1px solid #e0e0e0; /* Lighter border */
+    padding: 10px 12px; /* Reduced padding */
+    margin-bottom: 10px;
+    border-radius: 4px;
+    background-color: #fbfbfb; /* Slightly off-white */
 }
 .product-entry-group {
     display: flex;
     flex-wrap: wrap;
-    gap: 15px;
+    gap: 10px;
     align-items: flex-end;
 }
 .product-name-group {
-    flex: 3;
-    min-width: 250px;
-    position: relative; /* सुझाव बॉक्स के लिए */
+    flex: 1;
+    min-width: 180px; /* Reduced min-width */
+    position: relative;
 }
 .product-qty-group {
-    flex: 1;
-    min-width: 100px;
+    flex: 0 0 85px; /* Fixed width, no grow/shrink */
 }
 .product-name-group label,
 .product-qty-group label {
     flex-basis: 100%;
     text-align: left;
     padding: 0;
-    margin-bottom: 5px;
+    margin-bottom: 3px;
     display: block;
     width: 100%;
-    font-weight: bold; /* थोड़ा बोल्ड */
+    font-weight: 600;
+    font-size: 0.85em; /* Smaller label */
+    color: #333;
+}
+/* Qty input direct style */
+#quantity_input {
+    max-width: 85px; /* Match group width */
+    text-align: center;
 }
 .add-product-button {
-  padding: 8px 15px;
+  padding: 6px 10px; /* Reduced padding */
   border: none;
-  border-radius: 4px;
+  border-radius: 3px;
   cursor: pointer;
-  font-size: 0.95em;
+  font-size: 0.85em; /* Smaller text */
   background-color: #28a745;
   color: white;
-  height: 38px;
+  height: 34px; /* Match input height */
   white-space: nowrap;
-  display: inline-flex; /* आइकन के लिए */
+  display: inline-flex;
   align-items: center;
-  gap: 5px;
+  gap: 4px;
 }
-.add-product-button:hover {
-  background-color: #218838;
+.add-product-button:hover { background-color: #218838; }
+.add-product-button i { font-size: 0.9em; }
+/* Align button better if wrapping */
+@media (max-width: 500px) {
+    .product-entry-group {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    .product-qty-group {
+        flex-basis: auto;
+    }
+     #quantity_input { max-width: none; } /* Full width on small screens */
+     .add-product-button { margin-top: 5px; }
 }
-.add-product-button i {
-    font-size: 0.9em;
-}
+
 
 /* Product List Container */
 .product-list-container {
-    margin-top: 15px;
+    margin-top: 10px;
     border-top: 1px solid #eee;
-    padding-top: 15px;
+    padding-top: 10px;
+    margin-bottom: 10px;
 }
 .product-list-item {
     display: flex;
     justify-content: space-between;
     align-items: center;
     background-color: #f8f9fa;
-    padding: 8px 12px;
-    border-radius: 4px;
-    margin-bottom: 8px;
-    font-size: 0.95em;
-    border: 1px solid #eee;
+    padding: 5px 10px; /* Reduced padding */
+    border-radius: 3px;
+    margin-bottom: 5px; /* Reduced margin */
+    font-size: 0.88em; /* Smaller font */
+    border: 1px solid #e9ecef; /* Lighter border */
 }
-.product-list-item span {
-    flex-grow: 1;
-    margin-right: 10px;
-    word-break: break-all; /* लंबा नाम हो तो तोड़ें */
-}
+.product-list-item span { flex-grow: 1; margin-right: 8px; word-break: break-all; }
 .product-list-item .delete-product-btn {
-    background: none;
-    border: none;
-    color: #dc3545;
-    cursor: pointer;
-    font-size: 1.1em;
-    padding: 0 5px;
-    line-height: 1; /* अलाइनमेंट के लिए */
+    background: none; border: none; color: #dc3545; cursor: pointer;
+    font-size: 1em; padding: 0 4px; line-height: 1;
 }
-.product-list-item .delete-product-btn:hover {
-    color: #a71d2a;
-}
-.empty-list-message { /* खाली लिस्ट का संदेश */
-    color: #777;
-    font-style: italic;
-    text-align: center;
-    padding: 10px 0;
-}
+.product-list-item .delete-product-btn:hover { color: #a71d2a; }
+.empty-list-message { color: #777; font-style: italic; text-align: center; padding: 6px 0; font-size: 0.85em; }
 
 
 /* Autocomplete Suggestions Box */
-.suggestions-box {
-  /* स्थिति पहले से ही .form-group या .product-name-group पर relative है */
-  width: 100%; /* इनपुट की पूरी चौड़ाई ले */
-}
+.suggestions-box { width: 100%; }
 .suggestions-box ul {
-  position: absolute; /* फ्लोट करने के लिए */
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  border: 1px solid #ccc;
-  border-top: none;
-  background-color: white;
-  width: 100%; /* कंटेनर की चौड़ाई */
-  max-height: 150px;
-  overflow-y: auto;
-  z-index: 10; /* दूसरे एलिमेंट्स के ऊपर दिखे */
-  border-radius: 0 0 4px 4px;
-  box-shadow: 0 3px 5px rgba(0,0,0,0.1); /* हल्की छाया */
-  /* यह सुनिश्चित करने के लिए कि यह लेबल के नीचे से शुरू हो */
-  top: 100%;
-  left: 0;
+  position: absolute; list-style: none; margin: 1px 0 0 0; padding: 0; /* Add small top margin */
+  border: 1px solid #ced4da; background-color: white; width: 100%;
+  max-height: 150px; overflow-y: auto; z-index: 10;
+  border-radius: 0 0 3px 3px; box-shadow: 0 3px 5px rgba(0,0,0,0.08);
+  top: 100%; left: 0;
 }
-/* विशेष रूप से कस्टमर फ़ील्ड्स के लिए */
-.form-group .suggestions-box ul {
-    left: 170px; /* लेबल की चौड़ाई + गैप */
-    width: calc(100% - 170px); /* शेष चौड़ाई */
-}
-/* विशेष रूप से प्रोडक्ट फ़ील्ड के लिए */
-.product-name-group .suggestions-box ul {
-    left: 0; /* उत्पाद फ़ील्ड के नीचे सीधे */
-    width: 100%;
-}
-
-.suggestions-box li {
-  padding: 8px 12px;
-  cursor: pointer;
-  font-size: 0.9em;
-}
-.suggestions-box li:hover, .suggestions-box li.selected { /* होवर और चयनित स्टाइल */
-  background-color: #eee;
-}
-.suggestions-box li strong { /* मैचिंग टेक्स्ट को बोल्ड करें (JS द्वारा जोड़ा जाएगा) */
-    font-weight: bold;
-}
+.form-group .suggestions-box ul { left: 140px; width: calc(100% - 140px); }
+.product-name-group .suggestions-box ul { left: 0; width: 100%; }
+.suggestions-box li { padding: 6px 10px; cursor: pointer; font-size: 0.85em; } /* Smaller font */
+.suggestions-box li:hover, .suggestions-box li.selected { background-color: #e9ecef; }
+.suggestions-box li strong { font-weight: 600; }
 
 
 /* Buttons Container */
 .button-container {
   display: flex;
   justify-content: flex-end;
-  gap: 10px;
-  padding-top: 20px;
-  margin-top: 20px;
-  border-top: 1px solid #eee;
+  gap: 8px; /* Reduced gap */
+  padding-top: 15px;
+  margin-top: 15px; /* Reduced margin */
+  border-top: 1px solid #e5e5e5;
 }
 .save-button, .cancel-button {
-  padding: 10px 20px;
+  padding: 8px 16px; /* Adjusted padding */
   border: none;
-  border-radius: 4px;
+  border-radius: 3px;
   cursor: pointer;
-  font-weight: bold;
-  font-size: 1em;
+  font-weight: 600;
+  font-size: 0.9em; /* Adjusted size */
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  gap: 5px;
   transition: background-color 0.2s ease, opacity 0.2s ease;
 }
-.save-button {
-  background-color: #007bff;
-  color: white;
-}
-.save-button:hover {
-  background-color: #0056b3;
-}
-.save-button:disabled {
-    background-color: #a0cfff;
-    cursor: not-allowed;
-    opacity: 0.7;
-}
-.cancel-button {
-    background-color: #6c757d;
-    color: white;
-}
-.cancel-button:hover {
-    background-color: #5a6268;
-}
+.save-button { background-color: #007bff; color: white; }
+.save-button:hover { background-color: #0056b3; }
+.save-button:disabled { background-color: #a0cfff; cursor: not-allowed; opacity: 0.7; }
+.cancel-button { background-color: #6c757d; color: white; }
+.cancel-button:hover { background-color: #5a6268; }
 
 
-/* WhatsApp Reminder Popup */
-.popup-overlay {
-    display: none;
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.6);
-    z-index: 1050;
-    justify-content: center;
-    align-items: center;
-    padding: 15px; /* थोड़ा पैडिंग दें */
-    box-sizing: border-box;
-}
-.popup-overlay.active {
-    display: flex;
-}
-.popup-content {
-    background-color: #fff;
-    padding: 25px 30px;
-    border-radius: 8px;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-    text-align: center;
-    position: relative;
-    max-width: 450px; /* थोड़ी चौड़ाई बढ़ाई */
-    width: 100%;
-}
-.popup-close {
-    position: absolute;
-    top: 8px;
-    right: 12px;
-    font-size: 26px;
-    color: #aaa;
-    background: none;
-    border: none;
-    cursor: pointer;
-    line-height: 1;
-}
-.popup-close:hover {
-    color: #333;
-}
-.popup-content h4 {
-    margin-top: 0;
-    margin-bottom: 10px;
-    color: #28a745;
-    font-size: 1.3em;
-}
-.popup-content p {
-    margin-bottom: 15px;
-    color: #555;
-}
-.message-preview { /* बदला हुआ नाम और स्टाइल */
-    margin-top: 15px;
-    margin-bottom: 20px;
-    font-size: 0.95em;
-    background-color: #e9f5ff; /* हल्का नीला बैकग्राउंड */
-    padding: 12px;
-    border-radius: 5px;
-    text-align: left;
-    border: 1px solid #bde0ff;
-    white-space: pre-wrap; /* संदेश में लाइन ब्रेक दिखाएं */
-    word-wrap: break-word;
-}
-.whatsapp-send-btn {
-    background-color: #25d366;
-    color: white;
-    text-decoration: none;
-    padding: 10px 20px;
-    border-radius: 5px;
-    display: inline-flex; /* आइकन के लिए */
-    align-items: center;
-    gap: 8px;
-    font-weight: bold;
-    transition: background-color 0.2s ease;
-}
-.whatsapp-send-btn:hover {
-    background-color: #1ebe57;
-}
+/* WhatsApp Reminder Popup (Keep styles from previous version - might need minor tweaks) */
+.popup-overlay { /* ... */ }
+.popup-overlay.active { /* ... */ }
+.popup-content { /* ... */ }
+.popup-close { /* ... */ }
+.popup-content h4 { /* ... */ }
+.popup-content p { /* ... */ }
+.message-preview { /* ... */ }
+.whatsapp-send-btn { /* ... */ }
 
-/* Responsive Styles */
+/* Responsive Styles Refined */
 @media (max-width: 768px) {
   body { padding: 10px; }
-  .container { padding: 20px 15px; }
-  .header { margin: -20px -15px 20px -15px; font-size: 1.2em; }
-  .form-group { flex-direction: column; align-items: stretch; gap: 5px; }
-  .form-group label { text-align: left; padding-top: 0; margin-bottom: 3px; flex-basis: auto; }
+  .container { padding: 15px; }
+  .header { margin: -15px -15px 15px -15px; font-size: 1.1em; }
+  .form-group { flex-direction: column; align-items: stretch; gap: 3px; }
+  .form-group label { text-align: left; padding-top: 0; margin-bottom: 2px; flex-basis: auto; font-size: 0.85em;}
   .form-group input[type="text"],
   .form-group input[type="date"],
   .form-group input[type="number"],
   .form-group select,
-  .form-group textarea { width: 100%; }
-  .order-status-group { padding-left: 0; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); }
+  .form-group textarea { width: 100%; font-size: 0.95em; height: 36px; }
+  #order_date, #delivery_date { width: 100%; } /* Full width on mobile */
+  textarea { height: 70px !important; }
+  .order-status-group { padding-left: 0; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 4px 8px;}
   .product-entry-group { flex-direction: column; align-items: stretch; }
   .info-text { margin-left: 0; }
-  .suggestions-box { margin-left: 0; }
   .form-group .suggestions-box ul { left: 0; width: 100%; }
-  .button-container { flex-direction: column; gap: 10px; align-items: stretch;}
+  .button-container { flex-direction: column; gap: 8px; align-items: stretch;}
   .save-button, .cancel-button { justify-content: center; }
+}
+/* Further reduce spacing on very small screens */
+@media (max-width: 480px) {
+    body { padding: 5px;}
+    .container { padding: 10px;}
+    .header { margin: -10px -10px 10px -10px; font-size: 1em;}
+    .section-title { font-size: 1em; margin-top: 15px; margin-bottom: 10px;}
+    .form-group label { font-size: 0.82em;}
+    .form-group input, .form-group textarea, .form-group select { font-size: 0.9em; height: 34px;}
+    textarea { height: 60px !important;}
+    .add-product-button { height: 34px; font-size: 0.8em;}
+    .product-list-item { font-size: 0.85em; padding: 4px 8px;}
+    .save-button, .cancel-button { font-size: 0.88em; padding: 7px 15px;}
 }

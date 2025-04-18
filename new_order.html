@@ -1,18 +1,21 @@
 <!DOCTYPE html>
-<html lang="en"> <head>
+<html lang="en">
+<head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>New/Edit Order</title> <link rel="stylesheet" href="css/new_order.css"> <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" integrity="sha512-9usAa10IRO0HhonpyAIVpjrylPvoDwiPUiKdWk5t3PyolY1cOd4DSE0Ga+ri4AuTroPR5aQvXU9xC6qOPnzFeg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <title>New/Edit Order</title>
+    <link rel="stylesheet" href="css/new_order.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" integrity="sha512-9usAa10IRO0HhonpyAIVpjrylPvoDwiPUiKdWk5t3PyolY1cOd4DSE0Ga+ri4AuTroPR5aQvXU9xC6qOPnzFeg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
 </head>
 <body>
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-        import { getFirestore, collection, addDoc, doc, updateDoc, deleteDoc, onSnapshot, getDocs, query, where, getDoc, orderBy, limit } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js"; // limit जोड़ा गया
+        import { getFirestore, collection, addDoc, doc, updateDoc, deleteDoc, onSnapshot, getDocs, query, where, getDoc, orderBy, limit } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
         const firebaseConfig = {
           apiKey: "AIzaSyBQj5rQmE77kKKGYixP8y3Hcimz8tiAqzQ", // Your config
           authDomain: "madhav-multyprint.firebaseapp.com",
           projectId: "madhav-multyprint",
-          storageBucket: "madhav-multyprint.appspot.com", // Check your correct storage bucket name
+          storageBucket: "madhav-multyprint.appspot.com",
           messagingSenderId: "104988349637",
           appId: "1:104988349637:web:faf045b77c6786a4e70cac"
         };
@@ -23,42 +26,62 @@
                  window.firebaseAppInitialized = true; console.log("Firebase initialized on new_order page.");
             } else { console.log("Firebase already initialized."); }
             const db = window.db || getFirestore(app || undefined);
-            // Global functions (Include limit)
+            // Global functions
             window.db = db; window.collection = collection; window.addDoc = addDoc; window.doc = doc;
             window.updateDoc = updateDoc; window.deleteDoc = deleteDoc; window.onSnapshot = onSnapshot;
             window.getDocs = getDocs; window.query = query; window.where = where; window.getDoc = getDoc;
-            window.orderBy = orderBy; window.limit = limit; // limit को ग्लोबल बनाया
+            window.orderBy = orderBy; window.limit = limit;
             console.log("Firebase functions available globally.");
         } catch (e) {
             console.error("Firebase initialization error:", e);
-            if (!window.db) { alert("Database connection error!"); } // English Error
+            if (!window.db) { alert("Database connection error!"); }
         }
     </script>
 
     <div class="container">
-        <div class="header" id="formHeader">New Order</div> <form id="newOrderForm">
+        <div class="header" id="formHeader">
+             <i class="fas fa-file-alt header-icon"></i> <span id="headerText">New Order</span> </div>
+        <form id="newOrderForm">
             <input type="hidden" id="editOrderId" name="editOrderId">
-             <input type="hidden" id="selectedCustomerId" name="selectedCustomerId">
+            <input type="hidden" id="selectedCustomerId" name="selectedCustomerId">
 
             <div class="section-title">1. Customer Details</div>
             <div class="form-group">
-                <label for="full_name">Full Name:</label> <input type="text" id="full_name" name="full_name" required autocomplete="off" placeholder="Enter customer name..."> <div id="customer-suggestions-name" class="suggestions-box"></div> </div>
-            <div class="form-group">
-                <label for="address">Address:</label> <input type="text" id="address" name="address" readonly placeholder="Autofills when customer selected"> </div>
-            <div class="form-group">
-                <label for="whatsapp_no">WhatsApp No:</label> <input type="text" id="whatsapp_no" name="whatsapp_no" required autocomplete="off" placeholder="Enter WhatsApp number..."> <div id="customer-suggestions-whatsapp" class="suggestions-box"></div> </div>
-            <div class="form-group">
-                <label for="contact_no">Contact No:</label> <input type="text" id="contact_no" name="contact_no" readonly placeholder="Autofills when customer selected"> </div>
-             <p class="info-text">*New customer cannot be added here, only select an existing one.</p> <div class="section-title">2. Order Details</div>
-            <div class="form-group">
-                <label for="manual_order_id">Order ID (Manual):</label> <input type="text" id="manual_order_id" name="manual_order_id" placeholder="Optional - Auto-generated if empty"> </div>
-             <div class="form-group">
-                <label for="display_order_id">Order ID (System):</label> <input type="text" id="display_order_id" name="display_order_id" readonly placeholder="Auto-generated or Existing"> </div>
-            <div class="form-group">
-                <label for="order_date">Order Date:</label> <input type="date" id="order_date" name="order_date" required>
+                <label for="full_name">Full Name:</label>
+                <input type="text" id="full_name" name="full_name" required autocomplete="off" placeholder="Enter customer name...">
+                <div id="customer-suggestions-name" class="suggestions-box"></div>
             </div>
             <div class="form-group">
-                <label for="delivery_date">Delivery Date:</label> <input type="date" id="delivery_date" name="delivery_date">
+                <label for="address">Address:</label>
+                <input type="text" id="address" name="address" readonly placeholder="Autofills when customer selected">
+            </div>
+            <div class="form-group">
+                <label for="whatsapp_no">WhatsApp No:</label>
+                <input type="text" id="whatsapp_no" name="whatsapp_no" required autocomplete="off" placeholder="Enter WhatsApp number...">
+                <div id="customer-suggestions-whatsapp" class="suggestions-box"></div>
+            </div>
+            <div class="form-group">
+                <label for="contact_no">Contact No:</label>
+                <input type="text" id="contact_no" name="contact_no" readonly placeholder="Autofills when customer selected">
+            </div>
+             <p class="info-text">*New customer cannot be added here, only select an existing one.</p>
+
+            <div class="section-title">2. Order Details</div>
+            <div class="form-group">
+                <label for="manual_order_id">Order ID (Manual):</label>
+                <input type="text" id="manual_order_id" name="manual_order_id" placeholder="Optional - Auto-generated if empty">
+            </div>
+             <div class="form-group">
+                <label for="display_order_id">Order ID (System):</label>
+                <input type="text" id="display_order_id" name="display_order_id" readonly placeholder="Auto-generated or Existing">
+            </div>
+            <div class="form-group">
+                <label for="order_date">Order Date:</label>
+                <input type="date" id="order_date" name="order_date" required>
+            </div>
+            <div class="form-group">
+                <label for="delivery_date">Delivery Date:</label>
+                <input type="date" id="delivery_date" name="delivery_date">
             </div>
 
             <div class="section-title">3. Order Status</div>
@@ -77,43 +100,60 @@
             <div class="product-input-area">
                 <div class="product-entry-group">
                     <div class="form-group product-name-group">
-                        <label for="product_name_input">Product Name:</label> <input type="text" id="product_name_input" name="product_name_input" placeholder="Enter product name..." autocomplete="off"> <div id="product-suggestions" class="suggestions-box"></div> </div>
+                        <label for="product_name_input">Product Name:</label>
+                        <input type="text" id="product_name_input" name="product_name_input" placeholder="Enter product name..." autocomplete="off">
+                        <div id="product-suggestions" class="suggestions-box"></div>
+                    </div>
                      <div class="form-group product-qty-group">
-                        <label for="quantity_input">Qty:</label> <input type="number" id="quantity_input" name="quantity_input" placeholder="Quantity"> </div>
+                        <label for="quantity_input">Qty:</label>
+                        <input type="number" id="quantity_input" name="quantity_input" placeholder="Qty"> </div>
                     <button type="button" id="add-product-btn" class="add-product-button">
-                        <i class="fas fa-plus"></i> Add Product </button>
+                        <i class="fas fa-plus"></i> Add Product
+                    </button>
                 </div>
-                 <p class="info-text">*New product cannot be added here, only select an existing one.</p> </div>
+                 <p class="info-text">*New product cannot be added here, only select an existing one.</p>
+            </div>
             <div id="product-list" class="product-list-container">
                 </div>
 
             <div class="section-title">5. Reminder & Priority</div>
             <div class="form-group">
-                <label>Urgent?</label> <div class="radio-group">
-                     <label><input type="radio" name="urgent" value="Yes"> Yes</label> <label><input type="radio" name="urgent" value="No" checked> No</label> </div>
+                <label>Urgent?</label>
+                <div class="radio-group">
+                     <label><input type="radio" name="urgent" value="Yes"> Yes</label>
+                     <label><input type="radio" name="urgent" value="No" checked> No</label>
+                 </div>
             </div>
 
             <div class="section-title">6. Remarks</div>
             <div class="remarks-group">
-                <label for="remarks">Remarks:</label> <textarea id="remarks" name="remarks" placeholder="Any specific notes..."></textarea> </div>
+                <label for="remarks">Remarks:</label>
+                <textarea id="remarks" name="remarks" placeholder="Any specific notes..."></textarea>
+            </div>
 
             <div class="button-container">
                 <button type="submit" class="save-button" id="saveOrderBtn">
-                    <i class="fas fa-save"></i> <span>Save Order</span> </button>
+                    <i class="fas fa-save"></i> <span>Save Order</span>
+                </button>
                 <button type="button" onclick="window.location.href='order_history.html'" class="cancel-button">
-                    Cancel </button>
+                    Cancel
+                </button>
             </div>
         </form>
     </div>
 
     <div id="whatsapp-reminder-popup" class="popup-overlay">
         <div class="popup-content">
-            <button id="popup-close-btn" class="popup-close" title="Close">&times;</button> <h4>Order Saved Successfully!</h4> <p>Send update to customer?</p> <div id="whatsapp-message-preview" class="message-preview">
-                </div>
+            <button id="popup-close-btn" class="popup-close" title="Close">&times;</button>
+            <h4>Order Saved Successfully!</h4>
+            <p>Send update to customer?</p>
+            <div id="whatsapp-message-preview" class="message-preview"></div>
             <a href="#" id="whatsapp-send-link" class="button whatsapp-send-btn" target="_blank">
-                <i class="fab fa-whatsapp"></i> Send on WhatsApp </a>
+                <i class="fab fa-whatsapp"></i> Send on WhatsApp
+            </a>
         </div>
     </div>
 
-    <script src="js/new_order.js" type="module" defer></script> </body>
+    <script src="js/new_order.js" type="module" defer></script>
+</body>
 </html>
