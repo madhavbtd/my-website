@@ -1,18 +1,15 @@
 // js/new_customer.js
 
-// Firestore फंक्शन्स window ऑब्जेक्ट से उपलब्ध हैं
 const { db, collection, addDoc, doc, getDocs, query, where, getDoc, updateDoc } = window;
 
-// --- DOM एलिमेंट रेफरेंस ---
 const customerForm = document.getElementById('newCustomerForm');
 const saveButton = document.getElementById('saveCustomerBtn');
 const formHeader = document.getElementById('formHeader');
 const hiddenEditIdInput = document.getElementById('editCustomerId');
 
-// --- पेज लोड होने पर एडिट मोड चेक करें ---
 document.addEventListener('DOMContentLoaded', () => {
     const urlParams = new URLSearchParams(window.location.search);
-    const customerIdToEdit = urlParams.get('editId');
+    const customerIdToEdit = urlParams.get('editId'); // Use editId from customer list link
 
     const checkDbInterval = setInterval(() => {
         if (window.db) {
@@ -37,48 +34,32 @@ document.addEventListener('DOMContentLoaded', () => {
     } else { console.error("Customer form not found!"); }
 });
 
-
-// --- एडिट के लिए डेटा लोड करने का फंक्शन ---
 async function loadCustomerDataForEdit(customerId) {
      if (!db || !doc || !getDoc) { alert("Database functions not available."); return; }
-     console.log(`Attempting to load data for customer ID: ${customerId}`);
+     console.log(`Loading data for customer ID: ${customerId}`);
      try {
         const customerRef = doc(db, "customers", customerId);
         const docSnap = await getDoc(customerRef);
         if (docSnap.exists()) {
-            const customerData = docSnap.data();
-            console.log("Customer data loaded for edit:", customerData);
-            // फॉर्म फ़ील्ड्स भरें (सभी फ़ील्ड्स)
-            customerForm.full_name.value = customerData.fullName || '';
-            customerForm.billing_address.value = customerData.billingAddress || '';
-            customerForm.city.value = customerData.city || '';
-            customerForm.state.value = customerData.state || '';
-            customerForm.pin_code.value = customerData.pinCode || '';
-            customerForm.email_id.value = customerData.emailId || '';
-            customerForm.whatsapp_no.value = customerData.whatsappNo || '';
-            customerForm.contact_no.value = customerData.contactNo || '';
-            customerForm.pan_no.value = customerData.panNo || '';
-            customerForm.gstin.value = customerData.gstin || '';
-            customerForm.composite_trade_name.value = customerData.compositeTradeName || '';
-            if (customerData.gstType) {
-                const gstRadio = customerForm.querySelector(`input[name="gst_type"][value="${customerData.gstType}"]`);
-                if (gstRadio) gstRadio.checked = true;
-                else customerForm.querySelectorAll('input[name="gst_type"]').forEach(r => r.checked = false);
-            } else { customerForm.querySelectorAll('input[name="gst_type"]').forEach(r => r.checked = false); }
-        } else {
-            console.error("No such customer document for editing!");
-            alert("Could not find customer data to edit.");
-            window.location.href = 'customer_management.html';
-        }
-    } catch (error) {
-        console.error("Error loading customer data for edit: ", error);
-        alert("Error loading customer data: " + error.message);
-        window.location.href = 'customer_management.html';
-    }
+            const d = docSnap.data();
+            console.log("Customer data loaded:", d);
+            customerForm.full_name.value = d.fullName || '';
+            customerForm.billing_address.value = d.billingAddress || '';
+            customerForm.city.value = d.city || '';
+            customerForm.state.value = d.state || '';
+            customerForm.pin_code.value = d.pinCode || '';
+            customerForm.email_id.value = d.emailId || '';
+            customerForm.whatsapp_no.value = d.whatsappNo || '';
+            customerForm.contact_no.value = d.contactNo || '';
+            customerForm.pan_no.value = d.panNo || '';
+            customerForm.gstin.value = d.gstin || '';
+            customerForm.composite_trade_name.value = d.compositeTradeName || '';
+            if (d.gstType) { const r = customerForm.querySelector(`input[name="gst_type"][value="${d.gstType}"]`); if (r) r.checked = true; else customerForm.querySelectorAll('input[name="gst_type"]').forEach(r => r.checked = false); }
+            else { customerForm.querySelectorAll('input[name="gst_type"]').forEach(r => r.checked = false); }
+        } else { console.error("Doc not found!"); alert("Could not find customer data."); window.location.href = 'customer_management.html'; }
+    } catch (error) { console.error("Error loading data: ", error); alert("Error loading data: " + error.message); window.location.href = 'customer_management.html'; }
 }
 
-
-// --- फॉर्म सबमिट हैंडलर (ऐड और अपडेट दोनों के लिए) ---
 async function handleFormSubmit(event) {
     event.preventDefault();
     if (saveButton) { saveButton.disabled = true; saveButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...'; }
@@ -88,64 +69,39 @@ async function handleFormSubmit(event) {
     const fullName = formData.get('full_name')?.trim() || '';
     const whatsappNo = formData.get('whatsapp_no')?.trim() || '';
 
-    if (!fullName || !whatsappNo) {
-        alert('Please enter Full Name and WhatsApp No.');
-        if (saveButton) { saveButton.disabled = false; saveButton.innerHTML = customerId ? '<i class="fas fa-sync-alt"></i> Update' : '<i class="fas fa-save"></i> Save'; }
-        return;
-    }
-    if (!db) {
-        alert("Database connection not found.");
-        if (saveButton) { saveButton.disabled = false; saveButton.innerHTML = customerId ? '<i class="fas fa-sync-alt"></i> Update' : '<i class="fas fa-save"></i> Save'; }
-        return;
-    }
+    if (!fullName || !whatsappNo) { alert('Please enter Full Name and WhatsApp No.'); if (saveButton) { saveButton.disabled = false; saveButton.innerHTML = customerId ? '<i class="fas fa-sync-alt"></i> Update' : '<i class="fas fa-save"></i> Save'; } return; }
+    if (!db) { alert("Database connection error."); if (saveButton) { saveButton.disabled = false; saveButton.innerHTML = customerId ? '<i class="fas fa-sync-alt"></i> Update' : '<i class="fas fa-save"></i> Save'; } return; }
 
-    const customerDataPayload = {
-        fullName: fullName,
-        billingAddress: formData.get('billing_address')?.trim() || '',
-        city: formData.get('city')?.trim() || '',
-        state: formData.get('state')?.trim() || '',
-        pinCode: formData.get('pin_code')?.trim() || '',
-        country: formData.get('country') || 'India',
-        emailId: formData.get('email_id')?.trim() || '',
-        whatsappNo: whatsappNo,
-        contactNo: formData.get('contact_no')?.trim() || '',
-        panNo: formData.get('pan_no')?.trim() || '',
-        gstin: formData.get('gstin')?.trim() || '',
-        gstType: formData.get('gst_type') || '',
+    const payload = {
+        fullName: fullName, billingAddress: formData.get('billing_address')?.trim() || '', city: formData.get('city')?.trim() || '',
+        state: formData.get('state')?.trim() || '', pinCode: formData.get('pin_code')?.trim() || '', country: 'India',
+        emailId: formData.get('email_id')?.trim() || '', whatsappNo: whatsappNo, contactNo: formData.get('contact_no')?.trim() || '',
+        panNo: formData.get('pan_no')?.trim() || '', gstin: formData.get('gstin')?.trim() || '', gstType: formData.get('gst_type') || '',
         compositeTradeName: formData.get('composite_trade_name')?.trim() || '',
     };
 
     try {
         const customersRef = collection(db, "customers");
-        if (customerId) {
-            // --- अपडेट मोड ---
-             console.log("Updating customer with ID:", customerId);
-             customerDataPayload.updatedAt = new Date();
+        if (customerId) { // Update mode
+             console.log("Updating customer:", customerId);
+             payload.updatedAt = new Date();
              const customerRef = doc(db, "customers", customerId);
-             await updateDoc(customerRef, customerDataPayload);
+             await updateDoc(customerRef, payload);
              alert('Customer updated successfully!');
              window.location.href = 'customer_management.html';
-
-        } else {
-            // --- ऐड मोड (डुप्लीकेट चेक और नया displayCustomerId जोड़ें) ---
-            console.log("Adding new customer. Checking for duplicates...");
+        } else { // Add mode
+            console.log("Adding customer, checking duplicate...");
             const q = query(customersRef, where("whatsappNo", "==", whatsappNo));
             const querySnapshot = await getDocs(q);
-
             if (querySnapshot.empty) {
-                // === नया न्यूमेरिकल ID यहाँ जोड़ा जा रहा है ===
-                customerDataPayload.displayCustomerId = Date.now().toString();
-                // ==========================================
-                customerDataPayload.createdAt = new Date();
-                const customerDocRef = await addDoc(customersRef, customerDataPayload);
-                console.log("New customer added with ID: ", customerDocRef.id, "and Display ID:", customerDataPayload.displayCustomerId);
+                payload.displayCustomerId = Date.now().toString(); // Add display ID
+                payload.createdAt = new Date();
+                const docRef = await addDoc(customersRef, payload);
+                console.log("New customer added:", docRef.id);
                 alert('Customer saved successfully!');
                 window.location.href = 'customer_management.html';
-
             } else {
-                const existingCustomerId = querySnapshot.docs[0].id;
-                console.log("Duplicate found with ID: ", existingCustomerId);
-                alert(`Customer with WhatsApp number ${whatsappNo} already exists.`);
+                alert(`Customer with WhatsApp ${whatsappNo} already exists.`);
                 if (saveButton) { saveButton.disabled = false; saveButton.innerHTML = '<i class="fas fa-save"></i> Save'; }
                 return;
             }
