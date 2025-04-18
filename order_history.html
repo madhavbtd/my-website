@@ -18,9 +18,9 @@
              <a href="new_order.html" class="button add-new-button">
                 <i class="fas fa-plus"></i> Add New Order
             </a>
-             </div>
+        </div>
 
-        <div class="filter-bar">
+         <div class="filter-bar">
             <div class="filter-group">
                 <label for="filterDate"><i class="fas fa-calendar-alt"></i> Order Date:</label>
                 <input type="date" id="filterDate">
@@ -47,13 +47,13 @@
             </div>
         </div>
 
+
         <div class="table-container">
             <table id="orderTable">
                 <thead>
                     <tr>
                         <th>Order ID</th>
-                        <th>Customer Name</th>
-                        <th>Order Date</th>
+                        <th>Customer Name / Products</th> <th>Order Date</th>
                         <th>Delivery Date</th>
                         <th>Priority</th>
                         <th>Status</th>
@@ -81,6 +81,10 @@
                  <p><strong>Order ID:</strong> <span id="modalDisplayOrderId"></span></p>
                  <p><strong>Customer:</strong> <span id="modalCustomerName"></span></p>
             </div>
+            <div class="modal-section" id="modalProductSection">
+                <label>Products in this Order:</label>
+                <div id="modalProductList"><p>Loading products...</p></div>
+            </div>
             <div class="modal-section">
                 <label for="modalOrderStatus">Update Status:</label>
                 <select id="modalOrderStatus">
@@ -93,30 +97,22 @@
                     <option value="Delivered">Delivered</option>
                     <option value="Completed">Completed</option>
                 </select>
-                <button id="modalUpdateStatusBtn" class="button update-status-button">
-                    <i class="fas fa-sync-alt"></i> Update Status
-                </button>
+                <button id="modalUpdateStatusBtn" class="button update-status-button"><i class="fas fa-sync-alt"></i> Update Status</button>
             </div>
             <div class="modal-section modal-actions">
-                 <button id="modalEditFullBtn" class="button edit-full-button">
-                     <i class="fas fa-edit"></i> Edit Full Order
-                 </button>
-                 <button id="modalDeleteBtn" class="button delete-button">
-                     <i class="fas fa-trash-alt"></i> Delete Order
-                 </button>
+                 <button id="modalEditFullBtn" class="button edit-full-button"><i class="fas fa-edit"></i> Edit Full Order</button>
+                 <button id="modalDeleteBtn" class="button delete-button"><i class="fas fa-trash-alt"></i> Delete Order</button>
             </div>
         </div>
     </div>
 
      <div id="whatsapp-reminder-popup" class="popup-overlay">
          <div class="popup-content">
-            <button id="popup-close-btn" class="popup-close" title="Close">&times;</button>
+            <button id="popup-close-btn" class="popup-close" title="Close">&times;</span>
             <h4 id="whatsapp-popup-title">Status Updated!</h4>
             <p>Send update to customer?</p>
             <div id="whatsapp-message-preview" class="message-preview"></div>
-            <a href="#" id="whatsapp-send-link" class="button whatsapp-send-btn" target="_blank">
-                <i class="fab fa-whatsapp"></i> Send on WhatsApp
-            </a>
+            <a href="#" id="whatsapp-send-link" class="button whatsapp-send-btn" target="_blank"><i class="fab fa-whatsapp"></i> Send on WhatsApp</a>
         </div>
     </div>
 
@@ -125,50 +121,23 @@
         // Firebase Imports
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
         import { getFirestore, collection, doc, deleteDoc, updateDoc, onSnapshot, query, orderBy } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-
         // --- PASTE YOUR firebaseConfig HERE ---
         const firebaseConfig = {
-          apiKey: "AIzaSyBQj5rQmE77kKKGYixP8y3Hcimz8tiAqzQ", // Your config
-          authDomain: "madhav-multyprint.firebaseapp.com",
-          projectId: "madhav-multyprint",
-          storageBucket: "madhav-multyprint.appspot.com",
-          messagingSenderId: "104988349637",
-          appId: "1:104988349637:web:faf045b77c6786a4e70cac"
+          apiKey: "AIzaSyBQj5rQmE77kKKGYixP8y3Hcimz8tiAqzQ", // YOUR CONFIG
+          authDomain: "madhav-multyprint.firebaseapp.com", // YOUR CONFIG
+          projectId: "madhav-multyprint", // YOUR CONFIG
+          storageBucket: "madhav-multyprint.appspot.com", // YOUR CONFIG
+          messagingSenderId: "104988349637", // YOUR CONFIG
+          appId: "1:104988349637:web:faf045b77c6786a4e70cac" // YOUR CONFIG
         };
         // --- END OF PASTE ---
-
-        // Initialize Firebase and make functions global
+        // Initialize Firebase
          try {
-            let app;
-            if (!window.firebaseAppInitialized) {
-                 app = initializeApp(firebaseConfig);
-                 window.firebaseAppInitialized = true;
-                 console.log("Firebase initialized on order_history page.");
-            } else {
-                 console.log("Firebase already initialized (order_history).");
-            }
-            const db = window.db || getFirestore(app || undefined);
-            window.db = db;
-
-            // Make Firestore functions globally available
-            window.collection = collection;
-            window.doc = doc;
-            window.deleteDoc = deleteDoc;
-            window.updateDoc = updateDoc;
-            window.onSnapshot = onSnapshot;
-            window.query = query;
-            window.orderBy = orderBy;
-
-            console.log("Firebase functions available globally for order_history.");
-
-        } catch (e) {
-            console.error("Firebase initialization error (order_history):", e);
-            if (!window.db) {
-                alert("Database connection error on history page!");
-                 const loadingCell = document.getElementById('loadingMessage');
-                 if(loadingCell) loadingCell.textContent = 'Database connection error!';
-            }
-        }
+            let app; if (!window.firebaseAppInitialized) { app = initializeApp(firebaseConfig); window.firebaseAppInitialized = true; }
+            const db = window.db || getFirestore(app || undefined); window.db = db;
+            window.collection = collection; window.doc = doc; window.deleteDoc = deleteDoc; window.updateDoc = updateDoc; window.onSnapshot = onSnapshot; window.query = query; window.orderBy = orderBy;
+            console.log("Firebase initialized.");
+        } catch (e) { console.error("Firebase init error:", e); alert("DB connection error!"); }
     </script>
 
     <script src="js/order_history.js" type="module" defer></script>
