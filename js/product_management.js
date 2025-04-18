@@ -1,312 +1,355 @@
 // js/product_management.js
 
-// Firebase फ़ंक्शंस HTML से ग्लोबल स्कोप में उपलब्ध हैं
-// इसलिए यहाँ दोबारा इम्पोर्ट या इनिशियलाइज़ करने की आवश्यकता नहीं है।
-// const { db, collection, addDoc, onSnapshot, doc, deleteDoc, updateDoc, getDocs } = window;
-// ऊपर वाली लाइन सिर्फ यह बताने के लिए है कि हम window ऑब्जेक्ट से इन्हें इस्तेमाल कर रहे हैं।
+// --- Ensure Firestore functions are available globally ---
+const { db, collection, onSnapshot, query, orderBy, doc, addDoc, updateDoc, deleteDoc, serverTimestamp } = window;
 
-// --- DOM एलिमेंट रेफरेंस ---
-const addProductForm = document.getElementById('addProductForm');
-const productListTableBody = document.querySelector('#productListTable tbody');
-const searchInput = document.getElementById('search');
-const filterButton = document.getElementById('filterBtn');
-const addProductModal = document.getElementById('addProductModal'); // Modal का रेफरेंस
-const modalOverlay = document.getElementById('modalOverlay'); // Overlay का रेफरेंस
+// --- DOM Elements ---
+const productTableBody = document.getElementById('productTableBody');
+const loadingRow = document.getElementById('loadingMessage');
+const sortSelect = document.getElementById('sort-products');
+const filterSearchInput = document.getElementById('filterSearch');
+const clearFiltersBtn = document.getElementById('clearFiltersBtn');
+const addNewProductBtn = document.getElementById('addNewProductBtn');
 
-// --- ग्लोबल वेरिएबल्स ---
-let allProducts = []; // सभी प्रोडक्ट्स को स्टोर करने के लिए (onSnapshot अपडेट करेगा)
+// Modal Elements
+const productModal = document.getElementById('productModal');
+const modalTitle = document.getElementById('modalTitle');
+const productForm = document.getElementById('productForm');
+const closeProductModalBtn = document.getElementById('closeProductModal');
+const cancelProductBtn = document.getElementById('cancelProductBtn');
+const saveProductBtn = document.getElementById('saveProductBtn');
+const saveProductBtnText = saveProductBtn.querySelector('span');
+const editProductIdInput = document.getElementById('editProductId'); // Hidden input for ID
 
-
-// --- Modal दिखाने/छिपाने के फंक्शन ---
-// (ये फंक्शन अब HTML के onclick से कॉल होंगे)
-
-window.showAddProductForm = function(isEdit = false, productData = null) {
-    const modalTitle = addProductModal.querySelector('.modal-header h2');
-    const saveButton = addProductModal.querySelector('#saveProductBtn');
-    const editIdInput = addProductForm.editProductId;
-
-    if (!isEdit) {
-        addProductForm.reset(); // फॉर्म रीसेट करें
-        modalTitle.textContent = 'Add New Product';
-        saveButton.textContent = 'Save Product';
-        editIdInput.value = ''; // एडिट ID खाली करें
-        const descriptionCount = document.getElementById('descriptionCount');
-        if (descriptionCount) descriptionCount.textContent = '0 / 250'; // काउंटर रीसेट
-    } else {
-        // एडिट मोड में टाइटल और बटन बदलें (फॉर्म भरना loadProductForEdit में होगा)
-        modalTitle.textContent = 'Edit Product';
-        saveButton.textContent = 'Update Product';
-        // editIdInput.value को loadProductForEdit में सेट किया जाएगा
-    }
-    addProductModal.style.display = 'flex';
-    modalOverlay.style.display = 'block';
-};
-
-window.hideAddProductForm = function() {
-    addProductModal.style.display = 'none';
-    modalOverlay.style.display = 'none';
-    addProductForm.reset(); // बंद होने पर हमेशा रीसेट करें
-    addProductForm.editProductId.value = ''; // एडिट ID खाली करें
-    const descriptionCount = document.getElementById('descriptionCount');
-    if(descriptionCount) descriptionCount.textContent = '0 / 250'; // काउंटर रीसेट
-};
+// Modal Form Fields
+const productPrintNameInput = document.getElementById('productPrintName');
+const productPriceInput = document.getElementById('productPrice');
+const productCategoryInput = document.getElementById('productCategory');
 
 
-// --- Firestore से रियल-टाइम डेटा सुनना और टेबल अपडेट करना ---
-try {
-    const productsCollectionRef = window.collection(window.db, "products"); // 'products' कलेक्शन का नाम
-    window.onSnapshot(productsCollectionRef, (querySnapshot) => {
-        console.log("Snapshot received");
-        allProducts = []; // लिस्ट क्लियर करें
-        let serialNumber = 1;
-        querySnapshot.forEach((doc) => {
-            allProducts.push({ id: doc.id, ...doc.data(), serialNumber: serialNumber++ });
+// --- Global State ---
+let currentSortField = 'createdAt'; // Default sort
+let currentSortDirection = 'desc';
+let unsubscribeProducts = null; // Firestore listener cleanup
+let allProductsCache = []; // Stores ALL products fetched from Firestore
+let searchDebounceTimer;
+
+// --- Initialization ---
+document.addEventListener('DOMContentLoaded', () => {
+    console.log("[DEBUG] Product Management DOM Loaded.");
+    waitForDbConnection(() => {
+        console.log("[DEBUG] DB connection confirmed. Initializing listener.");
+        listenForProducts(); // Start listening
+
+        // --- Event Listeners ---
+        if (sortSelect) sortSelect.addEventListener('change', handleSortChange);
+        if (filterSearchInput) filterSearchInput.addEventListener('input', handleSearchInput);
+        if (clearFiltersBtn) clearFiltersBtn.addEventListener('click', clearFilters);
+        if (addNewProductBtn) addNewProductBtn.addEventListener('click', openAddModal);
+
+        // Modal Listeners
+        if (closeProductModalBtn) closeProductModalBtn.addEventListener('click', closeProductModal);
+        if (cancelProductBtn) cancelProductBtn.addEventListener('click', closeProductModal);
+        if (productModal) productModal.addEventListener('click', (event) => {
+            if (event.target === productModal) closeProductModal();
         });
-        console.log("Products fetched/updated:", allProducts);
-        displayProductsInTable(allProducts); // फिल्टर की गई लिस्ट दिखाएँ
-    }, (error) => {
-        console.error("Error listening to product updates: ", error);
-        alert("Could not fetch products in real-time.");
+        if (productForm) productForm.addEventListener('submit', handleSaveProduct);
+
+        console.log("[DEBUG] Product Management event listeners set up.");
     });
-} catch(e) {
-    console.error("Error setting up Firestore listener: ", e);
-    alert("Error connecting to database. Please check console.");
+});
+
+// --- DB Connection Wait ---
+function waitForDbConnection(callback) {
+    if (window.db) { callback(); } else {
+        let attempts = 0; const maxAttempts = 20;
+        const intervalId = setInterval(() => {
+            attempts++;
+            if (window.db) { clearInterval(intervalId); callback(); }
+            else if (attempts >= maxAttempts) { clearInterval(intervalId); console.error("DB timeout"); alert("DB Error"); }
+        }, 250);
+    }
 }
 
 
-// --- टेबल में प्रोडक्ट्स दिखाने का फंक्शन ---
-function displayProductsInTable(productsToDisplay) {
-    if (!productListTableBody) {
-        console.error("Table body not found!");
-        return;
+// --- Sorting Change Handler ---
+function handleSortChange() {
+    if (!sortSelect) return;
+    const selectedValue = sortSelect.value;
+    const [field, direction] = selectedValue.split('_');
+    if (field && direction) {
+        if (field === currentSortField && direction === currentSortDirection) return;
+        currentSortField = field;
+        currentSortDirection = direction;
+        console.log(`[DEBUG] Product sort changed: ${currentSortField} ${currentSortDirection}`);
+        applyFiltersAndRender();
     }
-    productListTableBody.innerHTML = ''; // टेबल बॉडी खाली करें
+}
 
-    if (productsToDisplay.length === 0) {
-        productListTableBody.innerHTML = '<tr><td colspan="8" style="text-align:center;">No products found.</td></tr>';
-        return;
-    }
+// --- Filter Change Handlers ---
+function handleSearchInput() {
+    clearTimeout(searchDebounceTimer);
+    searchDebounceTimer = setTimeout(() => {
+        console.log("[DEBUG] Product search processed.");
+        applyFiltersAndRender();
+    }, 300);
+}
 
-    productsToDisplay.forEach(product => {
-        const row = productListTableBody.insertRow();
-        row.innerHTML = `
-            <td>${product.serialNumber}</td>
-            <td>${product.productName || '-'}</td>
-            <td>${product.printName || '-'}</td>
-            <td>${(product.purchasePrice || 0).toFixed(2)}</td>
-            <td>${(product.salePrice || 0).toFixed(2)}</td>
-            <td>${product.unit || '-'}</td>
-            <td>${product.currentStock !== undefined ? product.currentStock : (product.openingStock !== undefined ? product.openingStock : 0)}</td>
-            <td class="actions">
-                <button class="action-btn edit-btn" data-id="${product.id}" title="Edit"><i class="fas fa-edit"></i></button>
-                <button class="action-btn delete-btn" data-id="${product.id}" title="Delete"><i class="fas fa-trash"></i></button>
-            </td>
-        `;
-        // Edit/Delete बटन के लिए इवेंट लिसनर जोड़ें
-         const editBtn = row.querySelector('.edit-btn');
-         if(editBtn) {
-            editBtn.addEventListener('click', () => loadProductForEdit(product.id));
-         }
-         const deleteBtn = row.querySelector('.delete-btn');
-          if(deleteBtn) {
-             deleteBtn.addEventListener('click', () => deleteProduct(product.id, product.productName));
-          }
-    });
-    addActionButtonStyles(); // बटन स्टाइलिंग
+function clearFilters() {
+    console.log("[DEBUG] Clearing product filters.");
+    if(filterSearchInput) filterSearchInput.value = '';
+    // Reset sort to default?
+    if(sortSelect) sortSelect.value = 'createdAt_desc';
+    currentSortField = 'createdAt';
+    currentSortDirection = 'desc';
+    applyFiltersAndRender();
 }
 
 
-// --- एडिट के लिए प्रोडक्ट डेटा फॉर्म में लोड करना ---
-function loadProductForEdit(id) {
-    const product = allProducts.find(p => p.id === id);
-    if (!product) {
-        console.error("Product not found for editing:", id);
-        return;
-    }
+// --- Firestore Listener Setup ---
+function listenForProducts() {
+    if (unsubscribeProducts) { unsubscribeProducts(); unsubscribeProducts = null; }
+    if (!db || !collection || !query || !orderBy || !onSnapshot) { console.error("Firestore functions not available!"); /* Error handling */ return; }
 
-    console.log("Loading product for edit:", product);
+    productTableBody.innerHTML = `<tr><td colspan="4" id="loadingMessage" style="text-align: center; color: #666;">Loading products...</td></tr>`; // Updated colspan
 
-    // फॉर्म फ़ील्ड्स भरें
-    addProductForm.editProductId.value = product.id; // हिडन ID सेट करें
-    addProductForm.productName.value = product.productName || '';
-    addProductForm.printName.value = product.printName || '';
-    addProductForm.purchasePrice.value = product.purchasePrice || 0;
-    addProductForm.salePrice.value = product.salePrice || 0;
-    addProductForm.minSalePrice.value = product.minSalePrice || '';
-    addProductForm.mrp.value = product.mrp || '';
-    addProductForm.unit.value = product.unit || 'NOS';
-    addProductForm.openingStock.value = product.openingStock || 0;
-    addProductForm.saleDiscount.value = product.saleDiscount || '';
-    addProductForm.lowLevelLimit.value = product.lowLevelLimit || '';
-    addProductForm.productDescription.value = product.productDescription || '';
+    try {
+        console.log(`[DEBUG] Setting up Firestore listener for 'products'...`);
+        const productsRef = collection(db, "products");
+        const q = query(productsRef); // Fetch all, sort/filter client-side
 
-    // डिस्क्रिप्शन काउंटर अपडेट करें
-    const descriptionCount = document.getElementById('descriptionCount');
-    if(descriptionCount) {
-        const currentLength = addProductForm.productDescription.value.length;
-        descriptionCount.textContent = currentLength + ' / 250';
-    }
+        unsubscribeProducts = onSnapshot(q, (snapshot) => {
+            console.log(`[DEBUG] Received ${snapshot.docs.length} total products from Firestore.`);
+            allProductsCache = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            console.log(`[DEBUG] Stored ${allProductsCache.length} products.`);
+            applyFiltersAndRender();
 
-    // चेकबॉक्स सेट करें
-    addProductForm.printDescription.checked = product.printDescription || false;
-    addProductForm.printSerialNo.checked = product.printSerialNo || false;
-    addProductForm.oneClickSale.checked = product.oneClickSale || false;
-    addProductForm.notForSale.checked = product.notForSale || false;
-    addProductForm.enableTracking.checked = product.enableTracking || false;
-
-    // एडिट मोड के साथ Modal दिखाएँ
-    window.showAddProductForm(true); // isEdit = true
+        }, (error) => { console.error("Error fetching products snapshot:", error); /* Error handling */ });
+    } catch (error) { console.error("Error setting up product listener:", error); /* Error handling */ }
 }
 
 
-// --- फॉर्म सबमिशन (नया जोड़ना / अपडेट करना) ---
-if (addProductForm) {
-    addProductForm.addEventListener('submit', async (event) => {
-        event.preventDefault();
+// --- Filter, Sort, and Render Function ---
+function applyFiltersAndRender() {
+    if (!allProductsCache) return;
+    console.log("[DEBUG] Applying product filters and rendering...");
 
-        const saveButton = document.getElementById('saveProductBtn');
-        saveButton.disabled = true;
-        saveButton.textContent = 'Saving...';
+    // 1. Get filter values
+    const filterSearchValue = filterSearchInput ? filterSearchInput.value.trim().toLowerCase() : '';
 
-        // फॉर्म डेटा इकट्ठा करें (सभी फ़ील्ड्स)
-        const openingStockValue = parseInt(addProductForm.openingStock.value) || 0;
-        const productData = {
-            productName: addProductForm.productName.value.trim(),
-            printName: addProductForm.printName.value.trim(),
-            purchasePrice: parseFloat(addProductForm.purchasePrice.value) || 0,
-            salePrice: parseFloat(addProductForm.salePrice.value) || 0,
-            minSalePrice: addProductForm.minSalePrice.value ? parseFloat(addProductForm.minSalePrice.value) : null,
-            mrp: addProductForm.mrp.value ? parseFloat(addProductForm.mrp.value) : null,
-            unit: addProductForm.unit.value,
-            openingStock: openingStockValue,
-            // currentStock को अपडेट/सेट करें (अगर एडिट नहीं हो रहा तो openingStock के बराबर)
-            saleDiscount: addProductForm.saleDiscount.value ? parseFloat(addProductForm.saleDiscount.value) : null,
-            lowLevelLimit: addProductForm.lowLevelLimit.value ? parseInt(addProductForm.lowLevelLimit.value) : null,
-            productDescription: addProductForm.productDescription.value.trim(),
-            printDescription: addProductForm.printDescription.checked,
-            printSerialNo: addProductForm.printSerialNo.checked,
-            oneClickSale: addProductForm.oneClickSale.checked,
-            notForSale: addProductForm.notForSale.checked,
-            enableTracking: addProductForm.enableTracking.checked
-        };
+    // 2. Filter cached data
+    let filteredProducts = allProductsCache.filter(product => {
+        if (filterSearchValue) {
+            // Search in printName and potentially category
+            const name = (product.printName || '').toLowerCase();
+            const category = (product.category || '').toLowerCase(); // Optional search in category
 
-        const editId = addProductForm.editProductId.value;
-
-        try {
-            if (editId) {
-                // --- अपडेट मोड ---
-                const productRef = window.doc(window.db, "products", editId);
-                // Note: Update logic might need to adjust currentStock based on transactions,
-                // Here we are just updating the fields from the form.
-                // We should likely NOT overwrite currentStock here unless specifically intended.
-                // Let's preserve currentStock unless openingStock changed? Or maybe never update currentStock from this form?
-                // For simplicity, let's assume this form primarily sets configuration and initial/opening stock.
-                // We won't explicitly update currentStock here. It should be updated via purchases/sales logic elsewhere.
-                // However, we WILL update openingStock if changed.
-                productData.updatedAt = new Date(); // अपडेट का समय
-                await window.updateDoc(productRef, productData);
-                alert('Product updated successfully!');
-            } else {
-                // --- ऐड मोड ---
-                productData.createdAt = new Date(); // बनाने का समय
-                productData.currentStock = openingStockValue; // नया प्रोडक्ट है तो currentStock = openingStock
-                await window.addDoc(window.collection(window.db, "products"), productData);
-                alert('Product saved successfully!');
+            if (!(name.includes(filterSearchValue) || category.includes(filterSearchValue))) {
+                 return false; // Doesn't match search
             }
-            window.hideAddProductForm(); // सफल होने पर ही फॉर्म बंद करें
-
-        } catch (e) {
-            console.error("Error adding/updating document: ", e);
-            alert('Error saving product: ' + e.message);
-        } finally {
-            // बटन को फिर से इनेबल करें और टेक्स्ट सही करें
-            saveButton.disabled = false;
-            saveButton.textContent = editId ? 'Update Product' : 'Save Product';
         }
+        return true; // Passes filters
     });
-} else {
-     console.error("Add Product Form not found!");
+    console.log(`[DEBUG] Filtered down to ${filteredProducts.length} products.`);
+
+    // 3. Sort filtered data
+    filteredProducts.sort((a, b) => {
+        let valA = a[currentSortField];
+        let valB = b[currentSortField];
+
+        if (valA && typeof valA.toDate === 'function') valA = valA.toDate(); // Handle Timestamps
+        if (valB && typeof valB.toDate === 'function') valB = valB.toDate();
+        if (currentSortField === 'price') { // Handle Price as number
+             valA = Number(valA) || 0;
+             valB = Number(valB) || 0;
+        }
+        if (currentSortField === 'printName') { // Handle Name case-insensitively
+            valA = (valA || '').toLowerCase();
+            valB = (valB || '').toLowerCase();
+        }
+
+        let comparison = 0;
+        if (valA > valB) comparison = 1;
+        else if (valA < valB) comparison = -1;
+        return currentSortDirection === 'desc' ? comparison * -1 : comparison;
+    });
+    console.log(`[DEBUG] Sorted ${filteredProducts.length} products.`);
+
+    // 4. Render table
+    productTableBody.innerHTML = '';
+    if (filteredProducts.length === 0) {
+        productTableBody.innerHTML = `<tr><td colspan="4" id="noProductsMessage" style="text-align: center; color: #666;">No products found matching filters.</td></tr>`; // Updated colspan
+    } else {
+        filteredProducts.forEach(product => {
+            displayProductRow(product.id, product); // Render row
+        });
+    }
+     console.log("[DEBUG] Product rendering complete.");
 }
 
 
-// --- प्रोडक्ट डिलीट करना ---
-async function deleteProduct(id, productName) {
-    if (!id) {
-        console.error("Delete failed: Invalid ID provided.");
+// --- Display Single Product Row ---
+function displayProductRow(firestoreId, data) {
+    const tableRow = document.createElement('tr');
+    tableRow.setAttribute('data-id', firestoreId);
+
+    const name = data.printName || 'N/A'; // Use printName field
+    const price = data.price !== undefined && data.price !== null ? `₹ ${Number(data.price).toFixed(2)}` : '-'; // Format price
+    const category = data.category || '-';
+
+    // Updated table structure
+    tableRow.innerHTML = `
+        <td>${name}</td>
+        <td>${price}</td>
+        <td>${category}</td>
+        <td>
+            <button type="button" class="action-button edit-button" title="Edit Product">
+                <i class="fas fa-edit"></i>
+            </button>
+            <button type="button" class="action-button delete-button" title="Delete Product">
+                <i class="fas fa-trash-alt"></i>
+            </button>
+        </td>
+    `;
+
+    // Add event listeners for actions
+    const editButton = tableRow.querySelector('.edit-button');
+    if (editButton) editButton.addEventListener('click', (e) => { e.stopPropagation(); openEditModal(firestoreId, data); });
+    const deleteButton = tableRow.querySelector('.delete-button');
+    if (deleteButton) deleteButton.addEventListener('click', (e) => { e.stopPropagation(); handleDeleteProduct(firestoreId, name); });
+
+    productTableBody.appendChild(tableRow);
+}
+
+
+// --- Modal Handling (Add/Edit) ---
+function openAddModal() {
+    console.log("[DEBUG] Opening modal to add new product.");
+    if (!productModal || !productForm) return;
+    modalTitle.textContent = "Add New Product";
+    editProductIdInput.value = ''; // Clear edit ID
+    productForm.reset(); // Clear form fields
+    if(saveProductBtnText) saveProductBtnText.textContent = 'Save Product';
+    else if(saveProductBtn) saveProductBtn.innerHTML = '<i class="fas fa-save"></i> Save Product';
+    saveProductBtn.disabled = false;
+    productModal.classList.add('active');
+}
+
+function openEditModal(firestoreId, data) {
+     console.log("[DEBUG] Opening modal to edit product:", firestoreId);
+     if (!productModal || !productForm) return;
+     modalTitle.textContent = "Edit Product";
+     editProductIdInput.value = firestoreId; // Set ID for update logic
+     if(saveProductBtnText) saveProductBtnText.textContent = 'Update Product';
+     else if(saveProductBtn) saveProductBtn.innerHTML = '<i class="fas fa-save"></i> Update Product';
+     saveProductBtn.disabled = false;
+
+     // Fill form with existing data
+     productPrintNameInput.value = data.printName || '';
+     productPriceInput.value = data.price !== undefined ? data.price : ''; // Handle potential null/undefined price
+     productCategoryInput.value = data.category || '';
+
+     productModal.classList.add('active');
+}
+
+function closeProductModal() {
+     if (productModal) { productModal.classList.remove('active'); }
+}
+
+// --- Save/Update Product Handler ---
+async function handleSaveProduct(event) {
+    event.preventDefault();
+    if (!db || !collection || !addDoc || !doc || !updateDoc || !serverTimestamp ) {
+         alert("Database functions unavailable."); return;
+    }
+
+    const productId = editProductIdInput.value; // Firestore document ID
+    const isEditing = !!productId;
+
+    // Get data from form
+    const printName = productPrintNameInput.value.trim();
+    const priceString = productPriceInput.value.trim();
+    const category = productCategoryInput.value.trim() || null;
+
+    // Basic Validation
+    if (!printName) {
+        alert("Product Name (Print Name) is required.");
         return;
     }
-    if (confirm(`Are you sure you want to delete "${productName || 'this product'}"?`)) {
+
+    // Convert price to number, handle empty string as null
+    let price = null;
+    if (priceString !== '') {
+        price = parseFloat(priceString);
+        if (isNaN(price) || price < 0) {
+             alert("Please enter a valid positive number for Price, or leave it empty.");
+             return;
+        }
+    }
+
+
+    // Prepare data payload
+    const productData = {
+        printName: printName, // Field used by new_order.js
+        price: price,         // Store price as number or null
+        category: category,
+        updatedAt: serverTimestamp()
+    };
+
+    // Disable save button
+    saveProductBtn.disabled = true;
+    const originalButtonHTML = saveProductBtn.innerHTML;
+    saveProductBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+
+    try {
+        if (isEditing) {
+            // Update existing product
+             console.log(`[DEBUG] Updating product ${productId}...`);
+             const productRef = doc(db, "products", productId);
+             await updateDoc(productRef, productData);
+             console.log("[DEBUG] Product updated successfully.");
+             alert("Product updated successfully!");
+        } else {
+            // Add new product
+            console.log("[DEBUG] Adding new product...");
+            productData.createdAt = serverTimestamp(); // Add createdAt for new products
+            const docRef = await addDoc(collection(db, "products"), productData);
+            console.log("[DEBUG] New product added with ID:", docRef.id);
+            alert("New product added successfully!");
+        }
+        closeProductModal(); // Close modal on success
+    } catch (error) {
+        console.error("Error saving product:", error);
+        alert(`Error saving product: ${error.message}`);
+    } finally {
+        // Re-enable button
+        saveProductBtn.disabled = false;
+        saveProductBtn.innerHTML = originalButtonHTML;
+    }
+}
+
+
+// --- Delete Product Handler ---
+async function handleDeleteProduct(firestoreId, productName) {
+    console.log(`[DEBUG] handleDeleteProduct called for ID: ${firestoreId}, Name: ${productName}`);
+    if (!db || !doc || !deleteDoc) { alert("Error: Delete function not available."); return; }
+
+    // ** Consideration: Check if product is used in any existing orders before deleting? **
+    if (confirm(`Are you sure you want to delete product "${productName}"? This might affect existing orders if the product name was used.`)) {
+        console.log(`[DEBUG] User confirmed deletion for ${firestoreId}.`);
         try {
-            const productRef = window.doc(window.db, 'products', id);
-            await window.deleteDoc(productRef);
-            console.log('Product deleted successfully: ', id);
-            alert('Product deleted successfully!');
-            // टेबल onSnapshot के कारण अपने आप अपडेट हो जाएगी
+            const productRef = doc(db, "products", firestoreId);
+            await deleteDoc(productRef);
+            console.log(`[DEBUG] Product deleted successfully from Firestore: ${firestoreId}`);
+            // UI updates via onSnapshot listener
         } catch (error) {
-            console.error('Error deleting product: ', error);
-            alert('Error deleting product: ' + error.message);
+            console.error(`[DEBUG] Error deleting product ${firestoreId}:`, error);
+            alert(`Failed to delete product: ${error.message}`);
         }
+    } else {
+        console.log("[DEBUG] Deletion cancelled by user.");
     }
 }
 
-
-// --- फ़िल्टरिंग लॉजिक ---
-function filterProducts() {
-    const searchTerm = searchInput.value.toLowerCase().trim();
-    if (!searchTerm) {
-        displayProductsInTable(allProducts); // कोई सर्च टर्म नहीं, सब दिखाएं
-        return;
-    }
-    const filtered = allProducts.filter(product =>
-        (product.productName && product.productName.toLowerCase().includes(searchTerm)) ||
-        (product.printName && product.printName.toLowerCase().includes(searchTerm))
-    );
-    displayProductsInTable(filtered);
-}
-
-// फ़िल्टर बटन और सर्च इनपुट पर इवेंट लिसनर
-if (filterButton) {
-    filterButton.addEventListener('click', filterProducts);
-} else {
-    console.warn("Filter button not found");
-}
-if (searchInput) {
-    searchInput.addEventListener('input', filterProducts); // टाइप करते ही फ़िल्टर करें
-} else {
-    console.warn("Search input not found");
-}
-
-
-// --- एक्शन बटन के लिए बेसिक स्टाइल (अगर CSS में नहीं है) ---
-function addActionButtonStyles() {
-    const styleId = 'action-button-styles';
-    if (!document.getElementById(styleId)) {
-        const styleSheet = document.createElement("style");
-        styleSheet.id = styleId;
-        styleSheet.innerHTML = `
-        .action-btn {
-            background: none;
-            border: none;
-            cursor: pointer;
-            padding: 2px 5px;
-            margin: 0 2px;
-            font-size: 14px;
-        }
-        .action-btn i { /* Font Awesome icons */
-            pointer-events: none; /* Prevent icon from stealing click */
-        }
-        .action-btn.edit-btn { color: #0d6efd; } /* Bootstrap blue */
-        .action-btn.delete-btn { color: #dc3545; } /* Bootstrap red */
-        .action-btn:hover { opacity: 0.7; }
-        td.actions {
-            text-align: center; /* Center align buttons */
-        }
-        `;
-        document.head.appendChild(styleSheet);
-    }
-}
-
-// --- इनिशियलाइज़ेशन ---
-// displayProductsInTable(allProducts); // onSnapshot इसे अपने आप कॉल करेगा जब डेटा आएगा
-
-console.log("product_management.js loaded and listeners attached.");
+// --- Final Log ---
+console.log("product_management.js script fully loaded and initialized.");

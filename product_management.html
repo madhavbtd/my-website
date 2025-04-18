@@ -4,238 +4,143 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Product Management</title>
-    <link rel="stylesheet" href="css/style.css"> <link rel="stylesheet" href="css/product_management.css"> <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" integrity="sha512-9usAa10IRO0HhonpyAIVpjrylPvoDwiPUiKdWk5t3PyolY1cOd4DSE0Ga+ri4AuTroPR5aQvXU9xC6qOPnzFeg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
-    <style>
-        /* आपका पूरा CSS कोड यहाँ रहेगा जैसा पहले था */
-        body { font-family: 'Segoe UI Emoji', sans-serif; margin: 0; background-color: #f8f9fa; }
-        .container { max-width: 100%; margin: 20px; background-color: #fff; padding: 20px; border-radius: 5px; box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); }
-        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 1px solid #eee; }
-        .header h2 { margin: 0; font-size: 24px; color: #333; }
-        .header .btn-group { display: flex; }
-        .header .btn-group a, .header .btn-group button { background-color: #007bff; color: white; border: none; padding: 8px 12px; border-radius: 5px; cursor: pointer; margin-left: 5px; font-size: 14px; text-decoration: none; }
-        .header .btn-group a i, .header .btn-group button i { margin-right: 5px; }
-        .filter-section { display: flex; align-items: center; margin-bottom: 20px; }
-        .filter-item { display: flex; align-items: center; margin-right: 15px; }
-        .filter-item label { margin-right: 5px; font-size: 14px; color: #555; cursor: pointer; }
-        .filter-item input[type="text"], .filter-item select { padding: 6px 8px; border-radius: 3px; border: 1px solid #ccc; font-size: 14px; }
-        .filter-button { background-color: #007bff; color: white; border: none; padding: 6px 10px; border-radius: 3px; cursor: pointer; font-size: 14px; margin-left: 10px; }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; font-size: 12px; }
-        th { background-color: #f8f9fa; font-weight: bold; color: #333; }
-        tbody tr:nth-child(even) { background-color: #f9f9f9; }
-        .add-product-modal { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background-color: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.2); z-index: 1000; width: 80%; max-width: 600px; max-height: 90vh; overflow-y: auto; display: none; flex-direction: column; }
-        .modal-content { display: flex; flex-direction: column; height: 100%; }
-        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; color: #333; flex-shrink: 0; }
-        .modal-header h2 { margin: 0; font-size: 20px; }
-        .modal-header .close-button { background: none; border: none; color: #aaa; font-size: 20px; cursor: pointer; }
-        .modal-header .close-button:hover { color: #333; }
-        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-bottom: 15px; overflow-y: auto; flex-grow: 1; padding-right: 10px; }
-        .form-group { margin-bottom: 12px; }
-        .form-group label { display: block; margin-bottom: 5px; font-weight: bold; color: #555; font-size: 14px; }
-        .form-group input[type="text"], .form-group input[type="number"], .form-group textarea, .form-group select { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; font-size: 14px; }
-        .form-group textarea { resize: vertical; }
-        .product-settings label { display: block; font-weight: normal; margin-bottom: 5px; font-size: 14px; cursor: pointer; }
-        .product-settings input[type="checkbox"] { margin-right: 8px; }
-        .modal-actions { margin-top: 20px; text-align: right; flex-shrink: 0; border-top: 1px solid #eee; padding-top: 15px; }
-        .modal-actions button { background-color: #007bff; color: white; border: none; padding: 10px 15px; border-radius: 5px; cursor: pointer; font-size: 16px; margin-left: 10px; box-shadow: 0 2px 2px rgba(0,0,0,0.1); }
-        .modal-actions button:hover { background-color: #0056b3; }
-        .overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); z-index: 999; }
-    </style>
+    <link rel="stylesheet" href="css/product_management.css"> <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" integrity="sha512-9usAa10IRO0HhonpyAIVpjrylPvoDwiPUiKdWk5t3PyolY1cOd4DSE0Ga+ri4AuTroPR5aQvXU9xC6qOPnzFeg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
 </head>
 <body>
-    <script type="module">
-      // Firebase Initialization Code (जैसा पहले था)
-      import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-      import { getFirestore, collection, getDocs, addDoc, deleteDoc, doc, updateDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-
-      const firebaseConfig = {
-        apiKey: "AIzaSyBOj5rQmE77kKKGYixP8y3Hcimz8tiAqzQ", // सुरक्षा नोट!
-        authDomain: "madhav-multyprint.firebaseapp.com",
-        projectId: "madhav-multyprint",
-        storageBucket: "madhav-multyprint.firebasestorage.app",
-        messagingSenderId: "104988349637",
-        appId: "1:104988349637:web:faf045b77c6786a4e70cac"
-      };
-
-      const app = initializeApp(firebaseConfig);
-      const db = getFirestore(app);
-
-      // Firebase functions को ग्लोबल बनाना ताकि product_management.js में इस्तेमाल हो सकें
-      window.db = db;
-      window.collection = collection;
-      window.addDoc = addDoc;
-      window.onSnapshot = onSnapshot;
-      window.doc = doc;
-      window.deleteDoc = deleteDoc;
-      window.updateDoc = updateDoc;
-      window.getDocs = getDocs;
-
-    </script>
-
     <div class="container">
         <div class="header">
-            <h2>Product List</h2>
-            <div class="btn-group">
-                <button onclick="showAddProductForm()"><i class="fas fa-plus"></i> Add New</button>
+            <i class="fas fa-box-open header-icon"></i>
+            <h1>Product Management</h1>
+        </div>
+
+        <div class="filter-bar">
+             <div class="filter-group">
+                 <button id="addNewProductBtn" class="button add-new-button">
+                    <i class="fas fa-plus"></i> Add New Product
+                </button>
+            </div>
+             <div class="filter-group">
+                <label for="filterSearch"><i class="fas fa-search"></i> Search:</label>
+                <input type="text" id="filterSearch" placeholder="Product Name...">
+            </div>
+             <div class="filter-group filter-sort">
+                <label for="sort-products"><i class="fas fa-sort"></i> Sort by:</label>
+                <select id="sort-products">
+                    <option value="createdAt_desc">Newest First</option>
+                    <option value="createdAt_asc">Oldest First</option>
+                    <option value="printName_asc">Name (A-Z)</option>
+                    <option value="printName_desc">Name (Z-A)</option>
+                    <option value="price_asc">Price (Low-High)</option>
+                    <option value="price_desc">Price (High-Low)</option>
+                 </select>
+            </div>
+            <div class="filter-group">
+                 <button id="clearFiltersBtn" class="button clear-filters-button" title="Clear search and reset sort">
+                    <i class="fas fa-times"></i> Clear
+                 </button>
             </div>
         </div>
 
-        <div class="filter-section">
-            <div class="filter-item">
-                <label for="search">Search:</label>
-                <input type="text" id="search" placeholder="Enter product name">
-            </div>
-            <button class="filter-button" id="filterBtn">Filter</button>
-        </div>
-
-        <div class="add-product-modal" id="addProductModal">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h2>Add New Product</h2> <button type="button" class="close-button" onclick="hideAddProductForm()">×</button>
-                </div>
-                <form id="addProductForm">
-                    <div class="form-grid">
-                         <div class="form-group">
-                            <label for="productName">Product Name*:</label>
-                            <input type="text" id="productName" name="productName" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="printName">Print Name:</label>
-                            <input type="text" id="printName" name="printName">
-                        </div>
-                        <div class="form-group">
-                            <label for="purchasePrice">Purchase Price*:</label>
-                            <input type="number" id="purchasePrice" name="purchasePrice" min="0" step="any" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="salePrice">Sale Price* (Excluding Tax):</label>
-                            <input type="number" id="salePrice" name="salePrice" min="0" step="any" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="minSalePrice">Min. Sale Price:</label>
-                            <input type="number" id="minSalePrice" name="minSalePrice" min="0" step="any">
-                        </div>
-                        <div class="form-group">
-                            <label for="mrp">MRP:</label>
-                            <input type="number" id="mrp" name="mrp" min="0" step="any">
-                        </div>
-                        <div class="form-group">
-                            <label for="unit">Unit*:</label>
-                            <select id="unit" name="unit" required>
-                                <option value="NOS">NOS</option>
-                                <option value="SQ Feet">SQ Feet</option>
-                            </select>
-                        </div>
-                         <div class="form-group">
-                             <label for="openingStock">Opening Stock:</label>
-                             <input type="number" id="openingStock" name="openingStock" min="0" step="any" value="0">
-                        </div>
-                        <div class="form-group">
-                            <label for="saleDiscount">Sale Discount %:</label>
-                            <input type="number" id="saleDiscount" name="saleDiscount" min="0" max="100" step="any">
-                        </div>
-                        <div class="form-group">
-                            <label for="lowLevelLimit">Low Level Limit:</label>
-                            <input type="number" id="lowLevelLimit" name="lowLevelLimit" min="0" step="any">
-                        </div>
-                        <div class="form-group" style="grid-column: span 2;">
-                            <label for="productDescription">Product Description:</label>
-                            <textarea id="productDescription" name="productDescription" rows="3" maxlength="250"></textarea>
-                            <small id="descriptionCount" style="display: block; text-align: right;">0 / 250</small>
-                        </div>
-                        <div class="form-group product-settings" style="grid-column: span 2;">
-                             <strong>Settings:</strong><br>
-                            <label><input type="checkbox" id="printDescription" name="printDescription"> Print Description</label>
-                            <label><input type="checkbox" id="printSerialNo" name="printSerialNo"> Print Serial No</label>
-                            <label><input type="checkbox" id="oneClickSale" name="oneClickSale"> One Click Sale</label>
-                            <label><input type="checkbox" id="notForSale" name="notForSale"> Not For Sale</label>
-                            <label><input type="checkbox" id="enableTracking" name="enableTracking"> Enable Tracking</label>
-                        </div>
-                    </div>
-                     <input type="hidden" id="editProductId" name="editProductId">
-                    <div class="modal-actions">
-                        <button type="button" onclick="hideAddProductForm()">Cancel</button>
-                        <button type="submit" id="saveProductBtn">Save Product</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-
-        <table id="productListTable">
-            <thead>
-                <tr>
-                    <th>S.No.</th>
-                    <th>Item Name</th>
-                    <th>Print Name</th>
-                    <th>Purchase Price</th>
-                    <th>Sale Price</th>
-                    <th>UoM</th>
-                    <th>Stock</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody>
+        <div class="table-container">
+            <table id="productTable">
+                <thead>
+                    <tr>
+                        <th>Product Name</th>
+                        <th>Price</th> <th>Category</th> <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="productTableBody">
+                    <tr>
+                        <td colspan="4" id="loadingMessage">Loading products...</td>
+                    </tr>
                 </tbody>
-        </table>
-
-        <div class="overlay" id="modalOverlay"></div>
+            </table>
+        </div>
     </div>
 
-    <script src="js/product_management.js" type="module"></script>
+    <div id="productModal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" id="closeProductModal" title="Close">&times;</span>
+            <h2 id="modalTitle">Add New Product</h2>
+            <form id="productForm">
+                <input type="hidden" id="editProductId"> <div class="form-group">
+                    <label for="productPrintName">Product Name (Print Name) <span class="required">*</span>:</label>
+                    <input type="text" id="productPrintName" required placeholder="Name shown in order form">
+                </div>
+                <div class="form-group">
+                    <label for="productPrice">Price:</label>
+                    <input type="number" id="productPrice" placeholder="e.g., 150.00" step="0.01" min="0">
+                </div>
+                <div class="form-group">
+                    <label for="productCategory">Category:</label>
+                    <input type="text" id="productCategory" placeholder="e.g., Visiting Card, Banner">
+                </div>
+                 <div class="modal-actions">
+                    <button type="submit" id="saveProductBtn" class="button save-button">
+                        <i class="fas fa-save"></i> <span>Save Product</span>
+                    </button>
+                     <button type="button" id="cancelProductBtn" class="button cancel-button">
+                        Cancel
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
 
-    <script>
-        const descriptionInput = document.getElementById('productDescription');
-        const descriptionCount = document.getElementById('descriptionCount');
-        const addProductModal = document.getElementById('addProductModal');
-        const modalOverlay = document.getElementById('modalOverlay');
-        const addProductForm = document.getElementById('addProductForm');
 
-        // कैरेक्टर काउंटर
-        if (descriptionInput && descriptionCount) {
-            descriptionInput.addEventListener('input', function() {
-                const currentLength = this.value.length;
-                descriptionCount.textContent = currentLength + ' / 250';
-            });
-        }
+    <script type="module">
+        // Import necessary Firebase functions
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+        import { getFirestore, collection, doc, addDoc, updateDoc, deleteDoc, onSnapshot, query, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-        // Modal दिखाने का फंक्शन
-        window.showAddProductForm = function(isEdit = false, productData = null) {
-             const modalTitle = document.querySelector('#addProductModal .modal-header h2');
-             const saveButton = document.getElementById('saveProductBtn');
-             const editIdInput = document.getElementById('editProductId');
+        // --- PASTE YOUR firebaseConfig HERE ---
+        const firebaseConfig = {
+          apiKey: "AIzaSyBQj5rQmE77kKKGYixP8y3Hcimz8tiAqzQ", // YOUR CONFIG
+          authDomain: "madhav-multyprint.firebaseapp.com", // YOUR CONFIG
+          projectId: "madhav-multyprint", // YOUR CONFIG
+          storageBucket: "madhav-multyprint.appspot.com", // YOUR CONFIG
+          messagingSenderId: "104988349637", // YOUR CONFIG
+          appId: "1:104988349637:web:faf045b77c6786a4e70cac" // YOUR CONFIG
+        };
+        // --- END OF PASTE ---
 
-            if (!isEdit) {
-               // ऐड मोड के लिए फॉर्म रीसेट करें
-               addProductForm.reset();
-               modalTitle.textContent = 'Add New Product';
-               saveButton.textContent = 'Save Product';
-               editIdInput.value = '';
-               if(descriptionCount) descriptionCount.textContent = '0 / 250';
-            } else if (productData) {
-               // एडिट मोड के लिए फॉर्म भरें (यह लॉजिक product_management.js में बेहतर रहेगा)
-               modalTitle.textContent = 'Edit Product';
-               saveButton.textContent = 'Update Product';
-               editIdInput.value = productData.id;
-               // यहाँ फॉर्म फ़ील्ड्स को productData से भरने का कोड आएगा...
-               // उदा. document.getElementById('productName').value = productData.productName || '';
-               // ... बाकी फ़ील्ड्स ...
+        // Initialize Firebase and make functions globally available
+         try {
+            let app;
+            if (!window.firebaseAppInitialized) {
+                 app = initializeApp(firebaseConfig);
+                 window.firebaseAppInitialized = true;
+                 console.log("Firebase initialized on product_management page.");
+            } else {
+                 console.log("Firebase already initialized (product_management).");
             }
-            addProductModal.style.display = 'flex';
-            modalOverlay.style.display = 'block';
-        }
+            const db = window.db || getFirestore(app || undefined);
+            window.db = db;
 
-        // Modal छिपाने का फंक्शन
-        window.hideAddProductForm = function() {
-            addProductModal.style.display = 'none';
-            modalOverlay.style.display = 'none';
-        }
+            // Make Firestore functions globally available
+            window.collection = collection;
+            window.doc = doc;
+            window.addDoc = addDoc;
+            window.updateDoc = updateDoc;
+            window.deleteDoc = deleteDoc;
+            window.onSnapshot = onSnapshot;
+            window.query = query;
+            window.orderBy = orderBy;
+            window.serverTimestamp = serverTimestamp;
 
-        // Overlay पर क्लिक करने से Modal बंद हो
-        if (modalOverlay) {
-            modalOverlay.addEventListener('click', hideAddProductForm);
-        }
+            console.log("Firebase functions available globally for product_management.");
 
+        } catch (e) {
+            console.error("Firebase initialization error (product_management):", e);
+            if (!window.db) {
+                alert("Database connection error on product page!");
+                 const loadingCell = document.getElementById('loadingMessage');
+                 if(loadingCell) loadingCell.textContent = 'Database connection error!';
+            }
+        }
     </script>
+
+    <script src="js/product_management.js" type="module" defer></script>
 
 </body>
 </html>

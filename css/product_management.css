@@ -1,127 +1,197 @@
-/* css/product_management.css */
+/* General Body Styles */
+body {
+    font-family: "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
+    margin: 0;
+    padding: 15px;
+    background-color: #f0f2f5;
+    color: #333;
+    line-height: 1.45;
+}
 
-.add-product-modal {
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
+/* Container */
+.container {
     background-color: #fff;
-    padding: 20px;
-    border-radius: 8px;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-    z-index: 1000;
-    width: 80%; /* Adjust as needed */
-    max-width: 600px; /* Limit maximum width */
-    max-height: 90vh; /* Increased max height */
-    overflow-y: auto;
+    padding: 20px 25px;
+    border-radius: 5px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    width: 100%;
+    max-width: 1000px;
+    margin: 20px auto;
+    box-sizing: border-box;
+}
+
+/* Header */
+.header {
+    background-color: #6f42c1; /* Product Management color - Purple */
+    color: white;
+    padding: 10px 15px;
+    border-radius: 4px 4px 0 0;
+    margin: -20px -25px 20px -25px;
+    font-size: 1.15em;
+    font-weight: 600;
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+.header-icon { font-size: 1em; }
+h1 { margin: 0; font-size: 1.2em; }
+
+/* Filter Bar */
+.filter-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    padding: 15px;
+    background-color: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 4px;
+    margin-bottom: 20px;
+    align-items: flex-end;
+}
+
+.filter-group {
     display: flex;
     flex-direction: column;
-}
-
-.modal-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 15px;
-    color: #333;
-}
-
-.modal-header h2 {
-    margin: 0;
-    font-size: 20px;
-}
-
-.modal-header .close-button {
-    background: none;
-    border: none;
-    color: #aaa;
-    font-size: 20px;
-    cursor: pointer;
-}
-
-.modal-header .close-button:hover {
-    color: #333;
-}
-
-.form-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 12px;
-    margin-bottom: 15px;
-    overflow: auto;
+    gap: 5px;
     flex-grow: 1;
+    min-width: 150px;
 }
-
-.form-group {
-    margin-bottom: 12px;
+.filter-group.filter-sort {
+    min-width: 180px;
 }
-
-.form-group label {
-    display: block;
-    margin-bottom: 5px;
-    font-weight: bold;
-    color: #555;
-    font-size: 14px;
+.filter-group label {
+    font-size: 0.85em;
+    font-weight: 500;
+    color: #495057;
+    white-space: nowrap;
 }
-
-.form-group input[type="text"],
-.form-group input[type="number"],
-.form-group textarea,
-.form-group select {
+.filter-group label i {
+    margin-right: 4px;
+    color: #6f42c1; /* Match header color */
+}
+.filter-group input[type="text"],
+.filter-group select {
+    padding: 6px 9px;
+    border: 1px solid #ced4da;
+    border-radius: 3px;
+    font-size: 0.9em;
+    height: 34px;
+    background-color: #fff;
+    box-sizing: border-box;
     width: 100%;
-    padding: 10px;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    box-sizing: border-box;
-    font-size: 14px;
 }
-
-.gst-rates {
-    display: none; /* Hide GST Rates section */
-    display: flex;
-    gap: 8px;
-    align-items: center;
-}
-
-.gst-rates label {
-    font-weight: normal;
-    font-size: 14px;
-    margin-right: 5px;
-}
-
-.gst-rates input[type="number"] {
-    width: 60px;
-    padding: 8px;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    box-sizing: border-box;
-    font-size: 14px;
-}
-
-.product-settings label {
-    font-weight: normal;
-    margin-right: 10px;
-    font-size: 14px;
-}
-
-.modal-actions {
-    margin-top: 20px;
-    text-align: right;
-    flex-shrink: 0;
-}
-
-.modal-actions button {
-    background-color: #007bff; /* Blue color */
+/* Add New Product button specific styling */
+.filter-group .add-new-button {
+    height: 34px;
+    align-self: flex-end;
+    background-color: #28a745;
     color: white;
+    flex-grow: 0;
+}
+.filter-group .add-new-button:hover { background-color: #218838; }
+
+
+/* Clear Filters Button */
+.clear-filters-button {
+    background-color: #6c757d;
+    color: white;
+    padding: 6px 12px;
+    height: 34px;
+    align-self: flex-end;
+    flex-grow: 0;
+}
+.clear-filters-button:hover { background-color: #5a6268; }
+
+
+/* General Button Styles */
+.button {
+    padding: 8px 15px;
+    font-size: 0.9em;
     border: none;
-    padding: 10px 15px;
-    border-radius: 5px;
+    border-radius: 3px;
     cursor: pointer;
-    font-size: 16px;
-    margin-left: 10px;
-    box-shadow: 0 2px 2px rgba(0,0,0,0.1);
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    text-decoration: none;
+    transition: background-color 0.2s ease;
+    white-space: nowrap;
+}
+.button:disabled { opacity: 0.6; cursor: not-allowed; }
+.button i { margin-right: 3px; }
+
+
+/* Table Styles */
+.table-container { width: 100%; overflow-x: auto; }
+#productTable { width: 100%; border-collapse: collapse; margin-top: 0; font-size: 0.9em; }
+#productTable thead { background-color: #e9ecef; }
+#productTable th, #productTable td { border: 1px solid #dee2e6; padding: 10px 12px; text-align: left; vertical-align: middle; white-space: nowrap; }
+#productTable td:nth-child(1), /* Name */
+#productTable td:nth-child(3)  /* Category */
+{ white-space: normal; } /* Allow wrapping */
+#productTable td:nth-child(2) { text-align: right; } /* Align Price right */
+#productTable th { font-weight: 600; color: #495057; }
+#productTable tbody tr:nth-child(even) { background-color: #f8f9fa; }
+#productTable tbody tr:hover { background-color: #f1f1f1; }
+#productTable td { color: #212529; }
+#loadingMessage, #noProductsMessage { text-align: center; color: #666; font-style: italic; padding: 20px !important; }
+
+/* Action Buttons within Table */
+.action-button { background: none; border: none; cursor: pointer; padding: 5px; font-size: 1.1em; margin: 0 4px; vertical-align: middle; }
+.edit-button { color: #ffc107; }
+.edit-button:hover { color: #e0a800; }
+.delete-button { color: #dc3545; }
+.delete-button:hover { color: #c82333; }
+
+
+/* --- Modal Styles (Add/Edit Product) --- */
+.modal { display: none; position: fixed; z-index: 1050; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.5); align-items: center; justify-content: center; padding: 15px; box-sizing: border-box; }
+.modal.active { display: flex; }
+
+.modal-content { background-color: #fefefe; margin: auto; padding: 25px 30px; border: 1px solid #ccc; width: 90%; max-width: 500px; border-radius: 8px; position: relative; box-shadow: 0 5px 15px rgba(0,0,0,0.2); z-index: 1051; }
+
+.close-btn { color: #aaa; position: absolute; top: 10px; right: 15px; font-size: 28px; font-weight: bold; cursor: pointer; line-height: 1; background: none; border: none; padding: 0; }
+.close-btn:hover, .close-btn:focus { color: black; text-decoration: none; }
+
+.modal h2 { margin-top: 0; margin-bottom: 20px; font-size: 1.3em; color: #333; text-align: center; border-bottom: 1px solid #eee; padding-bottom: 10px; }
+
+/* Form Styles within Modal */
+#productForm .form-group { margin-bottom: 15px; }
+#productForm label { display: block; margin-bottom: 5px; font-weight: 600; font-size: 0.9em; color: #495057; }
+#productForm input[type="text"],
+#productForm input[type="number"] {
+    width: 100%;
+    padding: 8px 10px;
+    border: 1px solid #ced4da;
+    border-radius: 3px;
+    font-size: 0.95em;
+    box-sizing: border-box;
+}
+#productForm .required { color: #dc3545; margin-left: 2px; font-weight: bold; }
+
+
+.modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; padding-top: 15px; border-top: 1px solid #eee; }
+.save-button { background-color: #28a745; color: white; }
+.save-button:hover { background-color: #218838; }
+.cancel-button { background-color: #6c757d; color: white; }
+.cancel-button:hover { background-color: #5a6268; }
+
+
+/* --- Responsive Adjustments --- */
+@media (max-width: 768px) {
+    .container { max-width: 95%; padding: 15px; }
+    .filter-bar { flex-direction: column; align-items: stretch; }
+    #productTable { font-size: 0.85em; }
+    #productTable th, #productTable td { padding: 8px; white-space: normal; }
+    #productTable td:nth-child(2) { text-align: left; } /* Reset price alignment */
+    .button { font-size: 0.85em; padding: 7px 12px; }
+    .modal-content { width: 95%; padding: 20px; }
 }
 
-.modal-actions button:hover {
-    background-color: #0056b3;
+@media (max-width: 480px) {
+    .modal-actions { flex-direction: column; }
+    .modal-actions .button { width: 100%; justify-content: center; }
 }
