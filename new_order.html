@@ -10,14 +10,14 @@
 </head>
 <body>
     <script type="module">
-        // Firebase initialization (Same as before)
+        // Firebase initialization (Same as original)
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
         import { getFirestore, collection, addDoc, doc, updateDoc, deleteDoc, onSnapshot, getDocs, query, where, getDoc, orderBy, limit } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
         const firebaseConfig = {
           apiKey: "AIzaSyBQj5rQmE77kKKGYixP8y3Hcimz8tiAqzQ", // Your config
           authDomain: "madhav-multyprint.firebaseapp.com",
           projectId: "madhav-multyprint",
-          storageBucket: "madhav-multyprint.appspot.com", // Check storage bucket name
+          storageBucket: "madhav-multyprint.appspot.com", // Check your bucket name
           messagingSenderId: "104988349637",
           appId: "1:104988349637:web:faf045b77c6786a4e70cac"
         };
@@ -25,10 +25,13 @@
             let app;
             if (!window.firebaseAppInitialized) {
                  app = initializeApp(firebaseConfig);
-                 window.firebaseAppInitialized = true; console.log("Firebase initialized on new_order page.");
-            } else { console.log("Firebase already initialized."); }
-            const db = window.db || getFirestore(app || undefined);
-            // Make functions global (Same as before)
+                 window.firebaseAppInitialized = true;
+                 window.firebaseApp = app;
+                 console.log("Firebase initialized on new_order page.");
+            } else {
+                app = window.firebaseApp;
+                console.log("Firebase already initialized."); }
+            const db = window.db || getFirestore(app);
             window.db = db; window.collection = collection; window.addDoc = addDoc; window.doc = doc;
             window.updateDoc = updateDoc; window.deleteDoc = deleteDoc; window.onSnapshot = onSnapshot;
             window.getDocs = getDocs; window.query = query; window.where = where; window.getDoc = getDoc;
