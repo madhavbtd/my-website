@@ -9,63 +9,32 @@
 </head>
 <body>
     <script type="module">
-        // Import ALL necessary Firebase functions used by new_order.js
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-        import {
-            getFirestore, collection, addDoc, doc, updateDoc, deleteDoc,
-            onSnapshot, getDocs, query, where, getDoc, orderBy, limit,
-            runTransaction, serverTimestamp, Timestamp, arrayUnion // <<< सभी जरूरी फंक्शन्स >>>
-        } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-
-        // --- PASTE YOUR firebaseConfig HERE ---
+        import { getFirestore, collection, addDoc, doc, updateDoc, deleteDoc, onSnapshot, getDocs, query, where, getDoc, orderBy, limit } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
         const firebaseConfig = {
           apiKey: "AIzaSyBQj5rQmE77kKKGYixP8y3Hcimz8tiAqzQ", // Your config
-          authDomain: "madhav-multyprint.firebaseapp.com", // Your config
-          projectId: "madhav-multyprint", // Your config
-          storageBucket: "madhav-multyprint.appspot.com", // Your config
-          messagingSenderId: "104988349637", // Your config
-          appId: "1:104988349637:web:faf045b77c6786a4e70cac" // Your config
+          authDomain: "madhav-multyprint.firebaseapp.com",
+          projectId: "madhav-multyprint",
+          storageBucket: "madhav-multyprint.appspot.com", // Check storage bucket name
+          messagingSenderId: "104988349637",
+          appId: "1:104988349637:web:faf045b77c6786a4e70cac"
         };
-        // --- END OF PASTE ---
-
-        // Initialize Firebase and make ALL functions globally available
-         try {
+        try {
             let app;
             if (!window.firebaseAppInitialized) {
                  app = initializeApp(firebaseConfig);
-                 window.firebaseAppInitialized = true;
-                 console.log("Firebase initialized on new_order page.");
-            } else {
-                 console.log("Firebase already initialized (new_order).");
-            }
+                 window.firebaseAppInitialized = true; console.log("Firebase initialized on new_order page.");
+            } else { console.log("Firebase already initialized."); }
             const db = window.db || getFirestore(app || undefined);
-            window.db = db;
-
-            // Make ALL Firestore functions global for new_order.js
-            window.collection = collection;
-            window.addDoc = addDoc;
-            window.doc = doc;
-            window.updateDoc = updateDoc;
-            window.deleteDoc = deleteDoc;
-            window.onSnapshot = onSnapshot;
-            window.getDocs = getDocs;
-            window.query = query;
-            window.where = where;
-            window.getDoc = getDoc;
-            window.orderBy = orderBy;
-            window.limit = limit;
-            window.runTransaction = runTransaction;     // <<< ग्लोबल बनाया गया >>>
-            window.serverTimestamp = serverTimestamp; // <<< ग्लोबल बनाया गया >>>
-            window.Timestamp = Timestamp;             // <<< ग्लोबल बनाया गया >>>
-            window.arrayUnion = arrayUnion;           // <<< ग्लोबल बनाया गया >>>
-
-            console.log("ALL Firebase functions available globally for new_order.");
-
-        } catch (e) {
-            console.error("Firebase initialization error (new_order):", e);
-            if (!window.db) { alert("Database connection error!"); }
-        }
+            // Make functions global
+            window.db = db; window.collection = collection; window.addDoc = addDoc; window.doc = doc;
+            window.updateDoc = updateDoc; window.deleteDoc = deleteDoc; window.onSnapshot = onSnapshot;
+            window.getDocs = getDocs; window.query = query; window.where = where; window.getDoc = getDoc;
+            window.orderBy = orderBy; window.limit = limit;
+            console.log("Firebase functions available globally.");
+        } catch (e) { console.error("Firebase initialization error:", e); if (!window.db) { alert("Database connection error!"); } }
     </script>
+
     <div class="container">
         <div class="header" id="formHeader">
              <i class="fas fa-file-alt header-icon"></i>
@@ -73,26 +42,24 @@
         </div>
         <form id="newOrderForm">
             <input type="hidden" id="editOrderId" name="editOrderId">
-             <input type="hidden" id="selectedCustomerId" name="selectedCustomerId">
+            <input type="hidden" id="selectedCustomerId" name="selectedCustomerId">
 
             <div class="section-title">1. Customer Details</div>
-            <div class="form-row">
-                 <div class="form-group form-group-half">
+            <div class="form-row"> <div class="form-group form-group-half">
                     <label for="full_name">Full Name:</label>
                     <input type="text" id="full_name" name="full_name" required autocomplete="off" placeholder="Enter customer name...">
                     <div id="customer-suggestions-name" class="suggestions-box"></div>
-                 </div>
+                </div>
                 <div class="form-group form-group-half">
                     <label for="address">Address:</label>
                     <input type="text" id="address" name="address" readonly placeholder="Autofills when customer selected">
-                 </div>
+                </div>
             </div>
-            <div class="form-row">
-                 <div class="form-group form-group-half">
+            <div class="form-row"> <div class="form-group form-group-half">
                     <label for="whatsapp_no">WhatsApp No:</label>
                     <input type="text" id="whatsapp_no" name="whatsapp_no" required autocomplete="off" placeholder="Enter WhatsApp number...">
-                     <div id="customer-suggestions-whatsapp" class="suggestions-box"></div>
-                 </div>
+                    <div id="customer-suggestions-whatsapp" class="suggestions-box"></div>
+                </div>
                 <div class="form-group form-group-half">
                     <label for="contact_no">Contact No:</label>
                     <input type="text" id="contact_no" name="contact_no" readonly placeholder="Autofills when customer selected">
@@ -101,8 +68,7 @@
              <p class="info-text">*New customer cannot be added here, only select an existing one.</p>
 
             <div class="section-title">2. Order Details</div>
-            <div class="form-row">
-                 <div class="form-group form-group-half">
+            <div class="form-row"> <div class="form-group form-group-half">
                     <label for="manual_order_id">Order ID (Manual):</label>
                     <input type="text" id="manual_order_id" name="manual_order_id" placeholder="Optional - Auto-generated if empty">
                 </div>
@@ -111,12 +77,11 @@
                     <input type="text" id="display_order_id" name="display_order_id" readonly placeholder="Auto-generated or Existing">
                 </div>
             </div>
-             <div class="form-row">
-                 <div class="form-group form-group-half">
+             <div class="form-row"> <div class="form-group form-group-half">
                     <label for="order_date">Order Date:</label>
                     <input type="date" id="order_date" name="order_date" required>
                 </div>
-                 <div class="form-group form-group-half">
+                <div class="form-group form-group-half">
                     <label for="delivery_date">Delivery Date:</label>
                     <input type="date" id="delivery_date" name="delivery_date">
                 </div>
@@ -147,7 +112,7 @@
                         <input type="number" id="quantity_input" name="quantity_input" placeholder="Qty">
                     </div>
                     <button type="button" id="add-product-btn" class="add-product-button">
-                     <i class="fas fa-plus"></i> Add Product
+                        <i class="fas fa-plus"></i> Add Product
                     </button>
                 </div>
                  <p class="info-text">*New product cannot be added here, only select an existing one.</p>
@@ -159,24 +124,24 @@
                 <div class="form-group priority-group">
                     <label>Urgent?</label>
                     <div class="radio-group">
-                          <label><input type="radio" name="urgent" value="Yes"> Yes</label>
-                          <label><input type="radio" name="urgent" value="No" checked> No</label>
+                         <label><input type="radio" name="urgent" value="Yes"> Yes</label>
+                         <label><input type="radio" name="urgent" value="No" checked> No</label>
                      </div>
                 </div>
                 <div class="form-group remarks-group">
-                     <label for="remarks">Remarks:</label>
+                    <label for="remarks">Remarks:</label>
                     <textarea id="remarks" name="remarks" placeholder="Any specific notes..."></textarea>
                 </div>
             </div>
 
             <div class="button-container">
                 <button type="submit" class="save-button" id="saveOrderBtn">
-                      <i class="fas fa-save"></i> <span>Save Order</span>
+                    <i class="fas fa-save"></i> <span>Save Order</span>
                 </button>
                 <button type="button" onclick="window.location.href='order_history.html'" class="cancel-button">
                     Cancel
                 </button>
-             </div>
+            </div>
         </form>
     </div>
 
@@ -186,7 +151,7 @@
             <h4>Order Saved Successfully!</h4>
             <p>Send update to customer?</p>
             <div id="whatsapp-message-preview" class="message-preview"></div>
-             <a href="#" id="whatsapp-send-link" class="button whatsapp-send-btn" target="_blank">
+            <a href="#" id="whatsapp-send-link" class="button whatsapp-send-btn" target="_blank">
                 <i class="fab fa-whatsapp"></i> Send on WhatsApp
             </a>
         </div>
