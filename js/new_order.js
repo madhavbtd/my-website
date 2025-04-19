@@ -322,7 +322,7 @@ async function handleFormSubmit(event) {
         else { orderDataPayload.createdAt = new Date(); const newOrderRef = await addDoc(collection(db, "orders"), orderDataPayload); orderDocRefPath = newOrderRef.path; console.log("[DEBUG] New order saved:", newOrderRef.id); alert('New order saved successfully!'); displayOrderIdInput.value = orderIdToUse; }
         // Post-save actions
         await saveToDailyReport(orderDataPayload, orderDocRefPath);
-        showWhatsAppReminder(customerData, orderIdToUse, orderDetails.deliveryDate);
+        showWhatsAppReminder(customerData, orderIdToUse, orderDetails.deliveryDate); // Pass data to WhatsApp function
         if (!isEditMode) { resetNewOrderForm(); }
     } catch (error) { console.error("Error saving/updating order:", error); alert("Error: " + error.message);
     } finally { saveButton.disabled = false; const btnTxt = isEditMode ? "Update Order" : "Save Order"; saveButton.innerHTML = `<i class="fas fa-save"></i> <span>${btnTxt}</span>`; }
@@ -333,7 +333,50 @@ function resetNewOrderForm() { console.log("[DEBUG] Resetting form."); resetCust
 
 // --- Post-Save Functions ---
 async function saveToDailyReport(orderData, orderPath) { console.log(`[DEBUG] Placeholder: Saving to daily_reports (Path: ${orderPath})`, orderData); try { /* ... */ console.log("[DEBUG] Placeholder: Called saveToDailyReport."); } catch (error) { console.error("[DEBUG] Placeholder: Error saving to daily_reports:", error); } }
-function showWhatsAppReminder(customer, orderId, deliveryDate) { if (!whatsappReminderPopup || !whatsappMsgPreview || !whatsappSendLink) { console.error("[DEBUG] WhatsApp popup elements missing."); return; } const customerName = customer.fullName || 'Customer'; const customerNumber = customer.whatsappNo?.replace(/[^0-9]/g, ''); if (!customerNumber) { console.warn("[DEBUG] WhatsApp No missing."); alert("Cust WhatsApp No missing."); return; } let message = `Hello ${customerName},\nYour order (ID: ${orderId}) has been received successfully.\n`; if (deliveryDate) { message += `Est delivery date is ${deliveryDate}.\n`; } message += `Thank you!`; whatsappMsgPreview.innerText = message; const encodedMessage = encodeURIComponent(message); const whatsappUrl = `https://wa.me/${customerNumber}?text=${encodedMessage}`; whatsappSendLink.href = whatsappUrl; whatsappReminderPopup.classList.add('active'); console.log("[DEBUG] WhatsApp reminder shown."); }
+
+// --- UPDATED WhatsApp Reminder Function ---
+function showWhatsAppReminder(customer, orderId, deliveryDate) {
+    if (!whatsappReminderPopup || !whatsappMsgPreview || !whatsappSendLink) {
+        console.error("[DEBUG] WhatsApp popup elements missing.");
+        return;
+    }
+    const customerName = customer.fullName || 'Customer';
+    const customerNumber = customer.whatsappNo?.replace(/[^0-9]/g, '');
+    if (!customerNumber) {
+        console.warn("[DEBUG] WhatsApp No missing.");
+        // आप चाहें तो यहां अलर्ट रख सकते हैं या हटा सकते हैं
+        // alert("Cust WhatsApp No missing.");
+        return;
+    }
+
+    // डिलीवरी की तारीख को फॉर्मेट करें (यदि आवश्यक हो)
+    // मान लें कि deliveryDate 'YYYY-MM-DD' फॉर्मेट में है, आप इसे जरूरत अनुसार बदल सकते हैं
+    const formattedDeliveryDate = deliveryDate ? deliveryDate : ' जल्द से जल्द'; // यदि तारीख नहीं है तो एक डिफ़ॉल्ट टेक्स्ट जोड़ें
+
+    // नया टेम्पलेट यहाँ डालें
+    let message = `प्रिय ${customerName},
+नमस्कार,
+आपका ऑर्डर (Order No: ${orderId}) हमें सफलतापूर्वक प्राप्त हो गया है।
+हम इस ऑर्डर को ${formattedDeliveryDate} तक पूर्ण करने का प्रयास करेंगे।
+
+Dear ${customerName},
+We have successfully received your order (Order No: ${orderId}).
+We aim to complete it by ${formattedDeliveryDate}.
+
+धन्यवाद,
+Madhav Offset
+Head Office: Moodh Market, Batadu
+Mobile: 9549116541`;
+
+    whatsappMsgPreview.innerText = message;
+    const encodedMessage = encodeURIComponent(message);
+    const whatsappUrl = `https://wa.me/${customerNumber}?text=${encodedMessage}`;
+    whatsappSendLink.href = whatsappUrl;
+    whatsappReminderPopup.classList.add('active');
+    console.log("[DEBUG] WhatsApp reminder shown.");
+}
+// --- End of Updated Function ---
+
 function closeWhatsAppPopup() { if (whatsappReminderPopup) whatsappReminderPopup.classList.remove('active'); }
 
-console.log("new_order.js script loaded (Client-Side Filtering + Save Fix + Debug Logs).");
+console.log("new_order.js script loaded (Client-Side Filtering + Save Fix + Debug Logs + Updated WhatsApp Template).");
