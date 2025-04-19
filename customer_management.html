@@ -6,7 +6,99 @@
     <title>Customer Management</title>
     <link rel="stylesheet" href="css/customer_management.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" integrity="sha512-9usAa10IRO0HhonpyAIVpjrylPvoDwiPUiKdWk5t3PyolY1cOd4DSE0Ga+ri4AuTroPR5aQvXU9xC6qOPnzFeg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
-</head>
+
+    <script type="module">
+        // Import Firebase services
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+        // Import other services like Firestore if needed by the page
+        import { getFirestore, collection, doc, addDoc, updateDoc, deleteDoc, onSnapshot, query, orderBy, serverTimestamp, runTransaction, getDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js"; // Added Firestore imports needed for original script
+
+        // **** Your Firebase Configuration ****
+         const firebaseConfig = {
+           apiKey: "AIzaSyBQj5rQmE77kKKGYixP8y3Hcimz8tiAqzQ", // Your apiKey
+           authDomain: "madhav-multyprint.firebaseapp.com", // Your authDomain
+           projectId: "madhav-multyprint", // Your projectId
+           storageBucket: "madhav-multyprint.appspot.com", // Your storageBucket
+           messagingSenderId: "104988349637", // Your messagingSenderId
+           appId: "1:104988349637:web:faf045b77c6786a4e70cac" // Your appId
+         };
+
+        let app;
+        let auth;
+        let db; // Example for Firestore
+
+        try {
+             // Initialize Firebase App (only once per page load)
+             if (!window.firebaseAppInitialized) {
+                 app = initializeApp(firebaseConfig);
+                 window.firebaseAppInitialized = true;
+                 window.firebaseApp = app; // Store globally
+                 console.log("Firebase initialized on this page (customer_management).");
+             } else {
+                 app = window.firebaseApp; // Use existing instance
+                 console.log("Firebase already initialized on this page (customer_management).");
+             }
+             auth = getAuth(app);
+             db = getFirestore(app); // Initialize Firestore (or other services)
+             window.db = db; // Make global if needed by other scripts on the page
+             window.auth = auth; // Make auth global
+
+             // Make other Firestore functions globally available if customer_management.js needs them
+             window.collection = collection;
+             window.doc = doc;
+             window.addDoc = addDoc;
+             window.updateDoc = updateDoc;
+             window.deleteDoc = deleteDoc;
+             window.onSnapshot = onSnapshot;
+             window.query = query;
+             window.orderBy = orderBy;
+             window.serverTimestamp = serverTimestamp;
+             window.runTransaction = runTransaction;
+             window.getDoc = getDoc;
+
+             // ---->> Authentication State Check (Core Security) <<----
+             onAuthStateChanged(auth, (user) => {
+                 const currentPage = window.location.pathname.split('/').pop() || 'index.html'; // Get current file name
+
+                 if (user) {
+                     // User is logged in. Allow page to load.
+                     console.log(`User is logged in on ${currentPage}:`, user.uid);
+                     // Initialize page-specific functions if needed
+                     // e.g., if (typeof initializeCustomerManagement === 'function') { initializeCustomerManagement(user); }
+
+                 } else {
+                     // User is not logged in.
+                     console.log(`User is not logged in on ${currentPage}. Redirecting to login...`);
+                     // Redirect to login.html from all protected pages (but NOT from login.html itself)
+                     if (currentPage.toLowerCase() !== 'login.html') {
+                        // Make sure 'login.html' path is correct relative to your files
+                        window.location.replace('login.html');
+                     }
+                 }
+             });
+             // ---->> Auth check end <<----
+
+             // --- Logout Link Logic (Include if a logout link exists on this page) ---
+             // Assuming no logout link on this specific page based on original code,
+             // but you can add it here if needed, similar to index.html
+
+
+             // --- Optional: Make user info available globally ---
+             window.getCurrentUser = () => {
+                 return auth.currentUser;
+             };
+
+        } catch(e) {
+            console.error("Firebase setup / Auth check error:", e);
+            alert("Error loading application. Please try again later."); // English alert
+            // Optional: Redirect to login on critical error
+            // if (window.location.pathname.split('/').pop().toLowerCase() !== 'login.html') {
+            //    window.location.replace('login.html');
+            // }
+        }
+    </script>
+    </head>
 <body>
     <div class="container">
         <div class="header">
@@ -15,23 +107,23 @@
         </div>
 
         <div class="filter-bar">
-             <div class="filter-group">
+              <div class="filter-group">
                  <button id="addNewCustomerBtn" class="button add-new-button">
                     <i class="fas fa-user-plus"></i> Add New Customer
                 </button>
             </div>
              <div class="filter-group">
-                <label for="filterSearch"><i class="fas fa-search"></i> Search:</label>
+                 <label for="filterSearch"><i class="fas fa-search"></i> Search:</label>
                 <input type="text" id="filterSearch" placeholder="ID, Name, WhatsApp...">
             </div>
              <div class="filter-group filter-sort">
                 <label for="sort-customers"><i class="fas fa-sort"></i> Sort by:</label>
-                <select id="sort-customers">
+                 <select id="sort-customers">
                     <option value="createdAt_desc">Newest First</option>
                     <option value="createdAt_asc">Oldest First</option>
                     <option value="fullName_asc">Name (A-Z)</option>
                     <option value="fullName_desc">Name (Z-A)</option>
-                    <option value="customCustomerId_asc">ID (Low-High)</option> <option value="customCustomerId_desc">ID (High-Low)</option> </select>
+                     <option value="customCustomerId_asc">ID (Low-High)</option> <option value="customCustomerId_desc">ID (High-Low)</option> </select>
             </div>
             <div class="filter-group">
                  <button id="clearFiltersBtn" class="button clear-filters-button" title="Clear search and reset sort">
@@ -44,16 +136,16 @@
             <table id="customerTable">
                 <thead>
                     <tr>
-                        <th>Cust. ID</th> <th>Full Name</th>
+                         <th>Cust. ID</th> <th>Full Name</th>
                         <th>WhatsApp No</th>
                         <th>Contact No</th>
                         <th>Address</th>
-                        <th>Actions</th>
+                         <th>Actions</th>
                     </tr>
                 </thead>
                 <tbody id="customerTableBody">
                     <tr>
-                        <td colspan="6" id="loadingMessage">Loading customers...</td>
+                         <td colspan="6" id="loadingMessage">Loading customers...</td>
                     </tr>
                 </tbody>
             </table>
@@ -63,27 +155,27 @@
     <div id="customerModal" class="modal">
         <div class="modal-content">
             <span class="close-btn" id="closeCustomerModal" title="Close">&times;</span>
-            <h2 id="modalTitle">Add New Customer</h2>
+             <h2 id="modalTitle">Add New Customer</h2>
             <form id="customerForm">
                 <input type="hidden" id="editCustomerId"> <div class="form-group">
                     <label for="customerFullName">Full Name <span class="required">*</span>:</label>
                     <input type="text" id="customerFullName" required>
-                </div>
+                 </div>
                 <div class="form-group">
                      <label for="customerWhatsApp">WhatsApp No <span class="required">*</span>:</label>
                     <input type="tel" id="customerWhatsApp" required placeholder="e.g., 91XXXXXXXXXX">
                 </div>
-                <div class="form-group">
+                 <div class="form-group">
                     <label for="customerContact">Contact No:</label>
                     <input type="tel" id="customerContact" placeholder="Optional alternate number">
                 </div>
                 <div class="form-group">
-                    <label for="customerAddress">Address:</label>
+                     <label for="customerAddress">Address:</label>
                     <textarea id="customerAddress" rows="3" placeholder="Optional address details"></textarea>
                 </div>
                 <div class="form-group" id="customIdDisplayArea" style="display: none;">
                      <label>Customer ID:</label>
-                     <input type="text" id="generatedCustomId" readonly>
+                       <input type="text" id="generatedCustomId" readonly>
                  </div>
 
 
@@ -94,66 +186,9 @@
                         Cancel
                     </button>
                 </div>
-            </form>
+             </form>
         </div>
     </div>
-
-
-    <script type="module">
-        // Import necessary Firebase functions
-        // Added runTransaction, getDoc, serverTimestamp
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-        import { getFirestore, collection, doc, addDoc, updateDoc, deleteDoc, onSnapshot, query, orderBy, serverTimestamp, runTransaction, getDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-
-        // --- PASTE YOUR firebaseConfig HERE ---
-        // Use the exact same config as new_order.html and order_history.html
-        const firebaseConfig = {
-          apiKey: "AIzaSyBQj5rQmE77kKKGYixP8y3Hcimz8tiAqzQ", // YOUR CONFIG
-          authDomain: "madhav-multyprint.firebaseapp.com", // YOUR CONFIG
-          projectId: "madhav-multyprint", // YOUR CONFIG
-          storageBucket: "madhav-multyprint.appspot.com", // YOUR CONFIG
-          messagingSenderId: "104988349637", // YOUR CONFIG
-          appId: "1:104988349637:web:faf045b77c6786a4e70cac" // YOUR CONFIG
-        };
-        // --- END OF PASTE ---
-
-        // Initialize Firebase and make functions globally available
-         try {
-            let app;
-            if (!window.firebaseAppInitialized) {
-                 app = initializeApp(firebaseConfig);
-                 window.firebaseAppInitialized = true;
-                 console.log("Firebase initialized on customer_management page.");
-            } else {
-                 console.log("Firebase already initialized (customer_management).");
-            }
-            const db = window.db || getFirestore(app || undefined);
-            window.db = db;
-
-            // Make Firestore functions globally available
-            window.collection = collection;
-            window.doc = doc;
-            window.addDoc = addDoc;
-            window.updateDoc = updateDoc;
-            window.deleteDoc = deleteDoc;
-            window.onSnapshot = onSnapshot;
-            window.query = query;
-            window.orderBy = orderBy;
-            window.serverTimestamp = serverTimestamp;
-            window.runTransaction = runTransaction; // Make transaction function available
-            window.getDoc = getDoc; // Needed for transaction
-
-            console.log("Firebase functions available globally for customer_management.");
-
-        } catch (e) {
-            console.error("Firebase initialization error (customer_management):", e);
-            if (!window.db) {
-                alert("Database connection error on customer page!");
-                 const loadingCell = document.getElementById('loadingMessage');
-                 if(loadingCell) loadingCell.textContent = 'Database connection error!';
-            }
-        }
-    </script>
 
     <script src="js/customer_management.js" type="module" defer></script>
 

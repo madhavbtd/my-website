@@ -1,33 +1,79 @@
 <!DOCTYPE html>
-<html lang="en">
-
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Log In</title>
+<html lang="en"> <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Madhav MultyPrint - Login</title> <style>
+        /* Basic Styling - same as before */
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; background-color: #f0f2f5; }
+        .login-container { text-align: center; background: white; padding: 2rem 3rem; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+        .logo-image { max-height: 60px; margin-bottom: 1.5rem; }
+        h2 { margin-bottom: 1.5rem; color: #333; }
+        .form-group { margin-bottom: 1rem; text-align: left; }
+        label { display: block; margin-bottom: 0.5rem; font-weight: 600; color: #555; }
+        input[type="text"], input[type="password"] { width: 100%; padding: 0.7rem; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; font-size: 1rem; }
+        button { width: 100%; padding: 0.8rem; background-color: #1877f2; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 1.1rem; font-weight: bold; margin-top: 1rem; transition: background-color 0.2s; }
+        button:hover { background-color: #166fe5; }
+        button:disabled { background-color: #9dbdfa; cursor: not-allowed;}
+        #errorMessage { color: #dc3545; margin-top: 1rem; font-size: 0.9em; min-height: 1.2em; }
+    </style>
 </head>
-
 <body>
-  <div class="login-container">
-    <div class="logo">
-      <img src="https://i.ibb.co/Z6gKD9Rd/1.png" alt="माधव मल्टीप्रिंट">
-    </div>
-    <h2>Log In</h2>
-    <form>
-      <div class="form-group">
-        <label for="mobile">Mobile Number</label>
-        <input type="text" id="mobile" name="mobile" placeholder="Enter your mobile number">
-      </div>
-      <div class="form-group">
-        <label for="password">Password</label>
-        <input type="password" id="password" name="password" placeholder="Enter your password">
-      </div>
-      <button type="submit" class="login-button">Log In</button>
-    </form>
-    <div class="forgot-password">
-      <a href="#">Forgot Password?</a>
-    </div>
-  </div>
-</body>
+    <div class="login-container">
+        <img src="https://i.ibb.co/Z6gKD9Rd/1.png" alt="Madhav MultyPrint Logo" class="logo-image">
 
+        <h2>Application Login</h2> <form id="loginForm">
+            <div class="form-group">
+                <label for="username">Username:</label> <input type="text" id="username" name="username" required autocomplete="username">
+            </div>
+            <div class="form-group">
+                <label for="password">Password:</label> <input type="password" id="password" name="password" required autocomplete="current-password">
+            </div>
+            <button type="submit" id="loginButton">Login</button> <p id="errorMessage"></p> </form>
+    </div>
+
+    <script type="module">
+        // Your Firebase Configuration
+        const firebaseConfig = {
+          apiKey: "AIzaSyBQj5rQmE77kKKGYixP8y3Hcimz8tiAqzQ",
+          authDomain: "madhav-multyprint.firebaseapp.com",
+          projectId: "madhav-multyprint",
+          storageBucket: "madhav-multyprint.appspot.com",
+          messagingSenderId: "104988349637",
+          appId: "1:104988349637:web:faf045b77c6786a4e70cac"
+        };
+
+        // Initialize Firebase
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+        import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+
+        let app;
+        try {
+            if (!window.firebaseAppInitialized) {
+                 app = initializeApp(firebaseConfig);
+                 window.firebaseAppInitialized = true;
+                 window.firebaseApp = app;
+                 console.log("Firebase initialized on login page.");
+            } else {
+                app = window.firebaseApp;
+                console.log("Firebase already initialized (login page).");
+            }
+            const auth = getAuth(app);
+            window.auth = auth;
+            window.signInWithEmailAndPassword = signInWithEmailAndPassword;
+            console.log("Firebase Auth functions available globally.");
+
+        } catch (e) {
+             console.error("Firebase initialization error:", e);
+             const errorMessageElement = document.getElementById('errorMessage');
+             if(errorMessageElement) {
+                // Changed error message to English
+                errorMessageElement.textContent = 'Firebase configuration error. Contact admin.';
+             }
+             const loginButton = document.getElementById('loginButton');
+             if(loginButton) loginButton.disabled = true;
+        }
+    </script>
+
+    <script src="js/login.js" type="module" defer></script>
+</body>
 </html>

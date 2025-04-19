@@ -9,6 +9,106 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
 
+    <script type="module">
+        // Import Firebase services
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+        // Import other services like Firestore if needed by the page
+        import { getFirestore, collection, onSnapshot, query, where } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js"; // Added Firestore imports needed for original script
+
+        // **** Your Firebase Configuration ****
+         const firebaseConfig = {
+           apiKey: "AIzaSyBQj5rQmE77kKKGYixP8y3Hcimz8tiAqzQ", // Your apiKey
+           authDomain: "madhav-multyprint.firebaseapp.com", // Your authDomain
+           projectId: "madhav-multyprint", // Your projectId
+           storageBucket: "madhav-multyprint.appspot.com", // Your storageBucket
+           messagingSenderId: "104988349637", // Your messagingSenderId
+           appId: "1:104988349637:web:faf045b77c6786a4e70cac" // Your appId
+         };
+
+        let app;
+        let auth;
+        let db; // Example for Firestore
+
+        try {
+             // Initialize Firebase App (only once per page load)
+             if (!window.firebaseAppInitialized) {
+                 app = initializeApp(firebaseConfig);
+                 window.firebaseAppInitialized = true;
+                 window.firebaseApp = app; // Store globally
+                 console.log("Firebase initialized on this page (index).");
+             } else {
+                 app = window.firebaseApp; // Use existing instance
+                 console.log("Firebase already initialized on this page (index).");
+             }
+             auth = getAuth(app);
+             db = getFirestore(app); // Initialize Firestore (or other services)
+             window.db = db; // Make global if needed by other scripts on the page
+             window.auth = auth; // Make auth global
+
+             // Make other Firestore functions globally available if dashboard.js needs them
+             window.collection = collection;
+             window.onSnapshot = onSnapshot;
+             window.query = query;
+             window.where = where;
+
+
+             // ---->> Authentication State Check (Core Security) <<----
+             onAuthStateChanged(auth, (user) => {
+                 const currentPage = window.location.pathname.split('/').pop() || 'index.html'; // Get current file name
+
+                 if (user) {
+                     // User is logged in. Allow page to load.
+                     console.log(`User is logged in on ${currentPage}:`, user.uid);
+                     // Initialize dashboard after auth check
+                     if (typeof initializeDashboard === 'function') {
+                         initializeDashboard(); // Assuming dashboard.js exposes this
+                     }
+
+                 } else {
+                     // User is not logged in.
+                     console.log(`User is not logged in on ${currentPage}. Redirecting to login...`);
+                     // Redirect to login.html from all protected pages (but NOT from login.html itself)
+                     if (currentPage.toLowerCase() !== 'login.html') {
+                        // Make sure 'login.html' path is correct relative to your files
+                        window.location.replace('login.html');
+                     }
+                 }
+             });
+             // ---->> Auth check end <<----
+
+             // --- Logout Link Logic ---
+             const logoutLink = document.getElementById('logout-link');
+             if (logoutLink) {
+                logoutLink.addEventListener('click', (e) => {
+                    e.preventDefault(); // Prevent default link action
+                    if (confirm("Are you sure you want to logout?")) { // English confirm
+                        signOut(auth).then(() => {
+                            console.log('User signed out.');
+                            window.location.href = 'login.html'; // Redirect to login page after logout
+                        }).catch((error) => {
+                            console.error('Sign out error:', error);
+                            alert("Logout failed."); // English alert
+                        });
+                    }
+                });
+             }
+             // --- Logout logic end ---
+
+             // --- Optional: Make user info available globally ---
+             window.getCurrentUser = () => {
+                 return auth.currentUser;
+             };
+
+        } catch(e) {
+            console.error("Firebase setup / Auth check error:", e);
+            alert("Error loading application. Please try again later."); // English alert
+            // Optional: Redirect to login on critical error
+            // if (window.location.pathname.split('/').pop().toLowerCase() !== 'login.html') {
+            //    window.location.replace('login.html');
+            // }
+        }
+    </script>
     <style>
     /* --- <<< बेहतर CSS स्टाइलिंग >>> --- */
     :root {
@@ -22,16 +122,14 @@
         --border-color: #dee2e6;
         --text-color: #343a40;
         --text-muted: #6c757d;
-        --sidebar-text: #ecf0f1;
-        --sidebar-hover: #34495e;
+        --sidebar-text: #ecf0f1; --sidebar-hover: #34495e;
         --sidebar-active: #1abc9c;
         --sidebar-active-border: #f1c40f;
     }
 
     /* General Body Styles */
     body {
-        font-family: 'Poppins', 'Segoe UI Emoji', sans-serif;
-        margin: 0;
+        font-family: 'Poppins', 'Segoe UI Emoji', sans-serif; margin: 0;
         padding: 0;
         background-color: #f4f6f8;
         color: var(--text-color);
@@ -49,7 +147,7 @@
     .sidebar ul li a i { margin-right: 12px; width: 20px; text-align: center; font-size: 1.1em; }
     .sidebar ul li a:hover { background-color: var(--sidebar-hover); color: #fff; padding-left: 24px; }
     .sidebar ul li a.active { background-color: var(--sidebar-active); border-left-color: var(--sidebar-active-border); font-weight: 600; color: #fff; }
-    .sidebar ul li a[href="#logout"] { margin-top: auto; border-top: 1px solid var(--sidebar-hover); }
+    .sidebar ul li a[href="#logout"] { margin-top: auto; border-top: 1px solid var(--sidebar-hover); } /* This might be handled by the id now */
 
     /* Main Content Area */
     .main-content { flex: 1; padding: 25px; overflow-y: auto; height: 100vh; box-sizing: border-box; }
@@ -58,13 +156,13 @@
     .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; background-color: white; padding: 15px 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05); }
     .header-buttons { display: flex; gap: 10px; }
     .header-buttons a { text-decoration: none; }
-    .button-base { color: white; border: none; padding: 9px 14px; cursor: pointer; border-radius: 6px; font-family: 'Poppins', sans-serif; font-size: 0.9em; display: inline-flex; align-items: center; gap: 6px; text-decoration: none; transition: background-color 0.2s ease, transform 0.1s ease; }
+    .button-base { /* Combined button-base and button-link styles */ color: white; border: none; padding: 9px 14px; cursor: pointer; border-radius: 6px; font-family: 'Poppins', sans-serif; font-size: 0.9em; display: inline-flex; align-items: center; gap: 6px; text-decoration: none; transition: background-color 0.2s ease, transform 0.1s ease; }
     .button-base:hover { opacity: 0.9; }
     .button-base:active { transform: scale(0.98); }
-    .header-buttons .button-link { /* Extends button-base */ } /* Apply base styles to links acting as buttons */
-    .header-buttons a:nth-child(1) .button-link { background-color: var(--success-color); }
-    .header-buttons a:nth-child(2) .button-link { background-color: var(--info-color); }
-    .header-buttons a:nth-child(3) .button-link { background-color: var(--primary-color); }
+    /* .header-buttons .button-link { } No longer needed as separate class */
+    .header-buttons a:nth-child(1) { background-color: var(--success-color); }
+    .header-buttons a:nth-child(2) { background-color: var(--info-color); }
+    .header-buttons a:nth-child(3) { background-color: var(--primary-color); }
 
     .welcome-text { font-family: 'Poppins', sans-serif; color: var(--text-color); font-weight: 600; margin-right: auto; padding-left: 5px; font-size: 1.05em; }
     .date-time-container { background-color: var(--accent-color); color: #333; padding: 9px 14px; border-radius: 6px; font-family: 'Poppins', sans-serif; font-size: 0.9em; white-space: nowrap; font-weight: 500; }
@@ -76,9 +174,7 @@
     .panel-item:hover { transform: translateY(-3px); box-shadow: 0 5px 10px rgba(0, 0, 0, 0.1); }
     .panel-icon { font-size: 2.2em; margin-bottom: 8px; }
     .panel-count { font-size: 2.8em; font-weight: 700; display: block; margin-bottom: 8px; font-family: 'Poppins', sans-serif; color: var(--primary-color); }
-    .panel-item a.button-link { /* Panel Link Button */
-         background-color: var(--primary-color); color: white; border: none; padding: 8px 15px; cursor: pointer; border-radius: 5px; font-size: 0.85em; margin-top: 10px; font-weight: 500; font-family: 'Poppins', sans-serif; text-transform: capitalize; text-decoration: none; display: inline-block; transition: background-color 0.2s ease;
-     }
+    .panel-item a.button-link { /* Panel Link Button */ background-color: var(--primary-color); color: white; border: none; padding: 8px 15px; cursor: pointer; border-radius: 5px; font-size: 0.85em; margin-top: 10px; font-weight: 500; font-family: 'Poppins', sans-serif; text-transform: capitalize; text-decoration: none; display: inline-block; transition: background-color 0.2s ease; }
     .panel-item a.button-link:hover { background-color: #004085; }
     .panel-item.light-blue { background-color: #e1f5fe; color: #0d47a1; } .panel-item.light-blue .panel-count { color: #1976d2;}
     .panel-item.light-orange { background-color: #fff3e0; color: #bf360c; } .panel-item.light-orange .panel-count { color: #e65100;}
@@ -125,11 +221,11 @@
 
         <div class="main-content" id="main-content">
             <div class="header">
-                <span class="welcome-text">Welcome Devendra Choudhary</span>
+                <span class="welcome-text" id="welcome-user">Welcome</span>
                 <div class="header-buttons">
-                    <a href="customer_management.html?action=add" class="button-link"><i class="fas fa-user-plus"></i> Add Customer</a>
-                    <a href="#" class="button-link"><i class="fas fa-truck"></i> Add Supplier</a>
-                    <a href="new_order.html" class="button-link"><i class="fas fa-plus-circle"></i> New Order</a>
+                     <a href="customer_management.html?action=add" class="button-base" style="background-color: var(--success-color);"><i class="fas fa-user-plus"></i> Add Customer</a>
+                    <a href="#" class="button-base" style="background-color: var(--info-color);"><i class="fas fa-truck"></i> Add Supplier</a>
+                    <a href="new_order.html" class="button-base" style="background-color: var(--primary-color);"><i class="fas fa-plus-circle"></i> New Order</a>
                 </div>
                 <div class="date-time-container">
                     <span id="currentDateTime">Loading date...</span>
@@ -179,49 +275,79 @@
                  </div>
             </div>
 
-            <div class="search-bar">
+             <div class="search-bar">
                 <label for="customer-search">Search in Customer:</label>
                 <input type="text" id="customer-search" placeholder="Enter customer name or ID">
                 <button><i class="fas fa-search"></i></button>
             </div>
 
             <div class="reminder-section">
-                <h3>Reminder</h3>
+                 <h3>Reminder</h3>
                  <p>No reminders currently.</p>
             </div>
         </div>
     </div>
 
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-        import { getFirestore, collection, onSnapshot, query, where } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-        // --- PASTE YOUR firebaseConfig HERE ---
-        const firebaseConfig = {
-          apiKey: "AIzaSyBQj5rQmE77kKKGYixP8y3Hcimz8tiAqzQ", // YOUR CONFIG
-          authDomain: "madhav-multyprint.firebaseapp.com", // YOUR CONFIG
-          projectId: "madhav-multyprint", // YOUR CONFIG
-          storageBucket: "madhav-multyprint.appspot.com", // YOUR CONFIG
-          messagingSenderId: "104988349637", // YOUR CONFIG
-          appId: "1:104988349637:web:faf045b77c6786a4e70cac" // YOUR CONFIG
-        };
-        // --- END OF PASTE ---
-        try {
-            let app; if (!window.firebaseAppInitialized) { app = initializeApp(firebaseConfig); window.firebaseAppInitialized = true; }
-            const db = window.db || getFirestore(app || undefined); window.db = db;
-            window.collection = collection; window.onSnapshot = onSnapshot; window.query = query; window.where = where;
-            console.log("Firebase initialized (Dashboard).");
-        } catch (e) { console.error("Firebase init error:", e); alert("DB connection error!"); }
-    </script>
-
     <script src="js/dashboard.js" type="module" defer></script>
 
     <script>
-        function updateDateTime() { const now=new Date(); const optsDate={year:'numeric',month:'long',day:'numeric'}; const optsDay={weekday:'long'}; const date=now.toLocaleDateString('hi-IN',optsDate); const day=now.toLocaleDateString('hi-IN',optsDay); const elem=document.getElementById('currentDateTime'); if(elem) elem.textContent=`${date}, ${day}`; }
-        function setActiveLink() { const path=window.location.pathname; const page=path==='/'?'index.html':path.split('/').pop()||'index.html'; const links=document.querySelectorAll('.sidebar ul li a'); links.forEach(l=>{const h=l.getAttribute('href');l.classList.remove('active'); if(h&&page===h){l.classList.add('active');} else if((page==='index.html')&&l.href.includes('index.html')){l.classList.add('active');} else if((page==='index.html')&&l.getAttribute('href')==='#'&&l.querySelector('.fa-tachometer-alt')){l.classList.add('active');}}); }
-        updateDateTime(); setInterval(updateDateTime, 60000);
-        // Set active link on load and history navigation
-        window.addEventListener('load', setActiveLink);
-        window.addEventListener('popstate', setActiveLink);
+        function updateDateTime() {
+            const now = new Date();
+            // Use English locale for consistency, adjust if Hindi date format is strictly needed elsewhere
+            const optsDate = { year: 'numeric', month: 'long', day: 'numeric' };
+            const optsDay = { weekday: 'long' };
+            const date = now.toLocaleDateString('en-GB', optsDate); // Changed to en-GB for English
+            const day = now.toLocaleDateString('en-GB', optsDay); // Changed to en-GB
+            const elem = document.getElementById('currentDateTime');
+            if (elem) elem.textContent = `${date}, ${day}`;
+        }
+
+        function setActiveLink() {
+            const path = window.location.pathname;
+            // Handle potential base path if not at root
+            const basePath = '/my-website/'; // Adjust if your GitHub Pages site is in a subdirectory
+            let page = path.startsWith(basePath) ? path.substring(basePath.length) : path.split('/').pop();
+            page = page === '' ? 'index.html' : page; // Default to index.html if path is '/' or '/my-website/'
+
+            const links = document.querySelectorAll('.sidebar ul li a');
+            links.forEach(l => {
+                const href = l.getAttribute('href');
+                l.classList.remove('active');
+                if (href && page === href) {
+                    l.classList.add('active');
+                } else if ((page === 'index.html') && href === 'index.html') { // Explicitly check for index.html link
+                     l.classList.add('active');
+                }
+            });
+             // Fallback for dashboard link if no other match (useful if index.html isn't explicitly linked)
+             if (!document.querySelector('.sidebar ul li a.active') && page === 'index.html') {
+                const dashboardLink = document.querySelector('.sidebar ul li a[href="index.html"]');
+                 if(dashboardLink) dashboardLink.classList.add('active');
+            }
+        }
+
+        updateDateTime();
+        setInterval(updateDateTime, 60000); // Update every minute
+
+        // Set active link on load and handle browser back/forward navigation
+        window.addEventListener('DOMContentLoaded', setActiveLink); // Use DOMContentLoaded
+        window.addEventListener('popstate', setActiveLink); // Handles back/forward
+
+        // Also update welcome message if user is logged in
+        window.addEventListener('DOMContentLoaded', () => {
+             const welcomeSpan = document.getElementById('welcome-user');
+             if (welcomeSpan && window.auth) {
+                 const currentUser = window.auth.currentUser;
+                 if (currentUser) {
+                     // Display email for now, can be changed later if you store display names
+                     welcomeSpan.textContent = `Welcome ${currentUser.email || 'User'}`;
+                 } else {
+                     // Should ideally not happen due to auth check, but as fallback:
+                     welcomeSpan.textContent = 'Welcome';
+                 }
+             }
+         });
+
     </script>
 </body>
 </html>
