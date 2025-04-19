@@ -61,7 +61,7 @@
                      // User is logged in.
                      console.log(`User is logged in on ${currentPage}:`, user.uid);
 
-                     // --->>> यह वेरिफिकेशन ब्लॉक जोड़ा गया है <<<---
+                     // --->>> यह वेरिफिकेशन ब्लॉक <<<---
                      console.log("Attempting to get ID token result to check claims...");
                      user.getIdTokenResult(true) // forceRefresh = true ensures we get latest claims
                          .then((idTokenResult) => {
@@ -91,6 +91,7 @@
                              // if (typeof initializeDashboard === 'function') {
                              //     initializeDashboard(userRole); // Pass role if needed
                              // }
+
 
                          })
                          .catch((error) => {
@@ -216,10 +217,11 @@
     .search-bar button:hover { background-color: #1e7e34; }
     .reminder-section { background-color: white; padding: 20px; border: 1px solid var(--border-color); border-radius: 8px; font-size: 0.95em; color: var(--text-color); box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05); min-height: 120px; }
     .reminder-section h3 { margin-top: 0; margin-bottom: 15px; font-size: 1.2em; color: var(--primary-color); border-bottom: 1px solid #eee; padding-bottom: 8px; }
-    /* Responsive CSS remains the same */
+    /* Responsive CSS */
      @media (max-width: 992px) { .sidebar { width: 60px; overflow: hidden; } .sidebar:hover { width: 220px; } .sidebar h2 { padding: 10px 5px; } .sidebar h2 img { max-width: 40px; } .sidebar:hover h2 img { max-width: 90%; } .sidebar ul li a span { display: none; } .sidebar:hover ul li a span { display: inline; } .sidebar ul li a { justify-content: center; padding: 12px 0; } .sidebar:hover ul li a { justify-content: flex-start; padding: 12px 20px;} .sidebar ul li a i { margin-right: 0; } .sidebar:hover ul li a i { margin-right: 12px; } .main-content { padding-left: 80px; } }
     @media (max-width: 768px) { .container { flex-direction: column; } .sidebar { width: 100%; min-height: auto; flex-direction: row; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.1); } .sidebar:hover { width: 100%; } .sidebar h2 { padding: 5px 15px; flex-shrink: 0; } .sidebar h2 img { max-width: 120px; } .sidebar ul { display: flex; overflow-x: auto; flex-grow: 1; padding: 0 5px; justify-content: flex-start; } .sidebar ul li { flex-shrink: 0; } .sidebar ul li a { padding: 10px; border-left: none; border-bottom: 3px solid transparent; white-space: nowrap; } .sidebar ul li a i { margin-right: 5px; } .sidebar ul li a:hover { padding-left: 10px; background-color: var(--sidebar-hover); } .sidebar ul li a.active { border-left: none; border-bottom-color: var(--sidebar-active-border); background-color: transparent; color: var(--sidebar-active); } .sidebar:hover ul li a span { display: inline; } .main-content { padding: 15px; height: auto; min-height: calc(100vh - 60px); padding-left: 15px; } .header { flex-direction: column; gap: 10px; align-items: stretch; } .welcome-text { text-align: center; margin: 0 0 10px 0; max-width: none; } .header-buttons { justify-content: center; flex-wrap: wrap; } .date-time-container { text-align: center; } .search-bar { flex-direction: column; align-items: stretch; gap: 10px; } .search-bar input[type="text"] { max-width: none; border-radius: 6px; border-right: 1px solid var(--border-color); } .search-bar button { border-radius: 6px; margin-left: 0; height: auto; } }
     @media (max-width: 480px) { .header-buttons a { font-size: 0.85em; padding: 7px 10px; } .panel-item { font-size: 0.85em; min-height: 140px;} .panel-count { font-size: 2.2em; } .panel-item a.button-link { font-size: 0.8em; padding: 7px 10px;} }
+    /* --- <<< CSS का अंत >>> --- */
     </style>
 </head>
 
@@ -246,7 +248,7 @@
                 <span class="welcome-text" id="welcome-user">Welcome...</span> <div class="header-buttons">
                     <a href="customer_management.html?action=add" class="button-base" style="background-color: var(--success-color);"><i class="fas fa-user-plus"></i> Add Customer</a>
                     <a href="#" class="button-base" style="background-color: var(--info-color);"><i class="fas fa-truck"></i> Add Supplier</a>
-                    <a href="new_order.html" class="button-base" style="background-color: var(--primary-color);"><i class="fas fa-plus-circle"></i> New Order</a>
+                     <a href="new_order.html" class="button-base" style="background-color: var(--primary-color);"><i class="fas fa-plus-circle"></i> New Order</a>
                 </div>
                 <div class="date-time-container">
                     <span id="currentDateTime">Loading date...</span>

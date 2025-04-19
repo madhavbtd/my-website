@@ -64,8 +64,17 @@
                  if (user) {
                      // User is logged in. Allow page to load.
                      console.log(`User is logged in on ${currentPage}:`, user.uid);
-                     // Initialize page-specific functions if needed
-                     // e.g., if (typeof initializeCustomerManagement === 'function') { initializeCustomerManagement(user); }
+                     // Optionally get role if needed for UI control on this page
+                     user.getIdTokenResult(true).then(idTokenResult => {
+                         window.currentUserRole = idTokenResult.claims.role;
+                         console.log("User role for UI:", window.currentUserRole);
+                          // Initialize page *after* role is known
+                          // if(typeof initializeCustomerManagement === 'function') initializeCustomerManagement(window.currentUserRole);
+                     }).catch(err => {
+                         console.error("Error fetching role on customer_management:", err);
+                          // Handle error - maybe default to standard role view?
+                          // if(typeof initializeCustomerManagement === 'function') initializeCustomerManagement();
+                     });
 
                  } else {
                      // User is not logged in.
