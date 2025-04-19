@@ -10,25 +10,34 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
 
     <style>
-    /* --- CSS स्टाइलिंग (अपडेटेड) --- */
+    /* --- <<< बेहतर CSS स्टाइलिंग >>> --- */
     :root {
         --primary-color: #0056b3; /* नीला */
         --secondary-color: #2c3e50; /* गहरा नीला (साइडबार) */
+        --accent-color: #ffc107; /* पीला (डेट/टाइम) */
         --success-color: #28a745; /* हरा */
         --info-color: #17a2b8; /* Teal */
         --danger-color: #dc3545; /* लाल */
-        --grey-color: #6c757d; /* ग्रे (डेट/टाइम के लिए इस्तेमाल) */
         --light-bg: #f8f9fa;
         --border-color: #dee2e6;
         --text-color: #343a40;
         --text-muted: #6c757d;
         --sidebar-text: #ecf0f1;
-        --sidebar-hover: #34495e; /* होवर और एक्टिव बैकग्राउंड */
-        --sidebar-active-border: #f1c40f; /* एक्टिव बॉर्डर */
+        --sidebar-hover: #34495e;
+        --sidebar-active: #1abc9c;
+        --sidebar-active-border: #f1c40f;
     }
 
     /* General Body Styles */
-    body { font-family: 'Poppins', 'Segoe UI Emoji', sans-serif; margin: 0; padding: 0; background-color: #f4f6f8; color: var(--text-color); line-height: 1.6; }
+    body {
+        font-family: 'Poppins', 'Segoe UI Emoji', sans-serif;
+        margin: 0;
+        padding: 0;
+        background-color: #f4f6f8;
+        color: var(--text-color);
+        line-height: 1.6;
+    }
+
     .container { display: flex; }
 
     /* Sidebar */
@@ -39,35 +48,27 @@
     .sidebar ul li a { padding: 12px 20px; text-decoration: none; color: var(--sidebar-text); display: flex; align-items: center; transition: background-color 0.2s ease, padding-left 0.2s ease, color 0.2s ease; border-left: 4px solid transparent; font-size: 0.95em; }
     .sidebar ul li a i { margin-right: 12px; width: 20px; text-align: center; font-size: 1.1em; }
     .sidebar ul li a:hover { background-color: var(--sidebar-hover); color: #fff; padding-left: 24px; }
-    .sidebar ul li a.active { background-color: var(--sidebar-hover); border-left-color: var(--sidebar-active-border); font-weight: 600; color: #fff; }
+    .sidebar ul li a.active { background-color: var(--sidebar-active); border-left-color: var(--sidebar-active-border); font-weight: 600; color: #fff; }
     .sidebar ul li a[href="#logout"] { margin-top: auto; border-top: 1px solid var(--sidebar-hover); }
 
     /* Main Content Area */
     .main-content { flex: 1; padding: 25px; overflow-y: auto; height: 100vh; box-sizing: border-box; }
 
     /* Header */
-    .header { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; margin-bottom: 25px; background-color: white; padding: 15px 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05); gap: 10px; }
-    .header-left { display: flex; align-items: center; gap: 8px; flex-grow: 1; }
-     .header-left i { font-size: 1.1em; color: var(--primary-color, #0056b3); } /* यूजर आइकन */
-    .header-right { display: flex; align-items: center; gap: 10px; flex-wrap: nowrap; }
+    .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; background-color: white; padding: 15px 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05); }
     .header-buttons { display: flex; gap: 10px; }
     .header-buttons a { text-decoration: none; }
-    /* Button base style */
-    .button-base { color: white; border: none; padding: 9px 14px; cursor: pointer; border-radius: 6px; font-family: 'Poppins', sans-serif; font-size: 0.9em; display: inline-flex; align-items: center; gap: 6px; text-decoration: none; transition: background-color 0.2s ease, transform 0.1s ease; white-space: nowrap; }
+    .button-base { color: white; border: none; padding: 9px 14px; cursor: pointer; border-radius: 6px; font-family: 'Poppins', sans-serif; font-size: 0.9em; display: inline-flex; align-items: center; gap: 6px; text-decoration: none; transition: background-color 0.2s ease, transform 0.1s ease; }
     .button-base:hover { opacity: 0.9; }
     .button-base:active { transform: scale(0.98); }
-    /* Header specific buttons */
-    .header-buttons .button-link { /* Extends button-base */ }
-    /* रंग यहाँ सेट करें */
-    .header-buttons a:nth-child(1) .button-link { background-color: var(--success-color, #28a745); } /* Add Customer हरा */
-    .header-buttons a:nth-child(2) .button-link { background-color: var(--info-color, #17a2b8); }   /* Add Supplier टील */
-    .header-buttons a:nth-child(3) .button-link { background-color: var(--primary-color, #007bff); } /* New Order नीला */
+    .header-buttons .button-link { /* Extends button-base */ } /* Apply base styles to links acting as buttons */
+    .header-buttons a:nth-child(1) .button-link { background-color: var(--success-color); }
+    .header-buttons a:nth-child(2) .button-link { background-color: var(--info-color); }
+    .header-buttons a:nth-child(3) .button-link { background-color: var(--primary-color); }
 
-    .welcome-text { font-family: 'Poppins', sans-serif; color: var(--text-color); font-weight: 600; padding-left: 0; font-size: 1.05em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-
-    /* डेट/टाइम स्टाइल */
-    .date-time-display { background-color: var(--grey-color); color: white; }
-    .date-time-display i { font-size: 1em; }
+    .welcome-text { font-family: 'Poppins', sans-serif; color: var(--text-color); font-weight: 600; margin-right: auto; padding-left: 5px; font-size: 1.05em; }
+    .date-time-container { background-color: var(--accent-color); color: #333; padding: 9px 14px; border-radius: 6px; font-family: 'Poppins', sans-serif; font-size: 0.9em; white-space: nowrap; font-weight: 500; }
+    .date-time-container .date-day, .date-time-container .day-name { font-weight: 600; }
 
     /* Order Control Panel */
     .order-control-panel { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 20px; margin-bottom: 25px; }
@@ -75,9 +76,10 @@
     .panel-item:hover { transform: translateY(-3px); box-shadow: 0 5px 10px rgba(0, 0, 0, 0.1); }
     .panel-icon { font-size: 2.2em; margin-bottom: 8px; }
     .panel-count { font-size: 2.8em; font-weight: 700; display: block; margin-bottom: 8px; font-family: 'Poppins', sans-serif; color: var(--primary-color); }
-    .panel-item a.button-link { background-color: var(--primary-color); color: white; border: none; padding: 8px 15px; cursor: pointer; border-radius: 5px; font-size: 0.85em; margin-top: 10px; font-weight: 500; font-family: 'Poppins', sans-serif; text-transform: capitalize; text-decoration: none; display: inline-block; transition: background-color 0.2s ease; }
+    .panel-item a.button-link { /* Panel Link Button */
+         background-color: var(--primary-color); color: white; border: none; padding: 8px 15px; cursor: pointer; border-radius: 5px; font-size: 0.85em; margin-top: 10px; font-weight: 500; font-family: 'Poppins', sans-serif; text-transform: capitalize; text-decoration: none; display: inline-block; transition: background-color 0.2s ease;
+     }
     .panel-item a.button-link:hover { background-color: #004085; }
-    /* Panel Item Colors */
     .panel-item.light-blue { background-color: #e1f5fe; color: #0d47a1; } .panel-item.light-blue .panel-count { color: #1976d2;}
     .panel-item.light-orange { background-color: #fff3e0; color: #bf360c; } .panel-item.light-orange .panel-count { color: #e65100;}
     .panel-item.light-green { background-color: #e8f5e9; color: #1b5e20; } .panel-item.light-green .panel-count { color: #388e3c;}
@@ -96,9 +98,9 @@
     .reminder-section h3 { margin-top: 0; margin-bottom: 15px; font-size: 1.2em; color: var(--primary-color); border-bottom: 1px solid #eee; padding-bottom: 8px; }
 
     /* Responsive */
-    @media (max-width: 992px) { /* ... (responsive sidebar logic) ... */ }
-    @media (max-width: 768px) { /* ... (responsive adjustments for smaller screens) ... */ }
-     @media (max-width: 576px) { /* ... (Extra small screen adjustments) ... */ }
+    @media (max-width: 992px) { .sidebar { width: 60px; overflow: hidden; } .sidebar:hover { width: 220px; } .sidebar h2 { padding: 10px 5px; } .sidebar h2 img { max-width: 40px; } .sidebar:hover h2 img { max-width: 90%; } .sidebar ul li a span { display: none; } .sidebar:hover ul li a span { display: inline; } .sidebar ul li a { justify-content: center; padding: 12px 0; } .sidebar:hover ul li a { justify-content: flex-start; padding: 12px 20px;} .sidebar ul li a i { margin-right: 0; } .sidebar:hover ul li a i { margin-right: 12px; } .main-content { padding-left: 80px; } }
+    @media (max-width: 768px) { .container { flex-direction: column; } .sidebar { width: 100%; min-height: auto; flex-direction: row; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.1); } .sidebar:hover { width: 100%; } .sidebar h2 { padding: 5px 15px; flex-shrink: 0; } .sidebar h2 img { max-width: 120px; } .sidebar ul { display: flex; overflow-x: auto; flex-grow: 1; padding: 0 5px; justify-content: flex-start; } .sidebar ul li { flex-shrink: 0; } .sidebar ul li a { padding: 10px; border-left: none; border-bottom: 3px solid transparent; white-space: nowrap; } .sidebar ul li a i { margin-right: 5px; } .sidebar ul li a:hover { padding-left: 10px; background-color: var(--sidebar-hover); } .sidebar ul li a.active { border-left: none; border-bottom-color: var(--sidebar-active-border); background-color: transparent; color: var(--sidebar-active); } .sidebar:hover ul li a span { display: inline; } .main-content { padding: 15px; height: auto; min-height: calc(100vh - 60px); padding-left: 15px; } .header { flex-direction: column; gap: 10px; align-items: stretch; } .welcome-text { text-align: center; margin: 0 0 10px 0; max-width: none; } .header-buttons { justify-content: center; flex-wrap: wrap; } .date-time-container { text-align: center; } .search-bar { flex-direction: column; align-items: stretch; gap: 10px; } .search-bar input[type="text"] { max-width: none; border-radius: 6px; border-right: 1px solid var(--border-color); } .search-bar button { border-radius: 6px; margin-left: 0; height: auto; } }
+    @media (max-width: 480px) { .header-buttons .button-base { font-size: 0.85em; padding: 7px 10px; } .panel-item { font-size: 0.85em; min-height: 140px;} .panel-count { font-size: 2.2em; } .panel-item a.button-link { font-size: 0.8em; padding: 7px 10px;} }
     /* --- <<< CSS का अंत >>> --- */
     </style>
 </head>
@@ -123,30 +125,58 @@
 
         <div class="main-content" id="main-content">
             <div class="header">
-                <div class="header-left">
-                    <i class="fas fa-user-circle"></i> <span class="welcome-text">Welcome Devendra Choudhary</span>
+                <span class="welcome-text">Welcome Devendra Choudhary</span>
+                <div class="header-buttons">
+                    <a href="customer_management.html?action=add" class="button-link"><i class="fas fa-user-plus"></i> Add Customer</a>
+                    <a href="#" class="button-link"><i class="fas fa-truck"></i> Add Supplier</a>
+                    <a href="new_order.html" class="button-link"><i class="fas fa-plus-circle"></i> New Order</a>
                 </div>
-                 <div class="header-right">
-                     <div class="header-buttons">
-                         <a href="customer_management.html?action=add" class="button-link button-base"><i class="fas fa-user-plus"></i> Add Customer</a>
-                         <a href="#" class="button-link button-base"><i class="fas fa-truck"></i> Add Supplier</a>
-                         <a href="new_order.html" class="button-link button-base"><i class="fas fa-plus-circle"></i> New Order</a>
-                     </div>
-                      <span class="button-base date-time-display">
-                         <i class="fas fa-calendar-alt"></i> <span id="currentDateTime">Loading date...</span>
-                     </span>
-                 </div>
+                <div class="date-time-container">
+                    <span id="currentDateTime">Loading date...</span>
+                </div>
             </div>
 
             <div class="order-control-panel">
-                <div class="panel-item light-blue"> <i class="fas fa-shopping-bag panel-icon"></i> Order Received <span class="panel-count" id="count-order-received">00</span> <a href="order_history.html?status=Order+Received" class="button-link">Click to View</a> </div>
-                 <div class="panel-item light-orange"> <i class="fas fa-hourglass-half panel-icon"></i> Designing <span class="panel-count" id="count-designing">00</span> <a href="order_history.html?status=Designing" class="button-link">Click to View</a> </div>
-                 <div class="panel-item light-green"> <i class="fas fa-check-circle panel-icon"></i> Verification <span class="panel-count" id="count-verification">00</span> <a href="order_history.html?status=Verification" class="button-link">Click to View</a> </div>
-                 <div class="panel-item light-red"> <i class="fas fa-thumbs-up panel-icon"></i> Design Approved <span class="panel-count" id="count-design-approved">00</span> <a href="order_history.html?status=Design+Approved" class="button-link">Click to View</a> </div>
-                 <div class="panel-item light-blue"> <i class="fas fa-print panel-icon"></i> Printing <span class="panel-count" id="count-printing">00</span> <a href="order_history.html?status=Printing" class="button-link">Click to View</a> </div>
-                 <div class="panel-item light-orange"> <i class="fas fa-cog panel-icon"></i> Ready For Working <span class="panel-count" id="count-ready-for-working">00</span> <a href="order_history.html?status=Ready+for+Working" class="button-link">Click to View</a> </div>
-                 <div class="panel-item light-green"> <i class="fas fa-truck panel-icon"></i> Delivered <span class="panel-count" id="count-delivered">00</span> <a href="order_history.html?status=Delivered" class="button-link">Click to View</a> </div>
-                 <div class="panel-item light-red"> <i class="fas fa-check-double panel-icon"></i> Completed <span class="panel-count" id="count-completed">00</span> <a href="order_history.html?status=Completed" class="button-link">Click to View</a> </div>
+                <div class="panel-item light-blue">
+                    <i class="fas fa-shopping-bag panel-icon"></i> Order Received
+                    <span class="panel-count" id="count-order-received">00</span>
+                    <a href="order_history.html?status=Order+Received" class="button-link">Click to View</a>
+                </div>
+                <div class="panel-item light-orange">
+                    <i class="fas fa-hourglass-half panel-icon"></i> Designing
+                    <span class="panel-count" id="count-designing">00</span>
+                    <a href="order_history.html?status=Designing" class="button-link">Click to View</a>
+                </div>
+                 <div class="panel-item light-green">
+                    <i class="fas fa-check-circle panel-icon"></i> Verification
+                    <span class="panel-count" id="count-verification">00</span>
+                    <a href="order_history.html?status=Verification" class="button-link">Click to View</a>
+                </div>
+                 <div class="panel-item light-red">
+                     <i class="fas fa-thumbs-up panel-icon"></i> Design Approved
+                     <span class="panel-count" id="count-design-approved">00</span>
+                     <a href="order_history.html?status=Design+Approved" class="button-link">Click to View</a>
+                </div>
+                 <div class="panel-item light-blue">
+                     <i class="fas fa-print panel-icon"></i> Printing
+                     <span class="panel-count" id="count-printing">00</span>
+                     <a href="order_history.html?status=Printing" class="button-link">Click to View</a>
+                </div>
+                 <div class="panel-item light-orange">
+                     <i class="fas fa-cog panel-icon"></i> Ready For Working
+                     <span class="panel-count" id="count-ready-for-working">00</span>
+                     <a href="order_history.html?status=Ready+for+Working" class="button-link">Click to View</a>
+                </div>
+                 <div class="panel-item light-green">
+                     <i class="fas fa-truck panel-icon"></i> Delivered
+                     <span class="panel-count" id="count-delivered">00</span>
+                     <a href="order_history.html?status=Delivered" class="button-link">Click to View</a>
+                </div>
+                 <div class="panel-item light-red">
+                     <i class="fas fa-check-double panel-icon"></i> Completed
+                     <span class="panel-count" id="count-completed">00</span>
+                     <a href="order_history.html?status=Completed" class="button-link">Click to View</a>
+                 </div>
             </div>
 
             <div class="search-bar">
@@ -187,8 +217,9 @@
 
     <script>
         function updateDateTime() { const now=new Date(); const optsDate={year:'numeric',month:'long',day:'numeric'}; const optsDay={weekday:'long'}; const date=now.toLocaleDateString('hi-IN',optsDate); const day=now.toLocaleDateString('hi-IN',optsDay); const elem=document.getElementById('currentDateTime'); if(elem) elem.textContent=`${date}, ${day}`; }
-        function setActiveLink() { const path=window.location.pathname; const page=path==='/'?'index.html':path.split('/').pop()||'index.html'; const links=document.querySelectorAll('.sidebar ul li a'); links.forEach(l=>{const h=l.getAttribute('href');l.classList.remove('active'); const span=l.querySelector('span'); const linkText = span?span.textContent.trim():''; if(h&&page===h){l.classList.add('active');} else if((page==='index.html'||page==='')&&(h==='index.html'||(h==='#'&&linkText==='Dashboard'))){l.classList.add('active');}}); }
+        function setActiveLink() { const path=window.location.pathname; const page=path==='/'?'index.html':path.split('/').pop()||'index.html'; const links=document.querySelectorAll('.sidebar ul li a'); links.forEach(l=>{const h=l.getAttribute('href');l.classList.remove('active'); if(h&&page===h){l.classList.add('active');} else if((page==='index.html')&&l.href.includes('index.html')){l.classList.add('active');} else if((page==='index.html')&&l.getAttribute('href')==='#'&&l.querySelector('.fa-tachometer-alt')){l.classList.add('active');}}); }
         updateDateTime(); setInterval(updateDateTime, 60000);
+        // Set active link on load and history navigation
         window.addEventListener('load', setActiveLink);
         window.addEventListener('popstate', setActiveLink);
     </script>
