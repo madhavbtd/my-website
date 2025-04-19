@@ -14,10 +14,12 @@
             <h1>Order History & Management</h1>
         </div>
 
+        <div class="breadcrumb">
+            <a href="index.html">Home</a> / <span>Order History</span>
+        </div>
+
         <div class="actions-bar">
-             <a href="new_order.html" class="button add-new-button">
-                <i class="fas fa-plus"></i> Add New Order
-            </a>
+             <a href="new_order.html" class="button add-new-button"><i class="fas fa-plus"></i> Add New Order</a>
         </div>
 
          <div class="filter-bar">
@@ -27,7 +29,21 @@
             </div>
             <div class="filter-group">
                 <label for="filterSearch"><i class="fas fa-search"></i> Search:</label>
-                <input type="text" id="filterSearch" placeholder="Order ID or Customer Name...">
+                <input type="text" id="filterSearch" placeholder="Order ID, Cust. Name, Product...">
+            </div>
+            <div class="filter-group">
+                <label for="filterStatus"><i class="fas fa-flag"></i> Status:</label>
+                <select id="filterStatus">
+                    <option value="">All Statuses</option>
+                    <option value="Order Received">Order Received</option>
+                    <option value="Designing">Designing</option>
+                    <option value="Verification">Verification</option>
+                    <option value="Design Approved">Design Approved</option>
+                    <option value="Ready for Working">Ready for Working</option>
+                    <option value="Printing">Printing</option>
+                    <option value="Delivered">Delivered</option>
+                    <option value="Completed">Completed</option>
+                    </select>
             </div>
              <div class="filter-group filter-sort">
                 <label for="sort-orders"><i class="fas fa-sort"></i> Sort by:</label>
@@ -41,19 +57,18 @@
                  </select>
             </div>
             <div class="filter-group">
-                 <button id="clearFiltersBtn" class="button clear-filters-button" title="Clear all filters">
-                    <i class="fas fa-times"></i> Clear Filters
-                 </button>
+                 <button id="clearFiltersBtn" class="button clear-filters-button" title="Clear all filters"><i class="fas fa-times"></i> Clear Filters</button>
             </div>
         </div>
-
 
         <div class="table-container">
             <table id="orderTable">
                 <thead>
                     <tr>
                         <th>Order ID</th>
-                        <th>Customer Name / Products</th> <th>Order Date</th>
+                        <th>Customer Name</th>
+                        <th>Products</th>
+                        <th>Order Date</th>
                         <th>Delivery Date</th>
                         <th>Priority</th>
                         <th>Status</th>
@@ -63,16 +78,18 @@
                 </thead>
                 <tbody id="orderTableBody">
                     <tr>
-                        <td colspan="8" id="loadingMessage">Loading orders...</td>
-                    </tr>
-                    </tbody>
+                        <td colspan="9" id="loadingMessage">Loading orders...</td> </tr>
+                </tbody>
             </table>
         </div>
-        <div id="paginationControls">
-             </div>
-    </div>
 
-    <div id="detailsModal" class="modal">
+        <div class="order-summary-counts">
+            <span>Total: <strong id="total-orders">0</strong></span> |
+            <span>Completed/Delivered: <strong id="completed-delivered-orders">0</strong></span> |
+            <span>Pending: <strong id="pending-orders">0</strong></span>
+        </div>
+
+    </div> <div id="detailsModal" class="modal">
         <div class="modal-content">
             <span class="close-btn" id="closeDetailsModal" title="Close">&times;</span>
             <h2>Order Details & Actions</h2>
@@ -80,29 +97,32 @@
             <div class="modal-info">
                  <p><strong>Order ID:</strong> <span id="modalDisplayOrderId"></span></p>
                  <p><strong>Customer:</strong> <span id="modalCustomerName"></span></p>
-            </div>
+                 <p><strong>WhatsApp:</strong> <span id="modalCustomerWhatsApp"></span></p> </div>
             <div class="modal-section" id="modalProductSection">
-                <label>Products in this Order:</label>
-                <div id="modalProductList"><p>Loading products...</p></div>
+                <label>Products:</label>
+                <div id="modalProductList"><p>Loading...</p></div>
             </div>
+             <div class="modal-section" id="modalStatusHistorySection">
+                <label>Status History:</label>
+                <div id="modalStatusHistoryList"><p>Loading history...</p></div> </div>
             <div class="modal-section">
-                <label for="modalOrderStatus">Update Status:</label>
-                <select id="modalOrderStatus">
-                    <option value="Order Received">Order Received</option>
-                    <option value="Designing">Designing</option>
-                    <option value="Verification">Verification</option>
-                    <option value="Design Approved">Design Approved</option>
-                    <option value="Ready for Working">Ready for Working</option>
-                    <option value="Printing">Printing</option>
-                    <option value="Delivered">Delivered</option>
-                    <option value="Completed">Completed</option>
-                </select>
-                <button id="modalUpdateStatusBtn" class="button update-status-button"><i class="fas fa-sync-alt"></i> Update Status</button>
+                 <label for="modalOrderStatus">Update Status:</label>
+                 <select id="modalOrderStatus">
+                     <option value="Order Received">Order Received</option>
+                     <option value="Designing">Designing</option>
+                     <option value="Verification">Verification</option>
+                     <option value="Design Approved">Design Approved</option>
+                     <option value="Ready for Working">Ready for Working</option>
+                     <option value="Printing">Printing</option>
+                     <option value="Delivered">Delivered</option>
+                     <option value="Completed">Completed</option>
+                 </select>
+                 <button id="modalUpdateStatusBtn" class="button update-status-button"><i class="fas fa-sync-alt"></i> Update Status</button>
             </div>
             <div class="modal-section modal-actions">
-                 <button id="modalEditFullBtn" class="button edit-full-button"><i class="fas fa-edit"></i> Edit Full Order</button>
-                 <button id="modalDeleteBtn" class="button delete-button"><i class="fas fa-trash-alt"></i> Delete Order</button>
-            </div>
+                  <button id="modalEditFullBtn" class="button edit-full-button"><i class="fas fa-edit"></i> Edit Full Order</button>
+                  <button id="modalDeleteBtn" class="button delete-button"><i class="fas fa-trash-alt"></i> Delete Order</button>
+             </div>
         </div>
     </div>
 
@@ -116,11 +136,10 @@
         </div>
     </div>
 
-
     <script type="module">
-        // Firebase Imports
+        // Ensure Timestamp, arrayUnion are imported/global
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-        import { getFirestore, collection, doc, deleteDoc, updateDoc, onSnapshot, query, orderBy } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+        import { getFirestore, collection, doc, deleteDoc, updateDoc, onSnapshot, query, orderBy, Timestamp, arrayUnion } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
         // --- PASTE YOUR firebaseConfig HERE ---
         const firebaseConfig = {
           apiKey: "AIzaSyBQj5rQmE77kKKGYixP8y3Hcimz8tiAqzQ", // YOUR CONFIG
@@ -131,12 +150,13 @@
           appId: "1:104988349637:web:faf045b77c6786a4e70cac" // YOUR CONFIG
         };
         // --- END OF PASTE ---
-        // Initialize Firebase
          try {
             let app; if (!window.firebaseAppInitialized) { app = initializeApp(firebaseConfig); window.firebaseAppInitialized = true; }
             const db = window.db || getFirestore(app || undefined); window.db = db;
-            window.collection = collection; window.doc = doc; window.deleteDoc = deleteDoc; window.updateDoc = updateDoc; window.onSnapshot = onSnapshot; window.query = query; window.orderBy = orderBy;
-            console.log("Firebase initialized.");
+            window.collection = collection; window.doc = doc; window.deleteDoc = deleteDoc; window.updateDoc = updateDoc;
+            window.onSnapshot = onSnapshot; window.query = query; window.orderBy = orderBy;
+            window.Timestamp = Timestamp; window.arrayUnion = arrayUnion; // Make new functions global
+            console.log("Firebase initialized (Order History).");
         } catch (e) { console.error("Firebase init error:", e); alert("DB connection error!"); }
     </script>
 
