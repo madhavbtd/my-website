@@ -14,17 +14,17 @@
         import {
             getFirestore, collection, addDoc, doc, updateDoc, deleteDoc,
             onSnapshot, getDocs, query, where, getDoc, orderBy, limit,
-            runTransaction, serverTimestamp, Timestamp, arrayUnion // <<< नई फंक्शन्स जोड़ी गईं >>>
+            runTransaction, serverTimestamp, Timestamp, arrayUnion // <<< सभी जरूरी फंक्शन्स >>>
         } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
         // --- PASTE YOUR firebaseConfig HERE ---
         const firebaseConfig = {
-          apiKey: "AIzaSyBQj5rQmE77kKKGYixP8y3Hcimz8tiAqzQ", // YOUR CONFIG
-          authDomain: "madhav-multyprint.firebaseapp.com", // YOUR CONFIG
-          projectId: "madhav-multyprint", // YOUR CONFIG
-          storageBucket: "madhav-multyprint.appspot.com", // YOUR CONFIG
-          messagingSenderId: "104988349637", // YOUR CONFIG
-          appId: "1:104988349637:web:faf045b77c6786a4e70cac" // YOUR CONFIG
+          apiKey: "AIzaSyBQj5rQmE77kKKGYixP8y3Hcimz8tiAqzQ", // Your config
+          authDomain: "madhav-multyprint.firebaseapp.com", // Your config
+          projectId: "madhav-multyprint", // Your config
+          storageBucket: "madhav-multyprint.appspot.com", // Your config
+          messagingSenderId: "104988349637", // Your config
+          appId: "1:104988349637:web:faf045b77c6786a4e70cac" // Your config
         };
         // --- END OF PASTE ---
 
@@ -66,7 +66,7 @@
             if (!window.db) { alert("Database connection error!"); }
         }
     </script>
-     <div class="container">
+    <div class="container">
         <div class="header" id="formHeader">
              <i class="fas fa-file-alt header-icon"></i>
              <span id="headerText">New Order</span>
@@ -154,7 +154,7 @@
             </div>
             <div id="product-list" class="product-list-container"></div>
 
-             <div class="section-title">5. Priority & Remarks</div>
+            <div class="section-title">5. Priority & Remarks</div>
              <div class="form-row">
                 <div class="form-group priority-group">
                     <label>Urgent?</label>
