@@ -73,7 +73,7 @@
         </div>
         <form id="newOrderForm">
             <input type="hidden" id="editOrderId" name="editOrderId">
-            <input type="hidden" id="selectedCustomerId" name="selectedCustomerId">
+             <input type="hidden" id="selectedCustomerId" name="selectedCustomerId">
 
             <div class="section-title">1. Customer Details</div>
             <div class="form-row">
@@ -85,13 +85,13 @@
                 <div class="form-group form-group-half">
                     <label for="address">Address:</label>
                     <input type="text" id="address" name="address" readonly placeholder="Autofills when customer selected">
-                </div>
+                 </div>
             </div>
             <div class="form-row">
                  <div class="form-group form-group-half">
                     <label for="whatsapp_no">WhatsApp No:</label>
                     <input type="text" id="whatsapp_no" name="whatsapp_no" required autocomplete="off" placeholder="Enter WhatsApp number...">
-                    <div id="customer-suggestions-whatsapp" class="suggestions-box"></div>
+                     <div id="customer-suggestions-whatsapp" class="suggestions-box"></div>
                  </div>
                 <div class="form-group form-group-half">
                     <label for="contact_no">Contact No:</label>
@@ -116,7 +116,7 @@
                     <label for="order_date">Order Date:</label>
                     <input type="date" id="order_date" name="order_date" required>
                 </div>
-                <div class="form-group form-group-half">
+                 <div class="form-group form-group-half">
                     <label for="delivery_date">Delivery Date:</label>
                     <input type="date" id="delivery_date" name="delivery_date">
                 </div>
@@ -147,7 +147,7 @@
                         <input type="number" id="quantity_input" name="quantity_input" placeholder="Qty">
                     </div>
                     <button type="button" id="add-product-btn" class="add-product-button">
-                        <i class="fas fa-plus"></i> Add Product
+                     <i class="fas fa-plus"></i> Add Product
                     </button>
                 </div>
                  <p class="info-text">*New product cannot be added here, only select an existing one.</p>
@@ -159,24 +159,24 @@
                 <div class="form-group priority-group">
                     <label>Urgent?</label>
                     <div class="radio-group">
-                         <label><input type="radio" name="urgent" value="Yes"> Yes</label>
-                         <label><input type="radio" name="urgent" value="No" checked> No</label>
+                          <label><input type="radio" name="urgent" value="Yes"> Yes</label>
+                          <label><input type="radio" name="urgent" value="No" checked> No</label>
                      </div>
                 </div>
                 <div class="form-group remarks-group">
-                    <label for="remarks">Remarks:</label>
+                     <label for="remarks">Remarks:</label>
                     <textarea id="remarks" name="remarks" placeholder="Any specific notes..."></textarea>
                 </div>
             </div>
 
             <div class="button-container">
                 <button type="submit" class="save-button" id="saveOrderBtn">
-                     <i class="fas fa-save"></i> <span>Save Order</span>
+                      <i class="fas fa-save"></i> <span>Save Order</span>
                 </button>
                 <button type="button" onclick="window.location.href='order_history.html'" class="cancel-button">
                     Cancel
                 </button>
-            </div>
+             </div>
         </form>
     </div>
 
@@ -186,7 +186,7 @@
             <h4>Order Saved Successfully!</h4>
             <p>Send update to customer?</p>
             <div id="whatsapp-message-preview" class="message-preview"></div>
-            <a href="#" id="whatsapp-send-link" class="button whatsapp-send-btn" target="_blank">
+             <a href="#" id="whatsapp-send-link" class="button whatsapp-send-btn" target="_blank">
                 <i class="fab fa-whatsapp"></i> Send on WhatsApp
             </a>
         </div>
