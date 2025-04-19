@@ -66,17 +66,8 @@
                  if (user) {
                      // User is logged in. Allow page to load.
                      console.log(`User is logged in on ${currentPage}:`, user.uid);
-                      // Optionally get role if needed for UI control on this page
-                      user.getIdTokenResult(true).then(idTokenResult => {
-                          window.currentUserRole = idTokenResult.claims.role;
-                          console.log("User role for UI:", window.currentUserRole);
-                          // Initialize form or other elements after role is known
-                          // if(typeof initializeNewOrderForm === 'function') initializeNewOrderForm(window.currentUserRole);
-                      }).catch(err => {
-                          console.error("Error fetching role on new_order:", err);
-                          // Handle error - maybe default to standard role view?
-                          // if(typeof initializeNewOrderForm === 'function') initializeNewOrderForm();
-                      });
+                     // Initialize page-specific functions if needed
+                     // e.g., if (typeof initializeNewOrderForm === 'function') { initializeNewOrderForm(user); }
 
                  } else {
                      // User is not logged in.
