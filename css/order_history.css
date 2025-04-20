@@ -35,26 +35,26 @@ h1 { margin: 0; font-size: 1.2em; }
 #orderTable { width: 100%; border-collapse: collapse; margin-top: 0; font-size: 0.9em; table-layout: fixed; }
 #orderTable thead { background-color: #e9ecef; }
 #orderTable th, #orderTable td { border: 1px solid #dee2e6; padding: 8px; text-align: left; vertical-align: top; overflow: hidden; text-overflow: ellipsis; } /* Align top for name/mobile/product cell */
-#orderTable th { font-weight: 600; color: #495057; white-space: nowrap; }
+#orderTable th { font-weight: 600; color: #495057; white-space: nowrap; } /* Default TH style */
 #orderTable tbody tr:nth-child(even) { background-color: #f8f9fa; }
 #orderTable tbody tr:hover { background-color: #f1f1f1; }
 #orderTable td { color: #212529; }
 
-/* Column Widths (9 columns) - Adjusted */
+/* Column Widths (9 columns) - Adjusted Again */
 #orderTable th:nth-child(1), #orderTable td:nth-child(1) { width: 10%; }  /* Order ID */
 #orderTable th:nth-child(2), #orderTable td:nth-child(2) { width: 18%; white-space: normal;} /* Customer Name / Mobile */
-/* --- Product Font Size Change --- */
-#orderTable th:nth-child(3) { width: 18%; white-space: normal; font-size: 0.85em;} /* Products Header */
+/* --- Product Header Font Size Change --- */
+#orderTable th:nth-child(3) { width: 18%; white-space: normal; } /* Products Header - Inherit 0.9em - WAS 0.85em */
 #orderTable td:nth-child(3) { width: 18%; white-space: normal; } /* Products Cell - Inherit 0.9em */
-/* --- End Product Font Size Change --- */
+/* --- End Product Header Font Size Change --- */
 #orderTable th:nth-child(4), #orderTable td:nth-child(4) { width: 9%; white-space: nowrap;} /* Order Date */
 #orderTable th:nth-child(5), #orderTable td:nth-child(5) { width: 9%; white-space: nowrap;} /* Delivery Date */
-/* --- Priority Width Change --- */
-#orderTable th:nth-child(6), #orderTable td:nth-child(6) { width: 5%; text-align: center; vertical-align: middle;} /* Priority - WAS 7% */
-/* --- End Priority Width Change --- */
-/* --- Status Width Change --- */
-#orderTable th:nth-child(7), #orderTable td:nth-child(7) { width: 12%; vertical-align: middle;} /* Status - WAS 10% */
-/* --- End Status Width Change --- */
+/* --- Priority Width Change Again --- */
+#orderTable th:nth-child(6), #orderTable td:nth-child(6) { width: 6%; text-align: center; vertical-align: middle;} /* Priority - WAS 5% */
+/* --- End Priority Width Change Again --- */
+/* --- Status Width Change Again --- */
+#orderTable th:nth-child(7), #orderTable td:nth-child(7) { width: 11%; vertical-align: middle;} /* Status - WAS 12% */
+/* --- End Status Width Change Again --- */
 #orderTable th:nth-child(8), #orderTable td:nth-child(8) { width: 10%; text-align: center; vertical-align: middle;} /* Action */
 #orderTable th:nth-child(9), #orderTable td:nth-child(9) { width: 9%; text-align: center; vertical-align: middle;} /* Send Wtsp */
 
