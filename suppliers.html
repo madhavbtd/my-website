@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Page Title</title>
+    <title>Supplier Management</title>
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -12,76 +12,208 @@
 
     <link rel="stylesheet" href="css/order_history.css">
     <script type="module">
-        // Firebase SDKs को इम्पोर्ट करें
+        // Import Firebase services
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
         import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-        // Firestore और अन्य आवश्यक सेवाओं को इम्पोर्ट करें (हर पेज की जरूरत के अनुसार)
-        import { getFirestore } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-        // *** ध्यान दें: जिस पेज पर जो फंक्शन चाहिए, उसे यहाँ इम्पोर्ट करें (जैसे collection, doc, addDoc आदि) ***
+        // Import Firestore services needed by suppliers.js
+        import { getFirestore, collection, doc, addDoc, setDoc, deleteDoc, onSnapshot, query, orderBy, Timestamp, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-        // **** आपकी Firebase कॉन्फ़िगरेशन जानकारी ****
+        // **** Your Firebase Configuration ****
         const firebaseConfig = {
-          apiKey: "YOUR_API_KEY", // **<<< Step 1.1 से अपना API Key यहाँ डालें**
-          authDomain: "YOUR_AUTH_DOMAIN", // **<<< Step 1.1 से अपना Auth Domain यहाँ डालें**
-          projectId: "YOUR_PROJECT_ID", // **<<< Step 1.1 से अपना Project ID यहाँ डालें**
-          storageBucket: "YOUR_STORAGE_BUCKET", // **<<< Step 1.1 से अपना Storage Bucket यहाँ डालें**
-          messagingSenderId: "YOUR_MESSAGING_SENDER_ID", // **<<< Step 1.1 से अपना Sender ID यहाँ डालें**
-          appId: "YOUR_APP_ID" // **<<< Step 1.1 से अपना App ID यहाँ डालें**
+          apiKey: "YOUR_API_KEY", // **<<< अपना API Key यहाँ डालें**
+          authDomain: "YOUR_AUTH_DOMAIN", // **<<< अपना Auth Domain यहाँ डालें**
+          projectId: "YOUR_PROJECT_ID", // **<<< अपना Project ID यहाँ डालें**
+          storageBucket: "YOUR_STORAGE_BUCKET", // **<<< अपना Storage Bucket यहाँ डालें**
+          messagingSenderId: "YOUR_MESSAGING_SENDER_ID", // **<<< अपना Sender ID यहाँ डालें**
+          appId: "YOUR_APP_ID" // **<<< अपना App ID यहाँ डालें**
         };
 
-        // Firebase ऐप को इनिशियलाइज़ करें (सिर्फ एक बार प्रति पेज लोड)
+        // --- Firebase App Initialization ---
         let app;
-        if (!window.firebaseAppInitialized) {
-            app = initializeApp(firebaseConfig);
-            window.firebaseAppInitialized = true;
-            window.firebaseApp = app; // इसे ग्लोबली स्टोर करें
-            console.log("Firebase initialized on this page.");
-        } else {
-            app = window.firebaseApp; // मौजूदा इंस्टेंस का उपयोग करें
-            console.log("Firebase already initialized on this page.");
+        let auth;
+        let db;
+
+        try {
+             if (!window.firebaseAppInitialized) {
+                 app = initializeApp(firebaseConfig);
+                 window.firebaseAppInitialized = true;
+                 window.firebaseApp = app;
+                 console.log("Firebase initialized on this page (suppliers).");
+             } else {
+                 app = window.firebaseApp;
+                 console.log("Firebase already initialized on this page (suppliers).");
+             }
+             auth = getAuth(app);
+             db = getFirestore(app);
+
+             // --- Make services and functions globally available for suppliers.js ---
+             window.db = db;
+             window.auth = auth;
+             window.collection = collection;
+             window.doc = doc;
+             window.addDoc = addDoc;
+             window.setDoc = setDoc;
+             window.deleteDoc = deleteDoc;
+             window.onSnapshot = onSnapshot;
+             window.query = query;
+             window.orderBy = orderBy;
+             window.Timestamp = Timestamp;
+             window.serverTimestamp = serverTimestamp;
+
+             // ----- <<<<< UPDATED Authentication State Check >>>>> -----
+             const mainPageContent = document.getElementById('main-supplier-content'); // <<< रैपर div का ID
+
+             onAuthStateChanged(auth, (user) => {
+                 const currentPage = window.location.pathname.split('/').pop() || 'index.html';
+                 console.log(`Auth state changed/checked on: ${currentPage}. User:`, user ? user.uid : 'Not logged in');
+
+                 if (user) {
+                     // User IS logged in (Firebase confirmed)
+                     console.log(`User is confirmed logged in on ${currentPage}. Loading page content.`);
+
+                     // Show the main page content
+                     if (mainPageContent) {
+                         mainPageContent.style.display = 'block'; // <<< कंटेंट दिखाएं
+                     } else {
+                          console.warn("main-supplier-content element not found to display.");
+                     }
+
+                     // Initialize the page's JavaScript functionality
+                     if (typeof initializeSuppliersPage === 'function') {
+                         initializeSuppliersPage();
+                     } else {
+                         console.warn("initializeSuppliersPage function not found.");
+                     }
+
+                 } else {
+                     // User is DEFINITELY not logged in (Firebase confirmed)
+                     console.log(`User is confirmed NOT logged in on ${currentPage}. Redirecting to login...`);
+                     if (currentPage.toLowerCase() !== 'login.html') {
+                        // Store original URL and redirect to login
+                        const originalUrl = encodeURIComponent(window.location.pathname + window.location.search);
+                        console.log(`Redirecting to login.html?redirectUrl=${originalUrl}`);
+                        window.location.replace(`login.html?redirectUrl=${originalUrl}`); // <<< login.html का सही पाथ दें
+                     }
+                 }
+             });
+             // ----- <<<<< End of UPDATED Auth Check >>>>> -----
+
+        } catch(e) {
+            console.error("Firebase setup / Auth check error:", e);
+            alert("Error loading application. Please try again later.");
+            // Optionally hide content or show error message on page if init fails
+            if (mainPageContent) mainPageContent.innerHTML = '<p style="color:red; text-align:center; padding: 20px;">Error loading application.</p>';
         }
-
-        // Firebase सेवाओं को प्राप्त करें
-        const auth = getAuth(app);
-        const db = getFirestore(app);
-
-        // सेवाओं को ग्लोबल बनाएं ताकि अन्य JS फाइलें (जैसे suppliers.js) इन्हें इस्तेमाल कर सकें
-        window.auth = auth;
-        window.db = db;
-        // *** ध्यान दें: Firestore के फंक्शन्स (collection, doc आदि) को भी ग्लोबल बनाएं यदि वे अलग JS फाइल में इस्तेमाल होंगे ***
-        // window.collection = import("https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js").collection; // उदाहरण
-
-        // ---->> प्रमाणीकरण स्थिति जांच (Authentication State Check) <<----
-        onAuthStateChanged(auth, (user) => {
-            const currentPage = window.location.pathname.split('/').pop() || 'index.html';
-            const protectedPages = ['suppliers.html', 'po_history.html', 'new_po.html', 'index.html']; // सुरक्षित पेज
-
-            if (user) {
-                // यूजर लॉग इन है
-                console.log(`User is logged in on ${currentPage}:`, user.uid);
-                // पेज-विशिष्ट फ़ंक्शन लोड करें (यदि आवश्यक हो)
-                // उदाहरण: if (typeof initializeSuppliersPage === 'function') { initializeSuppliersPage(); }
-
-            } else {
-                // यूजर लॉग इन नहीं है
-                console.log(`User is not logged in on ${currentPage}.`);
-                // यदि यूजर सुरक्षित पेज पर है और लॉग इन नहीं है, तो उसे लॉगिन पेज पर रीडायरेक्ट करें
-                if (protectedPages.includes(currentPage.toLowerCase()) && currentPage.toLowerCase() !== 'login.html') {
-                   console.log(`Redirecting to login.html from ${currentPage}...`);
-                   window.location.replace('login.html'); // **<<< login.html का सही पाथ दें**
-                }
-            }
-        });
-        // ---->> Auth जांच समाप्त <<----
-
     </script>
+    <style>
+        /* Add specific styles for supplier page if needed, or put in separate CSS */
+        .modal-content { max-width: 500px; }
+        .modal-content label { font-weight: 500; margin-bottom: 3px; display: block;}
+        .modal-content input, .modal-content textarea {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+            font-family: inherit;
+            font-size: 0.95em;
+        }
+        .modal-content textarea { resize: vertical; min-height: 60px;}
+        .modal-actions .button { flex-grow: 1; }
+
+         /* Ensure modal styles from order_history.css are available */
+        .modal { z-index: 1050; }
+
+    </style>
 </head>
 <body>
 
-    <div class="container">
-        <h1>Welcome to [Page Title]</h1>
+    <div id="main-supplier-content" style="display: none;">
 
-    </div>
+        <div class="container">
+            <div class="header">
+                <i class="fas fa-users header-icon"></i>
+                <h1>Supplier Management</h1>
+            </div>
 
-    </body>
+            <div class="breadcrumb">
+                <a href="index.html">Home</a> / <span>Suppliers</span> </div>
+
+            <div class="actions-bar">
+                 <button id="addNewSupplierBtn" class="button add-new-button"><i class="fas fa-plus"></i> Add New Supplier</button>
+            </div>
+
+             <div class="filter-bar">
+                <div class="filter-group" style="flex-grow: 2;">
+                    <label for="filterSearch"><i class="fas fa-search"></i> Search:</label>
+                    <input type="text" id="filterSearch" placeholder="Name, Contact, Phone, Email...">
+                </div>
+                 <div class="filter-group">
+                     <button id="clearFiltersBtn" class="button clear-filters-button" title="Clear search"><i class="fas fa-times"></i> Clear Search</button>
+                </div>
+            </div>
+
+            <div class="table-container">
+                <table id="supplierTable">
+                     <thead>
+                        <tr>
+                            <th>Supplier Name</th>
+                            <th>Contact Person</th>
+                            <th>Phone</th>
+                            <th>Email</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                     <tbody id="supplierTableBody">
+                        <tr>
+                            <td colspan="5" id="loadingMessage">Initializing...</td>
+                        </tr>
+                     </tbody>
+                </table>
+            </div>
+             <div class="order-summary-counts">
+                 <span>Total Suppliers: <strong id="total-suppliers">0</strong></span>
+            </div>
+
+        </div> <div id="supplierModal" class="modal">
+            <div class="modal-content">
+                <span class="close-btn" id="closeSupplierModal" title="Close">&times;</span>
+                <h2 id="modalTitle">Add New Supplier</h2>
+                <form id="supplierForm">
+                    <input type="hidden" id="supplierId">
+
+                    <div>
+                        <label for="supplierName">Supplier Name:</label>
+                        <input type="text" id="supplierName" required>
+                    </div>
+                    <div>
+                        <label for="contactPerson">Contact Person:</label>
+                        <input type="text" id="contactPerson">
+                    </div>
+                     <div>
+                        <label for="phone">Phone:</label>
+                        <input type="tel" id="phone">
+                    </div>
+                     <div>
+                        <label for="email">Email:</label>
+                        <input type="email" id="email">
+                    </div>
+                    <div>
+                        <label for="address">Address:</label>
+                        <textarea id="address"></textarea>
+                    </div>
+
+                    <div class="modal-actions" style="margin-top: 15px;">
+                        <button type="submit" id="saveSupplierBtn" class="button add-new-button"><i class="fas fa-save"></i> Save Supplier</button>
+                        <button type="button" id="cancelBtn" class="button clear-filters-button" style="background-color: #6c757d;"><i class="fas fa-times"></i> Cancel</button>
+                    </div>
+                     <p id="modalError" style="color: red; margin-top: 10px; text-align: center;"></p>
+                </form>
+            </div>
+        </div>
+
+    </div> <script src="js/suppliers.js" type="module"></script>
+
+</body>
 </html>
