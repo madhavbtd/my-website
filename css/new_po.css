@@ -1,87 +1,100 @@
-/* css/new_po.css - Styles for the New/Edit Purchase Order page */
+/* css/new_po.css - IMPROVED Styles for New/Edit Purchase Order page */
 
-/* Basic body and container (can inherit from index.css or main css) */
+/* ----- Basic Setup (Inherit or define) ----- */
 body {
     font-family: 'Poppins', sans-serif;
-    background-color: #f4f6f8;
+    background-color: #f0f2f5; /* Light grey background */
     margin: 0;
     color: #343a40;
+    line-height: 1.5; /* Improved line spacing */
 }
 
 .container {
-    /* Assuming similar container structure as other pages */
+    /* Assuming .container wraps .main-content */
 }
 
 .main-content {
-    padding: 25px;
-    max-width: 1100px; /* Adjust max-width as needed for the form */
-    margin: 20px auto;
-    background-color: #fff;
+    padding: 30px; /* Increased padding */
+    max-width: 1200px; /* Slightly wider */
+    margin: 30px auto; /* Increased margin */
+    background-color: #ffffff; /* White background for the form area */
     border-radius: 8px;
-    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08); /* Softer shadow */
     box-sizing: border-box;
 }
 
-/* Page Header and Breadcrumb (Can inherit or copy from supplier_management.css) */
+/* ----- Page Header and Breadcrumb ----- */
 .page-header {
-    margin-bottom: 15px;
-    padding-bottom: 10px;
-    border-bottom: 1px solid #dee2e6;
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid #e9ecef; /* Lighter border */
 }
-.page-header h1 { margin: 0; font-size: 1.6em; color: var(--primary-color, #0056b3); }
-.page-header h1 i { margin-right: 10px; }
+.page-header h1 {
+    margin: 0;
+    font-size: 1.75em; /* Slightly larger title */
+    font-weight: 600; /* Bolder */
+    color: var(--secondary-color, #2c3e50); /* Darker color */
+}
+.page-header h1 i {
+    margin-right: 12px;
+    color: var(--primary-color, #0056b3); /* Icon color */
+}
 
-.breadcrumb { font-size: 0.9em; color: #6c757d; margin-bottom: 25px; }
+.breadcrumb {
+    font-size: 0.9em;
+    color: #6c757d;
+    margin-bottom: 30px; /* More space below breadcrumb */
+}
 .breadcrumb a { color: var(--primary-color, #0056b3); text-decoration: none; }
 .breadcrumb a:hover { text-decoration: underline; }
 .breadcrumb span { margin-left: 5px; }
-.breadcrumb span::before { content: "/"; margin-right: 5px; color: #6c757d; }
+.breadcrumb span::before { content: "/"; margin-right: 5px; color: #adb5bd; } /* Lighter separator */
 
-/* Form Sections */
+/* ----- Form Sections ----- */
 #poForm .form-section {
-    margin-bottom: 30px;
-    padding-bottom: 20px;
-    border-bottom: 1px solid #eee;
+    margin-bottom: 35px;
+    padding: 25px; /* Padding inside sections */
+    border: 1px solid #e9ecef; /* Border around sections */
+    border-radius: 6px; /* Rounded corners for sections */
+    background-color: #fdfdfd; /* Very light background for sections */
 }
 #poForm .form-section:last-of-type {
-    border-bottom: none;
-    margin-bottom: 0;
-    padding-bottom: 0;
+    border-bottom: 1px solid #e9ecef; /* Keep border for last section too */
 }
 #poForm .form-section h2 {
-    font-size: 1.2em;
-    color: var(--secondary-color, #2c3e50);
+    font-size: 1.3em; /* Slightly larger section titles */
+    font-weight: 600;
+    color: var(--primary-color, #0056b3);
     margin-top: 0;
-    margin-bottom: 15px;
-    padding-bottom: 5px;
-    /* border-bottom: 1px dashed #ccc; */ /* Optional separator for section title */
+    margin-bottom: 25px; /* More space below section title */
+    padding-bottom: 10px;
+    border-bottom: 1px solid #dee2e6; /* Underline section title */
 }
 
 /* Form Row for inline elements */
 .form-row {
     display: flex;
     flex-wrap: wrap;
-    gap: 20px; /* Adjust gap between items in a row */
+    gap: 25px; /* Increased gap */
+    align-items: flex-start; /* Align items top */
 }
 
 /* General Form Group Styling */
 .form-group {
-    margin-bottom: 15px;
-    flex: 1; /* Allow groups to grow */
-    min-width: 200px; /* Minimum width for form groups */
-    position: relative; /* Needed for suggestions list */
+    margin-bottom: 20px; /* Consistent bottom margin */
+    flex: 1 1 250px; /* Allow shrinking but prefer 250px */
+    position: relative;
 }
-
 .form-group label {
     display: block;
-    margin-bottom: 6px;
-    font-weight: 600;
+    margin-bottom: 8px; /* More space below label */
+    font-weight: 500; /* Medium weight */
     font-size: 0.9em;
     color: #495057;
 }
-.form-group label .required { color: #dc3545; font-weight: bold; } /* Style for required asterisk */
+.form-group label .required { color: var(--danger-color, #dc3545); font-weight: 600; margin-left: 3px; }
 
-/* General Input Styling */
+/* ----- Input Styling ----- */
 .form-input,
 #poForm input[type="text"],
 #poForm input[type="date"],
@@ -89,178 +102,172 @@ body {
 #poForm select,
 #poForm textarea {
     width: 100%;
-    padding: 9px 12px;
+    padding: 10px 14px; /* Increased padding */
     border: 1px solid #ced4da;
-    border-radius: 4px;
+    border-radius: 5px; /* Slightly more rounded */
     font-size: 0.95em;
     box-sizing: border-box;
     transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    background-color: #fff; /* Ensure white background */
+    color: #495057;
 }
-#poForm input[type="text"]:focus,
-#poForm input[type="date"]:focus,
-#poForm input[type="number"]:focus,
+#poForm input[type="date"] { color-scheme: light; } /* Improve date picker appearance */
+
+/* Focus state for inputs */
+#poForm input:focus,
 #poForm select:focus,
 #poForm textarea:focus {
-    border-color: var(--primary-color, #0056b3);
+    border-color: var(--primary-color, #80bdff);
     outline: 0;
-    box-shadow: 0 0 0 0.15rem rgba(0, 86, 179, 0.25); /* Adjusted shadow */
+    box-shadow: 0 0 0 0.2rem rgba(0, 86, 179, 0.2); /* More subtle focus shadow */
 }
-#poForm textarea { resize: vertical; min-height: 60px; }
+#poForm textarea { resize: vertical; min-height: 70px; }
 
-/* Supplier Search Specific */
+/* ----- Supplier Search Specific ----- */
 .supplier-search-group {
-    min-width: 300px; /* Give more space to supplier search */
+    flex-basis: 350px; /* Give more base width */
 }
-/* Suggestions List Styles (Copy/adapt from index.css) */
 .suggestions-list {
-    display: none; /* Hidden by default */
-    position: absolute;
-    background-color: white;
-    border: 1px solid #ccc;
-    border-top: none;
-    max-height: 150px;
-    overflow-y: auto;
-    width: calc(100% - 2px); /* Match input width */
-    box-sizing: border-box;
-    z-index: 100; /* Ensure it's above other elements */
-    border-radius: 0 0 4px 4px;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    border: 1px solid var(--primary-color, #80bdff); /* Match focus border */
+    box-shadow: 0 5px 10px rgba(0, 0, 0, 0.1);
+    border-radius: 5px;
 }
-.suggestions-list div {
-    padding: 8px 12px;
-    cursor: pointer;
-    font-size: 0.9em;
-}
-.suggestions-list div:hover {
-    background-color: #f0f0f0;
-}
-.suggestions-list div.no-suggestions { color: #888; cursor: default; }
+.suggestions-list div { padding: 10px 14px; font-size: 0.95em; }
+.suggestions-list div:hover { background-color: #e9f5ff; } /* Light blue hover */
 
-/* Link-style button */
-.link-button {
-    background: none;
-    border: none;
-    color: var(--primary-color, #0056b3);
-    cursor: pointer;
-    padding: 0;
-    font-size: 0.85em;
-    text-decoration: underline;
-}
-.link-button:hover {
-    color: #003f7f;
-}
+.link-button { margin-top: 8px; }
 
-/* Items Table Styling */
+/* ----- Items Table Styling ----- */
 .po-items-table {
-    margin-bottom: 15px;
-    border: 1px solid #dee2e6;
-    border-radius: 4px;
-    overflow-x: auto; /* Add horizontal scroll if needed */
+    margin-bottom: 20px;
+    border: none; /* Remove outer border, section border is enough */
+    border-radius: 0;
 }
-#poItemsTable { width: 100%; border-collapse: collapse; }
+#poItemsTable { width: 100%; border-collapse: separate; border-spacing: 0; /* Use separate for better internal borders */ }
 #poItemsTable thead th {
-    background-color: #f8f9fa;
-    padding: 10px 8px; /* Slightly reduced padding */
-    font-size: 0.85em;
+    background-color: #e9ecef; /* Lighter header */
+    padding: 12px 10px;
+    font-size: 0.88em;
+    font-weight: 600; /* Bolder headers */
     text-align: left;
-    border-bottom: 2px solid #dee2e6;
+    border-bottom: 2px solid #adb5bd; /* Stronger bottom border */
     white-space: nowrap;
+    color: #495057;
 }
-#poItemsTable tbody td {
-    padding: 5px 8px; /* Reduced padding */
-    border-bottom: 1px solid #eee;
-    vertical-align: top; /* Align content to top */
-}
-#poItemsTable tbody tr:last-child td {
-    border-bottom: none;
-}
+/* Rounded corners for table header */
+#poItemsTable thead th:first-child { border-top-left-radius: 5px; }
+#poItemsTable thead th:last-child { border-top-right-radius: 5px; }
 
+#poItemsTable tbody td {
+    padding: 8px 10px; /* Consistent padding */
+    border-bottom: 1px solid #e9ecef; /* Lighter row separator */
+    vertical-align: middle; /* Align vertically center */
+}
 /* Input fields within table cells */
 #poItemsTable .form-input {
-    padding: 6px 8px; /* Smaller padding for table inputs */
+    padding: 8px 10px;
     font-size: 0.9em;
-    margin: 0; /* Remove margin if any */
+    border-radius: 4px; /* Match general inputs */
 }
-/* Specific input adjustments in table */
-#poItemsTable .dimension-input { max-width: 80px; } /* Limit width of W/H inputs */
-#poItemsTable .quantity-input { max-width: 70px; }
-#poItemsTable .rate-input { max-width: 100px; }
-#poItemsTable .item-amount { font-weight: 500; display: block; padding-top: 8px; }
+#poItemsTable .dimension-input { width: 75px; text-align: right;}
+#poItemsTable .quantity-input { width: 70px; text-align: right;}
+#poItemsTable .rate-input { width: 90px; text-align: right;}
+#poItemsTable .item-amount { font-weight: 600; text-align: right; padding-right: 5px; }
+#poItemsTable td:last-child { text-align: center; } /* Center delete button */
 
-/* Hide/Show Columns based on Unit Type (JS will add/remove 'hidden-col' class) */
+/* Style specific input containers in table row if needed */
+.sq-feet-input .dimension-input-container { /* Hypothetical container class */
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
 .hidden-col { display: none; }
 
 /* Add Item Button */
 .add-item-button {
     background-color: var(--info-color, #17a2b8);
     color: white;
-    margin-top: 10px;
-    padding: 7px 12px;
+    margin-top: 15px; /* Space above button */
+    padding: 8px 15px;
+    font-size: 0.9em;
+    border-radius: 5px;
 }
 .add-item-button:hover { background-color: #117a8b; }
+.add-item-button i { margin-right: 6px; }
 
 /* Delete Item Button */
 .delete-item-btn {
-    background-color: #f8d7da; /* Light red background */
-    color: #721c24; /* Dark red text */
-    border: 1px solid #f5c6cb;
-    padding: 4px 8px;
-    border-radius: 3px;
+    background-color: transparent;
+    color: var(--danger-color, #dc3545);
+    border: none;
+    padding: 5px;
+    font-size: 1.1em; /* Slightly larger icon */
     cursor: pointer;
-    line-height: 1;
-    font-size: 0.9em;
+    opacity: 0.7;
+    transition: opacity 0.2s ease;
 }
-.delete-item-btn:hover { background-color: #f5c6cb; color: #721c24; }
-.delete-item-btn i { color: #dc3545; } /* Make icon red */
-
+.delete-item-btn:hover { opacity: 1; }
+.delete-item-btn i { vertical-align: middle; }
 
 /* Calculation Preview Area */
 .calculation-preview {
-    font-size: 0.85em;
-    color: #666;
-    background-color: #f9f9f9;
-    border: 1px dashed #ddd;
-    padding: 8px;
-    margin-top: 10px;
-    min-height: 20px; /* Ensure it has some height even when empty */
-    border-radius: 4px;
+    font-size: 0.9em; /* Increase size slightly */
+    color: #555;
+    background-color: #eef1f5; /* Light background */
+    border: 1px solid #d6dde7;
+    padding: 10px 15px;
+    margin-top: 15px;
+    min-height: 25px;
+    border-radius: 5px;
 }
 
-/* PO Summary Section */
+/* ----- PO Summary Section ----- */
 .po-summary .total-amount-display {
-    font-size: 1.2em;
-    font-weight: bold;
+    font-size: 1.4em; /* Larger total */
+    font-weight: 700; /* Bolder total */
     text-align: right;
-    margin-top: 15px;
-    padding-top: 15px;
-    border-top: 1px solid #eee;
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid #dee2e6;
     color: var(--success-color, #28a745);
 }
-.po-summary .total-amount-display span {
-    min-width: 80px;
-    display: inline-block;
-}
+.po-summary .total-amount-display span { min-width: 100px; }
 
-/* Form Actions */
+/* ----- Form Actions ----- */
 .form-actions {
     margin-top: 30px;
-    padding-top: 20px;
-    border-top: 1px solid #eee;
+    padding-top: 25px;
+    border-top: 1px solid #e9ecef;
     display: flex;
-    justify-content: flex-end; /* Align buttons to the right */
-    gap: 10px;
+    justify-content: flex-end;
+    gap: 15px; /* More gap between buttons */
 }
-/* Use button styles defined earlier or add specific ones */
+/* Use button styles defined in index.css or add specific ones */
+.form-actions .button {
+    padding: 10px 25px; /* Larger buttons */
+    font-size: 1em;
+    border-radius: 5px;
+}
 .form-actions .save-button { background-color: var(--success-color, #28a745); }
 .form-actions .save-button:hover { background-color: #218838; }
+.form-actions .cancel-button { background-color: #6c757d; }
+.form-actions .cancel-button:hover { background-color: #5a6268; }
 
-.error-message { color: red; font-size: 0.9em; margin-top: 15px; text-align: center; }
+.error-message { color: var(--danger-color, #dc3545); font-weight: 500; }
 
-/* Responsive adjustments if needed */
+/* ----- Responsive ----- */
+@media (max-width: 992px) {
+    .main-content { padding: 20px; }
+    #poItemsTable thead th, #poItemsTable tbody td { padding: 8px 6px; }
+    /* Maybe hide less important columns on smaller screens if needed */
+}
 @media (max-width: 768px) {
-    .main-content { padding: 15px; }
-    .form-row { flex-direction: column; gap: 0; } /* Stack elements vertically on small screens */
-    .form-group { min-width: 100%; } /* Make form groups full width */
-    .form-actions { justify-content: center; }
-    /* Adjust table font size or hide columns if necessary */
+    .main-content { padding: 15px; margin: 15px auto; }
+    .form-row { flex-direction: column; gap: 0; }
+    .form-group { flex-basis: auto; } /* Reset basis */
+    .form-actions { flex-direction: column; gap: 10px; }
+    .form-actions .button { width: 100%; justify-content: center; }
+    .po-summary .total-amount-display { text-align: center; }
+    /* Adjust table styles for very small screens if needed */
 }
