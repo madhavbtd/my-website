@@ -376,8 +376,8 @@ function renderProductSuggestions(suggestions, term, box) {
 // --- Form Submit Handler ---
 async function handleFormSubmit(event) {
     event.preventDefault(); console.log("[DEBUG] Form submission initiated...");
-    if (!db || !collection || !addDoc || !doc || !updateDoc || !getDoc || !getDocs || !query || !orderBy || !limit ) { // Added missing functions for ID generation
-        alert("Database functions unavailable."); return;
+    if (!db || !collection || !addDoc || !doc || !updateDoc || !getDoc || !getDocs || !query || !orderBy || !limit ) { // Ensure all needed functions are checked
+        alert("Database functions unavailable. Cannot save order."); return;
     }
     if (!saveButton) return; saveButton.disabled = true; saveButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
     try {
@@ -390,11 +390,6 @@ async function handleFormSubmit(event) {
         const customerContactFromInput = customerContactInput.value.trim();
         // --- Use stored selectedCustomerId if available ---
         const customerIdToUse = selectedCustomerId;
-
-        // REMOVED: Validation forcing selection for NEW orders
-        // if (!customerIdToUse && !isEditMode) {
-        //      throw new Error("Please select an existing customer from the suggestions. If the customer is new, add them via Customer Management first.");
-        // }
 
          // Construct customerData using input values
          const customerData = {
@@ -414,17 +409,16 @@ async function handleFormSubmit(event) {
         let orderIdToUse;
         const existingSystemId = displayOrderIdInput.value; // Get ID potentially loaded in edit mode
 
-        // >> NEW LOGIC for Order ID Generation (if not editing and no manual ID) <<
+        // >> NEW LOGIC for Order ID Generation (if not editing and no manual ID) - V2 (No orderBy) <<
         if (!isEditMode && !orderDetails.manualOrderId) {
-            console.log("[DEBUG] Generating new Order ID. Checking Firestore for highest existing ID...");
+            console.log("[DEBUG] Generating new Order ID (V2). Checking Firestore without sorting...");
             try {
-                // Query Firestore for the highest numeric orderId
                 const ordersRef = collection(db, "orders");
-
-                // Query to find the highest numeric orderId (assuming stored as string)
-                // Fetch a larger batch and filter/sort client-side due to Firestore query limitations on mixed types/formats
-                const q = query(ordersRef, orderBy("createdAt", "desc"), limit(1000)); // Fetch recent orders
+                // Fetch documents without specific order - might need pagination for very large collections
+                // Fetching up to 2000 recent docs should be enough usually. Increase if needed.
+                 const q = query(ordersRef, limit(2000)); // Removed orderBy("createdAt")
                 const querySnapshot = await getDocs(q);
+                console.log(`[DEBUG] Fetched ${querySnapshot.size} documents to check for max numeric ID.`);
                 let maxNumericId = 0;
 
                 querySnapshot.forEach(doc => {
@@ -436,20 +430,22 @@ async function handleFormSubmit(event) {
                         }
                     }
                 });
+                console.log(`[DEBUG] Max numeric ID found in fetched docs: ${maxNumericId}`);
 
-                if (maxNumericId >= 1001) {
+                if (maxNumericId >= 1000) { // Check if any numeric ID was found (start from 1001 even if max is less)
                     orderIdToUse = (maxNumericId + 1).toString();
-                    console.log(`[DEBUG] Found max numeric ID: ${maxNumericId}. New ID generated: ${orderIdToUse}`);
+                    console.log(`[DEBUG] New ID generated: ${orderIdToUse}`);
                 } else {
-                    orderIdToUse = "1001"; // Start from 1001 if no valid numeric ID >= 1001 found
-                    console.log(`[DEBUG] No existing numeric ID >= 1001 found. Starting with ${orderIdToUse}`);
+                    orderIdToUse = "1001"; // Start from 1001 if no valid numeric ID >= 1000 found
+                    console.log(`[DEBUG] No existing numeric ID >= 1000 found. Starting with ${orderIdToUse}`);
                 }
 
             } catch (err) {
-                console.error("[DEBUG] Error fetching highest order ID:", err);
+                console.error("[DEBUG] Error fetching/processing order IDs (V2):", err);
                 // Fallback to timestamp if Firestore query fails
                 orderIdToUse = Date.now().toString();
-                alert("Warning: Could not generate sequential Order ID. Using fallback ID.");
+                alert("Warning: Could not generate sequential Order ID due to error. Using fallback ID. Check console for details.");
+                console.error("Fallback ID generated:", orderIdToUse); // Log fallback ID
             }
 
         } else if (isEditMode) {
@@ -469,7 +465,6 @@ async function handleFormSubmit(event) {
         if (!customerData.whatsappNo) throw new Error("WhatsApp No required.");
         if (addedProducts.length === 0) throw new Error("Add at least one product.");
         if (!orderDetails.orderDate) throw new Error("Order Date required.");
-        // Removed status check validation - defaulting to 'Order Received'
 
 
         // Prepare Payload
@@ -492,12 +487,17 @@ async function handleFormSubmit(event) {
             if (!orderIdToEdit) throw new Error("Missing Firestore Document ID for update.");
             const orderRef = doc(db, "orders", orderIdToEdit);
             delete orderDataPayload.createdAt; // Don't update createdAt on edit
+             // Add createdAt field if it doesn't exist when editing (for consistency maybe?)
+             // Optional: const docSnap = await getDoc(orderRef); if (!docSnap.data()?.createdAt) orderDataPayload.createdAt = new Date();
             await updateDoc(orderRef, orderDataPayload);
             orderDocRefPath = orderRef.path;
             console.log("[DEBUG] Order updated:", orderIdToEdit);
             alert('Order updated successfully!');
         } else {
-            orderDataPayload.createdAt = new Date(); // Add createdAt only for new orders
+            // Add createdAt only for new orders if it's not added by serverTimestamp equivalent
+            if (!orderDataPayload.createdAt) {
+                 orderDataPayload.createdAt = new Date();
+            }
             const newOrderRef = await addDoc(collection(db, "orders"), orderDataPayload);
             orderDocRefPath = newOrderRef.path;
             console.log("[DEBUG] New order saved:", newOrderRef.id);
@@ -511,7 +511,6 @@ async function handleFormSubmit(event) {
         // Show WhatsApp reminder only if WhatsApp number exists
         if (customerData.whatsappNo) {
             showWhatsAppReminder(customerData, orderIdToUse, orderDetails.deliveryDate);
-             // Reset ONLY IF reminder is shown OR for new orders where number is missing
              // Reset handled within showWhatsAppReminder or its skip path
         } else {
             console.warn("[DEBUG] WhatsApp number missing, skipping reminder.");
@@ -615,4 +614,4 @@ Mobile: 9549116541`;
 
 function closeWhatsAppPopup() { if (whatsappReminderPopup) whatsappReminderPopup.classList.remove('active'); }
 
-console.log("new_order.js script loaded (Client-Side Filtering + Save Fix + Debug Logs + Updated WhatsApp Template + Suggestion Box Fix v2 + ID Generation Logic)."); // Updated log
+console.log("new_order.js script loaded (ID Gen Fix Attempt V2)."); // Updated log
