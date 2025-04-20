@@ -102,7 +102,7 @@ function initializeForm() {
         if(headerText) headerText.textContent = "Edit Order"; else if(formHeader) formHeader.textContent = "Edit Order";
         if(saveButtonText) saveButtonText.textContent = "Update Order";
         if(hiddenEditOrderIdInput) hiddenEditOrderIdInput.value = orderIdToEdit;
-        if(manualOrderIdInput) manualOrderIdInput.readOnly = true;
+        if(manualOrderIdInput) manualOrderIdInput.readOnly = true; // Cannot change manual ID in edit mode
         loadOrderForEdit(orderIdToEdit);
         handleStatusCheckboxes(true);
     } else {
@@ -110,12 +110,13 @@ function initializeForm() {
         console.log("[DEBUG] Add Mode Initializing.");
         if(headerText) headerText.textContent = "New Order"; else if(formHeader) formHeader.textContent = "New Order";
         if(saveButtonText) saveButtonText.textContent = "Save Order";
-        if(manualOrderIdInput) manualOrderIdInput.readOnly = false;
+        if(manualOrderIdInput) manualOrderIdInput.readOnly = false; // Can set manual ID for new orders
         const orderDateInput = document.getElementById('order_date');
         if (orderDateInput && !orderDateInput.value) { orderDateInput.value = new Date().toISOString().split('T')[0]; }
         handleStatusCheckboxes(false);
         renderProductList();
         resetCustomerSelection();
+        displayOrderIdInput.value = ''; // Clear system ID field for new orders
     }
 }
 
@@ -135,10 +136,11 @@ async function loadOrderForEdit(docId) {
             customerContactInput.value = data.customerDetails?.contactNo || '';
             selectedCustomerId = data.customerId || null;
             if (selectedCustomerIdInput) selectedCustomerIdInput.value = selectedCustomerId;
-            customerAddressInput.readOnly = true; customerContactInput.readOnly = true; // Lock after load
+            // Don't lock customer fields in edit mode - allow changes
+            customerAddressInput.readOnly = false; customerContactInput.readOnly = false;
 
-            displayOrderIdInput.value = data.orderId || docId;
-            manualOrderIdInput.value = data.orderId || '';
+            displayOrderIdInput.value = data.orderId || docId; // Show the existing system/saved Order ID
+            manualOrderIdInput.value = data.orderId || ''; // Display same ID in manual field, but keep it readOnly
             orderForm.order_date.value = data.orderDate || '';
             orderForm.delivery_date.value = data.deliveryDate || '';
             orderForm.remarks.value = data.remarks || '';
@@ -192,8 +194,18 @@ function handleDeleteProduct(event) {
 // --- Status Checkbox Handling ---
 function handleStatusCheckboxes(isEditing) {
     const defaultStatus = "Order Received"; let defaultCheckbox = null;
-    orderStatusCheckboxes.forEach(checkbox => { if (checkbox.value === defaultStatus) defaultCheckbox = checkbox; checkbox.disabled = !isEditing; checkbox.closest('label').classList.toggle('disabled', !isEditing); checkbox.removeEventListener('change', handleStatusChange); checkbox.addEventListener('change', handleStatusChange); });
-    if (!isEditing && defaultCheckbox) { defaultCheckbox.checked = true; }
+    orderStatusCheckboxes.forEach(checkbox => {
+         if (checkbox.value === defaultStatus) defaultCheckbox = checkbox;
+         // Status can always be changed, even for new orders that start default
+         checkbox.disabled = false; // Always enable status change
+         checkbox.closest('label').classList.remove('disabled'); // Remove disabled visual style
+         checkbox.removeEventListener('change', handleStatusChange);
+         checkbox.addEventListener('change', handleStatusChange);
+     });
+    // Only default check 'Order Received' if it's a truly new order and no status is loaded yet
+    if (!isEditing && !orderForm.querySelector('input[name="order_status"]:checked') && defaultCheckbox) {
+        defaultCheckbox.checked = true;
+    }
 }
 function handleStatusChange(event) { const changedCheckbox = event.target; if (changedCheckbox.checked) { orderStatusCheckboxes.forEach(otherCb => { if (otherCb !== changedCheckbox) otherCb.checked = false; }); } }
 
@@ -205,6 +217,9 @@ function handleCustomerInput(event, type) {
     const searchTerm = event.target.value.trim();
     const suggestionBox = type === 'name' ? customerSuggestionsNameBox : customerSuggestionsWhatsAppBox;
     if (!suggestionBox) return;
+
+    // Allow editing customer details even if selected
+    resetCustomerSelection(); // Make fields editable on input
 
     if (searchTerm.length < 2) {
         clearTimeout(customerSearchTimeout);
@@ -277,7 +292,8 @@ function fillCustomerData(customer) {
     // Explicitly Hide Boxes after filling
     hideSuggestionBox(customerSuggestionsNameBox);
     hideSuggestionBox(customerSuggestionsWhatsAppBox);
-    customerAddressInput.readOnly = true; customerContactInput.readOnly = true; // Make readonly
+    // Keep fields editable after filling
+    customerAddressInput.readOnly = false; customerContactInput.readOnly = false;
 }
 function resetCustomerSelection() {
      selectedCustomerId = null; if(selectedCustomerIdInput) selectedCustomerIdInput.value = '';
@@ -360,7 +376,9 @@ function renderProductSuggestions(suggestions, term, box) {
 // --- Form Submit Handler ---
 async function handleFormSubmit(event) {
     event.preventDefault(); console.log("[DEBUG] Form submission initiated...");
-    if (!db || !collection || !addDoc || !doc || !updateDoc || !getDoc ) { alert("Database functions unavailable."); return; }
+    if (!db || !collection || !addDoc || !doc || !updateDoc || !getDoc || !getDocs || !query || !orderBy || !limit ) { // Added missing functions for ID generation
+        alert("Database functions unavailable."); return;
+    }
     if (!saveButton) return; saveButton.disabled = true; saveButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
     try {
         // Get data
@@ -373,10 +391,11 @@ async function handleFormSubmit(event) {
         // --- Use stored selectedCustomerId if available ---
         const customerIdToUse = selectedCustomerId;
 
-        // Validate if customer ID was selected for NEW orders
-        if (!customerIdToUse && !isEditMode) {
-             throw new Error("Please select an existing customer from the suggestions. If the customer is new, add them via Customer Management first.");
-        }
+        // REMOVED: Validation forcing selection for NEW orders
+        // if (!customerIdToUse && !isEditMode) {
+        //      throw new Error("Please select an existing customer from the suggestions. If the customer is new, add them via Customer Management first.");
+        // }
+
          // Construct customerData using input values
          const customerData = {
              fullName: customerFullNameFromInput,
@@ -386,33 +405,85 @@ async function handleFormSubmit(event) {
          };
 
         const orderDetails = { manualOrderId: formData.get('manual_order_id')?.trim() || '', orderDate: formData.get('order_date') || '', deliveryDate: formData.get('delivery_date') || '', urgent: formData.get('urgent') || 'No', remarks: formData.get('remarks')?.trim() || '' };
-        const statusCheckbox = orderForm.querySelector('input[name="order_status"]:checked'); const selectedStatus = statusCheckbox ? statusCheckbox.value : (isEditMode ? null : 'Order Received');
+        const statusCheckbox = orderForm.querySelector('input[name="order_status"]:checked');
+        // Default status to 'Order Received' if nothing is checked (can happen in new mode if user unchecks it)
+        const selectedStatus = statusCheckbox ? statusCheckbox.value : 'Order Received';
+
+
+        // Determine Order ID
+        let orderIdToUse;
+        const existingSystemId = displayOrderIdInput.value; // Get ID potentially loaded in edit mode
+
+        // >> NEW LOGIC for Order ID Generation (if not editing and no manual ID) <<
+        if (!isEditMode && !orderDetails.manualOrderId) {
+            console.log("[DEBUG] Generating new Order ID. Checking Firestore for highest existing ID...");
+            try {
+                // Query Firestore for the highest numeric orderId
+                const ordersRef = collection(db, "orders");
+
+                // Query to find the highest numeric orderId (assuming stored as string)
+                // Fetch a larger batch and filter/sort client-side due to Firestore query limitations on mixed types/formats
+                const q = query(ordersRef, orderBy("createdAt", "desc"), limit(1000)); // Fetch recent orders
+                const querySnapshot = await getDocs(q);
+                let maxNumericId = 0;
+
+                querySnapshot.forEach(doc => {
+                    const idString = doc.data().orderId;
+                    if (idString && /^\d+$/.test(idString)) { // Check if it's a string containing only digits
+                        const numericId = parseInt(idString, 10);
+                        if (!isNaN(numericId) && numericId > maxNumericId) {
+                            maxNumericId = numericId;
+                        }
+                    }
+                });
+
+                if (maxNumericId >= 1001) {
+                    orderIdToUse = (maxNumericId + 1).toString();
+                    console.log(`[DEBUG] Found max numeric ID: ${maxNumericId}. New ID generated: ${orderIdToUse}`);
+                } else {
+                    orderIdToUse = "1001"; // Start from 1001 if no valid numeric ID >= 1001 found
+                    console.log(`[DEBUG] No existing numeric ID >= 1001 found. Starting with ${orderIdToUse}`);
+                }
+
+            } catch (err) {
+                console.error("[DEBUG] Error fetching highest order ID:", err);
+                // Fallback to timestamp if Firestore query fails
+                orderIdToUse = Date.now().toString();
+                alert("Warning: Could not generate sequential Order ID. Using fallback ID.");
+            }
+
+        } else if (isEditMode) {
+            // In edit mode, use the ID that was loaded (either manual or system generated previously)
+            orderIdToUse = existingSystemId || orderIdToEdit; // Use displayed ID or the Firestore doc ID
+            console.log(`[DEBUG] Edit mode. Using existing Order ID: ${orderIdToUse}`);
+        } else {
+             // Use manual ID if provided by user for a new order
+            orderIdToUse = orderDetails.manualOrderId;
+            console.log(`[DEBUG] Manual Order ID provided for new order: ${orderIdToUse}`);
+        }
+        // >> END NEW LOGIC for Order ID <<
+
 
         // ** Validation **
         if (!customerData.fullName) { throw new Error("Full Name is required."); }
         if (!customerData.whatsappNo) throw new Error("WhatsApp No required.");
         if (addedProducts.length === 0) throw new Error("Add at least one product.");
         if (!orderDetails.orderDate) throw new Error("Order Date required.");
-        if (!selectedStatus && isEditMode) throw new Error("Select order status for update.");
+        // Removed status check validation - defaulting to 'Order Received'
 
-
-        // Determine Order ID
-        let orderIdToUse; const existingSystemId = displayOrderIdInput.value;
-        if (isEditMode) { orderIdToUse = existingSystemId || orderIdToEdit; } // Use displayed ID or the edit ID
-        else { orderIdToUse = orderDetails.manualOrderId || Date.now().toString(); } // Use manual or generate
 
         // Prepare Payload
         const orderDataPayload = {
-            orderId: orderIdToUse,
+            orderId: orderIdToUse, // Use the determined ID
             customerId: customerIdToUse || null, // Store ID if selected
             customerDetails: customerData, // Store details captured from input
             orderDate: orderDetails.orderDate,
             deliveryDate: orderDetails.deliveryDate,
             urgent: orderDetails.urgent,
             remarks: orderDetails.remarks,
-            status: selectedStatus || 'Order Received', // Default status if somehow null
+            status: selectedStatus, // Use the determined status
             products: addedProducts,
-            updatedAt: new Date()
+            updatedAt: new Date() // Always update 'updatedAt'
         };
 
         // Save/Update
@@ -420,18 +491,18 @@ async function handleFormSubmit(event) {
         if (isEditMode) {
             if (!orderIdToEdit) throw new Error("Missing Firestore Document ID for update.");
             const orderRef = doc(db, "orders", orderIdToEdit);
-            delete orderDataPayload.createdAt; // Don't update createdAt
+            delete orderDataPayload.createdAt; // Don't update createdAt on edit
             await updateDoc(orderRef, orderDataPayload);
             orderDocRefPath = orderRef.path;
             console.log("[DEBUG] Order updated:", orderIdToEdit);
             alert('Order updated successfully!');
         } else {
-            orderDataPayload.createdAt = new Date(); // Add createdAt for new orders
+            orderDataPayload.createdAt = new Date(); // Add createdAt only for new orders
             const newOrderRef = await addDoc(collection(db, "orders"), orderDataPayload);
             orderDocRefPath = newOrderRef.path;
             console.log("[DEBUG] New order saved:", newOrderRef.id);
             alert('New order saved successfully!');
-            displayOrderIdInput.value = orderIdToUse;
+            displayOrderIdInput.value = orderIdToUse; // Display the newly generated/used ID
         }
 
         // Post-save actions
@@ -441,7 +512,7 @@ async function handleFormSubmit(event) {
         if (customerData.whatsappNo) {
             showWhatsAppReminder(customerData, orderIdToUse, orderDetails.deliveryDate);
              // Reset ONLY IF reminder is shown OR for new orders where number is missing
-             // if (!isEditMode) { resetNewOrderForm(); } // Reset handled within showWhatsAppReminder or its skip path
+             // Reset handled within showWhatsAppReminder or its skip path
         } else {
             console.warn("[DEBUG] WhatsApp number missing, skipping reminder.");
              if (!isEditMode) { resetNewOrderForm(); } // Reset form if no reminder shown for new order
@@ -464,23 +535,30 @@ async function handleFormSubmit(event) {
 
 // --- Reset Form ---
 function resetNewOrderForm() {
-     console.log("[DEBUG] Resetting form.");
+     console.log("[DEBUG] Resetting form for New Order.");
+     isEditMode = false; // Ensure mode is reset
+     orderIdToEdit = null;
      resetCustomerSelection();
      customerNameInput.value = '';
      customerWhatsAppInput.value = '';
      customerAddressInput.value = '';
      customerContactInput.value = '';
-     manualOrderIdInput.value = '';
-     displayOrderIdInput.value = '';
+     manualOrderIdInput.value = ''; // Clear manual ID
+     displayOrderIdInput.value = ''; // Clear system ID
      orderForm.delivery_date.value = '';
      orderForm.remarks.value = '';
      addedProducts = [];
      renderProductList();
-     handleStatusCheckboxes(false);
+     orderStatusCheckboxes.forEach(cb => cb.checked = false); // Uncheck all status
+     handleStatusCheckboxes(false); // Re-apply default state for new order
      const urgentNoRadio = orderForm.querySelector('input[name="urgent"][value="No"]');
      if (urgentNoRadio) urgentNoRadio.checked = true;
      const orderDateInput = document.getElementById('order_date');
-     if (orderDateInput) orderDateInput.value = new Date().toISOString().split('T')[0];
+     if (orderDateInput) orderDateInput.value = new Date().toISOString().split('T')[0]; // Reset date
+     // Ensure header and button text are correct for 'New Order'
+     if(headerText) headerText.textContent = "New Order"; else if(formHeader) formHeader.textContent = "New Order";
+     if(saveButtonText) saveButtonText.textContent = "Save Order"; else if(saveButton) saveButton.innerHTML = '<i class="fas fa-save"></i> Save Order';
+     if(manualOrderIdInput) manualOrderIdInput.readOnly = false; // Make manual ID editable again
      // Hide suggestion boxes
      hideSuggestionBox(customerSuggestionsNameBox);
      hideSuggestionBox(customerSuggestionsWhatsAppBox);
@@ -537,4 +615,4 @@ Mobile: 9549116541`;
 
 function closeWhatsAppPopup() { if (whatsappReminderPopup) whatsappReminderPopup.classList.remove('active'); }
 
-console.log("new_order.js script loaded (Client-Side Filtering + Save Fix + Debug Logs + Updated WhatsApp Template + Suggestion Box Fix v2)."); // Updated log
+console.log("new_order.js script loaded (Client-Side Filtering + Save Fix + Debug Logs + Updated WhatsApp Template + Suggestion Box Fix v2 + ID Generation Logic)."); // Updated log

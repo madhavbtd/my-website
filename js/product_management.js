@@ -25,6 +25,10 @@ const editProductIdInput = document.getElementById('editProductId'); // Hidden i
 const productPrintNameInput = document.getElementById('productPrintName');
 const productPriceInput = document.getElementById('productPrice');
 const productCategoryInput = document.getElementById('productCategory');
+// >> NEW FIELD ELEMENTS <<
+const productGroupInput = document.getElementById('productGroup');
+const productUnitSelect = document.getElementById('productUnit');
+// >> END NEW FIELD ELEMENTS <<
 
 
 // --- Global State ---
@@ -248,6 +252,10 @@ function openEditModal(firestoreId, data) {
      productPrintNameInput.value = data.printName || '';
      productPriceInput.value = data.price !== undefined ? data.price : ''; // Handle potential null/undefined price
      productCategoryInput.value = data.category || '';
+     // >> FILL NEW FIELDS IF DATA EXISTS <<
+     productGroupInput.value = data.productGroup || ''; // Fill group if present
+     productUnitSelect.value = data.productUnit || '';   // Fill unit if present
+     // >> END FILL NEW FIELDS <<
 
      productModal.classList.add('active');
 }
@@ -270,6 +278,10 @@ async function handleSaveProduct(event) {
     const printName = productPrintNameInput.value.trim();
     const priceString = productPriceInput.value.trim();
     const category = productCategoryInput.value.trim() || null;
+    // >> GET NEW FIELD VALUES <<
+    const productGroup = productGroupInput.value.trim() || null;
+    const productUnit = productUnitSelect.value || null;
+    // >> END GET NEW FIELD VALUES <<
 
     // Basic Validation
     if (!printName) {
@@ -293,6 +305,10 @@ async function handleSaveProduct(event) {
         printName: printName, // Field used by new_order.js
         price: price,         // Store price as number or null
         category: category,
+        // >> ADD NEW FIELDS TO PAYLOAD <<
+        productGroup: productGroup,
+        productUnit: productUnit,
+        // >> END ADD NEW FIELDS <<
         updatedAt: serverTimestamp()
     };
 
