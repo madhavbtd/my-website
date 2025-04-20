@@ -10,30 +10,33 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
 
     <link rel="stylesheet" href="css/index.css">
+    <link rel="stylesheet" href="css/order_history.css">
+
 
     <script type="module">
-        // Import Firebase services
+        // Firebase services Import
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-        // Import Firestore services needed by this page AND dashboard.js
-        import { getFirestore, collection, onSnapshot, query, where, getDocs, limit } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js"; // Added getDocs, limit
+        // Firestore services needed by this page AND dashboard.js
+        import { getFirestore, collection, onSnapshot, query, where, getDocs, limit } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-        // **** Your Firebase Configuration ****
+        // --- आपकी सही Firebase कॉन्फ़िगरेशन ---
          const firebaseConfig = {
-           apiKey: "AIzaSyBQj5rQmE77kKKGYixP8y3Hcimz8tiAqzQ", // **<<< सुनिश्चित करें कि यह सही है**
-           authDomain: "madhav-multyprint.firebaseapp.com", // **<<< सुनिश्चित करें कि यह सही है**
-           projectId: "madhav-multyprint", // **<<< सुनिश्चित करें कि यह सही है**
-           storageBucket: "madhav-multyprint.appspot.com", // **<<< सुनिश्चित करें कि यह सही है**
-           messagingSenderId: "104988349637", // **<<< सुनिश्चित करें कि यह सही है**
-           appId: "1:104988349637:web:faf045b77c6786a4e70cac" // **<<< सुनिश्चित करें कि यह सही है**
+           apiKey: "AIzaSyBQj5rQmE77kKKGYixP8y3Hcimz8tiAqzQ",
+           authDomain: "madhav-multyprint.firebaseapp.com",
+           projectId: "madhav-multyprint",
+           storageBucket: "madhav-multyprint.appspot.com",
+           messagingSenderId: "104988349637",
+           appId: "1:104988349637:web:faf045b77c6786a4e70cac"
          };
+        // --- कॉन्फ़िगरेशन समाप्त ---
 
         let app;
         let auth;
         let db;
 
         try {
-             // Initialize Firebase App (only once per page load)
+             // Initialize Firebase App
              if (!window.firebaseAppInitialized) {
                  app = initializeApp(firebaseConfig);
                  window.firebaseAppInitialized = true;
@@ -53,18 +56,16 @@
              window.onSnapshot = onSnapshot;
              window.query = query;
              window.where = where;
-             window.getDocs = getDocs; // Expose getDocs globally
-             window.limit = limit;     // Expose limit globally
-             // --- End Global Exposure ---
+             window.getDocs = getDocs;
+             window.limit = limit;
 
-
-             // ---->> Authentication State Check (Core Security) <<----
+             // --- Authentication State Check ---
              onAuthStateChanged(auth, (user) => {
                  const currentPage = window.location.pathname.split('/').pop() || 'index.html';
 
                  if (user) {
                      console.log(`User is logged in on ${currentPage}:`, user.uid);
-                     // Role Verification Block
+                     // Role Verification Block (Optional but good practice)
                      user.getIdTokenResult(true) // Force refresh claims
                          .then((idTokenResult) => {
                              const userRole = idTokenResult.claims.role;
@@ -77,7 +78,9 @@
                              }
                              // Call dashboard functions only after auth and role check
                              if (typeof initializeDashboard === 'function') {
-                                initializeDashboard(user); // Pass user if needed
+                                initializeDashboard(user); // Defined in dashboard.js
+                             } else {
+                                 console.warn("initializeDashboard function not found!");
                              }
                          })
                          .catch((error) => {
@@ -87,20 +90,23 @@
                               if (welcomeSpan) {
                                  welcomeSpan.textContent = `Welcome ${user.email || 'User'} (Role Error)`;
                               }
-                              // Still initialize dashboard even if role fails? Decide based on your logic
+                              // Still initialize dashboard even if role fails?
                               if (typeof initializeDashboard === 'function') {
                                 initializeDashboard(user);
+                              } else {
+                                  console.warn("initializeDashboard function not found!");
                               }
                          });
                  } else {
                      // User is not logged in. Redirect.
                      console.log(`User is not logged in on ${currentPage}. Redirecting to login...`);
+                     // --- login.html का सही पाथ यहाँ डालें ---
                      if (currentPage.toLowerCase() !== 'login.html') {
                         window.location.replace('login.html');
                      }
                  }
              });
-             // ---->> Auth check end <<----
+             // --- Auth check end ---
 
              // --- Logout Link Logic ---
              const logoutLink = document.getElementById('logout-link');
@@ -110,6 +116,7 @@
                     if (confirm("Are you sure you want to logout?")) {
                         signOut(auth).then(() => {
                             console.log('User signed out.');
+                             // --- login.html का सही पाथ यहाँ डालें ---
                             window.location.href = 'login.html';
                         }).catch((error) => {
                             console.error('Sign out error:', error);
@@ -117,8 +124,6 @@
                         });
                     }
                 });
-             } else {
-                 console.warn("Logout link with ID 'logout-link' not found.");
              }
              // --- Logout logic end ---
 
@@ -132,13 +137,12 @@
 <body>
     <div class="container">
         <div class="sidebar">
-            <h2><img src="https://i.ibb.co/Z6gKD9Rd/1.png" alt="माधव मल्टीप्रिन्ट Logo"></h2>
+             <h2><img src="https://i.ibb.co/Z6gKD9Rd/1.png" alt="माधव मल्टीप्रिन्ट Logo"></h2>
             <ul>
                 <li><a href="index.html" class="active"><i class="fas fa-tachometer-alt"></i> <span>Dashboard</span></a></li>
                 <li><a href="order_history.html"><i class="fas fa-history"></i> <span>Order History</span></a></li>
                 <li><a href="customer_management.html"><i class="fas fa-users"></i> <span>Customers</span></a></li>
-                <li><a href="suppliers.html"><i class="fas fa-truck"></i> <span>Suppliers</span></a></li>
-                <li><a href="#"><i class="fas fa-chart-bar"></i> <span>Report</span></a></li>
+                <li><a href="suppliers.html"><i class="fas fa-truck"></i> <span>Suppliers</span></a></li> <li><a href="#"><i class="fas fa-chart-bar"></i> <span>Report</span></a></li>
                 <li><a href="#"><i class="fas fa-code-branch"></i> <span>Branch Manage</span></a></li>
                 <li><a href="#"><i class="fas fa-cog"></i> <span>Settings</span></a></li>
                 <li><a href="product_management.html"><i class="fas fa-box-open"></i> <span>Product Management</span></a></li>
@@ -151,8 +155,8 @@
             <div class="header">
                 <span class="welcome-text" id="welcome-user">Welcome...</span>
                 <div class="header-buttons">
-                    <a href="customer_management.html?action=add" class="button-base add-customer-btn"><i class="fas fa-user-plus"></i> Add Customer</a>
-                    <a href="suppliers.html?action=add" class="button-base add-supplier-btn"><i class="fas fa-truck"></i> Add Supplier</a> <a href="new_order.html" class="button-base new-order-btn"><i class="fas fa-plus-circle"></i> New Order</a>
+                     <a href="customer_management.html?action=add" class="button-base add-customer-btn"><i class="fas fa-user-plus"></i> Add Customer</a>
+                    <a href="suppliers.html" class="button-base add-supplier-btn"><i class="fas fa-truck"></i> Add Supplier</a> <a href="new_order.html" class="button-base new-order-btn"><i class="fas fa-plus-circle"></i> New Order</a>
                 </div>
                 <div class="date-time-container">
                     <span id="currentDateTime">Loading date...</span>
@@ -209,15 +213,14 @@
             </div>
              <div class="reminder-section">
                  <h3>Reminder</h3>
-                 <p>No reminders currently.</p>
-            </div>
+                 <p>No reminders currently.</p> </div>
         </div>
     </div>
 
     <script src="js/dashboard.js" type="module"></script>
 
     <script>
-        // यह स्क्रिप्ट ब्लॉक अपरिवर्तित है
+        // यह स्क्रिप्ट ब्लॉक अपरिवर्तित है (setActiveLink सुधार शामिल है)
         function updateDateTime() {
             const now = new Date();
             const optsDate = { year: 'numeric', month: 'long', day: 'numeric' };
@@ -227,25 +230,22 @@
                 const day = now.toLocaleDateString('en-GB', optsDay);
                 const elem = document.getElementById('currentDateTime');
                 if (elem) elem.textContent = `${date}, ${day}`;
-            } catch (e) { console.error("Error formatting date/time:", e); /*...*/ }
+            } catch (e) { console.error("Error formatting date/time:", e); }
         }
 
         function setActiveLink() {
             try {
                 const path = window.location.pathname;
-                // Ensure page name extraction handles potential empty strings correctly
                 let page = path.substring(path.lastIndexOf('/') + 1);
-                if (page === '') page = 'index.html'; // Default to index.html if path ends with /
+                if (page === '' || page === '/') page = 'index.html';
 
                 const links = document.querySelectorAll('.sidebar ul li a');
                 links.forEach(l => {
                     const hrefAttr = l.getAttribute('href');
-                    l.classList.remove('active'); // Remove active from all first
+                    l.classList.remove('active');
                     if (hrefAttr) {
-                         // Ensure comparison handles potential differences like leading slashes or parameters
                         const linkPage = hrefAttr.split('/').pop().split('?')[0].split('#')[0];
-                        let effectiveLinkPage = linkPage === '' ? 'index.html' : linkPage; // Treat empty href like index.html
-
+                        let effectiveLinkPage = linkPage === '' ? 'index.html' : linkPage;
                         if (page === effectiveLinkPage) {
                              l.classList.add('active');
                         }
@@ -255,21 +255,10 @@
         }
 
         updateDateTime();
-        setInterval(updateDateTime, 60000); // Update time every minute
+        setInterval(updateDateTime, 60000);
 
-        // Run setActiveLink after the DOM is fully loaded and potentially after async operations (like role check) complete
-        // Using DOMContentLoaded is generally safe, but if dashboard.js makes late changes, consider calling it from there too.
-        window.addEventListener('DOMContentLoaded', () => {
-            setActiveLink();
-            // Also ensure initializeDashboard is defined before calling it in the auth check
-            if (window.auth && window.auth.currentUser && typeof initializeDashboard === 'function') {
-                 // Re-check auth state or rely on the onAuthStateChanged logic
-            }
-        });
-        window.addEventListener('popstate', setActiveLink); // For browser back/forward navigation
-
-        // Also moved dashboard.js loading to the end for potentially better performance
-        // and ensuring DOM is ready before it runs.
+        window.addEventListener('DOMContentLoaded', setActiveLink);
+        window.addEventListener('popstate', setActiveLink); // Handle browser back/forward
     </script>
 </body>
 </html>

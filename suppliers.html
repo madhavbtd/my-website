@@ -3,98 +3,228 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DEBUG - Supplier Auth Check</title>
-    <style> body { font-family: sans-serif; padding: 20px; } </style>
+    <title>Supplier Management</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" integrity="sha512-9usAa10IRO0HhonpyAIVpjrylPvoDwiPUiKdWk5t3PyolY1cOd4DSE0Ga+ri4AuTroPR5aQvXU9xC6qOPnzFeg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+    <link rel="stylesheet" href="css/order_history.css"> <style>
+        /* Styles */
+        .modal-content { max-width: 500px; }
+        .modal-content label { font-weight: 500; margin-bottom: 3px; display: block;}
+        .modal-content input, .modal-content textarea { width: 100%; padding: 8px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; font-family: inherit; font-size: 0.95em; }
+        .modal-content textarea { resize: vertical; min-height: 60px;}
+        .modal-actions .button { flex-grow: 1; }
+        .modal { z-index: 1050; }
+        #loading-state { text-align: center; padding: 40px; font-size: 1.1em; color: #555; }
+    </style>
 
     <script type="module">
         // Firebase Services Import
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
         import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+        import { getFirestore, collection, doc, addDoc, setDoc, deleteDoc, onSnapshot, query, orderBy, Timestamp, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-        // !!!!! अपनी वास्तविक Firebase कॉन्फ़िगरेशन यहाँ डालें !!!!!
+        // --- आपकी सही Firebase कॉन्फ़िगरेशन ---
         const firebaseConfig = {
-          apiKey: "YOUR_API_KEY",
-          authDomain: "YOUR_AUTH_DOMAIN",
-          projectId: "YOUR_PROJECT_ID",
-          storageBucket: "YOUR_STORAGE_BUCKET",
-          messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-          appId: "YOUR_APP_ID"
+          apiKey: "AIzaSyBQj5rQmE77kKKGYixP8y3Hcimz8tiAqzQ",
+          authDomain: "madhav-multyprint.firebaseapp.com",
+          projectId: "madhav-multyprint",
+          storageBucket: "madhav-multyprint.appspot.com",
+          messagingSenderId: "104988349637",
+          appId: "1:104988349637:web:faf045b77c6786a4e70cac"
         };
+        // --- कॉन्फ़िगरेशन समाप्त ---
+
 
         // Firebase App Initialization
         let app;
         let auth;
+        let db;
+
         try {
              if (!window.firebaseAppInitialized) {
                  app = initializeApp(firebaseConfig);
                  window.firebaseAppInitialized = true;
                  window.firebaseApp = app;
-                 console.log("DEBUG PAGE: Firebase initialized.");
+                 console.log("Firebase initialized on this page (suppliers - Promise method).");
              } else {
                  app = window.firebaseApp;
-                 console.log("DEBUG PAGE: Firebase already initialized.");
+                 console.log("Firebase already initialized on this page (suppliers - Promise method).");
              }
              auth = getAuth(app);
+             db = getFirestore(app);
 
-             // ----- Promise-Based Authentication State Check -----
-             const statusDiv = document.getElementById('auth-status');
-             statusDiv.textContent = "Checking Authentication..."; // Initial message
+             // Make services globally available for suppliers.js
+             window.db = db;
+             window.auth = auth;
+             window.collection = collection;
+             window.doc = doc;
+             window.addDoc = addDoc;
+             window.setDoc = setDoc;
+             window.deleteDoc = deleteDoc;
+             window.onSnapshot = onSnapshot;
+             window.query = query;
+             window.orderBy = orderBy;
+             window.Timestamp = Timestamp;
+             window.serverTimestamp = serverTimestamp;
+
+             // --- Promise-Based Authentication State Check ---
+             const mainPageContent = document.getElementById('main-supplier-content');
+             const loadingState = document.getElementById('loading-state');
+
+             if (mainPageContent) mainPageContent.style.display = 'none';
+             if (loadingState) loadingState.style.display = 'block';
 
              function checkAuthState() {
-                 console.log("DEBUG PAGE: checkAuthState: Promise created.");
+                 console.log("checkAuthState: Promise created. Waiting for onAuthStateChanged...");
                  return new Promise((resolve, reject) => {
                      const timer = setTimeout(() => { reject(new Error("Auth check timed out.")); }, 10000);
                      const unsubscribe = onAuthStateChanged(auth, (user) => {
                          clearTimeout(timer);
                          unsubscribe();
-                         console.log("DEBUG PAGE: checkAuthState: onAuthStateChanged fired. User:", user ? user.uid : null);
+                         console.log("checkAuthState: onAuthStateChanged fired. User:", user ? user.uid : null);
                          resolve(user);
                      }, (error) => { clearTimeout(timer); reject(error); });
                  });
              }
 
+             console.log("Auth Check Strategy: Using Promise to wait for auth state...");
              checkAuthState().then(user => {
+                 if (loadingState) loadingState.style.display = 'none'; // Hide loading state
+
                  if (user) {
-                     // ----- USER IS LOGGED IN -----
-                     console.log(`DEBUG PAGE: User confirmed LOGGED IN. UID: ${user.uid}.`);
-                     statusDiv.textContent = `Authentication Success! User ID: ${user.uid}. You should NOT be redirected.`;
-                     statusDiv.style.color = 'green';
-                     // *** यहाँ हम जानबूझकर initializeSuppliersPage() को कॉल नहीं कर रहे हैं ***
+                     // USER IS LOGGED IN
+                     console.log(`User confirmed logged in via Promise. UID: ${user.uid}. Initializing page.`);
+                     if (mainPageContent) {
+                         console.log("Showing main content area.");
+                         mainPageContent.style.display = 'block'; // Show content
+                     } else {
+                          console.error("CRITICAL: main-supplier-content element not found!");
+                     }
+                     // Initialize JS
+                     console.log("Attempting to call initializeSuppliersPage...");
+                     if (typeof initializeSuppliersPage === 'function') {
+                         initializeSuppliersPage();
+                         console.log("initializeSuppliersPage function called successfully.");
+                     } else {
+                         console.error("CRITICAL: initializeSuppliersPage function not found! Check js/suppliers.js");
+                         alert("Error: Could not initialize page functionality.");
+                     }
                  } else {
-                     // ----- USER IS NOT LOGGED IN -----
-                     console.log("DEBUG PAGE: User confirmed NOT logged in. Redirecting to login...");
-                     statusDiv.textContent = "Authentication Failed. Redirecting to login...";
-                     statusDiv.style.color = 'red';
-                     // Redirect logic
+                     // USER IS NOT LOGGED IN
                      const currentPage = window.location.pathname.split('/').pop() || 'index.html';
+                     console.log(`User confirmed NOT logged in via Promise on ${currentPage}. Redirecting...`);
                      if (currentPage.toLowerCase() !== 'login.html') {
                         const originalUrl = encodeURIComponent(window.location.pathname + window.location.search);
+                        console.log(`Redirecting to login.html?redirectUrl=${originalUrl}`);
                         // !!!!! login.html का सही पाथ यहाँ डालें !!!!!
                         window.location.replace(`login.html?redirectUrl=${originalUrl}`);
                      }
                  }
              }).catch(error => {
-                  console.error("DEBUG PAGE: Failed to check auth state:", error);
-                  alert("DEBUG PAGE: Error checking auth state: " + error.message);
-                  statusDiv.textContent = `Authentication Check Error: ${error.message}`;
-                  statusDiv.style.color = 'red';
+                  console.error("Failed to check auth state due to error:", error);
+                  alert("Error checking user login status: " + error.message);
+                  if (loadingState) loadingState.style.display = 'none';
+                  document.body.innerHTML = `<p style="color:red; text-align:center; padding: 20px;">Error checking login status: ${error.message}. Please refresh.</p>`;
              });
-             // ----- End of Promise-Based Auth Check -----
+             // --- End of Promise-Based Auth Check ---
 
         } catch(e) {
-            console.error("DEBUG PAGE: CRITICAL Firebase setup error:", e);
-            alert("DEBUG PAGE: Critical setup error. Check console.");
-            document.body.innerHTML = `<p style="color:red;">Critical setup error: ${e.message}</p>`;
+            console.error("CRITICAL Firebase setup error in suppliers.html:", e);
+            alert("Critical error during application setup. See console.");
+            document.body.innerHTML = '<p style="color:red; text-align:center; padding: 20px;">Critical error loading application setup. Check console for details.</p>';
         }
     </script>
     </head>
 <body>
-    <h1>Supplier Page - Authentication Debug</h1>
-    <div id="auth-status" style="margin-top: 20px; font-weight: bold;">
-        Initializing...
+
+    <div id="loading-state" style="display: block;"> <p style="text-align: center; padding: 40px; font-size: 1.1em; color: #555;">
+            <i class="fas fa-spinner fa-spin"></i> Loading Authentication...
+        </p>
     </div>
-    <p>If you see a success message above, the authentication check on this specific page is working. The problem might be with the full page content or suppliers.js.</p>
-    <p>If you are redirected to login, the authentication check itself is failing on this page load.</p>
+
+    <div id="main-supplier-content" style="display: none;"> <div class="container">
+            <div class="header">
+                <i class="fas fa-users header-icon"></i>
+                <h1>Supplier Management</h1>
+            </div>
+
+            <div class="breadcrumb">
+                 <a href="index.html">Home</a> / <span>Suppliers</span>
+            </div>
+
+            <div class="actions-bar">
+                 <button id="addNewSupplierBtn" class="button add-new-button"><i class="fas fa-plus"></i> Add New Supplier</button>
+            </div>
+
+             <div class="filter-bar">
+                <div class="filter-group" style="flex-grow: 2;">
+                    <label for="filterSearch"><i class="fas fa-search"></i> Search:</label>
+                    <input type="text" id="filterSearch" placeholder="Name, Contact, Phone, Email...">
+                </div>
+                 <div class="filter-group">
+                     <button id="clearFiltersBtn" class="button clear-filters-button" title="Clear search"><i class="fas fa-times"></i> Clear Search</button>
+                </div>
+            </div>
+
+            <div class="table-container">
+                <table id="supplierTable">
+                     <thead>
+                        <tr>
+                            <th>Supplier Name</th>
+                            <th>Contact Person</th>
+                            <th>Phone</th>
+                            <th>Email</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                     <tbody id="supplierTableBody">
+                        </tbody>
+                </table>
+            </div>
+             <div class="order-summary-counts">
+                 <span>Total Suppliers: <strong id="total-suppliers">0</strong></span>
+            </div>
+
+        </div> <div id="supplierModal" class="modal">
+             <div class="modal-content">
+                <span class="close-btn" id="closeSupplierModal" title="Close">&times;</span>
+                <h2 id="modalTitle">Add New Supplier</h2>
+                <form id="supplierForm">
+                    <input type="hidden" id="supplierId">
+                    <div>
+                        <label for="supplierName">Supplier Name:</label>
+                        <input type="text" id="supplierName" required>
+                    </div>
+                    <div>
+                        <label for="contactPerson">Contact Person:</label>
+                        <input type="text" id="contactPerson">
+                    </div>
+                     <div>
+                        <label for="phone">Phone:</label>
+                        <input type="tel" id="phone">
+                    </div>
+                     <div>
+                        <label for="email">Email:</label>
+                        <input type="email" id="email">
+                    </div>
+                    <div>
+                        <label for="address">Address:</label>
+                        <textarea id="address"></textarea>
+                    </div>
+                    <div class="modal-actions" style="margin-top: 15px;">
+                        <button type="submit" id="saveSupplierBtn" class="button add-new-button"><i class="fas fa-save"></i> Save Supplier</button>
+                        <button type="button" id="cancelBtn" class="button clear-filters-button" style="background-color: #6c757d;"><i class="fas fa-times"></i> Cancel</button>
+                    </div>
+                     <p id="modalError" style="color: red; margin-top: 10px; text-align: center;"></p>
+                </form>
+            </div>
+        </div>
+
+    </div> <script src="js/suppliers.js" type="module"></script>
 
 </body>
 </html>
