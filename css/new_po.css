@@ -1,0 +1,266 @@
+/* css/new_po.css - Styles for the New/Edit Purchase Order page */
+
+/* Basic body and container (can inherit from index.css or main css) */
+body {
+    font-family: 'Poppins', sans-serif;
+    background-color: #f4f6f8;
+    margin: 0;
+    color: #343a40;
+}
+
+.container {
+    /* Assuming similar container structure as other pages */
+}
+
+.main-content {
+    padding: 25px;
+    max-width: 1100px; /* Adjust max-width as needed for the form */
+    margin: 20px auto;
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+    box-sizing: border-box;
+}
+
+/* Page Header and Breadcrumb (Can inherit or copy from supplier_management.css) */
+.page-header {
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #dee2e6;
+}
+.page-header h1 { margin: 0; font-size: 1.6em; color: var(--primary-color, #0056b3); }
+.page-header h1 i { margin-right: 10px; }
+
+.breadcrumb { font-size: 0.9em; color: #6c757d; margin-bottom: 25px; }
+.breadcrumb a { color: var(--primary-color, #0056b3); text-decoration: none; }
+.breadcrumb a:hover { text-decoration: underline; }
+.breadcrumb span { margin-left: 5px; }
+.breadcrumb span::before { content: "/"; margin-right: 5px; color: #6c757d; }
+
+/* Form Sections */
+#poForm .form-section {
+    margin-bottom: 30px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid #eee;
+}
+#poForm .form-section:last-of-type {
+    border-bottom: none;
+    margin-bottom: 0;
+    padding-bottom: 0;
+}
+#poForm .form-section h2 {
+    font-size: 1.2em;
+    color: var(--secondary-color, #2c3e50);
+    margin-top: 0;
+    margin-bottom: 15px;
+    padding-bottom: 5px;
+    /* border-bottom: 1px dashed #ccc; */ /* Optional separator for section title */
+}
+
+/* Form Row for inline elements */
+.form-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px; /* Adjust gap between items in a row */
+}
+
+/* General Form Group Styling */
+.form-group {
+    margin-bottom: 15px;
+    flex: 1; /* Allow groups to grow */
+    min-width: 200px; /* Minimum width for form groups */
+    position: relative; /* Needed for suggestions list */
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 6px;
+    font-weight: 600;
+    font-size: 0.9em;
+    color: #495057;
+}
+.form-group label .required { color: #dc3545; font-weight: bold; } /* Style for required asterisk */
+
+/* General Input Styling */
+.form-input,
+#poForm input[type="text"],
+#poForm input[type="date"],
+#poForm input[type="number"],
+#poForm select,
+#poForm textarea {
+    width: 100%;
+    padding: 9px 12px;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    font-size: 0.95em;
+    box-sizing: border-box;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+#poForm input[type="text"]:focus,
+#poForm input[type="date"]:focus,
+#poForm input[type="number"]:focus,
+#poForm select:focus,
+#poForm textarea:focus {
+    border-color: var(--primary-color, #0056b3);
+    outline: 0;
+    box-shadow: 0 0 0 0.15rem rgba(0, 86, 179, 0.25); /* Adjusted shadow */
+}
+#poForm textarea { resize: vertical; min-height: 60px; }
+
+/* Supplier Search Specific */
+.supplier-search-group {
+    min-width: 300px; /* Give more space to supplier search */
+}
+/* Suggestions List Styles (Copy/adapt from index.css) */
+.suggestions-list {
+    display: none; /* Hidden by default */
+    position: absolute;
+    background-color: white;
+    border: 1px solid #ccc;
+    border-top: none;
+    max-height: 150px;
+    overflow-y: auto;
+    width: calc(100% - 2px); /* Match input width */
+    box-sizing: border-box;
+    z-index: 100; /* Ensure it's above other elements */
+    border-radius: 0 0 4px 4px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+.suggestions-list div {
+    padding: 8px 12px;
+    cursor: pointer;
+    font-size: 0.9em;
+}
+.suggestions-list div:hover {
+    background-color: #f0f0f0;
+}
+.suggestions-list div.no-suggestions { color: #888; cursor: default; }
+
+/* Link-style button */
+.link-button {
+    background: none;
+    border: none;
+    color: var(--primary-color, #0056b3);
+    cursor: pointer;
+    padding: 0;
+    font-size: 0.85em;
+    text-decoration: underline;
+}
+.link-button:hover {
+    color: #003f7f;
+}
+
+/* Items Table Styling */
+.po-items-table {
+    margin-bottom: 15px;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    overflow-x: auto; /* Add horizontal scroll if needed */
+}
+#poItemsTable { width: 100%; border-collapse: collapse; }
+#poItemsTable thead th {
+    background-color: #f8f9fa;
+    padding: 10px 8px; /* Slightly reduced padding */
+    font-size: 0.85em;
+    text-align: left;
+    border-bottom: 2px solid #dee2e6;
+    white-space: nowrap;
+}
+#poItemsTable tbody td {
+    padding: 5px 8px; /* Reduced padding */
+    border-bottom: 1px solid #eee;
+    vertical-align: top; /* Align content to top */
+}
+#poItemsTable tbody tr:last-child td {
+    border-bottom: none;
+}
+
+/* Input fields within table cells */
+#poItemsTable .form-input {
+    padding: 6px 8px; /* Smaller padding for table inputs */
+    font-size: 0.9em;
+    margin: 0; /* Remove margin if any */
+}
+/* Specific input adjustments in table */
+#poItemsTable .dimension-input { max-width: 80px; } /* Limit width of W/H inputs */
+#poItemsTable .quantity-input { max-width: 70px; }
+#poItemsTable .rate-input { max-width: 100px; }
+#poItemsTable .item-amount { font-weight: 500; display: block; padding-top: 8px; }
+
+/* Hide/Show Columns based on Unit Type (JS will add/remove 'hidden-col' class) */
+.hidden-col { display: none; }
+
+/* Add Item Button */
+.add-item-button {
+    background-color: var(--info-color, #17a2b8);
+    color: white;
+    margin-top: 10px;
+    padding: 7px 12px;
+}
+.add-item-button:hover { background-color: #117a8b; }
+
+/* Delete Item Button */
+.delete-item-btn {
+    background-color: #f8d7da; /* Light red background */
+    color: #721c24; /* Dark red text */
+    border: 1px solid #f5c6cb;
+    padding: 4px 8px;
+    border-radius: 3px;
+    cursor: pointer;
+    line-height: 1;
+    font-size: 0.9em;
+}
+.delete-item-btn:hover { background-color: #f5c6cb; color: #721c24; }
+.delete-item-btn i { color: #dc3545; } /* Make icon red */
+
+
+/* Calculation Preview Area */
+.calculation-preview {
+    font-size: 0.85em;
+    color: #666;
+    background-color: #f9f9f9;
+    border: 1px dashed #ddd;
+    padding: 8px;
+    margin-top: 10px;
+    min-height: 20px; /* Ensure it has some height even when empty */
+    border-radius: 4px;
+}
+
+/* PO Summary Section */
+.po-summary .total-amount-display {
+    font-size: 1.2em;
+    font-weight: bold;
+    text-align: right;
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 1px solid #eee;
+    color: var(--success-color, #28a745);
+}
+.po-summary .total-amount-display span {
+    min-width: 80px;
+    display: inline-block;
+}
+
+/* Form Actions */
+.form-actions {
+    margin-top: 30px;
+    padding-top: 20px;
+    border-top: 1px solid #eee;
+    display: flex;
+    justify-content: flex-end; /* Align buttons to the right */
+    gap: 10px;
+}
+/* Use button styles defined earlier or add specific ones */
+.form-actions .save-button { background-color: var(--success-color, #28a745); }
+.form-actions .save-button:hover { background-color: #218838; }
+
+.error-message { color: red; font-size: 0.9em; margin-top: 15px; text-align: center; }
+
+/* Responsive adjustments if needed */
+@media (max-width: 768px) {
+    .main-content { padding: 15px; }
+    .form-row { flex-direction: column; gap: 0; } /* Stack elements vertically on small screens */
+    .form-group { min-width: 100%; } /* Make form groups full width */
+    .form-actions { justify-content: center; }
+    /* Adjust table font size or hide columns if necessary */
+}
