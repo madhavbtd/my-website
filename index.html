@@ -19,35 +19,38 @@
         import { getFirestore, collection, onSnapshot, query, where, getDocs, limit } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js"; // Added getDocs, limit
 
         // **** Your Firebase Configuration ****
-         // !!!!! IMPORTANT: REPLACE PLACEHOLDERS BELOW WITH YOUR ACTUAL FIREBASE CONFIG !!!!!
+         // Using details from your screenshots and standard patterns
          const firebaseConfig = {
-           apiKey: "YOUR_API_KEY",             // <-- अपनी वास्तविक API Key यहाँ डालें
-           authDomain: "YOUR_AUTH_DOMAIN",       // <-- अपना वास्तविक Auth Domain यहाँ डालें
-           projectId: "YOUR_PROJECT_ID",         // <-- अपना वास्तविक Project ID यहाँ डालें
-           storageBucket: "YOUR_STORAGE_BUCKET",   // <-- अपना वास्तविक Storage Bucket यहाँ डालें
-           messagingSenderId: "YOUR_SENDER_ID",    // <-- अपना वास्तविक Sender ID यहाँ डालें
-           appId: "YOUR_APP_ID"                // <-- अपनी वास्तविक App ID यहाँ डालें
+           apiKey: "AIzaSyBQj5rQmE77kKKGYixP8y3Hcimz8tiAqzQ", // From screenshot
+           authDomain: "madhav-multyprint.firebaseapp.com",   // Assumed from projectId
+           projectId: "madhav-multyprint",                // From screenshot
+           storageBucket: "madhav-multyprint.appspot.com",   // Assumed from projectId
+           messagingSenderId: "104988349637",             // From screenshot (Project number)
+           appId: "1:104988349637:web:faf045b77c6786a4e70cac" // From your previous file (assuming it's correct)
          };
-         // !!!!! END OF CONFIGURATION SECTION !!!!!
+         // !!!!! PLEASE DOUBLE-CHECK THESE VALUES WITH YOUR FIREBASE CONSOLE !!!!!
 
         let app;
         let auth;
         let db;
 
         try {
+             console.log("index.html: Attempting Firebase initialization..."); // Log added
              // Initialize Firebase App (only once per page load)
              if (!window.firebaseAppInitialized) {
-                 // Use your actual config object here
                  app = initializeApp(firebaseConfig); // Uses the config object from above
                  window.firebaseAppInitialized = true;
                  window.firebaseApp = app;
-                 console.log("Firebase initialized on this page (index).");
+                 console.log("index.html: Firebase initialized successfully."); // Log added
              } else {
                  app = window.firebaseApp;
-                 console.log("Firebase already initialized on this page (index).");
+                 console.log("index.html: Firebase already initialized."); // Log added
              }
+
+             console.log("index.html: Getting Auth and Firestore instances..."); // Log added
              auth = getAuth(app);
              db = getFirestore(app);
+             console.log("index.html: Auth and Firestore instances obtained."); // Log added
 
              // --- Make functions globally available for dashboard.js ---
              window.db = db;
@@ -58,72 +61,94 @@
              window.where = where;
              window.getDocs = getDocs; // Expose getDocs globally
              window.limit = limit;     // Expose limit globally
+             console.log("index.html: Firebase functions made global."); // Log added
              // --- End Global Exposure ---
 
 
              // ---->> Authentication State Check (Core Security) <<----
+             console.log("index.html: Setting up onAuthStateChanged listener..."); // Log added
              onAuthStateChanged(auth, (user) => {
+                 console.log("index.html: onAuthStateChanged triggered."); // Log added
                  const currentPage = window.location.pathname.split('/').pop() || 'index.html';
+                 console.log("index.html: Current page:", currentPage); // Log added
 
                  if (user) {
-                     console.log(`User is logged in on ${currentPage}:`, user.uid);
+                     console.log("index.html: User FOUND in onAuthStateChanged. UID:", user.uid, "Email:", user.email); // Log added
+
                      // Role Verification Block
-                     user.getIdTokenResult(true)
+                     console.log("index.html: Getting ID token result for role check..."); // Log added
+                     user.getIdTokenResult(true) // Force refresh token
                          .then((idTokenResult) => {
                              const userRole = idTokenResult.claims.role;
-                             console.log('User Role:', userRole);
+                             console.log('index.html: User Role:', userRole); // Log added
                              window.currentUserRole = userRole; // Store globally
                              // Update welcome message
                              const welcomeSpan = document.getElementById('welcome-user');
                              if (welcomeSpan) {
                                  welcomeSpan.textContent = `Welcome ${user.email || 'User'} (${userRole || 'Standard'})`;
+                                 console.log("index.html: Welcome message updated."); // Log added
+                             } else {
+                                 console.warn("index.html: Welcome span not found."); // Log added
                              }
                          })
                          .catch((error) => {
-                             console.error('Error getting user claims:', error);
+                             console.error('index.html: Error getting user claims:', error); // Log added
                              window.currentUserRole = undefined;
                              const welcomeSpan = document.getElementById('welcome-user');
                               if (welcomeSpan) {
                                  welcomeSpan.textContent = `Welcome ${user.email || 'User'} (Role Error)`;
                               }
                          });
+                     // --- End Role Check ---
+
                  } else {
+                     console.log("index.html: User NOT FOUND in onAuthStateChanged."); // Log added
                      // User is not logged in. Redirect.
-                     console.log(`User is not logged in on ${currentPage}. Redirecting to login...`);
                      if (currentPage.toLowerCase() !== 'login.html') {
+                        console.log(`index.html: Not on login page, redirecting to login.html...`); // Log added
                         window.location.replace('login.html');
+                     } else {
+                        console.log("index.html: Already on login page, no redirect needed."); // Log added
                      }
                  }
              });
+             console.log("index.html: onAuthStateChanged listener attached."); // Log added
              // ---->> Auth check end <<----
 
              // --- Logout Link Logic ---
-             // Ensure this runs after the DOM is loaded or use defer on script tag
+             // Ensure this runs after the DOM is loaded
              document.addEventListener('DOMContentLoaded', () => {
+                 console.log("index.html: DOMContentLoaded event fired."); // Log added
                  const logoutLink = document.getElementById('logout-link');
                  if (logoutLink) {
+                    console.log("index.html: Logout link found, adding listener."); // Log added
                     logoutLink.addEventListener('click', (e) => {
                         e.preventDefault();
+                        console.log("index.html: Logout link clicked."); // Log added
                         if (confirm("Are you sure you want to logout?")) {
+                            console.log("index.html: Signing out user..."); // Log added
                             signOut(auth).then(() => {
-                                console.log('User signed out.');
+                                console.log('index.html: User signed out successfully.'); // Log added
                                 window.location.href = 'login.html';
                             }).catch((error) => {
-                                console.error('Sign out error:', error);
+                                console.error('index.html: Sign out error:', error); // Log added
                                 alert("Logout failed.");
                             });
+                        } else {
+                            console.log("index.html: Logout cancelled by user."); // Log added
                         }
                     });
                  } else {
-                     console.warn("Logout link with ID 'logout-link' not found.");
+                     console.warn("index.html: Logout link with ID 'logout-link' not found."); // Log added
                  }
              });
              // --- Logout logic end ---
 
         } catch(e) {
-            console.error("Firebase setup / Auth check error:", e);
-            alert("Error loading application. Please try again later.");
+            console.error("index.html: MAJOR ERROR in Firebase setup block:", e); // Log added
+            alert("Critical Error loading application. Please check console.");
         }
+        console.log("index.html: Module script finished execution."); // Log added
     </script>
     </head>
 
