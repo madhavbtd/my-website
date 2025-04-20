@@ -56,7 +56,7 @@ body {
 
 /* Form Layout with Rows */
 .form-row { display: flex; flex-wrap: wrap; gap: 15px 20px; margin-bottom: 15px; }
-.form-group { display: flex; flex-direction: column; flex: 1; min-width: 150px; position: relative; }
+.form-group { display: flex; flex-direction: column; flex: 1; min-width: 150px; position: relative; /* Keep relative for suggestion box */ }
 .form-group:last-child { margin-bottom: 0; }
 .form-group-half { flex: 1 1 calc(50% - 10px); }
 .form-group label { font-size: 0.85em; text-align: left; padding-right: 0; padding-top: 0; margin-bottom: 5px; color: #404040; font-weight: 500; }
@@ -99,7 +99,7 @@ body {
 .product-input-area { padding: 10px 0px 15px 0px; margin-top: 0; margin-bottom: 10px; }
 .product-entry-group { display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-end; }
 .product-entry-group .form-group { margin-bottom: 0; }
-.product-name-group { flex: 1 1 300px; position: relative; }
+.product-name-group { flex: 1 1 300px; position: relative; } /* Keep relative */
 .product-qty-group { flex: 0 0 85px; }
 .product-name-group label, .product-qty-group label { font-weight: 600; font-size: 0.85em; margin-bottom: 5px; }
 #quantity_input { max-width: 85px; text-align: center; }
@@ -115,12 +115,36 @@ body {
 .product-list-item .delete-product-btn:hover { color: #a71d2a; }
 .empty-list-message { color: #6c757d; font-style: italic; text-align: center; padding: 10px 0; font-size: 0.9em; }
 
-/* Autocomplete Suggestions */
-.suggestions-box ul { top: 100%; left: 0; width: 100%; position: absolute; list-style: none; margin: 2px 0 0 0; padding: 0; border: 1px solid #ced4da; background-color: white; max-height: 160px; overflow-y: auto; z-index: 1000; border-radius: 0 0 4px 4px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+/* --- Autocomplete Suggestions Styling Update --- */
+.suggestions-box {
+    position: relative; /* Container for absolute positioned ul */
+    display: none; /* Hide container by default */
+}
+.suggestions-box.active {
+    display: block; /* Show container when JS adds 'active' class */
+}
+.suggestions-box ul {
+    position: absolute; /* Position below the input */
+    top: 100%;
+    left: 0;
+    width: 100%;
+    list-style: none;
+    margin: 2px 0 0 0;
+    padding: 0;
+    border: 1px solid #ced4da;
+    background-color: white;
+    max-height: 160px;
+    overflow-y: auto;
+    z-index: 1000; /* Ensure it's above other elements */
+    border-radius: 0 0 4px 4px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
 .suggestions-box li { padding: 8px 12px; font-size: 0.88em; cursor: pointer; border-bottom: 1px solid #f0f0f0; }
 .suggestions-box li:last-child { border-bottom: none; }
 .suggestions-box li:hover, .suggestions-box li.selected { background-color: #e9ecef; }
 .suggestions-box li strong { font-weight: 600; color: #0056b3; }
+/* --- End Autocomplete Suggestions Styling Update --- */
+
 
 /* Buttons Container */
 .button-container { padding-top: 20px; margin-top: 20px; border-top: 1px solid #e5e5e5; display: flex; justify-content: flex-end; gap: 10px; }
@@ -131,101 +155,26 @@ body {
 .cancel-button { background-color: #6c757d; color: white; }
 .cancel-button:hover { background-color: #5a6268; }
 
-
-/* --- WhatsApp Popup Styling Update --- */
-.popup-overlay {
-    display: none;
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.65); /* Slightly darker overlay */
-    z-index: 1050;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    padding: 15px;
-    box-sizing: border-box;
-    opacity: 0; /* Start hidden for transition */
-    transition: opacity 0.3s ease;
-}
-.popup-overlay.active {
-    display: flex;
-    opacity: 1; /* Fade in */
-}
-.popup-content {
-    background-color: #fff; /* White background */
-    padding: 30px 35px; /* More padding */
-    border-radius: 8px;
-    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.25); /* Stronger shadow */
-    text-align: center;
-    position: relative;
-    max-width: 480px; /* Slightly wider */
-    width: 90%; /* Responsive width */
-    transform: scale(0.95); /* Start slightly small */
-    transition: transform 0.3s ease;
-}
-.popup-overlay.active .popup-content {
-    transform: scale(1); /* Scale up */
-}
-.popup-close { /* Kept standard position */
-    position: absolute; top: 10px; right: 15px;
-    font-size: 26px; color: #aaa; background: none; border: none; cursor: pointer; line-height: 1; z-index: 1051;
-}
+/* WhatsApp Popup Styling Update */
+.popup-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.65); z-index: 1050; display: flex; justify-content: center; align-items: center; padding: 15px; box-sizing: border-box; opacity: 0; transition: opacity 0.3s ease; }
+.popup-overlay.active { display: flex; opacity: 1; }
+.popup-content { background-color: #fff; padding: 30px 35px; border-radius: 8px; box-shadow: 0 5px 20px rgba(0, 0, 0, 0.25); text-align: center; position: relative; max-width: 480px; width: 90%; transform: scale(0.95); transition: transform 0.3s ease; }
+.popup-overlay.active .popup-content { transform: scale(1); }
+.popup-close { position: absolute; top: 10px; right: 15px; font-size: 26px; color: #aaa; background: none; border: none; cursor: pointer; line-height: 1; z-index: 1051; }
 .popup-close:hover { color: #333; }
-.popup-content h4 { /* Title style */
-    margin-top: 0;
-    margin-bottom: 15px;
-    color: #111; /* Darker title */
-    font-size: 1.4em;
-    font-weight: 600;
-}
-.popup-content p { /* Paragraph style */
-    margin-bottom: 20px;
-    color: #444; /* Good contrast */
-    font-size: 1em;
-}
-.message-preview { /* WhatsApp bubble style */
-    margin-top: 15px;
-    margin-bottom: 25px;
-    font-size: 0.9em;
-    background-color: #e1ffc7; /* Light green bubble */
-    padding: 15px;
-    border-radius: 8px; /* Bubble radius */
-    text-align: left;
-    border: 1px solid #c5eab2; /* Matching border */
-    white-space: pre-wrap;
-    word-wrap: break-word;
-    max-height: 150px;
-    overflow-y: auto;
-    color: #333;
-}
-.whatsapp-send-btn { /* WhatsApp button style */
-    background-color: #128C7E; /* WhatsApp dark green */
-    color: #fff;
-    text-decoration: none;
-    padding: 12px 25px; /* Larger padding */
-    border-radius: 5px;
-    display: inline-flex;
-    align-items: center;
-    gap: 10px; /* More gap */
-    font-weight: 700;
-    font-size: 1em;
-    transition: background-color .2s ease, transform 0.1s ease;
-    border: none;
-    cursor: pointer;
-}
-.whatsapp-send-btn:hover { background-color: #075E54; transform: scale(1.03); } /* Darker hover + slight scale */
+.popup-content h4 { margin-top: 0; margin-bottom: 15px; color: #111; font-size: 1.4em; font-weight: 600; }
+.popup-content p { margin-bottom: 20px; color: #444; font-size: 1em; }
+.message-preview { margin-top: 15px; margin-bottom: 25px; font-size: 0.9em; background-color: #e1ffc7; padding: 15px; border-radius: 8px; text-align: left; border: 1px solid #c5eab2; white-space: pre-wrap; word-wrap: break-word; max-height: 150px; overflow-y: auto; color: #333; }
+.whatsapp-send-btn { background-color: #128C7E; color: #fff; text-decoration: none; padding: 12px 25px; border-radius: 5px; display: inline-flex; align-items: center; gap: 10px; font-weight: 700; font-size: 1em; transition: background-color .2s ease, transform 0.1s ease; border: none; cursor: pointer; }
+.whatsapp-send-btn:hover { background-color: #075E54; transform: scale(1.03); }
 .whatsapp-send-btn i { font-size: 1.1em; }
-/* --- End WhatsApp Popup Styling Update --- */
 
 
-/* Responsive Adjustments */
+/* Responsive Adjustments Refined */
 @media (max-width: 767px) {
     .container { max-width: 95%; padding: 15px; }
     .header { margin: -15px -15px 20px -15px; font-size: 1.1em; }
-    .form-layout-columns { /* Stacks automatically */ }
+    /* Columns stack automatically */
     .form-row { flex-direction: column; gap: 15px; margin-bottom: 15px; }
     .form-group-half { flex-basis: auto; }
     .priority-group { max-width: none; }
@@ -234,7 +183,7 @@ body {
     .save-button, .cancel-button { width: 100%; max-width: 200px; justify-content: center;}
     .form-section-card { padding: 15px; }
     #order-status-group { grid-template-columns: repeat(2, 1fr); }
-    .popup-content { padding: 25px 20px; } /* Adjust popup padding */
+    .popup-content { padding: 25px 20px; }
 }
 
 @media (max-width: 575px) {
