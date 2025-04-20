@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Purchase Order History</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" integrity="sha512-9usAa10IRO0HhonpyAIVpjrylPvoDwiPUiKdWk5t3PyolY1cOd4DSE0Ga+ri4AuTroPR5aQvXU9xC6qOPnzFeg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+    <link rel="stylesheet" href="css/order_history.css"> <script type="module">
+        // Import Firebase services
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+        // Import Firestore services needed by po_history.js
+        import { getFirestore, collection, doc, deleteDoc, updateDoc, onSnapshot, query, orderBy, Timestamp, arrayUnion } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+        // **** Your Firebase Configuration ****
+        const firebaseConfig = {
+          apiKey: "YOUR_API_KEY", // **<<< अपना API Key यहाँ डालें**
+          authDomain: "YOUR_AUTH_DOMAIN", // **<<< अपना Auth Domain यहाँ डालें**
+          projectId: "YOUR_PROJECT_ID", // **<<< अपना Project ID यहाँ डालें**
+          storageBucket: "YOUR_STORAGE_BUCKET", // **<<< अपना Storage Bucket यहाँ डालें**
+          messagingSenderId: "YOUR_MESSAGING_SENDER_ID", // **<<< अपना Sender ID यहाँ डालें**
+          appId: "YOUR_APP_ID" // **<<< अपना App ID यहाँ डालें**
+        };
+
+        let app;
+        let auth;
+        let db;
+
+        try {
+             // Initialize Firebase App
+             if (!window.firebaseAppInitialized) {
+                 app = initializeApp(firebaseConfig);
+                 window.firebaseAppInitialized = true;
+                 window.firebaseApp = app;
+                 console.log("Firebase initialized on this page (po_history).");
+             } else {
+                 app = window.firebaseApp;
+                 console.log("Firebase already initialized on this page (po_history).");
+             }
+             auth = getAuth(app);
+             db = getFirestore(app);
+             window.db = db;
+             window.auth = auth;
+
+             // Make Firestore functions globally available for po_history.js
+             window.collection = collection;
+             window.doc = doc;
+             window.deleteDoc = deleteDoc;
+             window.updateDoc = updateDoc;
+             window.onSnapshot = onSnapshot;
+             window.query = query;
+             window.orderBy = orderBy;
+             window.Timestamp = Timestamp;
+             window.arrayUnion = arrayUnion; // For status history if needed
+
+             // ---->> Authentication State Check <<----
+             onAuthStateChanged(auth, (user) => {
+                 const currentPage = window.location.pathname.split('/').pop() || 'index.html';
+                 if (!user) {
+                     console.log(`User is not logged in on ${currentPage}. Redirecting to login...`);
+                     if (currentPage.toLowerCase() !== 'login.html') {
+                        window.location.replace('login.html'); // **<<< login.html का सही पाथ दें**
+                     }
+                 } else {
+                      console.log(`User is logged in on ${currentPage}:`, user.uid);
+                      // Load POs only after user is confirmed logged in
+                      if (typeof initializePOHistoryPage === 'function') {
+                          initializePOHistoryPage();
+                      }
+                 }
+             });
+             // ---->> Auth check end <<----
+
+        } catch(e) {
+            console.error("Firebase setup / Auth check error:", e);
+            alert("Error loading application. Please try again later.");
+        }
+    </script>
+     <style>
+        /* Add specific styles for PO page if needed */
+        .modal-content { max-width: 750px; } /* Wider modal for product details */
+        #modalProductList ul { padding-left: 0; list-style: none; }
+        #modalProductList li { border-bottom: 1px dotted #eee; padding-bottom: 8px; margin-bottom: 8px; }
+        #modalProductList li:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+        .product-line-item strong { font-weight: 600; }
+        .product-details { font-size: 0.9em; color: #555; padding-left: 15px; margin-top: 4px; display: block; }
+        .flex-details span { margin-right: 10px; }
+        .modal-section:has(#modalProductList) { background-color: #f8f9fa; border: 1px solid #eee; padding: 15px; border-radius: 4px;}
+
+        /* Status Badge colors for PO */
+        .status-badge.status-draft { background-color: #6c757d; }
+        .status-badge.status-sent { background-color: #0dcaf0; color: #333; }
+        .status-badge.status-acknowledged { background-color: #ffc107; color: #333; }
+        .status-badge.status-in-progress { background-color: #007bff; }
+        .status-badge.status-completed { background-color: #28a745; }
+        .status-badge.status-cancelled { background-color: #dc3545; }
+
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <i class="fas fa-file-invoice header-icon"></i>
+            <h1>Purchase Order History</h1>
+        </div>
+
+        <div class="breadcrumb">
+            <a href="index.html">Home</a> / <span>PO History</span> </div>
+
+        <div class="actions-bar">
+             <a href="new_po.html" class="button add-new-button"><i class="fas fa-plus"></i> Create New PO</a>
+        </div>
+
+         <div class="filter-bar">
+            <div class="filter-group">
+                <label for="filterDate"><i class="fas fa-calendar-alt"></i> PO Date:</label>
+                <input type="date" id="filterDate">
+            </div>
+            <div class="filter-group">
+                <label for="filterSearch"><i class="fas fa-search"></i> Search:</label>
+                <input type="text" id="filterSearch" placeholder="PO No, Supplier...">
+            </div>
+            <div class="filter-group">
+                <label for="filterStatus"><i class="fas fa-flag"></i> Status:</label>
+                <select id="filterStatus">
+                    <option value="">All Statuses</option>
+                    <option value="Draft">Draft</option>
+                    <option value="Sent">Sent</option>
+                    <option value="Acknowledged">Acknowledged</option>
+                    <option value="In Progress">In Progress</option>
+                    <option value="Completed">Completed</option>
+                    <option value="Cancelled">Cancelled</option>
+                 </select>
+            </div>
+              <div class="filter-group filter-sort">
+                <label for="sort-pos"><i class="fas fa-sort"></i> Sort by:</label>
+                <select id="sort-pos">
+                    <option value="createdAt_desc">Newest First (Created)</option>
+                    <option value="createdAt_asc">Oldest First (Created)</option>
+                    <option value="orderDate_desc">PO Date (Newest)</option>
+                    <option value="orderDate_asc">PO Date (Oldest)</option>
+                    <option value="supplierName_asc">Supplier Name (A-Z)</option>
+                    <option value="supplierName_desc">Supplier Name (Z-A)</option>
+                 </select>
+            </div>
+            <div class="filter-group">
+                 <button id="clearFiltersBtn" class="button clear-filters-button" title="Clear all filters"><i class="fas fa-times"></i> Clear Filters</button>
+            </div>
+        </div>
+
+        <div class="table-container">
+            <table id="poTable">
+                 <thead>
+                    <tr>
+                        <th>PO Number</th>
+                        <th>Supplier Name</th>
+                        <th>PO Date</th>
+                        <th>Status</th>
+                        <th>Products Summary</th> <th>Action</th>
+                    </tr>
+                </thead>
+                 <tbody id="poTableBody">
+                    <tr>
+                        <td colspan="6" id="loadingMessage">Loading purchase orders...</td> </tr>
+                 </tbody>
+            </table>
+        </div>
+
+        </div>
+
+    <div id="poDetailsModal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" id="closePODetailsModal" title="Close">&times;</span>
+            <h2>PO Details & Actions</h2>
+            <input type="hidden" id="modalPOId"> <div class="modal-info">
+                 <p><strong>PO Number:</strong> <span id="modalPONumber"></span></p>
+                 <p><strong>Supplier:</strong> <span id="modalSupplierName"></span></p>
+                 <p><strong>PO Date:</strong> <span id="modalPODate"></span></p>
+                 <p><strong>Current Status:</strong> <span id="modalCurrentStatus" class="status-badge"></span></p>
+            </div>
+
+            <div class="modal-section" id="modalProductSection">
+                <label>Products Ordered:</label>
+                <div id="modalProductList"><p>Loading products...</p></div>
+             </div>
+
+             <div class="modal-section">
+                 <label for="modalPOStatusUpdate">Update Status:</label>
+                 <select id="modalPOStatusUpdate">
+                    <option value="Draft">Draft</option>
+                    <option value="Sent">Sent</option>
+                    <option value="Acknowledged">Acknowledged</option>
+                    <option value="In Progress">In Progress</option>
+                    <option value="Completed">Completed</option>
+                    <option value="Cancelled">Cancelled</option>
+                 </select>
+                 <button id="modalUpdateStatusBtn" class="button update-status-button"><i class="fas fa-sync-alt"></i> Update Status</button>
+            </div>
+
+            <div class="modal-section modal-actions">
+                  <button id="modalEditPOBtn" class="button edit-full-button"><i class="fas fa-edit"></i> Edit Full PO</button>
+                   <button id="modalGeneratePDFBtn" class="button add-new-button" style="background-color: #17a2b8;"><i class="fas fa-file-pdf"></i> Generate PDF</button> <button id="modalDeletePOBtn" class="button delete-button"><i class="fas fa-trash-alt"></i> Delete PO</button>
+             </div>
+               <p id="modalErrorPO" style="color: red; margin-top: 10px; text-align: center;"></p>
+        </div>
+    </div>
+
+    <script src="js/po_history.js" type="module"></script>
+
+</body>
+</html>

@@ -20,12 +20,12 @@
 
         // **** Your Firebase Configuration ****
          const firebaseConfig = {
-           apiKey: "AIzaSyBQj5rQmE77kKKGYixP8y3Hcimz8tiAqzQ", // Your apiKey - Consider securing this
-           authDomain: "madhav-multyprint.firebaseapp.com", // Your authDomain
-           projectId: "madhav-multyprint", // Your projectId
-           storageBucket: "madhav-multyprint.appspot.com", // Your storageBucket
-           messagingSenderId: "104988349637", // Your messagingSenderId
-           appId: "1:104988349637:web:faf045b77c6786a4e70cac" // Your appId
+           apiKey: "AIzaSyBQj5rQmE77kKKGYixP8y3Hcimz8tiAqzQ", // **<<< सुनिश्चित करें कि यह सही है**
+           authDomain: "madhav-multyprint.firebaseapp.com", // **<<< सुनिश्चित करें कि यह सही है**
+           projectId: "madhav-multyprint", // **<<< सुनिश्चित करें कि यह सही है**
+           storageBucket: "madhav-multyprint.appspot.com", // **<<< सुनिश्चित करें कि यह सही है**
+           messagingSenderId: "104988349637", // **<<< सुनिश्चित करें कि यह सही है**
+           appId: "1:104988349637:web:faf045b77c6786a4e70cac" // **<<< सुनिश्चित करें कि यह सही है**
          };
 
         let app;
@@ -65,7 +65,7 @@
                  if (user) {
                      console.log(`User is logged in on ${currentPage}:`, user.uid);
                      // Role Verification Block
-                     user.getIdTokenResult(true)
+                     user.getIdTokenResult(true) // Force refresh claims
                          .then((idTokenResult) => {
                              const userRole = idTokenResult.claims.role;
                              console.log('User Role:', userRole);
@@ -75,6 +75,10 @@
                              if (welcomeSpan) {
                                  welcomeSpan.textContent = `Welcome ${user.email || 'User'} (${userRole || 'Standard'})`;
                              }
+                             // Call dashboard functions only after auth and role check
+                             if (typeof initializeDashboard === 'function') {
+                                initializeDashboard(user); // Pass user if needed
+                             }
                          })
                          .catch((error) => {
                              console.error('Error getting user claims:', error);
@@ -82,6 +86,10 @@
                              const welcomeSpan = document.getElementById('welcome-user');
                               if (welcomeSpan) {
                                  welcomeSpan.textContent = `Welcome ${user.email || 'User'} (Role Error)`;
+                              }
+                              // Still initialize dashboard even if role fails? Decide based on your logic
+                              if (typeof initializeDashboard === 'function') {
+                                initializeDashboard(user);
                               }
                          });
                  } else {
@@ -129,7 +137,7 @@
                 <li><a href="index.html" class="active"><i class="fas fa-tachometer-alt"></i> <span>Dashboard</span></a></li>
                 <li><a href="order_history.html"><i class="fas fa-history"></i> <span>Order History</span></a></li>
                 <li><a href="customer_management.html"><i class="fas fa-users"></i> <span>Customers</span></a></li>
-                <li><a href="#"><i class="fas fa-truck"></i> <span>Suppliers</span></a></li>
+                <li><a href="suppliers.html"><i class="fas fa-truck"></i> <span>Suppliers</span></a></li>
                 <li><a href="#"><i class="fas fa-chart-bar"></i> <span>Report</span></a></li>
                 <li><a href="#"><i class="fas fa-code-branch"></i> <span>Branch Manage</span></a></li>
                 <li><a href="#"><i class="fas fa-cog"></i> <span>Settings</span></a></li>
@@ -144,8 +152,7 @@
                 <span class="welcome-text" id="welcome-user">Welcome...</span>
                 <div class="header-buttons">
                     <a href="customer_management.html?action=add" class="button-base add-customer-btn"><i class="fas fa-user-plus"></i> Add Customer</a>
-                    <a href="#" class="button-base add-supplier-btn"><i class="fas fa-truck"></i> Add Supplier</a>
-                    <a href="new_order.html" class="button-base new-order-btn"><i class="fas fa-plus-circle"></i> New Order</a>
+                    <a href="suppliers.html?action=add" class="button-base add-supplier-btn"><i class="fas fa-truck"></i> Add Supplier</a> <a href="new_order.html" class="button-base new-order-btn"><i class="fas fa-plus-circle"></i> New Order</a>
                 </div>
                 <div class="date-time-container">
                     <span id="currentDateTime">Loading date...</span>
@@ -207,9 +214,10 @@
         </div>
     </div>
 
-    <script src="js/dashboard.js" type="module" defer></script>
+    <script src="js/dashboard.js" type="module"></script>
 
     <script>
+        // यह स्क्रिप्ट ब्लॉक अपरिवर्तित है
         function updateDateTime() {
             const now = new Date();
             const optsDate = { year: 'numeric', month: 'long', day: 'numeric' };
@@ -225,17 +233,20 @@
         function setActiveLink() {
             try {
                 const path = window.location.pathname;
-                const page = path.substring(path.lastIndexOf('/') + 1) || 'index.html';
+                // Ensure page name extraction handles potential empty strings correctly
+                let page = path.substring(path.lastIndexOf('/') + 1);
+                if (page === '') page = 'index.html'; // Default to index.html if path ends with /
+
                 const links = document.querySelectorAll('.sidebar ul li a');
                 links.forEach(l => {
                     const hrefAttr = l.getAttribute('href');
                     l.classList.remove('active'); // Remove active from all first
                     if (hrefAttr) {
-                        const linkPage = hrefAttr.substring(hrefAttr.lastIndexOf('/') + 1).split('?')[0].split('#')[0];
-                         // Explicit check for index.html and empty page for dashboard link
-                        if ((page === 'index.html' || page === '') && (linkPage === 'index.html' || linkPage === '')) {
-                             l.classList.add('active');
-                        } else if (page !== '' && page !== 'index.html' && page === linkPage) {
+                         // Ensure comparison handles potential differences like leading slashes or parameters
+                        const linkPage = hrefAttr.split('/').pop().split('?')[0].split('#')[0];
+                        let effectiveLinkPage = linkPage === '' ? 'index.html' : linkPage; // Treat empty href like index.html
+
+                        if (page === effectiveLinkPage) {
                              l.classList.add('active');
                         }
                     }
@@ -244,10 +255,21 @@
         }
 
         updateDateTime();
-        setInterval(updateDateTime, 60000);
+        setInterval(updateDateTime, 60000); // Update time every minute
 
-        window.addEventListener('DOMContentLoaded', setActiveLink);
-        window.addEventListener('popstate', setActiveLink);
+        // Run setActiveLink after the DOM is fully loaded and potentially after async operations (like role check) complete
+        // Using DOMContentLoaded is generally safe, but if dashboard.js makes late changes, consider calling it from there too.
+        window.addEventListener('DOMContentLoaded', () => {
+            setActiveLink();
+            // Also ensure initializeDashboard is defined before calling it in the auth check
+            if (window.auth && window.auth.currentUser && typeof initializeDashboard === 'function') {
+                 // Re-check auth state or rely on the onAuthStateChanged logic
+            }
+        });
+        window.addEventListener('popstate', setActiveLink); // For browser back/forward navigation
+
+        // Also moved dashboard.js loading to the end for potentially better performance
+        // and ensuring DOM is ready before it runs.
     </script>
 </body>
 </html>

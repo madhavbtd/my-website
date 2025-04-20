@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Page Title</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" integrity="sha512-9usAa10IRO0HhonpyAIVpjrylPvoDwiPUiKdWk5t3PyolY1cOd4DSE0Ga+ri4AuTroPR5aQvXU9xC6qOPnzFeg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+    <link rel="stylesheet" href="css/order_history.css">
+    <script type="module">
+        // Firebase SDKs को इम्पोर्ट करें
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+        // Firestore और अन्य आवश्यक सेवाओं को इम्पोर्ट करें (हर पेज की जरूरत के अनुसार)
+        import { getFirestore } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+        // *** ध्यान दें: जिस पेज पर जो फंक्शन चाहिए, उसे यहाँ इम्पोर्ट करें (जैसे collection, doc, addDoc आदि) ***
+
+        // **** आपकी Firebase कॉन्फ़िगरेशन जानकारी ****
+        const firebaseConfig = {
+          apiKey: "YOUR_API_KEY", // **<<< Step 1.1 से अपना API Key यहाँ डालें**
+          authDomain: "YOUR_AUTH_DOMAIN", // **<<< Step 1.1 से अपना Auth Domain यहाँ डालें**
+          projectId: "YOUR_PROJECT_ID", // **<<< Step 1.1 से अपना Project ID यहाँ डालें**
+          storageBucket: "YOUR_STORAGE_BUCKET", // **<<< Step 1.1 से अपना Storage Bucket यहाँ डालें**
+          messagingSenderId: "YOUR_MESSAGING_SENDER_ID", // **<<< Step 1.1 से अपना Sender ID यहाँ डालें**
+          appId: "YOUR_APP_ID" // **<<< Step 1.1 से अपना App ID यहाँ डालें**
+        };
+
+        // Firebase ऐप को इनिशियलाइज़ करें (सिर्फ एक बार प्रति पेज लोड)
+        let app;
+        if (!window.firebaseAppInitialized) {
+            app = initializeApp(firebaseConfig);
+            window.firebaseAppInitialized = true;
+            window.firebaseApp = app; // इसे ग्लोबली स्टोर करें
+            console.log("Firebase initialized on this page.");
+        } else {
+            app = window.firebaseApp; // मौजूदा इंस्टेंस का उपयोग करें
+            console.log("Firebase already initialized on this page.");
+        }
+
+        // Firebase सेवाओं को प्राप्त करें
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        // सेवाओं को ग्लोबल बनाएं ताकि अन्य JS फाइलें (जैसे suppliers.js) इन्हें इस्तेमाल कर सकें
+        window.auth = auth;
+        window.db = db;
+        // *** ध्यान दें: Firestore के फंक्शन्स (collection, doc आदि) को भी ग्लोबल बनाएं यदि वे अलग JS फाइल में इस्तेमाल होंगे ***
+        // window.collection = import("https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js").collection; // उदाहरण
+
+        // ---->> प्रमाणीकरण स्थिति जांच (Authentication State Check) <<----
+        onAuthStateChanged(auth, (user) => {
+            const currentPage = window.location.pathname.split('/').pop() || 'index.html';
+            const protectedPages = ['suppliers.html', 'po_history.html', 'new_po.html', 'index.html']; // सुरक्षित पेज
+
+            if (user) {
+                // यूजर लॉग इन है
+                console.log(`User is logged in on ${currentPage}:`, user.uid);
+                // पेज-विशिष्ट फ़ंक्शन लोड करें (यदि आवश्यक हो)
+                // उदाहरण: if (typeof initializeSuppliersPage === 'function') { initializeSuppliersPage(); }
+
+            } else {
+                // यूजर लॉग इन नहीं है
+                console.log(`User is not logged in on ${currentPage}.`);
+                // यदि यूजर सुरक्षित पेज पर है और लॉग इन नहीं है, तो उसे लॉगिन पेज पर रीडायरेक्ट करें
+                if (protectedPages.includes(currentPage.toLowerCase()) && currentPage.toLowerCase() !== 'login.html') {
+                   console.log(`Redirecting to login.html from ${currentPage}...`);
+                   window.location.replace('login.html'); // **<<< login.html का सही पाथ दें**
+                }
+            }
+        });
+        // ---->> Auth जांच समाप्त <<----
+
+    </script>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Welcome to [Page Title]</h1>
+
+    </div>
+
+    </body>
+</html>
