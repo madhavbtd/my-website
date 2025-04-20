@@ -1,4 +1,4 @@
-/* css/index.css - v3 - Re-checked Layout Rules */
+/* css/index.css - Final Layout Adjustments */
 
 /* --- Base Variables and Styles --- */
 :root {
@@ -22,35 +22,50 @@ body {
     font-family: 'Poppins', 'Segoe UI Emoji', sans-serif;
     margin: 0;
     padding: 0;
-    background-color: #f4f6f8;
+    background-color: #f4f6f8; /* <<<-- Background for the empty space */
     color: var(--text-color);
     line-height: 1.6;
     font-size: 16px;
 }
 
+/* ===== NEW OUTER WRAPPER STYLE ===== */
+.page-wrapper {
+  max-width: 1550px; /* <<<--- Adjust this width as needed (e.g., 1400px, 1600px) */
+  margin-left: auto;
+  margin-right: auto;
+  /* Optional: Add box-shadow if you want the centered area to look like a card */
+  /* box-shadow: 0 0 15px rgba(0,0,0,0.1); */
+}
+/* ===== END WRAPPER STYLE ===== */
+
+
 .container {
     display: flex;
     min-height: 100vh;
+    background-color: #f4f6f8; /* Match body or set as needed */
+    /* No max-width or margin:auto here */
 }
 
 /* --- Sidebar Styles --- */
 .sidebar {
-    width: 220px;
+    width: 220px; /* Fixed width */
     background-color: var(--secondary-color);
     color: var(--sidebar-text);
-    padding-top: 0;
     display: flex;
     flex-direction: column;
     flex-shrink: 0; /* Prevent sidebar from shrinking */
+    height: 100vh; /* Full height */
+    /* position: fixed; <<<--- REMOVE this if you want sidebar inside the centered wrapper */
+    /* If you keep it fixed, the .page-wrapper approach needs adjustment */
     box-shadow: 2px 0 5px rgba(0,0,0,0.1);
     transition: width 0.3s ease;
     z-index: 1000;
 }
-/* ... (Other sidebar styles remain the same - h2, ul, li, a, i, active, logout) ... */
+/* ... other sidebar styles (h2, ul, li, a, i, active, logout) remain the same ... */
 .sidebar h2 { text-align: center; background-color: white; padding: 15px 10px; margin: 0; border-bottom: 1px solid var(--border-color); }
 .sidebar h2 img { max-width: 90%; height: auto; vertical-align: middle; }
 .sidebar ul { list-style-type: none; padding: 10px 0; margin: 0; flex-grow: 1; overflow-y: auto; }
-.sidebar ul li a { padding: 12px 20px; text-decoration: none; color: var(--sidebar-text); display: flex; align-items: center; transition: background-color 0.2s ease, padding-left 0.2s ease, color 0.2s ease; border-left: 4px solid transparent; font-size: 0.95em; white-space: nowrap; position: relative; z-index: 1; pointer-events: auto; }
+.sidebar ul li a { padding: 12px 20px; text-decoration: none; color: var(--sidebar-text); display: flex; align-items: center; transition: background-color 0.2s ease, padding-left 0.2s ease, color 0.2s ease; border-left: 4px solid transparent; font-size: 0.95em; white-space: nowrap; }
 .sidebar ul li a i { margin-right: 12px; width: 20px; text-align: center; font-size: 1.1em; flex-shrink: 0; }
 .sidebar ul li a:hover { background-color: var(--sidebar-hover); color: #fff; padding-left: 24px; }
 .sidebar ul li a.active { background-color: var(--sidebar-active); border-left-color: var(--sidebar-active-border); font-weight: 600; color: #fff; }
@@ -60,56 +75,52 @@ body {
 
 /* --- Main Content Area --- */
 .main-content {
-    flex: 1; /* Take remaining width */
-    padding: 25px; /* Padding around the content */
-    overflow-y: auto; /* Allow scrolling if content overflows */
-    height: 100vh; /* Ensure it takes full viewport height */
-    box-sizing: border-box; /* Include padding in height calculation */
-    background-color: #f4f6f8; /* Ensure background color */
-    display: flex; /* Use flexbox for vertical layout of children */
-    flex-direction: column; /* Stack children vertically */
+    flex: 1; /* Takes remaining space within .container */
+    /* margin-left: 0; <<<--- No margin needed if sidebar is part of flex */
+    padding: 25px;
+    overflow-y: auto;
+    height: 100vh; /* Takes full viewport height relative to container */
+    box-sizing: border-box;
+    background-color: #f4f6f8;
+    display: flex;
+    flex-direction: column;
 }
 
 /* --- Header within Main Content --- */
+/* Ensure header background is white as intended here */
 .header {
-    display: flex; /* Arrange items horizontally */
-    justify-content: space-between; /* Space out items */
-    align-items: center; /* Align items vertically */
-    flex-wrap: wrap; /* Allow wrapping on smaller screens */
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
     gap: 15px;
-    margin-bottom: 25px; /* Space below header */
-    background-color: white;
+    margin-bottom: 25px;
+    background-color: white; /* <<<--- This should make it white */
     padding: 15px 20px;
     border-radius: 8px;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-    flex-shrink: 0; /* Prevent header from shrinking */
+    flex-shrink: 0;
 }
-/* ... (Header child styles - welcome-text, header-buttons, date-time - remain the same) ... */
-.welcome-text { font-family: 'Poppins', sans-serif; color: var(--text-color); font-weight: 600; font-size: 1.05em; flex-grow: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* ... other header styles ... */
+.welcome-text { font-weight: 600; font-size: 1.05em; flex-grow: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--text-color);} /* Ensure text color isn't white */
 .header-buttons { display: flex; flex-wrap: wrap; gap: 10px; flex-shrink: 0; }
-.header-buttons a.button-base { text-decoration: none; color: white; border: none; padding: 9px 14px; cursor: pointer; border-radius: 6px; font-family: 'Poppins', sans-serif; font-size: 0.9em; display: inline-flex; align-items: center; gap: 6px; transition: background-color 0.2s ease, transform 0.1s ease; line-height: 1.4; }
-.header-buttons a.button-base:hover { opacity: 0.9; }
-.header-buttons a.button-base:active { transform: scale(0.98); }
-.header-buttons a.add-customer-btn { background-color: var(--success-color); }
-.header-buttons a.add-supplier-btn { background-color: var(--info-color); }
-.header-buttons a.new-order-btn { background-color: var(--primary-color); }
-.date-time-container { background-color: var(--accent-color); color: #333; padding: 9px 14px; border-radius: 6px; font-family: 'Poppins', sans-serif; font-size: 0.9em; white-space: nowrap; font-weight: 500; flex-shrink: 0; }
-.date-time-container .date-day, .date-time-container .day-name { font-weight: 600; }
+.header-buttons a.button-base { text-decoration: none; color: white; border: none; padding: 9px 14px; cursor: pointer; border-radius: 6px; font-size: 0.9em; display: inline-flex; align-items: center; gap: 6px; transition: background-color 0.2s ease, transform 0.1s ease; line-height: 1.4; }
+.header-buttons a.button-base:hover { opacity: 0.9; } .header-buttons a.button-base:active { transform: scale(0.98); }
+.header-buttons a.add-customer-btn { background-color: var(--success-color); } .header-buttons a.add-supplier-btn { background-color: var(--info-color); } .header-buttons a.new-order-btn { background-color: var(--primary-color); }
+.date-time-container { background-color: var(--accent-color); color: #333; padding: 9px 14px; border-radius: 6px; font-size: 0.9em; white-space: nowrap; font-weight: 500; flex-shrink: 0; }
 
 
-/* --- Order Control Panel within Main Content --- */
-.order-control-panel {
-    display: grid; /* Use Grid layout */
-    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); /* Responsive columns */
-    gap: 20px;
-    margin-bottom: 25px; /* Space below panels */
+/* --- Order Control Panel --- */
+.order-control-panel { /* ... styles remain the same ... */
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 20px; margin-bottom: 25px;
 }
-/* ... (Panel item styles - panel-item, hover, icon, count, button, colors - remain the same) ... */
-.panel-item { background-color: #fff; border: 1px solid var(--border-color); padding: 20px 15px; text-align: center; border-radius: 8px; font-size: 0.9em; color: var(--text-color); box-shadow: 0 3px 6px rgba(0, 0, 0, 0.07); display: flex; flex-direction: column; justify-content: space-between; align-items: center; font-weight: 600; font-family: 'Poppins', sans-serif; text-transform: uppercase; line-height: 1.3; transition: transform 0.2s ease, box-shadow 0.2s ease; min-height: 170px; }
-.panel-item:hover { transform: translateY(-3px); box-shadow: 0 5px 10px rgba(0, 0, 0, 0.1); }
+.panel-item { /* ... styles remain the same ... */
+    background-color: #fff; border: 1px solid var(--border-color); padding: 20px 15px; text-align: center; border-radius: 8px; font-size: 0.9em; color: var(--text-color); box-shadow: 0 3px 6px rgba(0, 0, 0, 0.07); display: flex; flex-direction: column; justify-content: space-between; align-items: center; font-weight: 600; font-family: 'Poppins', sans-serif; text-transform: uppercase; line-height: 1.3; transition: transform 0.2s ease, box-shadow 0.2s ease; min-height: 170px;
+}
+/* ... other panel styles ... */
 .panel-icon { font-size: 2.2em; margin-bottom: 10px; }
-.panel-count { font-size: 2.8em; font-weight: 700; display: block; margin-bottom: 10px; font-family: 'Poppins', sans-serif; color: var(--primary-color); }
-.panel-item a.button-link { background-color: var(--primary-color); color: white; border: none; padding: 8px 15px; cursor: pointer; border-radius: 5px; font-size: 0.85em; margin-top: 10px; font-weight: 500; font-family: 'Poppins', sans-serif; text-transform: capitalize; text-decoration: none; display: inline-block; transition: background-color 0.2s ease; }
+.panel-count { font-size: 2.8em; font-weight: 700; display: block; margin-bottom: 10px; color: var(--primary-color); }
+.panel-item a.button-link { background-color: var(--primary-color); color: white; border: none; padding: 8px 15px; cursor: pointer; border-radius: 5px; font-size: 0.85em; margin-top: 10px; font-weight: 500; text-decoration: none; display: inline-block; transition: background-color 0.2s ease; }
 .panel-item a.button-link:hover { background-color: #004085; }
 .panel-item.light-blue { background-color: #e1f5fe; color: #0d47a1; } .panel-item.light-blue .panel-count { color: #1976d2;}
 .panel-item.light-orange { background-color: #fff3e0; color: #bf360c; } .panel-item.light-orange .panel-count { color: #e65100;}
@@ -117,159 +128,102 @@ body {
 .panel-item.light-red { background-color: #ffebee; color: #b71c1c; } .panel-item.light-red .panel-count { color: #d32f2f;}
 
 
-/* --- Search Bar within Main Content --- */
-.search-bar {
-    display: flex;
-    align-items: center;
-    justify-content: flex-end; /* Align items to the right */
-    flex-wrap: wrap;
-    gap: 10px;
-    margin-bottom: 25px; /* Space below search */
-    background-color: white;
-    padding: 15px 20px;
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-    position: relative; /* Needed for suggestions positioning */
-    flex-shrink: 0; /* Prevent shrinking */
+/* --- Search Bar --- */
+.search-bar { /* ... styles remain the same ... */
+    display: flex; align-items: center; justify-content: flex-end; flex-wrap: wrap; gap: 10px; margin-bottom: 25px; background-color: white; padding: 15px 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05); position: relative; flex-shrink: 0;
 }
-/* ... (Search bar child styles - label, input, button - remain the same) ... */
+/* ... other search styles ... */
 .search-bar label { margin: 0; color: var(--text-muted); font-size: 0.95em; font-weight: 500; flex-shrink: 0; }
-.search-bar input[type="text"] { padding: 9px 12px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 0.95em; /* Removed flex-grow: 1; */ width: 250px; /* Fixed width */ box-sizing: border-box; }
+.search-bar input[type="text"] { padding: 9px 12px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 0.95em; width: 250px; box-sizing: border-box; }
 .search-bar input[type="text"]:focus { outline: none; border-color: var(--primary-color); box-shadow: 0 0 0 2px rgba(0, 86, 179, 0.2); }
 .search-bar button { background-color: var(--success-color); color: white; border: none; padding: 9px 15px; cursor: pointer; border-radius: 6px; font-size: 0.95em; height: 39px; line-height: 1; transition: background-color 0.2s ease; flex-shrink: 0; }
 .search-bar button:hover { background-color: #1e7e34; }
-
-/* Suggestions List Styles */
-.suggestions-list {
-    display: none;
-    position: absolute;
-    top: calc(100% + 5px); /* Position below the search bar with gap */
-    /* Align to the right edge of the search bar container */
-    right: 20px; /* Match search bar padding */
-    width: 310px; /* Approximate width of input + button + gap */
-    background-color: white;
-    border: 1px solid var(--border-color);
-    border-radius: 8px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    max-height: 200px;
-    overflow-y: auto;
-    z-index: 1050;
-}
+.suggestions-list { display: none; position: absolute; top: calc(100% + 5px); right: 20px; width: 310px; background-color: white; border: 1px solid var(--border-color); border-radius: 8px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); max-height: 200px; overflow-y: auto; z-index: 1050; }
 .suggestions-list div { padding: 10px 15px; cursor: pointer; border-bottom: 1px solid #eee; font-size: 0.95em; }
-.suggestions-list div:last-child { border-bottom: none; }
-.suggestions-list div:hover { background-color: #f0f0f0; }
+.suggestions-list div:last-child { border-bottom: none; } .suggestions-list div:hover { background-color: #f0f0f0; }
 .suggestions-list div.no-suggestions { padding: 10px 15px; color: var(--text-muted); cursor: default; }
 
-/* --- Reminder Section within Main Content --- */
-.reminder-section {
-    background-color: white;
-    padding: 20px;
-    border: 1px solid var(--border-color);
-    border-radius: 8px;
-    font-size: 0.95em;
-    color: var(--text-color);
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-    min-height: 120px;
-    flex-shrink: 0; /* Prevent shrinking */
-    margin-top: auto; /* Push to bottom if main-content is flex column and has extra space */
+
+/* --- Reminder Section --- */
+.reminder-section { /* ... styles remain the same ... */
+    background-color: white; padding: 20px; border: 1px solid var(--border-color); border-radius: 8px; font-size: 0.95em; color: var(--text-color); box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05); min-height: 120px; flex-shrink: 0; margin-top: auto;
 }
-/* ... (Reminder section child styles - h3, p - remain the same) ... */
+/* ... other reminder styles ... */
 .reminder-section h3 { margin-top: 0; margin-bottom: 15px; font-size: 1.2em; color: var(--primary-color); border-bottom: 1px solid #eee; padding-bottom: 8px; }
 .reminder-section p { margin-bottom: 0; }
 
 
 /* --- Responsive Design --- */
-
-/* Medium screens / Tablets - Collapsed Sidebar */
+/* Medium screens / Tablets - Adjust main content padding */
 @media (max-width: 992px) {
-    /* Sidebar collapse styles remain the same */
-    .sidebar { width: 60px; overflow: hidden; position: absolute; left: 0; top: 0; height: 100%; }
+    /* Sidebar collapse styles */
+    .sidebar { width: 60px; overflow: hidden; position: fixed; left: 0; top: 0; height: 100%; } /* <<< Fixed position for medium screen */
     .sidebar:hover { width: 220px; box-shadow: 4px 0 10px rgba(0,0,0,0.2); }
     .sidebar h2 { padding: 10px 5px; } .sidebar h2 img { max-width: 40px; transition: max-width 0.3s ease; }
     .sidebar:hover h2 img { max-width: 90%; }
     .sidebar ul li a span { display: none; } .sidebar:hover ul li a span { display: inline; }
     .sidebar ul li a { justify-content: center; padding: 12px 0; } .sidebar:hover ul li a { justify-content: flex-start; padding: 12px 20px;}
     .sidebar ul li a i { margin-right: 0; } .sidebar:hover ul li a i { margin-right: 12px; }
-    .main-content { padding-left: 80px; } /* Adjust padding for collapsed sidebar */
+
+    /* Adjust main content margin for fixed collapsed sidebar */
+     .main-content {
+         /* margin-left: 60px; <<<--- Add margin for collapsed fixed sidebar */
+         width: calc(100% - 60px); /* Adjust width */
+         padding-left: 20px; /* Adjust padding if needed */
+         padding-right: 20px;
+    }
+     /* Page wrapper needs to account for potential fixed sidebar */
+     .page-wrapper {
+        /* No margin-left needed if wrapper itself is centered */
+        /* padding-left: 60px; */ /* <<< Alternatively, add padding to wrapper */
+     }
 }
 
-/* Small screens / Mobile */
+/* Small screens / Mobile - Stack layout */
 @media (max-width: 768px) {
+     /* Page wrapper should likely be full width on mobile */
+     .page-wrapper { max-width: 100%; margin: 0; padding: 0;}
+
     .container { flex-direction: column; } /* Stack sidebar and content */
     .sidebar {
         width: 100%; min-height: auto; height: auto; flex-direction: row;
         align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-        position: static; overflow: visible; padding-top: 0; z-index: 1000;
+        position: static; /* <<<--- Static position on mobile */
+        overflow: visible; padding-top: 0; z-index: 1000;
     }
+     /* ... other mobile sidebar styles ... */
     .sidebar:hover { width: 100%; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-    .sidebar h2 { padding: 5px 15px; flex-shrink: 0; border-bottom: none; }
-    .sidebar h2 img { max-width: 120px; }
-    .sidebar ul {
-        display: flex; overflow-x: auto; flex-grow: 1; padding: 0 5px;
-        justify-content: flex-start; border-top: none; position: relative; z-index: 1;
-    }
+    .sidebar h2 { padding: 5px 15px; flex-shrink: 0; border-bottom: none; } .sidebar h2 img { max-width: 120px; }
+    .sidebar ul { display: flex; overflow-x: auto; flex-grow: 1; padding: 0 5px; justify-content: flex-start; border-top: none; }
     .sidebar ul li { flex-shrink: 0; margin-top: 0; } .sidebar ul li:last-child { margin-top: 0; }
-    .sidebar ul li a {
-        padding: 12px 10px; border-left: none; border-bottom: 3px solid transparent;
-        white-space: nowrap; justify-content: center;
-        pointer-events: auto !important; z-index: 2 !important; position: relative;
-    }
-    .sidebar ul li a i { margin-right: 5px; }
-    .sidebar ul li a span { display: inline; }
-    .sidebar ul li a:hover { padding-left: 10px; background-color: var(--sidebar-hover); }
+    .sidebar ul li a { padding: 12px 10px; border-left: none; border-bottom: 3px solid transparent; white-space: nowrap; justify-content: center; }
+    .sidebar ul li a i { margin-right: 5px; } .sidebar ul li a span { display: inline; } .sidebar ul li a:hover { padding-left: 10px; background-color: var(--sidebar-hover); }
     .sidebar ul li a.active { border-left: none; border-bottom-color: var(--sidebar-active-border); background-color: transparent; color: var(--sidebar-active); font-weight: 600; }
 
     .main-content {
-         padding: 15px; /* Reduce padding */
-         height: auto; /* Auto height */
-         min-height: calc(100vh - 60px); /* Adjust based on estimated sidebar height */
-         padding-left: 15px; /* Reset left padding from desktop */
+         padding: 15px;
+         height: auto;
+         min-height: calc(100vh - 60px); /* Adjust based on header/sidebar height */
+         margin-left: 0; /* <<<--- Reset margin for mobile */
+         width: 100%; /* Ensure full width */
     }
-
-    .header {
-        flex-direction: column; /* Stack header items */
-        gap: 10px; align-items: stretch;
-    }
-    .welcome-text { text-align: center; margin: 0 0 10px 0; max-width: none; order: 1; }
-    .header-buttons { justify-content: center; order: 3; flex-wrap: wrap; } /* Ensure buttons wrap */
-    .date-time-container { text-align: center; order: 2; margin: 0 auto; }
-
-    /* Adjust search bar layout for mobile */
-    .search-bar {
-        flex-direction: column; /* Stack vertically */
-        align-items: stretch; /* Stretch items full width */
-        gap: 10px;
-        position: relative; /* Keep relative */
-    }
-    .search-bar input[type="text"] {
-        width: 100%; /* Full width */
-        max-width: none; /* Override desktop max-width */
-    }
-    .search-bar button {
-         width: 100%; /* Full width */
-    }
-
-    /* Suggestions list on mobile */
-    .suggestions-list {
-        position: static; /* Change from absolute to static */
-        width: 100%;
-        max-width: none;
-        margin-top: 5px; /* Space below input/button */
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-        border-radius: 8px;
-        right: auto; /* Reset desktop positioning */
-        left: auto; /* Reset desktop positioning */
-        max-height: 150px;
-        border: 1px solid var(--border-color); /* Add border back */
-    }
+    /* ... other mobile styles for header, search etc. ... */
+     .header { flex-direction: column; gap: 10px; align-items: stretch; }
+     .welcome-text { text-align: center; margin: 0 0 10px 0; max-width: none; order: 1; }
+     .header-buttons { justify-content: center; order: 3; flex-wrap: wrap; }
+     .date-time-container { text-align: center; order: 2; margin: 0 auto; }
+     .search-bar { flex-direction: column; align-items: stretch; gap: 10px; position: relative; }
+     .search-bar input[type="text"] { width: 100%; max-width: none; }
+     .search-bar button { width: 100%; }
+     .suggestions-list { position: static; width: 100%; max-width: none; margin-top: 5px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); border-radius: 8px; right: auto; left: auto; max-height: 150px; border: 1px solid var(--border-color); }
 }
 
 /* Extra Small screens */
-@media (max-width: 480px) {
+@media (max-width: 480px) { /* ... styles remain the same ... */
     body { font-size: 14px; }
     .header-buttons a.button-base { font-size: 0.85em; padding: 7px 10px; }
     .panel-item { font-size: 0.85em; min-height: 140px;}
     .panel-count { font-size: 2.2em; }
     .panel-item a.button-link { font-size: 0.8em; padding: 7px 10px;}
-    .sidebar ul li a { padding: 10px 8px; } /* Slightly reduce padding */
+    .sidebar ul li a { padding: 10px 8px; }
 }

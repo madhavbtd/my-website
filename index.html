@@ -28,120 +28,92 @@
          };
         // --- कॉन्फ़िगरेशन समाप्त ---
 
-        let app;
-        let auth;
-        let db;
-
+        let app, auth, db;
         try {
              // Initialize Firebase App
-             if (!window.firebaseAppInitialized) {
-                 app = initializeApp(firebaseConfig);
-                 window.firebaseAppInitialized = true;
-                 window.firebaseApp = app;
-                 console.log("Firebase initialized on this page (index).");
-             } else {
-                 app = window.firebaseApp;
-                 console.log("Firebase already initialized on this page (index).");
-             }
-             auth = getAuth(app);
-             db = getFirestore(app);
+             if (!window.firebaseAppInitialized) { app = initializeApp(firebaseConfig); window.firebaseAppInitialized = true; window.firebaseApp = app; } else { app = window.firebaseApp; }
+             auth = getAuth(app); db = getFirestore(app);
 
-             // --- Make functions globally available ---
-             window.db = db; window.auth = auth; window.collection = collection;
-             window.onSnapshot = onSnapshot; window.query = query; window.where = where;
-             window.getDocs = getDocs; window.limit = limit;
+             // Make functions globally available
+             window.db = db; window.auth = auth; window.collection = collection; window.onSnapshot = onSnapshot; window.query = query; window.where = where; window.getDocs = getDocs; window.limit = limit;
 
-             // --- Set Persistence and THEN Check Auth State ---
-              console.log("index.html: Attempting to set persistence before auth check...");
+             // Set Persistence and THEN Check Auth State
               setPersistence(auth, browserLocalPersistence)
                 .then(() => {
-                  console.log("index.html: Auth persistence set to local. Setting up auth listener...");
-                  // Authentication State Check
                   onAuthStateChanged(auth, (user) => {
-                      const currentPage = window.location.pathname.split('/').pop() || 'index.html';
-                      console.log(`index.html: onAuthStateChanged fired. User: ${user ? user.uid : 'null'}`);
+                      const currentPage = (window.location.pathname.split('/').pop() || 'index.html').toLowerCase();
                       if (user) {
                           // Logged in - Proceed
-                          user.getIdTokenResult(true)
-                              .then((idTokenResult) => {
-                                  const userRole = idTokenResult.claims.role;
-                                  console.log('index.html: User Role:', userRole);
-                                  window.currentUserRole = userRole;
-                                  const welcomeSpan = document.getElementById('welcome-user');
-                                  if (welcomeSpan) welcomeSpan.textContent = `Welcome ${user.email || 'User'} (${userRole || 'Standard'})`;
-                                  if (typeof initializeDashboard === 'function') initializeDashboard(user);
-                                  else console.warn("initializeDashboard function not found!");
-                              })
-                              .catch((error) => { /* ... Role error handling ... */ });
+                          if (typeof initializeDashboard === 'function') initializeDashboard(user); // Call dashboard init
+                          // Update welcome message (role check can be done inside initializeDashboard or here)
+                           user.getIdTokenResult(true).then(token => {
+                              const role = token.claims.role || 'Standard';
+                              const welcome = document.getElementById('welcome-user');
+                              if(welcome) welcome.textContent = `Welcome ${user.email || 'User'} (${role})`;
+                           }).catch(err => { /* Handle role error */ const welcome = document.getElementById('welcome-user'); if(welcome) welcome.textContent = `Welcome ${user.email || 'User'}`; });
                       } else {
                           // Not logged in - Redirect
-                          console.log(`index.html: User not logged in. Redirecting...`);
-                          if (currentPage.toLowerCase() !== 'login.html') {
-                             window.location.replace('login.html'); // <<< login.html का पाथ
-                          }
+                          if (currentPage !== 'login.html') window.location.replace('login.html');
                       }
                   }); // End onAuthStateChanged
-                }) // End .then() for setPersistence
-                .catch((error) => {
-                   console.error("index.html: Error setting persistence:", error);
-                   alert("Warning: Could not set auth persistence.");
-                   // Fallback: Setup listener anyway
-                   onAuthStateChanged(auth, (user) => { if(!user && (window.location.pathname.split('/').pop()||'index.html').toLowerCase() !== 'login.html') window.location.replace('login.html'); else if (user && typeof initializeDashboard === 'function') initializeDashboard(user); });
-                }); // End .catch() for setPersistence
+                })
+                .catch((error) => { console.error("Persistence error:", error); /* Handle or setup listener anyway */ });
 
-             // --- Logout Link Logic ---
+             // Logout Link Logic
              const logoutLink = document.getElementById('logout-link');
-             if (logoutLink) { /* ... Logout code as before ... */
-                logoutLink.addEventListener('click', (e) => {
-                    e.preventDefault(); if (confirm("Are you sure?")) { signOut(auth).then(() => { window.location.replace('login.html'); }).catch((error) => { console.error(error); alert("Logout failed."); }); }
-                });
-              }
+             if (logoutLink) { logoutLink.addEventListener('click', (e) => { e.preventDefault(); if (confirm("Are you sure?")) { signOut(auth).then(() => window.location.replace('login.html')).catch(err => alert("Logout failed.")); } }); }
 
-        } catch(e) { /* ... Error handling ... */ }
+        } catch(e) { console.error("Setup error:", e); alert("Application setup error."); }
     </script>
 </head>
+
 <body>
-    <div class="container">
-        <div class="sidebar">
-            <h2><img src="https://i.ibb.co/Z6gKD9Rd/1.png" alt="Logo"></h2>
-            <ul>
-                <li><a href="index.html" class="active"><i class="fas fa-tachometer-alt"></i> <span>Dashboard</span></a></li>
-                <li><a href="order_history.html"><i class="fas fa-history"></i> <span>Order History</span></a></li>
-                <li><a href="customer_management.html"><i class="fas fa-users"></i> <span>Customers</span></a></li>
-                <li><a href="suppliers.html"><i class="fas fa-truck"></i> <span>Suppliers</span></a></li>
-                <li><a href="#"><i class="fas fa-chart-bar"></i> <span>Report</span></a></li>
-                <li><a href="#"><i class="fas fa-code-branch"></i> <span>Branch Manage</span></a></li>
-                <li><a href="#"><i class="fas fa-cog"></i> <span>Settings</span></a></li>
-                <li><a href="product_management.html"><i class="fas fa-box-open"></i> <span>Product Management</span></a></li>
-                <li><a href="#"><i class="fas fa-tools"></i> <span>Tools</span></a></li>
-                <li><a href="#" id="logout-link"><i class="fas fa-sign-out-alt"></i> <span>LOGOUT</span></a></li>
-            </ul>
-        </div>
-        <div class="main-content" id="main-content">
-             <div class="header">
-                <span class="welcome-text" id="welcome-user">Welcome...</span>
-                <div class="header-buttons">
-                    <a href="customer_management.html?action=add" class="button-base add-customer-btn"><i class="fas fa-user-plus"></i> Add Customer</a>
-                    <a href="suppliers.html" class="button-base add-supplier-btn"><i class="fas fa-truck"></i> Add Supplier</a>
-                    <a href="new_order.html" class="button-base new-order-btn"><i class="fas fa-plus-circle"></i> New Order</a>
-                </div>
-                <div class="date-time-container"><span id="currentDateTime">...</span></div>
-             </div>
-            <div class="order-control-panel">
-                <div class="panel-item light-blue"><i class="fas fa-shopping-bag panel-icon"></i> Order Received <span class="panel-count" id="count-order-received">00</span> <a href="order_history.html?status=Order+Received" class="button-link">View</a></div>
-                <div class="panel-item light-orange"><i class="fas fa-hourglass-half panel-icon"></i> Designing <span class="panel-count" id="count-designing">00</span> <a href="order_history.html?status=Designing" class="button-link">View</a></div>
-                <div class="panel-item light-green"><i class="fas fa-check-circle panel-icon"></i> Verification <span class="panel-count" id="count-verification">00</span> <a href="order_history.html?status=Verification" class="button-link">View</a></div>
-                <div class="panel-item light-red"><i class="fas fa-thumbs-up panel-icon"></i> Design Approved <span class="panel-count" id="count-design-approved">00</span> <a href="order_history.html?status=Design+Approved" class="button-link">View</a></div>
-                <div class="panel-item light-blue"><i class="fas fa-print panel-icon"></i> Printing <span class="panel-count" id="count-printing">00</span> <a href="order_history.html?status=Printing" class="button-link">View</a></div>
-                <div class="panel-item light-orange"><i class="fas fa-cog panel-icon"></i> Ready For Working <span class="panel-count" id="count-ready-for-working">00</span> <a href="order_history.html?status=Ready+for+Working" class="button-link">View</a></div>
-                <div class="panel-item light-green"><i class="fas fa-truck panel-icon"></i> Delivered <span class="panel-count" id="count-delivered">00</span> <a href="order_history.html?status=Delivered" class="button-link">View</a></div>
-                <div class="panel-item light-red"><i class="fas fa-check-double panel-icon"></i> Completed <span class="panel-count" id="count-completed">00</span> <a href="order_history.html?status=Completed" class="button-link">View</a></div>
+
+    <div class="page-wrapper">
+
+        <div class="container">
+
+            <div class="sidebar">
+                <h2><img src="https://i.ibb.co/Z6gKD9Rd/1.png" alt="Logo"></h2>
+                <ul>
+                    <li><a href="index.html" class="active"><i class="fas fa-tachometer-alt"></i> <span>Dashboard</span></a></li>
+                    <li><a href="order_history.html"><i class="fas fa-history"></i> <span>Order History</span></a></li>
+                    <li><a href="customer_management.html"><i class="fas fa-users"></i> <span>Customers</span></a></li>
+                    <li><a href="suppliers.html"><i class="fas fa-truck"></i> <span>Suppliers</span></a></li>
+                    <li><a href="#"><i class="fas fa-chart-bar"></i> <span>Report</span></a></li>
+                    <li><a href="#"><i class="fas fa-code-branch"></i> <span>Branch Manage</span></a></li>
+                    <li><a href="#"><i class="fas fa-cog"></i> <span>Settings</span></a></li>
+                    <li><a href="product_management.html"><i class="fas fa-box-open"></i> <span>Product Management</span></a></li>
+                    <li><a href="#"><i class="fas fa-tools"></i> <span>Tools</span></a></li>
+                    <li><a href="#" id="logout-link"><i class="fas fa-sign-out-alt"></i> <span>LOGOUT</span></a></li>
+                </ul>
             </div>
-            <div class="search-bar order-search-bar"> <label for="order-id-search">Search Order ID:</label> <input type="text" id="order-id-search" placeholder="Enter Order ID..."> <button id="order-id-search-button"><i class="fas fa-search"></i></button> <div id="order-suggestions" class="suggestions-list"></div> </div>
-             <div class="reminder-section"> <h3>Reminder</h3> <p>No reminders currently.</p> </div>
-        </div>
-    </div>
-    <script src="js/dashboard.js" type="module"></script>
+
+            <div class="main-content" id="main-content">
+                 <div class="header">
+                    <span class="welcome-text" id="welcome-user">Welcome...</span>
+                    <div class="header-buttons">
+                        <a href="customer_management.html?action=add" class="button-base add-customer-btn"><i class="fas fa-user-plus"></i> Add Customer</a>
+                        <a href="suppliers.html" class="button-base add-supplier-btn"><i class="fas fa-truck"></i> Add Supplier</a>
+                        <a href="new_order.html" class="button-base new-order-btn"><i class="fas fa-plus-circle"></i> New Order</a>
+                    </div>
+                    <div class="date-time-container"><span id="currentDateTime">...</span></div>
+                 </div>
+                <div class="order-control-panel">
+                    <div class="panel-item light-blue"><i class="fas fa-shopping-bag panel-icon"></i> Order Received <span class="panel-count" id="count-order-received">00</span> <a href="order_history.html?status=Order+Received" class="button-link">View</a></div>
+                    <div class="panel-item light-orange"><i class="fas fa-hourglass-half panel-icon"></i> Designing <span class="panel-count" id="count-designing">00</span> <a href="order_history.html?status=Designing" class="button-link">View</a></div>
+                    <div class="panel-item light-green"><i class="fas fa-check-circle panel-icon"></i> Verification <span class="panel-count" id="count-verification">00</span> <a href="order_history.html?status=Verification" class="button-link">View</a></div>
+                    <div class="panel-item light-red"><i class="fas fa-thumbs-up panel-icon"></i> Design Approved <span class="panel-count" id="count-design-approved">00</span> <a href="order_history.html?status=Design+Approved" class="button-link">View</a></div>
+                    <div class="panel-item light-blue"><i class="fas fa-print panel-icon"></i> Printing <span class="panel-count" id="count-printing">00</span> <a href="order_history.html?status=Printing" class="button-link">View</a></div>
+                    <div class="panel-item light-orange"><i class="fas fa-cog panel-icon"></i> Ready For Working <span class="panel-count" id="count-ready-for-working">00</span> <a href="order_history.html?status=Ready+for+Working" class="button-link">View</a></div>
+                    <div class="panel-item light-green"><i class="fas fa-truck panel-icon"></i> Delivered <span class="panel-count" id="count-delivered">00</span> <a href="order_history.html?status=Delivered" class="button-link">View</a></div>
+                    <div class="panel-item light-red"><i class="fas fa-check-double panel-icon"></i> Completed <span class="panel-count" id="count-completed">00</span> <a href="order_history.html?status=Completed" class="button-link">View</a></div>
+                </div>
+                <div class="search-bar order-search-bar"> <label for="order-id-search">Search Order ID:</label> <input type="text" id="order-id-search" placeholder="Enter Order ID..."> <button id="order-id-search-button"><i class="fas fa-search"></i></button> <div id="order-suggestions" class="suggestions-list"></div> </div>
+                 <div class="reminder-section"> <h3>Reminder</h3> <p>No reminders currently.</p> </div>
+            </div>
+
+        </div> </div> <script src="js/dashboard.js" type="module"></script>
     <script>
         // Inline script for date/time and active link (same as before)
         function updateDateTime() { try { const dt=new Date(),d=dt.toLocaleDateString('en-GB',{year:'numeric',month:'long',day:'numeric'}),y=dt.toLocaleDateString('en-GB',{weekday:'long'}),el=document.getElementById('currentDateTime'); if(el)el.textContent=`${d}, ${y}`; } catch(e){} }
