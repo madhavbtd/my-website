@@ -72,16 +72,16 @@ h1 { margin: 0; font-size: 1.2em; }
 #orderTable td { color: #212529; }
 
 
-/* --- Column Widths (Adjusted Action & Send Wtsp) --- */
-#orderTable th:nth-child(1), #orderTable td:nth-child(1) { width: 10%; }  /* Order ID */
-#orderTable th:nth-child(2), #orderTable td:nth-child(2) { width: 18%; white-space: normal;} /* Customer Name / Mobile */
-#orderTable th:nth-child(3), #orderTable td:nth-child(3) { width: 18%; white-space: normal; } /* Products */
+/* --- Column Widths (Adjusted Order ID, Customer, Products) --- */
+#orderTable th:nth-child(1), #orderTable td:nth-child(1) { width: 14%; }  /* Order ID - Increased */
+#orderTable th:nth-child(2), #orderTable td:nth-child(2) { width: 16%; white-space: normal;} /* Customer Name / Mobile - Decreased */
+#orderTable th:nth-child(3), #orderTable td:nth-child(3) { width: 16%; white-space: normal; } /* Products - Decreased */
 #orderTable th:nth-child(4), #orderTable td:nth-child(4) { width: 9%; white-space: nowrap;} /* Order Date */
 #orderTable th:nth-child(5), #orderTable td:nth-child(5) { width: 9%; white-space: nowrap;} /* Delivery Date */
 #orderTable th:nth-child(6), #orderTable td:nth-child(6) { width: 6%; text-align: center;} /* Priority */
 #orderTable th:nth-child(7), #orderTable td:nth-child(7) { width: 11%; } /* Status */
-#orderTable th:nth-child(8), #orderTable td:nth-child(8) { width: 12%; text-align: center;} /* Action - WAS 10% */
-#orderTable th:nth-child(9), #orderTable td:nth-child(9) { width: 7%; text-align: center;} /* Send Wtsp - WAS 9% */
+#orderTable th:nth-child(8), #orderTable td:nth-child(8) { width: 12%; text-align: center;} /* Action */
+#orderTable th:nth-child(9), #orderTable td:nth-child(9) { width: 7%; text-align: center;} /* Send Wtsp */
 /* --- End Column Widths Adjustment --- */
 
 
