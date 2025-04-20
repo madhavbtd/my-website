@@ -7,8 +7,9 @@ const {
 } = window;
 
 // --- DOM Elements ---
+// Ensure these elements exist in your supplier_management.html
 const addSupplierBtn = document.getElementById('addSupplierBtn');
-const createPoBtn = document.getElementById('createPoBtn');
+const createPoBtn = document.getElementById('createPoBtn'); // Assuming you have this button
 const supplierTableBody = document.getElementById('supplierTableBody');
 const poTableBody = document.getElementById('poTableBody');
 
@@ -37,6 +38,12 @@ let currentEditingSupplierId = null; // To track if editing
 
 // --- Modal Handling ---
 function openSupplierModal(mode = 'add', supplierData = null, supplierId = null) {
+    // Ensure modal elements exist before proceeding
+    if (!supplierModal || !supplierForm || !supplierModalTitle || !supplierErrorMsg || !supplierIdInput || !supplierNameInput || !supplierCompanyInput || !supplierWhatsappInput || !supplierEmailInput || !supplierAddressInput || !supplierGstInput) {
+        console.error("Supplier modal elements not found!");
+        alert("Error: Could not open supplier form.");
+        return;
+    }
     supplierForm.reset(); // Clear form
     supplierErrorMsg.style.display = 'none';
     supplierErrorMsg.textContent = '';
@@ -61,18 +68,27 @@ function openSupplierModal(mode = 'add', supplierData = null, supplierId = null)
 }
 
 function closeSupplierModal() {
-    supplierModal.classList.remove('active'); // Hide modal
+    if (supplierModal) {
+        supplierModal.classList.remove('active'); // Hide modal
+    }
 }
 
 // --- Firestore Operations ---
 
 // Function to display suppliers
 async function displaySupplierList() {
-    if (!db || !collection || !getDocs || !query) {
+    // Ensure table body exists
+    if (!supplierTableBody) {
+        console.error("Supplier table body not found!");
+        return;
+    }
+    // Ensure Firestore functions are ready
+    if (!db || !collection || !getDocs || !query || !orderBy) {
         console.error("Firestore functions not ready for displaySupplierList.");
         supplierTableBody.innerHTML = '<tr><td colspan="5" style="color:red;">Error loading Firestore.</td></tr>';
         return;
     }
+
     supplierTableBody.innerHTML = '<tr><td colspan="5">Loading suppliers...</td></tr>'; // Show loading state
     try {
         const q = query(collection(db, "suppliers"), orderBy("name")); // Order by name
@@ -84,10 +100,11 @@ async function displaySupplierList() {
             return;
         }
 
-        querySnapshot.forEach((doc) => {
-            const supplier = doc.data();
-            const supplierId = doc.id;
+        querySnapshot.forEach((docRef) => { // Use docRef to avoid confusion with doc function
+            const supplier = docRef.data();
+            const supplierId = docRef.id;
             const tr = document.createElement('tr');
+            tr.setAttribute('data-id', supplierId); // Add data-id attribute
             tr.innerHTML = `
                 <td>${supplier.name || 'N/A'}</td>
                 <td>${supplier.companyName || '-'}</td>
@@ -99,12 +116,20 @@ async function displaySupplierList() {
                 </td>
             `;
             // Add event listeners for edit/delete buttons
-            tr.querySelector('.edit-button').addEventListener('click', () => {
-                 openSupplierModal('edit', supplier, supplierId);
-            });
-            tr.querySelector('.delete-button').addEventListener('click', () => {
-                 deleteSupplier(supplierId, supplier.name);
-            });
+            const editBtn = tr.querySelector('.edit-button');
+            if(editBtn) {
+                editBtn.addEventListener('click', () => {
+                    // Fetch data again for edit to ensure it's the latest, or use cached data carefully
+                    // For simplicity, using potentially cached data passed to modal
+                    openSupplierModal('edit', supplier, supplierId);
+                });
+            }
+            const deleteBtn = tr.querySelector('.delete-button');
+            if(deleteBtn) {
+                deleteBtn.addEventListener('click', () => {
+                    deleteSupplier(supplierId, supplier.name);
+                });
+            }
 
             supplierTableBody.appendChild(tr);
         });
@@ -118,8 +143,10 @@ async function displaySupplierList() {
 // Function to save/update supplier
 async function saveSupplier(event) {
     event.preventDefault(); // Prevent default form submission
-    if (!db || !collection || !addDoc || !doc || !updateDoc || !Timestamp) {
-         showSupplierError("Firestore not ready. Cannot save.");
+    // Ensure elements and functions are available
+    if (!saveSupplierBtn || !supplierNameInput || !supplierErrorMsg || !db || !collection || !addDoc || !doc || !updateDoc || !Timestamp) {
+         console.error("Save Supplier prerequisites missing.");
+         alert("Error: Cannot save supplier.");
          return;
      }
 
@@ -164,8 +191,11 @@ async function saveSupplier(event) {
         console.error("Error saving supplier: ", error);
         showSupplierError("Error saving supplier: " + error.message);
     } finally {
-         saveSupplierBtn.disabled = false; // Re-enable button
-         saveSupplierBtn.textContent = 'Save Supplier';
+         // Check if button still exists before re-enabling
+         if(saveSupplierBtn) {
+            saveSupplierBtn.disabled = false;
+            saveSupplierBtn.textContent = 'Save Supplier';
+         }
     }
 }
 
@@ -189,11 +219,18 @@ async function deleteSupplier(supplierId, supplierName) {
 
 // Function to display POs (Basic - will be expanded later)
 async function displayPoList() {
-     if (!db || !collection || !getDocs || !query) {
-          console.error("Firestore not ready for displayPoList.");
+     // Ensure table body exists
+     if (!poTableBody) {
+         console.error("PO table body not found!");
+         return;
+     }
+     // Ensure Firestore functions are ready
+     if (!db || !collection || !getDocs || !query || !orderBy) {
+          console.error("Firestore functions not ready for displayPoList.");
           poTableBody.innerHTML = '<tr><td colspan="6" style="color:red;">Error loading Firestore.</td></tr>';
           return;
       }
+
     poTableBody.innerHTML = '<tr><td colspan="6">Loading purchase orders...</td></tr>';
      try {
          const q = query(collection(db, "purchaseOrders"), orderBy("orderDate", "desc")); // Example sort
@@ -205,10 +242,11 @@ async function displayPoList() {
              return;
          }
 
-         querySnapshot.forEach((doc) => {
-             const po = doc.data();
-             const poId = doc.id;
+         querySnapshot.forEach((docRef) => { // Use docRef
+             const po = docRef.data();
+             const poId = docRef.id;
              const tr = document.createElement('tr');
+             tr.setAttribute('data-id', poId); // Add data-id attribute
              // Format date if available
              let orderDateStr = '-';
              if (po.orderDate && po.orderDate.toDate) {
@@ -217,19 +255,43 @@ async function displayPoList() {
                   } catch(e) { console.warn("Error formatting PO date", e); }
              }
 
+             // --- Determine Status Badge Class ---
+             let statusClass = 'unknown'; // Default class
+             if (po.status) {
+                statusClass = po.status.toLowerCase().replace(/[^a-z0-9]+/g, '-') || 'unknown';
+             }
+             // --- ---
+
              tr.innerHTML = `
                  <td>${po.poNumber || 'N/A'}</td>
                  <td>${po.supplierName || 'N/A'}</td>
                  <td>${orderDateStr}</td>
-                 <td><span class="status-badge status-${(po.status || 'unknown').toLowerCase().replace(/\s+/g, '-')}">${po.status || 'Unknown'}</span></td>
+                 <td><span class="status-badge status-${statusClass}">${po.status || 'Unknown'}</span></td>
                  <td>${po.totalAmount !== undefined ? po.totalAmount.toFixed(2) : '-'}</td>
                  <td class="action-buttons">
-                     <a href="new_po.html?editPOId=${poId}" class="button edit-button"><i class="fas fa-edit"></i></a>
-                     <button class="button delete-button" data-id="${poId}" data-ponumber="${po.poNumber || ''}"><i class="fas fa-trash-alt"></i></button>
-                     <button class="button pdf-button" data-id="${poId}"><i class="fas fa-file-pdf"></i></button>
+                     <a href="new_po.html?editPOId=${poId}" class="button edit-button" title="Edit PO"><i class="fas fa-edit"></i></a>
+                     <button class="button delete-button" data-id="${poId}" data-ponumber="${po.poNumber || ''}" title="Delete PO"><i class="fas fa-trash-alt"></i></button>
+                     <button class="button pdf-button" data-id="${poId}" title="Download PDF"><i class="fas fa-file-pdf"></i></button>
                  </td>
              `;
              // Add event listeners for PO delete/PDF buttons later
+             // Example for delete:
+             const deletePoBtn = tr.querySelector('.delete-button');
+             if (deletePoBtn) {
+                 deletePoBtn.addEventListener('click', () => {
+                     // Call a function like handleDeletePO(poId, po.poNumber);
+                     alert('Delete PO functionality not implemented yet.');
+                 });
+             }
+             // Example for PDF:
+             const pdfBtn = tr.querySelector('.pdf-button');
+             if (pdfBtn) {
+                 pdfBtn.addEventListener('click', () => {
+                     // Call a function like generatePoPdfById(poId);
+                     alert('Generate PO PDF functionality not implemented yet.');
+                 });
+             }
+
              poTableBody.appendChild(tr);
          });
 
@@ -241,49 +303,91 @@ async function displayPoList() {
 
 // Helper to show errors in modal
 function showSupplierError(message) {
-    supplierErrorMsg.textContent = message;
-    supplierErrorMsg.style.display = 'block';
+    if(supplierErrorMsg) {
+        supplierErrorMsg.textContent = message;
+        supplierErrorMsg.style.display = 'block';
+    } else {
+        console.error("Supplier error message element not found:", message);
+        alert(message); // Fallback
+    }
 }
 
-// --- Global Initialization ---
-// We wrap the main logic in a function that can be called after Firebase auth is confirmed
-window.initializeSupplierManagement = () => {
-    console.log("Initializing Supplier Management...");
+// --- DB Connection Wait ---
+function waitForDbConnection(callback) {
+    if (window.db) {
+        callback();
+    } else {
+        let attempts = 0; const maxAttempts = 20; // 5 सेकंड तक प्रतीक्षा करें
+        const intervalId = setInterval(() => {
+            attempts++;
+            if (window.db) {
+                clearInterval(intervalId);
+                callback();
+            } else if (attempts >= maxAttempts) {
+                clearInterval(intervalId);
+                console.error("Supplier Management: DB connection timeout.");
+                alert("Database connection failed. Please refresh.");
+            }
+        }, 250);
+    }
+}
 
-    // --- Event Listeners ---
-    if (addSupplierBtn) {
-        addSupplierBtn.addEventListener('click', () => openSupplierModal('add'));
-    }
-    if (closeSupplierModalBtn) {
-        closeSupplierModalBtn.addEventListener('click', closeSupplierModal);
-    }
-     if (cancelSupplierBtn) {
-         cancelSupplierBtn.addEventListener('click', closeSupplierModal);
-     }
-    if (supplierForm) {
-        supplierForm.addEventListener('submit', saveSupplier);
-    }
+// --- Initialization on DOM Load ---
+document.addEventListener('DOMContentLoaded', () => {
+    // सुनिश्चित करें कि DB कनेक्शन तैयार है
+    waitForDbConnection(() => {
+        console.log("Supplier Management: DOM loaded and DB connected. Initializing.");
 
-    // Close modal if clicked outside content
-    if (supplierModal) {
-         supplierModal.addEventListener('click', (event) => {
-             if (event.target === supplierModal) {
-                 closeSupplierModal();
+        // --- Event Listeners ---
+        if (addSupplierBtn) {
+            addSupplierBtn.addEventListener('click', () => openSupplierModal('add'));
+        } else { console.warn("Add Supplier button not found."); }
+
+        if (closeSupplierModalBtn) {
+            closeSupplierModalBtn.addEventListener('click', closeSupplierModal);
+        } else { console.warn("Close Supplier Modal button not found."); }
+
+         if (cancelSupplierBtn) {
+             cancelSupplierBtn.addEventListener('click', closeSupplierModal);
+         } else { console.warn("Cancel Supplier button not found."); }
+
+        if (supplierForm) {
+            supplierForm.addEventListener('submit', saveSupplier);
+        } else { console.warn("Supplier form not found."); }
+
+        // Close modal if clicked outside content
+        if (supplierModal) {
+             supplierModal.addEventListener('click', (event) => {
+                 if (event.target === supplierModal) {
+                     closeSupplierModal();
+                 }
+             });
+         } else { console.warn("Supplier modal not found."); }
+
+         // PO Filter Listeners (Add later if needed)
+         // Example:
+         // if(poFilterBtn) poFilterBtn.addEventListener('click', displayPoList);
+
+
+         // Initial data load
+         displaySupplierList();
+         displayPoList();
+
+         // Check for #add in URL to open modal automatically
+         if(window.location.hash === '#add') {
+             if(supplierModal) {
+                openSupplierModal('add');
+             } else {
+                 console.warn("Modal not found, cannot open from hash.");
              }
-         });
-     }
+             // Clean the hash using history API if available
+             if (history.replaceState) {
+                 history.replaceState(null, null, window.location.pathname + window.location.search);
+             }
+         }
+         console.log("Supplier Management Initialized via DOMContentLoaded.");
+    });
+});
 
-     // Initial data load
-     displaySupplierList();
-     displayPoList();
-
-     // Check for #add in URL to open modal automatically
-     if(window.location.hash === '#add') {
-         openSupplierModal('add');
-     }
-
-};
-
-// The actual initialization is triggered by the auth check in the HTML head script block
-
+// Log to confirm script loaded
 console.log("supplier_management.js loaded.");

@@ -1,4 +1,13 @@
-<script type="module">
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Supplier & PO Management</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/supplier_management.css">
+    <link rel="stylesheet" href="css/index.css"> <script type="module">
         // --- Firebase Setup ---
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
         import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
@@ -7,7 +16,7 @@
             query, orderBy, where, Timestamp
          } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-         // **** Your Firebase Configuration (Copied from your other working files) ****
+         // **** Your Firebase Configuration (Copied from your working files) ****
          const firebaseConfig = {
            apiKey: "AIzaSyBQj5rQmE77kKKGYixP8y3Hcimz8tiAqzQ", // From your other files
            authDomain: "madhav-multyprint.firebaseapp.com",   // From your other files
@@ -16,7 +25,7 @@
            messagingSenderId: "104988349637",             // From your other files
            appId: "1:104988349637:web:faf045b77c6786a4e70cac" // From your other files
          };
-         // !!!!! MAKE SURE THESE VALUES ARE CORRECT !!!!!
+         // !!!!! ENSURE THESE VALUES ARE CORRECT !!!!!
 
         let app;
         let auth;
@@ -63,14 +72,9 @@
                           window.location.replace('login.html');
                      }
                  } else {
+                     // User is logged in, JS file will handle initialization via DOMContentLoaded
                      console.log("supplier_management.html: User is logged in:", user.uid);
-                     // Initialize page-specific JS functions AFTER auth is confirmed
-                     if(window.initializeSupplierManagement) {
-                        console.log("supplier_management.html: Calling initializeSupplierManagement().");
-                        window.initializeSupplierManagement();
-                     } else {
-                        console.warn("supplier_management.html: initializeSupplierManagement function not found on window.");
-                     }
+                     // No need to call initialize function from here anymore
                  }
              });
              console.log("supplier_management.html: onAuthStateChanged listener attached.");
@@ -78,11 +82,119 @@
         } catch(e) {
             console.error("supplier_management.html: Firebase setup error:", e);
             alert("Error loading application.");
-            // Optionally redirect to login on critical error
-            // if (window.location.pathname.split('/').pop().toLowerCase() !== 'login.html') {
-            //    window.location.replace('login.html');
-            // }
         }
         console.log("supplier_management.html: Module script finished execution.");
         // --- End Firebase Setup ---
     </script>
+
+</head>
+<body>
+    <div class="container">
+        <div class="main-content" id="main-content">
+            <div class="page-header">
+                <h1><i class="fas fa-truck"></i> Supplier & PO Management</h1>
+            </div>
+
+            <div class="breadcrumb">
+                <a href="index.html">Dashboard</a> / <span>Suppliers & POs</span>
+            </div>
+
+            <div class="actions-bar">
+                <button id="addSupplierBtn" class="button add-new-button"><i class="fas fa-plus"></i> Add New Supplier</button>
+                <a href="new_po.html" id="createPoBtn" class="button add-new-button" style="background-color: var(--primary-color);"><i class="fas fa-file-alt"></i> Create New PO</a>
+            </div>
+
+            <div class="section-container" id="suppliers-section">
+                <h2><i class="fas fa-users"></i> Suppliers List</h2>
+                <div class="table-container">
+                    <table id="supplierTable">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Company</th>
+                                <th>WhatsApp No</th>
+                                <th>Email</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="supplierTableBody">
+                            <tr><td colspan="5">Loading suppliers...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="section-container" id="pos-section">
+                <h2><i class="fas fa-file-invoice-dollar"></i> Purchase Orders</h2>
+                <div class="po-filters">
+                    <input type="text" id="poSearchInput" placeholder="Search PO# or Supplier...">
+                    <select id="poStatusFilter">
+                        <option value="">All Status</option>
+                        <option value="New">New</option>
+                        <option value="Sent">Sent</option>
+                        <option value="Received">Received</option>
+                        </select>
+                    <button id="poFilterBtn">Filter</button>
+                 </div>
+                 <div class="table-container">
+                     <table id="poTable">
+                         <thead>
+                             <tr>
+                                 <th>PO Number</th>
+                                 <th>Supplier</th>
+                                 <th>Order Date</th>
+                                 <th>Status</th>
+                                 <th>Amount</th>
+                                 <th>Actions</th>
+                             </tr>
+                         </thead>
+                         <tbody id="poTableBody">
+                             <tr><td colspan="6">Loading purchase orders...</td></tr>
+                         </tbody>
+                     </table>
+                 </div>
+            </div>
+
+        </div> </div> <div id="supplierModal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" id="closeSupplierModal">&times;</span>
+            <h2 id="supplierModalTitle">Add New Supplier</h2>
+            <form id="supplierForm">
+                <input type="hidden" id="supplierIdInput"> <div class="form-group">
+                    <label for="supplierNameInput">Supplier Name *</label>
+                    <input type="text" id="supplierNameInput" required>
+                </div>
+                <div class="form-group">
+                    <label for="supplierCompanyInput">Company Name</label>
+                    <input type="text" id="supplierCompanyInput">
+                </div>
+                <div class="form-group">
+                    <label for="supplierWhatsappInput">WhatsApp No</label>
+                    <input type="tel" id="supplierWhatsappInput">
+                </div>
+                <div class="form-group">
+                    <label for="supplierEmailInput">Email</label>
+                    <input type="email" id="supplierEmailInput">
+                </div>
+                <div class="form-group">
+                    <label for="supplierAddressInput">Address</label>
+                    <textarea id="supplierAddressInput" rows="2"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="supplierGstInput">GST No</label>
+                    <input type="text" id="supplierGstInput">
+                </div>
+                <div class="modal-actions">
+                    <button type="button" id="cancelSupplierBtn" class="button cancel-button">Cancel</button>
+                    <button type="submit" id="saveSupplierBtn" class="button save-button">Save Supplier</button>
+                </div>
+                <div id="supplierErrorMsg" class="error-message" style="display: none;"></div>
+            </form>
+        </div>
+    </div>
+
+
+    <script src="js/supplier_management.js" type="module" defer></script>
+
+</body>
+</html>
