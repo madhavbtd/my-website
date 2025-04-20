@@ -8,16 +8,13 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
-
     <link rel="stylesheet" href="css/index.css">
     <link rel="stylesheet" href="css/order_history.css">
 
-
     <script type="module">
-        // Firebase services Import
+        // Firebase Imports - Auth Persistence शामिल करें
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-        // Firestore services needed by this page AND dashboard.js
+        import { getAuth, onAuthStateChanged, signOut, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js"; // Persistence जोड़ा गया
         import { getFirestore, collection, onSnapshot, query, where, getDocs, limit } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
         // --- आपकी सही Firebase कॉन्फ़िगरेशन ---
@@ -49,64 +46,61 @@
              auth = getAuth(app);
              db = getFirestore(app);
 
-             // --- Make functions globally available for dashboard.js ---
-             window.db = db;
-             window.auth = auth;
-             window.collection = collection;
-             window.onSnapshot = onSnapshot;
-             window.query = query;
-             window.where = where;
-             window.getDocs = getDocs;
-             window.limit = limit;
+             // --- Make functions globally available ---
+             window.db = db; window.auth = auth; window.collection = collection;
+             window.onSnapshot = onSnapshot; window.query = query; window.where = where;
+             window.getDocs = getDocs; window.limit = limit;
 
-             // --- Authentication State Check ---
-             onAuthStateChanged(auth, (user) => {
-                 const currentPage = window.location.pathname.split('/').pop() || 'index.html';
+             // --- <<< Set Persistence and THEN Check Auth State >>> ---
+              console.log("index.html: Attempting to set persistence before auth check...");
+              setPersistence(auth, browserLocalPersistence)
+                .then(() => {
+                  console.log("index.html: Auth persistence set to local. Setting up auth listener...");
+                  // --- Authentication State Check ---
+                  onAuthStateChanged(auth, (user) => {
+                      const currentPage = window.location.pathname.split('/').pop() || 'index.html';
+                      console.log(`index.html: onAuthStateChanged fired. User: ${user ? user.uid : 'null'}`);
 
-                 if (user) {
-                     console.log(`User is logged in on ${currentPage}:`, user.uid);
-                     // Role Verification Block (Optional but good practice)
-                     user.getIdTokenResult(true) // Force refresh claims
-                         .then((idTokenResult) => {
-                             const userRole = idTokenResult.claims.role;
-                             console.log('User Role:', userRole);
-                             window.currentUserRole = userRole; // Store globally
-                             // Update welcome message
-                             const welcomeSpan = document.getElementById('welcome-user');
-                             if (welcomeSpan) {
-                                 welcomeSpan.textContent = `Welcome ${user.email || 'User'} (${userRole || 'Standard'})`;
-                             }
-                             // Call dashboard functions only after auth and role check
-                             if (typeof initializeDashboard === 'function') {
-                                initializeDashboard(user); // Defined in dashboard.js
-                             } else {
-                                 console.warn("initializeDashboard function not found!");
-                             }
-                         })
-                         .catch((error) => {
-                             console.error('Error getting user claims:', error);
-                             window.currentUserRole = undefined;
-                             const welcomeSpan = document.getElementById('welcome-user');
-                              if (welcomeSpan) {
-                                 welcomeSpan.textContent = `Welcome ${user.email || 'User'} (Role Error)`;
-                              }
-                              // Still initialize dashboard even if role fails?
-                              if (typeof initializeDashboard === 'function') {
-                                initializeDashboard(user);
-                              } else {
-                                  console.warn("initializeDashboard function not found!");
-                              }
-                         });
-                 } else {
-                     // User is not logged in. Redirect.
-                     console.log(`User is not logged in on ${currentPage}. Redirecting to login...`);
-                     // --- login.html का सही पाथ यहाँ डालें ---
-                     if (currentPage.toLowerCase() !== 'login.html') {
-                        window.location.replace('login.html');
-                     }
-                 }
-             });
-             // --- Auth check end ---
+                      if (user) {
+                          // User is logged in - Proceed with role check and dashboard init
+                          user.getIdTokenResult(true)
+                              .then((idTokenResult) => {
+                                  const userRole = idTokenResult.claims.role;
+                                  console.log('index.html: User Role:', userRole);
+                                  window.currentUserRole = userRole;
+                                  const welcomeSpan = document.getElementById('welcome-user');
+                                  if (welcomeSpan) welcomeSpan.textContent = `Welcome ${user.email || 'User'} (${userRole || 'Standard'})`;
+
+                                  if (typeof initializeDashboard === 'function') initializeDashboard(user);
+                                  else console.warn("initializeDashboard function not found!");
+                              })
+                              .catch((error) => {
+                                  console.error('index.html: Error getting user claims:', error);
+                                  window.currentUserRole = undefined;
+                                  const welcomeSpan = document.getElementById('welcome-user');
+                                  if (welcomeSpan) welcomeSpan.textContent = `Welcome ${user.email || 'User'} (Role Error)`;
+
+                                  if (typeof initializeDashboard === 'function') initializeDashboard(user);
+                                  else console.warn("initializeDashboard function not found!");
+                              });
+                      } else {
+                          // User is not logged in. Redirect.
+                          console.log(`index.html: User is not logged in. Redirecting to login...`);
+                           // --- login.html का सही पाथ यहाँ डालें ---
+                          if (currentPage.toLowerCase() !== 'login.html') {
+                             window.location.replace('login.html');
+                          }
+                      }
+                  }); // End onAuthStateChanged
+                }) // End .then() for setPersistence
+                .catch((error) => {
+                   console.error("index.html: Error setting auth persistence:", error);
+                   // Even if persistence fails, try the auth check anyway
+                   onAuthStateChanged(auth, (user) => { /* ... simplified auth check without persistence assurance ... */ });
+                   alert("Warning: Could not set auth persistence. Login might not be saved properly.");
+                }); // End .catch() for setPersistence
+             // --- <<< End Persistence and Auth Check >>> ---
+
 
              // --- Logout Link Logic ---
              const logoutLink = document.getElementById('logout-link');
@@ -115,21 +109,17 @@
                     e.preventDefault();
                     if (confirm("Are you sure you want to logout?")) {
                         signOut(auth).then(() => {
-                            console.log('User signed out.');
                              // --- login.html का सही पाथ यहाँ डालें ---
-                            window.location.href = 'login.html';
-                        }).catch((error) => {
-                            console.error('Sign out error:', error);
-                            alert("Logout failed.");
-                        });
+                            window.location.replace('login.html'); // Use replace for logout too
+                        }).catch((error) => { console.error('Sign out error:', error); alert("Logout failed."); });
                     }
                 });
              }
              // --- Logout logic end ---
 
         } catch(e) {
-            console.error("Firebase setup / Auth check error:", e);
-            alert("Error loading application. Please try again later.");
+            console.error("Firebase setup error in index.html:", e);
+            alert("Error loading application setup. Check console.");
         }
     </script>
     </head>
@@ -142,7 +132,8 @@
                 <li><a href="index.html" class="active"><i class="fas fa-tachometer-alt"></i> <span>Dashboard</span></a></li>
                 <li><a href="order_history.html"><i class="fas fa-history"></i> <span>Order History</span></a></li>
                 <li><a href="customer_management.html"><i class="fas fa-users"></i> <span>Customers</span></a></li>
-                <li><a href="suppliers.html"><i class="fas fa-truck"></i> <span>Suppliers</span></a></li> <li><a href="#"><i class="fas fa-chart-bar"></i> <span>Report</span></a></li>
+                <li><a href="suppliers.html"><i class="fas fa-truck"></i> <span>Suppliers</span></a></li>
+                <li><a href="#"><i class="fas fa-chart-bar"></i> <span>Report</span></a></li>
                 <li><a href="#"><i class="fas fa-code-branch"></i> <span>Branch Manage</span></a></li>
                 <li><a href="#"><i class="fas fa-cog"></i> <span>Settings</span></a></li>
                 <li><a href="product_management.html"><i class="fas fa-box-open"></i> <span>Product Management</span></a></li>
@@ -152,11 +143,12 @@
         </div>
 
         <div class="main-content" id="main-content">
-            <div class="header">
+             <div class="header">
                 <span class="welcome-text" id="welcome-user">Welcome...</span>
                 <div class="header-buttons">
-                     <a href="customer_management.html?action=add" class="button-base add-customer-btn"><i class="fas fa-user-plus"></i> Add Customer</a>
-                    <a href="suppliers.html" class="button-base add-supplier-btn"><i class="fas fa-truck"></i> Add Supplier</a> <a href="new_order.html" class="button-base new-order-btn"><i class="fas fa-plus-circle"></i> New Order</a>
+                    <a href="customer_management.html?action=add" class="button-base add-customer-btn"><i class="fas fa-user-plus"></i> Add Customer</a>
+                    <a href="suppliers.html" class="button-base add-supplier-btn"><i class="fas fa-truck"></i> Add Supplier</a>
+                    <a href="new_order.html" class="button-base new-order-btn"><i class="fas fa-plus-circle"></i> New Order</a>
                 </div>
                 <div class="date-time-container">
                     <span id="currentDateTime">Loading date...</span>
@@ -164,101 +156,28 @@
              </div>
 
             <div class="order-control-panel">
-                <div class="panel-item light-blue">
-                    <i class="fas fa-shopping-bag panel-icon"></i> Order Received
-                    <span class="panel-count" id="count-order-received">00</span>
-                    <a href="order_history.html?status=Order+Received" class="button-link">Click to View</a>
-                </div>
-                <div class="panel-item light-orange">
-                    <i class="fas fa-hourglass-half panel-icon"></i> Designing
-                    <span class="panel-count" id="count-designing">00</span>
-                    <a href="order_history.html?status=Designing" class="button-link">Click to View</a>
-                </div>
-                 <div class="panel-item light-green">
-                    <i class="fas fa-check-circle panel-icon"></i> Verification
-                    <span class="panel-count" id="count-verification">00</span>
-                    <a href="order_history.html?status=Verification" class="button-link">Click to View</a>
-                </div>
-                 <div class="panel-item light-red">
-                     <i class="fas fa-thumbs-up panel-icon"></i> Design Approved
-                     <span class="panel-count" id="count-design-approved">00</span>
-                     <a href="order_history.html?status=Design+Approved" class="button-link">Click to View</a>
-                </div>
-                 <div class="panel-item light-blue">
-                     <i class="fas fa-print panel-icon"></i> Printing
-                     <span class="panel-count" id="count-printing">00</span>
-                     <a href="order_history.html?status=Printing" class="button-link">Click to View</a>
-                </div>
-                 <div class="panel-item light-orange">
-                     <i class="fas fa-cog panel-icon"></i> Ready For Working
-                     <span class="panel-count" id="count-ready-for-working">00</span>
-                     <a href="order_history.html?status=Ready+for+Working" class="button-link">Click to View</a>
-                </div>
-                 <div class="panel-item light-green">
-                     <i class="fas fa-truck panel-icon"></i> Delivered
-                     <span class="panel-count" id="count-delivered">00</span>
-                     <a href="order_history.html?status=Delivered" class="button-link">Click to View</a>
-                </div>
-                 <div class="panel-item light-red">
-                     <i class="fas fa-check-double panel-icon"></i> Completed
-                     <span class="panel-count" id="count-completed">00</span>
-                     <a href="order_history.html?status=Completed" class="button-link">Click to View</a>
-                 </div>
+                <div class="panel-item light-blue"><i class="fas fa-shopping-bag panel-icon"></i> Order Received <span class="panel-count" id="count-order-received">00</span> <a href="order_history.html?status=Order+Received" class="button-link">View</a></div>
+                <div class="panel-item light-orange"><i class="fas fa-hourglass-half panel-icon"></i> Designing <span class="panel-count" id="count-designing">00</span> <a href="order_history.html?status=Designing" class="button-link">View</a></div>
+                <div class="panel-item light-green"><i class="fas fa-check-circle panel-icon"></i> Verification <span class="panel-count" id="count-verification">00</span> <a href="order_history.html?status=Verification" class="button-link">View</a></div>
+                <div class="panel-item light-red"><i class="fas fa-thumbs-up panel-icon"></i> Design Approved <span class="panel-count" id="count-design-approved">00</span> <a href="order_history.html?status=Design+Approved" class="button-link">View</a></div>
+                <div class="panel-item light-blue"><i class="fas fa-print panel-icon"></i> Printing <span class="panel-count" id="count-printing">00</span> <a href="order_history.html?status=Printing" class="button-link">View</a></div>
+                <div class="panel-item light-orange"><i class="fas fa-cog panel-icon"></i> Ready For Working <span class="panel-count" id="count-ready-for-working">00</span> <a href="order_history.html?status=Ready+for+Working" class="button-link">View</a></div>
+                <div class="panel-item light-green"><i class="fas fa-truck panel-icon"></i> Delivered <span class="panel-count" id="count-delivered">00</span> <a href="order_history.html?status=Delivered" class="button-link">View</a></div>
+                <div class="panel-item light-red"><i class="fas fa-check-double panel-icon"></i> Completed <span class="panel-count" id="count-completed">00</span> <a href="order_history.html?status=Completed" class="button-link">View</a></div>
             </div>
 
-            <div class="search-bar order-search-bar"> <label for="order-id-search">Search Order ID:</label>
-                <input type="text" id="order-id-search" placeholder="Enter Order ID...">
-                <button id="order-id-search-button"><i class="fas fa-search"></i></button>
-                <div id="order-suggestions" class="suggestions-list"></div>
-            </div>
-             <div class="reminder-section">
-                 <h3>Reminder</h3>
-                 <p>No reminders currently.</p> </div>
+            <div class="search-bar order-search-bar"> <label for="order-id-search">Search Order ID:</label> <input type="text" id="order-id-search" placeholder="Enter Order ID..."> <button id="order-id-search-button"><i class="fas fa-search"></i></button> <div id="order-suggestions" class="suggestions-list"></div> </div>
+             <div class="reminder-section"> <h3>Reminder</h3> <p>No reminders currently.</p> </div>
         </div>
     </div>
 
     <script src="js/dashboard.js" type="module"></script>
-
     <script>
-        // यह स्क्रिप्ट ब्लॉक अपरिवर्तित है (setActiveLink सुधार शामिल है)
-        function updateDateTime() {
-            const now = new Date();
-            const optsDate = { year: 'numeric', month: 'long', day: 'numeric' };
-            const optsDay = { weekday: 'long' };
-            try {
-                const date = now.toLocaleDateString('en-GB', optsDate);
-                const day = now.toLocaleDateString('en-GB', optsDay);
-                const elem = document.getElementById('currentDateTime');
-                if (elem) elem.textContent = `${date}, ${day}`;
-            } catch (e) { console.error("Error formatting date/time:", e); }
-        }
-
-        function setActiveLink() {
-            try {
-                const path = window.location.pathname;
-                let page = path.substring(path.lastIndexOf('/') + 1);
-                if (page === '' || page === '/') page = 'index.html';
-
-                const links = document.querySelectorAll('.sidebar ul li a');
-                links.forEach(l => {
-                    const hrefAttr = l.getAttribute('href');
-                    l.classList.remove('active');
-                    if (hrefAttr) {
-                        const linkPage = hrefAttr.split('/').pop().split('?')[0].split('#')[0];
-                        let effectiveLinkPage = linkPage === '' ? 'index.html' : linkPage;
-                        if (page === effectiveLinkPage) {
-                             l.classList.add('active');
-                        }
-                    }
-                });
-            } catch(e) { console.error("Error setting active link:", e); }
-        }
-
-        updateDateTime();
-        setInterval(updateDateTime, 60000);
-
+        function updateDateTime() { try { const dt=new Date(),d=dt.toLocaleDateString('en-GB',{year:'numeric',month:'long',day:'numeric'}),y=dt.toLocaleDateString('en-GB',{weekday:'long'}),el=document.getElementById('currentDateTime'); if(el)el.textContent=`${d}, ${y}`; } catch(e){} }
+        function setActiveLink() { try { let p=window.location.pathname.substring(window.location.pathname.lastIndexOf('/')+1)||'index.html'; if(p==='/')p='index.html'; document.querySelectorAll('.sidebar ul li a').forEach(l=>{ l.classList.remove('active'); const h=l.getAttribute('href'); if(h){ let lp=(h.split('/').pop().split('?')[0].split('#')[0])||'index.html'; if(p===lp)l.classList.add('active'); } }); } catch(e){} }
+        updateDateTime(); setInterval(updateDateTime, 60000);
         window.addEventListener('DOMContentLoaded', setActiveLink);
-        window.addEventListener('popstate', setActiveLink); // Handle browser back/forward
+        window.addEventListener('popstate', setActiveLink);
     </script>
 </body>
 </html>

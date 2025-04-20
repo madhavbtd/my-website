@@ -10,7 +10,9 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" integrity="sha512-9usAa10IRO0HhonpyAIVpjrylPvoDwiPUiKdWk5t3PyolY1cOd4DSE0Ga+ri4AuTroPR5aQvXU9xC6qOPnzFeg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
 
-    <link rel="stylesheet" href="css/order_history.css"> <style>
+    <link rel="stylesheet" href="css/order_history.css">
+
+    <style>
         /* Styles */
         .modal-content { max-width: 500px; }
         .modal-content label { font-weight: 500; margin-bottom: 3px; display: block;}
@@ -22,9 +24,9 @@
     </style>
 
     <script type="module">
-        // Firebase Services Import
+        // Firebase Imports - Auth Persistence शामिल करें
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+        import { getAuth, onAuthStateChanged, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js"; // Persistence जोड़ा गया
         import { getFirestore, collection, doc, addDoc, setDoc, deleteDoc, onSnapshot, query, orderBy, Timestamp, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
         // --- आपकी सही Firebase कॉन्फ़िगरेशन ---
@@ -49,181 +51,131 @@
                  app = initializeApp(firebaseConfig);
                  window.firebaseAppInitialized = true;
                  window.firebaseApp = app;
-                 console.log("Firebase initialized on this page (suppliers - Promise method).");
+                 console.log("Firebase initialized on suppliers.html.");
              } else {
                  app = window.firebaseApp;
-                 console.log("Firebase already initialized on this page (suppliers - Promise method).");
+                 console.log("Firebase already initialized on suppliers.html.");
              }
              auth = getAuth(app);
              db = getFirestore(app);
 
-             // Make services globally available for suppliers.js
-             window.db = db;
-             window.auth = auth;
-             window.collection = collection;
-             window.doc = doc;
-             window.addDoc = addDoc;
-             window.setDoc = setDoc;
-             window.deleteDoc = deleteDoc;
-             window.onSnapshot = onSnapshot;
-             window.query = query;
-             window.orderBy = orderBy;
-             window.Timestamp = Timestamp;
-             window.serverTimestamp = serverTimestamp;
+             // --- Make services globally available ---
+             window.db = db; window.auth = auth; window.collection = collection; window.doc = doc;
+             window.addDoc = addDoc; window.setDoc = setDoc; window.deleteDoc = deleteDoc;
+             window.onSnapshot = onSnapshot; window.query = query; window.orderBy = orderBy;
+             window.Timestamp = Timestamp; window.serverTimestamp = serverTimestamp;
 
-             // --- Promise-Based Authentication State Check ---
+             // --- <<<< Promise + Persistence Auth Check >>>> ---
              const mainPageContent = document.getElementById('main-supplier-content');
              const loadingState = document.getElementById('loading-state');
 
              if (mainPageContent) mainPageContent.style.display = 'none';
              if (loadingState) loadingState.style.display = 'block';
 
+             // Function to check auth state using Promise
              function checkAuthState() {
-                 console.log("checkAuthState: Promise created. Waiting for onAuthStateChanged...");
+                 console.log("checkAuthState: Promise created. Waiting...");
                  return new Promise((resolve, reject) => {
                      const timer = setTimeout(() => { reject(new Error("Auth check timed out.")); }, 10000);
                      const unsubscribe = onAuthStateChanged(auth, (user) => {
-                         clearTimeout(timer);
-                         unsubscribe();
-                         console.log("checkAuthState: onAuthStateChanged fired. User:", user ? user.uid : null);
+                         clearTimeout(timer); unsubscribe();
+                         console.log("checkAuthState: Received state. User:", user ? user.uid : null);
                          resolve(user);
                      }, (error) => { clearTimeout(timer); reject(error); });
                  });
              }
 
-             console.log("Auth Check Strategy: Using Promise to wait for auth state...");
-             checkAuthState().then(user => {
-                 if (loadingState) loadingState.style.display = 'none'; // Hide loading state
+             console.log("suppliers.html: Attempting to set persistence...");
+             setPersistence(auth, browserLocalPersistence)
+               .then(() => {
+                  console.log("suppliers.html: Persistence set. Now checking auth state via Promise...");
+                  // --- Use the Promise ---
+                  return checkAuthState(); // Return the promise to chain .then()
+               })
+               .then(user => {
+                   // This runs after persistence is set AND auth state is resolved
+                   if (loadingState) loadingState.style.display = 'none';
 
-                 if (user) {
-                     // USER IS LOGGED IN
-                     console.log(`User confirmed logged in via Promise. UID: ${user.uid}. Initializing page.`);
-                     if (mainPageContent) {
-                         console.log("Showing main content area.");
-                         mainPageContent.style.display = 'block'; // Show content
-                     } else {
-                          console.error("CRITICAL: main-supplier-content element not found!");
-                     }
-                     // Initialize JS
-                     console.log("Attempting to call initializeSuppliersPage...");
-                     if (typeof initializeSuppliersPage === 'function') {
-                         initializeSuppliersPage();
-                         console.log("initializeSuppliersPage function called successfully.");
-                     } else {
-                         console.error("CRITICAL: initializeSuppliersPage function not found! Check js/suppliers.js");
-                         alert("Error: Could not initialize page functionality.");
-                     }
-                 } else {
-                     // USER IS NOT LOGGED IN
-                     const currentPage = window.location.pathname.split('/').pop() || 'index.html';
-                     console.log(`User confirmed NOT logged in via Promise on ${currentPage}. Redirecting...`);
-                     if (currentPage.toLowerCase() !== 'login.html') {
-                        const originalUrl = encodeURIComponent(window.location.pathname + window.location.search);
-                        console.log(`Redirecting to login.html?redirectUrl=${originalUrl}`);
-                        // !!!!! login.html का सही पाथ यहाँ डालें !!!!!
-                        window.location.replace(`login.html?redirectUrl=${originalUrl}`);
-                     }
-                 }
-             }).catch(error => {
-                  console.error("Failed to check auth state due to error:", error);
-                  alert("Error checking user login status: " + error.message);
-                  if (loadingState) loadingState.style.display = 'none';
-                  document.body.innerHTML = `<p style="color:red; text-align:center; padding: 20px;">Error checking login status: ${error.message}. Please refresh.</p>`;
-             });
-             // --- End of Promise-Based Auth Check ---
+                   if (user) {
+                       // USER LOGGED IN
+                       console.log(`suppliers.html: User confirmed via Promise. UID: ${user.uid}. Initializing page.`);
+                       if (mainPageContent) mainPageContent.style.display = 'block';
+                       else console.error("CRITICAL: main-supplier-content not found!");
+
+                       if (typeof initializeSuppliersPage === 'function') initializeSuppliersPage();
+                       else console.error("CRITICAL: initializeSuppliersPage function not found!");
+
+                   } else {
+                       // USER NOT LOGGED IN
+                       const currentPage = window.location.pathname.split('/').pop() || 'index.html';
+                       console.log(`suppliers.html: No user confirmed via Promise on ${currentPage}. Redirecting...`);
+                       if (currentPage.toLowerCase() !== 'login.html') {
+                          const originalUrl = encodeURIComponent(window.location.pathname + window.location.search);
+                          // !!!!! login.html का सही पाथ यहाँ डालें !!!!!
+                          window.location.replace(`login.html?redirectUrl=${originalUrl}`);
+                       }
+                   }
+               }) // End of checkAuthState().then()
+               .catch(error => {
+                    // This catches errors from setPersistence OR checkAuthState
+                    console.error("suppliers.html: Error during persistence setting or auth check:", error);
+                    alert("Error checking login status: " + error.message);
+                    if (loadingState) loadingState.style.display = 'none';
+                    document.body.innerHTML = `<p style="color:red; text-align:center; padding: 20px;">Error checking login status: ${error.message}. Please refresh.</p>`;
+               }); // End of setPersistence().catch()
+             // --- <<<< End Auth Check Logic >>>> ---
 
         } catch(e) {
             console.error("CRITICAL Firebase setup error in suppliers.html:", e);
-            alert("Critical error during application setup. See console.");
-            document.body.innerHTML = '<p style="color:red; text-align:center; padding: 20px;">Critical error loading application setup. Check console for details.</p>';
+            alert("Critical setup error. See console.");
+            document.body.innerHTML = `<p style="color:red; text-align:center; padding: 20px;">Critical setup error: ${e.message}</p>`;
         }
     </script>
     </head>
 <body>
 
-    <div id="loading-state" style="display: block;"> <p style="text-align: center; padding: 40px; font-size: 1.1em; color: #555;">
+    <div id="loading-state" style="display: block;">
+        <p style="text-align: center; padding: 40px; font-size: 1.1em; color: #555;">
             <i class="fas fa-spinner fa-spin"></i> Loading Authentication...
         </p>
     </div>
 
-    <div id="main-supplier-content" style="display: none;"> <div class="container">
-            <div class="header">
-                <i class="fas fa-users header-icon"></i>
-                <h1>Supplier Management</h1>
+    <div id="main-supplier-content" style="display: none;">
+        <div class="container">
+            <div class="header"><i class="fas fa-users header-icon"></i><h1>Supplier Management</h1></div>
+            <div class="breadcrumb"><a href="index.html">Home</a> / <span>Suppliers</span></div>
+            <div class="actions-bar"><button id="addNewSupplierBtn" class="button add-new-button"><i class="fas fa-plus"></i> Add New Supplier</button></div>
+            <div class="filter-bar">
+                <div class="filter-group" style="flex-grow: 2;"><label for="filterSearch"><i class="fas fa-search"></i> Search:</label><input type="text" id="filterSearch" placeholder="Name, Contact, Phone, Email..."></div>
+                <div class="filter-group"><button id="clearFiltersBtn" class="button clear-filters-button" title="Clear search"><i class="fas fa-times"></i> Clear Search</button></div>
             </div>
-
-            <div class="breadcrumb">
-                 <a href="index.html">Home</a> / <span>Suppliers</span>
-            </div>
-
-            <div class="actions-bar">
-                 <button id="addNewSupplierBtn" class="button add-new-button"><i class="fas fa-plus"></i> Add New Supplier</button>
-            </div>
-
-             <div class="filter-bar">
-                <div class="filter-group" style="flex-grow: 2;">
-                    <label for="filterSearch"><i class="fas fa-search"></i> Search:</label>
-                    <input type="text" id="filterSearch" placeholder="Name, Contact, Phone, Email...">
-                </div>
-                 <div class="filter-group">
-                     <button id="clearFiltersBtn" class="button clear-filters-button" title="Clear search"><i class="fas fa-times"></i> Clear Search</button>
-                </div>
-            </div>
-
             <div class="table-container">
                 <table id="supplierTable">
-                     <thead>
-                        <tr>
-                            <th>Supplier Name</th>
-                            <th>Contact Person</th>
-                            <th>Phone</th>
-                            <th>Email</th>
-                            <th>Action</th>
-                        </tr>
-                    </thead>
-                     <tbody id="supplierTableBody">
-                        </tbody>
+                    <thead><tr><th>Supplier Name</th><th>Contact Person</th><th>Phone</th><th>Email</th><th>Action</th></tr></thead>
+                    <tbody id="supplierTableBody"></tbody>
                 </table>
             </div>
-             <div class="order-summary-counts">
-                 <span>Total Suppliers: <strong id="total-suppliers">0</strong></span>
-            </div>
-
-        </div> <div id="supplierModal" class="modal">
-             <div class="modal-content">
+            <div class="order-summary-counts"><span>Total Suppliers: <strong id="total-suppliers">0</strong></span></div>
+        </div>
+        <div id="supplierModal" class="modal">
+            <div class="modal-content">
                 <span class="close-btn" id="closeSupplierModal" title="Close">&times;</span>
                 <h2 id="modalTitle">Add New Supplier</h2>
                 <form id="supplierForm">
                     <input type="hidden" id="supplierId">
-                    <div>
-                        <label for="supplierName">Supplier Name:</label>
-                        <input type="text" id="supplierName" required>
-                    </div>
-                    <div>
-                        <label for="contactPerson">Contact Person:</label>
-                        <input type="text" id="contactPerson">
-                    </div>
-                     <div>
-                        <label for="phone">Phone:</label>
-                        <input type="tel" id="phone">
-                    </div>
-                     <div>
-                        <label for="email">Email:</label>
-                        <input type="email" id="email">
-                    </div>
-                    <div>
-                        <label for="address">Address:</label>
-                        <textarea id="address"></textarea>
-                    </div>
+                    <div><label for="supplierName">Supplier Name:</label><input type="text" id="supplierName" required></div>
+                    <div><label for="contactPerson">Contact Person:</label><input type="text" id="contactPerson"></div>
+                    <div><label for="phone">Phone:</label><input type="tel" id="phone"></div>
+                    <div><label for="email">Email:</label><input type="email" id="email"></div>
+                    <div><label for="address">Address:</label><textarea id="address"></textarea></div>
                     <div class="modal-actions" style="margin-top: 15px;">
                         <button type="submit" id="saveSupplierBtn" class="button add-new-button"><i class="fas fa-save"></i> Save Supplier</button>
                         <button type="button" id="cancelBtn" class="button clear-filters-button" style="background-color: #6c757d;"><i class="fas fa-times"></i> Cancel</button>
                     </div>
-                     <p id="modalError" style="color: red; margin-top: 10px; text-align: center;"></p>
+                    <p id="modalError" style="color: red; margin-top: 10px; text-align: center;"></p>
                 </form>
             </div>
         </div>
-
     </div> <script src="js/suppliers.js" type="module"></script>
 
 </body>
