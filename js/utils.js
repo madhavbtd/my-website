@@ -1,11 +1,17 @@
-// js/utils.js
+// js/utils.js - v2 (Fix jsPDF loading)
 
 // --- PDF Generation Function ---
-
-// Make sure jsPDF and autoTable are loaded (e.g., via script tags in HTML)
-const { jsPDF } = window.jspdf;
-
 async function generatePoPdf(poData, supplierData) {
+    // --- Get jsPDF inside the function ---
+    // Ensure jsPDF is loaded when this function is CALLED
+    if (typeof window.jspdf === 'undefined' || typeof window.jspdf.jsPDF === 'undefined') {
+         console.error("jsPDF library (window.jspdf.jsPDF) not found! Make sure it's loaded on the calling page or included globally.");
+         alert("Error: PDF Library not loaded correctly. Cannot generate PDF.");
+         return; // Stop if library isn't loaded
+    }
+    const { jsPDF } = window.jspdf;
+    // ------------------------------------
+
     console.log("Generating PDF for PO:", poData);
     console.log("Supplier Data for PDF:", supplierData);
 
@@ -26,10 +32,11 @@ async function generatePoPdf(poData, supplierData) {
         doc.setFont(undefined, 'bold');
         doc.text("Madhav MultyPrint", pageWidth - 15, currentY, { align: 'right' });
         doc.setFont(undefined, 'normal');
-        doc.text("Your Company Address Line 1", pageWidth - 15, currentY + 4, { align: 'right' }); // <-- अपना पता डालें
-        doc.text("Your City, Pincode", pageWidth - 15, currentY + 8, { align: 'right' });       // <-- अपना शहर/पिन डालें
-        doc.text("Mobile: Your Mobile", pageWidth - 15, currentY + 12, { align: 'right' });     // <-- अपना मोबाइल डालें
-        doc.text("Email: your.email@example.com", pageWidth - 15, currentY + 16, { align: 'right' });// <-- अपना ईमेल डालें
+        // !!! अपना सही पता, शहर, मोबाइल, ईमेल यहाँ डालें !!!
+        doc.text("Shop No. X, Market Name", pageWidth - 15, currentY + 4, { align: 'right' });
+        doc.text("Sujangarh, Rajasthan", pageWidth - 15, currentY + 8, { align: 'right' });
+        doc.text("Mobile: 9876543210", pageWidth - 15, currentY + 12, { align: 'right' });
+        doc.text("email@example.com", pageWidth - 15, currentY + 16, { align: 'right' });
         currentY += 25;
 
         // ----- Document Title -----
@@ -50,8 +57,8 @@ async function generatePoPdf(poData, supplierData) {
         // Column 1: Supplier Info
         doc.text("Supplier Details:", col1X, currentY);
         doc.setFont(undefined, 'normal');
-        let supplierY = currentY + 5; // Start position for supplier details
-        doc.text(supplierData.name || '', col1X, supplierY); supplierY += 4;
+        let supplierY = currentY + 5;
+        if(supplierData.name) { doc.text(supplierData.name, col1X, supplierY); supplierY += 4; }
         if (supplierData.companyName) { doc.text(supplierData.companyName, col1X, supplierY); supplierY += 4; }
         if (supplierData.address) { doc.text(supplierData.address, col1X, supplierY); supplierY += 4; }
         if (supplierData.whatsappNo) { doc.text(`Ph: ${supplierData.whatsappNo}`, col1X, supplierY); supplierY += 4; }
@@ -59,14 +66,11 @@ async function generatePoPdf(poData, supplierData) {
         if (supplierData.gstNo) { doc.text(`GST: ${supplierData.gstNo}`, col1X, supplierY); supplierY += 4; }
 
         // Column 2: PO Info
-        let poInfoY = currentY + 5; // Start position for PO info
-        doc.setFont(undefined, 'bold');
-        doc.text("PO Number:", col2X, poInfoY);
-        doc.setFont(undefined, 'normal');
-        doc.text(poData.poNumber || 'N/A', col2X + 30, poInfoY); poInfoY += 5;
+        let poInfoY = currentY + 5;
+        doc.setFont(undefined, 'bold'); doc.text("PO Number:", col2X, poInfoY);
+        doc.setFont(undefined, 'normal'); doc.text(poData.poNumber || 'N/A', col2X + 30, poInfoY); poInfoY += 5;
 
-        doc.setFont(undefined, 'bold');
-        doc.text("Order Date:", col2X, poInfoY);
+        doc.setFont(undefined, 'bold'); doc.text("Order Date:", col2X, poInfoY);
         doc.setFont(undefined, 'normal');
         let orderDateStr = 'N/A';
         if (poData.orderDate && poData.orderDate.toDate) {
@@ -74,52 +78,35 @@ async function generatePoPdf(poData, supplierData) {
         }
         doc.text(orderDateStr, col2X + 30, poInfoY); poInfoY += 5;
 
-        // Ensure currentY moves past the taller column
-        currentY = Math.max(supplierY, poInfoY) + 5; // Move down past this section
+        currentY = Math.max(supplierY, poInfoY) + 5;
 
         // ----- Items Table -----
         const tableHeaders = [["#", "Product Name", "Details", "Rate", "Amount"]];
         const tableBody = poData.items.map((item, index) => {
             let details = '';
             if (item.type === 'Sq Feet') {
-                // Include real size in details as well? Optional.
                  details = `Size: ${item.printWidth}x${item.printHeight} ${item.unit}\n(Print Area: ${item.printSqFt} sq ft)`;
-            } else { // Qty
-                details = `Qty: ${item.quantity}`;
-            }
+            } else { details = `Qty: ${item.quantity}`; }
             const rateStr = typeof item.rate === 'number' ? item.rate.toFixed(2) : '-';
             const amountStr = typeof item.itemAmount === 'number' ? item.itemAmount.toFixed(2) : '-';
-
-            return [
-                index + 1,
-                item.productName || 'N/A',
-                details,
-                rateStr + (item.type === 'Sq Feet' ? '/sqft' : '/unit'),
-                amountStr
-            ];
+            return [ index + 1, item.productName || 'N/A', details, rateStr + (item.type === 'Sq Feet' ? '/sqft' : '/unit'), amountStr ];
         });
 
         doc.autoTable({
-            head: tableHeaders,
-            body: tableBody,
-            startY: currentY,
-            theme: 'grid',
+            head: tableHeaders, body: tableBody, startY: currentY, theme: 'grid',
             headStyles: { fillColor: [22, 160, 133], textColor: 255, fontStyle: 'bold', halign: 'center' },
             columnStyles: {
-                 0: { halign: 'right', cellWidth: 10 }, // Sr No align right
-                 1: { halign: 'left', cellWidth: 60 },   // Product Name
-                 2: { halign: 'left', cellWidth: 'auto'}, // Details
-                 3: { halign: 'right', cellWidth: 30},  // Rate
-                 4: { halign: 'right', cellWidth: 30}   // Amount
+                 0: { halign: 'right', cellWidth: 10 }, 1: { halign: 'left', cellWidth: 60 },
+                 2: { halign: 'left', cellWidth: 'auto'}, 3: { halign: 'right', cellWidth: 30},
+                 4: { halign: 'right', cellWidth: 30}
             },
-            didDrawPage: function (data) { /* Footer can be added */ }
+            didDrawPage: function (data) { /* Footer possible here */ }
         });
 
         currentY = doc.lastAutoTable.finalY + 15;
 
         // ----- Totals -----
-        doc.setFontSize(11);
-        doc.setFont(undefined, 'bold');
+        doc.setFontSize(11); doc.setFont(undefined, 'bold');
         doc.text("Total Amount:", pageWidth - 65, currentY, { align: 'left' });
         doc.setFont(undefined, 'normal');
         doc.text(`Rs. ${poData.totalAmount !== undefined ? poData.totalAmount.toFixed(2) : '0.00'}`, pageWidth - 15, currentY, { align: 'right' });
@@ -127,8 +114,7 @@ async function generatePoPdf(poData, supplierData) {
 
         // ----- Notes -----
         if (poData.notes) {
-            doc.setFontSize(10);
-            doc.setFont(undefined, 'bold');
+            doc.setFontSize(10); doc.setFont(undefined, 'bold');
             doc.text("Notes:", 15, currentY);
             doc.setFont(undefined, 'normal');
             const splitNotes = doc.splitTextToSize(poData.notes, pageWidth - 30);
@@ -137,14 +123,11 @@ async function generatePoPdf(poData, supplierData) {
         }
 
         // ----- Terms & Conditions / Footer -----
-        const bottomMargin = 15;
-        const termsY = pageHeight - bottomMargin - 15; // Adjust position slightly up
-        doc.setFontSize(8);
-        doc.setTextColor(100);
-        doc.text("Terms & Conditions: 1. Payment: Advance/Due. 2. Delivery: As per schedule.", 15, termsY); // Example T&C
+        const bottomMargin = 15; const termsY = pageHeight - bottomMargin - 15;
+        doc.setFontSize(8); doc.setTextColor(100);
+        doc.text("Terms & Conditions: 1. Payment: Advance/Due. 2. Delivery: As per schedule.", 15, termsY); // Example
         doc.text("For Madhav MultyPrint", pageWidth - 15, termsY + 5, { align: 'right' });
         doc.text("Authorized Signatory", pageWidth - 15, termsY + 10, { align: 'right' });
-
 
         // ----- Save PDF -----
         const filename = `PO-${poData.poNumber || poData.id?.substring(0, 6) || 'PurchaseOrder'}.pdf`;
@@ -157,12 +140,9 @@ async function generatePoPdf(poData, supplierData) {
     }
 }
 
-
-// --- Function for Flex Calculation (Keep it here or in new_po.js) ---
+// --- Function for Flex Calculation ---
 function calculateFlexDimensions(unit, width, height) {
-    // ... (The full code for this function should be here) ...
-    // Example placeholder:
-    console.log(`Calculating flex: Unit=${unit}, W=${width}, H=${height}`);
+    // ... (Assume the full correct code is here) ...
     const mediaWidthsFt = [3, 4, 5, 6, 8, 10];
     let wFt = (unit === 'inches') ? parseFloat(width || 0) / 12 : parseFloat(width || 0);
     let hFt = (unit === 'inches') ? parseFloat(height || 0) / 12 : parseFloat(height || 0);
@@ -179,7 +159,6 @@ function calculateFlexDimensions(unit, width, height) {
     return { realSqFt: realSqFt.toFixed(2), printWidth: displayPrintWidth.toFixed(2), printHeight: displayPrintHeight.toFixed(2), printSqFt: finalPrintSqFt.toFixed(2), inputUnit: unit };
 }
 
-
-// +++++ Export the function +++++
+// +++++ Export the functions +++++
 export { generatePoPdf, calculateFlexDimensions };
 // ++++++++++++++++++++++++++++++++
