@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Supplier & PO Management</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/supplier_management.css">
+    <link rel="stylesheet" href="css/index.css">
+
+
+    <script type="module">
+        // --- Firebase Setup ---
+        // IMPORTANT: Copy your Firebase config and initialization code here
+        // Make sure to import necessary Firestore functions:
+        // getFirestore, collection, doc, addDoc, getDocs, updateDoc, deleteDoc, onSnapshot, query, orderBy, where, Timestamp
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+        import {
+            getFirestore, collection, doc, addDoc, getDocs, updateDoc, deleteDoc, onSnapshot,
+            query, orderBy, where, Timestamp
+         } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+         // **** Your Firebase Configuration ****
+         const firebaseConfig = {
+           // --- PASTE YOUR CONFIG OBJECT HERE ---
+           apiKey: "YOUR_API_KEY",
+           authDomain: "YOUR_AUTH_DOMAIN",
+           projectId: "YOUR_PROJECT_ID",
+           storageBucket: "YOUR_STORAGE_BUCKET",
+           messagingSenderId: "YOUR_SENDER_ID",
+           appId: "YOUR_APP_ID"
+           // --- END OF YOUR CONFIG ---
+         };
+
+        let app;
+        let auth;
+        let db;
+
+        try {
+             if (!window.firebaseAppInitialized) {
+                 app = initializeApp(firebaseConfig);
+                 window.firebaseAppInitialized = true;
+                 window.firebaseApp = app;
+                 console.log("Firebase initialized on supplier_management.html");
+             } else {
+                 app = window.firebaseApp;
+                 console.log("Firebase already initialized (supplier_management.html)");
+             }
+             auth = getAuth(app);
+             db = getFirestore(app);
+
+             // Make Firestore functions globally available for supplier_management.js
+             window.db = db;
+             window.collection = collection;
+             window.doc = doc;
+             window.addDoc = addDoc;
+             window.getDocs = getDocs;
+             window.updateDoc = updateDoc;
+             window.deleteDoc = deleteDoc;
+             window.onSnapshot = onSnapshot;
+             window.query = query;
+             window.orderBy = orderBy;
+             window.where = where;
+             window.Timestamp = Timestamp;
+
+             // --- Authentication Check ---
+             onAuthStateChanged(auth, (user) => {
+                 if (!user) {
+                     console.log("User not logged in on supplier_management. Redirecting...");
+                     window.location.replace('login.html');
+                 } else {
+                     console.log("User is logged in:", user.uid);
+                     // You might want to trigger data loading here AFTER auth confirmation
+                     // For example, call a function defined in supplier_management.js
+                     if(window.initializeSupplierManagement) {
+                        window.initializeSupplierManagement();
+                     }
+                 }
+             });
+
+        } catch(e) {
+            console.error("Firebase setup error:", e);
+            alert("Error loading application.");
+        }
+        // --- End Firebase Setup ---
+    </script>
+
+</head>
+<body>
+    <div class="container">
+        <div class="main-content" id="main-content">
+            <div class="page-header">
+                <h1><i class="fas fa-truck"></i> Supplier & PO Management</h1>
+            </div>
+
+            <div class="breadcrumb">
+                <a href="index.html">Dashboard</a> / <span>Suppliers & POs</span>
+            </div>
+
+            <div class="actions-bar">
+                <button id="addSupplierBtn" class="button add-new-button"><i class="fas fa-plus"></i> Add New Supplier</button>
+                <a href="new_po.html" id="createPoBtn" class="button add-new-button" style="background-color: var(--primary-color);"><i class="fas fa-file-alt"></i> Create New PO</a>
+            </div>
+
+            <div class="section-container" id="suppliers-section">
+                <h2><i class="fas fa-users"></i> Suppliers List</h2>
+                <div class="table-container">
+                    <table id="supplierTable">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Company</th>
+                                <th>WhatsApp No</th>
+                                <th>Email</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="supplierTableBody">
+                            <tr><td colspan="5">Loading suppliers...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="section-container" id="pos-section">
+                <h2><i class="fas fa-file-invoice-dollar"></i> Purchase Orders</h2>
+                <div class="po-filters">
+                    <input type="text" id="poSearchInput" placeholder="Search PO# or Supplier...">
+                    <select id="poStatusFilter">
+                        <option value="">All Status</option>
+                        <option value="New">New</option>
+                        <option value="Sent">Sent</option>
+                        <option value="Received">Received</option>
+                        </select>
+                    <button id="poFilterBtn">Filter</button>
+                 </div>
+                 <div class="table-container">
+                     <table id="poTable">
+                         <thead>
+                             <tr>
+                                 <th>PO Number</th>
+                                 <th>Supplier</th>
+                                 <th>Order Date</th>
+                                 <th>Status</th>
+                                 <th>Amount</th>
+                                 <th>Actions</th>
+                             </tr>
+                         </thead>
+                         <tbody id="poTableBody">
+                             <tr><td colspan="6">Loading purchase orders...</td></tr>
+                         </tbody>
+                     </table>
+                 </div>
+            </div>
+
+        </div> </div> <div id="supplierModal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" id="closeSupplierModal">&times;</span>
+            <h2 id="supplierModalTitle">Add New Supplier</h2>
+            <form id="supplierForm">
+                <input type="hidden" id="supplierIdInput"> <div class="form-group">
+                    <label for="supplierNameInput">Supplier Name *</label>
+                    <input type="text" id="supplierNameInput" required>
+                </div>
+                <div class="form-group">
+                    <label for="supplierCompanyInput">Company Name</label>
+                    <input type="text" id="supplierCompanyInput">
+                </div>
+                <div class="form-group">
+                    <label for="supplierWhatsappInput">WhatsApp No</label>
+                    <input type="tel" id="supplierWhatsappInput">
+                </div>
+                <div class="form-group">
+                    <label for="supplierEmailInput">Email</label>
+                    <input type="email" id="supplierEmailInput">
+                </div>
+                <div class="form-group">
+                    <label for="supplierAddressInput">Address</label>
+                    <textarea id="supplierAddressInput" rows="2"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="supplierGstInput">GST No</label>
+                    <input type="text" id="supplierGstInput">
+                </div>
+                <div class="modal-actions">
+                    <button type="button" id="cancelSupplierBtn" class="button cancel-button">Cancel</button>
+                    <button type="submit" id="saveSupplierBtn" class="button save-button">Save Supplier</button>
+                </div>
+                <div id="supplierErrorMsg" class="error-message" style="display: none;"></div>
+            </form>
+        </div>
+    </div>
+
+
+    <script src="js/supplier_management.js" type="module" defer></script>
+
+</body>
+</html>
