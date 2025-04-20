@@ -10,11 +10,22 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" integrity="sha512-9usAa10IRO0HhonpyAIVpjrylPvoDwiPUiKdWk5t3PyolY1cOd4DSE0Ga+ri4AuTroPR5aQvXU9xC6qOPnzFeg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
 
-    <link rel="stylesheet" href="css/order_history.css"> <script type="module">
+    <link rel="stylesheet" href="css/order_history.css"> <style>
+        /* Styles from previous response - Add more if needed */
+        .modal-content { max-width: 500px; }
+        .modal-content label { font-weight: 500; margin-bottom: 3px; display: block;}
+        .modal-content input, .modal-content textarea { width: 100%; padding: 8px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; font-family: inherit; font-size: 0.95em; }
+        .modal-content textarea { resize: vertical; min-height: 60px;}
+        .modal-actions .button { flex-grow: 1; }
+        .modal { z-index: 1050; }
+        /* Style for loading state */
+        #loading-state { text-align: center; padding: 40px; font-size: 1.1em; color: #555; }
+    </style>
+
+    <script type="module">
         // ########## Firebase Services Import ##########
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
         import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-        // Firestore functions needed by suppliers.js
         import { getFirestore, collection, doc, addDoc, setDoc, deleteDoc, onSnapshot, query, orderBy, Timestamp, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
         // ########## Firebase Configuration ##########
@@ -39,18 +50,17 @@
                  app = initializeApp(firebaseConfig);
                  window.firebaseAppInitialized = true;
                  window.firebaseApp = app;
-                 console.log("Firebase initialized on this page (suppliers).");
+                 console.log("Firebase initialized on this page (suppliers - Promise method).");
              } else {
                  app = window.firebaseApp; // Use existing instance
-                 console.log("Firebase already initialized on this page (suppliers).");
+                 console.log("Firebase already initialized on this page (suppliers - Promise method).");
              }
              auth = getAuth(app);
              db = getFirestore(app);
 
              // --- Make services and functions globally available for suppliers.js ---
-             // This allows suppliers.js to use these variables directly
              window.db = db;
-             window.auth = auth; // Although auth might not be directly needed in suppliers.js
+             window.auth = auth; // Auth object itself might be useful globally
              window.collection = collection;
              window.doc = doc;
              window.addDoc = addDoc;
@@ -62,35 +72,62 @@
              window.Timestamp = Timestamp;
              window.serverTimestamp = serverTimestamp;
 
-             // ########## Authentication State Check Logic ##########
-             // Get the main content wrapper element
-             const mainPageContent = document.getElementById('main-supplier-content'); // <<< रैपर div का ID
+             // ----- <<<<< Promise-Based Authentication State Check >>>>> -----
 
-             // Initially hide content (redundant if CSS hides it, but safe)
+             // Get references to content and loading elements
+             const mainPageContent = document.getElementById('main-supplier-content');
+             const loadingState = document.getElementById('loading-state');
+
+             // Initially hide main content and show loading indicator
              if (mainPageContent) mainPageContent.style.display = 'none';
+             if (loadingState) loadingState.style.display = 'block';
 
-             // Optional: Show a loading indicator here if you have one
+             // Function to get the current user state via a Promise
+             function checkAuthState() {
+                 console.log("checkAuthState: Promise created. Waiting for onAuthStateChanged...");
+                 return new Promise((resolve, reject) => {
+                     // Set a timeout in case Firebase never responds
+                     const timer = setTimeout(() => {
+                          console.error("Auth state check timed out after 10 seconds.");
+                          reject(new Error("Auth state check timed out. Network issue?"));
+                     }, 10000); // 10 second timeout
 
-             console.log("Setting up onAuthStateChanged listener for suppliers.html");
-             onAuthStateChanged(auth, (user) => {
-                 const currentPage = window.location.pathname.split('/').pop() || 'index.html';
-                 console.log(`Auth state changed/checked on: ${currentPage}. User detected:`, user ? user.uid : 'None');
+                     // onAuthStateChanged listener - crucial part
+                     const unsubscribe = onAuthStateChanged(auth, (user) => {
+                         clearTimeout(timer); // Clear timeout - we got a response
+                         unsubscribe(); // IMPORTANT: Stop listening after the first result
+                         console.log("checkAuthState: onAuthStateChanged fired. User:", user ? user.uid : null);
+                         resolve(user); // Resolve promise with user or null
+                     }, (error) => {
+                          clearTimeout(timer); // Clear timeout on error too
+                         console.error("checkAuthState: Error subscribing to auth state changes:", error);
+                         reject(error); // Reject the promise on error
+                     });
+                 });
+             }
 
-                 // Optional: Hide loading indicator here
+             // --- Using the Promise to control page flow ---
+             console.log("Auth Check Strategy: Using Promise to wait for auth state...");
+
+             checkAuthState().then(user => {
+                 // This block runs ONLY after the Promise resolves (auth state is confirmed)
+
+                 // Hide loading indicator now
+                 if (loadingState) loadingState.style.display = 'none';
 
                  if (user) {
                      // ----- USER IS LOGGED IN -----
-                     console.log(`User is confirmed logged in on ${currentPage}. Preparing to show content and initialize page.`);
+                     console.log(`User confirmed logged in via Promise. UID: ${user.uid}. Initializing page.`);
 
                      // Show the main page content
                      if (mainPageContent) {
                          console.log("Showing main content area.");
-                         mainPageContent.style.display = 'block'; // Use 'block', 'flex', etc. as appropriate
+                         mainPageContent.style.display = 'block';
                      } else {
                           console.error("CRITICAL: main-supplier-content element not found! Page content cannot be displayed.");
                      }
 
-                     // Initialize the page's JavaScript functionality AFTER showing content
+                     // Initialize the page's JavaScript functionality
                      console.log("Attempting to call initializeSuppliersPage...");
                      if (typeof initializeSuppliersPage === 'function') {
                          initializeSuppliersPage(); // Function defined in suppliers.js
@@ -102,39 +139,41 @@
 
                  } else {
                      // ----- USER IS NOT LOGGED IN -----
-                     console.log(`User is confirmed NOT logged in on ${currentPage}. Redirecting to login page.`);
+                     const currentPage = window.location.pathname.split('/').pop() || 'index.html';
+                     console.log(`User confirmed NOT logged in via Promise on ${currentPage}. Redirecting to login...`);
                      if (currentPage.toLowerCase() !== 'login.html') {
-                        // Store original URL and redirect to login
                         const originalUrl = encodeURIComponent(window.location.pathname + window.location.search);
                         console.log(`Redirecting to login.html?redirectUrl=${originalUrl}`);
                         // !!!!! login.html का सही पाथ यहाँ डालें !!!!!
                         window.location.replace(`login.html?redirectUrl=${originalUrl}`);
                      } else {
-                         console.log("Already on login page."); // Avoid redirect loop if somehow on login.html
+                          console.log("Already on login page.");
                      }
                  }
+             }).catch(error => {
+                  // This block runs if checkAuthState() Promise fails (e.g., timeout or listener error)
+                  console.error("Failed to check auth state due to error:", error);
+                  alert("Error checking user login status: " + error.message);
+                  // Show error message on page
+                  if (loadingState) loadingState.style.display = 'none'; // Hide loading
+                  const bodyElement = document.querySelector('body');
+                  if (bodyElement) bodyElement.innerHTML = `<p style="color:red; text-align:center; padding: 20px;">Error checking login status: ${error.message}. Please refresh.</p>`;
              });
-             // ----- End of Auth Check Logic -----
+             // ----- <<<<< End of Promise-Based Auth Check >>>>> -----
 
         } catch(e) {
-            console.error("Firebase setup error in suppliers.html:", e);
-            alert("Critical error during application setup. Please check console.");
-            // Display error on page if possible
-            const bodyElement = document.querySelector('body');
-            if (bodyElement) bodyElement.innerHTML = '<p style="color:red; text-align:center; padding: 20px;">Critical error loading application setup. Check console for details.</p>';
+            // This catches errors during Firebase Initialization itself
+            console.error("CRITICAL Firebase setup error in suppliers.html:", e);
+            alert("Critical error during application setup. See console.");
+            document.body.innerHTML = '<p style="color:red; text-align:center; padding: 20px;">Critical error loading application setup. Check console for details.</p>';
         }
     </script>
-    <style>
-        /* Styles from previous response - Add more if needed */
-        .modal-content { max-width: 500px; }
-        .modal-content label { font-weight: 500; margin-bottom: 3px; display: block;}
-        .modal-content input, .modal-content textarea { width: 100%; padding: 8px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; font-family: inherit; font-size: 0.95em; }
-        .modal-content textarea { resize: vertical; min-height: 60px;}
-        .modal-actions .button { flex-grow: 1; }
-        .modal { z-index: 1050; }
-    </style>
-</head>
+    </head>
 <body>
+
+    <div id="loading-state" style="display: block; text-align: center; padding: 40px; font-size: 1.1em; color: #555;">
+        <i class="fas fa-spinner fa-spin"></i> Loading Authentication...
+    </div>
 
     <div id="main-supplier-content" style="display: none;">
 
@@ -174,10 +213,7 @@
                         </tr>
                     </thead>
                      <tbody id="supplierTableBody">
-                        <tr>
-                            <td colspan="5" id="loadingMessage">Initializing Authentication...</td>
-                        </tr>
-                     </tbody>
+                        </tbody>
                 </table>
             </div>
              <div class="order-summary-counts">
