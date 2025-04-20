@@ -1,4 +1,4 @@
-/* css/new_po.css - IMPROVED Styles for New/Edit Purchase Order page */
+/* css/new_po.css - IMPROVED Styles for New/Edit Purchase Order page (v2 - Button Fix) */
 
 /* ----- Basic Setup (Inherit or define) ----- */
 body {
@@ -10,7 +10,7 @@ body {
 }
 
 .container {
-    /* Assuming .container wraps .main-content */
+    /* Assuming similar container structure as other pages */
 }
 
 .main-content {
@@ -128,55 +128,73 @@ body {
     flex-basis: 350px; /* Give more base width */
 }
 .suggestions-list {
+    display: none; /* Hidden by default */
+    position: absolute;
+    background-color: white;
     border: 1px solid var(--primary-color, #80bdff); /* Match focus border */
+    border-top: none;
+    max-height: 150px;
+    overflow-y: auto;
+    width: calc(100% - 2px); /* Match input width */
+    box-sizing: border-box;
+    z-index: 100; /* Ensure it's above other elements */
+    border-radius: 0 0 5px 5px; /* Updated rounding */
     box-shadow: 0 5px 10px rgba(0, 0, 0, 0.1);
-    border-radius: 5px;
 }
 .suggestions-list div { padding: 10px 14px; font-size: 0.95em; }
 .suggestions-list div:hover { background-color: #e9f5ff; } /* Light blue hover */
 
-.link-button { margin-top: 8px; }
+.link-button { margin-top: 8px; font-size: 0.9em; } /* Slightly larger */
 
 /* ----- Items Table Styling ----- */
 .po-items-table {
     margin-bottom: 20px;
-    border: none; /* Remove outer border, section border is enough */
-    border-radius: 0;
+    border: 1px solid #dee2e6; /* Keep outer border for table section */
+    border-radius: 5px;
+    overflow: hidden; /* Ensures rounded corners clip inner content */
 }
-#poItemsTable { width: 100%; border-collapse: separate; border-spacing: 0; /* Use separate for better internal borders */ }
+#poItemsTable {
+    width: 100%;
+    border-collapse: collapse; /* Changed back to collapse for cleaner lines */
+    border-spacing: 0;
+}
 #poItemsTable thead th {
-    background-color: #e9ecef; /* Lighter header */
+    background-color: #f8f9fa; /* Slightly darker header */
     padding: 12px 10px;
     font-size: 0.88em;
-    font-weight: 600; /* Bolder headers */
+    font-weight: 600;
     text-align: left;
-    border-bottom: 2px solid #adb5bd; /* Stronger bottom border */
+    border-bottom: 2px solid #dee2e6; /* Clearer bottom border */
     white-space: nowrap;
     color: #495057;
 }
-/* Rounded corners for table header */
-#poItemsTable thead th:first-child { border-top-left-radius: 5px; }
-#poItemsTable thead th:last-child { border-top-right-radius: 5px; }
 
 #poItemsTable tbody td {
     padding: 8px 10px; /* Consistent padding */
     border-bottom: 1px solid #e9ecef; /* Lighter row separator */
-    vertical-align: middle; /* Align vertically center */
+    vertical-align: middle;
+    background-color: #fff; /* Ensure white background */
 }
+#poItemsTable tbody tr:last-child td {
+    border-bottom: none; /* No border for last row */
+}
+#poItemsTable tbody tr:hover td {
+    background-color: #f9f9f9; /* Subtle hover */
+}
+
 /* Input fields within table cells */
 #poItemsTable .form-input {
     padding: 8px 10px;
     font-size: 0.9em;
-    border-radius: 4px; /* Match general inputs */
+    border-radius: 4px;
 }
 #poItemsTable .dimension-input { width: 75px; text-align: right;}
 #poItemsTable .quantity-input { width: 70px; text-align: right;}
 #poItemsTable .rate-input { width: 90px; text-align: right;}
 #poItemsTable .item-amount { font-weight: 600; text-align: right; padding-right: 5px; }
-#poItemsTable td:last-child { text-align: center; } /* Center delete button */
+#poItemsTable td:last-child { text-align: center; }
 
-/* Style specific input containers in table row if needed */
-.sq-feet-input .dimension-input-container { /* Hypothetical container class */
+.sq-feet-input .dimension-input-container { /* Example if needed */
     display: flex;
     align-items: center;
     gap: 4px;
@@ -188,10 +206,12 @@ body {
 .add-item-button {
     background-color: var(--info-color, #17a2b8);
     color: white;
-    margin-top: 15px; /* Space above button */
+    margin-top: 15px;
     padding: 8px 15px;
     font-size: 0.9em;
     border-radius: 5px;
+    border: none; /* Ensure no border */
+    cursor: pointer;
 }
 .add-item-button:hover { background-color: #117a8b; }
 .add-item-button i { margin-right: 6px; }
@@ -202,7 +222,7 @@ body {
     color: var(--danger-color, #dc3545);
     border: none;
     padding: 5px;
-    font-size: 1.1em; /* Slightly larger icon */
+    font-size: 1.1em;
     cursor: pointer;
     opacity: 0.7;
     transition: opacity 0.2s ease;
@@ -212,9 +232,9 @@ body {
 
 /* Calculation Preview Area */
 .calculation-preview {
-    font-size: 0.9em; /* Increase size slightly */
+    font-size: 0.9em;
     color: #555;
-    background-color: #eef1f5; /* Light background */
+    background-color: #eef1f5;
     border: 1px solid #d6dde7;
     padding: 10px 15px;
     margin-top: 15px;
@@ -224,8 +244,8 @@ body {
 
 /* ----- PO Summary Section ----- */
 .po-summary .total-amount-display {
-    font-size: 1.4em; /* Larger total */
-    font-weight: 700; /* Bolder total */
+    font-size: 1.4em;
+    font-weight: 700;
     text-align: right;
     margin-top: 20px;
     padding-top: 20px;
@@ -241,33 +261,67 @@ body {
     border-top: 1px solid #e9ecef;
     display: flex;
     justify-content: flex-end;
-    gap: 15px; /* More gap between buttons */
+    gap: 15px;
 }
-/* Use button styles defined in index.css or add specific ones */
+
+/* UPDATED BUTTON STYLES */
 .form-actions .button {
-    padding: 10px 25px; /* Larger buttons */
+    padding: 10px 25px;
     font-size: 1em;
     border-radius: 5px;
+    font-weight: 600;   /* Bold text */
+    color: white;       /* White text */
+    border: none;       /* No border */
+    cursor: pointer;
+    transition: background-color 0.2s ease, opacity 0.2s ease;
+    display: inline-flex; /* Align icon and text */
+    align-items: center;
+    justify-content: center;
 }
-.form-actions .save-button { background-color: var(--success-color, #28a745); }
-.form-actions .save-button:hover { background-color: #218838; }
-.form-actions .cancel-button { background-color: #6c757d; }
-.form-actions .cancel-button:hover { background-color: #5a6268; }
+.form-actions .button i {
+    margin-right: 8px; /* Space between icon and text */
+}
+.form-actions .button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
 
-.error-message { color: var(--danger-color, #dc3545); font-weight: 500; }
+.form-actions .save-button {
+    background-color: var(--success-color, #28a745); /* Green background */
+}
+.form-actions .save-button:hover:not(:disabled) {
+     background-color: #218838; /* Darker green */
+}
+
+.form-actions .cancel-button {
+    background-color: var(--text-muted, #6c757d); /* Grey background */
+    text-decoration: none; /* Remove underline if it was an anchor */
+}
+.form-actions .cancel-button:hover {
+    background-color: #5a6268; /* Darker grey */
+}
+/* END UPDATED BUTTON STYLES */
+
+.error-message {
+    color: var(--danger-color, #dc3545);
+    font-weight: 500;
+    text-align: center; /* Center error message */
+    margin-top: 15px;
+    width: 100%; /* Make it full width if needed */
+}
+
 
 /* ----- Responsive ----- */
 @media (max-width: 992px) {
     .main-content { padding: 20px; }
     #poItemsTable thead th, #poItemsTable tbody td { padding: 8px 6px; }
-    /* Maybe hide less important columns on smaller screens if needed */
 }
 @media (max-width: 768px) {
     .main-content { padding: 15px; margin: 15px auto; }
     .form-row { flex-direction: column; gap: 0; }
-    .form-group { flex-basis: auto; } /* Reset basis */
+    .form-group { flex-basis: auto; margin-bottom: 15px; } /* Reduce bottom margin */
+    #poForm .form-section { padding: 15px; } /* Reduce section padding */
     .form-actions { flex-direction: column; gap: 10px; }
-    .form-actions .button { width: 100%; justify-content: center; }
+    .form-actions .button { width: 100%; }
     .po-summary .total-amount-display { text-align: center; }
-    /* Adjust table styles for very small screens if needed */
 }
