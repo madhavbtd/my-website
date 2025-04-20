@@ -1,10 +1,10 @@
-// js/supplier_management.js - v5 (Fix Function Availability Checks)
+// js/supplier_management.js - v5 (Fix Function Availability Checks & Add PDF/Delete Listeners)
 
-// Import PDF function from utils.js
+// +++++ Import PDF function +++++
 import { generatePoPdf } from './utils.js';
+// ++++++++++++++++++++++++++++++++
 
 // Assume Firebase functions are globally available via HTML script block
-// Destructure ALL needed functions to ensure they exist in scope
 const {
     db, collection, onSnapshot, addDoc, doc, getDoc, getDocs, updateDoc, deleteDoc,
     query, orderBy, where, Timestamp
@@ -46,11 +46,13 @@ function checkFirestoreReady(functionName, requiredFns = []) {
         return false;
     }
     for (const fnName of requiredFns) {
+        // Check if the function exists directly on the window object
         if (typeof window[fnName] !== 'function') {
             console.error(`${functionName}: Firestore function '${fnName}' (window.${fnName}) not available.`);
             return false;
         }
     }
+    console.log(`${functionName}: All required Firestore functions [${requiredFns.join(', ')}] are available.`);
     return true;
 }
 
@@ -90,7 +92,7 @@ async function displaySupplierList() {
     if (!supplierTableBody) { console.error("Supplier table body not found!"); return; }
     // Use helper to check required functions
     if (!checkFirestoreReady('displaySupplierList', ['collection', 'getDocs', 'query', 'orderBy', 'doc', 'deleteDoc'])) {
-        supplierTableBody.innerHTML = '<tr><td colspan="5" style="color:red;">Error loading Firestore functions.</td></tr>'; return;
+        supplierTableBody.innerHTML = '<tr><td colspan="5" style="color:red;">Error loading Firestore functions for Suppliers.</td></tr>'; return;
     }
 
     supplierTableBody.innerHTML = '<tr><td colspan="5">Loading suppliers...</td></tr>';
@@ -121,6 +123,7 @@ async function displaySupplierList() {
             if(deleteBtn) { deleteBtn.addEventListener('click', () => deleteSupplier(supplierId, supplier.name)); }
             supplierTableBody.appendChild(tr);
         });
+        console.log("Suppliers list displayed successfully.");
     } catch (error) {
         console.error("Error fetching suppliers: ", error);
         supplierTableBody.innerHTML = `<tr><td colspan="5" style="color:red;">Error loading suppliers: ${error.message}</td></tr>`;
@@ -171,7 +174,7 @@ async function deleteSupplier(supplierId, supplierName) {
     } else { console.log("Supplier delete cancelled."); }
 }
 
-// Function to delete Purchase Order
+// +++++ FUNCTION TO DELETE PURCHASE ORDER +++++
 async function handleDeletePO(poId, poNumber) {
     if (!checkFirestoreReady('handleDeletePO', ['doc', 'deleteDoc'])) { alert("Firestore delete function not available. Cannot delete PO."); return; }
     if (confirm(`Are you sure you want to delete Purchase Order "${poNumber || poId}"? This cannot be undone.`)) {
@@ -182,13 +185,14 @@ async function handleDeletePO(poId, poNumber) {
         } catch (error) { console.error("Error deleting Purchase Order:", error); alert("Error deleting Purchase Order: " + error.message); }
     } else { console.log("PO deletion cancelled by user."); }
 }
+// +++++ END FUNCTION TO DELETE PURCHASE ORDER +++++
 
 // Function to display POs
 async function displayPoList() {
      if (!poTableBody) { console.error("PO table body not found!"); return; }
-     // Ensure all required functions are available
+     // Ensure all required functions are available for this function specifically
      if (!checkFirestoreReady('displayPoList', ['collection', 'getDocs', 'query', 'orderBy', 'doc', 'getDoc', 'deleteDoc'])) {
-         poTableBody.innerHTML = '<tr><td colspan="6" style="color:red;">Error loading Firestore functions.</td></tr>';
+         poTableBody.innerHTML = '<tr><td colspan="6" style="color:red;">Error loading Firestore functions for PO list.</td></tr>';
          return;
      }
     poTableBody.innerHTML = '<tr><td colspan="6">Loading purchase orders...</td></tr>';
@@ -232,14 +236,11 @@ async function displayPoList() {
                  pdfBtn.addEventListener('click', async () => {
                      // Ensure generatePoPdf function is available (imported)
                      if (typeof generatePoPdf !== 'function') {
-                         console.error("generatePoPdf function is not imported or defined.");
-                         alert("Cannot generate PDF. Function not found.");
-                         return;
+                         console.error("generatePoPdf function is not imported or defined."); alert("Cannot generate PDF. Function not found."); return;
                      }
-                     // Check if necessary Firestore functions are available here too
+                     // Check if necessary Firestore functions for getting data are ready
                      if (!checkFirestoreReady('PDF Button Click', ['doc', 'getDoc'])) {
-                         alert("Cannot fetch data for PDF. Firestore functions missing.");
-                         return;
+                         alert("Cannot fetch data for PDF. Firestore functions missing."); return;
                      }
 
                      const currentPoId = pdfBtn.dataset.id;
@@ -256,6 +257,8 @@ async function displayPoList() {
 
                          if (!poDataForPdf.supplierId) throw new Error("Supplier ID missing in PO data.");
                          console.log(`Workspaceing supplier data for ID: ${poDataForPdf.supplierId}`);
+                         // Ensure suppliers collection exists for the ref
+                         if (!checkFirestoreReady('PDF Supplier Fetch', ['doc', 'getDoc'])) { throw new Error("Cannot fetch supplier. Firestore functions missing."); }
                          const supplierRef = doc(db, "suppliers", poDataForPdf.supplierId);
                          const supplierSnap = await getDoc(supplierRef);
                          if (!supplierSnap.exists()) throw new Error(`Supplier data not found for ID: ${poDataForPdf.supplierId}`);
@@ -265,19 +268,18 @@ async function displayPoList() {
                          await generatePoPdf(poDataForPdf, supplierDataForPdf);
 
                      } catch (error) {
-                         console.error("Error preparing data or generating PDF:", error);
-                         alert("Failed to generate PDF: " + error.message);
+                         console.error("Error preparing data or generating PDF:", error); alert("Failed to generate PDF: " + error.message);
                      } finally {
-                         const latestPdfBtn = document.querySelector(`tr[data-id="${poId}"] .pdf-button`);
+                         const latestPdfBtn = document.querySelector(`tr[data-id="${poId}"] .pdf-button`); // Re-find button using original poId from loop scope
                          if(latestPdfBtn) { latestPdfBtn.disabled = false; latestPdfBtn.innerHTML = '<i class="fas fa-file-pdf"></i>'; }
-                         else { console.warn("PDF button not found for re-enabling."); }
+                         else { console.warn("PDF button not found for re-enabling, row might have been removed."); }
                      }
                  });
              } // End PDF Button Listener
 
              poTableBody.appendChild(tr);
          }); // End forEach loop
-
+        console.log("Purchase Orders list displayed successfully.");
      } catch (error) {
          console.error("Error fetching POs: ", error);
          poTableBody.innerHTML = `<tr><td colspan="6" style="color:red;">Error loading POs: ${error.message}</td></tr>`;
@@ -306,16 +308,31 @@ function waitForDbConnection(callback) {
 
 // --- Initialization on DOM Load ---
 document.addEventListener('DOMContentLoaded', () => {
+    // Wait for DB connection first before doing anything else
     waitForDbConnection(() => {
         console.log("Supplier Management: DOM loaded and DB connected. Initializing.");
-        // Event Listeners
+        // Now that DB is ready, check if other required functions are ready
+        if (!checkFirestoreReady('DOMContentLoaded Init', ['collection', 'getDocs', 'query', 'orderBy', 'doc', 'getDoc', 'deleteDoc', 'addDoc', 'updateDoc', 'Timestamp'])) {
+            alert("Critical Error: Not all Firestore functions are available. Page might not work correctly.");
+            // Optionally update UI to show a more permanent error
+            if(supplierTableBody) supplierTableBody.innerHTML = '<tr><td colspan="5" style="color:red;">Initialization Error: Firestore functions missing.</td></tr>';
+            if(poTableBody) poTableBody.innerHTML = '<tr><td colspan="6" style="color:red;">Initialization Error: Firestore functions missing.</td></tr>';
+            return; // Stop initialization if critical functions are missing
+        }
+
+        console.log("All necessary Firestore functions confirmed available.");
+
+        // Setup Event Listeners
         if (addSupplierBtn) { addSupplierBtn.addEventListener('click', () => openSupplierModal('add')); } else { console.warn("Add Supplier button not found."); }
         if (closeSupplierModalBtn) { closeSupplierModalBtn.addEventListener('click', closeSupplierModal); } else { console.warn("Close Supplier Modal button not found."); }
         if (cancelSupplierBtn) { cancelSupplierBtn.addEventListener('click', closeSupplierModal); } else { console.warn("Cancel Supplier button not found."); }
         if (supplierForm) { supplierForm.addEventListener('submit', saveSupplier); } else { console.warn("Supplier form not found."); }
         if (supplierModal) { supplierModal.addEventListener('click', (event) => { if (event.target === supplierModal) { closeSupplierModal(); } }); } else { console.warn("Supplier modal not found."); }
-        // Initial data load
-        displaySupplierList(); displayPoList();
+
+        // Initial data load only after checks pass
+        displaySupplierList();
+        displayPoList();
+
         // Check for #add hash
         if(window.location.hash === '#add') { if(supplierModal) { openSupplierModal('add'); } else { console.warn("Modal not found, cannot open from hash."); } if (history.replaceState) { history.replaceState(null, null, window.location.pathname + window.location.search); } }
         console.log("Supplier Management Initialized via DOMContentLoaded.");
