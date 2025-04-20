@@ -12,116 +12,109 @@ body { font-family: 'Poppins', "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "H
 .header { background-color: #0056b3; color: white; padding: 12px 15px; border-radius: 6px 6px 0 0; margin: -20px -25px 25px -25px; font-size: 1.2em; font-weight: 600; text-align: center; display: flex; align-items: center; justify-content: center; gap: 10px; }
 .header-icon { font-size: 1.1em; }
 h1 { margin: 0; font-size: 1.2em; }
-.actions-bar { display: flex; justify-content: flex-start; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 15px; }
+.actions-bar { display: flex; justify-content: flex-start; align-items: center; margin-bottom: 20px; /* Increased space */ flex-wrap: wrap; gap: 15px; }
 
-/* Filter Bar Styling (Card Look) */
+/* --- Filter Bar Styling (Card Look) --- */
 .filter-bar {
     display: flex;
     flex-wrap: wrap;
-    gap: 15px;
-    padding: 15px 20px;
-    background-color: #ffffff;
-    border: 1px solid #e0e0e0;
-    border-radius: 6px;
-    margin-bottom: 25px;
+    gap: 15px; /* Increased gap slightly */
+    padding: 15px 20px; /* Adjusted padding */
+    background-color: #ffffff; /* White background */
+    border: 1px solid #e0e0e0; /* Softer border */
+    border-radius: 6px; /* Rounded corners */
+    margin-bottom: 25px; /* Increased space below */
     align-items: flex-end;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06); /* Subtle shadow */
 }
+/* --- End Filter Bar Styling --- */
 
 .filter-group { display: flex; flex-direction: column; gap: 5px; flex-grow: 1; min-width: 140px; }
-.filter-group:has(#filterStatus) { min-width: 160px; flex-grow: 0.5;}
+.filter-group:has(#filterStatus) { min-width: 160px; flex-grow: 0.5;} /* Status Filter width */
 .filter-group.filter-sort { min-width: 180px; }
 .filter-group label { font-size: 0.85em; font-weight: 500; color: #495057; white-space: nowrap; margin-bottom: 3px; }
 .filter-group label i { margin-right: 4px; color: #0056b3; }
 .filter-group input[type="date"], .filter-group input[type="text"], .filter-group select { padding: 7px 10px; border: 1px solid #ced4da; border-radius: 4px; font-size: 0.9em; height: 36px; background-color: #fff; box-sizing: border-box; width: 100%; }
 .filter-group input:focus, .filter-group select:focus { border-color: #80bdff; outline: 0; box-shadow: 0 0 0 0.2rem rgba(0,123,255,.25); }
-.clear-filters-button { background-color: #6c757d; color: white; padding: 7px 14px; height: 36px; align-self: flex-end; flex-grow: 0; font-size: 0.9em; border-radius: 4px; border:none; } /* Added border radius/none */
+.clear-filters-button { background-color: #6c757d; color: white; padding: 7px 14px; height: 36px; align-self: flex-end; flex-grow: 0; font-size: 0.9em; }
 .clear-filters-button:hover { background-color: #5a6268; }
 
 .button { padding: 8px 15px; font-size: 0.9em; border: none; border-radius: 4px; cursor: pointer; font-weight: 600; display: inline-flex; align-items: center; gap: 5px; text-decoration: none; transition: background-color 0.2s ease; white-space: nowrap; }
 .button:disabled { opacity: 0.6; cursor: not-allowed; }
 .button i { margin-right: 3px; }
-.add-new-button { background-color: #28a745; color: white; height: 36px; padding: 7px 14px;}
+.add-new-button { background-color: #28a745; color: white; height: 36px; padding: 7px 14px;} /* Match height */
 .add-new-button:hover { background-color: #218838; }
 
 /* Table Styles */
-.table-container { width: 100%; overflow-x: auto; border: 1px solid #e0e0e0; border-radius: 6px; margin-bottom: 25px; background-color: #fff; /* Added border/radius */ }
-#orderTable {
-    width: 100%;
-    border-collapse: collapse; /* Changed from separate */
-    font-size: 0.9em;
-    table-layout: fixed;
-}
-#orderTable thead { background-color: #f8f9fa; border-bottom: 2px solid #dee2e6; }
-
-/* --- Table Cell Border Update --- */
+.table-container { width: 100%; overflow-x: auto; border: 1px solid #e0e0e0; border-radius: 6px; margin-bottom: 25px; background-color: #fff;}
+#orderTable { width: 100%; border-collapse: collapse; font-size: 0.9em; table-layout: fixed; }
+#orderTable thead { background-color: #f8f9fa; border-bottom: 2px solid #dee2e6; } /* More distinct header background/border */
+/* --- Table Cell Styling Update --- */
 #orderTable th, #orderTable td {
-    border: 1px solid #e9ecef; /* Apply border to all sides */
-    padding: 10px 12px; /* Adjusted padding */
+    border: none; /* Remove cell borders */
+    border-bottom: 1px solid #e9ecef; /* Use row borders only */
+    padding: 10px 12px; /* Slightly more padding */
     text-align: left;
     vertical-align: middle; /* Align all content vertically center */
-    overflow: hidden; /* Keep for safety */
-    text-overflow: ellipsis; /* Keep for safety */
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
-/* Remove alternating color as borders provide separation */
-#orderTable tbody tr:nth-child(even) { background-color: transparent; }
-/* --- End Table Cell Border Update --- */
-
-#orderTable th { font-weight: 600; color: #495057; white-space: nowrap; padding: 12px; }
-#orderTable tbody tr:hover { background-color: #f1f1f1; transition: background-color 0.15s ease;}
+#orderTable tbody tr:last-child td { border-bottom: none; } /* Remove border from last row */
+#orderTable th { font-weight: 600; color: #495057; white-space: nowrap; padding: 12px; } /* Increase header padding */
+/* --- End Table Cell Styling Update --- */
+#orderTable tbody tr:nth-child(even) { background-color: transparent; } /* Remove alternating color if using row borders */
+#orderTable tbody tr:hover { background-color: #f1f1f1; transition: background-color 0.15s ease;} /* Enhanced hover */
 #orderTable td { color: #212529; }
 
-
-/* --- Column Widths (Adjusted Action & Send Wtsp) --- */
+/* Column Widths (No change from previous version) */
 #orderTable th:nth-child(1), #orderTable td:nth-child(1) { width: 10%; }  /* Order ID */
 #orderTable th:nth-child(2), #orderTable td:nth-child(2) { width: 18%; white-space: normal;} /* Customer Name / Mobile */
-#orderTable th:nth-child(3), #orderTable td:nth-child(3) { width: 18%; white-space: normal; } /* Products */
+#orderTable th:nth-child(3) { width: 18%; white-space: normal; } /* Products Header */
+#orderTable td:nth-child(3) { width: 18%; white-space: normal; } /* Products Cell */
 #orderTable th:nth-child(4), #orderTable td:nth-child(4) { width: 9%; white-space: nowrap;} /* Order Date */
 #orderTable th:nth-child(5), #orderTable td:nth-child(5) { width: 9%; white-space: nowrap;} /* Delivery Date */
 #orderTable th:nth-child(6), #orderTable td:nth-child(6) { width: 6%; text-align: center;} /* Priority */
 #orderTable th:nth-child(7), #orderTable td:nth-child(7) { width: 11%; } /* Status */
-#orderTable th:nth-child(8), #orderTable td:nth-child(8) { width: 12%; text-align: center;} /* Action - WAS 10% */
-#orderTable th:nth-child(9), #orderTable td:nth-child(9) { width: 7%; text-align: center;} /* Send Wtsp - WAS 9% */
-/* --- End Column Widths Adjustment --- */
+#orderTable th:nth-child(8), #orderTable td:nth-child(8) { width: 10%; text-align: center;} /* Action */
+#orderTable th:nth-child(9), #orderTable td:nth-child(9) { width: 9%; text-align: center;} /* Send Wtsp */
 
 
 /* Styles inside Customer Name/Mobile cell */
-.customer-name-display { display: block; font-weight: 700; margin-bottom: 3px; }
+.customer-name-display { display: block; font-weight: 700; margin-bottom: 3px; } /* Bolder Name */
 .customer-mobile-inline { display: block; font-size: 0.85em; color: #555; }
 
-#loadingMessage, #noOrdersMessage { text-align: center; color: #666; font-style: italic; padding: 25px !important; }
+#loadingMessage, #noOrdersMessage { text-align: center; color: #666; font-style: italic; padding: 25px !important; /* Increased padding */ }
 
-/* Action Buttons & Icons Update */
-.details-edit-button { background-color: #007bff; color: white; padding: 4px 8px; font-size: 0.8em; border-radius: 4px; white-space: nowrap; } /* Added nowrap */
+/* --- Action Buttons & Icons Update --- */
+.details-edit-button { background-color: #007bff; color: white; padding: 4px 8px; font-size: 0.8em; border-radius: 4px; } /* Added radius */
 .details-edit-button:hover { background-color: #0056b3; }
-
-/* --- WhatsApp Button Alignment Fix --- */
 .whatsapp-button {
     background-color: #25d366;
     color: white;
     border: none;
-    border-radius: 50%;
-    width: 28px;
+    border-radius: 50%; /* Make it round */
+    width: 28px; /* Fixed size */
     height: 28px;
-    font-size: 0.9em;
-    /* line-height: 28px; */ /* Removed line-height */
+    font-size: 0.9em; /* Adjust icon size */
+    line-height: 28px; /* Center icon vertically */
     text-align: center;
     cursor: pointer;
     padding: 0;
-    display: inline-flex;
+    display: inline-flex; /* Use flex to center icon */
     align-items: center;
     justify-content: center;
     transition: background-color 0.2s ease;
-    vertical-align: middle;
+    vertical-align: middle; /* Align with other buttons */
 }
 .whatsapp-button:hover { background-color: #1ebe57; }
-/* Ensure parent TD has correct alignment */
-#orderTable td:nth-child(8), #orderTable td:nth-child(9) { text-align: center; vertical-align: middle; } /* Ensure middle alignment */
-/* --- End WhatsApp Button Alignment Fix --- */
+/* Ensure cells with buttons have middle vertical alignment (already done for all td) */
+#orderTable td:nth-child(8), #orderTable td:nth-child(9) { text-align: center; }
+/* --- End Action Buttons & Icons Update --- */
 
 
 /* Status Badge & Priority */
-.status-badge { font-weight: 600; padding: 4px 10px; border-radius: 12px; font-size: 0.8em; color: white; background-color: #6c757d; white-space: nowrap; display: inline-block; }
+.status-badge { font-weight: 600; padding: 4px 10px; border-radius: 12px; font-size: 0.8em; color: white; background-color: #6c757d; white-space: nowrap; display: inline-block; } /* Slightly larger padding/radius */
+/* Status Colors (No Change) */
 .status-badge.status-order-received { background-color: #6c757d; }
 .status-badge.status-designing { background-color: #ffc107; color: #333;}
 .status-badge.status-verification { background-color: #fd7e14; }
@@ -135,28 +128,29 @@ h1 { margin: 0; font-size: 1.2em; }
 .priority-yes { color: #dc3545; font-weight: bold; }
 .priority-no { color: #6c757d; }
 
-/* Order Summary Counts Style Update */
+/* --- Order Summary Counts Style Update --- */
 .order-summary-counts {
     margin-top: 20px;
     padding: 15px 20px;
-    background-color: #fff;
+    background-color: #fff; /* Match filter bar */
     border: 1px solid #e0e0e0;
     border-radius: 6px;
-    font-size: 0.95em;
+    font-size: 0.95em; /* Slightly larger font */
     color: #495057;
     box-shadow: 0 1px 3px rgba(0,0,0,0.06);
     display: flex;
-    justify-content: space-around;
+    justify-content: space-around; /* Space out items */
     align-items: center;
     flex-wrap: wrap;
-    gap: 20px; /* Increased gap */
+    gap: 20px; /* Gap between items */
 }
-.order-summary-counts span { margin-left: 0; }
-.order-summary-counts strong { color: #0056b3; font-weight: 700; margin-left: 5px; }
+.order-summary-counts span { margin-left: 0; /* Remove margin, use gap */ }
+.order-summary-counts strong { color: #0056b3; /* Use theme color */ font-weight: 700; /* Bolder */ margin-left: 5px; }
+/* --- End Order Summary Counts Style Update --- */
 
 
-/* Modal Styles */
-.modal, .popup-overlay { /* ... (No changes needed in modal styles) ... */ display: none; position: fixed; z-index: 1050; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.5); align-items: center; justify-content: center; padding: 15px; box-sizing: border-box; }
+/* --- Modal Styles (Minor adjustments if needed) --- */
+.modal, .popup-overlay { display: none; position: fixed; z-index: 1050; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.5); align-items: center; justify-content: center; padding: 15px; box-sizing: border-box; }
 .modal.active, .popup-overlay.active { display: flex; }
 .modal-content { background-color: #fefefe; margin: auto; padding: 25px 30px; border: 1px solid #ccc; width: 90%; max-width: 600px; border-radius: 8px; position: relative; box-shadow: 0 5px 15px rgba(0,0,0,0.2); z-index: 1051; }
 #whatsapp-reminder-popup .modal-content { max-width: 450px; }
@@ -164,8 +158,8 @@ h1 { margin: 0; font-size: 1.2em; }
 .close-btn:hover, .close-btn:focus, #whatsapp-reminder-popup .popup-close:hover, #whatsapp-reminder-popup .popup-close:focus { color: black; text-decoration: none; }
 #detailsModal h2 { margin-top: 0; margin-bottom: 20px; font-size: 1.3em; color: #333; text-align: center; border-bottom: 1px solid #eee; padding-bottom: 10px; }
 #whatsapp-reminder-popup h4 { margin-top: 0; margin-bottom: 10px; color: #28a745; font-size: 1.3em; text-align: center; }
-.modal-info { margin-bottom: 15px; background-color: #f8f9fa; padding: 12px 18px; border-radius: 4px; border: 1px solid #eee; }
-.modal-info p { margin: 8px 0; font-size: 0.95em; }
+.modal-info { margin-bottom: 15px; background-color: #f8f9fa; padding: 12px 18px; /* Increased padding */ border-radius: 4px; border: 1px solid #eee; }
+.modal-info p { margin: 8px 0; /* Increased spacing */ font-size: 0.95em; }
 .modal-info p strong { font-weight: 600; color: #0056b3; min-width: 80px; display: inline-block;}
 #modalCustomerWhatsApp { color: #007bff; font-weight: 500; }
 .modal-section { margin-bottom: 15px; padding-bottom: 15px; border-bottom: 1px solid #eee; }
@@ -179,6 +173,8 @@ h1 { margin: 0; font-size: 1.2em; }
 .edit-full-button:hover { background-color: #31b0d5; }
 .delete-button { background-color: #dc3545; color: white; flex-grow: 1; border-radius: 4px; padding: 9px 15px;}
 .delete-button:hover { background-color: #c82333; }
+
+/* Styles for Product List in Modal */
 #modalProductList { background-color: #f8f9fa; border: 1px solid #e9ecef; border-radius: 4px; padding: 10px 15px; max-height: 120px; overflow-y: auto; font-size: 0.9em; }
 #modalProductList ul { list-style: none; padding: 0; margin: 0; }
 #modalProductList li { margin-bottom: 8px; padding-bottom: 5px; border-bottom: 1px dotted #ddd; }
@@ -186,6 +182,8 @@ h1 { margin: 0; font-size: 1.2em; }
 #modalProductList .product-name { display: block; font-weight: 600; color: #333; margin-bottom: 2px; }
 #modalProductList .product-qty-details { display: block; font-size: 0.9em; color: #555; padding-left: 5px; }
 #modalProductList .no-products { color: #6c757d; font-style: italic; text-align: center;}
+
+/* Styles for Status History List in Modal */
 #modalStatusHistorySection { margin-top: 15px; }
 #modalStatusHistoryList { background-color: #f8f9fa; border: 1px solid #e9ecef; border-radius: 4px; padding: 10px 15px; max-height: 150px; overflow-y: auto; font-size: 0.85em; }
 #modalStatusHistoryList ul { list-style: none; padding: 0; margin: 0; }
@@ -194,6 +192,8 @@ h1 { margin: 0; font-size: 1.2em; }
 #modalStatusHistoryList .history-status { font-weight: 600; color: #333; margin-right: 10px; }
 #modalStatusHistoryList .history-time { color: #555; font-size: 0.9em; white-space: nowrap; }
 #modalStatusHistoryList .no-history { color: #6c757d; font-style: italic; text-align: center;}
+
+/* WhatsApp Popup Specific Styles */
 #whatsapp-reminder-popup p { margin-bottom: 15px; color: #555; text-align: center;}
 .message-preview { margin-top: 15px; margin-bottom: 20px; font-size: .95em; background-color: #e9f5ff; padding: 12px; border-radius: 5px; text-align: left; border: 1px solid #bde0ff; white-space: pre-wrap; word-wrap: break-word; max-height: 150px; overflow-y: auto; }
 .whatsapp-send-btn { background-color: #25d366; color: #fff; text-decoration: none; padding: 10px 20px; border-radius: 5px; display: inline-flex; align-items: center; gap: 8px; font-weight: 700; transition: background-color .2s ease; margin: 0 auto; }
