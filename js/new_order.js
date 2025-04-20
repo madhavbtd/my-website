@@ -50,11 +50,29 @@ document.addEventListener('DOMContentLoaded', () => {
     if (orderForm) orderForm.addEventListener('submit', handleFormSubmit);
     if (addProductBtn) addProductBtn.addEventListener('click', handleAddProduct);
     if (productListContainer) productListContainer.addEventListener('click', handleDeleteProduct);
+    // Blur listeners to hide suggestions
+    if (customerNameInput) customerNameInput.addEventListener('blur', () => hideSuggestionBox(customerSuggestionsNameBox));
+    if (customerWhatsAppInput) customerWhatsAppInput.addEventListener('blur', () => hideSuggestionBox(customerSuggestionsWhatsAppBox));
+    if (productNameInput) productNameInput.addEventListener('blur', () => hideSuggestionBox(productSuggestionsBox));
+    // Input listeners for searching
     if (customerNameInput) customerNameInput.addEventListener('input', (e) => handleCustomerInput(e, 'name'));
     if (customerWhatsAppInput) customerWhatsAppInput.addEventListener('input', (e) => handleCustomerInput(e, 'whatsapp'));
     if (productNameInput) productNameInput.addEventListener('input', handleProductInput);
     if (popupCloseBtn) popupCloseBtn.addEventListener('click', closeWhatsAppPopup);
     if (whatsappReminderPopup) whatsappReminderPopup.addEventListener('click', (event) => { if (event.target === whatsappReminderPopup) closeWhatsAppPopup(); });
+
+    // Global click listener to hide suggestion boxes when clicking outside
+    document.addEventListener('click', (event) => {
+        if (customerSuggestionsNameBox && !customerSuggestionsNameBox.contains(event.target) && event.target !== customerNameInput) {
+            hideSuggestionBox(customerSuggestionsNameBox);
+        }
+        if (customerSuggestionsWhatsAppBox && !customerSuggestionsWhatsAppBox.contains(event.target) && event.target !== customerWhatsAppInput) {
+            hideSuggestionBox(customerSuggestionsWhatsAppBox);
+        }
+        if (productSuggestionsBox && !productSuggestionsBox.contains(event.target) && event.target !== productNameInput) {
+            hideSuggestionBox(productSuggestionsBox);
+        }
+    });
 });
 
 // --- DB Connection Wait ---
@@ -62,6 +80,17 @@ function waitForDbConnection(callback) {
     if (window.db) { console.log("[DEBUG] DB connection confirmed immediately."); callback(); }
     else { let attempts = 0; const maxAttempts = 20; const intervalId = setInterval(() => { attempts++; if (window.db) { clearInterval(intervalId); console.log("[DEBUG] DB connection confirmed after check."); callback(); } else if (attempts >= maxAttempts) { clearInterval(intervalId); console.error("[DEBUG] DB connection timeout."); alert("Database connection failed."); } }, 250); }
 }
+
+// --- Utility to Hide Suggestion Box (Removed Timeout) ---
+function hideSuggestionBox(box) {
+    // Hide immediately on blur or click outside
+    if (box) {
+         box.classList.remove('active');
+         box.style.display = 'none';
+    }
+    // No need for setTimeout or activeElement check here, rely on mousedown for selection clicks
+}
+
 
 // --- Initialize Form ---
 function initializeForm() {
@@ -101,7 +130,7 @@ async function loadOrderForEdit(docId) {
             console.log("[DEBUG] Order data for edit:", data);
             // Fill form (customer, order details, urgent, status)
             customerNameInput.value = data.customerDetails?.fullName || '';
-            customerAddressInput.value = data.customerDetails?.address || '';
+            customerAddressInput.value = data.customerDetails?.address || ''; // Changed from billingAddress for consistency if needed
             customerWhatsAppInput.value = data.customerDetails?.whatsappNo || '';
             customerContactInput.value = data.customerDetails?.contactNo || '';
             selectedCustomerId = data.customerId || null;
@@ -142,7 +171,8 @@ function handleAddProduct() {
     console.log("[DEBUG] Product added:", addedProducts);
     renderProductList();
     productNameInput.value = ''; quantityInput.value = ''; productNameInput.focus();
-    if (productSuggestionsBox) productSuggestionsBox.innerHTML = '';
+    // Hide suggestion box after adding
+    hideSuggestionBox(productSuggestionsBox);
     productNameInput.readOnly = false;
  }
 function renderProductList() {
@@ -163,7 +193,7 @@ function handleDeleteProduct(event) {
 function handleStatusCheckboxes(isEditing) {
     const defaultStatus = "Order Received"; let defaultCheckbox = null;
     orderStatusCheckboxes.forEach(checkbox => { if (checkbox.value === defaultStatus) defaultCheckbox = checkbox; checkbox.disabled = !isEditing; checkbox.closest('label').classList.toggle('disabled', !isEditing); checkbox.removeEventListener('change', handleStatusChange); checkbox.addEventListener('change', handleStatusChange); });
-    if (!isEditing && defaultCheckbox) { defaultCheckbox.checked = true; /* defaultCheckbox.closest('label').classList.remove('disabled'); */ }
+    if (!isEditing && defaultCheckbox) { defaultCheckbox.checked = true; }
 }
 function handleStatusChange(event) { const changedCheckbox = event.target; if (changedCheckbox.checked) { orderStatusCheckboxes.forEach(otherCb => { if (otherCb !== changedCheckbox) otherCb.checked = false; }); } }
 
@@ -173,10 +203,15 @@ function handleStatusChange(event) { const changedCheckbox = event.target; if (c
 let customerSearchTimeout;
 function handleCustomerInput(event, type) {
     const searchTerm = event.target.value.trim();
-    // console.log(`[DEBUG] Customer Input (${type}): "${searchTerm}"`);
     const suggestionBox = type === 'name' ? customerSuggestionsNameBox : customerSuggestionsWhatsAppBox;
-    if (!suggestionBox) return; resetCustomerSelection(); suggestionBox.innerHTML = '';
-    if (searchTerm.length < 2) { clearTimeout(customerSearchTimeout); return; }
+    if (!suggestionBox) return;
+
+    if (searchTerm.length < 2) {
+        clearTimeout(customerSearchTimeout);
+        hideSuggestionBox(suggestionBox); // Use the function to hide
+        return;
+     }
+
     clearTimeout(customerSearchTimeout);
     customerSearchTimeout = setTimeout(() => {
         console.log(`[DEBUG] Triggering customer filter for (${type}): "${searchTerm}"`);
@@ -210,16 +245,28 @@ function filterAndRenderCustomerSuggestions(term, type, box) {
     renderCustomerSuggestions(filtered, term, box);
 }
 function renderCustomerSuggestions(suggestions, term, box) {
-     if (suggestions.length === 0) { box.innerHTML = `<ul><li>No results matching '${term}'</li></ul>`; return; }
+     if (!box) return;
+     if (suggestions.length === 0) {
+         box.classList.remove('active'); // Hide container
+         box.style.display = 'none';
+         return;
+     }
     const ul = document.createElement('ul');
     suggestions.forEach(cust => {
         const li = document.createElement('li'); const dName = `${cust.fullName} (${cust.whatsappNo})`;
         try { li.innerHTML = dName.replace(new RegExp(`(${term.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')})`, 'gi'), '<strong>$1</strong>'); } catch { li.textContent = dName; }
         li.dataset.customer = JSON.stringify(cust);
-        li.addEventListener('click', () => { fillCustomerData(cust); box.innerHTML = ''; });
+        li.addEventListener('mousedown', (e) => { // Use mousedown to register before blur
+            e.preventDefault(); // Prevent input blur
+            fillCustomerData(cust);
+            hideSuggestionBox(box); // Hide box after selection
+        });
         ul.appendChild(li);
     });
-    box.innerHTML = ''; box.appendChild(ul);
+    box.innerHTML = '';
+    box.appendChild(ul);
+    box.classList.add('active'); // Show container
+    box.style.display = 'block'; // Explicitly show
 }
 function fillCustomerData(customer) {
     if (!customer) { resetCustomerSelection(); return; }
@@ -227,22 +274,31 @@ function fillCustomerData(customer) {
     customerNameInput.value = customer.fullName || ''; customerWhatsAppInput.value = customer.whatsappNo || '';
     customerAddressInput.value = customer.billingAddress || customer.address || ''; customerContactInput.value = customer.contactNo || '';
     selectedCustomerId = customer.id; if(selectedCustomerIdInput) selectedCustomerIdInput.value = selectedCustomerId; // Store ID
-    if (customerSuggestionsNameBox) customerSuggestionsNameBox.innerHTML = ''; if (customerSuggestionsWhatsAppBox) customerSuggestionsWhatsAppBox.innerHTML = '';
+    // Explicitly Hide Boxes after filling
+    hideSuggestionBox(customerSuggestionsNameBox);
+    hideSuggestionBox(customerSuggestionsWhatsAppBox);
     customerAddressInput.readOnly = true; customerContactInput.readOnly = true; // Make readonly
 }
 function resetCustomerSelection() {
      selectedCustomerId = null; if(selectedCustomerIdInput) selectedCustomerIdInput.value = '';
-     customerAddressInput.readOnly = false; customerContactInput.readOnly = false; // Make editable again
-     console.log("[DEBUG] Customer selection reset.");
+     // Keep input values, just make fields editable
+     customerAddressInput.readOnly = false; customerContactInput.readOnly = false;
+     console.log("[DEBUG] Customer selection reset (fields editable).");
 }
 
 // --- Product Autocomplete ---
 let productSearchTimeout;
 function handleProductInput(event) {
     const searchTerm = event.target.value.trim();
-     // console.log(`[DEBUG] Product Input: "${searchTerm}"`);
-    if (!productSuggestionsBox) return; productNameInput.readOnly = false; productSuggestionsBox.innerHTML = '';
-    if (searchTerm.length < 2) { clearTimeout(productSearchTimeout); return; }
+    if (!productSuggestionsBox) return;
+    productNameInput.readOnly = false;
+
+    if (searchTerm.length < 2) {
+        clearTimeout(productSearchTimeout);
+        hideSuggestionBox(productSuggestionsBox); // Use function to hide
+        return;
+    }
+
     clearTimeout(productSearchTimeout);
     productSearchTimeout = setTimeout(() => {
         console.log(`[DEBUG] Triggering product filter for: "${searchTerm}"`);
@@ -256,7 +312,6 @@ async function getOrFetchProductCache() {
     try {
         if (!db || !collection || !query || !getDocs || !orderBy) { throw new Error("Firestore query functions unavailable for products."); }
         const productsRef = collection(db, "products");
-        // ** Fetching based on printName, Index on printName (Asc) REQUIRED **
         const q = query(productsRef, orderBy("printName"));
         console.log("[DEBUG] Product Fetch Query:", q);
         productFetchPromise = getDocs(q).then(snapshot => {
@@ -276,16 +331,29 @@ function filterAndRenderProductSuggestions(term, box) {
     renderProductSuggestions(filtered, term, box);
 }
 function renderProductSuggestions(suggestions, term, box) {
-     if (suggestions.length === 0) { box.innerHTML = `<ul><li>No products found matching '${term}'</li></ul>`; return; }
+     if (!box) return;
+     if (suggestions.length === 0) {
+         box.classList.remove('active'); // Hide container
+         box.style.display = 'none';
+         return;
+     }
     const ul = document.createElement('ul');
     suggestions.forEach(prod => {
         const li = document.createElement('li');
         try { li.innerHTML = prod.name.replace(new RegExp(`(${term.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')})`, 'gi'), '<strong>$1</strong>'); } catch { li.textContent = prod.name; }
         li.dataset.name = prod.name; // Store printName
-        li.addEventListener('click', () => { productNameInput.value = prod.name; box.innerHTML = ''; quantityInput.focus(); });
+        li.addEventListener('mousedown', (e) => { // Use mousedown
+            e.preventDefault(); // Prevent blur
+            productNameInput.value = prod.name;
+            hideSuggestionBox(box); // Hide box on click
+            quantityInput.focus();
+        });
         ul.appendChild(li);
     });
-    box.innerHTML = ''; box.appendChild(ul);
+    box.innerHTML = '';
+    box.appendChild(ul);
+    box.classList.add('active'); // Show container
+    box.style.display = 'block'; // Explicitly show
 }
 // --- End Autocomplete ---
 
@@ -297,39 +365,128 @@ async function handleFormSubmit(event) {
     try {
         // Get data
         const formData = new FormData(orderForm);
-        const customerFullNameFromInput = customerNameInput.value.trim(); // Read direct value
-        console.log("[DEBUG] Reading Full Name directly from input:", customerFullNameFromInput);
-        const customerData = { fullName: customerFullNameFromInput, address: formData.get('address')?.trim() || '', whatsappNo: formData.get('whatsapp_no')?.trim() || '', contactNo: formData.get('contact_no')?.trim() || '' };
+        // --- Read customer details DIRECTLY from input fields ---
+        const customerFullNameFromInput = customerNameInput.value.trim();
+        const customerWhatsAppFromInput = customerWhatsAppInput.value.trim();
+        const customerAddressFromInput = customerAddressInput.value.trim();
+        const customerContactFromInput = customerContactInput.value.trim();
+        // --- Use stored selectedCustomerId if available ---
+        const customerIdToUse = selectedCustomerId;
+
+        // Validate if customer ID was selected for NEW orders
+        if (!customerIdToUse && !isEditMode) {
+             throw new Error("Please select an existing customer from the suggestions. If the customer is new, add them via Customer Management first.");
+        }
+         // Construct customerData using input values
+         const customerData = {
+             fullName: customerFullNameFromInput,
+             whatsappNo: customerWhatsAppFromInput,
+             address: customerAddressFromInput, // Use address from input
+             contactNo: customerContactFromInput // Use contact from input
+         };
+
         const orderDetails = { manualOrderId: formData.get('manual_order_id')?.trim() || '', orderDate: formData.get('order_date') || '', deliveryDate: formData.get('delivery_date') || '', urgent: formData.get('urgent') || 'No', remarks: formData.get('remarks')?.trim() || '' };
         const statusCheckbox = orderForm.querySelector('input[name="order_status"]:checked'); const selectedStatus = statusCheckbox ? statusCheckbox.value : (isEditMode ? null : 'Order Received');
+
         // ** Validation **
-        if (!selectedCustomerId) throw new Error("Please select an existing customer from the suggestions.");
-        if (!customerData.fullName) { console.error("[DEBUG] Validation failed: Full Name value is empty."); throw new Error("Full Name is required. Please select the customer again."); }
+        if (!customerData.fullName) { throw new Error("Full Name is required."); }
         if (!customerData.whatsappNo) throw new Error("WhatsApp No required.");
         if (addedProducts.length === 0) throw new Error("Add at least one product.");
         if (!orderDetails.orderDate) throw new Error("Order Date required.");
-        if (!selectedStatus) throw new Error("Select order status.");
-        // Use selected Customer ID
-        const customerIdToUse = selectedCustomerId;
+        if (!selectedStatus && isEditMode) throw new Error("Select order status for update.");
+
+
         // Determine Order ID
         let orderIdToUse; const existingSystemId = displayOrderIdInput.value;
-        if (isEditMode) { orderIdToUse = existingSystemId; } else { orderIdToUse = orderDetails.manualOrderId || Date.now().toString(); }
+        if (isEditMode) { orderIdToUse = existingSystemId || orderIdToEdit; } // Use displayed ID or the edit ID
+        else { orderIdToUse = orderDetails.manualOrderId || Date.now().toString(); } // Use manual or generate
+
         // Prepare Payload
-        const orderDataPayload = { orderId: orderIdToUse, customerId: customerIdToUse, customerDetails: customerData, orderDate: orderDetails.orderDate, deliveryDate: orderDetails.deliveryDate, urgent: orderDetails.urgent, remarks: orderDetails.remarks, status: selectedStatus, products: addedProducts, updatedAt: new Date() };
+        const orderDataPayload = {
+            orderId: orderIdToUse,
+            customerId: customerIdToUse || null, // Store ID if selected
+            customerDetails: customerData, // Store details captured from input
+            orderDate: orderDetails.orderDate,
+            deliveryDate: orderDetails.deliveryDate,
+            urgent: orderDetails.urgent,
+            remarks: orderDetails.remarks,
+            status: selectedStatus || 'Order Received', // Default status if somehow null
+            products: addedProducts,
+            updatedAt: new Date()
+        };
+
         // Save/Update
         let orderDocRefPath;
-        if (isEditMode) { if (!orderIdToEdit) throw new Error("Missing ID for update."); const orderRef = doc(db, "orders", orderIdToEdit); await updateDoc(orderRef, orderDataPayload); orderDocRefPath = orderRef.path; console.log("[DEBUG] Order updated:", orderIdToEdit); alert('Order updated successfully!'); }
-        else { orderDataPayload.createdAt = new Date(); const newOrderRef = await addDoc(collection(db, "orders"), orderDataPayload); orderDocRefPath = newOrderRef.path; console.log("[DEBUG] New order saved:", newOrderRef.id); alert('New order saved successfully!'); displayOrderIdInput.value = orderIdToUse; }
+        if (isEditMode) {
+            if (!orderIdToEdit) throw new Error("Missing Firestore Document ID for update.");
+            const orderRef = doc(db, "orders", orderIdToEdit);
+            delete orderDataPayload.createdAt; // Don't update createdAt
+            await updateDoc(orderRef, orderDataPayload);
+            orderDocRefPath = orderRef.path;
+            console.log("[DEBUG] Order updated:", orderIdToEdit);
+            alert('Order updated successfully!');
+        } else {
+            orderDataPayload.createdAt = new Date(); // Add createdAt for new orders
+            const newOrderRef = await addDoc(collection(db, "orders"), orderDataPayload);
+            orderDocRefPath = newOrderRef.path;
+            console.log("[DEBUG] New order saved:", newOrderRef.id);
+            alert('New order saved successfully!');
+            displayOrderIdInput.value = orderIdToUse;
+        }
+
         // Post-save actions
-        await saveToDailyReport(orderDataPayload, orderDocRefPath);
-        showWhatsAppReminder(customerData, orderIdToUse, orderDetails.deliveryDate); // Pass data to WhatsApp function
-        if (!isEditMode) { resetNewOrderForm(); }
-    } catch (error) { console.error("Error saving/updating order:", error); alert("Error: " + error.message);
-    } finally { saveButton.disabled = false; const btnTxt = isEditMode ? "Update Order" : "Save Order"; saveButton.innerHTML = `<i class="fas fa-save"></i> <span>${btnTxt}</span>`; }
+        // await saveToDailyReport(orderDataPayload, orderDocRefPath);
+
+        // Show WhatsApp reminder only if WhatsApp number exists
+        if (customerData.whatsappNo) {
+            showWhatsAppReminder(customerData, orderIdToUse, orderDetails.deliveryDate);
+             // Reset ONLY IF reminder is shown OR for new orders where number is missing
+             // if (!isEditMode) { resetNewOrderForm(); } // Reset handled within showWhatsAppReminder or its skip path
+        } else {
+            console.warn("[DEBUG] WhatsApp number missing, skipping reminder.");
+             if (!isEditMode) { resetNewOrderForm(); } // Reset form if no reminder shown for new order
+        }
+
+    } catch (error) {
+        console.error("Error saving/updating order:", error);
+        alert("Error: " + error.message);
+    } finally {
+        saveButton.disabled = false;
+        const btnTxt = isEditMode ? "Update Order" : "Save Order";
+        if (saveButtonText) {
+             saveButtonText.textContent = btnTxt;
+        } else {
+            saveButton.innerHTML = `<i class="fas fa-save"></i> ${btnTxt}`;
+        }
+    }
 }
 
+
 // --- Reset Form ---
-function resetNewOrderForm() { console.log("[DEBUG] Resetting form."); resetCustomerSelection(); customerNameInput.value = ''; customerWhatsAppInput.value = ''; customerAddressInput.value = ''; customerContactInput.value = ''; manualOrderIdInput.value = ''; displayOrderIdInput.value = ''; orderForm.delivery_date.value = ''; orderForm.remarks.value = ''; addedProducts = []; renderProductList(); handleStatusCheckboxes(false); const urgentNoRadio = orderForm.querySelector('input[name="urgent"][value="No"]'); if (urgentNoRadio) urgentNoRadio.checked = true; const orderDateInput = document.getElementById('order_date'); if (orderDateInput) orderDateInput.value = new Date().toISOString().split('T')[0]; }
+function resetNewOrderForm() {
+     console.log("[DEBUG] Resetting form.");
+     resetCustomerSelection();
+     customerNameInput.value = '';
+     customerWhatsAppInput.value = '';
+     customerAddressInput.value = '';
+     customerContactInput.value = '';
+     manualOrderIdInput.value = '';
+     displayOrderIdInput.value = '';
+     orderForm.delivery_date.value = '';
+     orderForm.remarks.value = '';
+     addedProducts = [];
+     renderProductList();
+     handleStatusCheckboxes(false);
+     const urgentNoRadio = orderForm.querySelector('input[name="urgent"][value="No"]');
+     if (urgentNoRadio) urgentNoRadio.checked = true;
+     const orderDateInput = document.getElementById('order_date');
+     if (orderDateInput) orderDateInput.value = new Date().toISOString().split('T')[0];
+     // Hide suggestion boxes
+     hideSuggestionBox(customerSuggestionsNameBox);
+     hideSuggestionBox(customerSuggestionsWhatsAppBox);
+     hideSuggestionBox(productSuggestionsBox);
+}
+
 
 // --- Post-Save Functions ---
 async function saveToDailyReport(orderData, orderPath) { console.log(`[DEBUG] Placeholder: Saving to daily_reports (Path: ${orderPath})`, orderData); try { /* ... */ console.log("[DEBUG] Placeholder: Called saveToDailyReport."); } catch (error) { console.error("[DEBUG] Placeholder: Error saving to daily_reports:", error); } }
@@ -338,22 +495,21 @@ async function saveToDailyReport(orderData, orderPath) { console.log(`[DEBUG] Pl
 function showWhatsAppReminder(customer, orderId, deliveryDate) {
     if (!whatsappReminderPopup || !whatsappMsgPreview || !whatsappSendLink) {
         console.error("[DEBUG] WhatsApp popup elements missing.");
+         if (!isEditMode) { resetNewOrderForm(); } // Reset form even if popup fails for new order
         return;
     }
     const customerName = customer.fullName || 'Customer';
     const customerNumber = customer.whatsappNo?.replace(/[^0-9]/g, '');
+    // Check moved inside, reset form if number missing for NEW order
     if (!customerNumber) {
-        console.warn("[DEBUG] WhatsApp No missing.");
-        // आप चाहें तो यहां अलर्ट रख सकते हैं या हटा सकते हैं
-        // alert("Cust WhatsApp No missing.");
+        console.warn("[DEBUG] WhatsApp No missing, skipping reminder.");
+        if (!isEditMode) { resetNewOrderForm(); } // Reset form if no reminder shown for new order
         return;
     }
 
-    // डिलीवरी की तारीख को फॉर्मेट करें (यदि आवश्यक हो)
-    // मान लें कि deliveryDate 'YYYY-MM-DD' फॉर्मेट में है, आप इसे जरूरत अनुसार बदल सकते हैं
-    const formattedDeliveryDate = deliveryDate ? deliveryDate : ' जल्द से जल्द'; // यदि तारीख नहीं है तो एक डिफ़ॉल्ट टेक्स्ट जोड़ें
+    const formattedDeliveryDate = deliveryDate ? new Date(deliveryDate).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}) : ' जल्द से जल्द';
 
-    // नया टेम्पलेट यहाँ डालें
+    // Using Order Received template specifically after saving NEW order
     let message = `प्रिय ${customerName},
 नमस्कार,
 आपका ऑर्डर (Order No: ${orderId}) हमें सफलतापूर्वक प्राप्त हो गया है।
@@ -374,9 +530,11 @@ Mobile: 9549116541`;
     whatsappSendLink.href = whatsappUrl;
     whatsappReminderPopup.classList.add('active');
     console.log("[DEBUG] WhatsApp reminder shown.");
+    // Reset form for NEW orders AFTER showing reminder
+    if (!isEditMode) { resetNewOrderForm(); }
 }
 // --- End of Updated Function ---
 
 function closeWhatsAppPopup() { if (whatsappReminderPopup) whatsappReminderPopup.classList.remove('active'); }
 
-console.log("new_order.js script loaded (Client-Side Filtering + Save Fix + Debug Logs + Updated WhatsApp Template).");
+console.log("new_order.js script loaded (Client-Side Filtering + Save Fix + Debug Logs + Updated WhatsApp Template + Suggestion Box Fix v2)."); // Updated log
