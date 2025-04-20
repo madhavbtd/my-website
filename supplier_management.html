@@ -31,7 +31,6 @@
                      }
                  } else {
                      console.log("supplier_management.html: User is logged in:", user.uid);
-                     // JS फ़ाइल DOMContentLoaded के माध्यम से इनिशियलाइज़ेशन को संभालेगी
                  }
              });
              console.log("supplier_management.html: onAuthStateChanged listener attached.");
@@ -51,7 +50,7 @@
     </script>
     </head>
 <body>
-    <div class="container">
+     <div class="container">
          <div class="main-content" id="main-content">
             <div class="page-header">
                 <h1><i class="fas fa-truck"></i> Supplier & PO Management</h1>
@@ -111,21 +110,21 @@
                              </tr>
                          </thead>
                          <tbody id="poTableBody">
-                             <tr><td colspan="6">Initializing...</td></tr>
-                         </tbody>
+                              <tr><td colspan="6">Initializing...</td></tr>
+                          </tbody>
                      </table>
                  </div>
             </div>
 
          </div>
      </div>
+
      <div id="supplierModal" class="modal">
          <div class="modal-content">
              <span class="close-btn" id="closeSupplierModal">&times;</span>
              <h2 id="supplierModalTitle">Add New Supplier</h2>
              <form id="supplierForm">
-                 <input type="hidden" id="supplierIdInput">
-                 <div class="form-group">
+                 <input type="hidden" id="supplierIdInput"> <div class="form-group">
                      <label for="supplierNameInput">Supplier Name *</label>
                      <input type="text" id="supplierNameInput" required>
                  </div>
@@ -158,8 +157,10 @@
          </div>
      </div>
 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
 
     <script src="js/supplier_management.js" type="module" defer></script>
 
-</body>
+    </body>
 </html>
