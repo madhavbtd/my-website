@@ -40,27 +40,23 @@ h1 { margin: 0; font-size: 1.2em; }
 #orderTable tbody tr:hover { background-color: #f1f1f1; }
 #orderTable td { color: #212529; }
 
-/* Column Widths (9 columns) - Adjusted Again */
+/* Column Widths (9 columns) - Adjusted */
 #orderTable th:nth-child(1), #orderTable td:nth-child(1) { width: 10%; }  /* Order ID */
 #orderTable th:nth-child(2), #orderTable td:nth-child(2) { width: 18%; white-space: normal;} /* Customer Name / Mobile */
-/* --- Product Header Font Size Change --- */
-#orderTable th:nth-child(3) { width: 18%; white-space: normal; } /* Products Header - Inherit 0.9em - WAS 0.85em */
+#orderTable th:nth-child(3) { width: 18%; white-space: normal; } /* Products Header - Inherit 0.9em */
 #orderTable td:nth-child(3) { width: 18%; white-space: normal; } /* Products Cell - Inherit 0.9em */
-/* --- End Product Header Font Size Change --- */
 #orderTable th:nth-child(4), #orderTable td:nth-child(4) { width: 9%; white-space: nowrap;} /* Order Date */
 #orderTable th:nth-child(5), #orderTable td:nth-child(5) { width: 9%; white-space: nowrap;} /* Delivery Date */
-/* --- Priority Width Change Again --- */
 #orderTable th:nth-child(6), #orderTable td:nth-child(6) { width: 6%; text-align: center; vertical-align: middle;} /* Priority - WAS 5% */
-/* --- End Priority Width Change Again --- */
-/* --- Status Width Change Again --- */
 #orderTable th:nth-child(7), #orderTable td:nth-child(7) { width: 11%; vertical-align: middle;} /* Status - WAS 12% */
-/* --- End Status Width Change Again --- */
 #orderTable th:nth-child(8), #orderTable td:nth-child(8) { width: 10%; text-align: center; vertical-align: middle;} /* Action */
 #orderTable th:nth-child(9), #orderTable td:nth-child(9) { width: 9%; text-align: center; vertical-align: middle;} /* Send Wtsp */
 
 
 /* Styles inside Customer Name/Mobile cell */
-.customer-name-display { display: block; font-weight: 500; margin-bottom: 3px; }
+/* --- Customer Name Font Weight Change --- */
+.customer-name-display { display: block; font-weight: 700; margin-bottom: 3px; } /* Made bolder - WAS 500 */
+/* --- End Customer Name Font Weight Change --- */
 .customer-mobile-inline { display: block; font-size: 0.85em; color: #555; }
 
 #loadingMessage, #noOrdersMessage { text-align: center; color: #666; font-style: italic; padding: 20px !important; }
