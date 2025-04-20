@@ -10,45 +10,47 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" integrity="sha512-9usAa10IRO0HhonpyAIVpjrylPvoDwiPUiKdWk5t3PyolY1cOd4DSE0Ga+ri4AuTroPR5aQvXU9xC6qOPnzFeg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
 
-    <link rel="stylesheet" href="css/order_history.css">
-    <script type="module">
-        // Import Firebase services
+    <link rel="stylesheet" href="css/order_history.css"> <script type="module">
+        // ########## Firebase Services Import ##########
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
         import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-        // Import Firestore services needed by suppliers.js
+        // Firestore functions needed by suppliers.js
         import { getFirestore, collection, doc, addDoc, setDoc, deleteDoc, onSnapshot, query, orderBy, Timestamp, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-        // **** Your Firebase Configuration ****
+        // ########## Firebase Configuration ##########
+        // !!!!! अपनी वास्तविक कॉन्फ़िगरेशन यहाँ डालें !!!!!
         const firebaseConfig = {
-          apiKey: "YOUR_API_KEY", // **<<< अपना API Key यहाँ डालें**
-          authDomain: "YOUR_AUTH_DOMAIN", // **<<< अपना Auth Domain यहाँ डालें**
-          projectId: "YOUR_PROJECT_ID", // **<<< अपना Project ID यहाँ डालें**
-          storageBucket: "YOUR_STORAGE_BUCKET", // **<<< अपना Storage Bucket यहाँ डालें**
-          messagingSenderId: "YOUR_MESSAGING_SENDER_ID", // **<<< अपना Sender ID यहाँ डालें**
-          appId: "YOUR_APP_ID" // **<<< अपना App ID यहाँ डालें**
+          apiKey: "YOUR_API_KEY",
+          authDomain: "YOUR_AUTH_DOMAIN",
+          projectId: "YOUR_PROJECT_ID",
+          storageBucket: "YOUR_STORAGE_BUCKET",
+          messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+          appId: "YOUR_APP_ID"
         };
 
-        // --- Firebase App Initialization ---
+        // ########## Firebase App Initialization ##########
         let app;
         let auth;
         let db;
 
         try {
+             // Initialize only once per page load
              if (!window.firebaseAppInitialized) {
                  app = initializeApp(firebaseConfig);
                  window.firebaseAppInitialized = true;
                  window.firebaseApp = app;
                  console.log("Firebase initialized on this page (suppliers).");
              } else {
-                 app = window.firebaseApp;
+                 app = window.firebaseApp; // Use existing instance
                  console.log("Firebase already initialized on this page (suppliers).");
              }
              auth = getAuth(app);
              db = getFirestore(app);
 
              // --- Make services and functions globally available for suppliers.js ---
+             // This allows suppliers.js to use these variables directly
              window.db = db;
-             window.auth = auth;
+             window.auth = auth; // Although auth might not be directly needed in suppliers.js
              window.collection = collection;
              window.doc = doc;
              window.addDoc = addDoc;
@@ -60,71 +62,76 @@
              window.Timestamp = Timestamp;
              window.serverTimestamp = serverTimestamp;
 
-             // ----- <<<<< UPDATED Authentication State Check >>>>> -----
+             // ########## Authentication State Check Logic ##########
+             // Get the main content wrapper element
              const mainPageContent = document.getElementById('main-supplier-content'); // <<< रैपर div का ID
 
+             // Initially hide content (redundant if CSS hides it, but safe)
+             if (mainPageContent) mainPageContent.style.display = 'none';
+
+             // Optional: Show a loading indicator here if you have one
+
+             console.log("Setting up onAuthStateChanged listener for suppliers.html");
              onAuthStateChanged(auth, (user) => {
                  const currentPage = window.location.pathname.split('/').pop() || 'index.html';
-                 console.log(`Auth state changed/checked on: ${currentPage}. User:`, user ? user.uid : 'Not logged in');
+                 console.log(`Auth state changed/checked on: ${currentPage}. User detected:`, user ? user.uid : 'None');
+
+                 // Optional: Hide loading indicator here
 
                  if (user) {
-                     // User IS logged in (Firebase confirmed)
-                     console.log(`User is confirmed logged in on ${currentPage}. Loading page content.`);
+                     // ----- USER IS LOGGED IN -----
+                     console.log(`User is confirmed logged in on ${currentPage}. Preparing to show content and initialize page.`);
 
                      // Show the main page content
                      if (mainPageContent) {
-                         mainPageContent.style.display = 'block'; // <<< कंटेंट दिखाएं
+                         console.log("Showing main content area.");
+                         mainPageContent.style.display = 'block'; // Use 'block', 'flex', etc. as appropriate
                      } else {
-                          console.warn("main-supplier-content element not found to display.");
+                          console.error("CRITICAL: main-supplier-content element not found! Page content cannot be displayed.");
                      }
 
-                     // Initialize the page's JavaScript functionality
+                     // Initialize the page's JavaScript functionality AFTER showing content
+                     console.log("Attempting to call initializeSuppliersPage...");
                      if (typeof initializeSuppliersPage === 'function') {
-                         initializeSuppliersPage();
+                         initializeSuppliersPage(); // Function defined in suppliers.js
+                         console.log("initializeSuppliersPage function called successfully.");
                      } else {
-                         console.warn("initializeSuppliersPage function not found.");
+                         console.error("CRITICAL: initializeSuppliersPage function not found! Ensure suppliers.js is loaded correctly and defines this function.");
+                         alert("Error: Could not initialize supplier page functionality. Check console.");
                      }
 
                  } else {
-                     // User is DEFINITELY not logged in (Firebase confirmed)
-                     console.log(`User is confirmed NOT logged in on ${currentPage}. Redirecting to login...`);
+                     // ----- USER IS NOT LOGGED IN -----
+                     console.log(`User is confirmed NOT logged in on ${currentPage}. Redirecting to login page.`);
                      if (currentPage.toLowerCase() !== 'login.html') {
                         // Store original URL and redirect to login
                         const originalUrl = encodeURIComponent(window.location.pathname + window.location.search);
                         console.log(`Redirecting to login.html?redirectUrl=${originalUrl}`);
-                        window.location.replace(`login.html?redirectUrl=${originalUrl}`); // <<< login.html का सही पाथ दें
+                        // !!!!! login.html का सही पाथ यहाँ डालें !!!!!
+                        window.location.replace(`login.html?redirectUrl=${originalUrl}`);
+                     } else {
+                         console.log("Already on login page."); // Avoid redirect loop if somehow on login.html
                      }
                  }
              });
-             // ----- <<<<< End of UPDATED Auth Check >>>>> -----
+             // ----- End of Auth Check Logic -----
 
         } catch(e) {
-            console.error("Firebase setup / Auth check error:", e);
-            alert("Error loading application. Please try again later.");
-            // Optionally hide content or show error message on page if init fails
-            if (mainPageContent) mainPageContent.innerHTML = '<p style="color:red; text-align:center; padding: 20px;">Error loading application.</p>';
+            console.error("Firebase setup error in suppliers.html:", e);
+            alert("Critical error during application setup. Please check console.");
+            // Display error on page if possible
+            const bodyElement = document.querySelector('body');
+            if (bodyElement) bodyElement.innerHTML = '<p style="color:red; text-align:center; padding: 20px;">Critical error loading application setup. Check console for details.</p>';
         }
     </script>
     <style>
-        /* Add specific styles for supplier page if needed, or put in separate CSS */
+        /* Styles from previous response - Add more if needed */
         .modal-content { max-width: 500px; }
         .modal-content label { font-weight: 500; margin-bottom: 3px; display: block;}
-        .modal-content input, .modal-content textarea {
-            width: 100%;
-            padding: 8px;
-            margin-bottom: 10px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            box-sizing: border-box;
-            font-family: inherit;
-            font-size: 0.95em;
-        }
+        .modal-content input, .modal-content textarea { width: 100%; padding: 8px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; font-family: inherit; font-size: 0.95em; }
         .modal-content textarea { resize: vertical; min-height: 60px;}
         .modal-actions .button { flex-grow: 1; }
-
-         /* Ensure modal styles from order_history.css are available */
         .modal { z-index: 1050; }
-
     </style>
 </head>
 <body>
@@ -138,7 +145,8 @@
             </div>
 
             <div class="breadcrumb">
-                <a href="index.html">Home</a> / <span>Suppliers</span> </div>
+                 <a href="index.html">Home</a> / <span>Suppliers</span>
+            </div>
 
             <div class="actions-bar">
                  <button id="addNewSupplierBtn" class="button add-new-button"><i class="fas fa-plus"></i> Add New Supplier</button>
@@ -167,7 +175,7 @@
                     </thead>
                      <tbody id="supplierTableBody">
                         <tr>
-                            <td colspan="5" id="loadingMessage">Initializing...</td>
+                            <td colspan="5" id="loadingMessage">Initializing Authentication...</td>
                         </tr>
                      </tbody>
                 </table>
@@ -182,7 +190,6 @@
                 <h2 id="modalTitle">Add New Supplier</h2>
                 <form id="supplierForm">
                     <input type="hidden" id="supplierId">
-
                     <div>
                         <label for="supplierName">Supplier Name:</label>
                         <input type="text" id="supplierName" required>
@@ -203,7 +210,6 @@
                         <label for="address">Address:</label>
                         <textarea id="address"></textarea>
                     </div>
-
                     <div class="modal-actions" style="margin-top: 15px;">
                         <button type="submit" id="saveSupplierBtn" class="button add-new-button"><i class="fas fa-save"></i> Save Supplier</button>
                         <button type="button" id="cancelBtn" class="button clear-filters-button" style="background-color: #6c757d;"><i class="fas fa-times"></i> Cancel</button>
