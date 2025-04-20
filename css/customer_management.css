@@ -1,6 +1,10 @@
 /* General Body Styles */
 body {
-    font-family: "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
+    /* ----- इस लाइन को बदलें ----- */
+    font-family: 'Poppins', "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
+    /* ----- बदलाव खत्म ----- */
+
+    /* बाकी स्टाइल वैसे ही रहने दें */
     margin: 0;
     padding: 15px;
     background-color: #f0f2f5;
@@ -37,6 +41,25 @@ body {
 }
 .header-icon { font-size: 1em; }
 h1 { margin: 0; font-size: 1.2em; }
+
+/* --- Breadcrumb Styles --- */ /* <<-- नया जोड़ा गया */
+.breadcrumb-container {
+  font-size: 14px;  /* फॉन्ट साइज़ */
+  color: #555555;   /* टेक्स्ट का रंग */
+  margin-bottom: 20px; /* ब्रेडक्रम्ब और फिल्टर बार के बीच जगह */
+  padding: 5px 0;     /* थोड़ा ऊपर-नीचे स्पेस */
+}
+
+.breadcrumb-container a {
+  color: #007bff;   /* 'Home' लिंक का रंग */
+  text-decoration: none; /* लिंक के नीचे लाइन नहीं */
+}
+
+.breadcrumb-container a:hover {
+  text-decoration: underline; /* माउस ले जाने पर अंडरलाइन */
+}
+/* --- Breadcrumb Styles End --- */ /* <<-- नया जोड़ा गया */
+
 
 /* Filter Bar */
 .filter-bar {
