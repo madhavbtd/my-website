@@ -28,7 +28,7 @@ const modalOrderStatusSelect = document.getElementById('modalOrderStatus');
 const modalUpdateStatusBtn = document.getElementById('modalUpdateStatusBtn');
 const modalDeleteBtn = document.getElementById('modalDeleteBtn');
 const modalEditFullBtn = document.getElementById('modalEditFullBtn');
-const modalProductListContainer = document.getElementById('modalProductList');
+const modalProductListContainer = document.getElementById('modalProductList'); // <<< Target for Product List
 const modalStatusHistoryListContainer = document.getElementById('modalStatusHistoryList'); // History List
 
 // Modal 2 Elements
@@ -47,7 +47,7 @@ let currentStatusFilter = '';
 
 // --- Initialization ---
 document.addEventListener('DOMContentLoaded', () => {
-    console.log("[DEBUG] Order History DOM Loaded (v12 - Final).");
+    console.log("[DEBUG] Order History DOM Loaded (v12 - Final + BugFix + Design).");
     waitForDbConnection(() => {
         // Check for Status Filter from URL
         const urlParams = new URLSearchParams(window.location.search);
@@ -79,7 +79,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!row || !row.dataset.id) return;
             const firestoreId = row.dataset.id;
             const orderData = allOrdersCache.find(o => o.id === firestoreId); // Find data from cache
-            if (!orderData) return; // Exit if data not found
+            if (!orderData) { console.warn(`[DEBUG] Order data not found in cache for ID: ${firestoreId}`); return; } // Exit if data not found
             if (target.closest('.details-edit-button')) { openDetailsModal(firestoreId, orderData); }
             else if (target.closest('.whatsapp-button')) { sendWhatsAppMessage(firestoreId, orderData); }
         });
@@ -198,7 +198,7 @@ function displayOrderRow(firestoreId, data) {
         <td class="${priorityClass}">${priority}</td>
         <td><span class="status-badge ${statusClass}">${status}</span></td>
         <td><button type="button" class="button details-edit-button"><i class="fas fa-info-circle"></i> Details/Edit</button></td>
-        <td><button type="button" class="whatsapp-button"><i class="fab fa-whatsapp"></i></button></td>
+        <td><button type="button" class="button whatsapp-button" title="Send Status on WhatsApp"><i class="fab fa-whatsapp"></i></button></td>
     `;
     orderTableBody.appendChild(tableRow);
 }
@@ -206,15 +206,63 @@ function displayOrderRow(firestoreId, data) {
 
 // --- Modal 1 Handling ---
 function openDetailsModal(firestoreId, orderData) {
-    if (!orderData || !detailsModal) { return; }
+    if (!orderData || !detailsModal) {
+        console.error("Missing order data or modal element for ID:", firestoreId);
+        return;
+    }
+    console.log("[DEBUG] Opening details modal for:", firestoreId, orderData);
     modalOrderIdInput.value = firestoreId;
     modalDisplayOrderIdSpan.textContent = orderData.orderId || `(Sys: ${firestoreId.substring(0, 6)}...)`;
     modalCustomerNameSpan.textContent = orderData.customerDetails?.fullName || 'N/A';
     modalCustomerWhatsAppSpan.textContent = orderData.customerDetails?.whatsappNo || 'N/A'; // Show WhatsApp
     modalOrderStatusSelect.value = orderData.status || '';
 
+    // --- <<< BUG FIX START >>> ---
     // Populate Product List in Modal
-    if (modalProductListContainer) { /* ... (same product list logic) ... */ }
+    if (modalProductListContainer) {
+        modalProductListContainer.innerHTML = ''; // Clear previous list
+        const products = orderData.products; // Get products array from order data
+        console.log("[DEBUG] Products for modal:", products);
+
+        if (Array.isArray(products) && products.length > 0) {
+            const ul = document.createElement('ul');
+            ul.style.listStyle = 'none'; // Basic styling if needed
+            ul.style.padding = '0';
+            ul.style.margin = '0';
+            products.forEach(product => {
+                const li = document.createElement('li');
+                li.style.marginBottom = '5px'; // Add some space between items
+                li.style.paddingBottom = '5px';
+                li.style.borderBottom = '1px dotted #eee';
+
+                const nameSpan = document.createElement('span');
+                nameSpan.className = 'product-name'; // Use existing class from CSS if needed
+                nameSpan.textContent = product.name || 'Unnamed Product';
+                nameSpan.style.fontWeight = '600'; // Make name slightly bolder
+
+                const qtySpan = document.createElement('span');
+                qtySpan.className = 'product-qty-details'; // Use existing class from CSS if needed
+                qtySpan.textContent = ` - Qty: ${product.quantity || '?'}`;
+                qtySpan.style.fontSize = '0.9em';
+                qtySpan.style.color = '#555';
+
+                li.appendChild(nameSpan);
+                li.appendChild(qtySpan);
+                ul.appendChild(li);
+            });
+             // Remove border from last item
+            if(ul.lastChild) ul.lastChild.style.borderBottom = 'none';
+            modalProductListContainer.appendChild(ul);
+        } else {
+            // Use existing class from CSS for styling 'no products' message
+            modalProductListContainer.innerHTML = '<p class="no-products">No products listed for this order.</p>';
+            console.log("[DEBUG] No products found for this order.");
+        }
+    } else {
+        console.error("[DEBUG] modalProductListContainer not found!");
+    }
+    // --- <<< BUG FIX END >>> ---
+
 
     // Populate Status History
     if (modalStatusHistoryListContainer) {
@@ -242,9 +290,9 @@ function closeDetailsModal() { if (detailsModal) { detailsModal.style.display = 
 async function handleUpdateStatus() {
     const firestoreId = modalOrderIdInput.value;
     const newStatus = modalOrderStatusSelect.value;
-    if (!firestoreId || !newStatus || !db || !doc || !updateDoc || !arrayUnion || !Timestamp) { return; }
-    const orderData = allOrdersCache.find(o => o.id === firestoreId); if (!orderData) return;
-    if(orderData.status === newStatus) { alert("Status already set."); return; }
+    if (!firestoreId || !newStatus || !db || !doc || !updateDoc || !arrayUnion || !Timestamp) { console.error("Update Status prerequisites failed."); return; }
+    const orderData = allOrdersCache.find(o => o.id === firestoreId); if (!orderData) { console.error("Order data not found in cache for update."); return; }
+    if(orderData.status === newStatus) { alert("Status is already set to '" + newStatus + "'."); return; }
 
     modalUpdateStatusBtn.disabled = true; modalUpdateStatusBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Updating...';
     const historyEntry = { status: newStatus, timestamp: Timestamp.now() };
@@ -256,9 +304,15 @@ async function handleUpdateStatus() {
             updatedAt: historyEntry.timestamp,
             statusHistory: arrayUnion(historyEntry) // Add history
         });
-        if (orderData.customerDetails) { showStatusUpdateWhatsAppReminder(orderData.customerDetails, orderData.orderId || `(Sys: ${firestoreId.substring(0,6)}...)`, newStatus); }
-        else { alert("Status updated, but couldn't prepare WhatsApp message."); closeDetailsModal(); }
-    } catch (error) { /* Error handling */ }
+        console.log("[DEBUG] Status updated successfully for:", firestoreId);
+        closeDetailsModal(); // Close modal immediately after successful update
+        // Show WhatsApp reminder only if customer details are present
+        if (orderData.customerDetails && orderData.customerDetails.whatsappNo) {
+             showStatusUpdateWhatsAppReminder(orderData.customerDetails, orderData.orderId || `(Sys: ${firestoreId.substring(0,6)}...)`, newStatus);
+        } else {
+             alert("Status updated successfully!"); // Alert if no WhatsApp details
+        }
+    } catch (error) { console.error("Error updating status:", error); alert("Error updating status: " + error.message); }
     finally { modalUpdateStatusBtn.disabled = false; modalUpdateStatusBtn.innerHTML = '<i class="fas fa-sync-alt"></i> Update Status'; }
 }
 
@@ -266,33 +320,36 @@ function handleDeleteFromModal() { const firestoreId = modalOrderIdInput.value; 
 function handleEditFullFromModal() { const firestoreId = modalOrderIdInput.value; if (!firestoreId) return; window.location.href = `new_order.html?editOrderId=${firestoreId}`; }
 
 // --- Main Delete Order Function ---
-async function handleDeleteOrder(firestoreId, orderDisplayId) { if (!db || !doc || !deleteDoc) return; if (confirm(`Delete Order ID: ${orderDisplayId}?`)) { try { await deleteDoc(doc(db, "orders", firestoreId)); } catch (error) { /* Error */ } } }
+async function handleDeleteOrder(firestoreId, orderDisplayId) { if (!db || !doc || !deleteDoc) { alert("Delete function unavailable."); return; } if (confirm(`Are you sure you want to delete Order ID: ${orderDisplayId}? This cannot be undone.`)) { try { console.log("[DEBUG] Deleting order:", firestoreId); await deleteDoc(doc(db, "orders", firestoreId)); console.log("[DEBUG] Order deleted."); alert("Order deleted successfully."); } catch (error) { console.error("Error deleting order:", error); alert("Error deleting order: " + error.message); } } else { console.log("[DEBUG] Deletion cancelled by user."); } }
 
 // --- Modal 2 (WhatsApp Reminder) Handling ---
-function showStatusUpdateWhatsAppReminder(customer, orderId, updatedStatus) { if (!whatsappReminderPopup) return; const customerName = customer.fullName || 'Customer'; const customerNumber = customer.whatsappNo?.replace(/[^0-9]/g, ''); if (!customerNumber) return; let message = getWhatsAppMessageTemplate(updatedStatus, customerName, orderId, null); whatsappMsgPreview.innerText = message; const encodedMessage = encodeURIComponent(message); const whatsappUrl = `https://wa.me/${customerNumber}?text=${encodedMessage}`; whatsappSendLink.href = whatsappUrl; whatsappReminderPopup.classList.add('active'); }
+function showStatusUpdateWhatsAppReminder(customer, orderId, updatedStatus) { if (!whatsappReminderPopup) { console.error("WhatsApp Popup element missing."); return; } const customerName = customer.fullName || 'Customer'; const customerNumber = customer.whatsappNo?.replace(/[^0-9]/g, ''); if (!customerNumber) { console.warn("WhatsApp number missing for reminder."); return; } let message = getWhatsAppMessageTemplate(updatedStatus, customerName, orderId, null); whatsappMsgPreview.innerText = message; const encodedMessage = encodeURIComponent(message); const whatsappUrl = `https://wa.me/${customerNumber}?text=${encodedMessage}`; whatsappSendLink.href = whatsappUrl; whatsappReminderPopup.classList.add('active'); }
 function closeWhatsAppPopup() { if (whatsappReminderPopup) { whatsappReminderPopup.classList.remove('active'); } }
 
 // --- Table Row WhatsApp Button Handler ---
-function sendWhatsAppMessage(firestoreId, orderData) { if (!orderData || !orderData.customerDetails || !orderData.customerDetails.whatsappNo) return; const customer = orderData.customerDetails; const orderId = orderData.orderId || `(Sys: ${firestoreId.substring(0,6)}...)`; const status = orderData.status; const deliveryDate = orderData.deliveryDate; const customerName = customer.fullName || 'Customer'; const customerNumber = customer.whatsappNo.replace(/[^0-9]/g, ''); let message = getWhatsAppMessageTemplate(status, customerName, orderId, deliveryDate); const encodedMessage = encodeURIComponent(message); const whatsappUrl = `https://wa.me/${customerNumber}?text=${encodedMessage}`; window.open(whatsappUrl, '_blank'); }
+function sendWhatsAppMessage(firestoreId, orderData) { if (!orderData || !orderData.customerDetails || !orderData.customerDetails.whatsappNo) { alert("Customer WhatsApp number not found for this order."); return; } const customer = orderData.customerDetails; const orderId = orderData.orderId || `(Sys: ${firestoreId.substring(0,6)}...)`; const status = orderData.status; const deliveryDate = orderData.deliveryDate; const customerName = customer.fullName || 'Customer'; const customerNumber = customer.whatsappNo.replace(/[^0-9]/g, ''); let message = getWhatsAppMessageTemplate(status, customerName, orderId, deliveryDate); const encodedMessage = encodeURIComponent(message); const whatsappUrl = `https://wa.me/${customerNumber}?text=${encodedMessage}`; window.open(whatsappUrl, '_blank'); }
 
 // --- Helper Function for WhatsApp Templates ---
 function getWhatsAppMessageTemplate(status, customerName, orderId, deliveryDate) {
      const namePlaceholder = "[Customer Name]"; const orderNoPlaceholder = "[ORDER_NO]"; const deliveryDatePlaceholder = "[DELIVERY_DATE]";
      const companyName = "Madhav Offset"; const companyAddress = "Head Office: Moodh Market, Batadu"; const companyMobile = "9549116541";
      const signature = `धन्यवाद,\n${companyName}\n${companyAddress}\nMobile: ${companyMobile}`;
-     let template = ""; let deliveryDateText = deliveryDate || "N/A";
+     let template = "";
+     // Use provided deliveryDate if available, otherwise use a placeholder text
+     let deliveryDateText = deliveryDate ? new Date(deliveryDate).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}) : "जल्द से जल्द (as soon as possible)";
+
      switch (status) {
         case "Order Received": template = `प्रिय ${namePlaceholder},\nनमस्कार,\nआपका ऑर्डर (Order No: ${orderNoPlaceholder}) हमें सफलतापूर्वक प्राप्त हो गया है।\nहम इस ऑर्डर को ${deliveryDatePlaceholder} तक पूर्ण करने का प्रयास करेंगे।\n\nDear ${namePlaceholder},\nWe have successfully received your order (Order No: ${orderNoPlaceholder}).\nWe aim to complete it by ${deliveryDatePlaceholder}.`; break;
-        // ... (other cases for Designing, Verification, etc. using provided templates) ...
         case "Designing": template = `प्रिय ${namePlaceholder},\nआपके ऑर्डर (Order No: ${orderNoPlaceholder}) का डिज़ाइन तैयार किया जा रहा है।\nजैसे ही डिज़ाइन तैयार होगा, हम आपसे पुष्टि के लिए संपर्क करेंगे।\n\nDear ${namePlaceholder},\nThe design for your order (Order No: ${orderNoPlaceholder}) is in progress.\nWe’ll contact you for confirmation once it’s ready.`; break;
         case "Verification": template = `प्रिय ${namePlaceholder},\nआपके ऑर्डर (Order No: ${orderNoPlaceholder}) की डिज़ाइन आपके साथ साझा कर दी गई है।\nकृपया डिज़ाइन को ध्यानपूर्वक जाँचे और हमें अपनी अनुमति प्रदान करें।\nएक बार ‘OK’ कर देने के बाद किसी भी प्रकार का संशोधन संभव नहीं होगा।\n\nDear ${namePlaceholder},\nWe have shared the design for your order (Order No: ${orderNoPlaceholder}) with you.\nPlease review it carefully and provide your approval.\nOnce you confirm with ‘OK’, no further changes will be possible.`; break;
         case "Design Approved": template = `प्रिय ${namePlaceholder},\nआपके ऑर्डर (Order No: ${orderNoPlaceholder}) की डिज़ाइन स्वीकृत कर दी गई है।\nअब यह प्रिंटिंग प्रक्रिया के लिए आगे बढ़ाया जा रहा है।\n\nDear ${namePlaceholder},\nYour design for Order No: ${orderNoPlaceholder} has been approved.\nIt is now moving forward to the printing stage.`; break;
         case "Ready for Working": template = `प्रिय ${namePlaceholder},\nआपका ऑर्डर (Order No: ${orderNoPlaceholder}) प्रिंटिंग के लिए पूरी तरह तैयार है।\nजल्द ही प्रिंटिंग प्रक्रिया शुरू की जाएगी।\n\nDear ${namePlaceholder},\nYour order (Order No: ${orderNoPlaceholder}) is ready for printing.\nWe’ll begin the printing process shortly.`; break;
         case "Printing": template = `प्रिय ${namePlaceholder},\nआपका ऑर्डर (Order No: ${orderNoPlaceholder}) प्रिंट हो रहा है।\nपूरा होते ही आपको सूचित किया जाएगा।\n\nDear ${namePlaceholder},\nYour order (Order No: ${orderNoPlaceholder}) is currently being printed.\nWe will notify you once it’s done.`; break;
         case "Delivered": template = `प्रिय ${namePlaceholder},\nआपका ऑर्डर (Order No: ${orderNoPlaceholder}) सफलतापूर्वक डिलीवर कर दिया गया है।\nकृपया पुष्टि करें कि आपने ऑर्डर प्राप्त कर लिया है।\nआपके सहयोग के लिए धन्यवाद।\nहमें आशा है कि आप हमें शीघ्र ही फिर से सेवा का अवसर देंगे।\n\nDear ${namePlaceholder},\nYour order (Order No: ${orderNoPlaceholder}) has been successfully delivered.\nPlease confirm the receipt.\nThank you for your support.\nWe hope to have the opportunity to serve you again soon.`; break;
-        case "Completed": template = `प्रिय ${namePlaceholder},\nआपका ऑर्डर (Order No: ${orderNoPlaceholder}) सफलतापूर्वक पूर्ण हो चुका है।\nआपके सहयोग के लिए धन्यवाद。\n\nDear ${namePlaceholder},\nYour order (Order No: ${orderNoPlaceholder}) has been successfully completed.\nThank you for your support.`; break;
+        case "Completed": template = `प्रिय ${namePlaceholder},\nआपका ऑर्डर (Order No: ${orderNoPlaceholder}) सफलतापूर्वक पूर्ण हो चुका है।\nआपके सहयोग के लिए धन्यवाद।\n\nDear ${namePlaceholder},\nYour order (Order No: ${orderNoPlaceholder}) has been successfully completed.\nThank you for your support.`; break;
         default: template = `प्रिय ${namePlaceholder},\nआपके ऑर्डर (Order No: ${orderNoPlaceholder}) का वर्तमान स्टेटस है: ${status}.\n\nDear ${namePlaceholder},\nThe current status for your order (Order No: ${orderNoPlaceholder}) is: ${status}.`;
      }
+     // Replace placeholders sensitively
      let message = template.replace(new RegExp(namePlaceholder.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&'), 'g'), customerName);
      message = message.replace(new RegExp(orderNoPlaceholder.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&'), 'g'), orderId);
      message = message.replace(new RegExp(deliveryDatePlaceholder.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&'), 'g'), deliveryDateText);
@@ -301,4 +358,4 @@ function getWhatsAppMessageTemplate(status, customerName, orderId, deliveryDate)
 }
 
 // --- Final Log ---
-console.log("order_history.js script fully loaded and initialized (v12 - Final).");
+console.log("order_history.js script fully loaded and initialized (v12 - Final + BugFix + Design)."); // Updated log message
