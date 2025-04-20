@@ -1,10 +1,10 @@
-// js/supplier_management.js - v4 (PDF Button Added)
+// js/supplier_management.js - v5 (Fix Function Availability Checks)
 
-// +++++ Import PDF function +++++
-import { generatePoPdf } from './utils.js'; // Assuming utils.js is in the same js folder
-// ++++++++++++++++++++++++++++++++
+// Import PDF function from utils.js
+import { generatePoPdf } from './utils.js';
 
 // Assume Firebase functions are globally available via HTML script block
+// Destructure ALL needed functions to ensure they exist in scope
 const {
     db, collection, onSnapshot, addDoc, doc, getDoc, getDocs, updateDoc, deleteDoc,
     query, orderBy, where, Timestamp
@@ -39,6 +39,22 @@ const poFilterBtn = document.getElementById('poFilterBtn');
 
 let currentEditingSupplierId = null;
 
+// --- Helper to check Firestore readiness ---
+function checkFirestoreReady(functionName, requiredFns = []) {
+    if (!window.db) {
+        console.error(`${functionName}: Firestore DB (window.db) not available.`);
+        return false;
+    }
+    for (const fnName of requiredFns) {
+        if (typeof window[fnName] !== 'function') {
+            console.error(`${functionName}: Firestore function '${fnName}' (window.${fnName}) not available.`);
+            return false;
+        }
+    }
+    return true;
+}
+
+
 // --- Modal Handling ---
 function openSupplierModal(mode = 'add', supplierData = null, supplierId = null) {
     if (!supplierModal || !supplierForm || !supplierModalTitle || !supplierErrorMsg || !supplierIdInput || !supplierNameInput || !supplierCompanyInput || !supplierWhatsappInput || !supplierEmailInput || !supplierAddressInput || !supplierGstInput) {
@@ -72,10 +88,11 @@ function closeSupplierModal() { if (supplierModal) { supplierModal.classList.rem
 // Function to display suppliers
 async function displaySupplierList() {
     if (!supplierTableBody) { console.error("Supplier table body not found!"); return; }
-    if (!db || !collection || !getDocs || !query || !orderBy) {
-        console.error("Firestore functions not ready for displaySupplierList.");
+    // Use helper to check required functions
+    if (!checkFirestoreReady('displaySupplierList', ['collection', 'getDocs', 'query', 'orderBy', 'doc', 'deleteDoc'])) {
         supplierTableBody.innerHTML = '<tr><td colspan="5" style="color:red;">Error loading Firestore functions.</td></tr>'; return;
     }
+
     supplierTableBody.innerHTML = '<tr><td colspan="5">Loading suppliers...</td></tr>';
     try {
         const q = query(collection(db, "suppliers"), orderBy("name"));
@@ -113,9 +130,12 @@ async function displaySupplierList() {
 // Function to save/update supplier
 async function saveSupplier(event) {
     event.preventDefault();
-    if (!saveSupplierBtn || !supplierNameInput || !supplierErrorMsg || !db || !collection || !addDoc || !doc || !updateDoc || !Timestamp) {
-        console.error("Save Supplier prerequisites missing."); alert("Error: Cannot save supplier."); return;
+    if (!checkFirestoreReady('saveSupplier', ['collection', 'addDoc', 'doc', 'updateDoc', 'Timestamp'])) {
+        showSupplierError("Firestore not ready. Cannot save."); return;
     }
+    if (!saveSupplierBtn || !supplierNameInput || !supplierErrorMsg ) {
+         console.error("Save Supplier prerequisites missing (DOM Elements)."); alert("Error: Cannot save supplier."); return;
+     }
     const supplierData = {
         name: supplierNameInput.value.trim(), companyName: supplierCompanyInput.value.trim(), whatsappNo: supplierWhatsappInput.value.trim(), email: supplierEmailInput.value.trim(), address: supplierAddressInput.value.trim(), gstNo: supplierGstInput.value.trim(),
     };
@@ -142,7 +162,7 @@ async function saveSupplier(event) {
 
 // Function to delete supplier
 async function deleteSupplier(supplierId, supplierName) {
-     if (!db || !doc || !deleteDoc) { alert("Firestore not ready. Cannot delete supplier."); return; }
+     if (!checkFirestoreReady('deleteSupplier', ['doc', 'deleteDoc'])) { alert("Firestore not ready. Cannot delete supplier."); return; }
     if (confirm(`Are you sure you want to delete supplier "${supplierName || 'this supplier'}"? This cannot be undone.`)) {
         try {
             await deleteDoc(doc(db, "suppliers", supplierId));
@@ -153,7 +173,7 @@ async function deleteSupplier(supplierId, supplierName) {
 
 // Function to delete Purchase Order
 async function handleDeletePO(poId, poNumber) {
-    if (!db || !doc || !deleteDoc) { alert("Firestore delete function not available. Cannot delete PO."); return; }
+    if (!checkFirestoreReady('handleDeletePO', ['doc', 'deleteDoc'])) { alert("Firestore delete function not available. Cannot delete PO."); return; }
     if (confirm(`Are you sure you want to delete Purchase Order "${poNumber || poId}"? This cannot be undone.`)) {
         console.log(`Attempting to delete PO: ${poId}`);
         try {
@@ -166,8 +186,10 @@ async function handleDeletePO(poId, poNumber) {
 // Function to display POs
 async function displayPoList() {
      if (!poTableBody) { console.error("PO table body not found!"); return; }
-     if (!db || !collection || !getDocs || !query || !orderBy || !doc || !getDoc ) {
-         console.error("Firestore functions not ready for displayPoList."); poTableBody.innerHTML = '<tr><td colspan="6" style="color:red;">Error loading Firestore functions.</td></tr>'; return;
+     // Ensure all required functions are available
+     if (!checkFirestoreReady('displayPoList', ['collection', 'getDocs', 'query', 'orderBy', 'doc', 'getDoc', 'deleteDoc'])) {
+         poTableBody.innerHTML = '<tr><td colspan="6" style="color:red;">Error loading Firestore functions.</td></tr>';
+         return;
      }
     poTableBody.innerHTML = '<tr><td colspan="6">Loading purchase orders...</td></tr>';
      try {
@@ -208,10 +230,24 @@ async function displayPoList() {
              const pdfBtn = tr.querySelector('.pdf-button');
              if (pdfBtn) {
                  pdfBtn.addEventListener('click', async () => {
+                     // Ensure generatePoPdf function is available (imported)
+                     if (typeof generatePoPdf !== 'function') {
+                         console.error("generatePoPdf function is not imported or defined.");
+                         alert("Cannot generate PDF. Function not found.");
+                         return;
+                     }
+                     // Check if necessary Firestore functions are available here too
+                     if (!checkFirestoreReady('PDF Button Click', ['doc', 'getDoc'])) {
+                         alert("Cannot fetch data for PDF. Firestore functions missing.");
+                         return;
+                     }
+
+                     const currentPoId = pdfBtn.dataset.id;
+                     if (!currentPoId) { alert("Error: Could not get PO ID for PDF."); return; }
+
                      pdfBtn.disabled = true; pdfBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+
                      try {
-                         const currentPoId = pdfBtn.dataset.id; // Get ID from button
-                         if (!currentPoId) throw new Error("Could not get PO ID for PDF generation.");
                          console.log(`Workspaceing latest data for PO ID: ${currentPoId}`);
                          const poDocRef = doc(db, "purchaseOrders", currentPoId);
                          const poDocSnap = await getDoc(poDocRef);
@@ -226,23 +262,15 @@ async function displayPoList() {
                          const supplierDataForPdf = supplierSnap.data();
 
                          console.log("Data ready for PDF:", poDataForPdf, supplierDataForPdf);
+                         await generatePoPdf(poDataForPdf, supplierDataForPdf);
 
-                         // Call the imported generatePoPdf function
-                         if (typeof generatePoPdf === 'function') {
-                             await generatePoPdf(poDataForPdf, supplierDataForPdf);
-                         } else {
-                              console.error("generatePoPdf function is not defined or imported.");
-                              alert("PDF generation function is not available.");
-                         }
                      } catch (error) {
                          console.error("Error preparing data or generating PDF:", error);
                          alert("Failed to generate PDF: " + error.message);
                      } finally {
-                         const currentPdfBtn = document.querySelector(`tr[data-id="${poId}"] .pdf-button`); // Re-find button
-                         if(currentPdfBtn) {
-                            currentPdfBtn.disabled = false;
-                            currentPdfBtn.innerHTML = '<i class="fas fa-file-pdf"></i>';
-                         }
+                         const latestPdfBtn = document.querySelector(`tr[data-id="${poId}"] .pdf-button`);
+                         if(latestPdfBtn) { latestPdfBtn.disabled = false; latestPdfBtn.innerHTML = '<i class="fas fa-file-pdf"></i>'; }
+                         else { console.warn("PDF button not found for re-enabling."); }
                      }
                  });
              } // End PDF Button Listener
