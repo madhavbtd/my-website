@@ -76,24 +76,77 @@ body {
 .remarks-group label { font-weight: 600; margin-bottom: 5px;}
 .remarks-group textarea { min-height: 36px; height: auto; }
 
-/* Order Status Checkboxes Styling (Grid & Color) */
-#order-status-group { gap: 10px; padding: 10px; border: 1px solid #eee; border-radius: 4px; background-color: #f8f9fa; display: grid; grid-template-columns: repeat(2, 1fr); }
+/* Order Status Checkboxes Styling (Grid & Color) - UPDATED */
+#order-status-group {
+    gap: 10px;
+    padding: 10px;
+    border: 1px solid #eee;
+    border-radius: 4px;
+    background-color: #f8f9fa;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+}
 @media (min-width: 576px) { #order-status-group { grid-template-columns: repeat(3, 1fr); } }
-#order-status-group label { margin-bottom: 0; border: 1px solid #ccc; border-radius: 15px; padding: 6px 10px; cursor: pointer; transition: all 0.2s ease; display: flex; justify-content: center; align-items: center; font-size: 0.85em; text-align: center; font-weight: 500; color: white; background-color: #aaa; }
-#order-status-group label span { }
-#order-status-group label input[type="checkbox"] { display: none; }
-#order-status-group label:has(input[value="Order Received"]) { background-color: #6c757d; border-color: #5a6268; }
-#order-status-group label:has(input[value="Designing"]) { background-color: #ffc107; border-color: #e0a800; color: #333; }
-#order-status-group label:has(input[value="Verification"]) { background-color: #fd7e14; border-color: #d96d12; }
-#order-status-group label:has(input[value="Design Approved"]) { background-color: #20c997; border-color: #1aa882; }
-#order-status-group label:has(input[value="Ready for Working"]) { background-color: #0dcaf0; border-color: #0baccc; color: #333; }
-#order-status-group label:has(input[value="Printing"]) { background-color: #17a2b8; border-color: #138496; }
-#order-status-group label:has(input[value="Delivered"]) { background-color: #28a745; border-color: #218838; }
-#order-status-group label:has(input[value="Completed"]) { background-color: #28a745; border-color: #218838; }
-#order-status-group label:not(:has(input:disabled)):hover { opacity: 0.85; }
-#order-status-group label:has(input[type="checkbox"]:disabled) { cursor: not-allowed; background-color: #e9ecef !important; border-color: #ced4da !important; color: #6c757d !important; opacity: 0.65; }
-#order-status-group label:has(input[type="checkbox"]:disabled):hover { opacity: 0.65; }
-#order-status-group label:has(input[type="checkbox"]:checked) { box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.6), 0 0 0 2px #0056b3; }
+
+/* Base label style (without background color) */
+#order-status-group label {
+    margin-bottom: 0;
+    border: 1px solid #ccc;
+    border-radius: 15px;
+    padding: 6px 10px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 0.85em;
+    text-align: center;
+    font-weight: 500;
+    color: #555; /* Default text color */
+}
+
+#order-status-group label span { /* No specific styles needed here usually */ }
+#order-status-group label input[type="checkbox"] { display: none; } /* Hide the actual checkbox */
+
+/* Color classes based on status value (lowercase, spaces replaced with hyphens) */
+#order-status-group label.status-order-received { background-color: #6c757d; border-color: #5a6268; color: white; }
+#order-status-group label.status-designing { background-color: #ffc107; border-color: #e0a800; color: #333; }
+#order-status-group label.status-verification { background-color: #fd7e14; border-color: #d96d12; color: white; }
+#order-status-group label.status-design-approved { background-color: #20c997; border-color: #1aa882; color: white; }
+#order-status-group label.status-ready-for-working { background-color: #0dcaf0; border-color: #0baccc; color: #333; }
+#order-status-group label.status-printing { background-color: #17a2b8; border-color: #138496; color: white; }
+#order-status-group label.status-delivered { background-color: #28a745; border-color: #218838; color: white; }
+#order-status-group label.status-completed { background-color: #28a745; border-color: #218838; color: white; } /* Same as Delivered */
+
+/* Style for labels containing a disabled checkbox */
+#order-status-group label:has(input[type="checkbox"]:disabled) {
+    cursor: not-allowed;
+    background-color: #e9ecef !important; /* Use !important to override status color */
+    border-color: #ced4da !important;
+    color: #6c757d !important;
+    opacity: 0.65;
+}
+#order-status-group label:has(input[type="checkbox"]:disabled):hover {
+    opacity: 0.65; /* Prevent hover effect */
+}
+
+/* Style for labels containing a checked checkbox */
+#order-status-group label:has(input[type="checkbox"]:checked) {
+    box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.6), 0 0 0 2px #0056b3;
+}
+
+/* Default style if no status class is present (optional fallback) */
+#order-status-group label:not([class*="status-"]) {
+    background-color: #f0f0f0; /* Neutral background */
+    border-color: #ccc;
+    color: #555;
+}
+
+/* Hover effect only for non-disabled labels */
+#order-status-group label:not(:has(input:disabled)):hover {
+    opacity: 0.85;
+}
+
 
 /* Product Input Area */
 .product-input-area { padding: 10px 0px 15px 0px; margin-top: 0; margin-bottom: 10px; }
@@ -182,12 +235,12 @@ body {
     .button-container { justify-content: center; }
     .save-button, .cancel-button { width: 100%; max-width: 200px; justify-content: center;}
     .form-section-card { padding: 15px; }
-    #order-status-group { grid-template-columns: repeat(2, 1fr); }
+    #order-status-group { grid-template-columns: repeat(2, 1fr); } /* Keep 2 columns for medium */
     .popup-content { padding: 25px 20px; }
 }
 
 @media (max-width: 575px) {
-     #order-status-group { grid-template-columns: repeat(1, 1fr); }
+     #order-status-group { grid-template-columns: repeat(1, 1fr); } /* Stack to 1 column on small */
 }
 
 @media (max-width: 480px) {
@@ -197,7 +250,7 @@ body {
     .product-qty-group { max-width: none; }
     #quantity_input { max-width: none; }
     .add-product-button { justify-content: center; }
-    #order-status-group { grid-template-columns: repeat(1, 1fr); }
+    /* #order-status-group { grid-template-columns: repeat(1, 1fr); } Already 1 column from above */
     .popup-content { padding: 20px 15px; }
     .popup-content h4 { font-size: 1.2em; }
     .whatsapp-send-btn { width: 100%; justify-content: center; }

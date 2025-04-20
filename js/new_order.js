@@ -88,7 +88,6 @@ function hideSuggestionBox(box) {
          box.classList.remove('active');
          box.style.display = 'none';
     }
-    // No need for setTimeout or activeElement check here, rely on mousedown for selection clicks
 }
 
 
@@ -102,18 +101,18 @@ function initializeForm() {
         if(headerText) headerText.textContent = "Edit Order"; else if(formHeader) formHeader.textContent = "Edit Order";
         if(saveButtonText) saveButtonText.textContent = "Update Order";
         if(hiddenEditOrderIdInput) hiddenEditOrderIdInput.value = orderIdToEdit;
-        if(manualOrderIdInput) manualOrderIdInput.readOnly = true;
+        if(manualOrderIdInput) manualOrderIdInput.readOnly = true; // Should be read-only for existing order ID
         loadOrderForEdit(orderIdToEdit);
-        handleStatusCheckboxes(true);
+        handleStatusCheckboxes(true); // Enable checkboxes for editing
     } else {
         isEditMode = false;
         console.log("[DEBUG] Add Mode Initializing.");
         if(headerText) headerText.textContent = "New Order"; else if(formHeader) formHeader.textContent = "New Order";
         if(saveButtonText) saveButtonText.textContent = "Save Order";
-        if(manualOrderIdInput) manualOrderIdInput.readOnly = false;
+        if(manualOrderIdInput) manualOrderIdInput.readOnly = false; // Allow manual ID for new order
         const orderDateInput = document.getElementById('order_date');
         if (orderDateInput && !orderDateInput.value) { orderDateInput.value = new Date().toISOString().split('T')[0]; }
-        handleStatusCheckboxes(false);
+        handleStatusCheckboxes(false); // Disable checkboxes initially for new order (optional, could be enabled)
         renderProductList();
         resetCustomerSelection();
     }
@@ -128,31 +127,52 @@ async function loadOrderForEdit(docId) {
         if (docSnap.exists()) {
             const data = docSnap.data();
             console.log("[DEBUG] Order data for edit:", data);
-            // Fill form (customer, order details, urgent, status)
+            // Fill form (customer, order details, urgent)
             customerNameInput.value = data.customerDetails?.fullName || '';
-            customerAddressInput.value = data.customerDetails?.address || ''; // Changed from billingAddress for consistency if needed
+            customerAddressInput.value = data.customerDetails?.address || '';
             customerWhatsAppInput.value = data.customerDetails?.whatsappNo || '';
             customerContactInput.value = data.customerDetails?.contactNo || '';
             selectedCustomerId = data.customerId || null;
             if (selectedCustomerIdInput) selectedCustomerIdInput.value = selectedCustomerId;
             customerAddressInput.readOnly = true; customerContactInput.readOnly = true; // Lock after load
 
-            displayOrderIdInput.value = data.orderId || docId;
-            manualOrderIdInput.value = data.orderId || '';
+            displayOrderIdInput.value = data.orderId || docId; // Display system ID
+            manualOrderIdInput.value = data.orderId || ''; // Also put system ID in manual (now read-only)
             orderForm.order_date.value = data.orderDate || '';
             orderForm.delivery_date.value = data.deliveryDate || '';
             orderForm.remarks.value = data.remarks || '';
             const urgentVal = data.urgent || 'No';
             const urgentRadio = orderForm.querySelector(`input[name="urgent"][value="${urgentVal}"]`);
             if (urgentRadio) urgentRadio.checked = true;
-            orderStatusCheckboxes.forEach(cb => cb.checked = false);
+
+            // --- Status part - UPDATED ---
+            orderStatusCheckboxes.forEach(cb => cb.checked = false); // Uncheck all first
+            let statusFound = false;
             if (data.status) {
                 const statusCheckbox = orderForm.querySelector(`input[name="order_status"][value="${data.status}"]`);
-                if (statusCheckbox) statusCheckbox.checked = true;
+                if (statusCheckbox) {
+                    statusCheckbox.checked = true;
+                    statusFound = true;
+                    console.log(`[DEBUG] Setting status checkbox for: ${data.status}`);
+                } else {
+                   console.warn(`[DEBUG] Status "${data.status}" from DB not found in checkboxes.`);
+                }
             }
+            // If no status in DB or invalid status, check 'Order Received' as default for edit mode
+            if (!statusFound) {
+                 const defaultReceived = orderForm.querySelector('input[name="order_status"][value="Order Received"]');
+                 if (defaultReceived) defaultReceived.checked = true;
+                 console.log("[DEBUG] DB status not found or missing, defaulting to Order Received for edit.");
+            }
+            // --- End Status Update ---
+
             // Fill product list
             addedProducts = data.products || [];
             renderProductList();
+
+            // IMPORTANT: Update classes AFTER setting the correct checkbox state
+            updateStatusLabelClasses(); // <--- ADDED CALL
+
         } else {
             console.error("[DEBUG] Order document not found for editing!"); alert("Error: Cannot find the order to edit."); window.location.href = 'order_history.html';
         }
@@ -171,7 +191,6 @@ function handleAddProduct() {
     console.log("[DEBUG] Product added:", addedProducts);
     renderProductList();
     productNameInput.value = ''; quantityInput.value = ''; productNameInput.focus();
-    // Hide suggestion box after adding
     hideSuggestionBox(productSuggestionsBox);
     productNameInput.readOnly = false;
  }
@@ -190,12 +209,87 @@ function handleDeleteProduct(event) {
 }
 
 // --- Status Checkbox Handling ---
-function handleStatusCheckboxes(isEditing) {
-    const defaultStatus = "Order Received"; let defaultCheckbox = null;
-    orderStatusCheckboxes.forEach(checkbox => { if (checkbox.value === defaultStatus) defaultCheckbox = checkbox; checkbox.disabled = !isEditing; checkbox.closest('label').classList.toggle('disabled', !isEditing); checkbox.removeEventListener('change', handleStatusChange); checkbox.addEventListener('change', handleStatusChange); });
-    if (!isEditing && defaultCheckbox) { defaultCheckbox.checked = true; }
+
+// --- NEW Helper Function to Update Status Classes ---
+function updateStatusLabelClasses() {
+    if (!orderStatusCheckboxes) return;
+    const statusClassPrefix = 'status-';
+    // Ensure these values exactly match the 'value' attribute of your checkboxes
+    const allStatusValues = [
+        "Order Received", "Designing", "Verification", "Design Approved",
+        "Ready for Working", "Printing", "Delivered", "Completed"
+    ];
+
+    orderStatusCheckboxes.forEach(checkbox => {
+        const label = checkbox.closest('label');
+        if (!label) return;
+
+        // 1. Remove all potential status classes first
+        allStatusValues.forEach(val => {
+            // Create class name: lowercase, replace space(s) with hyphen
+            const className = statusClassPrefix + val.toLowerCase().replace(/\s+/g, '-');
+            label.classList.remove(className);
+        });
+
+        // 2. Add the correct status class based on the checkbox's specific value
+        const currentStatusValue = checkbox.value;
+        const currentClassName = statusClassPrefix + currentStatusValue.toLowerCase().replace(/\s+/g, '-');
+        label.classList.add(currentClassName);
+
+        // Optional: Add/remove a generic 'is-checked' class if needed for other styling
+        // label.classList.toggle('is-checked', checkbox.checked);
+    });
+    console.log("[DEBUG] Updated status label classes.");
 }
-function handleStatusChange(event) { const changedCheckbox = event.target; if (changedCheckbox.checked) { orderStatusCheckboxes.forEach(otherCb => { if (otherCb !== changedCheckbox) otherCb.checked = false; }); } }
+// --- End Helper Function ---
+
+
+// --- UPDATED handleStatusCheckboxes ---
+function handleStatusCheckboxes(isEditing) {
+    const defaultStatus = "Order Received";
+    let defaultCheckbox = null;
+    orderStatusCheckboxes.forEach(checkbox => {
+        if (checkbox.value === defaultStatus) defaultCheckbox = checkbox;
+        checkbox.disabled = !isEditing; // Enable/disable the actual input
+        const label = checkbox.closest('label');
+        if (label) {
+             // You might not need the 'disabled' class on label if CSS :has(:disabled) works
+             // label.classList.toggle('disabled', !isEditing);
+        }
+        // Remove previous listener to prevent duplicates
+        checkbox.removeEventListener('change', handleStatusChange);
+        // Add the listener
+        checkbox.addEventListener('change', handleStatusChange);
+    });
+
+    // Set default state ONLY for new orders (not editing)
+    if (!isEditing && defaultCheckbox) {
+        // Ensure only the default is checked
+        orderStatusCheckboxes.forEach(cb => cb.checked = (cb === defaultCheckbox));
+    }
+     // Call the helper function AFTER setting disabled/checked states
+     updateStatusLabelClasses(); // <--- ADDED CALL
+}
+// --- End UPDATED handleStatusCheckboxes ---
+
+
+// --- UPDATED handleStatusChange ---
+function handleStatusChange(event) {
+    const changedCheckbox = event.target;
+    // If the clicked checkbox is being checked
+    if (changedCheckbox.checked) {
+        // Uncheck all other checkboxes
+        orderStatusCheckboxes.forEach(otherCb => {
+            if (otherCb !== changedCheckbox) {
+                otherCb.checked = false;
+            }
+        });
+    }
+    // Update classes after any change (check or uncheck)
+    updateStatusLabelClasses(); // <--- ADDED CALL
+}
+// --- End UPDATED handleStatusChange ---
+
 
 // --- Autocomplete V2: Client-Side Filtering ---
 
@@ -274,14 +368,12 @@ function fillCustomerData(customer) {
     customerNameInput.value = customer.fullName || ''; customerWhatsAppInput.value = customer.whatsappNo || '';
     customerAddressInput.value = customer.billingAddress || customer.address || ''; customerContactInput.value = customer.contactNo || '';
     selectedCustomerId = customer.id; if(selectedCustomerIdInput) selectedCustomerIdInput.value = selectedCustomerId; // Store ID
-    // Explicitly Hide Boxes after filling
     hideSuggestionBox(customerSuggestionsNameBox);
     hideSuggestionBox(customerSuggestionsWhatsAppBox);
     customerAddressInput.readOnly = true; customerContactInput.readOnly = true; // Make readonly
 }
 function resetCustomerSelection() {
      selectedCustomerId = null; if(selectedCustomerIdInput) selectedCustomerIdInput.value = '';
-     // Keep input values, just make fields editable
      customerAddressInput.readOnly = false; customerContactInput.readOnly = false;
      console.log("[DEBUG] Customer selection reset (fields editable).");
 }
@@ -363,88 +455,77 @@ async function handleFormSubmit(event) {
     if (!db || !collection || !addDoc || !doc || !updateDoc || !getDoc ) { alert("Database functions unavailable."); return; }
     if (!saveButton) return; saveButton.disabled = true; saveButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
     try {
-        // Get data
         const formData = new FormData(orderForm);
-        // --- Read customer details DIRECTLY from input fields ---
         const customerFullNameFromInput = customerNameInput.value.trim();
         const customerWhatsAppFromInput = customerWhatsAppInput.value.trim();
         const customerAddressFromInput = customerAddressInput.value.trim();
         const customerContactFromInput = customerContactInput.value.trim();
-        // --- Use stored selectedCustomerId if available ---
         const customerIdToUse = selectedCustomerId;
 
-        // Validate if customer ID was selected for NEW orders
         if (!customerIdToUse && !isEditMode) {
              throw new Error("Please select an existing customer from the suggestions. If the customer is new, add them via Customer Management first.");
         }
-         // Construct customerData using input values
          const customerData = {
              fullName: customerFullNameFromInput,
              whatsappNo: customerWhatsAppFromInput,
-             address: customerAddressFromInput, // Use address from input
-             contactNo: customerContactFromInput // Use contact from input
+             address: customerAddressFromInput,
+             contactNo: customerContactFromInput
          };
 
         const orderDetails = { manualOrderId: formData.get('manual_order_id')?.trim() || '', orderDate: formData.get('order_date') || '', deliveryDate: formData.get('delivery_date') || '', urgent: formData.get('urgent') || 'No', remarks: formData.get('remarks')?.trim() || '' };
-        const statusCheckbox = orderForm.querySelector('input[name="order_status"]:checked'); const selectedStatus = statusCheckbox ? statusCheckbox.value : (isEditMode ? null : 'Order Received');
+        // Read status directly from the checked input's value
+        const statusCheckbox = orderForm.querySelector('input[name="order_status"]:checked');
+        // IMPORTANT: Provide a sensible default if somehow nothing is checked
+        const selectedStatus = statusCheckbox ? statusCheckbox.value : 'Order Received';
 
-        // ** Validation **
         if (!customerData.fullName) { throw new Error("Full Name is required."); }
         if (!customerData.whatsappNo) throw new Error("WhatsApp No required.");
         if (addedProducts.length === 0) throw new Error("Add at least one product.");
         if (!orderDetails.orderDate) throw new Error("Order Date required.");
-        if (!selectedStatus && isEditMode) throw new Error("Select order status for update.");
+        // No need to validate selectedStatus if we provide a default
 
-
-        // Determine Order ID
         let orderIdToUse; const existingSystemId = displayOrderIdInput.value;
-        if (isEditMode) { orderIdToUse = existingSystemId || orderIdToEdit; } // Use displayed ID or the edit ID
-        else { orderIdToUse = orderDetails.manualOrderId || Date.now().toString(); } // Use manual or generate
+        if (isEditMode) { orderIdToUse = existingSystemId || orderIdToEdit; }
+        else { orderIdToUse = orderDetails.manualOrderId || Date.now().toString(); }
 
-        // Prepare Payload
         const orderDataPayload = {
             orderId: orderIdToUse,
-            customerId: customerIdToUse || null, // Store ID if selected
-            customerDetails: customerData, // Store details captured from input
+            customerId: customerIdToUse || null,
+            customerDetails: customerData,
             orderDate: orderDetails.orderDate,
             deliveryDate: orderDetails.deliveryDate,
             urgent: orderDetails.urgent,
             remarks: orderDetails.remarks,
-            status: selectedStatus || 'Order Received', // Default status if somehow null
+            status: selectedStatus, // Use the determined status
             products: addedProducts,
             updatedAt: new Date()
         };
 
-        // Save/Update
         let orderDocRefPath;
         if (isEditMode) {
             if (!orderIdToEdit) throw new Error("Missing Firestore Document ID for update.");
             const orderRef = doc(db, "orders", orderIdToEdit);
-            delete orderDataPayload.createdAt; // Don't update createdAt
+            delete orderDataPayload.createdAt;
             await updateDoc(orderRef, orderDataPayload);
             orderDocRefPath = orderRef.path;
             console.log("[DEBUG] Order updated:", orderIdToEdit);
             alert('Order updated successfully!');
         } else {
-            orderDataPayload.createdAt = new Date(); // Add createdAt for new orders
+            orderDataPayload.createdAt = new Date();
             const newOrderRef = await addDoc(collection(db, "orders"), orderDataPayload);
             orderDocRefPath = newOrderRef.path;
             console.log("[DEBUG] New order saved:", newOrderRef.id);
             alert('New order saved successfully!');
-            displayOrderIdInput.value = orderIdToUse;
+            displayOrderIdInput.value = orderIdToUse; // Display the used ID
         }
 
-        // Post-save actions
         // await saveToDailyReport(orderDataPayload, orderDocRefPath);
 
-        // Show WhatsApp reminder only if WhatsApp number exists
         if (customerData.whatsappNo) {
             showWhatsAppReminder(customerData, orderIdToUse, orderDetails.deliveryDate);
-             // Reset ONLY IF reminder is shown OR for new orders where number is missing
-             // if (!isEditMode) { resetNewOrderForm(); } // Reset handled within showWhatsAppReminder or its skip path
         } else {
             console.warn("[DEBUG] WhatsApp number missing, skipping reminder.");
-             if (!isEditMode) { resetNewOrderForm(); } // Reset form if no reminder shown for new order
+             if (!isEditMode) { resetNewOrderForm(); } // Reset form only if no reminder for new order
         }
 
     } catch (error) {
@@ -463,6 +544,7 @@ async function handleFormSubmit(event) {
 
 
 // --- Reset Form ---
+// --- UPDATED resetNewOrderForm ---
 function resetNewOrderForm() {
      console.log("[DEBUG] Resetting form.");
      resetCustomerSelection();
@@ -476,7 +558,10 @@ function resetNewOrderForm() {
      orderForm.remarks.value = '';
      addedProducts = [];
      renderProductList();
-     handleStatusCheckboxes(false);
+
+     // Reset status checkboxes (this will check 'Order Received' and update classes via the helper)
+     handleStatusCheckboxes(false); // <--- This now handles class updates too
+
      const urgentNoRadio = orderForm.querySelector('input[name="urgent"][value="No"]');
      if (urgentNoRadio) urgentNoRadio.checked = true;
      const orderDateInput = document.getElementById('order_date');
@@ -485,7 +570,10 @@ function resetNewOrderForm() {
      hideSuggestionBox(customerSuggestionsNameBox);
      hideSuggestionBox(customerSuggestionsWhatsAppBox);
      hideSuggestionBox(productSuggestionsBox);
+     // Ensure manual ID is editable again after reset
+     if(manualOrderIdInput) manualOrderIdInput.readOnly = false;
 }
+// --- End UPDATED resetNewOrderForm ---
 
 
 // --- Post-Save Functions ---
@@ -495,21 +583,20 @@ async function saveToDailyReport(orderData, orderPath) { console.log(`[DEBUG] Pl
 function showWhatsAppReminder(customer, orderId, deliveryDate) {
     if (!whatsappReminderPopup || !whatsappMsgPreview || !whatsappSendLink) {
         console.error("[DEBUG] WhatsApp popup elements missing.");
-         if (!isEditMode) { resetNewOrderForm(); } // Reset form even if popup fails for new order
+         if (!isEditMode) { resetNewOrderForm(); }
         return;
     }
     const customerName = customer.fullName || 'Customer';
     const customerNumber = customer.whatsappNo?.replace(/[^0-9]/g, '');
-    // Check moved inside, reset form if number missing for NEW order
+
     if (!customerNumber) {
         console.warn("[DEBUG] WhatsApp No missing, skipping reminder.");
-        if (!isEditMode) { resetNewOrderForm(); } // Reset form if no reminder shown for new order
+        if (!isEditMode) { resetNewOrderForm(); }
         return;
     }
 
     const formattedDeliveryDate = deliveryDate ? new Date(deliveryDate).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}) : ' जल्द से जल्द';
 
-    // Using Order Received template specifically after saving NEW order
     let message = `प्रिय ${customerName},
 नमस्कार,
 आपका ऑर्डर (Order No: ${orderId}) हमें सफलतापूर्वक प्राप्त हो गया है।
@@ -537,4 +624,4 @@ Mobile: 9549116541`;
 
 function closeWhatsAppPopup() { if (whatsappReminderPopup) whatsappReminderPopup.classList.remove('active'); }
 
-console.log("new_order.js script loaded (Client-Side Filtering + Save Fix + Debug Logs + Updated WhatsApp Template + Suggestion Box Fix v2)."); // Updated log
+console.log("new_order.js script loaded (Status Color Class Fix + Debug Logs)."); // Updated log
