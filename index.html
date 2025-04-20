@@ -15,8 +15,8 @@
         // Import Firebase services
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-        // Import other services like Firestore if needed by the page
-        import { getFirestore, collection, onSnapshot, query, where } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+        // Import Firestore services needed by this page AND dashboard.js
+        import { getFirestore, collection, onSnapshot, query, where, getDocs, limit } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js"; // Added getDocs, limit
 
         // **** Your Firebase Configuration ****
          const firebaseConfig = {
@@ -30,58 +30,46 @@
 
         let app;
         let auth;
-        let db; // Example for Firestore
+        let db;
 
         try {
              // Initialize Firebase App (only once per page load)
              if (!window.firebaseAppInitialized) {
                  app = initializeApp(firebaseConfig);
                  window.firebaseAppInitialized = true;
-                 window.firebaseApp = app; // Store globally
+                 window.firebaseApp = app;
                  console.log("Firebase initialized on this page (index).");
              } else {
-                 app = window.firebaseApp; // Use existing instance
+                 app = window.firebaseApp;
                  console.log("Firebase already initialized on this page (index).");
              }
              auth = getAuth(app);
-             db = getFirestore(app); // Initialize Firestore (or other services)
-             window.db = db; // Make global if needed by other scripts on the page
-             window.auth = auth; // Make auth global
+             db = getFirestore(app);
 
-             // Make other Firestore functions globally available if dashboard.js needs them
+             // --- Make functions globally available for dashboard.js ---
+             window.db = db;
+             window.auth = auth;
              window.collection = collection;
              window.onSnapshot = onSnapshot;
              window.query = query;
              window.where = where;
+             window.getDocs = getDocs; // Expose getDocs globally
+             window.limit = limit;     // Expose limit globally
+             // --- End Global Exposure ---
 
 
              // ---->> Authentication State Check (Core Security) <<----
              onAuthStateChanged(auth, (user) => {
-                 const currentPage = window.location.pathname.split('/').pop() || 'index.html'; // Get current file name
+                 const currentPage = window.location.pathname.split('/').pop() || 'index.html';
 
                  if (user) {
-                     // User is logged in.
                      console.log(`User is logged in on ${currentPage}:`, user.uid);
-
-                     // --->>> Role Verification Block <<<---
-                     console.log("Attempting to get ID token result to check claims...");
-                     user.getIdTokenResult(true) // forceRefresh = true ensures we get latest claims
+                     // Role Verification Block
+                     user.getIdTokenResult(true)
                          .then((idTokenResult) => {
-                             console.log("Successfully got ID token result.");
-                             console.log('User Claims:', idTokenResult.claims); // Log all claims
-                             const userRole = idTokenResult.claims.role; // Extract the 'role' claim
+                             const userRole = idTokenResult.claims.role;
                              console.log('User Role:', userRole);
-                             window.currentUserRole = userRole; // Optional: Store globally
-
-                             // Confirm role
-                             if (userRole === 'admin') {
-                                 console.log("Verification SUCCESS: 'admin' role confirmed!");
-                             } else if (userRole) {
-                                  console.log(`Verification NOTE: Role found is '${userRole}', not 'admin'.`);
-                             } else {
-                                 console.warn("Verification WARNING: No 'role' claim found for this user.");
-                             }
-
+                             window.currentUserRole = userRole; // Store globally
                              // Update welcome message
                              const welcomeSpan = document.getElementById('welcome-user');
                              if (welcomeSpan) {
@@ -90,20 +78,16 @@
                          })
                          .catch((error) => {
                              console.error('Error getting user claims:', error);
-                             window.currentUserRole = undefined; // Error getting role
+                             window.currentUserRole = undefined;
                              const welcomeSpan = document.getElementById('welcome-user');
                               if (welcomeSpan) {
                                  welcomeSpan.textContent = `Welcome ${user.email || 'User'} (Role Error)`;
                               }
                          });
-                     // --->>> Verification block end <<<---
-
                  } else {
-                     // User is not logged in.
+                     // User is not logged in. Redirect.
                      console.log(`User is not logged in on ${currentPage}. Redirecting to login...`);
-                     // Redirect to login.html from all protected pages (but NOT from login.html itself)
                      if (currentPage.toLowerCase() !== 'login.html') {
-                        // Make sure 'login.html' path is correct relative to your files
                         window.location.replace('login.html');
                      }
                  }
@@ -114,11 +98,11 @@
              const logoutLink = document.getElementById('logout-link');
              if (logoutLink) {
                 logoutLink.addEventListener('click', (e) => {
-                    e.preventDefault(); // Prevent default link action
+                    e.preventDefault();
                     if (confirm("Are you sure you want to logout?")) {
                         signOut(auth).then(() => {
                             console.log('User signed out.');
-                            window.location.href = 'login.html'; // Redirect to login page after logout
+                            window.location.href = 'login.html';
                         }).catch((error) => {
                             console.error('Sign out error:', error);
                             alert("Logout failed.");
@@ -129,11 +113,6 @@
                  console.warn("Logout link with ID 'logout-link' not found.");
              }
              // --- Logout logic end ---
-
-             // --- Optional: Make user info available globally ---
-             window.getCurrentUser = () => {
-                 return auth.currentUser;
-             };
 
         } catch(e) {
             console.error("Firebase setup / Auth check error:", e);
@@ -150,8 +129,13 @@
                 <li><a href="index.html" class="active"><i class="fas fa-tachometer-alt"></i> <span>Dashboard</span></a></li>
                 <li><a href="order_history.html"><i class="fas fa-history"></i> <span>Order History</span></a></li>
                 <li><a href="customer_management.html"><i class="fas fa-users"></i> <span>Customers</span></a></li>
-                <li><a href="#"><i class="fas fa-truck"></i> <span>Suppliers</span></a></li> <li><a href="#"><i class="fas fa-chart-bar"></i> <span>Report</span></a></li> <li><a href="#"><i class="fas fa-code-branch"></i> <span>Branch Manage</span></a></li> <li><a href="#"><i class="fas fa-cog"></i> <span>Settings</span></a></li> <li><a href="product_management.html"><i class="fas fa-box-open"></i> <span>Product Management</span></a></li>
-                <li><a href="#"><i class="fas fa-tools"></i> <span>Tools</span></a></li> <li><a href="#" id="logout-link"><i class="fas fa-sign-out-alt"></i> <span>LOGOUT</span></a></li>
+                <li><a href="#"><i class="fas fa-truck"></i> <span>Suppliers</span></a></li>
+                <li><a href="#"><i class="fas fa-chart-bar"></i> <span>Report</span></a></li>
+                <li><a href="#"><i class="fas fa-code-branch"></i> <span>Branch Manage</span></a></li>
+                <li><a href="#"><i class="fas fa-cog"></i> <span>Settings</span></a></li>
+                <li><a href="product_management.html"><i class="fas fa-box-open"></i> <span>Product Management</span></a></li>
+                <li><a href="#"><i class="fas fa-tools"></i> <span>Tools</span></a></li>
+                <li><a href="#" id="logout-link"><i class="fas fa-sign-out-alt"></i> <span>LOGOUT</span></a></li>
             </ul>
         </div>
 
@@ -160,7 +144,8 @@
                 <span class="welcome-text" id="welcome-user">Welcome...</span>
                 <div class="header-buttons">
                     <a href="customer_management.html?action=add" class="button-base add-customer-btn"><i class="fas fa-user-plus"></i> Add Customer</a>
-                    <a href="#" class="button-base add-supplier-btn"><i class="fas fa-truck"></i> Add Supplier</a> <a href="new_order.html" class="button-base new-order-btn"><i class="fas fa-plus-circle"></i> New Order</a>
+                    <a href="#" class="button-base add-supplier-btn"><i class="fas fa-truck"></i> Add Supplier</a>
+                    <a href="new_order.html" class="button-base new-order-btn"><i class="fas fa-plus-circle"></i> New Order</a>
                 </div>
                 <div class="date-time-container">
                     <span id="currentDateTime">Loading date...</span>
@@ -210,13 +195,12 @@
                  </div>
             </div>
 
-             <div class="search-bar">
-                <label for="customer-search">Search in Customer:</label>
-                <input type="text" id="customer-search" placeholder="Enter customer name or ID">
-                <button id="customer-search-button"><i class="fas fa-search"></i></button>
+            <div class="search-bar order-search-bar"> <label for="order-id-search">Search Order ID:</label>
+                <input type="text" id="order-id-search" placeholder="Enter Order ID...">
+                <button id="order-id-search-button"><i class="fas fa-search"></i></button>
+                <div id="order-suggestions" class="suggestions-list"></div>
             </div>
-
-            <div class="reminder-section">
+             <div class="reminder-section">
                  <h3>Reminder</h3>
                  <p>No reminders currently.</p>
             </div>
@@ -226,65 +210,43 @@
     <script src="js/dashboard.js" type="module" defer></script>
 
     <script>
-        // This function updates the date and time display
         function updateDateTime() {
             const now = new Date();
-            // Using en-GB for English date format consistency
             const optsDate = { year: 'numeric', month: 'long', day: 'numeric' };
             const optsDay = { weekday: 'long' };
-            // Use try-catch for locale string generation in case of unexpected errors
             try {
                 const date = now.toLocaleDateString('en-GB', optsDate);
                 const day = now.toLocaleDateString('en-GB', optsDay);
                 const elem = document.getElementById('currentDateTime');
                 if (elem) elem.textContent = `${date}, ${day}`;
-            } catch (e) {
-                console.error("Error formatting date/time:", e);
-                const elem = document.getElementById('currentDateTime');
-                if (elem) elem.textContent = "Error loading date";
-            }
+            } catch (e) { console.error("Error formatting date/time:", e); /*...*/ }
         }
 
-        // This function sets the active class on the current sidebar link
         function setActiveLink() {
             try {
                 const path = window.location.pathname;
-                // Handle potential base href or different deployment scenarios better
                 const page = path.substring(path.lastIndexOf('/') + 1) || 'index.html';
                 const links = document.querySelectorAll('.sidebar ul li a');
-                let foundActive = false;
                 links.forEach(l => {
                     const hrefAttr = l.getAttribute('href');
+                    l.classList.remove('active'); // Remove active from all first
                     if (hrefAttr) {
-                        // Compare only the filename part of the href
                         const linkPage = hrefAttr.substring(hrefAttr.lastIndexOf('/') + 1).split('?')[0].split('#')[0];
-                        l.classList.remove('active');
-                        if (page === linkPage) {
-                            l.classList.add('active');
-                            foundActive = true;
+                         // Explicit check for index.html and empty page for dashboard link
+                        if ((page === 'index.html' || page === '') && (linkPage === 'index.html' || linkPage === '')) {
+                             l.classList.add('active');
+                        } else if (page !== '' && page !== 'index.html' && page === linkPage) {
+                             l.classList.add('active');
                         }
                     }
                 });
-                // Fallback for root path or explicit index.html
-                if (!foundActive && (page === 'index.html' || page === '')) {
-                    const dashboardLink = document.querySelector('.sidebar ul li a[href="index.html"]');
-                     if(dashboardLink) dashboardLink.classList.add('active');
-                }
-            } catch(e) {
-                console.error("Error setting active link:", e);
-            }
+            } catch(e) { console.error("Error setting active link:", e); }
         }
 
-        // Run date/time update immediately and then every minute
         updateDateTime();
         setInterval(updateDateTime, 60000);
 
-        // Set active link after the DOM is loaded
-        window.addEventListener('DOMContentLoaded', () => {
-            setActiveLink();
-            // Note: dashboard.js initializes its listeners via waitForDbConnection
-        });
-        // Handle browser back/forward navigation
+        window.addEventListener('DOMContentLoaded', setActiveLink);
         window.addEventListener('popstate', setActiveLink);
     </script>
 </body>

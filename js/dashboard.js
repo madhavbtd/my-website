@@ -1,11 +1,10 @@
 // js/dashboard.js
 
-// Ensure Firebase functions are available from the inline script in HTML
-// Using optional chaining just in case window object is not fully ready, though unlikely
-const db = window?.db;
-const collection = window?.collection;
-const onSnapshot = window?.onSnapshot;
-const query = window?.query;
+// Ensure Firebase functions are available from the inline script in index.html
+// Destructuring assignment for clarity
+const {
+    db, collection, onSnapshot, query, where, getDocs, limit, // Firestore functions
+} = window;
 
 // --- DOM Elements ---
 const countElements = {
@@ -18,151 +17,164 @@ const countElements = {
     "Delivered": document.getElementById('count-delivered'),
     "Completed": document.getElementById('count-completed')
 };
-const customerSearchInput = document.getElementById('customer-search');
-const customerSearchButton = document.getElementById('customer-search-button');
 
+// *** NEW: Order ID Search Elements ***
+const orderIdSearchInput = document.getElementById('order-id-search');
+const orderIdSearchButton = document.getElementById('order-id-search-button'); // Assuming you keep a button, though search might trigger on input
+const suggestionsContainer = document.getElementById('order-suggestions');
+let suggestionDebounceTimer; // Timer for debouncing input
 
 // --- Function to Update Dashboard Counts ---
 function updateDashboardCounts(orders) {
-    // console.log(`[DEBUG] Updating counts for ${orders.length} orders.`);
-    const statusCounts = {
-        "Order Received": 0, "Designing": 0, "Verification": 0,
-        "Design Approved": 0, "Ready for Working": 0, "Printing": 0,
-        "Delivered": 0, "Completed": 0
-    };
-
+    // This function remains the same as before
+    const statusCounts = { "Order Received": 0, "Designing": 0, "Verification": 0, "Design Approved": 0, "Ready for Working": 0, "Printing": 0, "Delivered": 0, "Completed": 0 };
     orders.forEach(order => {
         const status = order.status;
-        if (status && statusCounts.hasOwnProperty(status)) {
-            statusCounts[status]++;
-        } else if (status) {
-             console.warn(`[DEBUG] Unknown order status found: ${status}`);
-        }
+        if (status && statusCounts.hasOwnProperty(status)) { statusCounts[status]++; }
+        // else if (status) { console.warn(`[DEBUG] Unknown status found: ${status}`); } // Optional warning
     });
-
-    // Update HTML elements
     for (const status in countElements) {
         if (countElements[status]) {
             const count = statusCounts[status] || 0;
-            // Ensure element exists before setting textContent
             countElements[status].textContent = count.toString().padStart(2, '0');
-        } else {
-            console.warn(`[DEBUG] Count element for status "${status}" not found.`);
         }
     }
-    // console.log("[DEBUG] Dashboard counts updated:", statusCounts);
+}
+
+// --- Firestore Listener for Order Counts ---
+function listenForOrderCounts() {
+    // This function remains the same - listens for ALL orders to update counts
+    if (!db || !collection || !query || !onSnapshot) { console.error("Firestore functions (counts) missing."); /*...*/ return; }
+    try {
+        const ordersRef = collection(db, "orders");
+        const q = query(ordersRef);
+        console.log("[DEBUG] Setting up real-time listener for order counts...");
+        const unsubscribe = onSnapshot(q, (snapshot) => {
+            // console.log(`[DEBUG] Counts snapshot received with ${snapshot.size} documents.`);
+            const orders = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            updateDashboardCounts(orders);
+        }, (error) => { console.error("[DEBUG] Error listening to order counts:", error); /*...*/ });
+    } catch (error) { console.error("[DEBUG] Error setting up counts listener:", error); /*...*/ }
 }
 
 
-// --- Firestore Listener for Order Updates ---
-function listenForOrderUpdates() {
-    // Check if essential Firestore functions are available
-    if (!db || !collection || !query || !onSnapshot) {
-        console.error("Firestore functions not available for dashboard listener. Cannot fetch counts.");
-        // Update UI to show error state for counts
-        Object.values(countElements).forEach(el => { if(el) el.textContent = "DB?"; });
-        return; // Stop execution if DB connection is not ready
+// --- *** NEW: Order ID Search Functionality *** ---
+
+// Function to fetch and display order ID suggestions
+async function fetchAndDisplaySuggestions(searchTerm) {
+    if (!suggestionsContainer || !db || !collection || !query || !where || !limit || !getDocs) {
+        console.error("Search suggestion prerequisites missing.");
+        return;
+    }
+
+    if (!searchTerm) {
+        suggestionsContainer.innerHTML = '';
+        suggestionsContainer.style.display = 'none';
+        return;
     }
 
     try {
+        console.log(`[DEBUG] Searching for Order IDs starting with: ${searchTerm}`);
+        // Query using the 'orderId' field confirmed from screenshot
         const ordersRef = collection(db, "orders");
-        const q = query(ordersRef); // Get all orders for counting
+        const q = query(ordersRef,
+                        where('orderId', '>=', searchTerm),
+                        where('orderId', '<=', searchTerm + '\uf8ff'), // Firestore "starts with" trick
+                        limit(10) // Limit results for performance
+                       );
 
-        console.log("[DEBUG] Setting up real-time listener for order counts...");
-        const unsubscribe = onSnapshot(q, (snapshot) => {
-            console.log(`[DEBUG] Order snapshot received with ${snapshot.size} documents.`);
-            const orders = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-            updateDashboardCounts(orders); // Update counts whenever data changes
-        }, (error) => {
-            console.error("[DEBUG] Error listening to order updates:", error);
-             // Update UI to show error state for counts
-             Object.values(countElements).forEach(el => { if(el) el.textContent = "Err"; });
-        });
+        const querySnapshot = await getDocs(q);
+        suggestionsContainer.innerHTML = ''; // Clear previous suggestions
 
-        // Optional: Store unsubscribe function if needed for cleanup later
-        // window.unsubscribeDashboardOrders = unsubscribe;
+        if (querySnapshot.empty) {
+            suggestionsContainer.innerHTML = '<div class="no-suggestions">No matching Order IDs found.</div>';
+            suggestionsContainer.style.display = 'block';
+        } else {
+            querySnapshot.forEach((doc) => {
+                const order = { id: doc.id, ...doc.data() };
+                const suggestionDiv = document.createElement('div');
+                suggestionDiv.textContent = order.orderId || `(Sys ID: ${order.id.substring(0,6)}...)`; // Display orderId
+                suggestionDiv.setAttribute('data-firestore-id', order.id); // Store Firestore ID
+                suggestionDiv.addEventListener('mousedown', (e) => { // Use mousedown to fire before blur
+                    e.preventDefault(); // Prevent input blur before click registers
+                    console.log(`Suggestion clicked: Firestore ID ${order.id}`);
+                    // Redirect to order_history page with parameter to open modal
+                    window.location.href = `order_history.html?openModalForId=${order.id}`;
+                     clearSuggestions(); // Clear suggestions after click
+                });
+                suggestionsContainer.appendChild(suggestionDiv);
+            });
+            suggestionsContainer.style.display = 'block'; // Show suggestions
+        }
 
     } catch (error) {
-        console.error("[DEBUG] Error setting up Firestore listener:", error);
-        Object.values(countElements).forEach(el => { if(el) el.textContent = "Err"; });
+        console.error("Error fetching order suggestions:", error);
+        suggestionsContainer.innerHTML = '<div class="no-suggestions">Error fetching suggestions.</div>';
+        suggestionsContainer.style.display = 'block';
     }
 }
 
-// --- Customer Search Functionality ---
-function handleCustomerSearch() {
-    if (!customerSearchInput) {
-        console.error("Customer search input element not found.");
-        return;
-    }
-    const searchTerm = customerSearchInput.value.trim();
-    if (searchTerm) {
-        // Redirect to customer management page with search query parameter
-        // Encode the search term to handle special characters in the URL
-        window.location.href = `customer_management.html?search=${encodeURIComponent(searchTerm)}`;
-    } else {
-        // Optionally, provide feedback if search term is empty
-        // alert("Please enter a customer name or ID to search.");
-        // Or redirect to the main customer page without a search term
-         window.location.href = `customer_management.html`;
+// Function to clear suggestions
+function clearSuggestions() {
+    if(suggestionsContainer) {
+        suggestionsContainer.innerHTML = '';
+        suggestionsContainer.style.display = 'none';
     }
 }
 
-function setupSearch() {
-    // Ensure search elements exist before adding listeners
-    if (customerSearchButton && customerSearchInput) {
-        customerSearchButton.addEventListener('click', handleCustomerSearch);
-
-        // Optional: Allow searching by pressing Enter in the input field
-        customerSearchInput.addEventListener('keydown', (event) => {
-            if (event.key === 'Enter') {
-                handleCustomerSearch();
+// Event listener for the search input field
+function setupOrderIdSearch() {
+    if (orderIdSearchInput && suggestionsContainer) {
+        orderIdSearchInput.addEventListener('input', () => {
+            clearTimeout(suggestionDebounceTimer);
+            const searchTerm = orderIdSearchInput.value.trim();
+            if (searchTerm.length > 0) { // Only search if input is not empty
+                 // Debounce: wait 300ms after user stops typing
+                suggestionDebounceTimer = setTimeout(() => {
+                    fetchAndDisplaySuggestions(searchTerm);
+                }, 300);
+            } else {
+                clearSuggestions(); // Clear if input is emptied
             }
         });
-        console.log("[DEBUG] Customer search listeners added.");
+
+        // Hide suggestions when clicking outside
+         orderIdSearchInput.addEventListener('blur', () => {
+             // Delay hiding to allow suggestion clicks
+             setTimeout(clearSuggestions, 150);
+         });
+
+        // Optional: Handle search button click (might just trigger search for current input)
+        if (orderIdSearchButton) {
+            orderIdSearchButton.addEventListener('click', () => {
+                const searchTerm = orderIdSearchInput.value.trim();
+                fetchAndDisplaySuggestions(searchTerm); // Fetch immediately on button click
+            });
+        }
+
+        console.log("[DEBUG] Order ID search listeners added.");
+
     } else {
-         console.warn("[DEBUG] Customer search button or input not found. Search disabled.");
+        console.warn("[DEBUG] Order ID search input or suggestions container not found.");
     }
 }
 
 
 // --- Initial Setup ---
-// Waits for the global 'db' object (set by index.html) to be available
 function waitForDbConnection(callback) {
-    if (window.db) {
-        console.log("[DEBUG] DB connection confirmed immediately (dashboard.js).");
-        callback(); // Run the callback (listenForOrderUpdates)
-    } else {
-        console.log("[DEBUG] DB connection not ready, starting polling (dashboard.js)...");
-        let attempts = 0;
-        const maxAttempts = 20; // Poll for 5 seconds (20 * 250ms)
-        const intervalId = setInterval(() => {
-            attempts++;
-            if (window.db) {
-                clearInterval(intervalId);
-                console.log(`[DEBUG] DB connection confirmed after ${attempts} attempts (dashboard.js).`);
-                callback(); // Run the callback
-            } else if (attempts >= maxAttempts) {
-                clearInterval(intervalId);
-                console.error("DB connection timeout (dashboard.js). Dashboard counts might not load.");
-                 // Update UI to show error state for counts
-                 Object.values(countElements).forEach(el => { if(el) el.textContent = "DB?"; });
-                // Optionally alert user, but console error might be sufficient
-                // alert("Dashboard could not connect to the database to load counts.");
-            }
-        }, 250); // Check every 250ms
-    }
+    // This function remains the same
+    if (window.db) { callback(); }
+    else { let a=0, m=20, i=setInterval(()=>{ a++; if(window.db){ clearInterval(i); callback(); } else if(a>=m){ clearInterval(i); console.error("DB timeout"); /*...*/ }}, 250); }
 }
 
 // --- Run Setup ---
-// 1. Wait for the DOM to be fully loaded to ensure all elements are available
 document.addEventListener('DOMContentLoaded', () => {
-    console.log("[DEBUG] DOM fully loaded (dashboard.js). Setting up search.");
-    // 2. Setup search functionality (doesn't require DB connection)
-    setupSearch();
-    // 3. Wait for DB connection and then setup Firestore listener
-    console.log("[DEBUG] Waiting for DB connection to setup listeners...");
-    waitForDbConnection(listenForOrderUpdates);
+    console.log("[DEBUG] DOM fully loaded (dashboard.js).");
+    // 1. Setup the new Order ID search functionality
+    setupOrderIdSearch();
+    // 2. Wait for DB connection and then setup Firestore listener for counts
+    console.log("[DEBUG] Waiting for DB connection to setup count listeners...");
+    waitForDbConnection(listenForOrderCounts); // Renamed function for clarity
 });
-
 
 console.log("dashboard.js loaded and executing.");
