@@ -166,7 +166,7 @@ async function handleDeletePO(poId, poNumber) {
 // Function to display POs
 async function displayPoList() {
      if (!poTableBody) { console.error("PO table body not found!"); return; }
-     if (!db || !collection || !getDocs || !query || !orderBy) {
+     if (!db || !collection || !getDocs || !query || !orderBy || !doc || !getDoc /* Added getDoc check */) {
          console.error("Firestore functions not ready for displayPoList."); poTableBody.innerHTML = '<tr><td colspan="6" style="color:red;">Error loading Firestore functions.</td></tr>'; return;
      }
     poTableBody.innerHTML = '<tr><td colspan="6">Loading purchase orders...</td></tr>';
@@ -176,9 +176,9 @@ async function displayPoList() {
          poTableBody.innerHTML = '';
          if (querySnapshot.empty) { poTableBody.innerHTML = '<tr><td colspan="6">No purchase orders found yet.</td></tr>'; return; }
 
-         querySnapshot.forEach((docRef) => {
-             const po = docRef.data();
-             const poId = docRef.id;
+         querySnapshot.forEach((docRef_po) => { // Renamed docRef for clarity
+             const po = docRef_po.data();
+             const poId = docRef_po.id;
              const tr = document.createElement('tr');
              tr.setAttribute('data-id', poId);
              let orderDateStr = '-';
@@ -210,14 +210,28 @@ async function displayPoList() {
                  pdfBtn.addEventListener('click', async () => {
                      pdfBtn.disabled = true; pdfBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
                      try {
-                         const poDataForPdf = { ...po, id: poId }; // Add ID to data from loop
-                         if (!poDataForPdf.supplierId || !db || !doc || !getDoc) { throw new Error("Missing supplier ID or Firestore function for PDF."); }
+                         // Get PO ID from button attribute
+                         const currentPoId = pdfBtn.dataset.id;
+                         if (!currentPoId) throw new Error("Could not get PO ID for PDF generation.");
+
+                         // Fetch the latest PO data for PDF
+                         console.log(`Workspaceing latest data for PO ID: ${currentPoId}`);
+                         const poDocRef = doc(db, "purchaseOrders", currentPoId);
+                         const poDocSnap = await getDoc(poDocRef);
+                         if (!poDocSnap.exists()) throw new Error(`PO data not found for ID: ${currentPoId}`);
+                         const poDataForPdf = { ...poDocSnap.data(), id: currentPoId }; // Add ID
+
+                         // Fetch supplier data
+                         if (!poDataForPdf.supplierId) throw new Error("Supplier ID missing in PO data.");
+                         console.log(`Workspaceing supplier data for ID: ${poDataForPdf.supplierId}`);
                          const supplierRef = doc(db, "suppliers", poDataForPdf.supplierId);
                          const supplierSnap = await getDoc(supplierRef);
-                         if (!supplierSnap.exists()) { throw new Error(`Supplier data not found for ID: ${poDataForPdf.supplierId}`); }
+                         if (!supplierSnap.exists()) throw new Error(`Supplier data not found for ID: ${poDataForPdf.supplierId}`);
                          const supplierDataForPdf = supplierSnap.data();
+
                          console.log("Data ready for PDF:", poDataForPdf, supplierDataForPdf);
-                         // Call generatePoPdf (assuming it's imported or global)
+
+                         // Call the generate function (must be imported or global)
                          if (typeof generatePoPdf === 'function') {
                              await generatePoPdf(poDataForPdf, supplierDataForPdf);
                          } else {
@@ -225,9 +239,16 @@ async function displayPoList() {
                               alert("PDF generation function is not available.");
                          }
                      } catch (error) {
-                         console.error("Error preparing data or generating PDF:", error); alert("Failed to generate PDF: " + error.message);
+                         console.error("Error preparing data or generating PDF:", error);
+                         alert("Failed to generate PDF: " + error.message);
                      } finally {
-                         if(pdfBtn) { pdfBtn.disabled = false; pdfBtn.innerHTML = '<i class="fas fa-file-pdf"></i>'; }
+                         // Ensure button re-enabling happens even if error occurred
+                         // Check if button still exists in DOM (user might navigate away)
+                         const currentPdfBtn = document.querySelector(`tr[data-id="${poId}"] .pdf-button`);
+                         if(currentPdfBtn) {
+                            currentPdfBtn.disabled = false;
+                            currentPdfBtn.innerHTML = '<i class="fas fa-file-pdf"></i>';
+                         }
                      }
                  });
              }
