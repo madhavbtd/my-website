@@ -81,23 +81,14 @@ function waitForDbConnection(callback) {
     else { let attempts = 0; const maxAttempts = 20; const intervalId = setInterval(() => { attempts++; if (window.db) { clearInterval(intervalId); console.log("[DEBUG] DB connection confirmed after check."); callback(); } else if (attempts >= maxAttempts) { clearInterval(intervalId); console.error("[DEBUG] DB connection timeout."); alert("Database connection failed."); } }, 250); }
 }
 
-// --- Utility to Hide Suggestion Box ---
+// --- Utility to Hide Suggestion Box (Removed Timeout) ---
 function hideSuggestionBox(box) {
-    // Delay hiding slightly to allow click events on suggestions to register
-    setTimeout(() => {
-        if (box) {
-            // Check if the input associated with the box still has focus
-            let associatedInput;
-            if (box === customerSuggestionsNameBox) associatedInput = customerNameInput;
-            else if (box === customerSuggestionsWhatsAppBox) associatedInput = customerWhatsAppInput;
-            else if (box === productSuggestionsBox) associatedInput = productNameInput;
-
-            if (document.activeElement !== associatedInput) {
-                 box.classList.remove('active');
-                 box.style.display = 'none';
-            }
-        }
-    }, 150); // 150ms delay
+    // Hide immediately on blur or click outside
+    if (box) {
+         box.classList.remove('active');
+         box.style.display = 'none';
+    }
+    // No need for setTimeout or activeElement check here, rely on mousedown for selection clicks
 }
 
 
@@ -203,7 +194,6 @@ function handleStatusCheckboxes(isEditing) {
     const defaultStatus = "Order Received"; let defaultCheckbox = null;
     orderStatusCheckboxes.forEach(checkbox => { if (checkbox.value === defaultStatus) defaultCheckbox = checkbox; checkbox.disabled = !isEditing; checkbox.closest('label').classList.toggle('disabled', !isEditing); checkbox.removeEventListener('change', handleStatusChange); checkbox.addEventListener('change', handleStatusChange); });
     if (!isEditing && defaultCheckbox) { defaultCheckbox.checked = true; }
-    // No need to remove 'disabled' class from label here, CSS handles :has(:disabled)
 }
 function handleStatusChange(event) { const changedCheckbox = event.target; if (changedCheckbox.checked) { orderStatusCheckboxes.forEach(otherCb => { if (otherCb !== changedCheckbox) otherCb.checked = false; }); } }
 
@@ -215,10 +205,7 @@ function handleCustomerInput(event, type) {
     const searchTerm = event.target.value.trim();
     const suggestionBox = type === 'name' ? customerSuggestionsNameBox : customerSuggestionsWhatsAppBox;
     if (!suggestionBox) return;
-    // Don't reset selection immediately on input, only if user types something new after selection
-    // resetCustomerSelection(); // Maybe remove this automatic reset
 
-    // Hide suggestion box if search term is too short
     if (searchTerm.length < 2) {
         clearTimeout(customerSearchTimeout);
         hideSuggestionBox(suggestionBox); // Use the function to hide
@@ -258,15 +245,12 @@ function filterAndRenderCustomerSuggestions(term, type, box) {
     renderCustomerSuggestions(filtered, term, box);
 }
 function renderCustomerSuggestions(suggestions, term, box) {
-     // --- JS Change: Show/Hide Container ---
      if (!box) return;
      if (suggestions.length === 0) {
-         // box.innerHTML = `<ul><li>No results matching '${term}'</li></ul>`; // Don't show 'no results' like this
          box.classList.remove('active'); // Hide container
          box.style.display = 'none';
          return;
      }
-     // --- End JS Change ---
     const ul = document.createElement('ul');
     suggestions.forEach(cust => {
         const li = document.createElement('li'); const dName = `${cust.fullName} (${cust.whatsappNo})`;
@@ -275,18 +259,14 @@ function renderCustomerSuggestions(suggestions, term, box) {
         li.addEventListener('mousedown', (e) => { // Use mousedown to register before blur
             e.preventDefault(); // Prevent input blur
             fillCustomerData(cust);
-            // --- JS Change: Hide box after selection ---
-            hideSuggestionBox(box);
-            // --- End JS Change ---
+            hideSuggestionBox(box); // Hide box after selection
         });
         ul.appendChild(li);
     });
-    box.innerHTML = ''; // Clear first
+    box.innerHTML = '';
     box.appendChild(ul);
-    // --- JS Change: Show container ---
-    box.classList.add('active');
-    box.style.display = 'block';
-    // --- End JS Change ---
+    box.classList.add('active'); // Show container
+    box.style.display = 'block'; // Explicitly show
 }
 function fillCustomerData(customer) {
     if (!customer) { resetCustomerSelection(); return; }
@@ -294,17 +274,15 @@ function fillCustomerData(customer) {
     customerNameInput.value = customer.fullName || ''; customerWhatsAppInput.value = customer.whatsappNo || '';
     customerAddressInput.value = customer.billingAddress || customer.address || ''; customerContactInput.value = customer.contactNo || '';
     selectedCustomerId = customer.id; if(selectedCustomerIdInput) selectedCustomerIdInput.value = selectedCustomerId; // Store ID
-    // --- JS Change: Explicitly Hide Boxes ---
+    // Explicitly Hide Boxes after filling
     hideSuggestionBox(customerSuggestionsNameBox);
     hideSuggestionBox(customerSuggestionsWhatsAppBox);
-    // --- End JS Change ---
     customerAddressInput.readOnly = true; customerContactInput.readOnly = true; // Make readonly
 }
 function resetCustomerSelection() {
      selectedCustomerId = null; if(selectedCustomerIdInput) selectedCustomerIdInput.value = '';
-     // Don't clear inputs here automatically, user might just be typing
-     // customerAddressInput.value = ''; customerContactInput.value = '';
-     customerAddressInput.readOnly = false; customerContactInput.readOnly = false; // Make editable again
+     // Keep input values, just make fields editable
+     customerAddressInput.readOnly = false; customerContactInput.readOnly = false;
      console.log("[DEBUG] Customer selection reset (fields editable).");
 }
 
@@ -313,15 +291,13 @@ let productSearchTimeout;
 function handleProductInput(event) {
     const searchTerm = event.target.value.trim();
     if (!productSuggestionsBox) return;
-    productNameInput.readOnly = false; // Ensure editable
+    productNameInput.readOnly = false;
 
-    // --- JS Change: Hide if term too short ---
     if (searchTerm.length < 2) {
         clearTimeout(productSearchTimeout);
         hideSuggestionBox(productSuggestionsBox); // Use function to hide
         return;
     }
-    // --- End JS Change ---
 
     clearTimeout(productSearchTimeout);
     productSearchTimeout = setTimeout(() => {
@@ -355,35 +331,29 @@ function filterAndRenderProductSuggestions(term, box) {
     renderProductSuggestions(filtered, term, box);
 }
 function renderProductSuggestions(suggestions, term, box) {
-     // --- JS Change: Show/Hide Container ---
      if (!box) return;
      if (suggestions.length === 0) {
          box.classList.remove('active'); // Hide container
          box.style.display = 'none';
          return;
      }
-     // --- End JS Change ---
     const ul = document.createElement('ul');
     suggestions.forEach(prod => {
         const li = document.createElement('li');
         try { li.innerHTML = prod.name.replace(new RegExp(`(${term.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')})`, 'gi'), '<strong>$1</strong>'); } catch { li.textContent = prod.name; }
         li.dataset.name = prod.name; // Store printName
-        // --- JS Change: Update click listener ---
-        li.addEventListener('mousedown', (e) => { // Use mousedown to register before blur
-            e.preventDefault(); // Prevent input blur
+        li.addEventListener('mousedown', (e) => { // Use mousedown
+            e.preventDefault(); // Prevent blur
             productNameInput.value = prod.name;
             hideSuggestionBox(box); // Hide box on click
             quantityInput.focus();
         });
-        // --- End JS Change ---
         ul.appendChild(li);
     });
-    box.innerHTML = ''; // Clear first
+    box.innerHTML = '';
     box.appendChild(ul);
-    // --- JS Change: Show container ---
-    box.classList.add('active');
-    box.style.display = 'block';
-    // --- End JS Change ---
+    box.classList.add('active'); // Show container
+    box.style.display = 'block'; // Explicitly show
 }
 // --- End Autocomplete ---
 
@@ -400,15 +370,14 @@ async function handleFormSubmit(event) {
         const customerWhatsAppFromInput = customerWhatsAppInput.value.trim();
         const customerAddressFromInput = customerAddressInput.value.trim();
         const customerContactFromInput = customerContactInput.value.trim();
-        // --- Use stored selectedCustomerId if available, otherwise maybe check cache? ---
-        const customerIdToUse = selectedCustomerId; // Use the ID stored when suggestion was clicked
+        // --- Use stored selectedCustomerId if available ---
+        const customerIdToUse = selectedCustomerId;
 
-        // Validate if customer ID was selected
-        if (!customerIdToUse && !isEditMode) { // Require selection for new orders
+        // Validate if customer ID was selected for NEW orders
+        if (!customerIdToUse && !isEditMode) {
              throw new Error("Please select an existing customer from the suggestions. If the customer is new, add them via Customer Management first.");
         }
-        // Construct customerData using input values (or maybe re-fetch using ID for safety?)
-        // For now, trust the input values if an ID was selected.
+         // Construct customerData using input values
          const customerData = {
              fullName: customerFullNameFromInput,
              whatsappNo: customerWhatsAppFromInput,
@@ -419,12 +388,12 @@ async function handleFormSubmit(event) {
         const orderDetails = { manualOrderId: formData.get('manual_order_id')?.trim() || '', orderDate: formData.get('order_date') || '', deliveryDate: formData.get('delivery_date') || '', urgent: formData.get('urgent') || 'No', remarks: formData.get('remarks')?.trim() || '' };
         const statusCheckbox = orderForm.querySelector('input[name="order_status"]:checked'); const selectedStatus = statusCheckbox ? statusCheckbox.value : (isEditMode ? null : 'Order Received');
 
-        // ** Validation ** (Keep existing validations)
+        // ** Validation **
         if (!customerData.fullName) { throw new Error("Full Name is required."); }
         if (!customerData.whatsappNo) throw new Error("WhatsApp No required.");
         if (addedProducts.length === 0) throw new Error("Add at least one product.");
         if (!orderDetails.orderDate) throw new Error("Order Date required.");
-        if (!selectedStatus && isEditMode) throw new Error("Select order status for update."); // Status needed for update too
+        if (!selectedStatus && isEditMode) throw new Error("Select order status for update.");
 
 
         // Determine Order ID
@@ -443,8 +412,7 @@ async function handleFormSubmit(event) {
             remarks: orderDetails.remarks,
             status: selectedStatus || 'Order Received', // Default status if somehow null
             products: addedProducts,
-            updatedAt: new Date() // Use JS Date for consistency or Firestore serverTimestamp
-            // createdAt: isEditMode ? undefined : new Date() // Add createdAt only for new orders
+            updatedAt: new Date()
         };
 
         // Save/Update
@@ -452,8 +420,7 @@ async function handleFormSubmit(event) {
         if (isEditMode) {
             if (!orderIdToEdit) throw new Error("Missing Firestore Document ID for update.");
             const orderRef = doc(db, "orders", orderIdToEdit);
-            // Remove createdAt if it exists in payload for updates
-            delete orderDataPayload.createdAt;
+            delete orderDataPayload.createdAt; // Don't update createdAt
             await updateDoc(orderRef, orderDataPayload);
             orderDocRefPath = orderRef.path;
             console.log("[DEBUG] Order updated:", orderIdToEdit);
@@ -464,23 +431,21 @@ async function handleFormSubmit(event) {
             orderDocRefPath = newOrderRef.path;
             console.log("[DEBUG] New order saved:", newOrderRef.id);
             alert('New order saved successfully!');
-            displayOrderIdInput.value = orderIdToUse; // Show the used ID
+            displayOrderIdInput.value = orderIdToUse;
         }
 
-        // Post-save actions (Consider error handling for daily report)
+        // Post-save actions
         // await saveToDailyReport(orderDataPayload, orderDocRefPath);
 
-        // Show WhatsApp reminder (only if WhatsApp number exists)
+        // Show WhatsApp reminder only if WhatsApp number exists
         if (customerData.whatsappNo) {
             showWhatsAppReminder(customerData, orderIdToUse, orderDetails.deliveryDate);
+             // Reset ONLY IF reminder is shown OR for new orders where number is missing
+             // if (!isEditMode) { resetNewOrderForm(); } // Reset handled within showWhatsAppReminder or its skip path
         } else {
             console.warn("[DEBUG] WhatsApp number missing, skipping reminder.");
-            // Optionally reset form only if no reminder shown
-             if (!isEditMode) { resetNewOrderForm(); }
+             if (!isEditMode) { resetNewOrderForm(); } // Reset form if no reminder shown for new order
         }
-
-        // Reset form only for NEW orders AFTER showing reminder (or skipping it)
-        // if (!isEditMode) { resetNewOrderForm(); } // Moved this logic inside whatsapp check
 
     } catch (error) {
         console.error("Error saving/updating order:", error);
@@ -488,11 +453,10 @@ async function handleFormSubmit(event) {
     } finally {
         saveButton.disabled = false;
         const btnTxt = isEditMode ? "Update Order" : "Save Order";
-        // Ensure span exists before setting textContent
         if (saveButtonText) {
              saveButtonText.textContent = btnTxt;
         } else {
-            saveButton.innerHTML = `<i class="fas fa-save"></i> ${btnTxt}`; // Fallback if span is missing
+            saveButton.innerHTML = `<i class="fas fa-save"></i> ${btnTxt}`;
         }
     }
 }
@@ -501,7 +465,7 @@ async function handleFormSubmit(event) {
 // --- Reset Form ---
 function resetNewOrderForm() {
      console.log("[DEBUG] Resetting form.");
-     resetCustomerSelection(); // Make fields editable
+     resetCustomerSelection();
      customerNameInput.value = '';
      customerWhatsAppInput.value = '';
      customerAddressInput.value = '';
@@ -512,7 +476,7 @@ function resetNewOrderForm() {
      orderForm.remarks.value = '';
      addedProducts = [];
      renderProductList();
-     handleStatusCheckboxes(false); // Reset status to default for new order
+     handleStatusCheckboxes(false);
      const urgentNoRadio = orderForm.querySelector('input[name="urgent"][value="No"]');
      if (urgentNoRadio) urgentNoRadio.checked = true;
      const orderDateInput = document.getElementById('order_date');
@@ -529,18 +493,17 @@ async function saveToDailyReport(orderData, orderPath) { console.log(`[DEBUG] Pl
 
 // --- UPDATED WhatsApp Reminder Function ---
 function showWhatsAppReminder(customer, orderId, deliveryDate) {
-    // Added checks for elements
     if (!whatsappReminderPopup || !whatsappMsgPreview || !whatsappSendLink) {
         console.error("[DEBUG] WhatsApp popup elements missing.");
-        if (!isEditMode) { resetNewOrderForm(); } // Reset form even if popup fails
+         if (!isEditMode) { resetNewOrderForm(); } // Reset form even if popup fails for new order
         return;
     }
     const customerName = customer.fullName || 'Customer';
     const customerNumber = customer.whatsappNo?.replace(/[^0-9]/g, '');
-    // Check moved inside, reset form if number missing
+    // Check moved inside, reset form if number missing for NEW order
     if (!customerNumber) {
         console.warn("[DEBUG] WhatsApp No missing, skipping reminder.");
-        if (!isEditMode) { resetNewOrderForm(); } // Reset form if no reminder shown
+        if (!isEditMode) { resetNewOrderForm(); } // Reset form if no reminder shown for new order
         return;
     }
 
@@ -574,4 +537,4 @@ Mobile: 9549116541`;
 
 function closeWhatsAppPopup() { if (whatsappReminderPopup) whatsappReminderPopup.classList.remove('active'); }
 
-console.log("new_order.js script loaded (Client-Side Filtering + Save Fix + Debug Logs + Updated WhatsApp Template + Suggestion Box Fix)."); // Updated log
+console.log("new_order.js script loaded (Client-Side Filtering + Save Fix + Debug Logs + Updated WhatsApp Template + Suggestion Box Fix v2)."); // Updated log

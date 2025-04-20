@@ -99,7 +99,7 @@ body {
 .product-input-area { padding: 10px 0px 15px 0px; margin-top: 0; margin-bottom: 10px; }
 .product-entry-group { display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-end; }
 .product-entry-group .form-group { margin-bottom: 0; }
-.product-name-group { flex: 1 1 300px; position: relative; } /* Keep relative */
+.product-name-group { flex: 1 1 300px; position: relative; }
 .product-qty-group { flex: 0 0 85px; }
 .product-name-group label, .product-qty-group label { font-weight: 600; font-size: 0.85em; margin-bottom: 5px; }
 #quantity_input { max-width: 85px; text-align: center; }
@@ -115,7 +115,7 @@ body {
 .product-list-item .delete-product-btn:hover { color: #a71d2a; }
 .empty-list-message { color: #6c757d; font-style: italic; text-align: center; padding: 10px 0; font-size: 0.9em; }
 
-/* --- Autocomplete Suggestions Styling Update --- */
+/* --- Autocomplete Suggestions Styling Update (With Fix) --- */
 .suggestions-box {
     position: relative; /* Container for absolute positioned ul */
     display: none; /* Hide container by default */
@@ -129,15 +129,15 @@ body {
     left: 0;
     width: 100%;
     list-style: none;
-    margin: 2px 0 0 0;
+    margin: 2px 0 0 0; /* Add small gap */
     padding: 0;
     border: 1px solid #ced4da;
     background-color: white;
-    max-height: 160px;
+    max-height: 160px; /* Increased height */
     overflow-y: auto;
     z-index: 1000; /* Ensure it's above other elements */
-    border-radius: 0 0 4px 4px;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    border-radius: 0 0 4px 4px; /* Match input radius */
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1); /* Slightly more shadow */
 }
 .suggestions-box li { padding: 8px 12px; font-size: 0.88em; cursor: pointer; border-bottom: 1px solid #f0f0f0; }
 .suggestions-box li:last-child { border-bottom: none; }
@@ -155,26 +155,26 @@ body {
 .cancel-button { background-color: #6c757d; color: white; }
 .cancel-button:hover { background-color: #5a6268; }
 
-/* WhatsApp Popup Styling Update */
-.popup-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.65); z-index: 1050; display: flex; justify-content: center; align-items: center; padding: 15px; box-sizing: border-box; opacity: 0; transition: opacity 0.3s ease; }
-.popup-overlay.active { display: flex; opacity: 1; }
-.popup-content { background-color: #fff; padding: 30px 35px; border-radius: 8px; box-shadow: 0 5px 20px rgba(0, 0, 0, 0.25); text-align: center; position: relative; max-width: 480px; width: 90%; transform: scale(0.95); transition: transform 0.3s ease; }
-.popup-overlay.active .popup-content { transform: scale(1); }
-.popup-close { position: absolute; top: 10px; right: 15px; font-size: 26px; color: #aaa; background: none; border: none; cursor: pointer; line-height: 1; z-index: 1051; }
-.popup-close:hover { color: #333; }
-.popup-content h4 { margin-top: 0; margin-bottom: 15px; color: #111; font-size: 1.4em; font-weight: 600; }
-.popup-content p { margin-bottom: 20px; color: #444; font-size: 1em; }
-.message-preview { margin-top: 15px; margin-bottom: 25px; font-size: 0.9em; background-color: #e1ffc7; padding: 15px; border-radius: 8px; text-align: left; border: 1px solid #c5eab2; white-space: pre-wrap; word-wrap: break-word; max-height: 150px; overflow-y: auto; color: #333; }
-.whatsapp-send-btn { background-color: #128C7E; color: #fff; text-decoration: none; padding: 12px 25px; border-radius: 5px; display: inline-flex; align-items: center; gap: 10px; font-weight: 700; font-size: 1em; transition: background-color .2s ease, transform 0.1s ease; border: none; cursor: pointer; }
-.whatsapp-send-btn:hover { background-color: #075E54; transform: scale(1.03); }
-.whatsapp-send-btn i { font-size: 1.1em; }
+
+/* --- WhatsApp Popup (Original Basic Styling) --- */
+.popup-overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background-color:rgba(0,0,0,.6);z-index:1050;justify-content:center;align-items:center;padding:15px;box-sizing:border-box}
+.popup-overlay.active{display:flex}
+.popup-content{background-color:#fff;padding:25px 30px;border-radius:8px;box-shadow:0 4px 15px rgba(0,0,0,.2);text-align:center;position:relative;max-width:450px;width:100%}
+.popup-close{position:absolute;top:8px;right:12px;font-size:26px;color:#aaa;background:none;border:none;cursor:pointer;line-height:1}
+.popup-close:hover{color:#333}
+.popup-content h4{margin-top:0;margin-bottom:10px;color:#28a745;font-size:1.3em} /* Default Green Title */
+.popup-content p{margin-bottom:15px;color:#555}
+.message-preview{margin-top:15px;margin-bottom:20px;font-size:.95em;background-color:#e9f5ff;padding:12px;border-radius:5px;text-align:left;border:1px solid #bde0ff;white-space:pre-wrap;word-wrap:break-word} /* Default Preview Style */
+.whatsapp-send-btn{background-color:#25d366;color:#fff;text-decoration:none;padding:10px 20px;border-radius:5px;display:inline-flex;align-items:center;gap:8px;font-weight:700;transition:background-color .2s ease; border: none; cursor: pointer;} /* Default Green Button */
+.whatsapp-send-btn:hover{background-color:#1ebe57}
+/* --- End WhatsApp Popup Styling --- */
 
 
 /* Responsive Adjustments Refined */
 @media (max-width: 767px) {
     .container { max-width: 95%; padding: 15px; }
     .header { margin: -15px -15px 20px -15px; font-size: 1.1em; }
-    /* Columns stack automatically */
+    .form-layout-columns { /* Stacks automatically */ }
     .form-row { flex-direction: column; gap: 15px; margin-bottom: 15px; }
     .form-group-half { flex-basis: auto; }
     .priority-group { max-width: none; }
