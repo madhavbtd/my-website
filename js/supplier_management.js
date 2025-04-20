@@ -1,4 +1,4 @@
-// js/supplier_management.js
+// js/supplier_management.js - v3 (Delete PO Added)
 
 // Assume Firebase functions are globally available via HTML script block
 const {
@@ -77,80 +77,69 @@ function closeSupplierModal() {
 
 // Function to display suppliers
 async function displaySupplierList() {
-    // Ensure table body exists
-    if (!supplierTableBody) {
-        console.error("Supplier table body not found!");
-        return;
-    }
-    // Ensure Firestore functions are ready
+    if (!supplierTableBody) { console.error("Supplier table body not found!"); return; }
     if (!db || !collection || !getDocs || !query || !orderBy) {
         console.error("Firestore functions not ready for displaySupplierList.");
-        supplierTableBody.innerHTML = '<tr><td colspan="5" style="color:red;">Error loading Firestore.</td></tr>';
+        supplierTableBody.innerHTML = '<tr><td colspan="5" style="color:red;">Error loading Firestore functions.</td></tr>';
         return;
     }
 
-    supplierTableBody.innerHTML = '<tr><td colspan="5">Loading suppliers...</td></tr>'; // Show loading state
+    supplierTableBody.innerHTML = '<tr><td colspan="5">Loading suppliers...</td></tr>';
     try {
-        const q = query(collection(db, "suppliers"), orderBy("name")); // Order by name
+        const q = query(collection(db, "suppliers"), orderBy("name"));
         const querySnapshot = await getDocs(q);
-        supplierTableBody.innerHTML = ''; // Clear loading/previous state
+        supplierTableBody.innerHTML = '';
 
         if (querySnapshot.empty) {
             supplierTableBody.innerHTML = '<tr><td colspan="5">No suppliers found. Add one!</td></tr>';
             return;
         }
 
-        querySnapshot.forEach((docRef) => { // Use docRef to avoid confusion with doc function
+        querySnapshot.forEach((docRef) => {
             const supplier = docRef.data();
             const supplierId = docRef.id;
             const tr = document.createElement('tr');
-            tr.setAttribute('data-id', supplierId); // Add data-id attribute
+            tr.setAttribute('data-id', supplierId);
             tr.innerHTML = `
                 <td>${supplier.name || 'N/A'}</td>
                 <td>${supplier.companyName || '-'}</td>
                 <td>${supplier.whatsappNo || '-'}</td>
                 <td>${supplier.email || '-'}</td>
                 <td class="action-buttons">
-                    <button class="button edit-button" data-id="${supplierId}"><i class="fas fa-edit"></i></button>
-                    <button class="button delete-button" data-id="${supplierId}"><i class="fas fa-trash-alt"></i></button>
+                    <button class="button edit-button" data-id="${supplierId}" title="Edit Supplier"><i class="fas fa-edit"></i></button>
+                    <button class="button delete-button" data-id="${supplierId}" title="Delete Supplier"><i class="fas fa-trash-alt"></i></button>
                 </td>
             `;
-            // Add event listeners for edit/delete buttons
             const editBtn = tr.querySelector('.edit-button');
             if(editBtn) {
                 editBtn.addEventListener('click', () => {
-                    // Fetch data again for edit to ensure it's the latest, or use cached data carefully
-                    // For simplicity, using potentially cached data passed to modal
                     openSupplierModal('edit', supplier, supplierId);
                 });
             }
             const deleteBtn = tr.querySelector('.delete-button');
             if(deleteBtn) {
+                // *** Use correct function name 'deleteSupplier' ***
                 deleteBtn.addEventListener('click', () => {
-                    deleteSupplier(supplierId, supplier.name);
+                    deleteSupplier(supplierId, supplier.name); // Corrected function call
                 });
             }
-
             supplierTableBody.appendChild(tr);
         });
-
     } catch (error) {
         console.error("Error fetching suppliers: ", error);
-        supplierTableBody.innerHTML = '<tr><td colspan="5" style="color:red;">Error loading suppliers.</td></tr>';
+        supplierTableBody.innerHTML = `<tr><td colspan="5" style="color:red;">Error loading suppliers: ${error.message}</td></tr>`;
     }
 }
 
 // Function to save/update supplier
 async function saveSupplier(event) {
-    event.preventDefault(); // Prevent default form submission
-    // Ensure elements and functions are available
+    event.preventDefault();
     if (!saveSupplierBtn || !supplierNameInput || !supplierErrorMsg || !db || !collection || !addDoc || !doc || !updateDoc || !Timestamp) {
          console.error("Save Supplier prerequisites missing.");
          alert("Error: Cannot save supplier.");
          return;
      }
 
-    // Get form data
     const supplierData = {
         name: supplierNameInput.value.trim(),
         companyName: supplierCompanyInput.value.trim(),
@@ -158,40 +147,35 @@ async function saveSupplier(event) {
         email: supplierEmailInput.value.trim(),
         address: supplierAddressInput.value.trim(),
         gstNo: supplierGstInput.value.trim(),
-        // Add or update timestamp based on mode
     };
 
-    // Basic Validation
     if (!supplierData.name) {
         showSupplierError("Supplier Name is required.");
         return;
     }
 
-    saveSupplierBtn.disabled = true; // Disable button while saving
+    saveSupplierBtn.disabled = true;
     saveSupplierBtn.textContent = 'Saving...';
     supplierErrorMsg.style.display = 'none';
 
     try {
         if (currentEditingSupplierId) {
-            // Update existing supplier
             supplierData.updatedAt = Timestamp.now();
             const supplierRef = doc(db, "suppliers", currentEditingSupplierId);
             await updateDoc(supplierRef, supplierData);
             console.log("Supplier updated with ID: ", currentEditingSupplierId);
         } else {
-            // Add new supplier
             supplierData.createdAt = Timestamp.now();
-            supplierData.updatedAt = Timestamp.now(); // Set updatedAt on creation too
+            supplierData.updatedAt = Timestamp.now();
             const docRef = await addDoc(collection(db, "suppliers"), supplierData);
             console.log("Supplier added with ID: ", docRef.id);
         }
         closeSupplierModal();
-        displaySupplierList(); // Refresh the list
+        displaySupplierList();
     } catch (error) {
         console.error("Error saving supplier: ", error);
         showSupplierError("Error saving supplier: " + error.message);
     } finally {
-         // Check if button still exists before re-enabling
          if(saveSupplierBtn) {
             saveSupplierBtn.disabled = false;
             saveSupplierBtn.textContent = 'Save Supplier';
@@ -202,7 +186,7 @@ async function saveSupplier(event) {
 // Function to delete supplier
 async function deleteSupplier(supplierId, supplierName) {
      if (!db || !doc || !deleteDoc) {
-          alert("Firestore not ready. Cannot delete.");
+          alert("Firestore not ready. Cannot delete supplier.");
           return;
       }
     if (confirm(`Are you sure you want to delete supplier "${supplierName || 'this supplier'}"? This cannot be undone.`)) {
@@ -214,53 +198,78 @@ async function deleteSupplier(supplierId, supplierName) {
             console.error("Error deleting supplier: ", error);
             alert("Error deleting supplier: " + error.message);
         }
-    }
+    } else {
+         console.log("Supplier delete cancelled.");
+     }
 }
 
-// Function to display POs (Basic - will be expanded later)
-async function displayPoList() {
-     // Ensure table body exists
-     if (!poTableBody) {
-         console.error("PO table body not found!");
+
+// +++++ FUNCTION TO DELETE PURCHASE ORDER +++++
+async function handleDeletePO(poId, poNumber) {
+    // Ensure Firestore delete function is available
+    if (!db || !doc || !deleteDoc) {
+         alert("Firestore delete function not available. Cannot delete PO.");
          return;
      }
-     // Ensure Firestore functions are ready
+
+    // Ask for confirmation
+    if (confirm(`Are you sure you want to delete Purchase Order "${poNumber || poId}"? This cannot be undone.`)) {
+        console.log(`Attempting to delete PO: ${poId}`);
+        try {
+            // Create a reference to the specific PO document
+            const poRef = doc(db, "purchaseOrders", poId);
+            // Delete the document
+            await deleteDoc(poRef);
+            console.log("Purchase Order deleted successfully:", poId);
+            alert(`Purchase Order ${poNumber || poId} deleted successfully.`);
+            // Refresh the PO list to show the change
+            displayPoList();
+        } catch (error) {
+            console.error("Error deleting Purchase Order:", error);
+            alert("Error deleting Purchase Order: " + error.message);
+        }
+    } else {
+        console.log("PO deletion cancelled by user.");
+    }
+}
+// +++++ END FUNCTION TO DELETE PURCHASE ORDER +++++
+
+
+// Function to display POs
+async function displayPoList() {
+     if (!poTableBody) { console.error("PO table body not found!"); return; }
      if (!db || !collection || !getDocs || !query || !orderBy) {
           console.error("Firestore functions not ready for displayPoList.");
-          poTableBody.innerHTML = '<tr><td colspan="6" style="color:red;">Error loading Firestore.</td></tr>';
+          poTableBody.innerHTML = '<tr><td colspan="6" style="color:red;">Error loading Firestore functions.</td></tr>';
           return;
       }
 
     poTableBody.innerHTML = '<tr><td colspan="6">Loading purchase orders...</td></tr>';
      try {
-         const q = query(collection(db, "purchaseOrders"), orderBy("orderDate", "desc")); // Example sort
+         const q = query(collection(db, "purchaseOrders"), orderBy("orderDate", "desc"));
          const querySnapshot = await getDocs(q);
-         poTableBody.innerHTML = ''; // Clear
+         poTableBody.innerHTML = '';
 
          if (querySnapshot.empty) {
              poTableBody.innerHTML = '<tr><td colspan="6">No purchase orders found yet.</td></tr>';
              return;
          }
 
-         querySnapshot.forEach((docRef) => { // Use docRef
+         querySnapshot.forEach((docRef) => {
              const po = docRef.data();
              const poId = docRef.id;
              const tr = document.createElement('tr');
-             tr.setAttribute('data-id', poId); // Add data-id attribute
-             // Format date if available
+             tr.setAttribute('data-id', poId);
              let orderDateStr = '-';
              if (po.orderDate && po.orderDate.toDate) {
                   try {
-                     orderDateStr = po.orderDate.toDate().toLocaleDateString('en-GB'); // dd/mm/yyyy format
+                     orderDateStr = po.orderDate.toDate().toLocaleDateString('en-GB');
                   } catch(e) { console.warn("Error formatting PO date", e); }
              }
-
-             // --- Determine Status Badge Class ---
-             let statusClass = 'unknown'; // Default class
+             let statusClass = 'unknown';
              if (po.status) {
                 statusClass = po.status.toLowerCase().replace(/[^a-z0-9]+/g, '-') || 'unknown';
              }
-             // --- ---
 
              tr.innerHTML = `
                  <td>${po.poNumber || 'N/A'}</td>
@@ -274,20 +283,19 @@ async function displayPoList() {
                      <button class="button pdf-button" data-id="${poId}" title="Download PDF"><i class="fas fa-file-pdf"></i></button>
                  </td>
              `;
-             // Add event listeners for PO delete/PDF buttons later
-             // Example for delete:
+
+             // +++++ ADD/CORRECT EVENT LISTENER FOR PO DELETE BUTTON +++++
              const deletePoBtn = tr.querySelector('.delete-button');
              if (deletePoBtn) {
-                 deletePoBtn.addEventListener('click', () => {
-                     // Call a function like handleDeletePO(poId, po.poNumber);
-                     alert('Delete PO functionality not implemented yet.');
-                 });
+                 // Make sure it calls handleDeletePO (the function we just added/verified)
+                 deletePoBtn.addEventListener('click', () => handleDeletePO(poId, po.poNumber || ''));
              }
-             // Example for PDF:
+             // +++++ END EVENT LISTENER +++++
+
+             // PDF Button Listener (Placeholder)
              const pdfBtn = tr.querySelector('.pdf-button');
              if (pdfBtn) {
                  pdfBtn.addEventListener('click', () => {
-                     // Call a function like generatePoPdfById(poId);
                      alert('Generate PO PDF functionality not implemented yet.');
                  });
              }
@@ -297,7 +305,7 @@ async function displayPoList() {
 
      } catch (error) {
          console.error("Error fetching POs: ", error);
-         poTableBody.innerHTML = '<tr><td colspan="6" style="color:red;">Error loading purchase orders.</td></tr>';
+         poTableBody.innerHTML = `<tr><td colspan="6" style="color:red;">Error loading POs: ${error.message}</td></tr>`;
      }
 }
 
@@ -317,7 +325,7 @@ function waitForDbConnection(callback) {
     if (window.db) {
         callback();
     } else {
-        let attempts = 0; const maxAttempts = 20; // 5 सेकंड तक प्रतीक्षा करें
+        let attempts = 0; const maxAttempts = 20;
         const intervalId = setInterval(() => {
             attempts++;
             if (window.db) {
@@ -334,7 +342,6 @@ function waitForDbConnection(callback) {
 
 // --- Initialization on DOM Load ---
 document.addEventListener('DOMContentLoaded', () => {
-    // सुनिश्चित करें कि DB कनेक्शन तैयार है
     waitForDbConnection(() => {
         console.log("Supplier Management: DOM loaded and DB connected. Initializing.");
 
@@ -355,7 +362,6 @@ document.addEventListener('DOMContentLoaded', () => {
             supplierForm.addEventListener('submit', saveSupplier);
         } else { console.warn("Supplier form not found."); }
 
-        // Close modal if clicked outside content
         if (supplierModal) {
              supplierModal.addEventListener('click', (event) => {
                  if (event.target === supplierModal) {
@@ -364,23 +370,16 @@ document.addEventListener('DOMContentLoaded', () => {
              });
          } else { console.warn("Supplier modal not found."); }
 
-         // PO Filter Listeners (Add later if needed)
-         // Example:
-         // if(poFilterBtn) poFilterBtn.addEventListener('click', displayPoList);
-
-
          // Initial data load
          displaySupplierList();
          displayPoList();
 
-         // Check for #add in URL to open modal automatically
          if(window.location.hash === '#add') {
              if(supplierModal) {
                 openSupplierModal('add');
              } else {
                  console.warn("Modal not found, cannot open from hash.");
              }
-             // Clean the hash using history API if available
              if (history.replaceState) {
                  history.replaceState(null, null, window.location.pathname + window.location.search);
              }
