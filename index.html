@@ -8,14 +8,15 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="index.css">
+
+    <link rel="stylesheet" href="css/index.css">
 
     <script type="module">
         // Import Firebase services
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
         // Import other services like Firestore if needed by the page
-        import { getFirestore, collection, onSnapshot, query, where } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js"; // Added Firestore imports needed for original script
+        import { getFirestore, collection, onSnapshot, query, where } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
         // **** Your Firebase Configuration ****
          const firebaseConfig = {
@@ -222,7 +223,7 @@
         </div>
     </div>
 
-    <script src="dashboard.js" type="module" defer></script>
+    <script src="js/dashboard.js" type="module" defer></script>
 
     <script>
         // This function updates the date and time display
@@ -231,31 +232,46 @@
             // Using en-GB for English date format consistency
             const optsDate = { year: 'numeric', month: 'long', day: 'numeric' };
             const optsDay = { weekday: 'long' };
-            const date = now.toLocaleDateString('en-GB', optsDate);
-            const day = now.toLocaleDateString('en-GB', optsDay);
-            const elem = document.getElementById('currentDateTime');
-            if (elem) elem.textContent = `${date}, ${day}`;
+            // Use try-catch for locale string generation in case of unexpected errors
+            try {
+                const date = now.toLocaleDateString('en-GB', optsDate);
+                const day = now.toLocaleDateString('en-GB', optsDay);
+                const elem = document.getElementById('currentDateTime');
+                if (elem) elem.textContent = `${date}, ${day}`;
+            } catch (e) {
+                console.error("Error formatting date/time:", e);
+                const elem = document.getElementById('currentDateTime');
+                if (elem) elem.textContent = "Error loading date";
+            }
         }
 
         // This function sets the active class on the current sidebar link
         function setActiveLink() {
-            const path = window.location.pathname;
-            const page = path.split('/').pop() || 'index.html'; // Basic extraction
-            const links = document.querySelectorAll('.sidebar ul li a');
-            let foundActive = false;
-            links.forEach(l => {
-                const href = l.getAttribute('href');
-                l.classList.remove('active');
-                // Make comparison more robust (ignore query strings/hashes for basic match)
-                if (href && page === href.split('?')[0].split('#')[0]) {
-                    l.classList.add('active');
-                    foundActive = true;
+            try {
+                const path = window.location.pathname;
+                // Handle potential base href or different deployment scenarios better
+                const page = path.substring(path.lastIndexOf('/') + 1) || 'index.html';
+                const links = document.querySelectorAll('.sidebar ul li a');
+                let foundActive = false;
+                links.forEach(l => {
+                    const hrefAttr = l.getAttribute('href');
+                    if (hrefAttr) {
+                        // Compare only the filename part of the href
+                        const linkPage = hrefAttr.substring(hrefAttr.lastIndexOf('/') + 1).split('?')[0].split('#')[0];
+                        l.classList.remove('active');
+                        if (page === linkPage) {
+                            l.classList.add('active');
+                            foundActive = true;
+                        }
+                    }
+                });
+                // Fallback for root path or explicit index.html
+                if (!foundActive && (page === 'index.html' || page === '')) {
+                    const dashboardLink = document.querySelector('.sidebar ul li a[href="index.html"]');
+                     if(dashboardLink) dashboardLink.classList.add('active');
                 }
-            });
-            // Fallback for '/' or empty path to activate dashboard link
-            if (!foundActive && (page === 'index.html' || page === '')) {
-                const dashboardLink = document.querySelector('.sidebar ul li a[href="index.html"]');
-                 if(dashboardLink) dashboardLink.classList.add('active');
+            } catch(e) {
+                console.error("Error setting active link:", e);
             }
         }
 
