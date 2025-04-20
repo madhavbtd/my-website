@@ -19,16 +19,16 @@
         import { getFirestore, collection, onSnapshot, query, where, getDocs, limit } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js"; // Added getDocs, limit
 
         // **** Your Firebase Configuration ****
+         // !!!!! IMPORTANT: REPLACE PLACEHOLDERS BELOW WITH YOUR ACTUAL FIREBASE CONFIG !!!!!
          const firebaseConfig = {
-           // --- PASTE YOUR CONFIG OBJECT HERE ---
-           apiKey: "YOUR_API_KEY", // Ensure this is your actual API key
-           authDomain: "YOUR_AUTH_DOMAIN",
-           projectId: "YOUR_PROJECT_ID",
-           storageBucket: "YOUR_STORAGE_BUCKET",
-           messagingSenderId: "YOUR_SENDER_ID",
-           appId: "YOUR_APP_ID"
-           // --- END OF YOUR CONFIG ---
+           apiKey: "YOUR_API_KEY",             // <-- अपनी वास्तविक API Key यहाँ डालें
+           authDomain: "YOUR_AUTH_DOMAIN",       // <-- अपना वास्तविक Auth Domain यहाँ डालें
+           projectId: "YOUR_PROJECT_ID",         // <-- अपना वास्तविक Project ID यहाँ डालें
+           storageBucket: "YOUR_STORAGE_BUCKET",   // <-- अपना वास्तविक Storage Bucket यहाँ डालें
+           messagingSenderId: "YOUR_SENDER_ID",    // <-- अपना वास्तविक Sender ID यहाँ डालें
+           appId: "YOUR_APP_ID"                // <-- अपनी वास्तविक App ID यहाँ डालें
          };
+         // !!!!! END OF CONFIGURATION SECTION !!!!!
 
         let app;
         let auth;
@@ -38,7 +38,7 @@
              // Initialize Firebase App (only once per page load)
              if (!window.firebaseAppInitialized) {
                  // Use your actual config object here
-                 app = initializeApp(firebaseConfig);
+                 app = initializeApp(firebaseConfig); // Uses the config object from above
                  window.firebaseAppInitialized = true;
                  window.firebaseApp = app;
                  console.log("Firebase initialized on this page (index).");
