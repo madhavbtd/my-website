@@ -20,12 +20,14 @@
 
         // **** Your Firebase Configuration ****
          const firebaseConfig = {
-           apiKey: "AIzaSyBQj5rQmE77kKKGYixP8y3Hcimz8tiAqzQ", // Your apiKey - Consider securing this
-           authDomain: "madhav-multyprint.firebaseapp.com", // Your authDomain
-           projectId: "madhav-multyprint", // Your projectId
-           storageBucket: "madhav-multyprint.appspot.com", // Your storageBucket
-           messagingSenderId: "104988349637", // Your messagingSenderId
-           appId: "1:104988349637:web:faf045b77c6786a4e70cac" // Your appId
+           // --- PASTE YOUR CONFIG OBJECT HERE ---
+           apiKey: "YOUR_API_KEY", // Ensure this is your actual API key
+           authDomain: "YOUR_AUTH_DOMAIN",
+           projectId: "YOUR_PROJECT_ID",
+           storageBucket: "YOUR_STORAGE_BUCKET",
+           messagingSenderId: "YOUR_SENDER_ID",
+           appId: "YOUR_APP_ID"
+           // --- END OF YOUR CONFIG ---
          };
 
         let app;
@@ -35,6 +37,7 @@
         try {
              // Initialize Firebase App (only once per page load)
              if (!window.firebaseAppInitialized) {
+                 // Use your actual config object here
                  app = initializeApp(firebaseConfig);
                  window.firebaseAppInitialized = true;
                  window.firebaseApp = app;
@@ -95,23 +98,26 @@
              // ---->> Auth check end <<----
 
              // --- Logout Link Logic ---
-             const logoutLink = document.getElementById('logout-link');
-             if (logoutLink) {
-                logoutLink.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    if (confirm("Are you sure you want to logout?")) {
-                        signOut(auth).then(() => {
-                            console.log('User signed out.');
-                            window.location.href = 'login.html';
-                        }).catch((error) => {
-                            console.error('Sign out error:', error);
-                            alert("Logout failed.");
-                        });
-                    }
-                });
-             } else {
-                 console.warn("Logout link with ID 'logout-link' not found.");
-             }
+             // Ensure this runs after the DOM is loaded or use defer on script tag
+             document.addEventListener('DOMContentLoaded', () => {
+                 const logoutLink = document.getElementById('logout-link');
+                 if (logoutLink) {
+                    logoutLink.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        if (confirm("Are you sure you want to logout?")) {
+                            signOut(auth).then(() => {
+                                console.log('User signed out.');
+                                window.location.href = 'login.html';
+                            }).catch((error) => {
+                                console.error('Sign out error:', error);
+                                alert("Logout failed.");
+                            });
+                        }
+                    });
+                 } else {
+                     console.warn("Logout link with ID 'logout-link' not found.");
+                 }
+             });
              // --- Logout logic end ---
 
         } catch(e) {
@@ -225,28 +231,39 @@
         function setActiveLink() {
             try {
                 const path = window.location.pathname;
+                // Ensure page defaults to 'index.html' if path is just '/'
                 const page = path.substring(path.lastIndexOf('/') + 1) || 'index.html';
                 const links = document.querySelectorAll('.sidebar ul li a');
                 links.forEach(l => {
                     const hrefAttr = l.getAttribute('href');
                     l.classList.remove('active'); // Remove active from all first
                     if (hrefAttr) {
-                        const linkPage = hrefAttr.substring(hrefAttr.lastIndexOf('/') + 1).split('?')[0].split('#')[0];
-                         // Explicit check for index.html and empty page for dashboard link
-                        if ((page === 'index.html' || page === '') && (linkPage === 'index.html' || linkPage === '')) {
+                        // Normalize linkPage to handle cases like '/' or '/index.html'
+                        const linkPage = hrefAttr.substring(hrefAttr.lastIndexOf('/') + 1).split('?')[0].split('#')[0] || 'index.html';
+                         // Check if current page matches link page
+                         if (page === linkPage) {
                              l.classList.add('active');
-                        } else if (page !== '' && page !== 'index.html' && page === linkPage) {
+                         }
+                         // Special case for root path '/' also activating index.html link
+                         else if ((page === '/' || page === 'index.html') && linkPage === 'index.html') {
                              l.classList.add('active');
-                        }
+                         }
                     }
                 });
             } catch(e) { console.error("Error setting active link:", e); }
         }
 
+        // Update date/time immediately and then every minute
         updateDateTime();
         setInterval(updateDateTime, 60000);
 
-        window.addEventListener('DOMContentLoaded', setActiveLink);
+        // Set active link on initial load and when history changes
+        // DOMContentLoaded ensures elements exist before setActiveLink runs
+        window.addEventListener('DOMContentLoaded', () => {
+            setActiveLink();
+             // Ensure Logout link listener is added after DOM is ready too
+             // Note: Moved logout logic to run within DOMContentLoaded in the module script above
+        });
         window.addEventListener('popstate', setActiveLink);
     </script>
 </body>
