@@ -1,283 +1,553 @@
-/* यहाँ CSS स्टाइलिंग होगी */
+/* index.css - Consolidated and Refined Styles */
+
+/* --- Base Variables and Styles --- */
+:root {
+    --primary-color: #0056b3; /* नीला */
+    --secondary-color: #2c3e50; /* गहरा नीला (साइडबार) */
+    --accent-color: #ffc107; /* पीला (डेट/टाइम) */
+    --success-color: #28a745; /* हरा */
+    --info-color: #17a2b8; /* Teal */
+    --danger-color: #dc3545; /* लाल */
+    --light-bg: #f8f9fa;
+    --border-color: #dee2e6;
+    --text-color: #343a40;
+    --text-muted: #6c757d;
+    --sidebar-text: #ecf0f1;
+    --sidebar-hover: #34495e;
+    --sidebar-active: #1abc9c; /* Teal for active link */
+    --sidebar-active-border: #f1c40f; /* Yellow border for active */
+}
+
 body {
-  font-family: 'Segoe UI Emoji', sans-serif;
-  margin: 0;
-  padding: 0;
-  background-color: #f4f6f8;
-  /* हल्का ग्रे बैकग्राउंड */
+    font-family: 'Poppins', 'Segoe UI Emoji', sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #f4f6f8; /* हल्का ग्रे बैकग्राउंड */
+    color: var(--text-color);
+    line-height: 1.6;
+    font-size: 16px; /* Base font size */
 }
 
 .container {
-  display: flex;
-  padding: 20px;
+    display: flex;
+    min-height: 100vh;
 }
 
+/* --- Sidebar Styles --- */
 .sidebar {
-  width: 200px;
-  background-color: #2c3e50;
-  height: auto;
-  /* कंटेंट के अनुसार हाइट */
-  min-height: 100vh;
-  /* कम से कम पूरी स्क्रीन की हाइट */
-  color: white;
-  padding-top: 20px;
+    width: 220px;
+    background-color: var(--secondary-color);
+    color: var(--sidebar-text);
+    padding-top: 0;
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0; /* Prevent sidebar from shrinking */
+    box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+    transition: width 0.3s ease;
 }
 
 .sidebar h2 {
-  text-align: center;
-  margin-bottom: 20px;
-  background-color: white;
-  padding: 10px;
+    text-align: center;
+    background-color: white;
+    padding: 15px 10px;
+    margin: 0;
+    border-bottom: 1px solid var(--border-color);
 }
 
 .sidebar h2 img {
-  max-width: 100%;
-  height: auto;
+    max-width: 90%;
+    height: auto;
+    vertical-align: middle; /* Align image properly */
 }
 
 .sidebar ul {
-  list-style-type: none;
-  padding: 0;
-  margin: 0;
+    list-style-type: none;
+    padding: 10px 0;
+    margin: 0;
+    flex-grow: 1; /* Allow list to take remaining space */
+    overflow-y: auto; /* Add scroll if items exceed height */
 }
 
 .sidebar ul li a {
-  display: block;
-  padding: 10px;
-  text-decoration: none;
-  color: white;
-  display: flex;
-  align-items: center;
+    padding: 12px 20px;
+    text-decoration: none;
+    color: var(--sidebar-text);
+    display: flex;
+    align-items: center;
+    transition: background-color 0.2s ease, padding-left 0.2s ease, color 0.2s ease;
+    border-left: 4px solid transparent;
+    font-size: 0.95em;
+    white-space: nowrap; /* Prevent text wrapping */
 }
 
 .sidebar ul li a i {
-  margin-right: 10px;
+    margin-right: 12px;
+    width: 20px;
+    text-align: center;
+    font-size: 1.1em;
+    flex-shrink: 0;
 }
 
 .sidebar ul li a:hover {
-  background-color: #34495e;
+    background-color: var(--sidebar-hover);
+    color: #fff;
+    padding-left: 24px; /* Indent on hover */
 }
 
+.sidebar ul li a.active {
+    background-color: var(--sidebar-active);
+    border-left-color: var(--sidebar-active-border);
+    font-weight: 600;
+    color: #fff;
+}
+
+/* Logout link at the bottom */
+.sidebar ul li:last-child {
+     margin-top: auto; /* Push logout to the bottom */
+}
+.sidebar ul li a#logout-link {
+     border-top: 1px solid var(--sidebar-hover);
+}
+
+
+/* --- Main Content Styles --- */
 .main-content {
-  flex: 1;
-  padding: 20px;
+    flex: 1; /* Take remaining width */
+    padding: 25px;
+    overflow-y: auto; /* Allow scrolling if content overflows */
+    height: 100vh; /* Ensure it takes full viewport height */
+    box-sizing: border-box; /* Include padding in height calculation */
 }
 
+/* --- Header Styles --- */
 .header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20px;
-  background-color: white;
-  /* हेडर का बैकग्राउंड */
-  padding: 15px;
-  border-radius: 5px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-}
-
-.header-buttons {
-  display: flex;
-  margin-right: 10px;
-  /* तारीख से थोड़ी दूरी */
-}
-
-.header-buttons button {
-  color: white;
-  border: none;
-  padding: 8px 12px;
-  margin-left: 10px;
-  cursor: pointer;
-  border-radius: 5px;
-  font-family: 'Poppins', sans-serif;
-  font-size: 0.9em;
-}
-
-.header-buttons button:first-child {
-  background-color: #28a745;
-  /* हरा */
-}
-
-.header-buttons button:nth-child(2) {
-  background-color: #17a2b8;
-  /* टील */
-}
-
-.header-buttons button:nth-child(3) {
-  background-color: #dc3545;
-  /* लाल */
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap; /* Allow wrapping on smaller screens */
+    gap: 15px; /* Space between items */
+    margin-bottom: 25px;
+    background-color: white;
+    padding: 15px 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
 .welcome-text {
-  font-family: 'Poppins', sans-serif;
-  color: #495057;
-  font-weight: bold;
-  margin-right: auto;
-  /* बटनों को दूसरी तरफ धकेलने के लिए */
+    font-family: 'Poppins', sans-serif;
+    color: var(--text-color);
+    font-weight: 600;
+    font-size: 1.05em;
+    flex-grow: 1; /* Allow text to take available space */
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis; /* Add ellipsis if text too long */
 }
+
+.header-buttons {
+    display: flex;
+    flex-wrap: wrap; /* Allow buttons to wrap */
+    gap: 10px; /* Space between buttons */
+    flex-shrink: 0; /* Prevent buttons container from shrinking excessively */
+}
+
+.header-buttons a.button-base {
+    text-decoration: none;
+    color: white;
+    border: none;
+    padding: 9px 14px;
+    cursor: pointer;
+    border-radius: 6px;
+    font-family: 'Poppins', sans-serif;
+    font-size: 0.9em;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: background-color 0.2s ease, transform 0.1s ease;
+    line-height: 1.4; /* Ensure consistent button height */
+}
+.header-buttons a.button-base:hover {
+    opacity: 0.9;
+}
+.header-buttons a.button-base:active {
+    transform: scale(0.98);
+}
+
+/* Specific button colors */
+.header-buttons a.add-customer-btn { background-color: var(--success-color); }
+.header-buttons a.add-supplier-btn { background-color: var(--info-color); }
+.header-buttons a.new-order-btn { background-color: var(--primary-color); }
+
 
 .date-time-container {
-  background-color: #ffc107;
-  color: #212529;
-  padding: 8px 12px;
-  border-radius: 5px;
-  font-family: 'Poppins', sans-serif;
-  font-size: 0.9em;
+    background-color: var(--accent-color);
+    color: #333;
+    padding: 9px 14px;
+    border-radius: 6px;
+    font-family: 'Poppins', sans-serif;
+    font-size: 0.9em;
+    white-space: nowrap;
+    font-weight: 500;
+    flex-shrink: 0; /* Prevent shrinking */
 }
-
-.date-time-container .date-day {
-  font-weight: bold;
-}
-
+.date-time-container .date-day,
 .date-time-container .day-name {
-  font-weight: bold;
+    font-weight: 600;
 }
 
+/* --- Order Control Panel Styles --- */
 .order-control-panel {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  gap: 15px;
-  margin-bottom: 20px;
+    display: grid;
+    /* Adjust minmax for better responsiveness */
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 20px;
+    margin-bottom: 25px;
 }
 
 .panel-item {
-  background-color: #fff;
-  /* हल्का बैकग्राउंड */
-  border: 1px solid #e0e0e0;
-  /* हल्की बॉर्डर */
-  padding: 15px;
-  /* थोड़ी कम पैडिंग */
-  text-align: center;
-  border-radius: 5px;
-  font-size: 0.9em;
-  /* थोड़ा छोटा फ़ॉन्ट */
-  color: #495057;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  font-weight: bold;
-  /* टेक्स्ट को बोल्ड किया */
-  font-family: 'Poppins', sans-serif;
-  /* पॉपिंग फ़ॉन्ट */
-  text-transform: uppercase;
-  /* कैपिटल लेटर */
-  line-height: 1.2;
-  /* लाइन की ऊंचाई थोड़ी कम */
+    background-color: #fff;
+    border: 1px solid var(--border-color);
+    padding: 20px 15px;
+    text-align: center;
+    border-radius: 8px;
+    font-size: 0.9em;
+    color: var(--text-color);
+    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.07);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between; /* Better vertical alignment */
+    align-items: center;
+    font-weight: 600;
+    font-family: 'Poppins', sans-serif;
+    text-transform: uppercase;
+    line-height: 1.3;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    min-height: 170px; /* Slightly increased height */
 }
 
-.panel-count {
-  font-size: 3em;
-  /* क्वांटिटी का साइज़ 1.5 गुना बढ़ाया */
-  font-weight: bolder;
-  /* और भी ज्यादा बोल्ड */
-  display: block;
-  margin-bottom: 5px;
-  font-family: 'Poppins', sans-serif;
-  /* पॉपिंग फ़ॉन्ट */
-}
-
-.panel-item button {
-  background-color: #007bff;
-  color: white;
-  border: none;
-  padding: 8px 12px;
-  cursor: pointer;
-  border-radius: 3px;
-  font-size: 0.8em;
-  /* बटन का फ़ॉन्ट भी थोड़ा छोटा */
-  margin-top: 5px;
-  /* बटन का मार्जिन भी थोड़ा कम */
-  font-weight: normal;
-  /* बटन का टेक्स्ट बोल्ड नहीं रहेगा */
-  font-family: 'Poppins', sans-serif;
-  /* पॉपिंग फ़ॉन्ट */
-  text-transform: capitalize;
-  /* बटन टेक्स्ट कैपिटलाइज */
-}
-
-.panel-item button:hover {
-  background-color: #0056b3;
-}
-
-/* हल्के रंग और आइकन के लिए नई क्लासेस */
-.panel-item.light-blue {
-  background-color: #e1f5fe;
-  color: #1976d2;
-}
-
-.panel-item.light-orange {
-  background-color: #fff3e0;
-  color: #e65100;
-}
-
-.panel-item.light-green {
-  background-color: #e8f5e9;
-  color: #388e3c;
-}
-
-.panel-item.light-red {
-  background-color: #ffebee;
-  color: #d32f2f;
+.panel-item:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 5px 10px rgba(0, 0, 0, 0.1);
 }
 
 .panel-icon {
-  font-size: 2em;
-  margin-bottom: 5px;
-  /* आइकन का मार्जिन भी थोड़ा कम */
+    font-size: 2.2em;
+    margin-bottom: 10px; /* Increased space */
 }
 
+.panel-count {
+    font-size: 2.8em;
+    font-weight: 700;
+    display: block;
+    margin-bottom: 10px; /* Increased space */
+    font-family: 'Poppins', sans-serif;
+    color: var(--primary-color);
+}
+
+.panel-item a.button-link {
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
+    padding: 8px 15px;
+    cursor: pointer;
+    border-radius: 5px;
+    font-size: 0.85em;
+    margin-top: 10px;
+    font-weight: 500;
+    font-family: 'Poppins', sans-serif;
+    text-transform: capitalize;
+    text-decoration: none;
+    display: inline-block;
+    transition: background-color 0.2s ease;
+}
+.panel-item a.button-link:hover {
+    background-color: #004085; /* Darker blue on hover */
+}
+
+/* Panel background color variations */
+.panel-item.light-blue { background-color: #e1f5fe; color: #0d47a1; }
+.panel-item.light-blue .panel-count { color: #1976d2;}
+.panel-item.light-orange { background-color: #fff3e0; color: #bf360c; }
+.panel-item.light-orange .panel-count { color: #e65100;}
+.panel-item.light-green { background-color: #e8f5e9; color: #1b5e20; }
+.panel-item.light-green .panel-count { color: #388e3c;}
+.panel-item.light-red { background-color: #ffebee; color: #b71c1c; }
+.panel-item.light-red .panel-count { color: #d32f2f;}
+
+/* --- Search Bar Styles --- */
 .search-bar {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  margin-bottom: 20px;
-  background-color: white;
-  padding: 15px;
-  border-radius: 5px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    flex-wrap: wrap; /* Allow wrapping */
+    gap: 10px; /* Space between label, input, button */
+    margin-bottom: 25px;
+    background-color: white;
+    padding: 15px 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
 .search-bar label {
-  margin-right: 10px;
-  color: #495057;
-  font-size: 0.9em;
+    margin: 0; /* Removed margin-right, using gap now */
+    color: var(--text-muted);
+    font-size: 0.95em;
+    font-weight: 500;
+    flex-shrink: 0;
 }
 
 .search-bar input[type="text"] {
-  padding: 8px;
-  border: 1px solid #ced4da;
-  border-radius: 4px;
-  font-size: 0.9em;
+    padding: 9px 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 6px; /* Rounded corners all around */
+    font-size: 0.95em;
+    flex-grow: 1; /* Allow input to grow */
+    min-width: 150px; /* Minimum width */
+    max-width: 300px; /* Maximum width */
+    box-sizing: border-box;
+}
+
+.search-bar input[type="text"]:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 2px rgba(0, 86, 179, 0.2);
 }
 
 .search-bar button {
-  background-color: #28a745;
-  color: white;
-  border: none;
-  padding: 8px 12px;
-  cursor: pointer;
-  border-radius: 4px;
-  font-size: 0.9em;
-  margin-left: 10px;
+    background-color: var(--success-color);
+    color: white;
+    border: none;
+    padding: 9px 15px;
+    cursor: pointer;
+    border-radius: 6px; /* Rounded corners */
+    font-size: 0.95em;
+    height: 39px; /* Match input height (approx) */
+    line-height: 1; /* Adjust for icon alignment */
+    transition: background-color 0.2s ease;
+    flex-shrink: 0;
 }
-
 .search-bar button:hover {
-  background-color: #1e7e34;
+    background-color: #1e7e34; /* Darker green on hover */
 }
 
+/* --- Reminder Section Styles --- */
 .reminder-section {
-  background-color: white;
-  padding: 15px;
-  border: 1px solid #dee2e6;
-  border-radius: 5px;
-  font-size: 0.9em;
-  color: #495057;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    background-color: white;
+    padding: 20px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    font-size: 0.95em;
+    color: var(--text-color);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    min-height: 120px;
 }
 
 .reminder-section h3 {
-  margin-top: 0;
-  margin-bottom: 10px;
-  font-size: 1.1em;
+    margin-top: 0;
+    margin-bottom: 15px;
+    font-size: 1.2em;
+    color: var(--primary-color);
+    border-bottom: 1px solid #eee;
+    padding-bottom: 8px;
+}
+.reminder-section p {
+    margin-bottom: 0;
+}
+
+
+/* --- Responsive Design --- */
+
+/* Medium screens / Tablets - Collapsed Sidebar */
+@media (max-width: 992px) {
+    .sidebar {
+        width: 60px; /* Collapsed width */
+        overflow: hidden; /* Hide text */
+        position: absolute; /* Take out of flow */
+        left: 0;
+        top: 0;
+        height: 100%;
+        z-index: 1000; /* Ensure it's above content when hovered */
+    }
+    .sidebar:hover {
+        width: 220px; /* Expand on hover */
+        box-shadow: 4px 0 10px rgba(0,0,0,0.2);
+    }
+    .sidebar h2 {
+        padding: 10px 5px; /* Adjust padding */
+    }
+    .sidebar h2 img {
+        max-width: 40px; /* Smaller logo when collapsed */
+        transition: max-width 0.3s ease;
+    }
+    .sidebar:hover h2 img {
+        max-width: 90%; /* Full size logo on hover */
+    }
+    .sidebar ul li a span {
+        display: none; /* Hide text span */
+    }
+    .sidebar:hover ul li a span {
+        display: inline; /* Show text span on hover */
+    }
+    .sidebar ul li a {
+        justify-content: center; /* Center icon when collapsed */
+        padding: 12px 0;
+    }
+    .sidebar:hover ul li a {
+        justify-content: flex-start; /* Align left on hover */
+        padding: 12px 20px; /* Restore padding */
+    }
+    .sidebar ul li a i {
+        margin-right: 0; /* No margin when collapsed */
+    }
+    .sidebar:hover ul li a i {
+        margin-right: 12px; /* Restore margin on hover */
+    }
+
+    /* Adjust main content padding to account for collapsed sidebar width */
+    .main-content {
+        padding-left: 80px; /* = collapsed sidebar width + some buffer */
+    }
+}
+
+/* Small screens / Mobile */
+@media (max-width: 768px) {
+    .container {
+        flex-direction: column; /* Stack sidebar and content vertically */
+    }
+    .sidebar {
+        width: 100%; /* Full width */
+        min-height: auto; /* Auto height */
+        height: auto;
+        flex-direction: row; /* Horizontal layout */
+        align-items: center; /* Center items vertically */
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        position: static; /* Back to normal flow */
+        overflow: visible; /* Reset overflow */
+        padding-top: 0; /* Reset padding */
+    }
+    .sidebar:hover {
+         width: 100%; /* Keep full width on hover */
+         box-shadow: 0 2px 5px rgba(0,0,0,0.1); /* Reset hover shadow */
+    }
+    .sidebar h2 {
+        padding: 5px 15px; /* Adjust padding */
+        flex-shrink: 0; /* Prevent logo container from shrinking */
+        border-bottom: none; /* Remove bottom border */
+    }
+    .sidebar h2 img {
+        max-width: 120px; /* Adjust logo size for mobile header */
+    }
+    .sidebar:hover h2 img {
+         max-width: 120px; /* Keep logo size consistent */
+    }
+
+    .sidebar ul {
+        display: flex; /* Horizontal layout */
+        overflow-x: auto; /* Allow horizontal scrolling for menu items */
+        flex-grow: 1; /* Take remaining space */
+        padding: 0 5px;
+        justify-content: flex-start; /* Align items to the start */
+        border-top: none; /* Remove top border if any */
+    }
+    .sidebar ul li {
+        flex-shrink: 0; /* Prevent items from shrinking */
+        margin-top: 0; /* Reset margin */
+    }
+     .sidebar ul li:last-child {
+         margin-top: 0; /* Reset margin */
+    }
+    .sidebar ul li a {
+        padding: 12px 10px; /* Adjust padding */
+        border-left: none; /* Remove left border */
+        border-bottom: 3px solid transparent; /* Bottom border for active state */
+        white-space: nowrap; /* Keep items on one line */
+        justify-content: center; /* Center icon+text */
+    }
+    .sidebar ul li a i {
+        margin-right: 5px; /* Space between icon and text */
+    }
+    .sidebar ul li a span {
+        display: inline; /* Always display text */
+    }
+    .sidebar:hover ul li a {
+        padding-left: 10px; /* Keep padding consistent */
+        background-color: var(--sidebar-hover); /* Hover effect */
+    }
+     .sidebar ul li a.active {
+        border-left: none; /* Ensure no left border */
+        border-bottom-color: var(--sidebar-active-border); /* Use bottom border for active */
+        background-color: transparent; /* No background for active */
+        color: var(--sidebar-active); /* Active text color */
+        font-weight: 600;
+    }
+    .sidebar:hover ul li a span {
+        display: inline; /* Ensure text stays visible */
+    }
+
+    .main-content {
+        padding: 15px; /* Reduce padding */
+        height: auto; /* Auto height */
+        min-height: calc(100vh - 60px); /* Adjust based on sidebar height */
+        padding-left: 15px; /* Reset left padding */
+    }
+
+    .header {
+        flex-direction: column; /* Stack header items vertically */
+        gap: 10px; /* Adjust gap */
+        align-items: stretch; /* Stretch items to full width */
+    }
+    .welcome-text {
+        text-align: center; /* Center welcome text */
+        margin: 0 0 10px 0; /* Adjust margin */
+        max-width: none; /* Allow full width */
+        order: 1; /* Change order if needed */
+    }
+    .header-buttons {
+        justify-content: center; /* Center buttons */
+        order: 3; /* Change order if needed */
+    }
+    .date-time-container {
+        text-align: center; /* Center date/time */
+        order: 2; /* Change order if needed */
+        margin: 0 auto; /* Center block */
+    }
+
+    .search-bar {
+        flex-direction: column; /* Stack vertically */
+        align-items: stretch; /* Stretch items */
+        gap: 10px;
+    }
+    .search-bar input[type="text"] {
+        max-width: none; /* Allow full width */
+    }
+    .search-bar button {
+        width: 100%; /* Full width button */
+        height: auto; /* Auto height */
+        padding: 10px 15px;
+    }
+}
+
+/* Extra Small screens */
+@media (max-width: 480px) {
+    body {
+        font-size: 14px; /* Slightly smaller base font */
+    }
+    .header-buttons a.button-base {
+        font-size: 0.85em;
+        padding: 7px 10px;
+    }
+    .panel-item {
+        font-size: 0.85em;
+        min-height: 140px; /* Adjust panel height */
+    }
+    .panel-count {
+        font-size: 2.2em; /* Adjust count size */
+    }
+    .panel-item a.button-link {
+        font-size: 0.8em;
+        padding: 7px 10px;
+    }
+    .sidebar ul li a {
+        padding: 10px 8px; /* Reduce padding slightly */
+    }
 }
