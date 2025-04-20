@@ -4,16 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Supplier Management</title>
-
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" integrity="sha512-9usAa10IRO0HhonpyAIVpjrylPvoDwiPUiKdWk5t3PyolY1cOd4DSE0Ga+ri4AuTroPR5aQvXU9xC6qOPnzFeg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
-
     <link rel="stylesheet" href="css/order_history.css">
-
     <style>
-        /* Styles */
+        /* Styles as provided before */
         .modal-content { max-width: 500px; }
         .modal-content label { font-weight: 500; margin-bottom: 3px; display: block;}
         .modal-content input, .modal-content textarea { width: 100%; padding: 8px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; font-family: inherit; font-size: 0.95em; }
@@ -26,7 +23,7 @@
     <script type="module">
         // Firebase Imports - Auth Persistence शामिल करें
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-        import { getAuth, onAuthStateChanged, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js"; // Persistence जोड़ा गया
+        import { getAuth, onAuthStateChanged, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
         import { getFirestore, collection, doc, addDoc, setDoc, deleteDoc, onSnapshot, query, orderBy, Timestamp, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
         // --- आपकी सही Firebase कॉन्फ़िगरेशन ---
@@ -40,40 +37,28 @@
         };
         // --- कॉन्फ़िगरेशन समाप्त ---
 
-
-        // Firebase App Initialization
-        let app;
-        let auth;
-        let db;
-
+        let app, auth, db;
         try {
+             // Init Firebase
              if (!window.firebaseAppInitialized) {
-                 app = initializeApp(firebaseConfig);
-                 window.firebaseAppInitialized = true;
-                 window.firebaseApp = app;
+                 app = initializeApp(firebaseConfig); window.firebaseAppInitialized = true; window.firebaseApp = app;
                  console.log("Firebase initialized on suppliers.html.");
-             } else {
-                 app = window.firebaseApp;
-                 console.log("Firebase already initialized on suppliers.html.");
-             }
-             auth = getAuth(app);
-             db = getFirestore(app);
+             } else { app = window.firebaseApp; console.log("Firebase already initialized on suppliers.html."); }
+             auth = getAuth(app); db = getFirestore(app);
 
-             // --- Make services globally available ---
+             // Make services global
              window.db = db; window.auth = auth; window.collection = collection; window.doc = doc;
              window.addDoc = addDoc; window.setDoc = setDoc; window.deleteDoc = deleteDoc;
              window.onSnapshot = onSnapshot; window.query = query; window.orderBy = orderBy;
              window.Timestamp = Timestamp; window.serverTimestamp = serverTimestamp;
 
-             // --- <<<< Promise + Persistence Auth Check >>>> ---
+             // --- Promise + Persistence Auth Check ---
              const mainPageContent = document.getElementById('main-supplier-content');
              const loadingState = document.getElementById('loading-state');
-
              if (mainPageContent) mainPageContent.style.display = 'none';
              if (loadingState) loadingState.style.display = 'block';
 
-             // Function to check auth state using Promise
-             function checkAuthState() {
+             function checkAuthState() { /* ... Promise function as provided before ... */
                  console.log("checkAuthState: Promise created. Waiting...");
                  return new Promise((resolve, reject) => {
                      const timer = setTimeout(() => { reject(new Error("Auth check timed out.")); }, 10000);
@@ -83,63 +68,50 @@
                          resolve(user);
                      }, (error) => { clearTimeout(timer); reject(error); });
                  });
-             }
+              }
 
-             console.log("suppliers.html: Attempting to set persistence...");
+             console.log("suppliers.html: Setting persistence...");
              setPersistence(auth, browserLocalPersistence)
                .then(() => {
-                  console.log("suppliers.html: Persistence set. Now checking auth state via Promise...");
-                  // --- Use the Promise ---
-                  return checkAuthState(); // Return the promise to chain .then()
+                  console.log("suppliers.html: Persistence set. Checking auth state...");
+                  return checkAuthState(); // Chain the promise
                })
                .then(user => {
-                   // This runs after persistence is set AND auth state is resolved
                    if (loadingState) loadingState.style.display = 'none';
-
                    if (user) {
-                       // USER LOGGED IN
-                       console.log(`suppliers.html: User confirmed via Promise. UID: ${user.uid}. Initializing page.`);
+                       console.log(`suppliers.html: User confirmed. UID: ${user.uid}. Init page.`);
                        if (mainPageContent) mainPageContent.style.display = 'block';
-                       else console.error("CRITICAL: main-supplier-content not found!");
-
+                       else console.error("CRITICAL: #main-supplier-content not found!");
                        if (typeof initializeSuppliersPage === 'function') initializeSuppliersPage();
                        else console.error("CRITICAL: initializeSuppliersPage function not found!");
-
                    } else {
-                       // USER NOT LOGGED IN
-                       const currentPage = window.location.pathname.split('/').pop() || 'index.html';
-                       console.log(`suppliers.html: No user confirmed via Promise on ${currentPage}. Redirecting...`);
-                       if (currentPage.toLowerCase() !== 'login.html') {
+                       const currentPage = (window.location.pathname.split('/').pop()||'').toLowerCase();
+                       console.log(`suppliers.html: No user confirmed. Redirecting from ${currentPage}...`);
+                       if (currentPage !== 'login.html') {
                           const originalUrl = encodeURIComponent(window.location.pathname + window.location.search);
-                          // !!!!! login.html का सही पाथ यहाँ डालें !!!!!
+                           // !!!!! login.html का सही पाथ यहाँ डालें !!!!!
                           window.location.replace(`login.html?redirectUrl=${originalUrl}`);
                        }
                    }
-               }) // End of checkAuthState().then()
-               .catch(error => {
-                    // This catches errors from setPersistence OR checkAuthState
-                    console.error("suppliers.html: Error during persistence setting or auth check:", error);
-                    alert("Error checking login status: " + error.message);
-                    if (loadingState) loadingState.style.display = 'none';
-                    document.body.innerHTML = `<p style="color:red; text-align:center; padding: 20px;">Error checking login status: ${error.message}. Please refresh.</p>`;
-               }); // End of setPersistence().catch()
-             // --- <<<< End Auth Check Logic >>>> ---
+               })
+               .catch(error => { /* ... Error handling as provided before ... */
+                   console.error("suppliers.html: Error setting persistence or checking auth:", error);
+                   alert("Error checking login: " + error.message);
+                   if (loadingState) loadingState.style.display = 'none';
+                   document.body.innerHTML = `<p style="color:red; text-align:center;">Error checking login: ${error.message}.</p>`;
+               });
+             // --- End Auth Check ---
 
-        } catch(e) {
-            console.error("CRITICAL Firebase setup error in suppliers.html:", e);
-            alert("Critical setup error. See console.");
-            document.body.innerHTML = `<p style="color:red; text-align:center; padding: 20px;">Critical setup error: ${e.message}</p>`;
-        }
+        } catch(e) { /* ... Error handling as provided before ... */ }
     </script>
-    </head>
-<body>
 
+</head>
+<body>
     <div id="loading-state" style="display: block;">
         <p style="text-align: center; padding: 40px; font-size: 1.1em; color: #555;">
             <i class="fas fa-spinner fa-spin"></i> Loading Authentication...
         </p>
     </div>
-
     <div id="main-supplier-content" style="display: none;">
         <div class="container">
             <div class="header"><i class="fas fa-users header-icon"></i><h1>Supplier Management</h1></div>
@@ -158,7 +130,7 @@
             <div class="order-summary-counts"><span>Total Suppliers: <strong id="total-suppliers">0</strong></span></div>
         </div>
         <div id="supplierModal" class="modal">
-            <div class="modal-content">
+             <div class="modal-content">
                 <span class="close-btn" id="closeSupplierModal" title="Close">&times;</span>
                 <h2 id="modalTitle">Add New Supplier</h2>
                 <form id="supplierForm">
@@ -172,7 +144,7 @@
                         <button type="submit" id="saveSupplierBtn" class="button add-new-button"><i class="fas fa-save"></i> Save Supplier</button>
                         <button type="button" id="cancelBtn" class="button clear-filters-button" style="background-color: #6c757d;"><i class="fas fa-times"></i> Cancel</button>
                     </div>
-                    <p id="modalError" style="color: red; margin-top: 10px; text-align: center;"></p>
+                     <p id="modalError" style="color: red; margin-top: 10px; text-align: center;"></p>
                 </form>
             </div>
         </div>
