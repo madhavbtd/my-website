@@ -1,6 +1,5 @@
 /* General Body Styles */
 body {
-    /* Poppins Font Added */
     font-family: 'Poppins', "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
     margin: 0;
     padding: 15px;
@@ -56,7 +55,7 @@ body {
 
 /* Form Layout with Rows */
 .form-row { display: flex; flex-wrap: wrap; gap: 15px 20px; margin-bottom: 15px; }
-.form-group { display: flex; flex-direction: column; flex: 1; min-width: 150px; position: relative; /* Keep relative for suggestion box */ }
+.form-group { display: flex; flex-direction: column; flex: 1; min-width: 150px; position: relative; }
 .form-group:last-child { margin-bottom: 0; }
 .form-group-half { flex: 1 1 calc(50% - 10px); }
 .form-group label { font-size: 0.85em; text-align: left; padding-right: 0; padding-top: 0; margin-bottom: 5px; color: #404040; font-weight: 500; }
@@ -76,7 +75,7 @@ body {
 .remarks-group label { font-weight: 600; margin-bottom: 5px;}
 .remarks-group textarea { min-height: 36px; height: auto; }
 
-/* Order Status Checkboxes Styling (Grid & Color) - UPDATED */
+/* Order Status Checkboxes Styling - UPDATED AGAIN FOR IMAGE MATCH */
 #order-status-group {
     gap: 10px;
     padding: 10px;
@@ -84,16 +83,22 @@ body {
     border-radius: 4px;
     background-color: #f8f9fa;
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(2, 1fr); /* Default 2 columns */
 }
-@media (min-width: 576px) { #order-status-group { grid-template-columns: repeat(3, 1fr); } }
+/* Adjust columns based on screen size for better layout */
+@media (min-width: 576px) {
+    #order-status-group { grid-template-columns: repeat(3, 1fr); } /* 3 columns on small screens */
+}
+@media (min-width: 768px) {
+    #order-status-group { grid-template-columns: repeat(4, 1fr); } /* 4 columns on medium screens and up */
+}
 
-/* Base label style (without background color) */
+/* Base label style */
 #order-status-group label {
     margin-bottom: 0;
-    border: 1px solid #ccc;
-    border-radius: 15px;
-    padding: 6px 10px;
+    border: 1px solid transparent; /* Make base border transparent */
+    border-radius: 6px; /* Match image rounding */
+    padding: 8px 12px; /* Adjust padding for better look */
     cursor: pointer;
     transition: all 0.2s ease;
     display: flex;
@@ -102,42 +107,42 @@ body {
     font-size: 0.85em;
     text-align: center;
     font-weight: 500;
-    color: #555; /* Default text color */
+    color: white; /* Default to white text */
 }
 
-#order-status-group label span { /* No specific styles needed here usually */ }
-#order-status-group label input[type="checkbox"] { display: none; } /* Hide the actual checkbox */
+#order-status-group label input[type="checkbox"] { display: none; }
 
-/* Color classes based on status value (lowercase, spaces replaced with hyphens) */
-#order-status-group label.status-order-received { background-color: #6c757d; border-color: #5a6268; color: white; }
-#order-status-group label.status-designing { background-color: #ffc107; border-color: #e0a800; color: #333; }
-#order-status-group label.status-verification { background-color: #fd7e14; border-color: #d96d12; color: white; }
-#order-status-group label.status-design-approved { background-color: #20c997; border-color: #1aa882; color: white; }
-#order-status-group label.status-ready-for-working { background-color: #0dcaf0; border-color: #0baccc; color: #333; }
-#order-status-group label.status-printing { background-color: #17a2b8; border-color: #138496; color: white; }
-#order-status-group label.status-delivered { background-color: #28a745; border-color: #218838; color: white; }
-#order-status-group label.status-completed { background-color: #28a745; border-color: #218838; color: white; } /* Same as Delivered */
+/* Color classes based on status value (Matching Image) */
+#order-status-group label.status-order-received { background-color: #6c757d; border-color: #5a6268; } /* Slate Grey */
+#order-status-group label.status-designing { background-color: #fd7e14; border-color: #d96d12; } /* Orange */
+#order-status-group label.status-verification { background-color: #dc3545; border-color: #c82333; } /* Reddish */
+#order-status-group label.status-design-approved { background-color: #28a745; border-color: #218838; } /* Green */
+#order-status-group label.status-ready-for-working { background-color: #0dcaf0; border-color: #0baccc; color: #333;} /* Cyan, Darker text might be needed */
+#order-status-group label.status-printing { background-color: #17a2b8; border-color: #138496; } /* Teal */
+#order-status-group label.status-delivered { background-color: #198754; border-color: #146c43; } /* Darker Green */
+#order-status-group label.status-completed { background-color: #198754; border-color: #146c43; } /* Darker Green */
 
-/* Style for labels containing a disabled checkbox */
+/* Style for disabled labels */
 #order-status-group label:has(input[type="checkbox"]:disabled) {
     cursor: not-allowed;
-    background-color: #e9ecef !important; /* Use !important to override status color */
+    background-color: #e9ecef !important;
     border-color: #ced4da !important;
     color: #6c757d !important;
     opacity: 0.65;
 }
 #order-status-group label:has(input[type="checkbox"]:disabled):hover {
-    opacity: 0.65; /* Prevent hover effect */
+    opacity: 0.65;
 }
 
-/* Style for labels containing a checked checkbox */
+/* Style for checked labels */
 #order-status-group label:has(input[type="checkbox"]:checked) {
-    box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.6), 0 0 0 2px #0056b3;
+    box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.7), 0 0 0 2px #0056b3; /* Brighter inner shadow */
+    font-weight: 600; /* Make checked bold */
 }
 
-/* Default style if no status class is present (optional fallback) */
+/* Fallback style (should not be needed if JS works) */
 #order-status-group label:not([class*="status-"]) {
-    background-color: #f0f0f0; /* Neutral background */
+    background-color: #f0f0f0;
     border-color: #ccc;
     color: #555;
 }
@@ -168,36 +173,14 @@ body {
 .product-list-item .delete-product-btn:hover { color: #a71d2a; }
 .empty-list-message { color: #6c757d; font-style: italic; text-align: center; padding: 10px 0; font-size: 0.9em; }
 
-/* --- Autocomplete Suggestions Styling Update (With Fix) --- */
-.suggestions-box {
-    position: relative; /* Container for absolute positioned ul */
-    display: none; /* Hide container by default */
-}
-.suggestions-box.active {
-    display: block; /* Show container when JS adds 'active' class */
-}
-.suggestions-box ul {
-    position: absolute; /* Position below the input */
-    top: 100%;
-    left: 0;
-    width: 100%;
-    list-style: none;
-    margin: 2px 0 0 0; /* Add small gap */
-    padding: 0;
-    border: 1px solid #ced4da;
-    background-color: white;
-    max-height: 160px; /* Increased height */
-    overflow-y: auto;
-    z-index: 1000; /* Ensure it's above other elements */
-    border-radius: 0 0 4px 4px; /* Match input radius */
-    box-shadow: 0 4px 6px rgba(0,0,0,0.1); /* Slightly more shadow */
-}
+/* Autocomplete Suggestions Styling */
+.suggestions-box { position: relative; display: none; }
+.suggestions-box.active { display: block; }
+.suggestions-box ul { position: absolute; top: 100%; left: 0; width: 100%; list-style: none; margin: 2px 0 0 0; padding: 0; border: 1px solid #ced4da; background-color: white; max-height: 160px; overflow-y: auto; z-index: 1000; border-radius: 0 0 4px 4px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
 .suggestions-box li { padding: 8px 12px; font-size: 0.88em; cursor: pointer; border-bottom: 1px solid #f0f0f0; }
 .suggestions-box li:last-child { border-bottom: none; }
 .suggestions-box li:hover, .suggestions-box li.selected { background-color: #e9ecef; }
 .suggestions-box li strong { font-weight: 600; color: #0056b3; }
-/* --- End Autocomplete Suggestions Styling Update --- */
-
 
 /* Buttons Container */
 .button-container { padding-top: 20px; margin-top: 20px; border-top: 1px solid #e5e5e5; display: flex; justify-content: flex-end; gap: 10px; }
@@ -209,25 +192,23 @@ body {
 .cancel-button:hover { background-color: #5a6268; }
 
 
-/* --- WhatsApp Popup (Original Basic Styling) --- */
+/* WhatsApp Popup Styling */
 .popup-overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background-color:rgba(0,0,0,.6);z-index:1050;justify-content:center;align-items:center;padding:15px;box-sizing:border-box}
 .popup-overlay.active{display:flex}
 .popup-content{background-color:#fff;padding:25px 30px;border-radius:8px;box-shadow:0 4px 15px rgba(0,0,0,.2);text-align:center;position:relative;max-width:450px;width:100%}
 .popup-close{position:absolute;top:8px;right:12px;font-size:26px;color:#aaa;background:none;border:none;cursor:pointer;line-height:1}
 .popup-close:hover{color:#333}
-.popup-content h4{margin-top:0;margin-bottom:10px;color:#28a745;font-size:1.3em} /* Default Green Title */
+.popup-content h4{margin-top:0;margin-bottom:10px;color:#28a745;font-size:1.3em}
 .popup-content p{margin-bottom:15px;color:#555}
-.message-preview{margin-top:15px;margin-bottom:20px;font-size:.95em;background-color:#e9f5ff;padding:12px;border-radius:5px;text-align:left;border:1px solid #bde0ff;white-space:pre-wrap;word-wrap:break-word} /* Default Preview Style */
-.whatsapp-send-btn{background-color:#25d366;color:#fff;text-decoration:none;padding:10px 20px;border-radius:5px;display:inline-flex;align-items:center;gap:8px;font-weight:700;transition:background-color .2s ease; border: none; cursor: pointer;} /* Default Green Button */
+.message-preview{margin-top:15px;margin-bottom:20px;font-size:.95em;background-color:#e9f5ff;padding:12px;border-radius:5px;text-align:left;border:1px solid #bde0ff;white-space:pre-wrap;word-wrap:break-word}
+.whatsapp-send-btn{background-color:#25d366;color:#fff;text-decoration:none;padding:10px 20px;border-radius:5px;display:inline-flex;align-items:center;gap:8px;font-weight:700;transition:background-color .2s ease; border: none; cursor: pointer;}
 .whatsapp-send-btn:hover{background-color:#1ebe57}
-/* --- End WhatsApp Popup Styling --- */
 
 
-/* Responsive Adjustments Refined */
+/* Responsive Adjustments */
 @media (max-width: 767px) {
     .container { max-width: 95%; padding: 15px; }
     .header { margin: -15px -15px 20px -15px; font-size: 1.1em; }
-    .form-layout-columns { /* Stacks automatically */ }
     .form-row { flex-direction: column; gap: 15px; margin-bottom: 15px; }
     .form-group-half { flex-basis: auto; }
     .priority-group { max-width: none; }
@@ -235,12 +216,12 @@ body {
     .button-container { justify-content: center; }
     .save-button, .cancel-button { width: 100%; max-width: 200px; justify-content: center;}
     .form-section-card { padding: 15px; }
-    #order-status-group { grid-template-columns: repeat(2, 1fr); } /* Keep 2 columns for medium */
+    #order-status-group { grid-template-columns: repeat(3, 1fr); } /* 3 columns on medium still */
     .popup-content { padding: 25px 20px; }
 }
 
 @media (max-width: 575px) {
-     #order-status-group { grid-template-columns: repeat(1, 1fr); } /* Stack to 1 column on small */
+     #order-status-group { grid-template-columns: repeat(2, 1fr); } /* Stack to 2 columns on small */
 }
 
 @media (max-width: 480px) {
@@ -250,7 +231,7 @@ body {
     .product-qty-group { max-width: none; }
     #quantity_input { max-width: none; }
     .add-product-button { justify-content: center; }
-    /* #order-status-group { grid-template-columns: repeat(1, 1fr); } Already 1 column from above */
+    #order-status-group { grid-template-columns: repeat(1, 1fr); } /* Stack to 1 column on extra small */
     .popup-content { padding: 20px 15px; }
     .popup-content h4 { font-size: 1.2em; }
     .whatsapp-send-btn { width: 100%; justify-content: center; }
