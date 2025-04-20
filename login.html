@@ -1,11 +1,13 @@
 <!DOCTYPE html>
-<html lang="en"> <head>
+<html lang="en">
+<head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Madhav MultyPrint - Login</title> <style>
-        /* Basic Styling - same as before */
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; background-color: #f0f2f5; }
-        .login-container { text-align: center; background: white; padding: 2rem 3rem; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+    <title>Madhav MultyPrint - Login</title>
+    <style>
+        /* Basic Styling */
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; background-color: #f0f2f5; margin: 0; }
+        .login-container { text-align: center; background: white; padding: 2rem 3rem; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); max-width: 400px; width: 90%; }
         .logo-image { max-height: 60px; margin-bottom: 1.5rem; }
         h2 { margin-bottom: 1.5rem; color: #333; }
         .form-group { margin-bottom: 1rem; text-align: left; }
@@ -14,25 +16,15 @@
         button { width: 100%; padding: 0.8rem; background-color: #1877f2; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 1.1rem; font-weight: bold; margin-top: 1rem; transition: background-color 0.2s; }
         button:hover { background-color: #166fe5; }
         button:disabled { background-color: #9dbdfa; cursor: not-allowed;}
-        #errorMessage { color: #dc3545; margin-top: 1rem; font-size: 0.9em; min-height: 1.2em; }
+        #errorMessage { color: #dc3545; margin-top: 1rem; font-size: 0.9em; min-height: 1.2em; text-align: center; }
     </style>
-</head>
-<body>
-    <div class="login-container">
-        <img src="https://i.ibb.co/Z6gKD9Rd/1.png" alt="Madhav MultyPrint Logo" class="logo-image">
-
-        <h2>Application Login</h2> <form id="loginForm">
-            <div class="form-group">
-                <label for="username">Username:</label> <input type="text" id="username" name="username" required autocomplete="username">
-            </div>
-            <div class="form-group">
-                <label for="password">Password:</label> <input type="password" id="password" name="password" required autocomplete="current-password">
-            </div>
-            <button type="submit" id="loginButton">Login</button> <p id="errorMessage"></p> </form>
-    </div>
 
     <script type="module">
-        // Your Firebase Configuration
+        // Firebase Imports - Auth Persistence शामिल करें
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+        import { getAuth, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js"; // <<<--- signInWithEmailAndPassword यहाँ इम्पोर्ट करने की ज़रुरत नहीं
+
+        // --- आपकी सही Firebase कॉन्फ़िगरेशन ---
         const firebaseConfig = {
           apiKey: "AIzaSyBQj5rQmE77kKKGYixP8y3Hcimz8tiAqzQ",
           authDomain: "madhav-multyprint.firebaseapp.com",
@@ -41,39 +33,94 @@
           messagingSenderId: "104988349637",
           appId: "1:104988349637:web:faf045b77c6786a4e70cac"
         };
-
-        // Initialize Firebase
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-        import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+        // --- कॉन्फ़िगरेशन समाप्त ---
 
         let app;
+        let auth;
+        let isLoginInitialized = false; // Flag to prevent multiple initializations
+
         try {
-            if (!window.firebaseAppInitialized) {
+             // Initialize Firebase App
+             if (!window.firebaseAppInitialized) {
                  app = initializeApp(firebaseConfig);
                  window.firebaseAppInitialized = true;
                  window.firebaseApp = app;
                  console.log("Firebase initialized on login page.");
-            } else {
-                app = window.firebaseApp;
-                console.log("Firebase already initialized (login page).");
+             } else {
+                 app = window.firebaseApp;
+                 console.log("Firebase already initialized on login page.");
+             }
+             auth = getAuth(app);
+
+             // --- Set Persistence ---
+             // Try setting persistence, but don't block execution if it fails
+             console.log("login.html: Attempting to set persistence...");
+             setPersistence(auth, browserLocalPersistence)
+                .then(() => {
+                    console.log("login.html: Auth persistence set to local.");
+                    // Attempt to initialize login form logic now
+                    initializeLoginScript();
+                })
+                .catch((error) => {
+                   console.error("login.html: Error setting persistence:", error);
+                   // Initialize login form logic even if persistence fails
+                   initializeLoginScript();
+                });
+
+            // Function to call login.js initialization
+            function initializeLoginScript() {
+                if (isLoginInitialized) return; // Run only once
+
+                console.log("login.html: Attempting to call initializeLoginForm...");
+                if (typeof initializeLoginForm === 'function') {
+                     initializeLoginForm(auth); // <<<--- login.js के फंक्शन को auth ऑब्जेक्ट पास करें
+                     isLoginInitialized = true;
+                     console.log("login.html: initializeLoginForm called successfully.");
+                } else {
+                     console.warn("initializeLoginForm function not found yet. Will retry on DOMContentLoaded.");
+                     // Fallback if login.js hasn't parsed yet (though defer should handle this)
+                     window.addEventListener('DOMContentLoaded', () => {
+                         if (!isLoginInitialized && typeof initializeLoginForm === 'function') {
+                             console.log("login.html: Calling initializeLoginForm on DOMContentLoaded.");
+                             initializeLoginForm(auth);
+                             isLoginInitialized = true;
+                         } else if (!isLoginInitialized) {
+                              console.error("CRITICAL: initializeLoginForm function STILL not found after DOM load!");
+                              const errorMsg = document.getElementById('errorMessage');
+                              if(errorMsg) errorMsg.textContent = "Error loading login script (Code:L5).";
+                         }
+                     });
+                }
             }
-            const auth = getAuth(app);
-            window.auth = auth;
-            window.signInWithEmailAndPassword = signInWithEmailAndPassword;
-            console.log("Firebase Auth functions available globally.");
 
         } catch (e) {
              console.error("Firebase initialization error:", e);
              const errorMessageElement = document.getElementById('errorMessage');
-             if(errorMessageElement) {
-                // Changed error message to English
-                errorMessageElement.textContent = 'Firebase configuration error. Contact admin.';
-             }
+             if(errorMessageElement) errorMessageElement.textContent = 'Setup error (Code:L6).';
              const loginButton = document.getElementById('loginButton');
              if(loginButton) loginButton.disabled = true;
         }
     </script>
+    </head>
+<body>
+    <div class="login-container">
+        <img src="https://i.ibb.co/Z6gKD9Rd/1.png" alt="Madhav MultyPrint Logo" class="logo-image">
+        <h2>Application Login</h2>
+        <form id="loginForm">
+            <div class="form-group">
+                <label for="username">Username:</label>
+                <input type="text" id="username" name="username" required autocomplete="username">
+            </div>
+            <div class="form-group">
+                <label for="password">Password:</label>
+                <input type="password" id="password" name="password" required autocomplete="current-password">
+            </div>
+            <button type="submit" id="loginButton">Login</button>
+            <p id="errorMessage"></p>
+        </form>
+    </div>
 
     <script src="js/login.js" type="module" defer></script>
+
 </body>
 </html>
