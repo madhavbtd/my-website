@@ -1,4 +1,4 @@
-/* css/supplier_management.css - v5 (Print Button and Print Styles Added) */
+/* css/supplier_management.css - v7 (Added Copy Button Style) */
 
 /* --- Basic and Variables --- */
 :root {
@@ -8,34 +8,20 @@
     --danger-color: #dc3545;
     --warning-color: #ffc107;
     --info-color: #17a2b8;
-    --purple-color: #6f42c1; /* For view details */
+    --purple-color: #6f42c1;
+    --copy-color: #5b21b6; /* New color for copy button */
     --light-gray: #f8f9fa;
     --medium-gray: #e9ecef;
     --dark-gray: #6c757d;
     --text-color: #343a40;
     --white-color: #ffffff;
     --black-color: #000000;
+    --font-family: 'Poppins', sans-serif;
 }
 
-body {
-    font-family: 'Poppins', sans-serif;
-    background-color: #f0f2f5;
-    margin: 0;
-    color: var(--text-color);
-    line-height: 1.5;
-}
-
+body { font-family: var(--font-family); background-color: #f0f2f5; margin: 0; color: var(--text-color); line-height: 1.5; }
 .container { }
-
-.main-content {
-    padding: 25px;
-    box-sizing: border-box;
-    max-width: 1500px;
-    margin: 20px auto;
-    background-color: var(--white-color);
-    border-radius: 8px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.07);
-}
+.main-content { padding: 25px; box-sizing: border-box; max-width: 1500px; margin: 20px auto; background-color: var(--white-color); border-radius: 8px; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.07); }
 
 /* --- Header & Breadcrumb --- */
 .page-header { margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid var(--medium-gray); }
@@ -49,12 +35,11 @@ body {
 
 /* --- Action Bar & Buttons --- */
 .actions-bar { display: flex; gap: 12px; margin-bottom: 25px; flex-wrap: wrap; align-items: center; }
-
 .button { padding: 9px 18px; font-size: 0.95em; border: none; border-radius: 5px; cursor: pointer; font-weight: 600; display: inline-flex; align-items: center; gap: 7px; text-decoration: none; transition: background-color 0.2s ease, opacity 0.2s ease, box-shadow 0.2s ease; white-space: nowrap; vertical-align: middle; line-height: 1; }
 .button i { line-height: 1; margin-right: 2px; }
 .button:hover:not(:disabled) { box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
-.button:disabled { background-color: #adb5bd; cursor: not-allowed; opacity: 0.7; box-shadow: none; }
-.button:disabled:hover { background-color: #adb5bd; }
+.button:disabled { background-color: #adb5bd !important; color: #fff !important; cursor: not-allowed; opacity: 0.7; box-shadow: none; } /* Ensure disabled style overrides */
+.button:disabled:hover { background-color: #adb5bd !important; }
 
 /* Specific Button Styles */
 .add-new-button { background-color: var(--success-color); color: var(--white-color); }
@@ -65,11 +50,22 @@ body {
 .cancel-button:hover:not(:disabled) { background-color: #5a6268;}
 .save-button { background-color: var(--primary-color); color: var(--white-color);}
 .save-button:hover:not(:disabled) { background-color: #004085; }
+.print-button { background-color: var(--info-color); color: var(--white-color); }
+.print-button:hover:not(:disabled) { background-color: #117a8b; }
+.print-button i { margin-right: 6px; }
+/* --- NEW Copy Button Style --- */
+.copy-button { background-color: var(--copy-color); color: var(--white-color); }
+.copy-button:hover:not(:disabled) { background-color: #4c1d95; } /* Darker purple */
+.copy-button i { margin-right: 6px; }
+/* Style for when copying is in progress or done */
+.copy-button.copying { background-color: var(--warning-color); color: #333; cursor: wait; }
+.copy-button.copied { background-color: var(--success-color); color: var(--white-color); }
+/* --- End Copy Button Style --- */
+
 
 /* Action buttons inside tables */
 .action-buttons .button { padding: 5px 9px; font-size: 0.85em; gap: 4px; border-radius: 4px; }
 .action-buttons .button i { margin-right: 0; font-size: 0.9em; }
-
 .edit-button { background-color: var(--warning-color); color: #333; }
 .edit-button:hover:not(:disabled) { background-color: #e0a800; }
 .delete-button { background-color: var(--danger-color); color: var(--white-color); }
@@ -94,7 +90,11 @@ table th, table td { border: 1px solid #e0e0e0; padding: 10px 12px; text-align: 
 table th { font-weight: 600; color: #495057; white-space: nowrap; }
 table tbody tr:nth-child(even) { background-color: #fdfdfd; }
 table tbody tr:hover { background-color: #f1f5f9; }
-table td.action-buttons { display: flex; gap: 5px; justify-content: flex-start; flex-wrap: nowrap; padding: 6px 8px; align-items: center; } /* Align items */
+table td.action-buttons { display: flex; gap: 5px; justify-content: flex-start; flex-wrap: nowrap; padding: 6px 8px; align-items: center; }
+
+/* Clickable PO Number Style */
+#poTableBody td.po-number-link { color: var(--primary-color); font-weight: 600; cursor: pointer; text-decoration: none; }
+#poTableBody td.po-number-link:hover { text-decoration: underline; color: #003d80; }
 
 /* --- Status Badge Styles --- */
 .status-badge { padding: 4px 10px; font-size: 0.8em; border-radius: 12px; font-weight: 500; white-space: nowrap; display: inline-block; text-transform: capitalize; }
@@ -126,17 +126,14 @@ table td.action-buttons { display: flex; gap: 5px; justify-content: flex-start; 
 .modal-content { background-color: #fefefe; margin: auto; padding: 25px 30px; border: 1px solid #ccc; width: 90%; max-width: 500px; border-radius: 8px; position: relative; box-shadow: 0 5px 15px rgba(0,0,0,0.2); z-index: 1051; display: flex; flex-direction: column; max-height: calc(100vh - 6vh); }
 .modal-content.modal-lg { max-width: 850px; }
 .modal-content.modal-xl { max-width: 1100px; }
-
 .modal-content h2 { margin-top: 0; margin-bottom: 20px; text-align: center; border-bottom: 1px solid var(--medium-gray); padding-bottom: 15px; font-size: 1.4em; font-weight: 600; color: var(--secondary-color); }
 .close-btn { color: #aaa; position: absolute; top: 10px; right: 15px; font-size: 28px; font-weight: bold; cursor: pointer; line-height: 1; z-index: 1052; }
 .close-btn:hover, .close-btn:focus { color: var(--black-color); text-decoration: none; }
-
 .modal form .form-group { margin-bottom: 15px; }
 .modal form .form-group label { display: block; margin-bottom: 6px; font-weight: 500; font-size: 0.9em; }
 .modal form .form-group input[type="text"], .modal form .form-group input[type="tel"], .modal form .form-group input[type="email"], .modal form .form-group input[type="password"], .modal form .form-group select, .modal form .form-group textarea { width: 100%; padding: 9px 12px; border: 1px solid #ced4da; border-radius: 4px; font-size: 0.95em; box-sizing: border-box; transition: border-color 0.2s ease, box-shadow 0.2s ease; }
 .modal form .form-group textarea { resize: vertical; min-height: 60px; }
 .modal form .form-group input:focus, .modal form .form-group select:focus, .modal form .form-group textarea:focus { border-color: var(--primary-color); outline: 0; box-shadow: 0 0 0 0.2rem rgba(0, 86, 179, 0.2); }
-
 .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 25px; padding-top: 15px; border-top: 1px solid var(--medium-gray); }
 .error-message { color: var(--danger-color); font-size: 0.88em; margin-top: 10px; text-align: center; width: 100%; }
 
@@ -154,16 +151,36 @@ table td.action-buttons { display: flex; gap: 5px; justify-content: flex-start; 
 #poDetailsModal .details-table tbody tr:nth-child(even) { background-color: #f9f9f9; }
 #poDetailsModal .details-table td[style*="text-align: right"] { text-align: right; font-weight: 500; white-space: nowrap; }
 #poDetailsModal .details-table td:nth-child(1) { text-align: center; width: 30px; }
-#poDetailsModal .details-table td:nth-child(4), #poDetailsModal .details-table td:nth-child(5) { white-space: nowrap; } /* Adjust column indices if table changes */
+#poDetailsModal .details-table td:nth-child(4), #poDetailsModal .details-table td:nth-child(5) { white-space: nowrap; }
 #poDetailsModal .po-notes-details { margin-top: 20px; padding: 15px; border: 1px solid #e0e0e0; border-radius: 4px; font-size: 0.9em; background-color: #fdfdfd; }
 #poDetailsModal .po-notes-details strong { display: block; margin-bottom: 8px; color: var(--secondary-color); font-weight: 600; }
 #poDetailsModal .po-notes-details p { margin: 0; line-height: 1.6; color: #555; }
 
-/* --- Suppliers List Modal Styles --- */
+/* Suppliers List Modal Styles */
 #suppliersListModal .suppliers-modal-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--medium-gray); padding-bottom: 15px; margin-bottom: 15px; }
 #suppliersListModal .suppliers-modal-header h2 { border-bottom: none; padding-bottom: 0; margin-bottom: 0; text-align: left; }
 #suppliersListModal .suppliers-modal-header .button { padding: 7px 14px; font-size: 0.9em; }
 #suppliersListModal .suppliers-table-container { overflow-y: auto; max-height: calc(100vh - 300px); border: none; margin-bottom: 0; }
+
+/* PO Share Modal Styles */
+#poShareModal .modal-content { max-width: 900px; }
+#poShareModal #poShareHeader { text-align: center; margin-bottom: 15px; }
+#poShareModal #poShareModalTitle { font-size: 1.6em; color: var(--primary-color); margin-bottom: 10px; border-bottom: none; padding-bottom: 0; text-align: center; }
+#poShareModal #poShareInfo { font-size: 1.1em; font-weight: 600; color: var(--secondary-color); margin-bottom: 20px; padding: 10px; background-color: var(--light-gray); border-radius: 4px; border: 1px solid var(--medium-gray); display: flex; justify-content: space-around; flex-wrap: wrap; gap: 15px; }
+#poShareModal #poShareInfo span { white-space: nowrap; }
+#poShareModal #poShareInfo .po-number-large { font-size: 1.3em; color: var(--primary-color); }
+#poShareModal #poShareGreeting { font-size: 1.05em; margin-bottom: 15px; color: var(--text-color); }
+.po-share-divider { border: none; border-top: 1px solid var(--medium-gray); margin: 20px 0; }
+#poShareModal #poShareItemsContainer h3, #poShareModal #poShareTerms h3 { font-size: 1.2em; color: var(--secondary-color); margin-bottom: 10px; font-weight: 600; }
+#poShareModal #poShareItemsContainer .details-table { font-size: 0.88em; }
+#poShareModal #poShareItemsContainer .details-table th, #poShareModal #poShareItemsContainer .details-table td { padding: 7px 9px; }
+#poShareModal #poShareTerms { margin-top: 15px; background-color: #fcfcfc; padding: 15px; border-radius: 4px; border: 1px solid #eee; }
+#poShareModal #poShareTermList { list-style-type: decimal; padding-left: 25px; margin: 0; font-size: 0.85em; color: #444; line-height: 1.6; }
+#poShareModal #poShareTermList li { margin-bottom: 6px; }
+#poShareModal .modal-actions { margin-top: 30px; /* Add space above buttons */ }
+/* Add spacing for copy button */
+#poShareModal .modal-actions .copy-button { margin-right: 10px; }
+
 
 /* --- Responsive Styles --- */
 @media (max-width: 992px) {
@@ -171,6 +188,7 @@ table td.action-buttons { display: flex; gap: 5px; justify-content: flex-start; 
     .modal-content.modal-lg, .modal-content.modal-xl { max-width: 95%; }
     .po-filters { gap: 10px; }
     .filter-group.filter-buttons { margin-left: 0; width: 100%; justify-content: space-between; }
+    #poShareModal #poShareInfo { flex-direction: column; align-items: center; text-align: center; }
 }
 @media (max-width: 768px) {
     .main-content { padding: 15px; margin: 10px auto;}
@@ -181,145 +199,68 @@ table td.action-buttons { display: flex; gap: 5px; justify-content: flex-start; 
     .filter-group.filter-buttons { flex-direction: column; gap: 8px; }
     .modal-content, .modal-content.modal-lg, .modal-content.modal-xl { width: 96%; padding: 20px; max-height: calc(100vh - 4vh); }
     .modal-content h2 { font-size: 1.2em; }
-    #poDetailsModal .details-table { font-size: 0.85em; }
-    #poDetailsModal .details-table th, #poDetailsModal .details-table td { padding: 6px 8px; }
+    #poDetailsModal .details-table, #poShareModal #poShareItemsContainer .details-table { font-size: 0.85em; }
+    #poDetailsModal .details-table th, #poDetailsModal .details-table td, #poShareModal #poShareItemsContainer .details-table th, #poShareModal #poShareItemsContainer .details-table td { padding: 6px 8px; }
     .table-container { -webkit-overflow-scrolling: touch; }
     table td.action-buttons { flex-wrap: wrap; justify-content: center;}
     #suppliersListModal .suppliers-modal-header { flex-direction: column; align-items: flex-start; gap: 10px; }
     #suppliersListModal .suppliers-modal-header .button { width: 100%; }
+    #poShareModal #poShareModalTitle { font-size: 1.4em; }
+    #poShareModal #poShareInfo { font-size: 1em; }
 }
 @media (max-width: 480px) {
     .page-header h1 { font-size: 1.4em; }
     table th, table td { padding: 8px 6px; }
     .status-badge { padding: 3px 8px; font-size: 0.75em;}
-    .modal-actions { flex-direction: column; gap: 8px; } /* Stack buttons vertically */
-    .modal-actions .button { width: 100%; } /* Make modal buttons full width */
+    .modal-actions { flex-direction: column; gap: 8px; }
+    .modal-actions .button { width: 100%; }
+    #poShareModal .modal-actions .copy-button { margin-right: 0; } /* Remove right margin when stacked */
+    #poShareModal .modal-actions .print-button { margin-right: 0; } /* Remove right margin when stacked */
 }
 
 
-/* --- <<< CSS स्टाइल Print बटन के लिए और Print नियम यहाँ जोड़े गए >>> --- */
-/* नए Print बटन के लिए स्टाइल */
-.print-button {
-    background-color: var(--info-color); /* नीला रंग */
-    color: var(--white-color);
-    margin-right: 10px; /* Close बटन से थोड़ा गैप */
-}
-.print-button:hover:not(:disabled) {
-    background-color: #117a8b; /* थोड़ा गहरा नीला */
-}
-.print-button i {
-    margin-right: 6px;
-}
-
-/* --- प्रिंट के लिए विशेष Styles --- */
+/* --- Print Specific Styles (Includes PO Share Modal Print) --- */
 @media print {
-    body, .container, .main-content {
-        margin: 0 !important;
-        padding: 0 !important;
-        box-shadow: none !important;
-        border: none !important;
-        background-color: #fff !important;
-        color: #000 !important;
-        -webkit-print-color-adjust: exact !important;
-        print-color-adjust: exact !important;
-    }
+    body { background-color: #fff !important; color: #000 !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+    .container, .main-content { margin: 0 !important; padding: 0 !important; box-shadow: none !important; border: none !important; }
+    body > *:not(.printing-active-modal) { display: none !important; } /* Hide non-active modals */
 
-    /* डिफ़ॉल्ट रूप से सब कुछ छिपाएं */
-    body > *:not(#poDetailsModal) {
-        display: none !important;
-    }
+    /* Common styles for the ACTIVE modal during printing */
+    .printing-active-modal { display: block !important; position: relative !important; width: 100% !important; max-width: 100% !important; height: auto !important; max-height: none !important; box-shadow: none !important; border: none !important; margin: 0 !important; padding: 15px !important; overflow: visible !important; background-color: #fff !important; }
+    .printing-active-modal .modal-content { box-shadow: none !important; border: none !important; padding: 0 !important; margin: 0 !important; max-height: none !important; background-color: #fff !important; }
+    .printing-active-modal .modal-actions, .printing-active-modal .close-btn { display: none !important; }
 
-    /* सुनिश्चित करें कि modal और उसका कंटेंट प्रिंट में दिखें */
-    #poDetailsModal,
-    #poDetailsModal .modal-content {
-        display: block !important;
-        position: relative !important;
-        width: 100% !important;
-        max-width: 100% !important;
-        height: auto !important;
-        max-height: none !important;
-        box-shadow: none !important;
-        border: none !important;
-        margin: 0 !important;
-        padding: 15px !important;
-        overflow: visible !important;
-        background-color: #fff !important;
-    }
+    /* Specific styles when printing #poDetailsModal */
+    body.printing-po-details #poDetailsModal { visibility: visible !important; }
+    body.printing-po-details #poDetailsModal .modal-content > *:not(#poDetailsModalTitle):not(#poDetailsContent) { display: none !important; }
+    body.printing-po-details #poDetailsModalTitle { display: block !important; text-align: left; border-bottom: 1px solid #ccc; padding-bottom: 10px; margin-bottom: 15px; font-size: 16pt; color: #000 !important; }
+    body.printing-po-details #poDetailsContent { display: block !important; overflow: visible !important; max-height: none !important; color: #000 !important; }
+    body.printing-po-details #poDetailsContent .details-table { width: 100%; border-collapse: collapse; font-size: 10pt; margin-bottom: 15px; border: 1px solid #ccc; color: #000 !important; }
+    body.printing-po-details #poDetailsContent .details-table th, body.printing-po-details #poDetailsContent .details-table td { border: 1px solid #ccc; padding: 6px 8px; text-align: left; vertical-align: top; color: #000 !important; background-color: #fff !important; word-break: break-word; }
+    body.printing-po-details #poDetailsContent .details-table thead th { background-color: #eee !important; font-weight: bold; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+    body.printing-po-details #poDetailsContent .details-table td[style*="text-align: right"] { text-align: right !important; }
+    body.printing-po-details #poDetailsContent .po-notes-details { display: block !important; margin-top: 20px; padding: 10px; border: 1px solid #ccc; font-size: 10pt; background-color: #fff !important; color: #000 !important; }
+    body.printing-po-details #poDetailsContent .po-notes-details strong { font-weight: bold; color: #000 !important; }
+    body.printing-po-details #poDetailsContent .po-notes-details p { color: #000 !important; }
 
-     /* Modal के अंदर केवल शीर्षक और कंटेंट क्षेत्र दिखाएं */
-    #poDetailsModal .modal-content > *:not(#poDetailsModalTitle):not(#poDetailsContent) {
-        display: none !important;
-    }
+    /* Specific styles when printing #poShareModal */
+    body.printing-po-share #poShareModal { visibility: visible !important; }
+    body.printing-po-share #poShareModal .modal-content > *:not(#poShareHeader):not(#poShareGreeting):not(#poShareItemsContainer):not(#poShareTerms) { display: none !important; }
+    body.printing-po-share #poShareHeader, body.printing-po-share #poShareGreeting, body.printing-po-share #poShareItemsContainer, body.printing-po-share #poShareTerms { display: block !important; }
+    body.printing-po-share #poShareModalTitle { display: block !important; font-size: 18pt; text-align: center; margin-bottom: 10px; color: #000 !important; border-bottom: 1px solid #ccc; padding-bottom: 5px; }
+    body.printing-po-share #poShareInfo { display: block !important; font-size: 11pt; border: 1px solid #ccc; padding: 8px; margin-bottom: 15px; background-color: #f8f8f8 !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; color: #000 !important; }
+    body.printing-po-share #poShareInfo .po-number-large { font-size: 1.2em; color: #000 !important; }
+    body.printing-po-share #poShareGreeting { display: block !important; font-size: 10pt; margin-bottom: 15px; color: #000 !important; }
+    body.printing-po-share .po-share-divider { display: none !important; }
+    body.printing-po-share #poShareItemsContainer h3, body.printing-po-share #poShareTerms h3 { display: block !important; font-size: 12pt; color: #000 !important; margin-bottom: 8px; border-bottom: 1px solid #eee; padding-bottom: 4px; }
+    body.printing-po-share #poShareItemsContainer .details-table { font-size: 9pt; border: 1px solid #ccc; width: 100%; border-collapse: collapse; }
+    body.printing-po-share #poShareItemsContainer .details-table th, body.printing-po-share #poShareItemsContainer .details-table td { border: 1px solid #ccc; padding: 5px 7px; background: #fff !important; color: #000 !important;}
+    body.printing-po-share #poShareItemsContainer .details-table thead th { background-color: #eee !important; }
+    body.printing-po-share #poShareTerms { display: block !important; border: none; padding: 0; margin-top: 15px; background: none !important; }
+    body.printing-po-share #poShareTermList { display: block !important; font-size: 9pt; color: #000 !important; list-style-position: outside; padding-left: 20px; }
+    body.printing-po-share #poShareTermList li { margin-bottom: 4px; }
 
-    /* Modal के शीर्षक की स्टाइल */
-    #poDetailsModalTitle {
-        text-align: left;
-        border-bottom: 1px solid #ccc;
-        padding-bottom: 10px;
-        margin-bottom: 15px;
-        font-size: 16pt;
-        color: #000 !important;
-    }
-
-    /* Modal के कंटेंट क्षेत्र की स्टाइल */
-    #poDetailsContent {
-        display: block !important;
-        overflow: visible !important;
-        max-height: none !important;
-        color: #000 !important;
-    }
-
-    /* कंटेंट के अंदर टेबल की स्टाइल */
-    #poDetailsContent .details-table {
-        width: 100%;
-        border-collapse: collapse;
-        font-size: 10pt;
-        margin-bottom: 15px;
-        border: 1px solid #ccc;
-        color: #000 !important;
-    }
-
-    #poDetailsContent .details-table th,
-    #poDetailsContent .details-table td {
-        border: 1px solid #ccc;
-        padding: 6px 8px;
-        text-align: left;
-        vertical-align: top;
-        color: #000 !important;
-        background-color: #fff !important;
-        word-break: break-word;
-    }
-
-    #poDetailsContent .details-table thead th {
-        background-color: #eee !important;
-        font-weight: bold;
-        -webkit-print-color-adjust: exact !important;
-        print-color-adjust: exact !important;
-    }
-
-    #poDetailsContent .details-table td[style*="text-align: right"] {
-        text-align: right !important;
-    }
-
-     /* नोट्स सेक्शन की स्टाइल */
-    #poDetailsContent .po-notes-details {
-        margin-top: 20px;
-        padding: 10px;
-        border: 1px solid #ccc;
-        font-size: 10pt;
-        background-color: #fff !important;
-        color: #000 !important;
-    }
-    #poDetailsContent .po-notes-details strong {
-        font-weight: bold;
-        color: #000 !important;
-    }
-     #poDetailsContent .po-notes-details p {
-         color: #000 !important;
-     }
-
-    /* सुनिश्चित करें कि कोई लिंक या बटन प्रिंट न हों */
+    /* Hide links/buttons universally */
     a[href]:after { content: "" !important; }
-    button, .button, .modal-actions, .close-btn { display: none !important; }
 }
 /* --- <<< Print Styles End >>> --- */
