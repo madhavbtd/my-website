@@ -1,82 +1,52 @@
-// js/utils.js (v4 - Updated PDF Design with User Details)
+// js/utils.js - v6 (New PDF Design based on INV290.pdf, Error Fix, No Logo, Flex Details)
 
 // --- Function for Flex Calculation (यह फ़ंक्शन अपरिवर्तित है) ---
 function calculateFlexDimensions(unit, width, height) {
+    // ... (Keep the function exactly as it was) ...
     console.log(`Calculating flex: Unit=${unit}, W=${width}, H=${height}`);
-    const mediaWidthsFt = [3, 4, 5, 6, 8, 10]; // Standard media widths in feet
-
-    // Convert input dimensions to feet
+    const mediaWidthsFt = [3, 4, 5, 6, 8, 10];
     let wFt = (unit === 'inches') ? parseFloat(width || 0) / 12 : parseFloat(width || 0);
     let hFt = (unit === 'inches') ? parseFloat(height || 0) / 12 : parseFloat(height || 0);
-
-    // Basic validation
-    if (isNaN(wFt) || isNaN(hFt) || wFt <= 0 || hFt <= 0) {
-        return { realSqFt: 0, printWidth: 0, printHeight: 0, printSqFt: 0, inputUnit: unit };
-    }
-
-    const realSqFt = wFt * hFt; // Actual area of the design
-    console.log(`Real dimensions in Ft: W=${wFt.toFixed(2)}, H=${hFt.toFixed(2)}, RealSqFt=${realSqFt.toFixed(2)}`);
-
-    // Option 1: Fit width to nearest larger media width, keep height same
+    if (isNaN(wFt) || isNaN(hFt) || wFt <= 0 || hFt <= 0) { return { realSqFt: 0, printWidth: 0, printHeight: 0, printSqFt: 0, inputUnit: unit, realWidthFt: 0, realHeightFt: 0, printWidthFt: 0, printHeightFt: 0 }; }
+    const realSqFt = wFt * hFt;
     const mediaWidthFitW = mediaWidthsFt.find(mw => mw >= wFt);
-    let printWidthFt1 = mediaWidthFitW || wFt; // Use actual width if larger than max media
-    let printHeightFt1 = hFt;
-    let printSqFt1 = printWidthFt1 * printHeightFt1;
-    if (!mediaWidthFitW) console.warn(`Width ${wFt.toFixed(2)}ft exceeds max media width. Using actual width.`);
-
-    // Option 2: Fit height to nearest larger media width (assuming roll can be rotated), keep width same
+    let printWidthFt1 = mediaWidthFitW || wFt; let printHeightFt1 = hFt; let printSqFt1 = printWidthFt1 * printHeightFt1;
+    if (!mediaWidthFitW) console.warn(`Width ${wFt.toFixed(2)}ft exceeds max media width.`);
     const mediaWidthFitH = mediaWidthsFt.find(mw => mw >= hFt);
-    let printWidthFt2 = wFt;
-    let printHeightFt2 = mediaWidthFitH || hFt; // Use actual height if larger than max media
-    let printSqFt2 = printWidthFt2 * printHeightFt2;
-    if (!mediaWidthFitH) console.warn(`Height ${hFt.toFixed(2)}ft exceeds max media width. Using actual height.`);
-
+    let printWidthFt2 = wFt; let printHeightFt2 = mediaWidthFitH || hFt; let printSqFt2 = printWidthFt2 * printHeightFt2;
+    if (!mediaWidthFitH) console.warn(`Height ${hFt.toFixed(2)}ft exceeds max media width.`);
     let finalPrintWidthFt, finalPrintHeightFt, finalPrintSqFt;
-
-    // Choose the option with less wastage (smaller printSqFt)
-    // If fitting height isn't possible (mediaWidthFitH is undefined), default to fitting width
-    if (printSqFt1 <= printSqFt2 || !mediaWidthFitH) {
-         finalPrintWidthFt = printWidthFt1;
-         finalPrintHeightFt = printHeightFt1;
-         finalPrintSqFt = printSqFt1;
-         console.log(`Choosing Option 1 (Fit Width): MediaW=${printWidthFt1.toFixed(2)}ft, RealH=${printHeightFt1.toFixed(2)}ft, PrintSqFt=${printSqFt1.toFixed(2)}`);
+    if (!mediaWidthFitH || printSqFt1 <= printSqFt2) {
+         finalPrintWidthFt = printWidthFt1; finalPrintHeightFt = printHeightFt1; finalPrintSqFt = printSqFt1;
     } else {
-         finalPrintWidthFt = printWidthFt2;
-         finalPrintHeightFt = printHeightFt2;
-         finalPrintSqFt = printSqFt2;
-         console.log(`Choosing Option 2 (Fit Height): RealW=${printWidthFt2.toFixed(2)}ft, MediaH=${printHeightFt2.toFixed(2)}ft, PrintSqFt=${printSqFt2.toFixed(2)}`);
+         finalPrintWidthFt = printWidthFt2; finalPrintHeightFt = printHeightFt2; finalPrintSqFt = printSqFt2;
     }
-
-    // Convert final print dimensions back to the original input unit for display consistency
     let displayPrintWidth = (unit === 'inches') ? finalPrintWidthFt * 12 : finalPrintWidthFt;
     let displayPrintHeight = (unit === 'inches') ? finalPrintHeightFt * 12 : finalPrintHeightFt;
-
     return {
-        realSqFt: realSqFt.toFixed(2), // Actual design area
-        printWidth: displayPrintWidth.toFixed(2), // Final width on media (in original unit)
-        printHeight: displayPrintHeight.toFixed(2), // Final height on media (in original unit)
-        printSqFt: finalPrintSqFt.toFixed(2), // Billing area in Square Feet
-        inputUnit: unit // The unit used for input width/height
+        realSqFt: realSqFt.toFixed(2), printWidth: displayPrintWidth.toFixed(2), printHeight: displayPrintHeight.toFixed(2),
+        printSqFt: finalPrintSqFt.toFixed(2), inputUnit: unit, realWidthFt: wFt, realHeightFt: hFt,
+        printWidthFt: finalPrintWidthFt, printHeightFt: finalPrintHeightFt
     };
 }
 
 
-// --- PDF Generation Function (Updated Design with User Details) ---
+// --- PDF Generation Function (New Design v6) ---
 async function generatePoPdf(poData, supplierData) {
     // 1. jsPDF Check & Init
     if (typeof window.jspdf === 'undefined' || typeof window.jspdf.jsPDF === 'undefined') {
-         console.error("jsPDF library (window.jspdf.jsPDF) not found!");
-         alert("Error: PDF Library not loaded correctly. Cannot generate PDF.");
-         return;
+        console.error("jsPDF library (window.jspdf.jsPDF) not found!");
+        alert("Error: PDF Library not loaded correctly. Cannot generate PDF.");
+        return;
     }
     if (typeof window.jspdf.jsPDF.API.autoTable !== 'function') {
-         console.error("jsPDF autoTable plugin not found!");
-         alert("Error: PDF AutoTable Plugin not loaded correctly. Cannot generate PDF table.");
-         return;
+        console.error("jsPDF autoTable plugin not found!");
+        alert("Error: PDF AutoTable Plugin not loaded correctly. Cannot generate PDF table.");
+        return;
     }
     const { jsPDF } = window.jspdf;
 
-    console.log("Generating PDF (New Design - User Details) for PO:", poData);
+    console.log("Generating PDF (v6 Design) for PO:", poData);
     console.log("Supplier Data for PDF:", supplierData);
 
     if (!poData || !poData.items || !supplierData) {
@@ -84,6 +54,13 @@ async function generatePoPdf(poData, supplierData) {
         console.error("Missing poData or items or supplierData for PDF generation");
         return;
     }
+
+    // --- <<<<< आपकी कंपनी की डिटेल्स >>>>> ---
+    const companyName = "Madhav Offset"; // आपका नाम
+    const companyAddress = "Head Office: Moodh Market, Batadu"; // आपका पता
+    const companyContact = "Mobile: 9549116541"; // आपका संपर्क
+    const companySignature = "For, Madhav Offset"; // नीचे सिग्नेचर के लिए
+    // ------------------------------------
 
     try {
         const doc = new jsPDF('p', 'pt', 'a4'); // Use points, A4 size
@@ -94,112 +71,124 @@ async function generatePoPdf(poData, supplierData) {
         let currentY = margin;
 
         // --- Define Colors ---
-        const primaryColor = '#0D47A1'; // Dark Blue
+        const headerColor = '#0056b3'; // आपका प्राइमरी नीला रंग
+        const textColor = '#333333';
+        const borderColor = '#CCCCCC';
         const whiteColor = '#FFFFFF';
         const blackColor = '#000000';
-        const grayColor = '#333333'; // Darker gray for text
+        const subTextColor = '#555555'; // थोड़ा हल्का टेक्स्ट
 
         // --- Set default text color & font ---
-        doc.setTextColor(grayColor);
-        doc.setFont('helvetica'); // Standard font
+        doc.setTextColor(textColor);
+        doc.setFont('helvetica', 'normal'); // आप चाहें तो 'Poppins' जैसा फॉन्ट लोड कर सकते हैं, पर वह जटिल है
 
-        // --- 3. Header ---
-        // Company Info (Right Aligned) - USER DETAILS UPDATED
-        const companyName = "MADHAV OFFSET";
-        const companyAddress1 = "MOODH MARKET, BATADU, BARMER";
-        const companyContact = "Contact : 9549116541";
-
+        // --- 1. Header ---
+        // Company Info (Right Aligned)
         doc.setFontSize(12);
         doc.setFont(undefined, 'bold');
         doc.text(companyName, pageWidth - margin, currentY, { align: 'right' });
         currentY += 15;
-        doc.setFontSize(10);
+        doc.setFontSize(9);
         doc.setFont(undefined, 'normal');
-        doc.text(companyAddress1, pageWidth - margin, currentY, { align: 'right' });
-        currentY += 12;
+        const addressLines = doc.splitTextToSize(companyAddress, 180); // चौड़ाई एडजस्ट करें
+        doc.text(addressLines, pageWidth - margin, currentY, { align: 'right' });
+        currentY += (addressLines.length * 10) + 2;
         doc.text(companyContact, pageWidth - margin, currentY, { align: 'right' });
-        currentY += 25;
+        currentY += 15; // हेडर के बाद थोड़ी जगह
 
         // Title (Centered)
-        doc.setFontSize(16);
+        doc.setFontSize(18);
         doc.setFont(undefined, 'bold');
-        doc.setTextColor(blackColor);
         doc.text("PURCHASE ORDER", pageWidth / 2, currentY, { align: 'center' });
         currentY += 30;
-        doc.setTextColor(grayColor);
 
-        // --- 4. Supplier/PO Info ---
+        // --- 2. Supplier/PO Info ---
         const infoStartY = currentY;
-        const col1X = margin;
-        const col2X = pageWidth / 2 + 20;
-        const col2LabelX = col2X;
-        const col2ValueX = col2X + 65;
+        const halfWidth = contentWidth / 2;
+        const gap = 15;
 
-        // Draw Blue Bar for "Issued To:"
-        doc.setFillColor(primaryColor);
-        doc.rect(margin, currentY, contentWidth, 20, 'F'); // Taller bar
-        doc.setFontSize(10);
+        // Left Column: Supplier Details ("Issued To:")
+        doc.setFontSize(9);
         doc.setFont(undefined, 'bold');
-        doc.setTextColor(whiteColor);
-        doc.text("Issued To:", margin + 5, currentY + 13); // Vertically centered text
-        currentY += 20 + 10; // Bar height + padding
-        doc.setTextColor(grayColor);
-
-        // Supplier Details (Left Column)
-        doc.setFontSize(10);
-        doc.setFont(undefined, 'bold');
-        if(supplierData.name) doc.text(supplierData.name, col1X, currentY);
-        currentY += 15;
+        doc.text("Issued To:", margin, currentY);
+        currentY += 12;
         doc.setFont(undefined, 'normal');
+        doc.setFontSize(10);
+        doc.setFont(undefined, 'bold');
+        if(supplierData.name) doc.text(supplierData.name, margin, currentY);
+        currentY += 13;
+        doc.setFont(undefined, 'normal');
+        doc.setFontSize(9);
         if (supplierData.address) {
-             const addressLines = doc.splitTextToSize(supplierData.address, (pageWidth / 2) - margin - 10);
-             doc.text(addressLines, col1X, currentY);
-             currentY += (addressLines.length * 12) + 2; // Adjust Y based on lines
-        } else {
-             currentY += 12; // Space even if no address
-        }
-        if (supplierData.whatsappNo) { doc.text(`Contact: ${supplierData.whatsappNo}`, col1X, currentY); currentY += 12; }
-        if (supplierData.gstNo) { doc.text(`GST: ${supplierData.gstNo}`, col1X, currentY); currentY += 12; }
-        // Add other supplier details if needed
-
+             const supAddressLines = doc.splitTextToSize(supplierData.address, halfWidth - gap);
+             doc.text(supAddressLines, margin, currentY);
+             currentY += (supAddressLines.length * 10) + 2;
+        } else { currentY += 10; }
+        if (supplierData.whatsappNo) { doc.text(`Contact: ${supplierData.whatsappNo}`, margin, currentY); currentY += 10; }
+        if (supplierData.gstNo) { doc.text(`GST No.: ${supplierData.gstNo}`, margin, currentY); currentY += 10; }
         const leftColEndY = currentY;
 
-        // PO Details (Right Column) - Reset Y
-        currentY = infoStartY + 20 + 10; // Start below blue bar
-        doc.setFontSize(10);
+        // Right Column: PO Details
+        currentY = infoStartY; // Reset Y
+        const col2X = margin + halfWidth + gap;
+        const col2LabelWidth = 55;
+        const col2ValueX = col2X + col2LabelWidth + 5;
+
+        doc.setFontSize(9);
         doc.setFont(undefined, 'normal');
 
-        doc.text("Order No.", col2LabelX, currentY);
-        doc.text(":", col2ValueX - 5, currentY);
-        doc.text(poData.poNumber || 'N/A', col2ValueX, currentY);
-        currentY += 15;
+        doc.text("Order No.", col2X, currentY, { align: 'left', maxWidth: col2LabelWidth });
+        // --- <<< ERROR FIX APPLIED HERE >>> ---
+        doc.text(`: ${String(poData.poNumber || 'N/A')}`, col2ValueX, currentY); // PO Number को स्ट्रिंग में बदला
+        // --- <<< END ERROR FIX >>> ---
+        currentY += 13;
 
-        doc.text("Date", col2LabelX, currentY);
-        doc.text(":", col2ValueX - 5, currentY);
+        doc.text("Date", col2X, currentY, { align: 'left', maxWidth: col2LabelWidth });
         let orderDateStr = 'N/A';
-        if (poData.orderDate && poData.orderDate.toDate) {
-           try { orderDateStr = poData.orderDate.toDate().toLocaleDateString('en-GB'); } catch(e){} // dd/mm/yyyy
+        if (poData.orderDate?.toDate) {
+           try { orderDateStr = poData.orderDate.toDate().toLocaleDateString('en-GB'); } catch(e){ console.error("Error formatting date:", e)}
         }
-        doc.text(orderDateStr, col2ValueX, currentY);
-        currentY += 15;
+        doc.text(`: ${orderDateStr}`, col2ValueX, currentY);
+        currentY += 13;
 
+        doc.text("Status", col2X, currentY, { align: 'left', maxWidth: col2LabelWidth });
+        doc.text(`: ${poData.status || 'N/A'}`, col2ValueX, currentY);
+        currentY += 13;
         const rightColEndY = currentY;
 
-        // Set currentY below the taller column
-        currentY = Math.max(leftColEndY, rightColEndY) + 20;
+        currentY = Math.max(leftColEndY, rightColEndY) + 20; // नीचे का Y सेट करें
 
-        // --- 5. Prepare Table Data ---
+        // --- 3. Prepare Table Data with Flex Details ---
         let totalQtySum = 0;
-        let totalSqFtSum = 0;
-
         const tableBody = poData.items.map((item, index) => {
-            let qtyStr = '';
-            let sqfStr = '';
+            let qtyStr = '-';
+            let sqfStr = '-';
+            let particularsContent = []; // Use array for multi-line content
 
+            // Add product name (Bold)
+            particularsContent.push({ content: item.productName || 'N/A', styles: { fontStyle: 'bold' } });
+
+            // Add Flex Details below product name for Sq Feet items
             if (item.type === 'Sq Feet') {
                 const area = item.printSqFt !== undefined ? parseFloat(item.printSqFt) : 0;
-                sqfStr = area.toFixed(2);
-                totalSqFtSum += area;
+                sqfStr = area.toFixed(2); // SqFt value for its column
+                totalQtySum += 0; // Sqft items don't add to Qty sum
+
+                // Format dimension details for Particulars column (smaller font, indented)
+                const w = item.realWidth || item.width || '?';
+                const h = item.realHeight || item.height || '?';
+                const u = item.unit || item.inputUnit || 'units';
+                const pw = item.printWidth || '?';
+                const ph = item.printHeight || '?';
+                const psf = item.printSqFt || '?';
+                const rsf = item.realSqFt || '?';
+                let wastage = parseFloat(psf) - parseFloat(rsf);
+                wastage = (!isNaN(wastage) && wastage >= 0.01) ? wastage.toFixed(2) + ' sqft' : 'None';
+
+                particularsContent.push({ content: `  Real: ${w}x${h} ${u} (${rsf} sqft)`, styles: { fontSize: 8, textColor: subTextColor } });
+                particularsContent.push({ content: `  Print: ${pw}x${ph} (${psf} sqft)`, styles: { fontSize: 8, textColor: subTextColor } });
+                particularsContent.push({ content: `  Wastage: ${wastage}`, styles: { fontSize: 8, textColor: subTextColor } });
+
             } else { // Qty
                 const qty = parseInt(item.quantity || 0);
                 qtyStr = `${qty}`;
@@ -208,117 +197,119 @@ async function generatePoPdf(poData, supplierData) {
             const rateStr = typeof item.rate === 'number' ? item.rate.toFixed(2) : '-';
             const amountStr = typeof item.itemAmount === 'number' ? item.itemAmount.toFixed(2) : '-';
 
-            return [ index + 1, item.productName || 'N/A', qtyStr, sqfStr, rateStr, amountStr ];
+            return [ index + 1, particularsContent, qtyStr, sqfStr, rateStr, amountStr ];
         });
 
-        // Add Total Qty Row (if applicable)
+        // Add summary rows
+        const summaryRows = [];
         if (totalQtySum > 0) {
-             tableBody.push([
-                 { content: `Total Qty: ${totalQtySum}`, colSpan: 4, styles: { halign: 'left' } }, // Spanning applied via hook
-                 { content: ''}, { content: ''}
+             summaryRows.push([
+                 { content: `Total Qty: ${totalQtySum}`, colSpan: 2, styles: { halign: 'left', fontStyle: 'bold'} },
+                 { content: ''}, { content: '' }, { content: '' }, { content: '' }
              ]);
         }
-
-        // Add final TOTAL row
          const finalTotalAmountStr = poData.totalAmount !== undefined ? poData.totalAmount.toFixed(2) : '0.00';
-         tableBody.push([
-              { content: 'TOTAL', colSpan: 4, styles: { halign: 'right'} }, // Spanning applied via hook
-              { content: '' }, // Empty Unit Price
-              { content: `₹ ${finalTotalAmountStr}`, styles: { halign: 'right'} } // Amount
+         summaryRows.push([
+              { content: 'GRAND TOTAL', colSpan: 5, styles: { halign: 'right', fontStyle: 'bold'} },
+              { content: `₹ ${finalTotalAmountStr}`, styles: { halign: 'right', fontStyle: 'bold'} }
          ]);
 
-
-        // --- 6. Define Table Styles ---
+        // --- 4. Define Table Styles ---
         const headStyles = {
-            fillColor: primaryColor, textColor: whiteColor, fontStyle: 'bold',
-            halign: 'center', valign: 'middle', fontSize: 10, cellPadding: 5,
+            fillColor: headerColor, textColor: whiteColor, fontStyle: 'bold',
+            halign: 'center', valign: 'middle', fontSize: 9, cellPadding: 5,
+            lineWidth: 0.5, lineColor: borderColor
         };
         const bodyStyles = {
-             fontSize: 9, textColor: grayColor, cellPadding: 4, valign: 'middle'
+             fontSize: 9, textColor: textColor, cellPadding: {top: 4, right: 5, bottom: 4, left: 5},
+             valign: 'top', lineWidth: 0.5, lineColor: borderColor
         };
+        // Adjust column widths for new content
         const columnStyles = {
              0: { halign: 'center', cellWidth: 30 },    // S.No.
-             1: { halign: 'left', cellWidth: 200 },   // Particulars
+             1: { halign: 'left', cellWidth: 235 },   // Particulars (Wider)
              2: { halign: 'right', cellWidth: 40 },   // Qty
-             3: { halign: 'right', cellWidth: 45 },   // Sqf
+             3: { halign: 'right', cellWidth: 50 },   // Sqf
              4: { halign: 'right', cellWidth: 60 },   // Unit Price
              5: { halign: 'right', cellWidth: 70 }    // Amount
         };
 
-         // Hook to style specific rows/cells
-         const didParseCell = (data) => {
-              // Style the final TOTAL row (last row)
-              if (data.row.index === tableBody.length - 1) {
-                  data.cell.styles.fillColor = '#f0f0f0'; // Light gray
-                  data.cell.styles.textColor = blackColor;
-                  data.cell.styles.fontStyle = 'bold';
-                  data.cell.styles.fontSize = 10; // Match header font size
-              }
-              // Style the Total Qty row (second to last if total exists and qty > 0)
-              if (totalQtySum > 0 && data.row.index === tableBody.length - 2) {
-                   data.cell.styles.fontStyle = 'bold';
-                   data.cell.styles.fontSize = 10;
-              }
-          };
-
-        // --- 7. Call doc.autoTable() ---
+        // --- 5. Call doc.autoTable() for Items ---
         doc.autoTable({
             head: [['S.No.', 'PARTICULARS', 'QTY', 'SQF', 'UNIT PRICE', 'AMOUNT']],
             body: tableBody,
             startY: currentY,
-            theme: 'grid', // Use grid for borders like sample
+            theme: 'grid',
             headStyles: headStyles,
             bodyStyles: bodyStyles,
             columnStyles: columnStyles,
-            didParseCell: didParseCell, // Apply custom styling
             margin: { left: margin, right: margin }
         });
+        currentY = doc.lastAutoTable.finalY; // Get Y position after table
 
-        currentY = doc.lastAutoTable.finalY + 15; // Position below table
+        // --- 6. Call doc.autoTable() for Summary Rows ---
+         doc.autoTable({
+            body: summaryRows,
+            startY: currentY,
+            theme: 'grid',
+            showHead: false, // No header for summary rows
+            bodyStyles: { // Specific styles for summary rows
+                 fontSize: 9, textColor: textColor, cellPadding: {top: 4, right: 5, bottom: 4, left: 5},
+                 valign: 'middle', lineWidth: 0.5, lineColor: borderColor, fontStyle: 'bold'
+             },
+             columnStyles: columnStyles, // Use same widths for alignment
+             margin: { left: margin, right: margin }
+        });
+        currentY = doc.lastAutoTable.finalY + 15; // Position below summary
 
-        // --- 8. Totals Section ---
+        // --- 7. Footer Sections ---
         // Amount in Words (Placeholder)
-        const amountInWords = "Rupees ... Only"; // !!! Requires number-to-words function !!!
+        // !!! इसे काम करने के लिए नंबर को शब्दों में बदलने वाला फंक्शन चाहिए !!!
+        const amountInWords = "Rupees ... Only";
         doc.setFontSize(9);
         doc.setFont(undefined, 'bold');
         doc.text("Amount (in words):", margin, currentY);
         doc.setFont(undefined, 'normal');
         doc.text(amountInWords, margin + 95, currentY);
-        currentY += 15;
+        currentY += 20;
 
-        // Terms / Declaration (Placeholder)
+        // Terms / Declaration
         doc.setFont(undefined, 'bold');
         doc.text("Terms / Declaration:", margin, currentY);
+        currentY += 12;
         doc.setFont(undefined, 'normal');
-        // !!! Add your terms here !!!
-        // doc.text("- Term 1...", margin, currentY + 12);
-        currentY += 25;
+        // --- <<< आप यहाँ अपनी शर्तें जोड़ सकते हैं >>> ---
+        const terms = [
+             "- Subject to Batadu jurisdiction.",
+             "- Goods once sold will not be taken back.",
+             // Add more terms if needed
+        ];
+         terms.forEach(term => {
+             if (currentY > pageHeight - 60) { doc.addPage(); currentY = margin; } // Page break check before terms
+             doc.text(term, margin, currentY);
+             currentY += 10;
+         });
+        currentY += 15;
 
-        // --- 9. Final Total Bar (Skipped as total is in table now) ---
-
-        // --- 10. Footer ---
-        if (currentY > pageHeight - 50) { // Check space
+        // --- 8. Signature ---
+        if (currentY > pageHeight - 40) { // Check space before signature
             doc.addPage();
             currentY = margin;
         }
         doc.setFontSize(10);
-        doc.setFont(undefined, 'normal');
-        // Footer Text - USER DETAILS UPDATED
-        const footerText = "For, MADHAV OFFSET";
-        doc.text(footerText, pageWidth - margin, pageHeight - margin, { align: 'right' });
+        doc.setFont(undefined, 'bold');
+        doc.text(companySignature, pageWidth - margin, pageHeight - margin - 10, { align: 'right' }); // Position signature
 
-        // --- 11. Save PDF ---
+        // --- 9. Save PDF ---
         const filename = `PO-${poData.poNumber || poData.id?.substring(0, 6) || 'PurchaseOrder'}.pdf`;
         doc.save(filename);
-        console.log("PDF Generated (New Design - User Details Updated):", filename);
+        console.log("PDF Generated (v6 Design):", filename);
 
     } catch (error) {
-        console.error("Error generating PDF (New Design):", error);
-        alert("Could not generate PDF. Check console for errors.");
+        console.error("Error generating PDF (v6 Design):", error);
+        alert(`Could not generate PDF. Error: ${error.message}. Check console for more details.`);
     }
 }
 
-// +++++ Export the functions +++++
-// सुनिश्चित करें कि दोनों फ़ंक्शन एक्सपोर्ट किए गए हैं
+// Export the functions
 export { generatePoPdf, calculateFlexDimensions };
-// ++++++++++++++++++++++++++++++++
