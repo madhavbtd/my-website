@@ -1,44 +1,130 @@
-/* css/new_po.css - v3 (Enhanced Preview, Item Details Added) */
+/* css/new_po.css - v4 (Refined Design - Gemini) */
 
-/* ----- Basic Setup (Inherit or define) ----- */
-body {
-    font-family: 'Poppins', sans-serif;
-    background-color: #f0f2f5; /* Light grey background */
-    margin: 0;
-    color: #343a40;
-    line-height: 1.5;
+/* ----- Global Variables (Optional: Define for consistency) ----- */
+:root {
+    --primary-color: #0056b3; /* Primary blue */
+    --secondary-color: #495057; /* Dark grey text */
+    --light-grey: #f8f9fa;   /* Light background */
+    --medium-grey: #e9ecef;  /* Borders */
+    --darker-grey: #6c757d;  /* Muted text/buttons */
+    --success-color: #28a745; /* Green for success */
+    --danger-color: #dc3545;  /* Red for danger/delete */
+    --info-color: #17a2b8;   /* Blue for info/add */
+    --warning-color: #ffc107; /* Yellow for warnings */
+    --white-color: #ffffff;
+    --body-bg: #f4f7f9;     /* Slightly softer body background */
+    --border-radius: 6px;   /* Consistent border radius */
+    --box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08); /* Standard shadow */
+    --focus-shadow: 0 0 0 0.2rem rgba(0, 86, 179, 0.25); /* Focus shadow */
 }
 
-.container {}
+/* ----- Basic Setup ----- */
+body {
+    font-family: 'Poppins', sans-serif;
+    background-color: var(--body-bg);
+    margin: 0;
+    color: var(--secondary-color);
+    line-height: 1.6; /* Slightly increased line height */
+}
+
+.container {} /* Container class seems unused in the HTML structure shown */
 
 .main-content {
-    padding: 30px;
-    max-width: 1300px; /* Slightly wider for new columns */
-    margin: 30px auto;
-    background-color: #ffffff;
-    border-radius: 8px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    padding: 30px 35px; /* Increased horizontal padding */
+    max-width: 1350px; /* Adjusted max-width */
+    margin: 35px auto;
+    background-color: var(--white-color);
+    border-radius: var(--border-radius);
+    box-shadow: var(--box-shadow);
     box-sizing: border-box;
 }
 
 /* ----- Page Header and Breadcrumb ----- */
-.page-header { margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid #e9ecef; }
-.page-header h1 { margin: 0; font-size: 1.75em; font-weight: 600; color: var(--secondary-color, #2c3e50); }
-.page-header h1 i { margin-right: 12px; color: var(--primary-color, #0056b3); }
-.breadcrumb { font-size: 0.9em; color: #6c757d; margin-bottom: 30px; }
-.breadcrumb a { color: var(--primary-color, #0056b3); text-decoration: none; }
-.breadcrumb a:hover { text-decoration: underline; }
-.breadcrumb span { margin-left: 5px; }
-.breadcrumb span::before { content: "/"; margin-right: 5px; color: #adb5bd; }
+.page-header {
+    margin-bottom: 25px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid var(--medium-grey);
+}
+.page-header h1 {
+    margin: 0;
+    font-size: 1.8em; /* Slightly larger */
+    font-weight: 600;
+    color: #2c3e50; /* Using a specific dark blue-grey */
+    display: flex; /* Align icon and text nicely */
+    align-items: center;
+}
+.page-header h1 i {
+    margin-right: 15px;
+    color: var(--primary-color);
+    font-size: 0.9em; /* Adjust icon size relative to text */
+}
+.breadcrumb {
+    font-size: 0.9em;
+    color: var(--darker-grey);
+    margin-bottom: 35px;
+}
+.breadcrumb a {
+    color: var(--primary-color);
+    text-decoration: none;
+    transition: color 0.2s ease;
+}
+.breadcrumb a:hover {
+    color: #003d80; /* Darker shade on hover */
+    text-decoration: underline;
+}
+.breadcrumb span {
+    margin-left: 5px;
+}
+.breadcrumb span::before {
+    content: "/";
+    margin-right: 5px;
+    color: #adb5bd;
+}
 
 /* ----- Form Sections ----- */
-#poForm .form-section { margin-bottom: 35px; padding: 25px; border: 1px solid #e9ecef; border-radius: 6px; background-color: #fdfdfd; }
-#poForm .form-section:last-of-type { border-bottom: 1px solid #e9ecef; }
-#poForm .form-section h2 { font-size: 1.3em; font-weight: 600; color: var(--primary-color, #0056b3); margin-top: 0; margin-bottom: 25px; padding-bottom: 10px; border-bottom: 1px solid #dee2e6; }
-.form-row { display: flex; flex-wrap: wrap; gap: 25px; align-items: flex-start; }
-.form-group { margin-bottom: 20px; flex: 1 1 250px; position: relative; }
-.form-group label { display: block; margin-bottom: 8px; font-weight: 500; font-size: 0.9em; color: #495057; }
-.form-group label .required { color: var(--danger-color, #dc3545); font-weight: 600; margin-left: 3px; }
+#poForm .form-section {
+    margin-bottom: 40px;
+    padding: 30px; /* Increased padding */
+    border: 1px solid var(--medium-grey);
+    border-radius: var(--border-radius);
+    background-color: var(--white-color); /* White background for contrast */
+    box-shadow: 0 2px 4px rgba(0,0,0,0.04); /* Subtle shadow for depth */
+}
+#poForm .form-section:last-of-type {
+    border-bottom: 1px solid var(--medium-grey);
+}
+#poForm .form-section h2 {
+    font-size: 1.4em; /* Larger section title */
+    font-weight: 600;
+    color: var(--primary-color);
+    margin-top: 0;
+    margin-bottom: 30px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid #dee2e6;
+}
+.form-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 30px; /* Increased gap */
+    align-items: flex-start;
+}
+.form-group {
+    margin-bottom: 20px;
+    flex: 1 1 280px; /* Adjusted flex basis */
+    position: relative;
+}
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 500; /* Medium weight label */
+    font-size: 0.95em;
+    color: var(--secondary-color);
+}
+.form-group label .required { /* Removed - Using * in HTML label */
+    color: var(--danger-color);
+    font-weight: 600;
+    margin-left: 3px;
+}
 
 /* ----- Input Styling ----- */
 .form-input,
@@ -46,77 +132,242 @@ body {
 #poForm input[type="date"],
 #poForm input[type="number"],
 #poForm select,
-#poForm textarea { width: 100%; padding: 10px 14px; border: 1px solid #ced4da; border-radius: 5px; font-size: 0.95em; box-sizing: border-box; transition: border-color 0.2s ease, box-shadow 0.2s ease; background-color: #fff; color: #495057; }
-#poForm input[type="date"] { color-scheme: light; }
+#poForm textarea {
+    width: 100%;
+    padding: 11px 15px; /* Increased padding */
+    border: 1px solid #ced4da;
+    border-radius: var(--border-radius);
+    font-size: 0.95em;
+    box-sizing: border-box;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    background-color: var(--white-color);
+    color: var(--secondary-color);
+    font-family: 'Poppins', sans-serif; /* Ensure Poppins is inherited */
+}
+#poForm input[type="date"] {
+    color-scheme: light;
+     min-height: 45px; /* Ensure consistent height with text inputs */
+}
 #poForm input:focus,
 #poForm select:focus,
-#poForm textarea:focus { border-color: var(--primary-color, #80bdff); outline: 0; box-shadow: 0 0 0 0.2rem rgba(0, 86, 179, 0.2); }
-#poForm textarea { resize: vertical; min-height: 70px; }
-#poForm input[readonly] { background-color: #e9ecef; cursor: not-allowed; } /* Style for readonly PO number */
+#poForm textarea:focus {
+    border-color: var(--primary-color);
+    outline: 0;
+    box-shadow: var(--focus-shadow);
+}
+#poForm textarea {
+    resize: vertical;
+    min-height: 80px;
+}
+#poForm input[readonly] {
+    background-color: var(--light-grey);
+    cursor: not-allowed;
+    border-color: var(--medium-grey);
+}
 
 /* ----- Supplier Search Specific ----- */
 .supplier-search-group { flex-basis: 350px; }
-.suggestions-list { display: none; position: absolute; background-color: white; border: 1px solid var(--primary-color, #80bdff); border-top: none; max-height: 150px; overflow-y: auto; width: calc(100% - 2px); box-sizing: border-box; z-index: 100; border-radius: 0 0 5px 5px; box-shadow: 0 5px 10px rgba(0, 0, 0, 0.1); }
-.suggestions-list div { padding: 10px 14px; font-size: 0.95em; cursor: pointer; } /* Added cursor */
-.suggestions-list div:hover { background-color: #e9f5ff; }
-.link-button { margin-top: 8px; font-size: 0.9em; }
+.suggestions-list {
+    display: none;
+    position: absolute;
+    background-color: var(--white-color);
+    border: 1px solid var(--primary-color);
+    border-top: none;
+    max-height: 180px; /* Increased height */
+    overflow-y: auto;
+    width: calc(100% - 2px); /* Adjusted width calc */
+    box-sizing: border-box;
+    z-index: 1000; /* Ensure it's above other elements */
+    border-radius: 0 0 var(--border-radius) var(--border-radius);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+    margin-top: -1px; /* Align nicely with the input box border */
+}
+.suggestions-list div {
+    padding: 10px 15px; /* Adjusted padding */
+    font-size: 0.95em;
+    cursor: pointer;
+    border-bottom: 1px solid var(--medium-grey); /* Separator */
+    transition: background-color 0.15s ease;
+}
+.suggestions-list div:last-child {
+    border-bottom: none;
+}
+.suggestions-list div:hover {
+    background-color: #e9f5ff; /* Lighter blue hover */
+}
+.suggestions-list .no-suggestions {
+    padding: 12px 15px;
+    color: var(--darker-grey);
+    cursor: default;
+}
+.suggestions-list .no-suggestions:hover {
+    background-color: var(--white-color); /* No hover effect for message */
+}
+.link-button { /* Button for '+ Add New Supplier' link */
+    margin-top: 10px;
+    font-size: 0.9em;
+    background: none;
+    border: none;
+    color: var(--primary-color);
+    cursor: pointer;
+    padding: 0;
+    text-align: left;
+}
+.link-button:hover {
+    text-decoration: underline;
+    color: #003d80;
+}
 
 /* ----- Items Table Styling ----- */
-.po-items-table { margin-bottom: 20px; border: 1px solid #dee2e6; border-radius: 5px; overflow: hidden; }
-#poItemsTable { width: 100%; border-collapse: collapse; border-spacing: 0; }
-#poItemsTable thead th { background-color: #f8f9fa; padding: 12px 8px; /* Adjusted padding */ font-size: 0.85em; /* Slightly smaller header */ font-weight: 600; text-align: left; border-bottom: 2px solid #dee2e6; white-space: nowrap; color: #495057; }
-#poItemsTable tbody td { padding: 6px 8px; /* Adjusted padding */ border-bottom: 1px solid #e9ecef; vertical-align: middle; background-color: #fff; }
-#poItemsTable tbody tr:last-child td { border-bottom: none; }
-#poItemsTable tbody tr:hover td { background-color: #f9f9f9; }
+.po-items-table {
+    margin-bottom: 25px;
+    border: 1px solid var(--medium-grey);
+    border-radius: var(--border-radius);
+    overflow: hidden; /* Ensures border radius clips content */
+    box-shadow: 0 2px 4px rgba(0,0,0,0.03); /* Subtle shadow */
+}
+#poItemsTable {
+    width: 100%;
+    border-collapse: collapse;
+    border-spacing: 0;
+}
+#poItemsTable thead th {
+    background-color: var(--light-grey);
+    padding: 14px 10px; /* Increased padding */
+    font-size: 0.88em; /* Slightly larger header */
+    font-weight: 600;
+    text-align: left;
+    border-bottom: 2px solid var(--medium-grey);
+    white-space: nowrap;
+    color: var(--secondary-color);
+    text-transform: uppercase; /* Uppercase headers */
+    letter-spacing: 0.5px; /* Slight spacing */
+}
+#poItemsTable tbody td {
+    padding: 8px 10px; /* Increased padding */
+    border-bottom: 1px solid var(--medium-grey);
+    vertical-align: middle;
+    background-color: var(--white-color);
+    font-size: 0.95em; /* Ensure consistent text size */
+}
+/* Zebra Striping */
+#poItemsTable tbody tr:nth-child(even) td {
+    background-color: #fdfdfe; /* Very subtle striping */
+}
+#poItemsTable tbody tr:last-child td {
+    border-bottom: none;
+}
+#poItemsTable tbody tr:hover td {
+    background-color: #f1f8ff; /* Light blue hover */
+}
 
 /* Input fields within table cells */
-#poItemsTable .form-input { padding: 6px 8px; /* Smaller padding */ font-size: 0.9em; border-radius: 4px; width: 100%; /* Make inputs fill cell */ box-sizing: border-box; }
-#poItemsTable .dimension-input { width: 65px; text-align: right; } /* Use fixed width from HTML */
-#poItemsTable .quantity-input { width: 60px; text-align: right; } /* Use fixed width from HTML */
-#poItemsTable .rate-input { width: 75px; text-align: right; } /* Use fixed width from HTML */
-#poItemsTable .dimension-unit-select { width: 70px; } /* Use fixed width from HTML */
-#poItemsTable .item-amount { font-weight: 600; text-align: right; padding-right: 5px; white-space: nowrap; }
+#poItemsTable .form-input {
+    padding: 8px 10px; /* Adjusted padding */
+    font-size: 0.9em;
+    border-radius: 4px;
+    width: 100%;
+    box-sizing: border-box;
+    min-height: 38px; /* Consistent height */
+    border: 1px solid #d8dde2; /* Slightly lighter border */
+}
+#poItemsTable .form-input:focus {
+    border-color: var(--primary-color);
+    box-shadow: var(--focus-shadow);
+}
+/* Keeping specific widths from HTML for number inputs */
+#poItemsTable .dimension-input { width: 65px; text-align: right; }
+#poItemsTable .quantity-input { width: 60px; text-align: right; }
+#poItemsTable .rate-input { width: 75px; text-align: right; }
+#poItemsTable .dimension-unit-select { width: 70px; }
+#poItemsTable .item-amount {
+    font-weight: 600;
+    text-align: right;
+    padding-right: 5px;
+    white-space: nowrap;
+    color: var(--secondary-color);
+}
 #poItemsTable td:last-child { text-align: center; } /* Action button cell */
 #poItemsTable td:nth-last-child(2) { text-align: right; } /* Amount cell */
 
-.sq-feet-input .dimension-input-container { display: flex; align-items: center; gap: 4px; }
-.hidden-col { display: none; }
+.sq-feet-input .dimension-input-container { /* Container for W x H inputs */
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+.hidden-col { display: none; } /* Utility class from original CSS */
 
 /* Add Item Button */
-.add-item-button { background-color: var(--info-color, #17a2b8); color: white; margin-top: 15px; padding: 8px 15px; font-size: 0.9em; border-radius: 5px; border: none; cursor: pointer; }
-.add-item-button:hover { background-color: #117a8b; }
-.add-item-button i { margin-right: 6px; }
+.add-item-button {
+    background-color: var(--info-color);
+    color: var(--white-color);
+    margin-top: 15px;
+    padding: 9px 18px; /* Slightly larger */
+    font-size: 0.9em;
+    border-radius: var(--border-radius);
+    border: none;
+    cursor: pointer;
+    font-weight: 500;
+    transition: background-color 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+.add-item-button:hover {
+    background-color: #117a8b; /* Darker shade */
+}
+.add-item-button i {
+    margin-right: 0; /* Using gap instead */
+}
 
 /* Delete Item Button */
-.delete-item-btn { background-color: transparent; color: var(--danger-color, #dc3545); border: none; padding: 5px; font-size: 1.1em; cursor: pointer; opacity: 0.7; transition: opacity 0.2s ease; }
-.delete-item-btn:hover { opacity: 1; }
-.delete-item-btn i { vertical-align: middle; }
+.delete-item-btn {
+    background-color: transparent;
+    color: var(--danger-color);
+    border: none;
+    padding: 6px 8px; /* Slightly larger click area */
+    font-size: 1.1em;
+    cursor: pointer;
+    opacity: 0.65; /* Slightly less visible initially */
+    transition: opacity 0.2s ease, color 0.2s ease;
+    border-radius: 4px; /* Add slight rounding */
+}
+.delete-item-btn:hover {
+    opacity: 1;
+    color: #a71d2a; /* Darker red on hover */
+    background-color: #fce8e6; /* Very light red background on hover */
+}
+.delete-item-btn i {
+    vertical-align: middle;
+    display: block; /* Helps prevent layout shifts */
+}
 
 /* ----- Calculation Preview Area Styling ----- */
 .calculation-preview.full-preview {
-    font-size: 0.88em; /* Slightly smaller font */
-    color: #444; /* Darker text */
-    background-color: #f8f9fa; /* Light background */
-    border: 1px solid #dee2e6; /* Standard border */
-    padding: 15px;
-    margin-top: 20px;
-    max-height: 250px; /* Limit height and allow scroll */
-    overflow-y: auto;  /* Enable vertical scroll */
-    border-radius: 5px;
-    line-height: 1.6; /* Better line spacing */
+    font-size: 0.9em;
+    color: #555; /* Slightly darker text */
+    background-color: var(--light-grey);
+    border: 1px solid var(--medium-grey);
+    padding: 20px; /* Increased padding */
+    margin-top: 25px;
+    max-height: 280px;
+    overflow-y: auto;
+    border-radius: var(--border-radius);
+    line-height: 1.7; /* Better line spacing */
 }
 .calculation-preview.full-preview h4 {
     margin-top: 0;
-    margin-bottom: 10px;
-    font-size: 1.1em;
-    color: #333;
-    border-bottom: 1px solid #e0e0e0;
-    padding-bottom: 5px;
+    margin-bottom: 15px;
+    font-size: 1.15em;
+    font-weight: 600; /* Bolder heading */
+    color: var(--secondary-color);
+    border-bottom: 1px solid #dee2e6;
+    padding-bottom: 8px;
 }
 .calculation-preview .item-preview-entry {
-    margin-bottom: 12px; /* Space between item entries */
-    padding-bottom: 8px;
-    border-bottom: 1px dashed #e0e0e0; /* Dashed separator */
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 1px dashed #dee2e6; /* Dashed separator */
 }
 .calculation-preview .item-preview-entry:last-child {
     margin-bottom: 0;
@@ -124,42 +375,178 @@ body {
     border-bottom: none;
 }
 .calculation-preview .item-preview-entry strong {
-    color: #0056b3; /* Highlight item name */
+    color: var(--primary-color);
+    font-weight: 600; /* Ensure item name is bold */
 }
-/* ----- End Calculation Preview Area Styling ----- */
+.calculation-preview .item-preview-entry span, /* Target specific spans if needed */
+.calculation-preview .item-preview-entry strong[style] { /* Target styled elements */
+    display: inline-block; /* Ensures spacing */
+    margin-left: 10px; /* Indent details */
+}
+.calculation-preview p[style*="color:grey"] { /* Style placeholder text */
+    margin-top: 10px;
+    font-style: italic;
+}
+
 
 /* ----- PO Summary Section ----- */
-.po-summary .total-amount-display { font-size: 1.4em; font-weight: 700; text-align: right; margin-top: 20px; padding-top: 20px; border-top: 1px solid #dee2e6; color: var(--success-color, #28a745); }
-.po-summary .total-amount-display span { min-width: 100px; }
+.po-summary .total-amount-display {
+    font-size: 1.5em; /* Larger total */
+    font-weight: 700;
+    text-align: right;
+    margin-top: 25px;
+    padding-top: 25px;
+    border-top: 1px solid var(--medium-grey);
+    color: var(--success-color);
+}
+.po-summary .total-amount-display span {
+    min-width: 120px; /* Ensure space for amount */
+    display: inline-block; /* Allows min-width */
+}
 
 /* ----- Form Actions ----- */
-.form-actions { margin-top: 30px; padding-top: 25px; border-top: 1px solid #e9ecef; display: flex; justify-content: flex-end; gap: 15px; }
-.form-actions .button { padding: 10px 25px; font-size: 1em; border-radius: 5px; font-weight: 600; color: white; border: none; cursor: pointer; transition: background-color 0.2s ease, opacity 0.2s ease; display: inline-flex; align-items: center; justify-content: center; }
-.form-actions .button i { margin-right: 8px; }
-.form-actions .button:disabled { opacity: 0.6; cursor: not-allowed; background-color: #6c757d !important; /* Ensure disabled is grey */ } /* Added disabled style */
-.form-actions .save-button { background-color: var(--success-color, #28a745); }
-.form-actions .save-button:hover:not(:disabled) { background-color: #218838; }
-.form-actions .cancel-button { background-color: var(--text-muted, #6c757d); text-decoration: none; }
-.form-actions .cancel-button:hover { background-color: #5a6268; }
+.form-actions {
+    margin-top: 35px;
+    padding-top: 30px;
+    border-top: 1px solid var(--medium-grey);
+    display: flex;
+    justify-content: flex-end;
+    gap: 15px;
+}
+.form-actions .button { /* Base style for action buttons */
+    padding: 12px 28px; /* Larger padding */
+    font-size: 1em;
+    border-radius: var(--border-radius);
+    font-weight: 600;
+    color: var(--white-color);
+    border: none;
+    cursor: pointer;
+    transition: background-color 0.2s ease, opacity 0.2s ease, box-shadow 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none; /* For cancel link */
+}
+.form-actions .button i {
+    margin-right: 8px;
+    font-size: 0.9em; /* Adjust icon size */
+}
+.form-actions .button:disabled {
+    opacity: 0.65;
+    cursor: not-allowed;
+    background-color: var(--darker-grey) !important;
+    box-shadow: none;
+}
+.form-actions .save-button {
+    background-color: var(--success-color);
+    box-shadow: 0 2px 5px rgba(40, 167, 69, 0.3); /* Subtle shadow */
+}
+.form-actions .save-button:hover:not(:disabled) {
+    background-color: #218838; /* Darker green */
+    box-shadow: 0 4px 8px rgba(40, 167, 69, 0.4);
+}
+.form-actions .cancel-button {
+    background-color: var(--darker-grey);
+}
+.form-actions .cancel-button:hover {
+    background-color: #5a6268; /* Darker grey */
+    color: var(--white-color); /* Ensure text remains white */
+}
 
-.error-message { color: var(--danger-color, #dc3545); font-weight: 500; text-align: center; margin-top: 15px; width: 100%; }
+/* ----- Error Message ----- */
+.error-message {
+    color: var(--danger-color);
+    background-color: #fdecea; /* Light red background */
+    border: 1px solid var(--danger-color);
+    border-radius: var(--border-radius);
+    padding: 12px 15px;
+    font-weight: 500;
+    text-align: center;
+    margin-top: 20px;
+    width: 100%;
+    box-sizing: border-box; /* Include padding in width */
+    display: none; /* Initially hidden, shown by JS */
+}
 
-/* ----- Responsive ----- */
+/* ----- Responsive Adjustments ----- */
 @media (max-width: 1200px) {
-    .main-content { max-width: 100%; padding: 20px; } /* Allow full width */
+    .main-content {
+        max-width: 95%; /* Allow slightly more width than 100% */
+        padding: 25px;
+        margin: 25px auto;
+    }
 }
+
 @media (max-width: 992px) {
-    #poItemsTable thead th, #poItemsTable tbody td { padding: 8px 6px; font-size: 0.8em; } /* Further reduce padding/font for smaller screens */
-    #poItemsTable .form-input { font-size: 0.85em; padding: 5px 6px; }
+    .form-row {
+        gap: 20px; /* Reduce gap */
+    }
+    .form-group {
+        flex-basis: calc(50% - 20px); /* Aim for 2 columns */
+    }
+    #poItemsTable thead th, #poItemsTable tbody td {
+        padding: 10px 8px; /* Adjust padding */
+        font-size: 0.85em;
+    }
+    #poItemsTable .form-input {
+        font-size: 0.88em;
+        padding: 6px 8px;
+        min-height: 36px;
+    }
+    .page-header h1 { font-size: 1.6em; }
+    #poForm .form-section h2 { font-size: 1.3em; }
+    .po-summary .total-amount-display { font-size: 1.3em; }
 }
+
 @media (max-width: 768px) {
-    .main-content { padding: 15px; margin: 15px auto; }
-    .form-row { flex-direction: column; gap: 0; }
-    .form-group { flex-basis: auto; margin-bottom: 15px; }
-    #poForm .form-section { padding: 15px; }
-    .form-actions { flex-direction: column; gap: 10px; }
-    .form-actions .button { width: 100%; }
-    .po-summary .total-amount-display { text-align: center; }
-    /* Force table to not exceed container width - may need horizontal scroll */
-    .table-container { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    .main-content {
+        padding: 20px 15px;
+        margin: 20px auto;
+        max-width: 100%; /* Use full width */
+        border-radius: 0; /* Optional: remove radius on small screens */
+        box-shadow: none; /* Optional: remove shadow */
+    }
+    .form-row {
+        flex-direction: column;
+        gap: 0;
+    }
+    .form-group {
+        flex-basis: auto; /* Full width */
+        margin-bottom: 20px;
+    }
+    #poForm .form-section {
+        padding: 20px 15px;
+    }
+    .form-actions {
+        flex-direction: column;
+        gap: 12px;
+    }
+    .form-actions .button {
+        width: 100%;
+        padding: 12px 20px; /* Adjust padding */
+    }
+    .po-summary .total-amount-display {
+        text-align: left; /* Align left on small screens */
+        font-size: 1.25em;
+    }
+    /* Force table horizontal scroll on small screens */
+    .table-container.po-items-table {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+        margin-left: -15px; /* Adjust margins to use full width */
+        margin-right: -15px;
+        padding-left: 15px;
+        padding-right: 15px;
+        border-left: none;
+        border-right: none;
+        border-radius: 0;
+    }
+     #poItemsTable {
+        min-width: 700px; /* Ensure table has minimum width for scrolling */
+    }
+     #poItemsTable thead th, #poItemsTable tbody td {
+        white-space: nowrap; /* Prevent text wrapping in cells */
+    }
+     .page-header h1 { font-size: 1.4em; }
+     #poForm .form-section h2 { font-size: 1.2em; }
 }
