@@ -171,6 +171,7 @@ body {
 #poItemsTable td:nth-last-child(2) { text-align: right; }
 
 .sq-feet-input .dimension-input-container { display: flex; align-items: center; gap: 4px; }
+/* This class is controlled by JS for header visibility */
 .hidden-col { display: none; }
 
 /* Add Item Button */
@@ -206,10 +207,9 @@ body {
     padding-bottom: 8px;
 }
 
-/* NEW: Grid container for calculation details */
+/* Grid container for calculation details */
 .calculation-grid {
     display: grid;
-    /* Responsive columns: Fit as many columns >= 300px as possible */
     grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
     gap: 15px 25px; /* Row gap, Column gap */
 }
@@ -219,16 +219,7 @@ body {
     margin-bottom: 0; /* Rely on grid gap */
     padding-bottom: 15px;
     border-bottom: 1px dashed #dee2e6;
-    /* Optional: add background/border for clarity */
-    /* background-color: #fff; */
-    /* border: 1px solid #eee; */
-    /* padding: 15px; */
-    /* border-radius: 4px; */
 }
-/* Remove border from the last item *within the grid* if grid adds one */
-/* .calculation-preview .calculation-grid .item-preview-entry:last-child {
-    border-bottom: none; /* Usually not needed with grid gap */
-/* } */
 
 .calculation-preview .item-preview-entry strong { color: var(--primary-color); font-weight: 600; }
 .calculation-preview .item-preview-entry span,
@@ -238,8 +229,7 @@ body {
 .calculation-preview > p[style*="color:grey"] {
     margin-top: 15px;
     font-style: italic;
-    /* Ensure it spans full width if accidentally in grid (shouldn't be with JS change) */
-    grid-column: 1 / -1;
+    grid-column: 1 / -1; /* Ensure it spans full width */
 }
 
 /* ----- PO Summary Section ----- */
@@ -273,8 +263,6 @@ body {
 /* ----- Responsive Adjustments ----- */
 @media (max-width: 1200px) {
     .main-content { max-width: 95%; padding: 20px 25px; /* Adjusted */ margin: 20px auto; /* Adjusted */ }
-    /* Adjust grid columns for medium screens if needed */
-    /* .calculation-grid { grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); } */
 }
 @media (max-width: 992px) {
     .form-row { gap: 20px; }
@@ -285,7 +273,6 @@ body {
     .page-header h1 { font-size: 1.6em; }
     #poForm .form-section h2 { font-size: 1.25em; /* Adjusted */ }
     .po-summary .total-amount-display { font-size: 1.3em; }
-    /* Calculation grid likely becomes 1 column due to auto-fit minmax */
 }
 @media (max-width: 768px) {
     .main-content { padding: 15px; margin: 15px auto; max-width: 100%; border-radius: 0; box-shadow: none; }
@@ -300,7 +287,6 @@ body {
     #poItemsTable thead th, #poItemsTable tbody td { white-space: nowrap; }
     .page-header h1 { font-size: 1.4em; }
     #poForm .form-section h2 { font-size: 1.2em; margin-bottom: 15px; /* Adjusted */ }
-    /* Ensure calculation grid items stack vertically */
     .calculation-grid { grid-template-columns: 1fr; gap: 15px 0; } /* Force 1 column */
     .calculation-preview.full-preview { padding: 15px; } /* Adjust padding */
     .calculation-preview.full-preview h4 { margin-bottom: 15px; }
