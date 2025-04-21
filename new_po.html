@@ -3,22 +3,42 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>New/Edit Purchase Order</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <title>New/Edit Purchase Order</title> <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/new_po.css">
     <link rel="stylesheet" href="css/index.css">
 
     <script type="module">
-        import { auth } from './js/firebase-init.js';
+        // --- Firebase Auth Check (यदि आवश्यक हो) ---
+        import { auth } from './js/firebase-init.js'; // <-- init फ़ाइल से इम्पोर्ट करें
         import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
         try {
              if (!auth) { throw new Error("Firebase Auth failed to load."); }
              console.log("new_po.html: Setting up onAuthStateChanged listener...");
-             onAuthStateChanged(auth, (user) => { /* ... */ });
+             onAuthStateChanged(auth, (user) => {
+                console.log("new_po.html: onAuthStateChanged triggered.");
+                 if (!user) {
+                     console.log("User not logged in on new_po. Redirecting...");
+                     if (window.location.pathname.split('/').pop().toLowerCase() !== 'login.html') {
+                          window.location.replace('login.html');
+                     }
+                 } else {
+                     console.log("new_po.html: User is logged in:", user.uid);
+                 }
+             });
              console.log("new_po.html: onAuthStateChanged listener attached.");
-        } catch(e) { console.error("new_po.html: Firebase auth error:", e); /* ... */ }
+        } catch(e) {
+            console.error("new_po.html: Firebase auth error:", e);
+            alert("Error loading application authentication: " + e.message);
+            const poFormElement = document.getElementById('poForm');
+            if(poFormElement) poFormElement.style.display = 'none';
+            const errorDiv = document.createElement('div');
+            errorDiv.textContent = "Application cannot load due to authentication setup error.";
+            errorDiv.style.color = "red";
+            document.body.prepend(errorDiv);
+        }
         console.log("new_po.html: Auth check module script finished execution.");
+        // --- End Firebase Auth Check ---
     </script>
 
 </head>
@@ -28,6 +48,7 @@
             <div class="page-header">
                 <h1 id="poPageTitle"><i class="fas fa-file-alt"></i> Create New Purchase Order</h1>
             </div>
+
             <div class="breadcrumb">
                 <a href="index.html">Dashboard</a> / <a href="supplier_management.html">Suppliers & POs</a> / <span id="poBreadcrumbAction">Create PO</span>
             </div>
@@ -39,37 +60,99 @@
                     <h2>Supplier & PO Details</h2>
                     <div class="form-row">
                         <div class="form-group supplier-search-group">
-                           </div>
+                            <label for="supplierSearchInput">Supplier *</label>
+                            <input type="text" id="supplierSearchInput" placeholder="Type to search supplier..." required autocomplete="off">
+                            <input type="hidden" id="selectedSupplierId">
+                            <input type="hidden" id="selectedSupplierName">
+                            <div id="supplierSuggestions" class="suggestions-list"></div>
+                            <button type="button" id="addNewSupplierFromPO" class="button link-button" style="margin-top: 5px;">+ Add New Supplier</button>
+                         </div>
                         <div class="form-group">
                             <label for="poNumberInput">PO Number</label>
                             <input type="text" id="poNumberInput" placeholder="Will be generated..." readonly style="background-color: #e9ecef;">
                         </div>
                         <div class="form-group">
-                           </div>
+                            <label for="poOrderDateInput">Order Date *</label>
+                            <input type="date" id="poOrderDateInput" required>
+                        </div>
                         <div class="form-group">
-                            </div>
+                            <label for="poStatusInput">Status *</label>
+                            <select id="poStatusInput" class="form-input" required>
+                                <option value="New" selected>New</option>
+                                <option value="Sent">Sent to Supplier</option>
+                                <option value="Received">Received</option>
+                                <option value="Partial Received">Partial Received</option>
+                                <option value="Cancelled">Cancelled</option>
+                            </select>
+                        </div>
+                    </div> </div> <div class="form-section">
+                    <h2>Items</h2>
+                    <div class="table-container po-items-table">
+                        <table id="poItemsTable">
+                            <thead>
+                                <tr>
+                                    <th style="width: 20%;">Product Name *</th>
+                                    <th style="width: 12%;">Unit Type *</th>
+                                    <th style="width: 25%;" class="sq-feet-header hidden-col">Print Size (W x H) *</th>
+                                    <th style="width: 10%;" class="sq-feet-header hidden-col">Unit *</th>
+                                    <th style="width: 15%;" class="qty-header">Quantity *</th>
+                                    <th style="width: 15%;">Rate *</th>
+                                    <th style="width: 15%;">Amount</th>
+                                    <th style="width: 5%;">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="poItemsTableBody">
+                                </tbody>
+                        </table>
                     </div>
-                </div>
-
-                <div class="form-section">
-                   </div>
-
-                <div class="form-section po-summary">
-                    </div>
-
-                 <div class="form-actions">
+                    <button type="button" id="addItemBtn" class="button add-item-button"><i class="fas fa-plus"></i> Add Item</button>
+                     <div id="calculationPreviewArea" class="calculation-preview">
+                         </div>
+                </div> <div class="form-section po-summary">
+                    <h2>Summary</h2>
+                     <div class="form-group">
+                         <label for="poNotesInput">Notes</label>
+                         <textarea id="poNotesInput" rows="3" placeholder="Add any notes for the supplier or internal reference..."></textarea>
                      </div>
-                 <div id="poErrorMsg" class="error-message" style="display: none;"></div>
+                     <div class="total-amount-display">
+                        <strong>Total Amount:</strong> ₹ <span id="poTotalAmount">0.00</span>
+                     </div>
+                </div> <div class="form-actions">
+                     <a href="supplier_management.html" class="button cancel-button">Cancel</a>
+                     <button type="submit" id="savePOBtn" class="button save-button">
+                         <i class="fas fa-save"></i> <span>Save Purchase Order</span>
+                     </button>
+                 </div> <div id="poErrorMsg" class="error-message" style="display: none;"></div>
 
-            </form>
+            </form> <template id="item-row-template">
+                <tr class="item-row">
+                    <td><input type="text" class="form-input product-name" placeholder="Product Name" required></td>
+                    <td>
+                        <select class="form-input unit-type-select">
+                            <option value="Qty" selected>Qty</option>
+                            <option value="Sq Feet">Sq Feet</option>
+                        </select>
+                    </td>
+                    <td class="sq-feet-input" style="display: none;"><div style="display: flex; gap: 5px; align-items: center;">
+                            <input type="number" step="0.01" class="form-input dimension-input width-input" placeholder="Width" style="width: 75px;" required>
+                            <span style="align-self: center;">x</span>
+                            <input type="number" step="0.01" class="form-input dimension-input height-input" placeholder="Height" style="width: 75px;" required>
+                         </div>
+                    </td>
+                    <td class="sq-feet-input" style="display: none;"><select class="form-input dimension-unit-select" style="width: 80px;">
+                            <option value="feet" selected>Feet</option>
+                            <option value="inches">Inches</option>
+                        </select>
+                    </td>
+                     <td class="qty-input"> <input type="number" step="1" class="form-input quantity-input" placeholder="Qty" min="1" style="width: 70px;" required>
+                    </td>
+                    <td><input type="number" step="0.01" class="form-input rate-input" placeholder="Rate/Unit" required style="width: 90px;"></td>
+                    <td style="text-align: right; font-weight: 600;"><span class="item-amount">0.00</span></td>
+                    <td style="text-align: center;"><button type="button" class="button delete-item-btn" title="Remove Item"><i class="fas fa-trash-alt"></i></button></td>
+                </tr>
+            </template>
 
-            <template id="item-row-template">
-               </template>
-
-         </div>
-     </div>
-
-     <script src="js/new_po.js" type="module" defer></script>
+         </div> </div> <script src="js/new_po.js" type="module" defer></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
 
