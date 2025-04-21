@@ -1,4 +1,4 @@
-/* css/supplier_management.css - v4 (Supplier Modal UI, Filters, Totals) */
+/* css/supplier_management.css - v5 (Print Button and Print Styles Added) */
 
 /* --- Basic and Variables --- */
 :root {
@@ -30,7 +30,7 @@ body {
 .main-content {
     padding: 25px;
     box-sizing: border-box;
-    max-width: 1500px; /* Wider for more filters/columns */
+    max-width: 1500px;
     margin: 20px auto;
     background-color: var(--white-color);
     border-radius: 8px;
@@ -48,10 +48,10 @@ body {
 .breadcrumb span::before { content: "/"; margin-right: 5px; color: var(--dark-gray); }
 
 /* --- Action Bar & Buttons --- */
-.actions-bar { display: flex; gap: 12px; /* Slightly more gap */ margin-bottom: 25px; flex-wrap: wrap; align-items: center; } /* Align items center */
+.actions-bar { display: flex; gap: 12px; margin-bottom: 25px; flex-wrap: wrap; align-items: center; }
 
-.button { padding: 9px 18px; /* Slightly larger padding */ font-size: 0.95em; /* Slightly larger font */ border: none; border-radius: 5px; /* More rounded */ cursor: pointer; font-weight: 600; display: inline-flex; align-items: center; gap: 7px; /* More gap */ text-decoration: none; transition: background-color 0.2s ease, opacity 0.2s ease, box-shadow 0.2s ease; white-space: nowrap; vertical-align: middle; line-height: 1; /* Ensure consistent height */ }
-.button i { line-height: 1; /* Ensure icon aligns well */ margin-right: 2px; /* Adjust if needed */}
+.button { padding: 9px 18px; font-size: 0.95em; border: none; border-radius: 5px; cursor: pointer; font-weight: 600; display: inline-flex; align-items: center; gap: 7px; text-decoration: none; transition: background-color 0.2s ease, opacity 0.2s ease, box-shadow 0.2s ease; white-space: nowrap; vertical-align: middle; line-height: 1; }
+.button i { line-height: 1; margin-right: 2px; }
 .button:hover:not(:disabled) { box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
 .button:disabled { background-color: #adb5bd; cursor: not-allowed; opacity: 0.7; box-shadow: none; }
 .button:disabled:hover { background-color: #adb5bd; }
@@ -59,18 +59,16 @@ body {
 /* Specific Button Styles */
 .add-new-button { background-color: var(--success-color); color: var(--white-color); }
 .add-new-button:hover:not(:disabled) { background-color: #218838; }
-/* Style for the new View Suppliers button */
 .view-suppliers-button { background-color: var(--secondary-color); color: var(--white-color); }
 .view-suppliers-button:hover:not(:disabled) { background-color: #1a2531; }
-
 .cancel-button { background-color: var(--dark-gray); color: var(--white-color);}
 .cancel-button:hover:not(:disabled) { background-color: #5a6268;}
 .save-button { background-color: var(--primary-color); color: var(--white-color);}
 .save-button:hover:not(:disabled) { background-color: #004085; }
 
-/* Action buttons inside tables need to be smaller */
+/* Action buttons inside tables */
 .action-buttons .button { padding: 5px 9px; font-size: 0.85em; gap: 4px; border-radius: 4px; }
-.action-buttons .button i { margin-right: 0; font-size: 0.9em; } /* Adjust icon size */
+.action-buttons .button i { margin-right: 0; font-size: 0.9em; }
 
 .edit-button { background-color: var(--warning-color); color: #333; }
 .edit-button:hover:not(:disabled) { background-color: #e0a800; }
@@ -82,7 +80,6 @@ body {
 .status-button:hover:not(:disabled) { background-color: #117a8b; }
 .view-details-button { background-color: var(--purple-color); color: var(--white-color); }
 .view-details-button:hover:not(:disabled) { background-color: #5a2d9e; }
-
 
 /* --- Section Containers --- */
 .section-container { background-color: var(--white-color); padding: 20px 25px; border-radius: 8px; box-shadow: 0 1px 5px rgba(0, 0, 0, 0.05); margin-bottom: 25px; }
@@ -97,9 +94,9 @@ table th, table td { border: 1px solid #e0e0e0; padding: 10px 12px; text-align: 
 table th { font-weight: 600; color: #495057; white-space: nowrap; }
 table tbody tr:nth-child(even) { background-color: #fdfdfd; }
 table tbody tr:hover { background-color: #f1f5f9; }
-table td.action-buttons { display: flex; gap: 5px; justify-content: flex-start; flex-wrap: nowrap; padding: 6px 8px; }
+table td.action-buttons { display: flex; gap: 5px; justify-content: flex-start; flex-wrap: nowrap; padding: 6px 8px; align-items: center; } /* Align items */
 
-/* --- Status Badge Styles (No changes) --- */
+/* --- Status Badge Styles --- */
 .status-badge { padding: 4px 10px; font-size: 0.8em; border-radius: 12px; font-weight: 500; white-space: nowrap; display: inline-block; text-transform: capitalize; }
 .status-new { background-color: #cfe2ff; color: #0a58ca; border: 1px solid #b6d4fe;}
 .status-sent { background-color: #e2e3e5; color: #41464b; border: 1px solid #d3d6d8;}
@@ -109,94 +106,37 @@ table td.action-buttons { display: flex; gap: 5px; justify-content: flex-start; 
 .status-cancel { background-color: #f8d7da; color: #842029; border: 1px solid #f5c2c7;}
 .status-unknown { background-color: #eee; color: #555; border: 1px solid #ddd;}
 
-/* --- PO Filters UPDATED --- */
-.po-filters {
-    margin-bottom: 25px;
-    padding: 15px;
-    background-color: #f9f9f9; /* Light background for filter area */
-    border: 1px solid var(--medium-gray);
-    border-radius: 6px;
-    display: flex;
-    gap: 15px;
-    flex-wrap: wrap;
-    align-items: flex-end; /* Align items to bottom for button alignment */
-}
-.filter-group {
-    display: flex;
-    flex-direction: column; /* Labels above inputs */
-    gap: 4px;
-}
-.filter-group label {
-    font-size: 0.85em;
-    font-weight: 500;
-    color: #495057;
-}
-.po-filters input[type="text"],
-.po-filters select,
-.po-filters input[type="date"] { /* Style date inputs */
-    padding: 8px 12px;
-    border: 1px solid #ced4da;
-    border-radius: 4px;
-    font-size: 0.9em;
-    height: 38px;
-    box-sizing: border-box;
-    min-width: 160px; /* Slightly wider inputs */
-}
-.po-filters input[type="date"] {
-    color-scheme: light; /* Ensure date picker is light themed */
-     min-width: 140px; /* Date inputs can be smaller */
-}
-.filter-group.filter-buttons {
-    margin-left: auto; /* Push buttons to the right */
-    flex-direction: row; /* Keep buttons in a row */
-    gap: 10px;
-}
-.po-filters button.filter-action-button {
-     height: 38px; /* Match input height */
-}
-.po-filters button#poFilterBtn {
-    background-color: var(--primary-color);
-    color: var(--white-color);
-}
+/* --- PO Filters --- */
+.po-filters { margin-bottom: 25px; padding: 15px; background-color: #f9f9f9; border: 1px solid var(--medium-gray); border-radius: 6px; display: flex; gap: 15px; flex-wrap: wrap; align-items: flex-end; }
+.filter-group { display: flex; flex-direction: column; gap: 4px; }
+.filter-group label { font-size: 0.85em; font-weight: 500; color: #495057; }
+.po-filters input[type="text"], .po-filters select, .po-filters input[type="date"] { padding: 8px 12px; border: 1px solid #ced4da; border-radius: 4px; font-size: 0.9em; height: 38px; box-sizing: border-box; min-width: 160px; }
+.po-filters input[type="date"] { color-scheme: light; min-width: 140px; }
+.filter-group.filter-buttons { margin-left: auto; flex-direction: row; gap: 10px; }
+.po-filters button.filter-action-button { height: 38px; }
+.po-filters button#poFilterBtn { background-color: var(--primary-color); color: var(--white-color); }
 .po-filters button#poFilterBtn:hover:not(:disabled) { background-color: #004085; }
-.po-filters button#poClearFilterBtn {
-    /* Style inherited from .cancel-button */
-}
 
-/* PO Totals Area */
-.po-totals {
-    margin-top: 15px;
-    padding: 10px 15px;
-    background-color: var(--light-gray);
-    border: 1px solid var(--medium-gray);
-    border-radius: 4px;
-    text-align: right;
-    font-size: 1em;
-    font-weight: 600;
-}
-
+/* --- PO Totals Area --- */
+.po-totals { margin-top: 15px; padding: 10px 15px; background-color: var(--light-gray); border: 1px solid var(--medium-gray); border-radius: 4px; text-align: right; font-size: 1em; font-weight: 600; }
 
 /* --- Modal Styles (Generic) --- */
-.modal { display: none; position: fixed; z-index: 1050; left: 0; top: 0; width: 100%; height: 100%; overflow: hidden; /* Prevent body scroll */ background-color: rgba(0,0,0,0.5); align-items: flex-start; /* Align modal to top */ justify-content: center; padding: 3vh 15px 15px 15px; /* Padding top with vh */ box-sizing: border-box; }
-.modal.active { display: flex; overflow-y: auto; /* Allow modal itself to scroll */ } /* Show the modal */
-.modal-content { background-color: #fefefe; margin: auto; /* Auto margin for centering */ padding: 25px 30px; border: 1px solid #ccc; width: 90%; max-width: 500px; border-radius: 8px; position: relative; box-shadow: 0 5px 15px rgba(0,0,0,0.2); z-index: 1051; display: flex; flex-direction: column; max-height: calc(100vh - 6vh); /* Limit height based on padding */ }
-
-/* Larger modal sizes */
+.modal { display: none; position: fixed; z-index: 1050; left: 0; top: 0; width: 100%; height: 100%; overflow: hidden; background-color: rgba(0,0,0,0.5); align-items: flex-start; justify-content: center; padding: 3vh 15px 15px 15px; box-sizing: border-box; }
+.modal.active { display: flex; overflow-y: auto; }
+.modal-content { background-color: #fefefe; margin: auto; padding: 25px 30px; border: 1px solid #ccc; width: 90%; max-width: 500px; border-radius: 8px; position: relative; box-shadow: 0 5px 15px rgba(0,0,0,0.2); z-index: 1051; display: flex; flex-direction: column; max-height: calc(100vh - 6vh); }
 .modal-content.modal-lg { max-width: 850px; }
-.modal-content.modal-xl { max-width: 1100px; } /* For suppliers list */
+.modal-content.modal-xl { max-width: 1100px; }
 
 .modal-content h2 { margin-top: 0; margin-bottom: 20px; text-align: center; border-bottom: 1px solid var(--medium-gray); padding-bottom: 15px; font-size: 1.4em; font-weight: 600; color: var(--secondary-color); }
 .close-btn { color: #aaa; position: absolute; top: 10px; right: 15px; font-size: 28px; font-weight: bold; cursor: pointer; line-height: 1; z-index: 1052; }
 .close-btn:hover, .close-btn:focus { color: var(--black-color); text-decoration: none; }
 
-/* Modal Form Styling */
 .modal form .form-group { margin-bottom: 15px; }
 .modal form .form-group label { display: block; margin-bottom: 6px; font-weight: 500; font-size: 0.9em; }
 .modal form .form-group input[type="text"], .modal form .form-group input[type="tel"], .modal form .form-group input[type="email"], .modal form .form-group input[type="password"], .modal form .form-group select, .modal form .form-group textarea { width: 100%; padding: 9px 12px; border: 1px solid #ced4da; border-radius: 4px; font-size: 0.95em; box-sizing: border-box; transition: border-color 0.2s ease, box-shadow 0.2s ease; }
 .modal form .form-group textarea { resize: vertical; min-height: 60px; }
 .modal form .form-group input:focus, .modal form .form-group select:focus, .modal form .form-group textarea:focus { border-color: var(--primary-color); outline: 0; box-shadow: 0 0 0 0.2rem rgba(0, 86, 179, 0.2); }
 
-/* Modal Actions (Footer) */
 .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 25px; padding-top: 15px; border-top: 1px solid var(--medium-gray); }
 .error-message { color: var(--danger-color); font-size: 0.88em; margin-top: 10px; text-align: center; width: 100%; }
 
@@ -207,62 +147,30 @@ table td.action-buttons { display: flex; gap: 5px; justify-content: flex-start; 
 #statusUpdateModal p strong { font-weight: 600; color: var(--primary-color); }
 
 /* PO Details Modal */
-#poDetailsModal .po-details-container { margin-top: 15px; overflow-y: auto; /* Allow content scroll */ padding-right: 10px; flex-grow: 1; max-height: calc(100vh - 250px); /* Adjust max height */ }
+#poDetailsModal .po-details-container { margin-top: 15px; overflow-y: auto; padding-right: 10px; flex-grow: 1; max-height: calc(100vh - 250px); }
 #poDetailsModal .details-table { width: 100%; border-collapse: collapse; font-size: 0.9em; margin-bottom: 20px; }
 #poDetailsModal .details-table th, #poDetailsModal .details-table td { border: 1px solid var(--medium-gray); padding: 8px 10px; text-align: left; vertical-align: top; }
 #poDetailsModal .details-table thead th { background-color: var(--light-gray); font-weight: 600; white-space: nowrap; position: sticky; top: 0; z-index: 1; }
 #poDetailsModal .details-table tbody tr:nth-child(even) { background-color: #f9f9f9; }
-#poDetailsModal .details-table td:last-child { text-align: right; font-weight: 500; white-space: nowrap; }
+#poDetailsModal .details-table td[style*="text-align: right"] { text-align: right; font-weight: 500; white-space: nowrap; }
 #poDetailsModal .details-table td:nth-child(1) { text-align: center; width: 30px; }
-#poDetailsModal .details-table td:nth-child(4), #poDetailsModal .details-table td:nth-child(5) { white-space: nowrap; }
+#poDetailsModal .details-table td:nth-child(4), #poDetailsModal .details-table td:nth-child(5) { white-space: nowrap; } /* Adjust column indices if table changes */
 #poDetailsModal .po-notes-details { margin-top: 20px; padding: 15px; border: 1px solid #e0e0e0; border-radius: 4px; font-size: 0.9em; background-color: #fdfdfd; }
 #poDetailsModal .po-notes-details strong { display: block; margin-bottom: 8px; color: var(--secondary-color); font-weight: 600; }
 #poDetailsModal .po-notes-details p { margin: 0; line-height: 1.6; color: #555; }
 
-/* **** NEW Suppliers List Modal Styles **** */
-#suppliersListModal .modal-content { /* Uses modal-xl */
-     /* Allow content to determine height up to max */
-}
-#suppliersListModal .suppliers-modal-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    border-bottom: 1px solid var(--medium-gray);
-    padding-bottom: 15px;
-    margin-bottom: 15px; /* Space below header */
-}
-#suppliersListModal .suppliers-modal-header h2 {
-     border-bottom: none; /* Remove double border */
-     padding-bottom: 0;
-     margin-bottom: 0;
-     text-align: left; /* Align title left */
-}
-/* Ensure button in header fits */
-#suppliersListModal .suppliers-modal-header .button {
-     padding: 7px 14px;
-     font-size: 0.9em;
-}
-#suppliersListModal .suppliers-table-container {
-     overflow-y: auto; /* Allow table scroll within modal */
-     max-height: calc(100vh - 300px); /* Adjust based on header/footer/padding */
-     border: none; /* Remove double border */
-     margin-bottom: 0;
-}
-#suppliersListModal table { /* Style table inside modal */
-    /* Inherits base table styles */
-}
-#suppliersListModal .modal-actions {
-     /* Inherits base modal action styles */
-}
-/* ****************************************** */
-
+/* --- Suppliers List Modal Styles --- */
+#suppliersListModal .suppliers-modal-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--medium-gray); padding-bottom: 15px; margin-bottom: 15px; }
+#suppliersListModal .suppliers-modal-header h2 { border-bottom: none; padding-bottom: 0; margin-bottom: 0; text-align: left; }
+#suppliersListModal .suppliers-modal-header .button { padding: 7px 14px; font-size: 0.9em; }
+#suppliersListModal .suppliers-table-container { overflow-y: auto; max-height: calc(100vh - 300px); border: none; margin-bottom: 0; }
 
 /* --- Responsive Styles --- */
 @media (max-width: 992px) {
     .main-content { max-width: 95%; }
     .modal-content.modal-lg, .modal-content.modal-xl { max-width: 95%; }
     .po-filters { gap: 10px; }
-    .filter-group.filter-buttons { margin-left: 0; width: 100%; justify-content: space-between; } /* Stack buttons below on smaller screens */
+    .filter-group.filter-buttons { margin-left: 0; width: 100%; justify-content: space-between; }
 }
 @media (max-width: 768px) {
     .main-content { padding: 15px; margin: 10px auto;}
@@ -271,7 +179,7 @@ table td.action-buttons { display: flex; gap: 5px; justify-content: flex-start; 
     .po-filters { flex-direction: column; align-items: stretch; }
     .po-filters input[type="text"], .po-filters select, .po-filters input[type="date"], .po-filters button { width: 100%; }
     .filter-group.filter-buttons { flex-direction: column; gap: 8px; }
-    .modal-content, .modal-content.modal-lg, .modal-content.modal-xl { width: 96%; padding: 20px; max-height: calc(100vh - 4vh); /* Adjust max height */}
+    .modal-content, .modal-content.modal-lg, .modal-content.modal-xl { width: 96%; padding: 20px; max-height: calc(100vh - 4vh); }
     .modal-content h2 { font-size: 1.2em; }
     #poDetailsModal .details-table { font-size: 0.85em; }
     #poDetailsModal .details-table th, #poDetailsModal .details-table td { padding: 6px 8px; }
@@ -284,6 +192,134 @@ table td.action-buttons { display: flex; gap: 5px; justify-content: flex-start; 
     .page-header h1 { font-size: 1.4em; }
     table th, table td { padding: 8px 6px; }
     .status-badge { padding: 3px 8px; font-size: 0.75em;}
-    .modal-actions { flex-direction: column; }
-    .modal-actions .button { width: 100%; }
+    .modal-actions { flex-direction: column; gap: 8px; } /* Stack buttons vertically */
+    .modal-actions .button { width: 100%; } /* Make modal buttons full width */
 }
+
+
+/* --- <<< CSS स्टाइल Print बटन के लिए और Print नियम यहाँ जोड़े गए >>> --- */
+/* नए Print बटन के लिए स्टाइल */
+.print-button {
+    background-color: var(--info-color); /* नीला रंग */
+    color: var(--white-color);
+    margin-right: 10px; /* Close बटन से थोड़ा गैप */
+}
+.print-button:hover:not(:disabled) {
+    background-color: #117a8b; /* थोड़ा गहरा नीला */
+}
+.print-button i {
+    margin-right: 6px;
+}
+
+/* --- प्रिंट के लिए विशेष Styles --- */
+@media print {
+    body, .container, .main-content {
+        margin: 0 !important;
+        padding: 0 !important;
+        box-shadow: none !important;
+        border: none !important;
+        background-color: #fff !important;
+        color: #000 !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+
+    /* डिफ़ॉल्ट रूप से सब कुछ छिपाएं */
+    body > *:not(#poDetailsModal) {
+        display: none !important;
+    }
+
+    /* सुनिश्चित करें कि modal और उसका कंटेंट प्रिंट में दिखें */
+    #poDetailsModal,
+    #poDetailsModal .modal-content {
+        display: block !important;
+        position: relative !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        height: auto !important;
+        max-height: none !important;
+        box-shadow: none !important;
+        border: none !important;
+        margin: 0 !important;
+        padding: 15px !important;
+        overflow: visible !important;
+        background-color: #fff !important;
+    }
+
+     /* Modal के अंदर केवल शीर्षक और कंटेंट क्षेत्र दिखाएं */
+    #poDetailsModal .modal-content > *:not(#poDetailsModalTitle):not(#poDetailsContent) {
+        display: none !important;
+    }
+
+    /* Modal के शीर्षक की स्टाइल */
+    #poDetailsModalTitle {
+        text-align: left;
+        border-bottom: 1px solid #ccc;
+        padding-bottom: 10px;
+        margin-bottom: 15px;
+        font-size: 16pt;
+        color: #000 !important;
+    }
+
+    /* Modal के कंटेंट क्षेत्र की स्टाइल */
+    #poDetailsContent {
+        display: block !important;
+        overflow: visible !important;
+        max-height: none !important;
+        color: #000 !important;
+    }
+
+    /* कंटेंट के अंदर टेबल की स्टाइल */
+    #poDetailsContent .details-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 10pt;
+        margin-bottom: 15px;
+        border: 1px solid #ccc;
+        color: #000 !important;
+    }
+
+    #poDetailsContent .details-table th,
+    #poDetailsContent .details-table td {
+        border: 1px solid #ccc;
+        padding: 6px 8px;
+        text-align: left;
+        vertical-align: top;
+        color: #000 !important;
+        background-color: #fff !important;
+        word-break: break-word;
+    }
+
+    #poDetailsContent .details-table thead th {
+        background-color: #eee !important;
+        font-weight: bold;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+
+    #poDetailsContent .details-table td[style*="text-align: right"] {
+        text-align: right !important;
+    }
+
+     /* नोट्स सेक्शन की स्टाइल */
+    #poDetailsContent .po-notes-details {
+        margin-top: 20px;
+        padding: 10px;
+        border: 1px solid #ccc;
+        font-size: 10pt;
+        background-color: #fff !important;
+        color: #000 !important;
+    }
+    #poDetailsContent .po-notes-details strong {
+        font-weight: bold;
+        color: #000 !important;
+    }
+     #poDetailsContent .po-notes-details p {
+         color: #000 !important;
+     }
+
+    /* सुनिश्चित करें कि कोई लिंक या बटन प्रिंट न हों */
+    a[href]:after { content: "" !important; }
+    button, .button, .modal-actions, .close-btn { display: none !important; }
+}
+/* --- <<< Print Styles End >>> --- */

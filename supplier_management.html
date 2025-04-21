@@ -7,8 +7,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/supplier_management.css">
-    <link rel="stylesheet" href="css/index.css">
-    <script type="module">
+    <link rel="stylesheet" href="css/index.css"> <script type="module">
         // --- Firebase Auth Check ---
         import { auth } from './js/firebase-init.js'; // Assuming firebase-init.js exports auth
         import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
@@ -45,12 +44,18 @@
             <div class="actions-bar">
                  <button id="viewSuppliersBtn" class="button view-suppliers-button"><i class="fas fa-users"></i> View Suppliers List</button>
                  <a href="new_po.html" id="createPoBtn" class="button add-new-button" style="background-color: var(--primary-color);"><i class="fas fa-file-alt"></i> Create New PO</a>
-                 </div>
+            </div>
 
             <div class="section-container" id="pos-section">
                 <h2><i class="fas fa-file-invoice-dollar"></i> Purchase Orders</h2>
                 <div class="po-filters">
-                     <div class="filter-group"> <label for="poSearchInput">Search:</label> <input type="text" id="poSearchInput" placeholder="PO# or Supplier..."> </div> <div class="filter-group"> <label for="poStatusFilter">Status:</label> <select id="poStatusFilter">
+                     <div class="filter-group">
+                         <label for="poSearchInput">Search:</label>
+                         <input type="text" id="poSearchInput" placeholder="PO# or Supplier...">
+                     </div>
+                     <div class="filter-group">
+                         <label for="poStatusFilter">Status:</label>
+                         <select id="poStatusFilter">
                             <option value="">All Status</option>
                             <option value="New">New</option>
                             <option value="Sent">Sent</option>
@@ -60,7 +65,20 @@
                             <option value="PO Paid">PO Paid</option>
                             <option value="Cancel">Cancel</option>
                         </select>
-                     </div> <div class="filter-group"> <label for="poStartDateFilter">From Date:</label> <input type="date" id="poStartDateFilter" class="date-filter"> </div> <div class="filter-group"> <label for="poEndDateFilter">To Date:</label> <input type="date" id="poEndDateFilter" class="date-filter"> </div> <div class="filter-group filter-buttons"> <button id="poFilterBtn" class="button filter-action-button"><i class="fas fa-filter"></i> Apply Filters</button> <button id="poClearFilterBtn" class="button cancel-button filter-action-button"><i class="fas fa-times"></i> Clear Filters</button> </div> </div>
+                     </div>
+                     <div class="filter-group">
+                         <label for="poStartDateFilter">From Date:</label>
+                         <input type="date" id="poStartDateFilter" class="date-filter">
+                     </div>
+                     <div class="filter-group">
+                         <label for="poEndDateFilter">To Date:</label>
+                         <input type="date" id="poEndDateFilter" class="date-filter">
+                     </div>
+                     <div class="filter-group filter-buttons">
+                         <button id="poFilterBtn" class="button filter-action-button"><i class="fas fa-filter"></i> Apply Filters</button>
+                         <button id="poClearFilterBtn" class="button cancel-button filter-action-button"><i class="fas fa-times"></i> Clear Filters</button>
+                     </div>
+                 </div>
                  <div class="table-container">
                      <table id="poTable">
                          <thead>
@@ -70,9 +88,7 @@
                                  <th>Order Date</th>
                                  <th>Status</th>
                                  <th>Amount</th>
-                                 <th>Quantity Info</th> <th>Print Sizes (WxH Unit)</th>
-                                 <th>Actions</th>
-                             </tr>
+                                 <th>Quantity Info</th> <th>Print Sizes (WxH Unit)</th> <th>Actions</th> </tr>
                          </thead>
                          <tbody id="poTableBody">
                               <tr><td colspan="8">Initializing...</td></tr>
@@ -139,8 +155,11 @@
              <h2 id="poDetailsModalTitle">Purchase Order Items</h2>
              <div id="poDetailsContent" class="po-details-container">
                  <p>Loading details...</p>
-                 </div>
+             </div>
              <div class="modal-actions">
+                 <button type="button" id="printPoDetailsBtn" class="button print-button">
+                     <i class="fas fa-print"></i> Print Details
+                 </button>
                  <button type="button" id="closePoDetailsBtn" class="button cancel-button">Close</button>
              </div>
          </div>
@@ -175,7 +194,7 @@
          </div>
      </div>
 
-     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
     <script src="js/supplier_management.js" type="module" defer></script>
 
