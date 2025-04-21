@@ -550,3 +550,54 @@ body {
      .page-header h1 { font-size: 1.4em; }
      #poForm .form-section h2 { font-size: 1.2em; }
 }
+/* ----- Product Suggestions List Styling (Added for auto-suggest) ----- */
+.product-suggestions-list {
+    display: none; /* Initially hidden */
+    position: absolute; /* Position near the input field */
+    background-color: var(--white-color);
+    border: 1px solid var(--primary-color);
+    border-top: none;
+    max-height: 200px; /* Limit height */
+    overflow-y: auto;
+    width: 250px; /* Adjust width as needed */
+    box-sizing: border-box;
+    z-index: 1050; /* Ensure it's above other elements, even table rows */
+    border-radius: 0 0 var(--border-radius) var(--border-radius);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+    margin-top: -1px; /* Align with input bottom border */
+}
+
+.product-suggestions-list div {
+    padding: 10px 15px;
+    font-size: 0.9em; /* Slightly smaller font */
+    cursor: pointer;
+    border-bottom: 1px solid var(--medium-grey);
+    white-space: nowrap; /* Prevent wrapping */
+    overflow: hidden;
+    text-overflow: ellipsis; /* Add ellipsis if text is too long */
+    transition: background-color 0.15s ease;
+}
+
+.product-suggestions-list div:last-child {
+    border-bottom: none;
+}
+
+.product-suggestions-list div:hover {
+    background-color: #e9f5ff; /* Lighter blue hover */
+}
+
+.product-suggestions-list .no-suggestions {
+    padding: 12px 15px;
+    color: var(--darker-grey);
+    cursor: default;
+    font-style: italic;
+}
+
+.product-suggestions-list .no-suggestions:hover {
+    background-color: var(--white-color); /* No hover effect */
+}
+
+/* Style to position the suggestion list container correctly */
+.product-search-container {
+    position: relative; /* Needed for absolute positioning of the list */
+}

@@ -1,4 +1,4 @@
-// js/new_po.js - v6 (DEBUGGING PO Number Generation)
+// js/new_po.js - v7 (Product Auto-Suggest Added)
 
 // Assume Firebase functions are globally available via HTML script block
 const {
@@ -27,13 +27,16 @@ const poTotalAmountSpan = document.getElementById('poTotalAmount');
 const savePOBtn = document.getElementById('savePOBtn');
 const savePOBtnSpan = savePOBtn ? savePOBtn.querySelector('span') : null;
 const poErrorMsg = document.getElementById('poErrorMsg');
+// Dynamic Product Suggestion List Element (created on demand)
+let productSuggestionsDiv = null;
 
 // --- Global State ---
 let supplierSearchDebounceTimer;
+let productSearchDebounceTimer; // <<< Added for product search
 let editingPOData = null;
+let activeProductInput = null; // <<< Added: Track which product input is active
 
-// --- Utility Functions --- (Keep calculateFlexDimensions, updateTotalAmount, etc. as they are from the file you sent)
-// Local modified copy of calculateFlexDimensions
+// --- Utility Functions --- (calculateFlexDimensions, updateTotalAmount, etc. - Kept from previous version)
 function calculateFlexDimensions(unit, width, height) {
     // ... (Keep the function exactly as it was in the file you sent) ...
     console.log(`Calculating flex: Unit=${unit}, W=${width}, H=${height}`);
@@ -142,7 +145,7 @@ function updateItemAmount(row) {
     } catch (e) { console.error("Error calculating item amount:", e); amount = 0; }
     if (amountSpan) amountSpan.textContent = amount.toFixed(2);
     updateTotalAmount();
-    updateFullCalculationPreview();
+    updateFullCalculationPreview(); // Already called here, good.
 }
 function handleUnitTypeChange(event) {
      // ... (Keep the function exactly as it was in the file you sent) ...
@@ -176,43 +179,301 @@ function handleUnitTypeChange(event) {
         const widthInput = sqFeetDimensionCell.querySelector('.width-input'); const heightInput = sqFeetDimensionCell.querySelector('.height-input');
         if (widthInput) widthInput.value = ''; if (heightInput) heightInput.value = '';
     }
-    updateItemAmount(row);
+    updateItemAmount(row); // Amount recalculated here
 }
 function addItemRowEventListeners(row) {
     // ... (Keep the function exactly as it was in the file you sent) ...
+    const productNameInput = row.querySelector('.product-name'); // <<< Get product name input
     const unitTypeSelect = row.querySelector('.unit-type-select');
     const dimensionUnitSelect = row.querySelector('.dimension-unit-select');
     const widthInput = row.querySelector('.width-input');
     const heightInput = row.querySelector('.height-input');
-    const quantityInput = row.querySelector('.quantity-input'); // Get the input itself
+    const quantityInput = row.querySelector('.quantity-input');
     const rateInput = row.querySelector('.rate-input');
     const deleteBtn = row.querySelector('.delete-item-btn');
+
+    // --- Product Name Input Listener (Using Delegation Now) ---
+    // if (productNameInput) {
+    //     productNameInput.addEventListener('input', handleProductSearchInput); // <<< Attach listener directly (will be replaced by delegation)
+    // }
+
+    // Existing listeners for calculation updates
     const recalcInputs = [dimensionUnitSelect, widthInput, heightInput, quantityInput, rateInput];
-    recalcInputs.forEach(input => { if (input) { input.addEventListener('input', () => updateItemAmount(row)); input.addEventListener('change', () => updateItemAmount(row)); input.addEventListener('blur', () => updateItemAmount(row)); } });
+    recalcInputs.forEach(input => {
+        if (input) {
+            input.addEventListener('input', () => updateItemAmount(row));
+            input.addEventListener('change', () => updateItemAmount(row));
+            input.addEventListener('blur', () => updateItemAmount(row)); // Recalculate on blur too
+        }
+    });
     if (unitTypeSelect) { unitTypeSelect.addEventListener('change', handleUnitTypeChange); }
-    if (deleteBtn) { deleteBtn.addEventListener('click', () => { row.remove(); updateTotalAmount(); updateFullCalculationPreview(); }); }
-    if (unitTypeSelect) { handleUnitTypeChange({ target: unitTypeSelect }); } else { console.warn("Unit type select not found in row for initial state setting:", row); updateFullCalculationPreview(); }
+    if (deleteBtn) { deleteBtn.addEventListener('click', () => { row.remove(); hideProductSuggestions(); updateTotalAmount(); updateFullCalculationPreview(); }); }
+
+    // Set initial state based on Unit Type
+    if (unitTypeSelect) { handleUnitTypeChange({ target: unitTypeSelect }); }
+    else { console.warn("Unit type select not found in row for initial state setting:", row); updateFullCalculationPreview(); }
 }
 
-// --- DOMContentLoaded Listener --- (Keep as is)
+// --- Product Search Implementation --- <<< NEW SECTION START >>>
+
+// Create or get the suggestion div
+function getOrCreateProductSuggestionsDiv() {
+    if (!productSuggestionsDiv) {
+        productSuggestionsDiv = document.createElement('div');
+        productSuggestionsDiv.className = 'product-suggestions-list'; // Use the new CSS class
+        productSuggestionsDiv.style.display = 'none'; // Start hidden
+        document.body.appendChild(productSuggestionsDiv); // Append to body for positioning freedom
+    }
+    return productSuggestionsDiv;
+}
+
+// Position the suggestion div below the target input
+function positionProductSuggestions(inputElement) {
+    const suggestionsDiv = getOrCreateProductSuggestionsDiv();
+    const rect = inputElement.getBoundingClientRect();
+    suggestionsDiv.style.left = `${rect.left + window.scrollX}px`;
+    suggestionsDiv.style.top = `${rect.bottom + window.scrollY}px`;
+    suggestionsDiv.style.width = `${rect.width}px`; // Match input width
+    suggestionsDiv.style.display = 'block';
+}
+
+// Hide the product suggestion list
+function hideProductSuggestions() {
+    if (productSuggestionsDiv) {
+        productSuggestionsDiv.style.display = 'none';
+    }
+    activeProductInput = null; // Reset active input tracking
+}
+
+// Handle input event on product name fields (using delegation)
+function handleProductSearchInput(event) {
+    const inputElement = event.target;
+    if (!inputElement.matches('.product-name')) {
+        return; // Ignore if not a product name input
+    }
+    activeProductInput = inputElement; // Track the currently focused input
+    clearTimeout(productSearchDebounceTimer);
+    const searchTerm = inputElement.value.trim();
+
+    if (searchTerm.length < 1) { // Require at least 1 char
+        hideProductSuggestions();
+        return;
+    }
+
+    // Position the list first, then fetch
+    positionProductSuggestions(inputElement);
+
+    productSearchDebounceTimer = setTimeout(() => {
+        fetchProductSuggestions(searchTerm, inputElement);
+    }, 350); // Debounce time
+}
+
+// Fetch suggestions from Firestore
+async function fetchProductSuggestions(searchTerm, inputElement) {
+    const suggestionsDiv = getOrCreateProductSuggestionsDiv();
+    suggestionsDiv.innerHTML = '<div>Loading...</div>';
+    // Ensure it's still positioned correctly relative to the active input
+    if (activeProductInput === inputElement) {
+        positionProductSuggestions(inputElement);
+    } else {
+        hideProductSuggestions(); // Hide if input changed during debounce
+        return;
+    }
+
+    try {
+        // Query based on product_management.js structure
+        const q = query(
+            collection(db, "products"),
+            orderBy("printName"), // Use 'printName' for sorting/searching
+            where("printName", ">=", searchTerm),
+            where("printName", "<=", searchTerm + '\uf8ff'),
+            limit(10)
+        );
+        const querySnapshot = await getDocs(q);
+        suggestionsDiv.innerHTML = ''; // Clear loading/previous results
+
+        if (querySnapshot.empty) {
+            suggestionsDiv.innerHTML = '<div class="no-suggestions">No matching products found.</div>';
+        } else {
+            querySnapshot.forEach((docSnapshot) => {
+                const product = docSnapshot.data();
+                const productId = docSnapshot.id; // Keep ID if needed later
+                const div = document.createElement('div');
+                div.textContent = product.printName || 'Unnamed Product'; // Display printName
+                // Store necessary data in dataset
+                div.dataset.id = productId;
+                div.dataset.name = product.printName || '';
+                // Store rate (price) and unit type (productUnit)
+                div.dataset.rate = product.price ?? ''; // Use 'price', default to empty string if null/undefined
+                div.dataset.unit = product.productUnit || 'Qty'; // Use 'productUnit', default to 'Qty'
+
+                div.addEventListener('mousedown', (e) => {
+                    e.preventDefault(); // Prevent input blur on click
+                    selectProductSuggestion(product, inputElement);
+                });
+                suggestionsDiv.appendChild(div);
+            });
+        }
+         // Ensure list is visible after population
+         if (activeProductInput === inputElement) {
+             suggestionsDiv.style.display = 'block';
+         } else {
+             hideProductSuggestions(); // Hide if input changed while fetching
+         }
+
+    } catch (error) {
+        console.error("Error fetching product suggestions:", error);
+        if (suggestionsDiv) { // Check if div still exists
+             suggestionsDiv.innerHTML = '<div class="no-suggestions" style="color:red;">Error fetching products.</div>';
+             if (activeProductInput === inputElement) {
+                 suggestionsDiv.style.display = 'block';
+             }
+        }
+    }
+}
+
+// Handle selection of a product suggestion
+function selectProductSuggestion(productData, inputElement) {
+    const row = inputElement.closest('.item-row');
+    if (!row) {
+        console.error("Could not find parent row for product selection.");
+        hideProductSuggestions();
+        return;
+    }
+
+    // Find elements within THIS row
+    const productNameInput = row.querySelector('.product-name');
+    const unitTypeSelect = row.querySelector('.unit-type-select');
+    const rateInput = row.querySelector('.rate-input');
+
+    if (!productNameInput || !unitTypeSelect || !rateInput) {
+        console.error("Could not find all necessary fields in the row.");
+        hideProductSuggestions();
+        return;
+    }
+
+    // 1. Fill Product Name
+    productNameInput.value = productData.printName || '';
+
+    // 2. Fill Rate
+    rateInput.value = productData.price ?? ''; // Use 'price' from Firestore
+
+    // 3. Fill Unit Type
+    const targetUnit = productData.productUnit || 'Qty'; // Default to 'Qty' if missing
+    let unitFound = false;
+    // Check if the unit type exists as an option
+    for (let option of unitTypeSelect.options) {
+        if (option.value === targetUnit) {
+            unitTypeSelect.value = targetUnit;
+            unitFound = true;
+            break;
+        }
+    }
+    if (!unitFound) {
+        console.warn(`Product unit "${targetUnit}" not found in dropdown. Defaulting to 'Qty'.`);
+        unitTypeSelect.value = 'Qty'; // Fallback if unit doesn't match options
+    }
+
+    // 4. Hide suggestions
+    hideProductSuggestions();
+
+    // 5. Trigger updates
+    // Create a synthetic event for handleUnitTypeChange
+    const changeEvent = new Event('change', { bubbles: true });
+    unitTypeSelect.dispatchEvent(changeEvent); // This calls handleUnitTypeChange -> updateItemAmount
+
+    // Optional: Focus the next input (e.g., Qty or Width)
+    let nextInput = null;
+    if (unitTypeSelect.value === 'Sq Feet') {
+        nextInput = row.querySelector('.width-input');
+    } else {
+        nextInput = row.querySelector('.quantity-input');
+    }
+    if (nextInput) {
+        nextInput.focus();
+        nextInput.select(); // Select text if needed
+    }
+}
+
+// --- <<< NEW SECTION END >>> ---
+
+
+// --- DOMContentLoaded Listener --- (MODIFIED FOR PRODUCT SEARCH)
 document.addEventListener('DOMContentLoaded', () => {
-    // ... (Keep the function exactly as it was in the file you sent) ...
-    console.log("new_po.js v5: DOM loaded.");
+    console.log("new_po.js v7: DOM loaded.");
     if (!window.db || !window.query || !window.orderBy || !window.limit || !window.getDocs || !window.Timestamp) { console.error("new_po.js: Firestore (window.db) or essential functions not available!"); alert("Error initializing page. Core functionalities missing."); if(poForm) poForm.style.opacity = '0.5'; if(savePOBtn) savePOBtn.disabled = true; return; }
     console.log("new_po.js: Firestore connection and functions confirmed.");
     const urlParamsInit = new URLSearchParams(window.location.search);
     const isEditingInit = urlParamsInit.has('editPOId');
     if (!isEditingInit && poOrderDateInput && !poOrderDateInput.value) { try { poOrderDateInput.value = new Date().toISOString().split('T')[0]; } catch (e) { console.error("Error setting default date:", e); } }
-    if (addItemBtn && itemRowTemplate && poItemsTableBody) { addItemBtn.addEventListener('click', () => { const templateContent = itemRowTemplate.content.cloneNode(true); poItemsTableBody.appendChild(templateContent); const appendedRow = poItemsTableBody.lastElementChild; if (appendedRow?.matches('.item-row')) { addItemRowEventListeners(appendedRow); const firstInput = appendedRow.querySelector('.product-name'); if(firstInput) firstInput.focus(); } else { console.error("Failed to get appended row or it's not an item-row"); } }); if (!isEditingInit && poItemsTableBody.children.length === 0) { addItemBtn.click(); } } else { console.error("Add Item button, Item Row template or Table Body not found!"); }
-    if (supplierSearchInput && supplierSuggestionsDiv && selectedSupplierIdInput && selectedSupplierNameInput) { supplierSearchInput.addEventListener('input', handleSupplierSearchInput); document.addEventListener('click', (e) => { if (supplierSuggestionsDiv && !supplierSearchInput.contains(e.target) && !supplierSuggestionsDiv.contains(e.target)) { supplierSuggestionsDiv.style.display = 'none'; } }); } else { console.warn("Supplier search elements not found."); }
-     if(addNewSupplierFromPOBtn) { addNewSupplierFromPOBtn.addEventListener('click', () => { window.open('supplier_management.html#add', '_blank'); alert("Supplier management page opened in new tab. Add supplier there and then search here."); }); }
-    if (poForm) { poForm.addEventListener('submit', handleSavePO); } else { console.error("PO Form element not found!"); }
+
+    // Add Item Button Listener
+    if (addItemBtn && itemRowTemplate && poItemsTableBody) {
+        addItemBtn.addEventListener('click', () => {
+            const templateContent = itemRowTemplate.content.cloneNode(true);
+            poItemsTableBody.appendChild(templateContent);
+            const appendedRow = poItemsTableBody.lastElementChild;
+            if (appendedRow?.matches('.item-row')) {
+                addItemRowEventListeners(appendedRow); // Add standard listeners
+                const firstInput = appendedRow.querySelector('.product-name');
+                if(firstInput) firstInput.focus();
+            } else { console.error("Failed to get appended row or it's not an item-row"); }
+        });
+        // Add initial row if not editing
+        if (!isEditingInit && poItemsTableBody.children.length === 0) {
+            addItemBtn.click();
+        }
+    } else { console.error("Add Item button, Item Row template or Table Body not found!"); }
+
+    // Supplier Search Listener
+    if (supplierSearchInput && supplierSuggestionsDiv && selectedSupplierIdInput && selectedSupplierNameInput) {
+        supplierSearchInput.addEventListener('input', handleSupplierSearchInput);
+        // Global click listener to hide supplier suggestions (Keep this one)
+        document.addEventListener('click', (e) => {
+             if (supplierSuggestionsDiv && supplierSuggestionsDiv.style.display === 'block' && !supplierSearchInput.contains(e.target) && !supplierSuggestionsDiv.contains(e.target)) {
+                supplierSuggestionsDiv.style.display = 'none';
+            }
+            // Global click listener to hide PRODUCT suggestions <<< ADDED >>>
+            if (productSuggestionsDiv && productSuggestionsDiv.style.display === 'block' && activeProductInput && !activeProductInput.contains(e.target) && !productSuggestionsDiv.contains(e.target)) {
+                hideProductSuggestions();
+            }
+         });
+    } else { console.warn("Supplier search elements not found."); }
+
+    // Add New Supplier Button Listener
+    if(addNewSupplierFromPOBtn) {
+        addNewSupplierFromPOBtn.addEventListener('click', () => {
+            window.open('supplier_management.html#add', '_blank');
+            alert("Supplier management page opened in new tab. Add supplier there and then search here.");
+        });
+    }
+
+    // --- Product Search Event Delegation <<< ADDED >>> ---
+    if (poItemsTableBody) {
+        poItemsTableBody.addEventListener('input', handleProductSearchInput);
+        // Add focus listener to track active product input
+        poItemsTableBody.addEventListener('focusin', (event) => {
+             if (event.target.matches('.product-name')) {
+                 activeProductInput = event.target;
+             }
+        });
+    } else {
+        console.error("Cannot add product search listener: Table body not found.");
+    }
+
+
+    // Form Submit Listener
+    if (poForm) { poForm.addEventListener('submit', handleSavePO); }
+    else { console.error("PO Form element not found!"); }
+
+    // Load data if editing
     const editPOIdValue = urlParamsInit.get('editPOId');
-    if (editPOIdValue) { loadPOForEditing(editPOIdValue); } else { if(poNumberInput) poNumberInput.value = ''; if (poItemsTableBody.children.length > 0) { updateFullCalculationPreview(); } }
-    console.log("new_po.js: Basic setup and listeners added.");
+    if (editPOIdValue) { loadPOForEditing(editPOIdValue); }
+    else { if(poNumberInput) poNumberInput.value = ''; if (poItemsTableBody.children.length > 0) { updateFullCalculationPreview(); } }
+    console.log("new_po.js v7: Basic setup and listeners added.");
 });
 
-// --- Supplier Search Implementation --- (Keep as is)
+// --- Supplier Search Implementation --- (Kept from previous version)
 function handleSupplierSearchInput() {
     // ... (Keep the function exactly as it was in the file you sent) ...
      if (!supplierSearchInput || !supplierSuggestionsDiv || !selectedSupplierIdInput || !selectedSupplierNameInput) return;
@@ -249,7 +510,7 @@ async function fetchSupplierSuggestions(searchTerm) {
 }
 
 
-// --- Save PO Implementation handleSavePO (DEBUGGING ADDED) ---
+// --- Save PO Implementation handleSavePO --- (Kept from previous version)
 async function handleSavePO(event) {
     event.preventDefault();
     console.log("DEBUG PO Gen: handleSavePO started."); // DEBUG
@@ -281,9 +542,7 @@ async function handleSavePO(event) {
         if (savePOBtnSpan) savePOBtnSpan.textContent = 'Generating PO#...';
         console.log("DEBUG PO Gen: Starting PO number generation..."); // DEBUG
         try {
-            // ***** DEBUGGING: Try sorting by createdAt first *****
-            // const q = query(collection(db, "purchaseOrders"), orderBy("poNumber", "desc"), limit(1));
-            const q = query(collection(db, "purchaseOrders"), orderBy("createdAt", "desc"), limit(1)); // <<< TRY THIS QUERY
+            const q = query(collection(db, "purchaseOrders"), orderBy("createdAt", "desc"), limit(1)); // Use createdAt for reliable last PO
             console.log("DEBUG PO Gen: Querying Firestore for last PO (using createdAt)..."); // DEBUG
 
             const querySnapshot = await getDocs(q);
@@ -292,33 +551,27 @@ async function handleSavePO(event) {
             if (!querySnapshot.empty) {
                 const lastPO = querySnapshot.docs[0].data();
                 console.log("DEBUG PO Gen: Last PO document found:", lastPO); // DEBUG
-                const lastPoNumberStr = lastPO.poNumber; // Get the poNumber field from the last document
+                const lastPoNumberStr = lastPO.poNumber;
                 console.log(`DEBUG PO Gen: Found last PO Number string/value: "${lastPoNumberStr}" (Type: ${typeof lastPoNumberStr})`); // DEBUG
 
-                if (lastPoNumberStr !== undefined && lastPoNumberStr !== null && lastPoNumberStr !== "") {
-                    const lastNum = Number(lastPoNumberStr); // Attempt to convert to Number
+                if (lastPoNumberStr !== undefined && lastPoNumberStr !== null && String(lastPoNumberStr).trim() !== "") {
+                    const lastNum = Number(lastPoNumberStr);
                     console.log(`DEBUG PO Gen: Attempted conversion to number: ${lastNum}`); // DEBUG
 
-                    if (!isNaN(lastNum)) { // Check if conversion was successful
-                         // Use the successfully parsed number + 1, only if it's greater than the default start
-                         // This prevents falling back if the last number was simply < 1000
-                         lastPoNumber = lastNum; // Assign the valid parsed number
+                    if (!isNaN(lastNum)) {
+                         lastPoNumber = lastNum;
                     } else {
                          console.warn("DEBUG PO Gen: Last PO number is not a valid number (NaN). Falling back.");
-                         // Keep lastPoNumber = 1000 (default)
                     }
                 } else {
                      console.warn("DEBUG PO Gen: Last PO number field is missing, null, or empty. Falling back.");
-                      // Keep lastPoNumber = 1000 (default)
                 }
             } else {
                 console.log("DEBUG PO Gen: No existing POs found in query result. Starting with default.");
-                // Keep lastPoNumber = 1000 (default)
             }
 
             finalPoNumber = lastPoNumber + 1; // Calculate the next number
-            // Optional: Ensure minimum number if needed
-             if (finalPoNumber < 1001) {
+             if (finalPoNumber < 1001) { // Ensure minimum starting number
                   console.log(`DEBUG PO Gen: Calculated number ${finalPoNumber} is less than 1001, adjusting.`);
                   finalPoNumber = 1001;
              }
@@ -401,19 +654,18 @@ async function handleSavePO(event) {
             if (isNaN(width) || width <= 0) { validationPassed = false; showPOError(`Item ${index + 1}: Valid Width required.`); widthInput?.focus(); return; }
             if (isNaN(height) || height <= 0) { validationPassed = false; showPOError(`Item ${index + 1}: Valid Height required.`); heightInput?.focus(); return; }
 
-            const calcResult = calculateFlexDimensions(unit, width, height); // Assume this exists and works
+            const calcResult = calculateFlexDimensions(unit, width, height);
 
             if(parseFloat(calcResult.printSqFt) <= 0) { validationPassed = false; showPOError(`Item ${index + 1}: Calculation error (printSqFt is zero).`); widthInput?.focus(); return; }
 
             itemData.unit = unit;
-            // Store both real and print dimensions for clarity/future use
-            itemData.realWidth = width; // Store original input width
-            itemData.realHeight = height; // Store original input height
+            itemData.realWidth = width;
+            itemData.realHeight = height;
             itemData.realSqFt = parseFloat(calcResult.realSqFt);
-            itemData.printWidth = parseFloat(calcResult.printWidth); // Width on media in original unit
-            itemData.printHeight = parseFloat(calcResult.printHeight); // Height on media in original unit
-            itemData.printSqFt = parseFloat(calcResult.printSqFt); // Billing area
-            itemData.inputUnit = calcResult.inputUnit; // Unit used for input W/H
+            itemData.printWidth = parseFloat(calcResult.printWidth);
+            itemData.printHeight = parseFloat(calcResult.printHeight);
+            itemData.printSqFt = parseFloat(calcResult.printSqFt);
+            itemData.inputUnit = calcResult.inputUnit;
 
             expectedAmount = itemData.printSqFt * itemData.rate;
 
@@ -432,16 +684,15 @@ async function handleSavePO(event) {
             console.warn(`Item ${index + 1} amount mismatch on save: displayed=${itemAmount.toFixed(2)}, calculated=${expectedAmount.toFixed(2)}. Using calculated.`);
             itemData.itemAmount = parseFloat(expectedAmount.toFixed(2));
         } else {
-            itemData.itemAmount = parseFloat(itemAmount.toFixed(2)); // Use displayed if close enough
+            itemData.itemAmount = parseFloat(itemAmount.toFixed(2));
         }
 
         itemsArray.push(itemData);
-        calculatedTotalAmount += itemData.itemAmount; // Add verified/recalculated amount
+        calculatedTotalAmount += itemData.itemAmount;
     }); // End itemRows.forEach
 
     if (!validationPassed) {
         console.error("Validation failed during item processing.");
-        // Button should be enabled by default if validation fails here
         savePOBtn.disabled = false;
         if (savePOBtnSpan) savePOBtnSpan.textContent = isEditing ? 'Update Purchase Order' : 'Save Purchase Order';
         return; // Stop saving
@@ -455,21 +706,19 @@ async function handleSavePO(event) {
     const poData = {
         supplierId: supplierId,
         supplierName: supplierName,
-        poNumber: finalPoNumber, // Use the number determined earlier (MUST BE VALID NUMBER FOR NEW POs)
-        orderDate: Timestamp.fromDate(new Date(orderDateValue + 'T00:00:00')), // Store date part only as Timestamp
+        poNumber: finalPoNumber,
+        orderDate: Timestamp.fromDate(new Date(orderDateValue + 'T00:00:00')),
         items: itemsArray,
         totalAmount: parseFloat(calculatedTotalAmount.toFixed(2)),
         notes: notes,
-        updatedAt: serverTimestamp() // Firestore server timestamp
+        updatedAt: serverTimestamp()
     };
 
-    // Add creation timestamp and default status ONLY for new documents
     if (!isEditing) {
-        poData.createdAt = serverTimestamp(); // Firestore server timestamp
+        poData.createdAt = serverTimestamp();
         poData.status = 'New';
     } else {
-        // Retain original status if editing, unless explicitly changed
-        poData.status = editingPOData?.status || 'New'; // Use loaded status or default to 'New'
+        poData.status = editingPOData?.status || 'New';
     }
 
     console.log("DEBUG PO Gen: Final PO Data being sent to Firestore:", poData); // DEBUG
@@ -483,7 +732,6 @@ async function handleSavePO(event) {
             successMessage = "Purchase Order updated successfully!";
             console.log(successMessage, "ID:", editingPOId);
         } else {
-             // Final check before adding new document
              if (typeof poData.poNumber !== 'number' || isNaN(poData.poNumber) || poData.poNumber <= 0) {
                   throw new Error(`Invalid PO number detected just before save: ${poData.poNumber}`);
              }
@@ -497,14 +745,13 @@ async function handleSavePO(event) {
     } catch (error) {
         console.error("Error saving PO to Firestore:", error); // DEBUG
         showPOError("Error saving Purchase Order: " + error.message);
-        // Re-enable button on failure
         savePOBtn.disabled = false;
         if (savePOBtnSpan) savePOBtnSpan.textContent = isEditing ? 'Update Purchase Order' : 'Save Purchase Order';
     }
 } // End handleSavePO
 
 
-// --- Load PO For Editing Implementation --- (Keep as is)
+// --- Load PO For Editing Implementation --- (Kept from previous version)
 async function loadPOForEditing(poId) {
     // ... (Keep the function exactly as it was in the file you sent) ...
     console.log(`Loading PO ${poId} for editing...`);
@@ -513,7 +760,7 @@ async function loadPOForEditing(poId) {
     if (poBreadcrumbAction) poBreadcrumbAction.textContent = `Edit PO #${poId}`;
     if (savePOBtnSpan) savePOBtnSpan.textContent = 'Update Purchase Order';
     editPOIdInput.value = poId;
-    if (poNumberInput) poNumberInput.readOnly = false; // Allow editing PO number
+    if (poNumberInput) poNumberInput.readOnly = false;
     try {
         const poDocRef = doc(db, "purchaseOrders", poId);
         const poDocSnap = await getDoc(poDocRef);
@@ -545,17 +792,17 @@ async function loadPOForEditing(poId) {
                         } else {
                            const quantityInput = newRow.querySelector('.quantity-input'); if(quantityInput) quantityInput.value = item.quantity ?? '';
                         }
-                        addItemRowEventListeners(newRow);
-                        updateItemAmount(newRow);
+                        addItemRowEventListeners(newRow); // Add listeners AFTER populating
+                        // updateItemAmount(newRow); // updateItemAmount is called by handleUnitTypeChange inside addItemRowEventListeners
                     }
                 });
-            } else { if (addItemBtn) addItemBtn.click(); }
+            } else { if (addItemBtn) addItemBtn.click(); } // Add a blank row if no items exist
             updateTotalAmount(); updateFullCalculationPreview();
         } else { console.error("No such PO document!"); showPOError("Error: Could not find PO to edit."); if(savePOBtn) savePOBtn.disabled = true; }
     } catch (error) { console.error("Error loading PO for editing:", error); showPOError("Error loading PO data: " + error.message); if(savePOBtn) savePOBtn.disabled = true; }
 }
 
-// Helper function showPOError (Keep as is)
+// Helper function showPOError (Kept from previous version)
 function showPOError(message) {
     // ... (Keep the function exactly as it was in the file you sent) ...
     if (poErrorMsg) {
@@ -564,4 +811,4 @@ function showPOError(message) {
     } else { if(message) alert(message); }
 }
 
-console.log("new_po.js v6 (DEBUG) loaded and ready.");
+console.log("new_po.js v7 (Product Suggest) loaded and ready.");
