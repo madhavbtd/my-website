@@ -1,106 +1,501 @@
-/* css/supplier_management.css - v3 (PO Details Modal Styles Added) */
+/* css/supplier_management.css - v3 (View Details Styles Added) */
 
-/* Keep all existing styles from v2 */
-body { font-family: 'Poppins', sans-serif; background-color: #f4f6f8; margin: 0; color: #343a40; }
-/* ... (container, main-content, page-header, breadcrumb, actions-bar, button styles including status-button, section-container, table-container, table styles, status badges, PO filters) ... */
-/* Keep existing generic modal styles */
-.modal { display: none; position: fixed; z-index: 1050; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.5); align-items: center; justify-content: center; padding: 15px; box-sizing: border-box; }
-.modal.active { display: flex; }
-.modal-content { background-color: #fefefe; margin: auto; padding: 25px 30px; border: 1px solid #ccc; width: 90%; max-width: 450px; border-radius: 8px; position: relative; box-shadow: 0 5px 15px rgba(0,0,0,0.2); z-index: 1051; max-height: 90vh; display: flex; flex-direction: column; } /* Added flex properties */
-.modal-content h2 { margin-top: 0; margin-bottom: 20px; text-align: center; border-bottom: 1px solid #eee; padding-bottom: 10px; font-size: 1.3em; flex-shrink: 0; }
-.close-btn { color: #aaa; position: absolute; top: 10px; right: 15px; font-size: 28px; font-weight: bold; cursor: pointer; line-height: 1; }
-.close-btn:hover, .close-btn:focus { color: black; text-decoration: none; }
-.form-group { margin-bottom: 15px; flex-shrink: 0; }
-/* ... (form element styles) ... */
-.modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; border-top: 1px solid #eee; padding-top: 15px; flex-shrink: 0;}
-.error-message { color: red; font-size: 0.85em; margin-top: 10px; text-align: center; }
-/* ... (Existing status modal styles) ... */
-
-
-/* **** NEW Styles for PO Details Modal **** */
-.details-modal .modal-content.large {
-    max-width: 90%; /* Allow wider modal */
-    max-height: 85vh; /* Limit height */
+/* --- Basic and Variables --- */
+:root {
+    --primary-color: #0056b3;
+    --secondary-color: #2c3e50;
+    --success-color: #28a745;
+    --danger-color: #dc3545;
+    --warning-color: #ffc107;
+    --info-color: #17a2b8;
+    --light-gray: #f8f9fa;
+    --medium-gray: #e9ecef;
+    --dark-gray: #6c757d;
+    --text-color: #343a40;
+    --white-color: #ffffff;
+    --black-color: #000000;
 }
 
-#poDetailsModalContent {
-    overflow-y: auto; /* Allow content scrolling */
-    flex-grow: 1; /* Allow content to take available space */
-    margin-bottom: 15px; /* Space before actions */
+body {
+    font-family: 'Poppins', sans-serif;
+    background-color: #f0f2f5; /* Consistent background */
+    margin: 0;
+    color: var(--text-color);
+    line-height: 1.5;
 }
 
-#poDetailsModalContent h3 { /* Optional: Style for item section header */
+.container {
+    /* Container for potential centering or max-width */
+}
+
+.main-content {
+    padding: 25px;
+    box-sizing: border-box;
+    max-width: 1400px; /* Adjust max-width if needed */
+    margin: 20px auto; /* Center content */
+    background-color: var(--white-color);
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.07);
+}
+
+/* --- Header & Breadcrumb --- */
+.page-header {
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid var(--medium-gray);
+}
+.page-header h1 {
+    margin: 0;
+    font-size: 1.7em;
+    color: var(--primary-color);
+    font-weight: 600;
+}
+.page-header h1 i {
+    margin-right: 12px;
+}
+
+.breadcrumb {
+    font-size: 0.9em;
+    color: var(--dark-gray);
+    margin-bottom: 25px;
+}
+.breadcrumb a {
+    color: var(--primary-color);
+    text-decoration: none;
+}
+.breadcrumb a:hover {
+    text-decoration: underline;
+}
+.breadcrumb span {
+    margin-left: 5px;
+}
+.breadcrumb span::before {
+    content: "/";
+    margin-right: 5px;
+    color: var(--dark-gray);
+}
+
+/* --- Action Bar & Buttons --- */
+.actions-bar {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 25px;
+    flex-wrap: wrap;
+}
+
+.button {
+    padding: 8px 15px;
+    font-size: 0.9em;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px; /* Consistent gap */
+    text-decoration: none;
+    transition: background-color 0.2s ease, opacity 0.2s ease;
+    white-space: nowrap;
+    vertical-align: middle; /* Align buttons nicely */
+}
+.button i {
+    /* Icons already have gap due to .button gap */
+    /* margin-right: 5px; */ /* Removed in favor of gap */
+    line-height: 1; /* Ensure icon aligns well */
+}
+.button:disabled {
+    background-color: #adb5bd;
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+.button:disabled:hover {
+     background-color: #adb5bd; /* Prevent hover effect on disabled */
+}
+
+.add-new-button { background-color: var(--success-color); color: var(--white-color); }
+.add-new-button:hover:not(:disabled) { background-color: #218838; }
+
+.cancel-button { background-color: var(--dark-gray); color: var(--white-color);}
+.cancel-button:hover:not(:disabled) { background-color: #5a6268;}
+
+.save-button { background-color: var(--primary-color); color: var(--white-color);}
+.save-button:hover:not(:disabled) { background-color: #004085; }
+
+/* Action buttons inside tables */
+.edit-button { background-color: var(--warning-color); color: #333; font-size: 0.8em; padding: 4px 8px;}
+.edit-button:hover:not(:disabled) { background-color: #e0a800; }
+
+.delete-button { background-color: var(--danger-color); color: var(--white-color); font-size: 0.8em; padding: 4px 8px;}
+.delete-button:hover:not(:disabled) { background-color: #c82333; }
+
+.pdf-button { background-color: #fd7e14; color: var(--white-color); font-size: 0.8em; padding: 4px 8px;}
+.pdf-button:hover:not(:disabled) { background-color: #e66a04; }
+
+.status-button { background-color: var(--info-color); color: var(--white-color); font-size: 0.8em; padding: 4px 8px;}
+.status-button:hover:not(:disabled) { background-color: #117a8b; }
+
+/* ***** नया View Details बटन स्टाइल ***** */
+.view-details-button {
+    background-color: #6f42c1; /* Example: Purple */
+    color: var(--white-color);
+    font-size: 0.8em;
+    padding: 4px 8px;
+}
+.view-details-button:hover:not(:disabled) {
+    background-color: #5a2d9e;
+}
+/* ************************************ */
+
+
+/* --- Section Containers --- */
+.section-container {
+    background-color: var(--white-color);
+    padding: 20px 25px;
+    border-radius: 8px;
+    box-shadow: 0 1px 5px rgba(0, 0, 0, 0.05);
+    margin-bottom: 25px;
+}
+.section-container h2 {
     margin-top: 0;
-    margin-bottom: 10px;
-    font-size: 1.1em;
-    color: #333;
+    margin-bottom: 20px; /* Increased spacing */
+    font-size: 1.4em; /* Slightly larger */
+    color: var(--secondary-color);
+    border-bottom: 1px solid var(--medium-gray);
+    padding-bottom: 12px;
+    font-weight: 600;
+}
+.section-container h2 i {
+    margin-right: 10px;
+    color: var(--primary-color); /* Match icon color */
 }
 
-/* Style for the table inside the details modal */
-#poDetailsModalTable {
+/* --- Table Styling --- */
+.table-container {
+    width: 100%;
+    overflow-x: auto;
+    border: 1px solid var(--medium-gray);
+    border-radius: 6px;
+    margin-bottom: 15px;
+}
+table {
     width: 100%;
     border-collapse: collapse;
-    font-size: 0.85em; /* Slightly smaller font inside modal */
+    font-size: 0.9em;
+}
+table thead {
+    background-color: var(--light-gray);
+    border-bottom: 2px solid var(--medium-gray); /* Stronger header bottom border */
+}
+table th, table td {
+    border: 1px solid #e0e0e0; /* Slightly lighter border */
+    padding: 10px 12px;
+    text-align: left;
+    vertical-align: middle; /* Center content vertically */
+}
+table th {
+    font-weight: 600;
+    color: #495057;
+    white-space: nowrap; /* Prevent header text wrapping */
+}
+table tbody tr:nth-child(even) {
+    background-color: #fdfdfd; /* Subtle zebra striping */
+}
+table tbody tr:hover {
+    background-color: #f1f5f9; /* Hover effect */
+}
+/* Action buttons cell */
+table td.action-buttons {
+    display: flex;
+    gap: 5px;
+    justify-content: flex-start; /* Align buttons left */
+    flex-wrap: nowrap; /* Prevent wrapping if possible, relies on overflow */
+    padding: 6px 8px; /* Slightly less padding for action buttons */
+}
+table td.action-buttons button,
+table td.action-buttons a.button { /* Include anchor tags styled as buttons */
+    padding: 4px 8px;
+    font-size: 0.8em;
 }
 
-#poDetailsModalTable thead th {
-    background-color: #f8f9fa;
+/* --- Status Badge Styles --- */
+.status-badge {
+    padding: 4px 10px; /* Slightly more padding */
+    font-size: 0.8em;
+    border-radius: 12px; /* More rounded */
+    font-weight: 500;
+    white-space: nowrap;
+    display: inline-block; /* Ensure proper spacing */
+    text-transform: capitalize; /* Capitalize status text */
+}
+.status-new { background-color: #cfe2ff; color: #0a58ca; border: 1px solid #b6d4fe;}
+.status-sent { background-color: #e2e3e5; color: #41464b; border: 1px solid #d3d6d8;}
+.status-printing { background-color: #ffedd5; color: #9a3412; border: 1px solid #fed7aa;}
+.status-received, .status-product-received { background-color: #d1e7dd; color: #0f5132; border: 1px solid #badbcc;}
+.status-po-paid { background-color: #a3cfbb; color: #0a3622; border: 1px solid #88c3a5;} /* Darker Green */
+.status-cancel { background-color: #f8d7da; color: #842029; border: 1px solid #f5c2c7;} /* Red */
+.status-unknown { background-color: #eee; color: #555; border: 1px solid #ddd;}
+
+/* --- PO Filters --- */
+.po-filters {
+    margin-bottom: 20px; /* More space */
+    display: flex;
+    gap: 15px; /* More gap */
+    flex-wrap: wrap;
+    align-items: center;
+}
+.po-filters input[type="text"],
+.po-filters select {
+    padding: 8px 12px; /* Consistent padding */
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    font-size: 0.9em;
+    height: 38px; /* Match button height */
+    box-sizing: border-box;
+    min-width: 150px; /* Minimum width */
+}
+.po-filters button {
+    padding: 8px 15px; /* Match input height */
+    background-color: var(--primary-color);
+    color: var(--white-color);
+}
+.po-filters button:hover:not(:disabled) {
+    background-color: #004085;
+}
+
+
+/* --- Modal Styles (Generic) --- */
+.modal {
+    display: none; /* Hidden by default */
+    position: fixed; /* Stay in place */
+    z-index: 1050; /* Sit on top */
+    left: 0;
+    top: 0;
+    width: 100%; /* Full width */
+    height: 100%; /* Full height */
+    overflow: auto; /* Enable scroll if needed */
+    background-color: rgba(0,0,0,0.5); /* Black w/ opacity */
+    /* Use Flexbox to center */
+    align-items: center;
+    justify-content: center;
+    padding: 15px;
+    box-sizing: border-box;
+}
+.modal.active {
+    display: flex; /* Show the modal */
+}
+.modal-content {
+    background-color: #fefefe;
+    margin: auto; /* Auto margin for centering */
+    padding: 25px 30px;
+    border: 1px solid #ccc;
+    width: 90%; /* Default width */
+    max-width: 500px; /* Default max-width */
+    border-radius: 8px;
+    position: relative;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+    z-index: 1051;
+    display: flex; /* Use flex column for content */
+    flex-direction: column;
+}
+/* Optional: Larger modal class */
+.modal-content.modal-lg {
+    max-width: 850px; /* Increased width for PO details */
+}
+.modal-content h2 {
+    margin-top: 0;
+    margin-bottom: 20px;
+    text-align: center;
+    border-bottom: 1px solid var(--medium-gray);
+    padding-bottom: 15px; /* Increased padding */
+    font-size: 1.4em;
+    font-weight: 600;
+    color: var(--secondary-color);
+}
+.close-btn {
+    color: #aaa;
+    position: absolute;
+    top: 10px;
+    right: 15px;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+    line-height: 1;
+}
+.close-btn:hover,
+.close-btn:focus {
+    color: var(--black-color);
+    text-decoration: none;
+}
+
+/* Modal Form Styling */
+.modal form .form-group {
+    margin-bottom: 15px;
+}
+.modal form .form-group label {
+    display: block;
+    margin-bottom: 6px; /* Slightly less margin */
+    font-weight: 500; /* Less bold */
+    font-size: 0.9em;
+}
+.modal form .form-group input[type="text"],
+.modal form .form-group input[type="tel"],
+.modal form .form-group input[type="email"],
+.modal form .form-group input[type="password"],
+.modal form .form-group select,
+.modal form .form-group textarea {
+    width: 100%;
+    padding: 9px 12px; /* Consistent padding */
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    font-size: 0.95em;
+    box-sizing: border-box;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.modal form .form-group textarea {
+    resize: vertical;
+    min-height: 60px;
+}
+.modal form .form-group input:focus,
+.modal form .form-group select:focus,
+.modal form .form-group textarea:focus {
+     border-color: var(--primary-color);
+     outline: 0;
+     box-shadow: 0 0 0 0.2rem rgba(0, 86, 179, 0.2);
+}
+
+/* Modal Actions (Footer) */
+.modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 25px; /* More space before actions */
+    padding-top: 15px;
+    border-top: 1px solid var(--medium-gray);
+}
+.error-message {
+    color: var(--danger-color);
+    font-size: 0.88em;
+    margin-top: 10px;
+    text-align: center;
+    width: 100%;
+}
+
+/* --- Specific Status Modal Styles --- */
+#statusUpdateModal .modal-content {
+    max-width: 450px; /* Keep status modal smaller */
+}
+#statusUpdateModal p {
+    margin-bottom: 15px;
+    font-size: 0.95em;
+    text-align: center; /* Center current status text */
+}
+#statusUpdateModal p strong {
+    font-weight: 600;
+    color: var(--primary-color);
+}
+
+
+/* ***** नया PO विवरण Modal Styles ***** */
+#poDetailsModal .po-details-container {
+    margin-top: 15px;
+    max-height: 65vh; /* Limit height, allow scroll */
+    overflow-y: auto;
+    padding-right: 10px; /* Space for scrollbar */
+    flex-grow: 1; /* Allow container to grow */
+}
+
+#poDetailsModal .details-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9em;
+    margin-bottom: 20px; /* Space after table */
+}
+#poDetailsModal .details-table th,
+#poDetailsModal .details-table td {
+    border: 1px solid var(--medium-gray);
     padding: 8px 10px;
     text-align: left;
-    border: 1px solid #dee2e6;
+    vertical-align: top; /* Better for multi-line content */
+}
+#poDetailsModal .details-table thead th {
+    background-color: var(--light-gray);
     font-weight: 600;
+    white-space: nowrap;
+    position: sticky; /* Keep header visible on scroll */
+    top: 0; /* Stick to top of scroll container */
+    z-index: 1; /* Ensure header is above body */
+}
+#poDetailsModal .details-table tbody tr:nth-child(even) {
+    background-color: #f9f9f9; /* Zebra striping */
+}
+#poDetailsModal .details-table td:last-child { /* Amount column */
+    text-align: right;
+    font-weight: 500;
+    white-space: nowrap;
+}
+/* Style specific columns if needed */
+#poDetailsModal .details-table td:nth-child(1) { /* Index column */
+    text-align: center;
+    width: 30px;
+}
+#poDetailsModal .details-table td:nth-child(4), /* Dimensions/Qty */
+#poDetailsModal .details-table td:nth-child(5) { /* Unit/Rate */
     white-space: nowrap;
 }
 
-#poDetailsModalTable tbody td {
-    padding: 6px 10px;
-    border: 1px solid #e9ecef;
-    vertical-align: top; /* Align content top */
-    word-break: break-word; /* Prevent long text overflowing */
+/* PO Notes style inside the modal */
+#poDetailsModal .po-notes-details {
+    margin-top: 20px;
+    padding: 15px; /* More padding */
+    border: 1px solid #e0e0e0; /* Border around notes */
+    border-radius: 4px;
+    font-size: 0.9em;
+    background-color: #fdfdfd; /* Slightly different background */
 }
-
-#poDetailsModalTable tbody tr:nth-child(even) {
-    background-color: #f9f9f9; /* Zebra striping */
+#poDetailsModal .po-notes-details strong {
+    display: block;
+    margin-bottom: 8px; /* More space after "Notes:" */
+    color: var(--secondary-color);
+    font-weight: 600;
 }
-
-/* Specific column widths for details table (optional) */
-#poDetailsModalTable .col-item-name { width: 15%; }
-#poDetailsModalTable .col-party { width: 10%; }
-#poDetailsModalTable .col-design { width: 15%; }
-#poDetailsModalTable .col-size { width: 15%; white-space: nowrap;} /* Combine sizes */
-#poDetailsModalTable .col-area { width: 15%; white-space: nowrap;} /* Combine areas */
-#poDetailsModalTable .col-wastage { width: 15%; white-space: nowrap;} /* Combine wastage */
-#poDetailsModalTable .col-rate { width: 7%; text-align: right;}
-#poDetailsModalTable .col-amount { width: 8%; text-align: right; font-weight: 600;}
-/* ***************************************** */
-
-/* Style for Print Sizes column in main PO table */
-#poTable td:nth-child(4) { /* Assuming Print Sizes is 4th column */
-    font-size: 0.8em;
+#poDetailsModal .po-notes-details p {
+    margin: 0;
+    line-height: 1.6; /* Better readability */
     color: #555;
-    max-width: 200px; /* Limit width */
-    overflow: hidden;
-    text-overflow: ellipsis; /* Add ellipsis if text overflows */
-    white-space: nowrap; /* Prevent wrapping */
+}
+/* ************************************* */
+
+
+/* --- Responsive Styles --- */
+@media (max-width: 992px) {
+    .main-content { padding: 20px; }
+    .modal-content.modal-lg {
+        max-width: 95%; /* Adjust max-width for tablets */
+    }
+    .po-filters { gap: 10px; }
 }
 
-
-/* Responsive */
 @media (max-width: 768px) {
-    /* ... keep existing responsive styles ... */
-    .details-modal .modal-content.large {
-        max-width: 95%;
+    .main-content { padding: 15px; margin: 10px auto;}
+    .actions-bar { flex-direction: column; align-items: stretch; }
+    .actions-bar .button, .actions-bar a.button { width: 100%; text-align: center; justify-content: center; }
+    .po-filters { flex-direction: column; align-items: stretch; }
+    .po-filters input[type="text"], .po-filters select, .po-filters button { width: 100%; } /* Full width filters */
+    .modal-content, .modal-content.modal-lg { width: 95%; padding: 20px; } /* Adjust modal padding */
+    .modal-content h2 { font-size: 1.2em; }
+    #poDetailsModal .details-table { font-size: 0.85em; }
+    #poDetailsModal .details-table th, #poDetailsModal .details-table td { padding: 6px 8px; }
+    .table-container { /* Improve mobile table scrolling */
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch; /* Smoother scrolling on iOS */
     }
-    #poDetailsModalTable {
-        font-size: 0.8em;
-    }
-    #poDetailsModalTable thead th, #poDetailsModalTable tbody td {
-        padding: 4px 6px;
-    }
-    /* Hide less critical columns on small screens for main PO table */
-    #poTable th:nth-child(4), /* Print Sizes Summary */
-    #poTable td:nth-child(4) {
-        /* display: none; */ /* Uncomment to hide */
-    }
-    /* Adjust colspan if columns are hidden */
+    table td.action-buttons { flex-wrap: wrap; justify-content: center;} /* Allow buttons to wrap on small screens */
+}
+
+@media (max-width: 480px) {
+    .page-header h1 { font-size: 1.4em; }
+    table th, table td { padding: 8px 6px; } /* Further reduce table padding */
+    .status-badge { padding: 3px 8px; font-size: 0.75em;}
+    .modal-actions { flex-direction: column; } /* Stack modal buttons */
+    .modal-actions .button { width: 100%; }
 }
