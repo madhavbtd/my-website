@@ -1,4 +1,4 @@
-// js/utils.js - v6 (New PDF Design based on INV290.pdf, Error Fix, No Logo, Flex Details)
+// js/utils.js - v7 (Layout Fixes, [object Object] Fix using didDrawCell hook)
 
 // --- Function for Flex Calculation (यह फ़ंक्शन अपरिवर्तित है) ---
 function calculateFlexDimensions(unit, width, height) {
@@ -31,76 +31,67 @@ function calculateFlexDimensions(unit, width, height) {
 }
 
 
-// --- PDF Generation Function (New Design v6) ---
+// --- PDF Generation Function (New Design v7) ---
 async function generatePoPdf(poData, supplierData) {
     // 1. jsPDF Check & Init
-    if (typeof window.jspdf === 'undefined' || typeof window.jspdf.jsPDF === 'undefined') {
-        console.error("jsPDF library (window.jspdf.jsPDF) not found!");
-        alert("Error: PDF Library not loaded correctly. Cannot generate PDF.");
-        return;
-    }
-    if (typeof window.jspdf.jsPDF.API.autoTable !== 'function') {
-        console.error("jsPDF autoTable plugin not found!");
-        alert("Error: PDF AutoTable Plugin not loaded correctly. Cannot generate PDF table.");
-        return;
-    }
+    if (typeof window.jspdf === 'undefined' || typeof window.jspdf.jsPDF === 'undefined') { console.error("jsPDF library not found!"); alert("Error: PDF Library not loaded."); return; }
+    if (typeof window.jspdf.jsPDF.API.autoTable !== 'function') { console.error("jsPDF autoTable plugin not found!"); alert("Error: PDF AutoTable Plugin not loaded."); return; }
     const { jsPDF } = window.jspdf;
 
-    console.log("Generating PDF (v6 Design) for PO:", poData);
+    console.log("Generating PDF (v7 Design) for PO:", poData);
     console.log("Supplier Data for PDF:", supplierData);
 
-    if (!poData || !poData.items || !supplierData) {
-        alert("Error: Missing data to generate PDF.");
-        console.error("Missing poData or items or supplierData for PDF generation");
-        return;
-    }
+    if (!poData || !poData.items || !supplierData) { alert("Error: Missing data to generate PDF."); console.error("Missing PDF data"); return; }
 
-    // --- <<<<< आपकी कंपनी की डिटेल्स >>>>> ---
-    const companyName = "Madhav Offset"; // आपका नाम
-    const companyAddress = "Head Office: Moodh Market, Batadu"; // आपका पता
-    const companyContact = "Mobile: 9549116541"; // आपका संपर्क
-    const companySignature = "For, Madhav Offset"; // नीचे सिग्नेचर के लिए
-    // ------------------------------------
+    // --- Company Details ---
+    const companyName = "Madhav Offset";
+    const companyAddress = "Head Office: Moodh Market, Batadu";
+    const companyContact = "Mobile: 9549116541";
+    const companySignature = "For, Madhav Offset";
 
     try {
-        const doc = new jsPDF('p', 'pt', 'a4'); // Use points, A4 size
+        const doc = new jsPDF('p', 'pt', 'a4');
         const pageHeight = doc.internal.pageSize.height;
         const pageWidth = doc.internal.pageSize.width;
-        const margin = 40; // Margin in points
+        const margin = 40;
         const contentWidth = pageWidth - (margin * 2);
         let currentY = margin;
 
-        // --- Define Colors ---
-        const headerColor = '#0056b3'; // आपका प्राइमरी नीला रंग
+        // --- Define Colors & Fonts ---
+        const headerColor = '#0056b3'; // Primary Blue
         const textColor = '#333333';
-        const borderColor = '#CCCCCC';
+        const subTextColor = '#555555';
+        const borderColor = '#DDDDDD'; // Lighter border
         const whiteColor = '#FFFFFF';
         const blackColor = '#000000';
-        const subTextColor = '#555555'; // थोड़ा हल्का टेक्स्ट
+        const tableHeaderBG = '#F2F2F2'; // Light Grey Header BG
+        const defaultFontSize = 9;
+        const smallFontSize = 8;
+        const headerFontSize = 10;
 
-        // --- Set default text color & font ---
         doc.setTextColor(textColor);
-        doc.setFont('helvetica', 'normal'); // आप चाहें तो 'Poppins' जैसा फॉन्ट लोड कर सकते हैं, पर वह जटिल है
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(defaultFontSize);
 
         // --- 1. Header ---
         // Company Info (Right Aligned)
-        doc.setFontSize(12);
+        doc.setFontSize(11);
         doc.setFont(undefined, 'bold');
-        doc.text(companyName, pageWidth - margin, currentY, { align: 'right' });
-        currentY += 15;
-        doc.setFontSize(9);
+        doc.text(companyName, pageWidth - margin, currentY + 5, { align: 'right' }); // Adjusted Y
+        currentY += 14;
+        doc.setFontSize(defaultFontSize);
         doc.setFont(undefined, 'normal');
-        const addressLines = doc.splitTextToSize(companyAddress, 180); // चौड़ाई एडजस्ट करें
+        const addressLines = doc.splitTextToSize(companyAddress, 180);
         doc.text(addressLines, pageWidth - margin, currentY, { align: 'right' });
         currentY += (addressLines.length * 10) + 2;
         doc.text(companyContact, pageWidth - margin, currentY, { align: 'right' });
-        currentY += 15; // हेडर के बाद थोड़ी जगह
+        currentY += 15; // Space after header
 
         // Title (Centered)
-        doc.setFontSize(18);
+        doc.setFontSize(16); // Larger title
         doc.setFont(undefined, 'bold');
         doc.text("PURCHASE ORDER", pageWidth / 2, currentY, { align: 'center' });
-        currentY += 30;
+        currentY += 25; // Space after title
 
         // --- 2. Supplier/PO Info ---
         const infoStartY = currentY;
@@ -108,24 +99,23 @@ async function generatePoPdf(poData, supplierData) {
         const gap = 15;
 
         // Left Column: Supplier Details ("Issued To:")
-        doc.setFontSize(9);
+        doc.setFontSize(smallFontSize); // Smaller label
         doc.setFont(undefined, 'bold');
         doc.text("Issued To:", margin, currentY);
-        currentY += 12;
-        doc.setFont(undefined, 'normal');
-        doc.setFontSize(10);
+        currentY += 11; // Space after label
+        doc.setFontSize(defaultFontSize); // Normal size for details
         doc.setFont(undefined, 'bold');
         if(supplierData.name) doc.text(supplierData.name, margin, currentY);
-        currentY += 13;
+        currentY += 12; // Line height
         doc.setFont(undefined, 'normal');
-        doc.setFontSize(9);
+        doc.setFontSize(smallFontSize + 1); // Normal small size
         if (supplierData.address) {
              const supAddressLines = doc.splitTextToSize(supplierData.address, halfWidth - gap);
              doc.text(supAddressLines, margin, currentY);
-             currentY += (supAddressLines.length * 10) + 2;
+             currentY += (supAddressLines.length * (smallFontSize+1)) + 2; // Adjust Y based on lines
         } else { currentY += 10; }
-        if (supplierData.whatsappNo) { doc.text(`Contact: ${supplierData.whatsappNo}`, margin, currentY); currentY += 10; }
-        if (supplierData.gstNo) { doc.text(`GST No.: ${supplierData.gstNo}`, margin, currentY); currentY += 10; }
+        if (supplierData.whatsappNo) { doc.text(`Contact: ${supplierData.whatsappNo}`, margin, currentY); currentY += (smallFontSize+1); }
+        if (supplierData.gstNo) { doc.text(`GST No.: ${supplierData.gstNo}`, margin, currentY); currentY += (smallFontSize+1); }
         const leftColEndY = currentY;
 
         // Right Column: PO Details
@@ -134,47 +124,50 @@ async function generatePoPdf(poData, supplierData) {
         const col2LabelWidth = 55;
         const col2ValueX = col2X + col2LabelWidth + 5;
 
-        doc.setFontSize(9);
+        doc.setFontSize(defaultFontSize);
         doc.setFont(undefined, 'normal');
 
-        doc.text("Order No.", col2X, currentY, { align: 'left', maxWidth: col2LabelWidth });
-        // --- <<< ERROR FIX APPLIED HERE >>> ---
-        doc.text(`: ${String(poData.poNumber || 'N/A')}`, col2ValueX, currentY); // PO Number को स्ट्रिंग में बदला
-        // --- <<< END ERROR FIX >>> ---
-        currentY += 13;
+        // Helper to draw Label: Value pair
+        const drawInfoLine = (label, value) => {
+            if (currentY > pageHeight - margin*2) { doc.addPage(); currentY = margin; } // Add page if needed
+            doc.text(label, col2X, currentY, { align: 'left', maxWidth: col2LabelWidth });
+            doc.text(`: ${value}`, col2ValueX, currentY);
+            currentY += 13; // Line height
+        };
 
-        doc.text("Date", col2X, currentY, { align: 'left', maxWidth: col2LabelWidth });
+        // --- <<< ERROR FIX included >>> ---
+        drawInfoLine("Order No.", String(poData.poNumber || 'N/A'));
+        // --- <<< END ERROR FIX >>> ---
+
         let orderDateStr = 'N/A';
         if (poData.orderDate?.toDate) {
            try { orderDateStr = poData.orderDate.toDate().toLocaleDateString('en-GB'); } catch(e){ console.error("Error formatting date:", e)}
         }
-        doc.text(`: ${orderDateStr}`, col2ValueX, currentY);
-        currentY += 13;
+        drawInfoLine("Date", orderDateStr);
+        drawInfoLine("Status", poData.status || 'N/A');
 
-        doc.text("Status", col2X, currentY, { align: 'left', maxWidth: col2LabelWidth });
-        doc.text(`: ${poData.status || 'N/A'}`, col2ValueX, currentY);
-        currentY += 13;
         const rightColEndY = currentY;
 
-        currentY = Math.max(leftColEndY, rightColEndY) + 20; // नीचे का Y सेट करें
+        currentY = Math.max(leftColEndY, rightColEndY) + 20; // Y below taller column + spacing
 
         // --- 3. Prepare Table Data with Flex Details ---
         let totalQtySum = 0;
-        const tableBody = poData.items.map((item, index) => {
+        // This array will hold data for AutoTable body
+        const tableBody = [];
+        // This array will hold data needed for custom drawing in hooks
+        const detailedItemData = [];
+
+        poData.items.forEach((item, index) => {
             let qtyStr = '-';
             let sqfStr = '-';
-            let particularsContent = []; // Use array for multi-line content
+            let productName = item.productName || 'N/A';
+            let flexDetailsLines = []; // Store flex details for hook
 
-            // Add product name (Bold)
-            particularsContent.push({ content: item.productName || 'N/A', styles: { fontStyle: 'bold' } });
-
-            // Add Flex Details below product name for Sq Feet items
             if (item.type === 'Sq Feet') {
                 const area = item.printSqFt !== undefined ? parseFloat(item.printSqFt) : 0;
-                sqfStr = area.toFixed(2); // SqFt value for its column
-                totalQtySum += 0; // Sqft items don't add to Qty sum
+                sqfStr = area.toFixed(2);
+                totalQtySum += 0;
 
-                // Format dimension details for Particulars column (smaller font, indented)
                 const w = item.realWidth || item.width || '?';
                 const h = item.realHeight || item.height || '?';
                 const u = item.unit || item.inputUnit || 'units';
@@ -185,10 +178,10 @@ async function generatePoPdf(poData, supplierData) {
                 let wastage = parseFloat(psf) - parseFloat(rsf);
                 wastage = (!isNaN(wastage) && wastage >= 0.01) ? wastage.toFixed(2) + ' sqft' : 'None';
 
-                particularsContent.push({ content: `  Real: ${w}x${h} ${u} (${rsf} sqft)`, styles: { fontSize: 8, textColor: subTextColor } });
-                particularsContent.push({ content: `  Print: ${pw}x${ph} (${psf} sqft)`, styles: { fontSize: 8, textColor: subTextColor } });
-                particularsContent.push({ content: `  Wastage: ${wastage}`, styles: { fontSize: 8, textColor: subTextColor } });
-
+                // Prepare lines for the hook
+                flexDetailsLines.push(`  Real: ${w}x${h} ${u} (${rsf} sqft)`);
+                flexDetailsLines.push(`  Print: ${pw}x${ph} (${psf} sqft)`);
+                flexDetailsLines.push(`  Wastage: ${wastage}`);
             } else { // Qty
                 const qty = parseInt(item.quantity || 0);
                 qtyStr = `${qty}`;
@@ -197,44 +190,96 @@ async function generatePoPdf(poData, supplierData) {
             const rateStr = typeof item.rate === 'number' ? item.rate.toFixed(2) : '-';
             const amountStr = typeof item.itemAmount === 'number' ? item.itemAmount.toFixed(2) : '-';
 
-            return [ index + 1, particularsContent, qtyStr, sqfStr, rateStr, amountStr ];
+            // Add data to tableBody - PARTICULARS only contains product name now
+            tableBody.push([ index + 1, productName, qtyStr, sqfStr, rateStr, amountStr ]);
+            // Store details needed for hook
+            detailedItemData.push({ flexDetails: flexDetailsLines });
         });
 
-        // Add summary rows
+        // Prepare summary rows
         const summaryRows = [];
         if (totalQtySum > 0) {
              summaryRows.push([
-                 { content: `Total Qty: ${totalQtySum}`, colSpan: 2, styles: { halign: 'left', fontStyle: 'bold'} },
-                 { content: ''}, { content: '' }, { content: '' }, { content: '' }
+                 { content: `Total Qty: ${totalQtySum}`, colSpan: 2, styles: { halign: 'left', fontStyle: 'bold', fontSize: defaultFontSize} },
+                 {}, {}, {}, {} // Empty cells for remaining columns
              ]);
         }
          const finalTotalAmountStr = poData.totalAmount !== undefined ? poData.totalAmount.toFixed(2) : '0.00';
          summaryRows.push([
-              { content: 'GRAND TOTAL', colSpan: 5, styles: { halign: 'right', fontStyle: 'bold'} },
-              { content: `₹ ${finalTotalAmountStr}`, styles: { halign: 'right', fontStyle: 'bold'} }
+              { content: 'GRAND TOTAL', colSpan: 5, styles: { halign: 'right', fontStyle: 'bold', fontSize: headerFontSize} },
+              { content: `₹ ${finalTotalAmountStr}`, styles: { halign: 'right', fontStyle: 'bold', fontSize: headerFontSize} }
          ]);
 
         // --- 4. Define Table Styles ---
         const headStyles = {
-            fillColor: headerColor, textColor: whiteColor, fontStyle: 'bold',
-            halign: 'center', valign: 'middle', fontSize: 9, cellPadding: 5,
+            fillColor: tableHeaderBG, // Light Grey BG
+            textColor: blackColor,    // Black Text
+            fontStyle: 'bold',
+            halign: 'center', valign: 'middle', fontSize: headerFontSize,
+            cellPadding: {top: 6, right: 5, bottom: 6, left: 5}, // More padding
             lineWidth: 0.5, lineColor: borderColor
         };
         const bodyStyles = {
-             fontSize: 9, textColor: textColor, cellPadding: {top: 4, right: 5, bottom: 4, left: 5},
-             valign: 'top', lineWidth: 0.5, lineColor: borderColor
+             fontSize: defaultFontSize, textColor: textColor,
+             cellPadding: {top: 4, right: 5, bottom: 4, left: 5},
+             valign: 'top', // Important for multi-line content
+             lineWidth: 0.5, lineColor: borderColor
         };
-        // Adjust column widths for new content
+        // Adjusted column widths
         const columnStyles = {
              0: { halign: 'center', cellWidth: 30 },    // S.No.
-             1: { halign: 'left', cellWidth: 235 },   // Particulars (Wider)
+             1: { halign: 'left', cellWidth: 235 },   // Particulars
              2: { halign: 'right', cellWidth: 40 },   // Qty
              3: { halign: 'right', cellWidth: 50 },   // Sqf
              4: { halign: 'right', cellWidth: 60 },   // Unit Price
              5: { halign: 'right', cellWidth: 70 }    // Amount
         };
 
-        // --- 5. Call doc.autoTable() for Items ---
+        // --- 5. Use didDrawCell Hook for Custom Rendering ---
+        let addPageRequired = false;
+        const didDrawCell = (data) => {
+            // Custom drawing for Particulars column (index 1) in the main body
+            if (data.column.dataKey === 1 && data.row.section === 'body') {
+                const itemIndex = data.row.index; // Index in the original items array
+                const itemDetails = detailedItemData[itemIndex]; // Get our stored details
+
+                if (itemDetails && itemDetails.flexDetails.length > 0) {
+                    // Manually draw the flex details below the product name
+
+                    // Store current styles
+                    const originalSize = data.doc.getFontSize();
+                    const originalStyle = data.doc.getFont().fontStyle;
+                    const originalColor = data.doc.getTextColor();
+
+                    // Style for flex details
+                    data.doc.setFont(undefined, 'normal');
+                    data.doc.setFontSize(smallFontSize);
+                    data.doc.setTextColor(subTextColor);
+
+                    let lineY = data.cell.y + cellPadding.top + (defaultFontSize * 1.15); // Start below product name line
+                    const lineStartX = data.cell.x + cellPadding.left;
+
+                    itemDetails.flexDetails.forEach(line => {
+                         // Check if drawing this line would exceed page boundary
+                         if (lineY + smallFontSize > pageHeight - margin) {
+                             addPageRequired = true; // Signal that a new page is needed *before* the next autoTable call
+                             // We can't add page *during* hook, so we defer it
+                             return; // Skip drawing this line on this page
+                         }
+                        data.doc.text(line.trim(), lineStartX, lineY);
+                        lineY += smallFontSize + 2; // Move Y for next line
+                    });
+
+                    // Restore original styles
+                    data.doc.setFontSize(originalSize);
+                    data.doc.setFont(undefined, originalStyle);
+                    data.doc.setTextColor(originalColor);
+                }
+            }
+        };
+
+
+        // --- 6. Call autoTable for Items ---
         doc.autoTable({
             head: [['S.No.', 'PARTICULARS', 'QTY', 'SQF', 'UNIT PRICE', 'AMOUNT']],
             body: tableBody,
@@ -243,30 +288,57 @@ async function generatePoPdf(poData, supplierData) {
             headStyles: headStyles,
             bodyStyles: bodyStyles,
             columnStyles: columnStyles,
+            didDrawCell: didDrawCell, // Use the hook for custom drawing
+             // Calculate cell heights dynamically based on content
+            didParseCell: function (data) {
+                if (data.column.dataKey === 1 && data.row.section === 'body') {
+                     // Increase cell height if flex details exist for this row
+                     const itemIndex = data.row.index;
+                     if (detailedItemData[itemIndex] && detailedItemData[itemIndex].flexDetails.length > 0) {
+                          // Estimate required height: base height + (lines * line height)
+                          const baseHeight = data.cell.styles.fontSize * 1.15; // Approx height for product name
+                          const detailLineHeight = smallFontSize * 1.15;
+                          const requiredHeight = baseHeight + (detailedItemData[itemIndex].flexDetails.length * detailLineHeight) + (cellPadding.top + cellPadding.bottom);
+                          data.cell.height = Math.max(data.cell.height, requiredHeight);
+                     }
+                }
+            },
             margin: { left: margin, right: margin }
         });
-        currentY = doc.lastAutoTable.finalY; // Get Y position after table
+        currentY = doc.lastAutoTable.finalY; // Y after item table
 
-        // --- 6. Call doc.autoTable() for Summary Rows ---
+        // Check if a page break is needed *before* drawing summary
+        if (addPageRequired || currentY > pageHeight - 80) { // Check space for summary + footer
+             doc.addPage();
+             currentY = margin;
+             addPageRequired = false; // Reset flag
+        }
+
+
+        // --- 7. Call autoTable for Summary Rows ---
          doc.autoTable({
             body: summaryRows,
             startY: currentY,
             theme: 'grid',
-            showHead: false, // No header for summary rows
-            bodyStyles: { // Specific styles for summary rows
-                 fontSize: 9, textColor: textColor, cellPadding: {top: 4, right: 5, bottom: 4, left: 5},
+            showHead: false,
+            bodyStyles: {
+                 fontSize: defaultFontSize, textColor: textColor,
+                 cellPadding: {top: 5, right: 5, bottom: 5, left: 5}, // Adjusted padding
                  valign: 'middle', lineWidth: 0.5, lineColor: borderColor, fontStyle: 'bold'
              },
-             columnStyles: columnStyles, // Use same widths for alignment
+             columnStyles: columnStyles,
              margin: { left: margin, right: margin }
         });
-        currentY = doc.lastAutoTable.finalY + 15; // Position below summary
+        currentY = doc.lastAutoTable.finalY + 20; // Y after summary table
 
-        // --- 7. Footer Sections ---
-        // Amount in Words (Placeholder)
-        // !!! इसे काम करने के लिए नंबर को शब्दों में बदलने वाला फंक्शन चाहिए !!!
+        // --- 8. Footer Sections ---
+        // Check page break before footer sections
+        if (currentY > pageHeight - 80) { doc.addPage(); currentY = margin; }
+
+        // Amount in Words
+        // !!! Placeholder - Requires a number-to-words library/function !!!
         const amountInWords = "Rupees ... Only";
-        doc.setFontSize(9);
+        doc.setFontSize(defaultFontSize);
         doc.setFont(undefined, 'bold');
         doc.text("Amount (in words):", margin, currentY);
         doc.setFont(undefined, 'normal');
@@ -274,39 +346,40 @@ async function generatePoPdf(poData, supplierData) {
         currentY += 20;
 
         // Terms / Declaration
+        if (currentY > pageHeight - 60) { doc.addPage(); currentY = margin; }
         doc.setFont(undefined, 'bold');
         doc.text("Terms / Declaration:", margin, currentY);
         currentY += 12;
         doc.setFont(undefined, 'normal');
-        // --- <<< आप यहाँ अपनी शर्तें जोड़ सकते हैं >>> ---
+        doc.setFontSize(smallFontSize); // Smaller font for terms
         const terms = [
              "- Subject to Batadu jurisdiction.",
              "- Goods once sold will not be taken back.",
              // Add more terms if needed
         ];
          terms.forEach(term => {
-             if (currentY > pageHeight - 60) { doc.addPage(); currentY = margin; } // Page break check before terms
+             if (currentY > pageHeight - 40) { doc.addPage(); currentY = margin; }
              doc.text(term, margin, currentY);
-             currentY += 10;
+             currentY += (smallFontSize + 2); // Adjust line height for small font
          });
-        currentY += 15;
+        // currentY += 15; // Space after terms (already included in loop)
 
-        // --- 8. Signature ---
-        if (currentY > pageHeight - 40) { // Check space before signature
-            doc.addPage();
-            currentY = margin;
-        }
-        doc.setFontSize(10);
+        // --- 9. Signature ---
+         // Ensure signature is at the bottom
+         const signatureY = pageHeight - margin - 10; // Position from bottom
+         if (currentY > signatureY - 10 ) { doc.addPage(); } // Add page if terms overlap signature area
+
+        doc.setFontSize(defaultFontSize); // Back to default size
         doc.setFont(undefined, 'bold');
-        doc.text(companySignature, pageWidth - margin, pageHeight - margin - 10, { align: 'right' }); // Position signature
+        doc.text(companySignature, pageWidth - margin, signatureY, { align: 'right' });
 
-        // --- 9. Save PDF ---
+        // --- 10. Save PDF ---
         const filename = `PO-${poData.poNumber || poData.id?.substring(0, 6) || 'PurchaseOrder'}.pdf`;
         doc.save(filename);
-        console.log("PDF Generated (v6 Design):", filename);
+        console.log("PDF Generated (v7 Design):", filename);
 
     } catch (error) {
-        console.error("Error generating PDF (v6 Design):", error);
+        console.error("Error generating PDF (v7 Design):", error);
         alert(`Could not generate PDF. Error: ${error.message}. Check console for more details.`);
     }
 }
