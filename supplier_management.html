@@ -70,12 +70,13 @@
                                  <th>Order Date</th>
                                  <th>Status</th>
                                  <th>Amount</th>
-                                 <th>Print Sizes (WxH Unit)</th>
+                                 <th>Quantity Info</th> <th>Print Sizes (WxH Unit)</th>
                                  <th>Actions</th>
                              </tr>
                          </thead>
                          <tbody id="poTableBody">
-                              <tr><td colspan="7">Initializing...</td></tr> </tbody>
+                              <tr><td colspan="8">Initializing...</td></tr>
+                         </tbody>
                      </table>
                  </div>
                  <div id="poTotalsDisplay" class="po-totals">
@@ -138,20 +139,22 @@
              <h2 id="poDetailsModalTitle">Purchase Order Items</h2>
              <div id="poDetailsContent" class="po-details-container">
                  <p>Loading details...</p>
-             </div>
+                 </div>
              <div class="modal-actions">
                  <button type="button" id="closePoDetailsBtn" class="button cancel-button">Close</button>
              </div>
          </div>
      </div>
 
-     <div id="suppliersListModal" class="modal modal-xl"> <div class="modal-content">
+     <div id="suppliersListModal" class="modal modal-xl">
+         <div class="modal-content">
              <span class="close-btn" id="closeSuppliersListModal">&times;</span>
              <div class="suppliers-modal-header">
                  <h2><i class="fas fa-users"></i> Suppliers List</h2>
                  <button id="addSupplierInModalBtn" class="button add-new-button"><i class="fas fa-plus"></i> Add New Supplier</button>
              </div>
-             <div class="table-container suppliers-table-container"> <table id="supplierTableModal">
+             <div class="table-container suppliers-table-container">
+                 <table id="supplierTableModal">
                      <thead>
                          <tr>
                              <th>Name</th>
@@ -171,6 +174,7 @@
              </div>
          </div>
      </div>
+
      <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
     <script src="js/supplier_management.js" type="module" defer></script>
