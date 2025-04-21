@@ -1,4 +1,4 @@
-// js/new_po.js - v8 (Handle 'sq feet' from Firestore)
+// js/new_po.js - v9 (2-Col Calc Preview & Compact Layout Adjustments)
 
 // Assume Firebase functions are globally available via HTML script block
 const {
@@ -27,7 +27,6 @@ const poTotalAmountSpan = document.getElementById('poTotalAmount');
 const savePOBtn = document.getElementById('savePOBtn');
 const savePOBtnSpan = savePOBtn ? savePOBtn.querySelector('span') : null;
 const poErrorMsg = document.getElementById('poErrorMsg');
-// Dynamic Product Suggestion List Element (created on demand)
 let productSuggestionsDiv = null;
 
 // --- Global State ---
@@ -36,9 +35,9 @@ let productSearchDebounceTimer;
 let editingPOData = null;
 let activeProductInput = null;
 
-// --- Utility Functions --- (calculateFlexDimensions, updateTotalAmount, etc. - Kept from previous version)
+// --- Utility Functions ---
 function calculateFlexDimensions(unit, width, height) {
-    // ... (Keep the function exactly as it was) ...
+    // ... (Keep the function exactly as it was in v8) ...
     console.log(`Calculating flex: Unit=${unit}, W=${width}, H=${height}`);
     const mediaWidthsFt = [3, 4, 5, 6, 8, 10];
     let wFt = (unit === 'inches') ? parseFloat(width || 0) / 12 : parseFloat(width || 0);
@@ -66,7 +65,7 @@ function calculateFlexDimensions(unit, width, height) {
     };
 }
 function updateTotalAmount() {
-    // ... (Keep the function exactly as it was) ...
+    // ... (Keep the function exactly as it was in v8) ...
     let total = 0;
     poItemsTableBody.querySelectorAll('.item-row').forEach(row => {
         const amountSpan = row.querySelector('.item-amount');
@@ -74,51 +73,71 @@ function updateTotalAmount() {
     });
     if (poTotalAmountSpan) { poTotalAmountSpan.textContent = total.toFixed(2); }
 }
+
+// --- MODIFIED FOR GRID LAYOUT ---
 function updateFullCalculationPreview() {
-     // ... (Keep the function exactly as it was) ...
-     if (!calculationPreviewArea || !poItemsTableBody) return;
-     let previewHTML = '<h4>Calculation Details:</h4>';
-     const itemRows = poItemsTableBody.querySelectorAll('.item-row');
-     let foundSqFt = false;
-     itemRows.forEach((row, index) => {
-         const unitTypeSelect = row.querySelector('.unit-type-select');
-         if (unitTypeSelect?.value === 'Sq Feet') {
-             foundSqFt = true;
-             const productNameInput = row.querySelector('.product-name');
-             const productName = productNameInput?.value.trim() || `Item ${index + 1}`;
-             const dimensionUnitSelect = row.querySelector('.dimension-unit-select');
-             const widthInput = row.querySelector('.width-input');
-             const heightInput = row.querySelector('.height-input');
-             const unit = dimensionUnitSelect ? dimensionUnitSelect.value : 'feet';
-             const width = parseFloat(widthInput?.value || 0);
-             const height = parseFloat(heightInput?.value || 0);
-             previewHTML += `<div class="item-preview-entry"><strong>${productName}:</strong><br>`;
-             if (width > 0 && height > 0) {
-                 const calcResult = calculateFlexDimensions(unit, width, height);
-                 if (calcResult && parseFloat(calcResult.printSqFt) > 0) {
-                      const realSqFtNum = parseFloat(calcResult.realSqFt);
-                      const printSqFtNum = parseFloat(calcResult.printSqFt);
-                      const wastageSqFt = (printSqFtNum - realSqFtNum);
-                      let wastageSizeStr = "N/A";
-                      const widthDiff = (calcResult.printWidthFt - calcResult.realWidthFt);
-                      const heightDiff = (calcResult.printHeightFt - calcResult.realHeightFt);
-                      const tolerance = 0.01;
-                      if (widthDiff > tolerance && Math.abs(heightDiff) < tolerance) { wastageSizeStr = `${widthDiff.toFixed(2)}ft W x ${calcResult.realHeightFt.toFixed(2)}ft H`; }
-                      else if (heightDiff > tolerance && Math.abs(widthDiff) < tolerance) { wastageSizeStr = `${calcResult.realWidthFt.toFixed(2)}ft W x ${heightDiff.toFixed(2)}ft H`; }
-                      else if (widthDiff > tolerance && heightDiff > tolerance) { wastageSizeStr = `~${wastageSqFt.toFixed(2)} sq ft area (complex)`; }
-                      else if (wastageSqFt > tolerance) { wastageSizeStr = `~${wastageSqFt.toFixed(2)} sq ft area`; }
-                      else { wastageSizeStr = "None"; }
-                      previewHTML += `&nbsp; Real: ${calcResult.realWidthFt.toFixed(2)}ft x ${calcResult.realHeightFt.toFixed(2)}ft = ${realSqFtNum.toFixed(2)} sq ft<br>&nbsp; Print: ${calcResult.printWidthFt.toFixed(2)}ft x ${calcResult.printHeightFt.toFixed(2)}ft = ${printSqFtNum.toFixed(2)} sq ft<br>&nbsp; <strong style="color: ${wastageSqFt > tolerance ? 'orange' : 'green'};">Wastage: ${wastageSqFt.toFixed(2)} sq ft</strong> | <span style="color: ${wastageSqFt > tolerance ? 'orange' : 'green'};">Size: ${wastageSizeStr}</span>`;
-                 } else { previewHTML += `&nbsp; <span style="color:orange;">Invalid dimensions or calculation error.</span>`; }
-             } else { previewHTML += `&nbsp; <span style="color:grey;">Enter valid width & height.</span>`; }
-             previewHTML += `</div>`;
-         }
-     });
-     if (!foundSqFt) { previewHTML += '<p style="color:grey;">Add items with Unit Type "Sq Feet" to see calculations.</p>'; }
-     calculationPreviewArea.innerHTML = previewHTML;
+    if (!calculationPreviewArea || !poItemsTableBody) return;
+
+    let entriesHTML = ''; // Store entries separately
+    const itemRows = poItemsTableBody.querySelectorAll('.item-row');
+    let foundSqFt = false;
+
+    itemRows.forEach((row, index) => {
+        const unitTypeSelect = row.querySelector('.unit-type-select');
+        if (unitTypeSelect?.value === 'Sq Feet') {
+            foundSqFt = true;
+            const productNameInput = row.querySelector('.product-name');
+            const productName = productNameInput?.value.trim() || `Item ${index + 1}`;
+            const dimensionUnitSelect = row.querySelector('.dimension-unit-select');
+            const widthInput = row.querySelector('.width-input');
+            const heightInput = row.querySelector('.height-input');
+            const unit = dimensionUnitSelect ? dimensionUnitSelect.value : 'feet';
+            const width = parseFloat(widthInput?.value || 0);
+            const height = parseFloat(heightInput?.value || 0);
+
+            let entryContent = `<strong>${productName}:</strong><br>`; // Start content for this entry
+            if (width > 0 && height > 0) {
+                const calcResult = calculateFlexDimensions(unit, width, height);
+                if (calcResult && parseFloat(calcResult.printSqFt) > 0) {
+                     const realSqFtNum = parseFloat(calcResult.realSqFt);
+                     const printSqFtNum = parseFloat(calcResult.printSqFt);
+                     const wastageSqFt = (printSqFtNum - realSqFtNum);
+                     let wastageSizeStr = "N/A";
+                     const widthDiff = (calcResult.printWidthFt - calcResult.realWidthFt);
+                     const heightDiff = (calcResult.printHeightFt - calcResult.realHeightFt);
+                     const tolerance = 0.01;
+                     if (widthDiff > tolerance && Math.abs(heightDiff) < tolerance) { wastageSizeStr = `${widthDiff.toFixed(2)}ft W x ${calcResult.realHeightFt.toFixed(2)}ft H`; }
+                     else if (heightDiff > tolerance && Math.abs(widthDiff) < tolerance) { wastageSizeStr = `${calcResult.realWidthFt.toFixed(2)}ft W x ${heightDiff.toFixed(2)}ft H`; }
+                     else if (widthDiff > tolerance && heightDiff > tolerance) { wastageSizeStr = `~${wastageSqFt.toFixed(2)} sq ft area (complex)`; }
+                     else if (wastageSqFt > tolerance) { wastageSizeStr = `~${wastageSqFt.toFixed(2)} sq ft area`; }
+                     else { wastageSizeStr = "None"; }
+                     entryContent += `&nbsp; Real: ${calcResult.realWidthFt.toFixed(2)}ft x ${calcResult.realHeightFt.toFixed(2)}ft = ${realSqFtNum.toFixed(2)} sq ft<br>&nbsp; Print: ${calcResult.printWidthFt.toFixed(2)}ft x ${calcResult.printHeightFt.toFixed(2)}ft = ${printSqFtNum.toFixed(2)} sq ft<br>&nbsp; <strong style="color: ${wastageSqFt > tolerance ? 'orange' : 'green'};">Wastage: ${wastageSqFt.toFixed(2)} sq ft</strong> | <span style="color: ${wastageSqFt > tolerance ? 'orange' : 'green'};">Size: ${wastageSizeStr}</span>`;
+                } else {
+                     entryContent += `&nbsp; <span style="color:orange;">Invalid dimensions or calculation error.</span>`;
+                }
+            } else {
+                entryContent += `&nbsp; <span style="color:grey;">Enter valid width & height.</span>`;
+            }
+            // Add the complete entry wrapped in its div to the entriesHTML string
+            entriesHTML += `<div class="item-preview-entry">${entryContent}</div>`;
+        }
+    });
+
+    // Assemble final HTML for the preview area
+    let finalHTML = '<h4>Calculation Details:</h4>';
+    if (foundSqFt && entriesHTML) {
+         // Wrap the collected entriesHTML in the grid container
+         finalHTML += `<div class="calculation-grid">${entriesHTML}</div>`;
+    } else {
+         // Keep the original fallback message if no Sq Ft items found or no entries generated
+         finalHTML += '<p style="color:grey;">Add items with Unit Type "Sq Feet" to see calculations.</p>';
+    }
+    calculationPreviewArea.innerHTML = finalHTML; // Set the final HTML into the preview area
 }
+// --- END MODIFICATION ---
+
 function updateItemAmount(row) {
-    // ... (Keep the function exactly as it was) ...
+    // ... (Keep the function exactly as it was in v8) ...
     if (!row) return;
     const unitTypeSelect = row.querySelector('.unit-type-select');
     const amountSpan = row.querySelector('.item-amount');
@@ -148,7 +167,7 @@ function updateItemAmount(row) {
     updateFullCalculationPreview();
 }
 function handleUnitTypeChange(event) {
-     // ... (Keep the function exactly as it was) ...
+     // ... (Keep the function exactly as it was in v8) ...
     const row = event.target.closest('.item-row');
     if (!row) { console.error("handleUnitTypeChange: Could not find parent row."); return; }
     const unitType = event.target.value; // This is the VALUE from the dropdown ('Qty' or 'Sq Feet')
@@ -182,7 +201,7 @@ function handleUnitTypeChange(event) {
     updateItemAmount(row);
 }
 function addItemRowEventListeners(row) {
-    // ... (Keep the function exactly as it was) ...
+    // ... (Keep the function exactly as it was in v8) ...
     const unitTypeSelect = row.querySelector('.unit-type-select');
     const dimensionUnitSelect = row.querySelector('.dimension-unit-select');
     const widthInput = row.querySelector('.width-input');
@@ -208,6 +227,7 @@ function addItemRowEventListeners(row) {
 
 // --- Product Search Implementation --- (No changes needed here)
 function getOrCreateProductSuggestionsDiv() {
+    // ... (Keep the function exactly as it was in v8) ...
     if (!productSuggestionsDiv) {
         productSuggestionsDiv = document.createElement('div');
         productSuggestionsDiv.className = 'product-suggestions-list';
@@ -217,6 +237,7 @@ function getOrCreateProductSuggestionsDiv() {
     return productSuggestionsDiv;
 }
 function positionProductSuggestions(inputElement) {
+    // ... (Keep the function exactly as it was in v8) ...
     const suggestionsDiv = getOrCreateProductSuggestionsDiv();
     const rect = inputElement.getBoundingClientRect();
     suggestionsDiv.style.left = `${rect.left + window.scrollX}px`;
@@ -225,12 +246,14 @@ function positionProductSuggestions(inputElement) {
     suggestionsDiv.style.display = 'block';
 }
 function hideProductSuggestions() {
+    // ... (Keep the function exactly as it was in v8) ...
     if (productSuggestionsDiv) {
         productSuggestionsDiv.style.display = 'none';
     }
     activeProductInput = null;
 }
 function handleProductSearchInput(event) {
+    // ... (Keep the function exactly as it was in v8) ...
     const inputElement = event.target;
     if (!inputElement.matches('.product-name')) { return; }
     activeProductInput = inputElement;
@@ -241,6 +264,7 @@ function handleProductSearchInput(event) {
     productSearchDebounceTimer = setTimeout(() => { fetchProductSuggestions(searchTerm, inputElement); }, 350);
 }
 async function fetchProductSuggestions(searchTerm, inputElement) {
+    // ... (Keep the function exactly as it was in v8) ...
     const suggestionsDiv = getOrCreateProductSuggestionsDiv();
     suggestionsDiv.innerHTML = '<div>Loading...</div>';
     if (activeProductInput === inputElement) { positionProductSuggestions(inputElement); }
@@ -268,12 +292,10 @@ async function fetchProductSuggestions(searchTerm, inputElement) {
                 div.dataset.id = productId;
                 div.dataset.name = product.printName || '';
                 div.dataset.rate = product.price ?? '';
-                // <<< Store the original value from Firestore >>>
                 div.dataset.unitFirestore = product.productUnit || ''; // Store the raw value
 
                 div.addEventListener('mousedown', (e) => {
                     e.preventDefault();
-                    // <<< Pass the raw Firestore data object to select function >>>
                     selectProductSuggestion(product, inputElement);
                 });
                 suggestionsDiv.appendChild(div);
@@ -290,9 +312,8 @@ async function fetchProductSuggestions(searchTerm, inputElement) {
         }
     }
 }
-
-// Handle selection of a product suggestion <<< MODIFIED LOGIC >>>
 function selectProductSuggestion(productData, inputElement) {
+    // ... (Keep the function exactly as it was in v8) ...
     const row = inputElement.closest('.item-row');
     if (!row) { console.error("Could not find parent row for product selection."); hideProductSuggestions(); return; }
 
@@ -302,54 +323,41 @@ function selectProductSuggestion(productData, inputElement) {
 
     if (!productNameInput || !unitTypeSelect || !rateInput) { console.error("Could not find all necessary fields in the row."); hideProductSuggestions(); return; }
 
-    // 1. Fill Product Name
     productNameInput.value = productData.printName || '';
-
-    // 2. Fill Rate
     rateInput.value = productData.price ?? '';
 
-    // 3. Fill Unit Type (Handle 'sq feet' vs 'Sq Feet')
-    let unitFromFirestore = productData.productUnit || 'Qty'; // Get value from Firestore ('sq feet', 'Qty', or other)
-    let valueToSelect = 'Qty'; // Default value for the dropdown
+    let unitFromFirestore = productData.productUnit || 'Qty';
+    let valueToSelect = 'Qty';
 
-    // --- Modification Start ---
-    // Check if the value from Firestore is the lowercase version
     if (unitFromFirestore.toLowerCase() === 'sq feet') {
-        valueToSelect = 'Sq Feet'; // Set the target value to the one PRESENT in the dropdown options
+        valueToSelect = 'Sq Feet';
     } else if (unitFromFirestore === 'Qty') {
         valueToSelect = 'Qty';
     } else {
-        // Handle potential other values from Firestore if necessary, or keep defaulting to Qty
         console.warn(`Unexpected unit type "${unitFromFirestore}" from Firestore. Defaulting to Qty.`);
         valueToSelect = 'Qty';
     }
-    // --- Modification End ---
 
-    // Now, find the option with the correctly cased value and select it
     let unitFound = false;
     for (let option of unitTypeSelect.options) {
-        if (option.value === valueToSelect) { // Compare with the normalized value ('Sq Feet' or 'Qty')
+        if (option.value === valueToSelect) {
             unitTypeSelect.value = valueToSelect;
             unitFound = true;
             break;
         }
     }
-    // Fallback if even 'Qty' is somehow not found (shouldn't happen)
     if (!unitFound) {
         console.error(`Dropdown option value "${valueToSelect}" not found! Check HTML template.`);
         unitTypeSelect.value = 'Qty';
     }
 
-    // 4. Hide suggestions
     hideProductSuggestions();
 
-    // 5. Trigger updates
     const changeEvent = new Event('change', { bubbles: true });
-    unitTypeSelect.dispatchEvent(changeEvent); // This calls handleUnitTypeChange -> updateItemAmount
+    unitTypeSelect.dispatchEvent(changeEvent);
 
-    // Optional: Focus the next input
     let nextInput = null;
-    if (unitTypeSelect.value === 'Sq Feet') { // Check dropdown's *current* value
+    if (unitTypeSelect.value === 'Sq Feet') {
         nextInput = row.querySelector('.width-input');
     } else {
         nextInput = row.querySelector('.quantity-input');
@@ -361,9 +369,9 @@ function selectProductSuggestion(productData, inputElement) {
 }
 
 
-// --- DOMContentLoaded Listener --- (No changes needed here from v7)
+// --- DOMContentLoaded Listener --- (No changes needed here from v8)
 document.addEventListener('DOMContentLoaded', () => {
-    console.log("new_po.js v8: DOM loaded.");
+    console.log("new_po.js v9: DOM loaded.");
     if (!window.db || !window.query || !window.orderBy || !window.limit || !window.getDocs || !window.Timestamp) { console.error("new_po.js: Firestore (window.db) or essential functions not available!"); alert("Error initializing page. Core functionalities missing."); if(poForm) poForm.style.opacity = '0.5'; if(savePOBtn) savePOBtn.disabled = true; return; }
     console.log("new_po.js: Firestore connection and functions confirmed.");
     const urlParamsInit = new URLSearchParams(window.location.search);
@@ -416,12 +424,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const editPOIdValue = urlParamsInit.get('editPOId');
     if (editPOIdValue) { loadPOForEditing(editPOIdValue); }
     else { if(poNumberInput) poNumberInput.value = ''; if (poItemsTableBody.children.length > 0) { updateFullCalculationPreview(); } }
-    console.log("new_po.js v8: Basic setup and listeners added.");
+    console.log("new_po.js v9: Basic setup and listeners added.");
 });
 
-// --- Supplier Search Implementation --- (Kept from previous version)
+// --- Supplier Search Implementation --- (Keep as is)
 function handleSupplierSearchInput() {
-    // ... (Keep the function exactly as it was) ...
+    // ... (Keep the function exactly as it was in v8) ...
      if (!supplierSearchInput || !supplierSuggestionsDiv || !selectedSupplierIdInput || !selectedSupplierNameInput) return;
      clearTimeout(supplierSearchDebounceTimer); const searchTerm = supplierSearchInput.value.trim();
      selectedSupplierIdInput.value = ''; selectedSupplierNameInput.value = '';
@@ -429,7 +437,7 @@ function handleSupplierSearchInput() {
      supplierSearchDebounceTimer = setTimeout(() => { fetchSupplierSuggestions(searchTerm); }, 350);
 }
 async function fetchSupplierSuggestions(searchTerm) {
-    // ... (Keep the function exactly as it was) ...
+    // ... (Keep the function exactly as it was in v8) ...
     if (!supplierSuggestionsDiv) return;
     supplierSuggestionsDiv.innerHTML = '<div>Loading...</div>'; supplierSuggestionsDiv.style.display = 'block';
     try {
@@ -456,9 +464,9 @@ async function fetchSupplierSuggestions(searchTerm) {
 }
 
 
-// --- Save PO Implementation handleSavePO --- (Kept from previous version)
+// --- Save PO Implementation handleSavePO --- (Keep as is)
 async function handleSavePO(event) {
-    // ... (Keep the function exactly as it was) ...
+    // ... (Keep the function exactly as it was in v8) ...
     event.preventDefault(); console.log("DEBUG PO Gen: handleSavePO started."); showPOError('');
     if (!poForm || !selectedSupplierIdInput || !poOrderDateInput || !poItemsTableBody || !poTotalAmountSpan || !savePOBtn || !db || !addDoc || !collection || !doc || !updateDoc || !Timestamp || !serverTimestamp || !query || !orderBy || !limit || !getDocs) { console.error("Save PO prerequisites missing."); showPOError("Critical error: Cannot save PO."); return; }
     const editingPOId = editPOIdInput.value; const isEditing = !!editingPOId; let finalPoNumber = null;
@@ -509,9 +517,9 @@ async function handleSavePO(event) {
 }
 
 
-// --- Load PO For Editing Implementation --- (Kept from previous version)
+// --- Load PO For Editing Implementation --- (Keep as is)
 async function loadPOForEditing(poId) {
-    // ... (Keep the function exactly as it was) ...
+    // ... (Keep the function exactly as it was in v8) ...
     console.log(`Loading PO ${poId} for editing...`);
     if (!db || !doc || !getDoc || !poForm) { showPOError("Cannot load PO: Init error."); return; }
     if (poPageTitle) poPageTitle.innerHTML = `<i class="fas fa-edit"></i> Edit Purchase Order`;
@@ -559,9 +567,9 @@ async function loadPOForEditing(poId) {
     } catch (error) { console.error("Error loading PO for editing:", error); showPOError("Error loading PO data: " + error.message); if(savePOBtn) savePOBtn.disabled = true; }
 }
 
-// Helper function showPOError (Kept from previous version)
+// Helper function showPOError (Keep as is)
 function showPOError(message) {
-    // ... (Keep the function exactly as it was) ...
+    // ... (Keep the function exactly as it was in v8) ...
     if (poErrorMsg) {
         poErrorMsg.textContent = message;
         poErrorMsg.style.display = message ? 'block' : 'none';

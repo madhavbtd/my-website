@@ -1,6 +1,6 @@
-/* css/new_po.css - v4 (Refined Design - Gemini) */
+/* css/new_po.css - v5 (Compact Layout, 2-Col Calc Preview) */
 
-/* ----- Global Variables (Optional: Define for consistency) ----- */
+/* ----- Global Variables ----- */
 :root {
     --primary-color: #0056b3; /* Primary blue */
     --secondary-color: #495057; /* Dark grey text */
@@ -24,15 +24,16 @@ body {
     background-color: var(--body-bg);
     margin: 0;
     color: var(--secondary-color);
-    line-height: 1.6; /* Slightly increased line height */
+    line-height: 1.6;
 }
 
-.container {} /* Container class seems unused in the HTML structure shown */
+.container {}
 
 .main-content {
-    padding: 30px 35px; /* Increased horizontal padding */
-    max-width: 1350px; /* Adjusted max-width */
-    margin: 35px auto;
+    /* Compact: Reduced padding and margin */
+    padding: 25px 30px;
+    max-width: 1280px; /* Compact: Slightly reduced max-width */
+    margin: 25px auto; /* Compact: Reduced top/bottom margin */
     background-color: var(--white-color);
     border-radius: var(--border-radius);
     box-shadow: var(--box-shadow);
@@ -41,90 +42,63 @@ body {
 
 /* ----- Page Header and Breadcrumb ----- */
 .page-header {
-    margin-bottom: 25px;
-    padding-bottom: 15px;
+    /* Compact: Reduced margins/padding */
+    margin-bottom: 20px;
+    padding-bottom: 12px;
     border-bottom: 1px solid var(--medium-grey);
 }
 .page-header h1 {
     margin: 0;
-    font-size: 1.8em; /* Slightly larger */
+    font-size: 1.7em; /* Slightly adjusted */
     font-weight: 600;
-    color: #2c3e50; /* Using a specific dark blue-grey */
-    display: flex; /* Align icon and text nicely */
+    color: #2c3e50;
+    display: flex;
     align-items: center;
 }
-.page-header h1 i {
-    margin-right: 15px;
-    color: var(--primary-color);
-    font-size: 0.9em; /* Adjust icon size relative to text */
-}
+.page-header h1 i { margin-right: 15px; color: var(--primary-color); font-size: 0.9em; }
 .breadcrumb {
     font-size: 0.9em;
     color: var(--darker-grey);
-    margin-bottom: 35px;
+    margin-bottom: 25px; /* Compact: Reduced margin */
 }
-.breadcrumb a {
-    color: var(--primary-color);
-    text-decoration: none;
-    transition: color 0.2s ease;
-}
-.breadcrumb a:hover {
-    color: #003d80; /* Darker shade on hover */
-    text-decoration: underline;
-}
-.breadcrumb span {
-    margin-left: 5px;
-}
-.breadcrumb span::before {
-    content: "/";
-    margin-right: 5px;
-    color: #adb5bd;
-}
+.breadcrumb a { color: var(--primary-color); text-decoration: none; transition: color 0.2s ease; }
+.breadcrumb a:hover { color: #003d80; text-decoration: underline; }
+.breadcrumb span { margin-left: 5px; }
+.breadcrumb span::before { content: "/"; margin-right: 5px; color: #adb5bd; }
 
 /* ----- Form Sections ----- */
 #poForm .form-section {
-    margin-bottom: 40px;
-    padding: 30px; /* Increased padding */
+    /* Compact: Reduced margin/padding */
+    margin-bottom: 30px;
+    padding: 25px;
     border: 1px solid var(--medium-grey);
     border-radius: var(--border-radius);
-    background-color: var(--white-color); /* White background for contrast */
-    box-shadow: 0 2px 4px rgba(0,0,0,0.04); /* Subtle shadow for depth */
+    background-color: var(--white-color);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.04);
 }
-#poForm .form-section:last-of-type {
-    border-bottom: 1px solid var(--medium-grey);
-}
+#poForm .form-section:last-of-type { border-bottom: 1px solid var(--medium-grey); }
 #poForm .form-section h2 {
-    font-size: 1.4em; /* Larger section title */
+    font-size: 1.35em; /* Slightly adjusted */
     font-weight: 600;
     color: var(--primary-color);
     margin-top: 0;
-    margin-bottom: 30px;
-    padding-bottom: 12px;
+    /* Compact: Reduced margin/padding */
+    margin-bottom: 20px;
+    padding-bottom: 10px;
     border-bottom: 1px solid #dee2e6;
 }
 .form-row {
     display: flex;
     flex-wrap: wrap;
-    gap: 30px; /* Increased gap */
+    gap: 25px; /* Compact: Reduced gap */
     align-items: flex-start;
 }
 .form-group {
-    margin-bottom: 20px;
-    flex: 1 1 280px; /* Adjusted flex basis */
+    margin-bottom: 18px; /* Compact: Reduced margin */
+    flex: 1 1 280px;
     position: relative;
 }
-.form-group label {
-    display: block;
-    margin-bottom: 8px;
-    font-weight: 500; /* Medium weight label */
-    font-size: 0.95em;
-    color: var(--secondary-color);
-}
-.form-group label .required { /* Removed - Using * in HTML label */
-    color: var(--danger-color);
-    font-weight: 600;
-    margin-left: 3px;
-}
+.form-group label { display: block; margin-bottom: 7px; /* Compact */ font-weight: 500; font-size: 0.95em; color: var(--secondary-color); }
 
 /* ----- Input Styling ----- */
 .form-input,
@@ -134,7 +108,7 @@ body {
 #poForm select,
 #poForm textarea {
     width: 100%;
-    padding: 11px 15px; /* Increased padding */
+    padding: 10px 14px; /* Compact: Slightly reduced padding */
     border: 1px solid #ced4da;
     border-radius: var(--border-radius);
     font-size: 0.95em;
@@ -142,462 +116,201 @@ body {
     transition: border-color 0.2s ease, box-shadow 0.2s ease;
     background-color: var(--white-color);
     color: var(--secondary-color);
-    font-family: 'Poppins', sans-serif; /* Ensure Poppins is inherited */
+    font-family: 'Poppins', sans-serif;
 }
-#poForm input[type="date"] {
-    color-scheme: light;
-     min-height: 45px; /* Ensure consistent height with text inputs */
-}
+#poForm input[type="date"] { color-scheme: light; min-height: 43px; /* Adjusted height */ }
 #poForm input:focus,
 #poForm select:focus,
-#poForm textarea:focus {
-    border-color: var(--primary-color);
-    outline: 0;
-    box-shadow: var(--focus-shadow);
-}
-#poForm textarea {
-    resize: vertical;
-    min-height: 80px;
-}
-#poForm input[readonly] {
-    background-color: var(--light-grey);
-    cursor: not-allowed;
-    border-color: var(--medium-grey);
-}
+#poForm textarea:focus { border-color: var(--primary-color); outline: 0; box-shadow: var(--focus-shadow); }
+#poForm textarea { resize: vertical; min-height: 75px; /* Compact */ }
+#poForm input[readonly] { background-color: var(--light-grey); cursor: not-allowed; border-color: var(--medium-grey); }
 
 /* ----- Supplier Search Specific ----- */
 .supplier-search-group { flex-basis: 350px; }
-.suggestions-list {
-    display: none;
-    position: absolute;
-    background-color: var(--white-color);
-    border: 1px solid var(--primary-color);
-    border-top: none;
-    max-height: 180px; /* Increased height */
-    overflow-y: auto;
-    width: calc(100% - 2px); /* Adjusted width calc */
-    box-sizing: border-box;
-    z-index: 1000; /* Ensure it's above other elements */
-    border-radius: 0 0 var(--border-radius) var(--border-radius);
-    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
-    margin-top: -1px; /* Align nicely with the input box border */
-}
-.suggestions-list div {
-    padding: 10px 15px; /* Adjusted padding */
-    font-size: 0.95em;
-    cursor: pointer;
-    border-bottom: 1px solid var(--medium-grey); /* Separator */
-    transition: background-color 0.15s ease;
-}
-.suggestions-list div:last-child {
-    border-bottom: none;
-}
-.suggestions-list div:hover {
-    background-color: #e9f5ff; /* Lighter blue hover */
-}
-.suggestions-list .no-suggestions {
-    padding: 12px 15px;
-    color: var(--darker-grey);
-    cursor: default;
-}
-.suggestions-list .no-suggestions:hover {
-    background-color: var(--white-color); /* No hover effect for message */
-}
-.link-button { /* Button for '+ Add New Supplier' link */
-    margin-top: 10px;
-    font-size: 0.9em;
-    background: none;
-    border: none;
-    color: var(--primary-color);
-    cursor: pointer;
-    padding: 0;
-    text-align: left;
-}
-.link-button:hover {
-    text-decoration: underline;
-    color: #003d80;
-}
+.suggestions-list { display: none; position: absolute; background-color: var(--white-color); border: 1px solid var(--primary-color); border-top: none; max-height: 180px; overflow-y: auto; width: calc(100% - 2px); box-sizing: border-box; z-index: 1000; border-radius: 0 0 var(--border-radius) var(--border-radius); box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1); margin-top: -1px; }
+.suggestions-list div { padding: 10px 15px; font-size: 0.95em; cursor: pointer; border-bottom: 1px solid var(--medium-grey); transition: background-color 0.15s ease; }
+.suggestions-list div:last-child { border-bottom: none; }
+.suggestions-list div:hover { background-color: #e9f5ff; }
+.suggestions-list .no-suggestions { padding: 12px 15px; color: var(--darker-grey); cursor: default; }
+.suggestions-list .no-suggestions:hover { background-color: var(--white-color); }
+.link-button { margin-top: 10px; font-size: 0.9em; background: none; border: none; color: var(--primary-color); cursor: pointer; padding: 0; text-align: left; }
+.link-button:hover { text-decoration: underline; color: #003d80; }
 
 /* ----- Items Table Styling ----- */
 .po-items-table {
-    margin-bottom: 25px;
+    margin-bottom: 20px; /* Compact: Reduced margin */
     border: 1px solid var(--medium-grey);
     border-radius: var(--border-radius);
-    overflow: hidden; /* Ensures border radius clips content */
-    box-shadow: 0 2px 4px rgba(0,0,0,0.03); /* Subtle shadow */
+    overflow: hidden;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.03);
 }
-#poItemsTable {
-    width: 100%;
-    border-collapse: collapse;
-    border-spacing: 0;
-}
+#poItemsTable { width: 100%; border-collapse: collapse; border-spacing: 0; }
 #poItemsTable thead th {
     background-color: var(--light-grey);
-    padding: 14px 10px; /* Increased padding */
-    font-size: 0.88em; /* Slightly larger header */
-    font-weight: 600;
-    text-align: left;
-    border-bottom: 2px solid var(--medium-grey);
-    white-space: nowrap;
-    color: var(--secondary-color);
-    text-transform: uppercase; /* Uppercase headers */
-    letter-spacing: 0.5px; /* Slight spacing */
+    padding: 12px 10px; /* Compact: Reduced padding */
+    font-size: 0.85em; /* Compact */
+    font-weight: 600; text-align: left; border-bottom: 2px solid var(--medium-grey); white-space: nowrap; color: var(--secondary-color); text-transform: uppercase; letter-spacing: 0.5px;
 }
 #poItemsTable tbody td {
-    padding: 8px 10px; /* Increased padding */
-    border-bottom: 1px solid var(--medium-grey);
-    vertical-align: middle;
-    background-color: var(--white-color);
-    font-size: 0.95em; /* Ensure consistent text size */
+    padding: 7px 10px; /* Compact: Reduced padding */
+    border-bottom: 1px solid var(--medium-grey); vertical-align: middle; background-color: var(--white-color); font-size: 0.92em; /* Compact */
 }
-/* Zebra Striping */
-#poItemsTable tbody tr:nth-child(even) td {
-    background-color: #fdfdfe; /* Very subtle striping */
-}
-#poItemsTable tbody tr:last-child td {
-    border-bottom: none;
-}
-#poItemsTable tbody tr:hover td {
-    background-color: #f1f8ff; /* Light blue hover */
-}
+#poItemsTable tbody tr:nth-child(even) td { background-color: #fdfdfe; }
+#poItemsTable tbody tr:last-child td { border-bottom: none; }
+#poItemsTable tbody tr:hover td { background-color: #f1f8ff; }
 
 /* Input fields within table cells */
-#poItemsTable .form-input {
-    padding: 8px 10px; /* Adjusted padding */
-    font-size: 0.9em;
-    border-radius: 4px;
-    width: 100%;
-    box-sizing: border-box;
-    min-height: 38px; /* Consistent height */
-    border: 1px solid #d8dde2; /* Slightly lighter border */
-}
-#poItemsTable .form-input:focus {
-    border-color: var(--primary-color);
-    box-shadow: var(--focus-shadow);
-}
-/* Keeping specific widths from HTML for number inputs */
+#poItemsTable .form-input { padding: 7px 9px; /* Compact */ font-size: 0.9em; border-radius: 4px; width: 100%; box-sizing: border-box; min-height: 36px; /* Compact */ border: 1px solid #d8dde2; }
+#poItemsTable .form-input:focus { border-color: var(--primary-color); box-shadow: var(--focus-shadow); }
 #poItemsTable .dimension-input { width: 65px; text-align: right; }
 #poItemsTable .quantity-input { width: 60px; text-align: right; }
 #poItemsTable .rate-input { width: 75px; text-align: right; }
 #poItemsTable .dimension-unit-select { width: 70px; }
-#poItemsTable .item-amount {
-    font-weight: 600;
-    text-align: right;
-    padding-right: 5px;
-    white-space: nowrap;
-    color: var(--secondary-color);
-}
-#poItemsTable td:last-child { text-align: center; } /* Action button cell */
-#poItemsTable td:nth-last-child(2) { text-align: right; } /* Amount cell */
+#poItemsTable .item-amount { font-weight: 600; text-align: right; padding-right: 5px; white-space: nowrap; color: var(--secondary-color); }
+#poItemsTable td:last-child { text-align: center; }
+#poItemsTable td:nth-last-child(2) { text-align: right; }
 
-.sq-feet-input .dimension-input-container { /* Container for W x H inputs */
-    display: flex;
-    align-items: center;
-    gap: 4px;
-}
-.hidden-col { display: none; } /* Utility class from original CSS */
+.sq-feet-input .dimension-input-container { display: flex; align-items: center; gap: 4px; }
+.hidden-col { display: none; }
 
 /* Add Item Button */
-.add-item-button {
-    background-color: var(--info-color);
-    color: var(--white-color);
-    margin-top: 15px;
-    padding: 9px 18px; /* Slightly larger */
-    font-size: 0.9em;
-    border-radius: var(--border-radius);
-    border: none;
-    cursor: pointer;
-    font-weight: 500;
-    transition: background-color 0.2s ease;
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-}
-.add-item-button:hover {
-    background-color: #117a8b; /* Darker shade */
-}
-.add-item-button i {
-    margin-right: 0; /* Using gap instead */
-}
+.add-item-button { background-color: var(--info-color); color: var(--white-color); margin-top: 12px; /* Compact */ padding: 9px 18px; font-size: 0.9em; border-radius: var(--border-radius); border: none; cursor: pointer; font-weight: 500; transition: background-color 0.2s ease; display: inline-flex; align-items: center; gap: 6px; }
+.add-item-button:hover { background-color: #117a8b; }
+.add-item-button i { margin-right: 0; }
 
 /* Delete Item Button */
-.delete-item-btn {
-    background-color: transparent;
-    color: var(--danger-color);
-    border: none;
-    padding: 6px 8px; /* Slightly larger click area */
-    font-size: 1.1em;
-    cursor: pointer;
-    opacity: 0.65; /* Slightly less visible initially */
-    transition: opacity 0.2s ease, color 0.2s ease;
-    border-radius: 4px; /* Add slight rounding */
-}
-.delete-item-btn:hover {
-    opacity: 1;
-    color: #a71d2a; /* Darker red on hover */
-    background-color: #fce8e6; /* Very light red background on hover */
-}
-.delete-item-btn i {
-    vertical-align: middle;
-    display: block; /* Helps prevent layout shifts */
-}
+.delete-item-btn { background-color: transparent; color: var(--danger-color); border: none; padding: 6px 8px; font-size: 1.1em; cursor: pointer; opacity: 0.65; transition: opacity 0.2s ease, color 0.2s ease; border-radius: 4px; }
+.delete-item-btn:hover { opacity: 1; color: #a71d2a; background-color: #fce8e6; }
+.delete-item-btn i { vertical-align: middle; display: block; }
 
-/* ----- Calculation Preview Area Styling ----- */
+/* ----- Calculation Preview Area Styling (Grid Layout Added) ----- */
 .calculation-preview.full-preview {
     font-size: 0.9em;
-    color: #555; /* Slightly darker text */
+    color: #555;
     background-color: var(--light-grey);
     border: 1px solid var(--medium-grey);
-    padding: 20px; /* Increased padding */
-    margin-top: 25px;
-    max-height: 280px;
+    padding: 20px 25px; /* Adjusted padding */
+    margin-top: 20px; /* Compact */
+    max-height: 350px; /* Allow slightly more height if needed for grid */
     overflow-y: auto;
     border-radius: var(--border-radius);
-    line-height: 1.7; /* Better line spacing */
+    line-height: 1.6; /* Adjusted line height */
 }
 .calculation-preview.full-preview h4 {
     margin-top: 0;
-    margin-bottom: 15px;
+    margin-bottom: 20px; /* Space below heading */
     font-size: 1.15em;
-    font-weight: 600; /* Bolder heading */
+    font-weight: 600;
     color: var(--secondary-color);
     border-bottom: 1px solid #dee2e6;
     padding-bottom: 8px;
 }
-.calculation-preview .item-preview-entry {
-    margin-bottom: 15px;
-    padding-bottom: 10px;
-    border-bottom: 1px dashed #dee2e6; /* Dashed separator */
-}
-.calculation-preview .item-preview-entry:last-child {
-    margin-bottom: 0;
-    padding-bottom: 0;
-    border-bottom: none;
-}
-.calculation-preview .item-preview-entry strong {
-    color: var(--primary-color);
-    font-weight: 600; /* Ensure item name is bold */
-}
-.calculation-preview .item-preview-entry span, /* Target specific spans if needed */
-.calculation-preview .item-preview-entry strong[style] { /* Target styled elements */
-    display: inline-block; /* Ensures spacing */
-    margin-left: 10px; /* Indent details */
-}
-.calculation-preview p[style*="color:grey"] { /* Style placeholder text */
-    margin-top: 10px;
-    font-style: italic;
+
+/* NEW: Grid container for calculation details */
+.calculation-grid {
+    display: grid;
+    /* Responsive columns: Fit as many columns >= 300px as possible */
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 15px 25px; /* Row gap, Column gap */
 }
 
+/* Adjust individual item entries for grid */
+.calculation-preview .item-preview-entry {
+    margin-bottom: 0; /* Rely on grid gap */
+    padding-bottom: 15px;
+    border-bottom: 1px dashed #dee2e6;
+    /* Optional: add background/border for clarity */
+    /* background-color: #fff; */
+    /* border: 1px solid #eee; */
+    /* padding: 15px; */
+    /* border-radius: 4px; */
+}
+/* Remove border from the last item *within the grid* if grid adds one */
+/* .calculation-preview .calculation-grid .item-preview-entry:last-child {
+    border-bottom: none; /* Usually not needed with grid gap */
+/* } */
+
+.calculation-preview .item-preview-entry strong { color: var(--primary-color); font-weight: 600; }
+.calculation-preview .item-preview-entry span,
+.calculation-preview .item-preview-entry strong[style] { display: inline-block; margin-left: 5px; /* Reduced indent */ }
+
+/* Style placeholder text ('No items...' message) */
+.calculation-preview > p[style*="color:grey"] {
+    margin-top: 15px;
+    font-style: italic;
+    /* Ensure it spans full width if accidentally in grid (shouldn't be with JS change) */
+    grid-column: 1 / -1;
+}
 
 /* ----- PO Summary Section ----- */
 .po-summary .total-amount-display {
-    font-size: 1.5em; /* Larger total */
-    font-weight: 700;
-    text-align: right;
-    margin-top: 25px;
-    padding-top: 25px;
+    font-size: 1.4em; /* Compact */
+    font-weight: 700; text-align: right;
+    margin-top: 20px; /* Compact */
+    padding-top: 20px; /* Compact */
     border-top: 1px solid var(--medium-grey);
     color: var(--success-color);
 }
-.po-summary .total-amount-display span {
-    min-width: 120px; /* Ensure space for amount */
-    display: inline-block; /* Allows min-width */
-}
+.po-summary .total-amount-display span { min-width: 120px; display: inline-block; }
 
 /* ----- Form Actions ----- */
 .form-actions {
-    margin-top: 35px;
-    padding-top: 30px;
-    border-top: 1px solid var(--medium-grey);
-    display: flex;
-    justify-content: flex-end;
-    gap: 15px;
+    margin-top: 25px; /* Compact */
+    padding-top: 20px; /* Compact */
+    border-top: 1px solid var(--medium-grey); display: flex; justify-content: flex-end; gap: 15px;
 }
-.form-actions .button { /* Base style for action buttons */
-    padding: 12px 28px; /* Larger padding */
-    font-size: 1em;
-    border-radius: var(--border-radius);
-    font-weight: 600;
-    color: var(--white-color);
-    border: none;
-    cursor: pointer;
-    transition: background-color 0.2s ease, opacity 0.2s ease, box-shadow 0.2s ease;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    text-decoration: none; /* For cancel link */
-}
-.form-actions .button i {
-    margin-right: 8px;
-    font-size: 0.9em; /* Adjust icon size */
-}
-.form-actions .button:disabled {
-    opacity: 0.65;
-    cursor: not-allowed;
-    background-color: var(--darker-grey) !important;
-    box-shadow: none;
-}
-.form-actions .save-button {
-    background-color: var(--success-color);
-    box-shadow: 0 2px 5px rgba(40, 167, 69, 0.3); /* Subtle shadow */
-}
-.form-actions .save-button:hover:not(:disabled) {
-    background-color: #218838; /* Darker green */
-    box-shadow: 0 4px 8px rgba(40, 167, 69, 0.4);
-}
-.form-actions .cancel-button {
-    background-color: var(--darker-grey);
-}
-.form-actions .cancel-button:hover {
-    background-color: #5a6268; /* Darker grey */
-    color: var(--white-color); /* Ensure text remains white */
-}
+.form-actions .button { padding: 11px 26px; /* Compact */ font-size: 1em; border-radius: var(--border-radius); font-weight: 600; color: var(--white-color); border: none; cursor: pointer; transition: background-color 0.2s ease, opacity 0.2s ease, box-shadow 0.2s ease; display: inline-flex; align-items: center; justify-content: center; text-decoration: none; }
+.form-actions .button i { margin-right: 8px; font-size: 0.9em; }
+.form-actions .button:disabled { opacity: 0.65; cursor: not-allowed; background-color: var(--darker-grey) !important; box-shadow: none; }
+.form-actions .save-button { background-color: var(--success-color); box-shadow: 0 2px 5px rgba(40, 167, 69, 0.3); }
+.form-actions .save-button:hover:not(:disabled) { background-color: #218838; box-shadow: 0 4px 8px rgba(40, 167, 69, 0.4); }
+.form-actions .cancel-button { background-color: var(--darker-grey); }
+.form-actions .cancel-button:hover { background-color: #5a6268; color: var(--white-color); }
 
 /* ----- Error Message ----- */
-.error-message {
-    color: var(--danger-color);
-    background-color: #fdecea; /* Light red background */
-    border: 1px solid var(--danger-color);
-    border-radius: var(--border-radius);
-    padding: 12px 15px;
-    font-weight: 500;
-    text-align: center;
-    margin-top: 20px;
-    width: 100%;
-    box-sizing: border-box; /* Include padding in width */
-    display: none; /* Initially hidden, shown by JS */
-}
+.error-message { color: var(--danger-color); background-color: #fdecea; border: 1px solid var(--danger-color); border-radius: var(--border-radius); padding: 12px 15px; font-weight: 500; text-align: center; margin-top: 20px; width: 100%; box-sizing: border-box; display: none; }
 
 /* ----- Responsive Adjustments ----- */
 @media (max-width: 1200px) {
-    .main-content {
-        max-width: 95%; /* Allow slightly more width than 100% */
-        padding: 25px;
-        margin: 25px auto;
-    }
+    .main-content { max-width: 95%; padding: 20px 25px; /* Adjusted */ margin: 20px auto; /* Adjusted */ }
+    /* Adjust grid columns for medium screens if needed */
+    /* .calculation-grid { grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); } */
 }
-
 @media (max-width: 992px) {
-    .form-row {
-        gap: 20px; /* Reduce gap */
-    }
-    .form-group {
-        flex-basis: calc(50% - 20px); /* Aim for 2 columns */
-    }
-    #poItemsTable thead th, #poItemsTable tbody td {
-        padding: 10px 8px; /* Adjust padding */
-        font-size: 0.85em;
-    }
-    #poItemsTable .form-input {
-        font-size: 0.88em;
-        padding: 6px 8px;
-        min-height: 36px;
-    }
+    .form-row { gap: 20px; }
+    .form-group { flex-basis: calc(50% - 20px); margin-bottom: 15px; /* Adjusted */ }
+    #poItemsTable thead th { padding: 10px 8px; font-size: 0.82em; /* Adjusted */ }
+    #poItemsTable tbody td { padding: 6px 8px; /* Adjusted */ font-size: 0.9em; /* Adjusted */ }
+    #poItemsTable .form-input { font-size: 0.88em; padding: 6px 8px; min-height: 34px; /* Adjusted */ }
     .page-header h1 { font-size: 1.6em; }
-    #poForm .form-section h2 { font-size: 1.3em; }
+    #poForm .form-section h2 { font-size: 1.25em; /* Adjusted */ }
     .po-summary .total-amount-display { font-size: 1.3em; }
+    /* Calculation grid likely becomes 1 column due to auto-fit minmax */
 }
-
 @media (max-width: 768px) {
-    .main-content {
-        padding: 20px 15px;
-        margin: 20px auto;
-        max-width: 100%; /* Use full width */
-        border-radius: 0; /* Optional: remove radius on small screens */
-        box-shadow: none; /* Optional: remove shadow */
-    }
-    .form-row {
-        flex-direction: column;
-        gap: 0;
-    }
-    .form-group {
-        flex-basis: auto; /* Full width */
-        margin-bottom: 20px;
-    }
-    #poForm .form-section {
-        padding: 20px 15px;
-    }
-    .form-actions {
-        flex-direction: column;
-        gap: 12px;
-    }
-    .form-actions .button {
-        width: 100%;
-        padding: 12px 20px; /* Adjust padding */
-    }
-    .po-summary .total-amount-display {
-        text-align: left; /* Align left on small screens */
-        font-size: 1.25em;
-    }
-    /* Force table horizontal scroll on small screens */
-    .table-container.po-items-table {
-        overflow-x: auto;
-        -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
-        margin-left: -15px; /* Adjust margins to use full width */
-        margin-right: -15px;
-        padding-left: 15px;
-        padding-right: 15px;
-        border-left: none;
-        border-right: none;
-        border-radius: 0;
-    }
-     #poItemsTable {
-        min-width: 700px; /* Ensure table has minimum width for scrolling */
-    }
-     #poItemsTable thead th, #poItemsTable tbody td {
-        white-space: nowrap; /* Prevent text wrapping in cells */
-    }
-     .page-header h1 { font-size: 1.4em; }
-     #poForm .form-section h2 { font-size: 1.2em; }
-}
-/* ----- Product Suggestions List Styling (Added for auto-suggest) ----- */
-.product-suggestions-list {
-    display: none; /* Initially hidden */
-    position: absolute; /* Position near the input field */
-    background-color: var(--white-color);
-    border: 1px solid var(--primary-color);
-    border-top: none;
-    max-height: 200px; /* Limit height */
-    overflow-y: auto;
-    width: 250px; /* Adjust width as needed */
-    box-sizing: border-box;
-    z-index: 1050; /* Ensure it's above other elements, even table rows */
-    border-radius: 0 0 var(--border-radius) var(--border-radius);
-    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
-    margin-top: -1px; /* Align with input bottom border */
+    .main-content { padding: 15px; margin: 15px auto; max-width: 100%; border-radius: 0; box-shadow: none; }
+    .form-row { flex-direction: column; gap: 0; }
+    .form-group { flex-basis: auto; margin-bottom: 15px; }
+    #poForm .form-section { padding: 20px 15px; margin-bottom: 25px; /* Adjusted */ }
+    .form-actions { flex-direction: column; gap: 12px; margin-top: 20px; /* Adjusted */ padding-top: 15px; /* Adjusted */ }
+    .form-actions .button { width: 100%; padding: 12px 20px; }
+    .po-summary .total-amount-display { text-align: left; font-size: 1.25em; margin-top: 15px; /* Adjusted */ padding-top: 15px; /* Adjusted */ }
+    .table-container.po-items-table { overflow-x: auto; -webkit-overflow-scrolling: touch; margin-left: -15px; margin-right: -15px; padding-left: 15px; padding-right: 15px; border-left: none; border-right: none; border-radius: 0; margin-bottom: 15px; /* Adjusted */ }
+    #poItemsTable { min-width: 700px; }
+    #poItemsTable thead th, #poItemsTable tbody td { white-space: nowrap; }
+    .page-header h1 { font-size: 1.4em; }
+    #poForm .form-section h2 { font-size: 1.2em; margin-bottom: 15px; /* Adjusted */ }
+    /* Ensure calculation grid items stack vertically */
+    .calculation-grid { grid-template-columns: 1fr; gap: 15px 0; } /* Force 1 column */
+    .calculation-preview.full-preview { padding: 15px; } /* Adjust padding */
+    .calculation-preview.full-preview h4 { margin-bottom: 15px; }
 }
 
-.product-suggestions-list div {
-    padding: 10px 15px;
-    font-size: 0.9em; /* Slightly smaller font */
-    cursor: pointer;
-    border-bottom: 1px solid var(--medium-grey);
-    white-space: nowrap; /* Prevent wrapping */
-    overflow: hidden;
-    text-overflow: ellipsis; /* Add ellipsis if text is too long */
-    transition: background-color 0.15s ease;
-}
-
-.product-suggestions-list div:last-child {
-    border-bottom: none;
-}
-
-.product-suggestions-list div:hover {
-    background-color: #e9f5ff; /* Lighter blue hover */
-}
-
-.product-suggestions-list .no-suggestions {
-    padding: 12px 15px;
-    color: var(--darker-grey);
-    cursor: default;
-    font-style: italic;
-}
-
-.product-suggestions-list .no-suggestions:hover {
-    background-color: var(--white-color); /* No hover effect */
-}
-
-/* Style to position the suggestion list container correctly */
-.product-search-container {
-    position: relative; /* Needed for absolute positioning of the list */
-}
+/* ----- Product Suggestions List Styling ----- */
+.product-suggestions-list { display: none; position: absolute; background-color: var(--white-color); border: 1px solid var(--primary-color); border-top: none; max-height: 200px; overflow-y: auto; width: 250px; box-sizing: border-box; z-index: 1050; border-radius: 0 0 var(--border-radius) var(--border-radius); box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1); margin-top: -1px; }
+.product-suggestions-list div { padding: 10px 15px; font-size: 0.9em; cursor: pointer; border-bottom: 1px solid var(--medium-grey); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; transition: background-color 0.15s ease; }
+.product-suggestions-list div:last-child { border-bottom: none; }
+.product-suggestions-list div:hover { background-color: #e9f5ff; }
+.product-suggestions-list .no-suggestions { padding: 12px 15px; color: var(--darker-grey); cursor: default; font-style: italic; }
+.product-suggestions-list .no-suggestions:hover { background-color: var(--white-color); }
+.product-search-container { position: relative; }
