@@ -3,22 +3,75 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>New/Edit Purchase Order</title> <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <title>New Purchase Order</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/new_po.css">
     <link rel="stylesheet" href="css/index.css">
 
     <script type="module">
-        // --- Firebase Auth Check (यदि आवश्यक हो) ---
-        import { auth } from './js/firebase-init.js'; // <-- init फ़ाइल से इम्पोर्ट करें
-        import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+        // --- Firebase Setup ---
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+        import {
+            getFirestore, collection, doc, addDoc, getDoc, getDocs, updateDoc, serverTimestamp,
+            query, where, orderBy, limit, Timestamp // Ensure all needed are imported
+         } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+         // **** Your Firebase Configuration ****
+         const firebaseConfig = {
+           apiKey: "AIzaSyBQj5rQmE77kKKGYixP8y3Hcimz8tiAqzQ", // From your other files
+           authDomain: "madhav-multyprint.firebaseapp.com",   // From your other files
+           projectId: "madhav-multyprint",                // From your other files
+           storageBucket: "madhav-multyprint.appspot.com",   // From your other files
+           messagingSenderId: "104988349637",             // From your other files
+           appId: "1:104988349637:web:faf045b77c6786a4e70cac" // From your other files
+         };
+         // !!!!! ENSURE THESE VALUES ARE CORRECT !!!!!
+
+        let app;
+        let auth;
+        let db;
+
         try {
-             if (!auth) { throw new Error("Firebase Auth failed to load."); }
+             console.log("new_po.html: Attempting Firebase initialization...");
+             if (!window.firebaseAppInitialized) {
+                 app = initializeApp(firebaseConfig);
+                 window.firebaseAppInitialized = true;
+                 window.firebaseApp = app;
+                 console.log("Firebase initialized on new_po.html");
+             } else {
+                 app = window.firebaseApp;
+                 console.log("Firebase already initialized (new_po.html)");
+             }
+             auth = getAuth(app);
+             db = getFirestore(app);
+             console.log("new_po.html: Auth and Firestore instances obtained.");
+
+             // Make Firestore functions globally available for new_po.js
+             window.db = db;
+             window.collection = collection;
+             window.doc = doc;
+             window.addDoc = addDoc;
+             window.getDoc = getDoc;
+             window.getDocs = getDocs;
+             window.updateDoc = updateDoc;
+             window.serverTimestamp = serverTimestamp;
+             window.Timestamp = Timestamp;
+             // --- ADDED/VERIFIED THESE LINES ---
+             window.query = query;
+             window.where = where;
+             window.orderBy = orderBy; // Ensure orderBy is global
+             window.limit = limit;     // Ensure limit is global
+             // --- END ADDED/VERIFIED ---
+             console.log("new_po.html: Firestore functions made global.");
+
+             // --- Authentication Check ---
              console.log("new_po.html: Setting up onAuthStateChanged listener...");
              onAuthStateChanged(auth, (user) => {
                 console.log("new_po.html: onAuthStateChanged triggered.");
                  if (!user) {
-                     console.log("User not logged in on new_po. Redirecting...");
+                     console.log("User not logged in on new_po. Redirecting to login.html...");
                      if (window.location.pathname.split('/').pop().toLowerCase() !== 'login.html') {
                           window.location.replace('login.html');
                      }
@@ -27,18 +80,13 @@
                  }
              });
              console.log("new_po.html: onAuthStateChanged listener attached.");
+
         } catch(e) {
-            console.error("new_po.html: Firebase auth error:", e);
-            alert("Error loading application authentication: " + e.message);
-            const poFormElement = document.getElementById('poForm');
-            if(poFormElement) poFormElement.style.display = 'none';
-            const errorDiv = document.createElement('div');
-            errorDiv.textContent = "Application cannot load due to authentication setup error.";
-            errorDiv.style.color = "red";
-            document.body.prepend(errorDiv);
+            console.error("new_po.html: Firebase setup error:", e);
+            alert("Error loading application.");
         }
-        console.log("new_po.html: Auth check module script finished execution.");
-        // --- End Firebase Auth Check ---
+        console.log("new_po.html: Module script finished execution.");
+        // --- End Firebase Setup ---
     </script>
 
 </head>
@@ -69,23 +117,16 @@
                          </div>
                         <div class="form-group">
                             <label for="poNumberInput">PO Number</label>
-                            <input type="text" id="poNumberInput" placeholder="Will be generated..." readonly style="background-color: #e9ecef;">
-                        </div>
+                            <input type="text" id="poNumberInput" placeholder="Auto-generated" readonly>
+                            </div>
                         <div class="form-group">
                             <label for="poOrderDateInput">Order Date *</label>
                             <input type="date" id="poOrderDateInput" required>
                         </div>
-                        <div class="form-group">
-                            <label for="poStatusInput">Status *</label>
-                            <select id="poStatusInput" class="form-input" required>
-                                <option value="New" selected>New</option>
-                                <option value="Sent">Sent to Supplier</option>
-                                <option value="Received">Received</option>
-                                <option value="Partial Received">Partial Received</option>
-                                <option value="Cancelled">Cancelled</option>
-                            </select>
-                        </div>
-                    </div> </div> <div class="form-section">
+                    </div>
+                </div>
+
+                <div class="form-section">
                     <h2>Items</h2>
                     <div class="table-container po-items-table">
                         <table id="poItemsTable">
@@ -93,7 +134,7 @@
                                 <tr>
                                     <th style="width: 20%;">Product Name *</th>
                                     <th style="width: 12%;">Unit Type *</th>
-                                    <th style="width: 25%;" class="sq-feet-header hidden-col">Print Size (W x H) *</th>
+                                    <th style="width: 25%;" class="sq-feet-header hidden-col">Dimensions (W x H) *</th>
                                     <th style="width: 10%;" class="sq-feet-header hidden-col">Unit *</th>
                                     <th style="width: 15%;" class="qty-header">Quantity *</th>
                                     <th style="width: 15%;">Rate *</th>
@@ -107,8 +148,10 @@
                     </div>
                     <button type="button" id="addItemBtn" class="button add-item-button"><i class="fas fa-plus"></i> Add Item</button>
                      <div id="calculationPreviewArea" class="calculation-preview">
-                         </div>
-                </div> <div class="form-section po-summary">
+                        </div>
+                </div>
+
+                <div class="form-section po-summary">
                     <h2>Summary</h2>
                      <div class="form-group">
                          <label for="poNotesInput">Notes</label>
@@ -117,14 +160,19 @@
                      <div class="total-amount-display">
                         <strong>Total Amount:</strong> ₹ <span id="poTotalAmount">0.00</span>
                      </div>
-                </div> <div class="form-actions">
+                </div>
+
+                 <div class="form-actions">
                      <a href="supplier_management.html" class="button cancel-button">Cancel</a>
                      <button type="submit" id="savePOBtn" class="button save-button">
                          <i class="fas fa-save"></i> <span>Save Purchase Order</span>
                      </button>
-                 </div> <div id="poErrorMsg" class="error-message" style="display: none;"></div>
+                 </div>
+                 <div id="poErrorMsg" class="error-message" style="display: none;"></div>
 
-            </form> <template id="item-row-template">
+            </form>
+
+            <template id="item-row-template">
                 <tr class="item-row">
                     <td><input type="text" class="form-input product-name" placeholder="Product Name" required></td>
                     <td>
@@ -134,9 +182,9 @@
                         </select>
                     </td>
                     <td class="sq-feet-input" style="display: none;"><div style="display: flex; gap: 5px; align-items: center;">
-                            <input type="number" step="0.01" class="form-input dimension-input width-input" placeholder="Width" style="width: 75px;" required>
+                            <input type="number" step="0.01" class="form-input dimension-input width-input" placeholder="Width" style="width: 75px;">
                             <span style="align-self: center;">x</span>
-                            <input type="number" step="0.01" class="form-input dimension-input height-input" placeholder="Height" style="width: 75px;" required>
+                            <input type="number" step="0.01" class="form-input dimension-input height-input" placeholder="Height" style="width: 75px;">
                          </div>
                     </td>
                     <td class="sq-feet-input" style="display: none;"><select class="form-input dimension-unit-select" style="width: 80px;">
@@ -144,7 +192,7 @@
                             <option value="inches">Inches</option>
                         </select>
                     </td>
-                     <td class="qty-input"> <input type="number" step="1" class="form-input quantity-input" placeholder="Qty" min="1" style="width: 70px;" required>
+                     <td class="qty-input"> <input type="number" step="1" class="form-input quantity-input" placeholder="Qty" min="1" style="width: 70px;">
                     </td>
                     <td><input type="number" step="0.01" class="form-input rate-input" placeholder="Rate/Unit" required style="width: 90px;"></td>
                     <td style="text-align: right; font-weight: 600;"><span class="item-amount">0.00</span></td>
