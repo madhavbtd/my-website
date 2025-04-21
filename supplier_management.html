@@ -6,49 +6,29 @@
     <title>Supplier & PO Management</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="css/supplier_management.css">
-    <link rel="stylesheet" href="css/index.css">
-
-    <script type="module">
+    <link rel="stylesheet" href="css/supplier_management.css"> <link rel="stylesheet" href="css/index.css"> <script type="module">
         // --- Firebase Auth Check ---
-        // केवल auth इम्पोर्ट करें firebase-init.js से
-        import { auth } from './js/firebase-init.js';
+        import { auth } from './js/firebase-init.js'; // Assuming firebase-init.js exports auth
         import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
         try {
-             // सुनिश्चित करें कि auth ठीक से लोड हुआ है
-             if (!auth) {
-                throw new Error("Firebase Auth instance failed to load from init module.");
-             }
-             console.log("supplier_management.html: Setting up onAuthStateChanged listener using imported auth...");
+             if (!auth) { throw new Error("Firebase Auth instance failed to load."); }
              onAuthStateChanged(auth, (user) => {
-                console.log("supplier_management.html: onAuthStateChanged triggered.");
-                 if (!user) {
-                     console.log("User not logged in on supplier_management. Redirecting to login.html...");
-                     // login.html पर होने पर रीडायरेक्ट लूप रोकें
-                     if (window.location.pathname.split('/').pop().toLowerCase() !== 'login.html') {
-                          window.location.replace('login.html');
-                     }
-                 } else {
-                     console.log("supplier_management.html: User is logged in:", user.uid);
+                 if (!user && window.location.pathname.split('/').pop().toLowerCase() !== 'login.html') {
+                      console.log("User not logged in on supplier_management. Redirecting...");
+                      window.location.replace('login.html');
+                 } else if (user) {
+                      console.log("supplier_management.html: User is logged in:", user.uid);
                  }
              });
-             console.log("supplier_management.html: onAuthStateChanged listener attached.");
-
         } catch(e) {
             console.error("supplier_management.html: Firebase auth error:", e);
-            // उपयोगकर्ता को त्रुटि दिखाएं या कार्यक्षमता ब्लॉक करें
-             const mainContent = document.getElementById('main-content');
-             if(mainContent) {
-                mainContent.innerHTML = `<div style="color: red; padding: 20px;"><strong>Application Error:</strong> ${e.message}. Please try refreshing the page.</div>`;
-             } else {
-                alert("Application Error: " + e.message);
-             }
+            const mainContent = document.getElementById('main-content');
+            if(mainContent) { mainContent.innerHTML = `<div class="error-message"><strong>Application Error:</strong> ${e.message}. Please refresh.</div>`; }
+            else { alert("Application Error: " + e.message); }
         }
-        console.log("supplier_management.html: Auth check module script finished execution.");
-        // --- End Firebase Auth Check ---
     </script>
-    </head>
+</head>
 <body>
      <div class="container">
          <div class="main-content" id="main-content">
@@ -66,23 +46,23 @@
             </div>
 
             <div class="section-container" id="suppliers-section">
-                <h2><i class="fas fa-users"></i> Suppliers List</h2>
-                <div class="table-container">
-                    <table id="supplierTable">
-                        <thead>
-                            <tr>
-                                <th>Name</th>
-                                <th>Company</th>
-                                <th>WhatsApp No</th>
-                                <th>Email</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody id="supplierTableBody">
-                            <tr><td colspan="5">Initializing...</td></tr>
-                        </tbody>
-                    </table>
-                </div>
+                 <h2><i class="fas fa-users"></i> Suppliers List</h2>
+                 <div class="table-container">
+                     <table id="supplierTable">
+                         <thead>
+                             <tr>
+                                 <th>Name</th>
+                                 <th>Company</th>
+                                 <th>WhatsApp No</th>
+                                 <th>Email</th>
+                                 <th>Actions</th>
+                             </tr>
+                         </thead>
+                         <tbody id="supplierTableBody">
+                             <tr><td colspan="5">Initializing...</td></tr>
+                         </tbody>
+                     </table>
+                 </div>
             </div>
 
             <div class="section-container" id="pos-section">
@@ -93,8 +73,7 @@
                         <option value="">All Status</option>
                         <option value="New">New</option>
                         <option value="Sent">Sent</option>
-                        <option value="Received">Received</option>
-                        </select>
+                        <option value="Printing">Printing</option> <option value="Received">Received</option> <option value="Product Received">Product Received</option> <option value="PO Paid">PO Paid</option> <option value="Cancel">Cancel</option> </select>
                     <button id="poFilterBtn">Filter</button>
                  </div>
                  <div class="table-container">
@@ -107,60 +86,63 @@
                                  <th>Status</th>
                                  <th>Amount</th>
                                  <th>Actions</th>
-                             </tr>
+                                 </tr>
                          </thead>
                          <tbody id="poTableBody">
-                              <tr><td colspan="6">Initializing...</td></tr>
-                          </tbody>
+                              <tr><td colspan="6">Initializing...</td></tr> </tbody>
                      </table>
                  </div>
             </div>
 
-         </div>
+         </div> </div> <div id="supplierModal" class="modal">
+          <div class="modal-content">
+              <span class="close-btn" id="closeSupplierModal">&times;</span>
+              <h2 id="supplierModalTitle">Add New Supplier</h2>
+              <form id="supplierForm">
+                  <input type="hidden" id="supplierIdInput">
+                  <div class="form-group"><label for="supplierNameInput">Supplier Name *</label><input type="text" id="supplierNameInput" required></div>
+                  <div class="form-group"><label for="supplierCompanyInput">Company Name</label><input type="text" id="supplierCompanyInput"></div>
+                  <div class="form-group"><label for="supplierWhatsappInput">WhatsApp No</label><input type="tel" id="supplierWhatsappInput"></div>
+                  <div class="form-group"><label for="supplierEmailInput">Email</label><input type="email" id="supplierEmailInput"></div>
+                  <div class="form-group"><label for="supplierAddressInput">Address</label><textarea id="supplierAddressInput" rows="2"></textarea></div>
+                  <div class="form-group"><label for="supplierGstInput">GST No</label><input type="text" id="supplierGstInput"></div>
+                  <div class="modal-actions">
+                      <button type="button" id="cancelSupplierBtn" class="button cancel-button">Cancel</button>
+                      <button type="submit" id="saveSupplierBtn" class="button save-button">Save Supplier</button>
+                  </div>
+                  <div id="supplierErrorMsg" class="error-message" style="display: none;"></div>
+              </form>
+          </div>
      </div>
 
-     <div id="supplierModal" class="modal">
+     <div id="statusUpdateModal" class="modal">
          <div class="modal-content">
-             <span class="close-btn" id="closeSupplierModal">&times;</span>
-             <h2 id="supplierModalTitle">Add New Supplier</h2>
-             <form id="supplierForm">
-                 <input type="hidden" id="supplierIdInput"> <div class="form-group">
-                     <label for="supplierNameInput">Supplier Name *</label>
-                     <input type="text" id="supplierNameInput" required>
-                 </div>
+             <span class="close-btn" id="closeStatusModal">&times;</span>
+             <h2 id="statusModalTitle">Update PO Status</h2>
+             <form id="statusUpdateForm">
+                 <input type="hidden" id="statusUpdatePOId">
+                 <p>Current Status: <strong id="currentPOStatus"></strong></p>
                  <div class="form-group">
-                     <label for="supplierCompanyInput">Company Name</label>
-                     <input type="text" id="supplierCompanyInput">
-                 </div>
-                 <div class="form-group">
-                     <label for="supplierWhatsappInput">WhatsApp No</label>
-                     <input type="tel" id="supplierWhatsappInput">
-                 </div>
-                 <div class="form-group">
-                     <label for="supplierEmailInput">Email</label>
-                     <input type="email" id="supplierEmailInput">
-                 </div>
-                 <div class="form-group">
-                     <label for="supplierAddressInput">Address</label>
-                     <textarea id="supplierAddressInput" rows="2"></textarea>
-                 </div>
-                 <div class="form-group">
-                     <label for="supplierGstInput">GST No</label>
-                     <input type="text" id="supplierGstInput">
+                     <label for="statusSelect">New Status *</label>
+                     <select id="statusSelect" required>
+                         <option value="">-- Select Status --</option>
+                         <option value="New">New</option>
+                         <option value="Sent">Sent</option>
+                         <option value="Printing">Printing</option>
+                         <option value="Received">Received</option> <option value="Product Received">Product Received</option>
+                         <option value="PO Paid">PO Paid</option>
+                         <option value="Cancel">Cancel</option>
+                     </select>
                  </div>
                  <div class="modal-actions">
-                     <button type="button" id="cancelSupplierBtn" class="button cancel-button">Cancel</button>
-                     <button type="submit" id="saveSupplierBtn" class="button save-button">Save Supplier</button>
+                     <button type="button" id="cancelStatusBtn" class="button cancel-button">Cancel</button>
+                     <button type="submit" id="saveStatusBtn" class="button save-button">Update Status</button>
                  </div>
-                 <div id="supplierErrorMsg" class="error-message" style="display: none;"></div>
+                 <div id="statusErrorMsg" class="error-message" style="display: none;"></div>
              </form>
          </div>
      </div>
-
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
-
-    <script src="js/supplier_management.js" type="module" defer></script>
-
-    </body>
+    <script src="js/supplier_management.js" type="module" defer></script> </body>
 </html>
