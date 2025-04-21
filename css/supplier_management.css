@@ -287,11 +287,3 @@ table td.action-buttons { display: flex; gap: 5px; justify-content: flex-start; 
     .modal-actions { flex-direction: column; }
     .modal-actions .button { width: 100%; }
 }
-/* Add near other action button styles */
-.action-buttons .compose-email-button {
-    background-color: #5DADE2; /* Different shade of blue for email */
-    color: var(--white-color);
-}
-.action-buttons .compose-email-button:hover:not(:disabled) {
-    background-color: #2E86C1; /* Darker shade */
-}
