@@ -1,4 +1,4 @@
-/* css/supplier_management.css - v3 (View Details Styles Added) */
+/* css/supplier_management.css - v4 (Supplier Modal UI, Filters, Totals) */
 
 /* --- Basic and Variables --- */
 :root {
@@ -8,6 +8,7 @@
     --danger-color: #dc3545;
     --warning-color: #ffc107;
     --info-color: #17a2b8;
+    --purple-color: #6f42c1; /* For view details */
     --light-gray: #f8f9fa;
     --medium-gray: #e9ecef;
     --dark-gray: #6c757d;
@@ -18,484 +19,271 @@
 
 body {
     font-family: 'Poppins', sans-serif;
-    background-color: #f0f2f5; /* Consistent background */
+    background-color: #f0f2f5;
     margin: 0;
     color: var(--text-color);
     line-height: 1.5;
 }
 
-.container {
-    /* Container for potential centering or max-width */
-}
+.container { }
 
 .main-content {
     padding: 25px;
     box-sizing: border-box;
-    max-width: 1400px; /* Adjust max-width if needed */
-    margin: 20px auto; /* Center content */
+    max-width: 1500px; /* Wider for more filters/columns */
+    margin: 20px auto;
     background-color: var(--white-color);
     border-radius: 8px;
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.07);
 }
 
 /* --- Header & Breadcrumb --- */
-.page-header {
-    margin-bottom: 20px;
-    padding-bottom: 15px;
-    border-bottom: 1px solid var(--medium-gray);
-}
-.page-header h1 {
-    margin: 0;
-    font-size: 1.7em;
-    color: var(--primary-color);
-    font-weight: 600;
-}
-.page-header h1 i {
-    margin-right: 12px;
-}
-
-.breadcrumb {
-    font-size: 0.9em;
-    color: var(--dark-gray);
-    margin-bottom: 25px;
-}
-.breadcrumb a {
-    color: var(--primary-color);
-    text-decoration: none;
-}
-.breadcrumb a:hover {
-    text-decoration: underline;
-}
-.breadcrumb span {
-    margin-left: 5px;
-}
-.breadcrumb span::before {
-    content: "/";
-    margin-right: 5px;
-    color: var(--dark-gray);
-}
+.page-header { margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid var(--medium-gray); }
+.page-header h1 { margin: 0; font-size: 1.7em; color: var(--primary-color); font-weight: 600; }
+.page-header h1 i { margin-right: 12px; }
+.breadcrumb { font-size: 0.9em; color: var(--dark-gray); margin-bottom: 25px; }
+.breadcrumb a { color: var(--primary-color); text-decoration: none; }
+.breadcrumb a:hover { text-decoration: underline; }
+.breadcrumb span { margin-left: 5px; }
+.breadcrumb span::before { content: "/"; margin-right: 5px; color: var(--dark-gray); }
 
 /* --- Action Bar & Buttons --- */
-.actions-bar {
-    display: flex;
-    gap: 10px;
-    margin-bottom: 25px;
-    flex-wrap: wrap;
-}
+.actions-bar { display: flex; gap: 12px; /* Slightly more gap */ margin-bottom: 25px; flex-wrap: wrap; align-items: center; } /* Align items center */
 
-.button {
-    padding: 8px 15px;
-    font-size: 0.9em;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    font-weight: 600;
-    display: inline-flex;
-    align-items: center;
-    gap: 6px; /* Consistent gap */
-    text-decoration: none;
-    transition: background-color 0.2s ease, opacity 0.2s ease;
-    white-space: nowrap;
-    vertical-align: middle; /* Align buttons nicely */
-}
-.button i {
-    /* Icons already have gap due to .button gap */
-    /* margin-right: 5px; */ /* Removed in favor of gap */
-    line-height: 1; /* Ensure icon aligns well */
-}
-.button:disabled {
-    background-color: #adb5bd;
-    cursor: not-allowed;
-    opacity: 0.7;
-}
-.button:disabled:hover {
-     background-color: #adb5bd; /* Prevent hover effect on disabled */
-}
+.button { padding: 9px 18px; /* Slightly larger padding */ font-size: 0.95em; /* Slightly larger font */ border: none; border-radius: 5px; /* More rounded */ cursor: pointer; font-weight: 600; display: inline-flex; align-items: center; gap: 7px; /* More gap */ text-decoration: none; transition: background-color 0.2s ease, opacity 0.2s ease, box-shadow 0.2s ease; white-space: nowrap; vertical-align: middle; line-height: 1; /* Ensure consistent height */ }
+.button i { line-height: 1; /* Ensure icon aligns well */ margin-right: 2px; /* Adjust if needed */}
+.button:hover:not(:disabled) { box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+.button:disabled { background-color: #adb5bd; cursor: not-allowed; opacity: 0.7; box-shadow: none; }
+.button:disabled:hover { background-color: #adb5bd; }
 
+/* Specific Button Styles */
 .add-new-button { background-color: var(--success-color); color: var(--white-color); }
 .add-new-button:hover:not(:disabled) { background-color: #218838; }
+/* Style for the new View Suppliers button */
+.view-suppliers-button { background-color: var(--secondary-color); color: var(--white-color); }
+.view-suppliers-button:hover:not(:disabled) { background-color: #1a2531; }
 
 .cancel-button { background-color: var(--dark-gray); color: var(--white-color);}
 .cancel-button:hover:not(:disabled) { background-color: #5a6268;}
-
 .save-button { background-color: var(--primary-color); color: var(--white-color);}
 .save-button:hover:not(:disabled) { background-color: #004085; }
 
-/* Action buttons inside tables */
-.edit-button { background-color: var(--warning-color); color: #333; font-size: 0.8em; padding: 4px 8px;}
+/* Action buttons inside tables need to be smaller */
+.action-buttons .button { padding: 5px 9px; font-size: 0.85em; gap: 4px; border-radius: 4px; }
+.action-buttons .button i { margin-right: 0; font-size: 0.9em; } /* Adjust icon size */
+
+.edit-button { background-color: var(--warning-color); color: #333; }
 .edit-button:hover:not(:disabled) { background-color: #e0a800; }
-
-.delete-button { background-color: var(--danger-color); color: var(--white-color); font-size: 0.8em; padding: 4px 8px;}
+.delete-button { background-color: var(--danger-color); color: var(--white-color); }
 .delete-button:hover:not(:disabled) { background-color: #c82333; }
-
-.pdf-button { background-color: #fd7e14; color: var(--white-color); font-size: 0.8em; padding: 4px 8px;}
+.pdf-button { background-color: #fd7e14; color: var(--white-color); }
 .pdf-button:hover:not(:disabled) { background-color: #e66a04; }
-
-.status-button { background-color: var(--info-color); color: var(--white-color); font-size: 0.8em; padding: 4px 8px;}
+.status-button { background-color: var(--info-color); color: var(--white-color); }
 .status-button:hover:not(:disabled) { background-color: #117a8b; }
-
-/* ***** नया View Details बटन स्टाइल ***** */
-.view-details-button {
-    background-color: #6f42c1; /* Example: Purple */
-    color: var(--white-color);
-    font-size: 0.8em;
-    padding: 4px 8px;
-}
-.view-details-button:hover:not(:disabled) {
-    background-color: #5a2d9e;
-}
-/* ************************************ */
+.view-details-button { background-color: var(--purple-color); color: var(--white-color); }
+.view-details-button:hover:not(:disabled) { background-color: #5a2d9e; }
 
 
 /* --- Section Containers --- */
-.section-container {
-    background-color: var(--white-color);
-    padding: 20px 25px;
-    border-radius: 8px;
-    box-shadow: 0 1px 5px rgba(0, 0, 0, 0.05);
-    margin-bottom: 25px;
-}
-.section-container h2 {
-    margin-top: 0;
-    margin-bottom: 20px; /* Increased spacing */
-    font-size: 1.4em; /* Slightly larger */
-    color: var(--secondary-color);
-    border-bottom: 1px solid var(--medium-gray);
-    padding-bottom: 12px;
-    font-weight: 600;
-}
-.section-container h2 i {
-    margin-right: 10px;
-    color: var(--primary-color); /* Match icon color */
-}
+.section-container { background-color: var(--white-color); padding: 20px 25px; border-radius: 8px; box-shadow: 0 1px 5px rgba(0, 0, 0, 0.05); margin-bottom: 25px; }
+.section-container h2 { margin-top: 0; margin-bottom: 20px; font-size: 1.4em; color: var(--secondary-color); border-bottom: 1px solid var(--medium-gray); padding-bottom: 12px; font-weight: 600; }
+.section-container h2 i { margin-right: 10px; color: var(--primary-color); }
 
 /* --- Table Styling --- */
-.table-container {
-    width: 100%;
-    overflow-x: auto;
-    border: 1px solid var(--medium-gray);
-    border-radius: 6px;
-    margin-bottom: 15px;
-}
-table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 0.9em;
-}
-table thead {
-    background-color: var(--light-gray);
-    border-bottom: 2px solid var(--medium-gray); /* Stronger header bottom border */
-}
-table th, table td {
-    border: 1px solid #e0e0e0; /* Slightly lighter border */
-    padding: 10px 12px;
-    text-align: left;
-    vertical-align: middle; /* Center content vertically */
-}
-table th {
-    font-weight: 600;
-    color: #495057;
-    white-space: nowrap; /* Prevent header text wrapping */
-}
-table tbody tr:nth-child(even) {
-    background-color: #fdfdfd; /* Subtle zebra striping */
-}
-table tbody tr:hover {
-    background-color: #f1f5f9; /* Hover effect */
-}
-/* Action buttons cell */
-table td.action-buttons {
-    display: flex;
-    gap: 5px;
-    justify-content: flex-start; /* Align buttons left */
-    flex-wrap: nowrap; /* Prevent wrapping if possible, relies on overflow */
-    padding: 6px 8px; /* Slightly less padding for action buttons */
-}
-table td.action-buttons button,
-table td.action-buttons a.button { /* Include anchor tags styled as buttons */
-    padding: 4px 8px;
-    font-size: 0.8em;
-}
+.table-container { width: 100%; overflow-x: auto; border: 1px solid var(--medium-gray); border-radius: 6px; margin-bottom: 15px; }
+table { width: 100%; border-collapse: collapse; font-size: 0.9em; }
+table thead { background-color: var(--light-gray); border-bottom: 2px solid var(--medium-gray); }
+table th, table td { border: 1px solid #e0e0e0; padding: 10px 12px; text-align: left; vertical-align: middle; }
+table th { font-weight: 600; color: #495057; white-space: nowrap; }
+table tbody tr:nth-child(even) { background-color: #fdfdfd; }
+table tbody tr:hover { background-color: #f1f5f9; }
+table td.action-buttons { display: flex; gap: 5px; justify-content: flex-start; flex-wrap: nowrap; padding: 6px 8px; }
 
-/* --- Status Badge Styles --- */
-.status-badge {
-    padding: 4px 10px; /* Slightly more padding */
-    font-size: 0.8em;
-    border-radius: 12px; /* More rounded */
-    font-weight: 500;
-    white-space: nowrap;
-    display: inline-block; /* Ensure proper spacing */
-    text-transform: capitalize; /* Capitalize status text */
-}
+/* --- Status Badge Styles (No changes) --- */
+.status-badge { padding: 4px 10px; font-size: 0.8em; border-radius: 12px; font-weight: 500; white-space: nowrap; display: inline-block; text-transform: capitalize; }
 .status-new { background-color: #cfe2ff; color: #0a58ca; border: 1px solid #b6d4fe;}
 .status-sent { background-color: #e2e3e5; color: #41464b; border: 1px solid #d3d6d8;}
 .status-printing { background-color: #ffedd5; color: #9a3412; border: 1px solid #fed7aa;}
 .status-received, .status-product-received { background-color: #d1e7dd; color: #0f5132; border: 1px solid #badbcc;}
-.status-po-paid { background-color: #a3cfbb; color: #0a3622; border: 1px solid #88c3a5;} /* Darker Green */
-.status-cancel { background-color: #f8d7da; color: #842029; border: 1px solid #f5c2c7;} /* Red */
+.status-po-paid { background-color: #a3cfbb; color: #0a3622; border: 1px solid #88c3a5;}
+.status-cancel { background-color: #f8d7da; color: #842029; border: 1px solid #f5c2c7;}
 .status-unknown { background-color: #eee; color: #555; border: 1px solid #ddd;}
 
-/* --- PO Filters --- */
+/* --- PO Filters UPDATED --- */
 .po-filters {
-    margin-bottom: 20px; /* More space */
+    margin-bottom: 25px;
+    padding: 15px;
+    background-color: #f9f9f9; /* Light background for filter area */
+    border: 1px solid var(--medium-gray);
+    border-radius: 6px;
     display: flex;
-    gap: 15px; /* More gap */
+    gap: 15px;
     flex-wrap: wrap;
-    align-items: center;
+    align-items: flex-end; /* Align items to bottom for button alignment */
+}
+.filter-group {
+    display: flex;
+    flex-direction: column; /* Labels above inputs */
+    gap: 4px;
+}
+.filter-group label {
+    font-size: 0.85em;
+    font-weight: 500;
+    color: #495057;
 }
 .po-filters input[type="text"],
-.po-filters select {
-    padding: 8px 12px; /* Consistent padding */
+.po-filters select,
+.po-filters input[type="date"] { /* Style date inputs */
+    padding: 8px 12px;
     border: 1px solid #ced4da;
     border-radius: 4px;
     font-size: 0.9em;
-    height: 38px; /* Match button height */
+    height: 38px;
     box-sizing: border-box;
-    min-width: 150px; /* Minimum width */
+    min-width: 160px; /* Slightly wider inputs */
 }
-.po-filters button {
-    padding: 8px 15px; /* Match input height */
+.po-filters input[type="date"] {
+    color-scheme: light; /* Ensure date picker is light themed */
+     min-width: 140px; /* Date inputs can be smaller */
+}
+.filter-group.filter-buttons {
+    margin-left: auto; /* Push buttons to the right */
+    flex-direction: row; /* Keep buttons in a row */
+    gap: 10px;
+}
+.po-filters button.filter-action-button {
+     height: 38px; /* Match input height */
+}
+.po-filters button#poFilterBtn {
     background-color: var(--primary-color);
     color: var(--white-color);
 }
-.po-filters button:hover:not(:disabled) {
-    background-color: #004085;
+.po-filters button#poFilterBtn:hover:not(:disabled) { background-color: #004085; }
+.po-filters button#poClearFilterBtn {
+    /* Style inherited from .cancel-button */
+}
+
+/* PO Totals Area */
+.po-totals {
+    margin-top: 15px;
+    padding: 10px 15px;
+    background-color: var(--light-gray);
+    border: 1px solid var(--medium-gray);
+    border-radius: 4px;
+    text-align: right;
+    font-size: 1em;
+    font-weight: 600;
 }
 
 
 /* --- Modal Styles (Generic) --- */
-.modal {
-    display: none; /* Hidden by default */
-    position: fixed; /* Stay in place */
-    z-index: 1050; /* Sit on top */
-    left: 0;
-    top: 0;
-    width: 100%; /* Full width */
-    height: 100%; /* Full height */
-    overflow: auto; /* Enable scroll if needed */
-    background-color: rgba(0,0,0,0.5); /* Black w/ opacity */
-    /* Use Flexbox to center */
-    align-items: center;
-    justify-content: center;
-    padding: 15px;
-    box-sizing: border-box;
-}
-.modal.active {
-    display: flex; /* Show the modal */
-}
-.modal-content {
-    background-color: #fefefe;
-    margin: auto; /* Auto margin for centering */
-    padding: 25px 30px;
-    border: 1px solid #ccc;
-    width: 90%; /* Default width */
-    max-width: 500px; /* Default max-width */
-    border-radius: 8px;
-    position: relative;
-    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
-    z-index: 1051;
-    display: flex; /* Use flex column for content */
-    flex-direction: column;
-}
-/* Optional: Larger modal class */
-.modal-content.modal-lg {
-    max-width: 850px; /* Increased width for PO details */
-}
-.modal-content h2 {
-    margin-top: 0;
-    margin-bottom: 20px;
-    text-align: center;
-    border-bottom: 1px solid var(--medium-gray);
-    padding-bottom: 15px; /* Increased padding */
-    font-size: 1.4em;
-    font-weight: 600;
-    color: var(--secondary-color);
-}
-.close-btn {
-    color: #aaa;
-    position: absolute;
-    top: 10px;
-    right: 15px;
-    font-size: 28px;
-    font-weight: bold;
-    cursor: pointer;
-    line-height: 1;
-}
-.close-btn:hover,
-.close-btn:focus {
-    color: var(--black-color);
-    text-decoration: none;
-}
+.modal { display: none; position: fixed; z-index: 1050; left: 0; top: 0; width: 100%; height: 100%; overflow: hidden; /* Prevent body scroll */ background-color: rgba(0,0,0,0.5); align-items: flex-start; /* Align modal to top */ justify-content: center; padding: 3vh 15px 15px 15px; /* Padding top with vh */ box-sizing: border-box; }
+.modal.active { display: flex; overflow-y: auto; /* Allow modal itself to scroll */ } /* Show the modal */
+.modal-content { background-color: #fefefe; margin: auto; /* Auto margin for centering */ padding: 25px 30px; border: 1px solid #ccc; width: 90%; max-width: 500px; border-radius: 8px; position: relative; box-shadow: 0 5px 15px rgba(0,0,0,0.2); z-index: 1051; display: flex; flex-direction: column; max-height: calc(100vh - 6vh); /* Limit height based on padding */ }
+
+/* Larger modal sizes */
+.modal-content.modal-lg { max-width: 850px; }
+.modal-content.modal-xl { max-width: 1100px; } /* For suppliers list */
+
+.modal-content h2 { margin-top: 0; margin-bottom: 20px; text-align: center; border-bottom: 1px solid var(--medium-gray); padding-bottom: 15px; font-size: 1.4em; font-weight: 600; color: var(--secondary-color); }
+.close-btn { color: #aaa; position: absolute; top: 10px; right: 15px; font-size: 28px; font-weight: bold; cursor: pointer; line-height: 1; z-index: 1052; }
+.close-btn:hover, .close-btn:focus { color: var(--black-color); text-decoration: none; }
 
 /* Modal Form Styling */
-.modal form .form-group {
-    margin-bottom: 15px;
-}
-.modal form .form-group label {
-    display: block;
-    margin-bottom: 6px; /* Slightly less margin */
-    font-weight: 500; /* Less bold */
-    font-size: 0.9em;
-}
-.modal form .form-group input[type="text"],
-.modal form .form-group input[type="tel"],
-.modal form .form-group input[type="email"],
-.modal form .form-group input[type="password"],
-.modal form .form-group select,
-.modal form .form-group textarea {
-    width: 100%;
-    padding: 9px 12px; /* Consistent padding */
-    border: 1px solid #ced4da;
-    border-radius: 4px;
-    font-size: 0.95em;
-    box-sizing: border-box;
-    transition: border-color 0.2s ease, box-shadow 0.2s ease;
-}
-.modal form .form-group textarea {
-    resize: vertical;
-    min-height: 60px;
-}
-.modal form .form-group input:focus,
-.modal form .form-group select:focus,
-.modal form .form-group textarea:focus {
-     border-color: var(--primary-color);
-     outline: 0;
-     box-shadow: 0 0 0 0.2rem rgba(0, 86, 179, 0.2);
-}
+.modal form .form-group { margin-bottom: 15px; }
+.modal form .form-group label { display: block; margin-bottom: 6px; font-weight: 500; font-size: 0.9em; }
+.modal form .form-group input[type="text"], .modal form .form-group input[type="tel"], .modal form .form-group input[type="email"], .modal form .form-group input[type="password"], .modal form .form-group select, .modal form .form-group textarea { width: 100%; padding: 9px 12px; border: 1px solid #ced4da; border-radius: 4px; font-size: 0.95em; box-sizing: border-box; transition: border-color 0.2s ease, box-shadow 0.2s ease; }
+.modal form .form-group textarea { resize: vertical; min-height: 60px; }
+.modal form .form-group input:focus, .modal form .form-group select:focus, .modal form .form-group textarea:focus { border-color: var(--primary-color); outline: 0; box-shadow: 0 0 0 0.2rem rgba(0, 86, 179, 0.2); }
 
 /* Modal Actions (Footer) */
-.modal-actions {
+.modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 25px; padding-top: 15px; border-top: 1px solid var(--medium-gray); }
+.error-message { color: var(--danger-color); font-size: 0.88em; margin-top: 10px; text-align: center; width: 100%; }
+
+/* --- Specific Modal Styles --- */
+/* Status Modal */
+#statusUpdateModal .modal-content { max-width: 450px; }
+#statusUpdateModal p { margin-bottom: 15px; font-size: 0.95em; text-align: center; }
+#statusUpdateModal p strong { font-weight: 600; color: var(--primary-color); }
+
+/* PO Details Modal */
+#poDetailsModal .po-details-container { margin-top: 15px; overflow-y: auto; /* Allow content scroll */ padding-right: 10px; flex-grow: 1; max-height: calc(100vh - 250px); /* Adjust max height */ }
+#poDetailsModal .details-table { width: 100%; border-collapse: collapse; font-size: 0.9em; margin-bottom: 20px; }
+#poDetailsModal .details-table th, #poDetailsModal .details-table td { border: 1px solid var(--medium-gray); padding: 8px 10px; text-align: left; vertical-align: top; }
+#poDetailsModal .details-table thead th { background-color: var(--light-gray); font-weight: 600; white-space: nowrap; position: sticky; top: 0; z-index: 1; }
+#poDetailsModal .details-table tbody tr:nth-child(even) { background-color: #f9f9f9; }
+#poDetailsModal .details-table td:last-child { text-align: right; font-weight: 500; white-space: nowrap; }
+#poDetailsModal .details-table td:nth-child(1) { text-align: center; width: 30px; }
+#poDetailsModal .details-table td:nth-child(4), #poDetailsModal .details-table td:nth-child(5) { white-space: nowrap; }
+#poDetailsModal .po-notes-details { margin-top: 20px; padding: 15px; border: 1px solid #e0e0e0; border-radius: 4px; font-size: 0.9em; background-color: #fdfdfd; }
+#poDetailsModal .po-notes-details strong { display: block; margin-bottom: 8px; color: var(--secondary-color); font-weight: 600; }
+#poDetailsModal .po-notes-details p { margin: 0; line-height: 1.6; color: #555; }
+
+/* **** NEW Suppliers List Modal Styles **** */
+#suppliersListModal .modal-content { /* Uses modal-xl */
+     /* Allow content to determine height up to max */
+}
+#suppliersListModal .suppliers-modal-header {
     display: flex;
-    justify-content: flex-end;
-    gap: 10px;
-    margin-top: 25px; /* More space before actions */
-    padding-top: 15px;
-    border-top: 1px solid var(--medium-gray);
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--medium-gray);
+    padding-bottom: 15px;
+    margin-bottom: 15px; /* Space below header */
 }
-.error-message {
-    color: var(--danger-color);
-    font-size: 0.88em;
-    margin-top: 10px;
-    text-align: center;
-    width: 100%;
+#suppliersListModal .suppliers-modal-header h2 {
+     border-bottom: none; /* Remove double border */
+     padding-bottom: 0;
+     margin-bottom: 0;
+     text-align: left; /* Align title left */
 }
-
-/* --- Specific Status Modal Styles --- */
-#statusUpdateModal .modal-content {
-    max-width: 450px; /* Keep status modal smaller */
+/* Ensure button in header fits */
+#suppliersListModal .suppliers-modal-header .button {
+     padding: 7px 14px;
+     font-size: 0.9em;
 }
-#statusUpdateModal p {
-    margin-bottom: 15px;
-    font-size: 0.95em;
-    text-align: center; /* Center current status text */
+#suppliersListModal .suppliers-table-container {
+     overflow-y: auto; /* Allow table scroll within modal */
+     max-height: calc(100vh - 300px); /* Adjust based on header/footer/padding */
+     border: none; /* Remove double border */
+     margin-bottom: 0;
 }
-#statusUpdateModal p strong {
-    font-weight: 600;
-    color: var(--primary-color);
+#suppliersListModal table { /* Style table inside modal */
+    /* Inherits base table styles */
 }
-
-
-/* ***** नया PO विवरण Modal Styles ***** */
-#poDetailsModal .po-details-container {
-    margin-top: 15px;
-    max-height: 65vh; /* Limit height, allow scroll */
-    overflow-y: auto;
-    padding-right: 10px; /* Space for scrollbar */
-    flex-grow: 1; /* Allow container to grow */
+#suppliersListModal .modal-actions {
+     /* Inherits base modal action styles */
 }
-
-#poDetailsModal .details-table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 0.9em;
-    margin-bottom: 20px; /* Space after table */
-}
-#poDetailsModal .details-table th,
-#poDetailsModal .details-table td {
-    border: 1px solid var(--medium-gray);
-    padding: 8px 10px;
-    text-align: left;
-    vertical-align: top; /* Better for multi-line content */
-}
-#poDetailsModal .details-table thead th {
-    background-color: var(--light-gray);
-    font-weight: 600;
-    white-space: nowrap;
-    position: sticky; /* Keep header visible on scroll */
-    top: 0; /* Stick to top of scroll container */
-    z-index: 1; /* Ensure header is above body */
-}
-#poDetailsModal .details-table tbody tr:nth-child(even) {
-    background-color: #f9f9f9; /* Zebra striping */
-}
-#poDetailsModal .details-table td:last-child { /* Amount column */
-    text-align: right;
-    font-weight: 500;
-    white-space: nowrap;
-}
-/* Style specific columns if needed */
-#poDetailsModal .details-table td:nth-child(1) { /* Index column */
-    text-align: center;
-    width: 30px;
-}
-#poDetailsModal .details-table td:nth-child(4), /* Dimensions/Qty */
-#poDetailsModal .details-table td:nth-child(5) { /* Unit/Rate */
-    white-space: nowrap;
-}
-
-/* PO Notes style inside the modal */
-#poDetailsModal .po-notes-details {
-    margin-top: 20px;
-    padding: 15px; /* More padding */
-    border: 1px solid #e0e0e0; /* Border around notes */
-    border-radius: 4px;
-    font-size: 0.9em;
-    background-color: #fdfdfd; /* Slightly different background */
-}
-#poDetailsModal .po-notes-details strong {
-    display: block;
-    margin-bottom: 8px; /* More space after "Notes:" */
-    color: var(--secondary-color);
-    font-weight: 600;
-}
-#poDetailsModal .po-notes-details p {
-    margin: 0;
-    line-height: 1.6; /* Better readability */
-    color: #555;
-}
-/* ************************************* */
+/* ****************************************** */
 
 
 /* --- Responsive Styles --- */
 @media (max-width: 992px) {
-    .main-content { padding: 20px; }
-    .modal-content.modal-lg {
-        max-width: 95%; /* Adjust max-width for tablets */
-    }
+    .main-content { max-width: 95%; }
+    .modal-content.modal-lg, .modal-content.modal-xl { max-width: 95%; }
     .po-filters { gap: 10px; }
+    .filter-group.filter-buttons { margin-left: 0; width: 100%; justify-content: space-between; } /* Stack buttons below on smaller screens */
 }
-
 @media (max-width: 768px) {
     .main-content { padding: 15px; margin: 10px auto;}
     .actions-bar { flex-direction: column; align-items: stretch; }
     .actions-bar .button, .actions-bar a.button { width: 100%; text-align: center; justify-content: center; }
     .po-filters { flex-direction: column; align-items: stretch; }
-    .po-filters input[type="text"], .po-filters select, .po-filters button { width: 100%; } /* Full width filters */
-    .modal-content, .modal-content.modal-lg { width: 95%; padding: 20px; } /* Adjust modal padding */
+    .po-filters input[type="text"], .po-filters select, .po-filters input[type="date"], .po-filters button { width: 100%; }
+    .filter-group.filter-buttons { flex-direction: column; gap: 8px; }
+    .modal-content, .modal-content.modal-lg, .modal-content.modal-xl { width: 96%; padding: 20px; max-height: calc(100vh - 4vh); /* Adjust max height */}
     .modal-content h2 { font-size: 1.2em; }
     #poDetailsModal .details-table { font-size: 0.85em; }
     #poDetailsModal .details-table th, #poDetailsModal .details-table td { padding: 6px 8px; }
-    .table-container { /* Improve mobile table scrolling */
-        overflow-x: auto;
-        -webkit-overflow-scrolling: touch; /* Smoother scrolling on iOS */
-    }
-    table td.action-buttons { flex-wrap: wrap; justify-content: center;} /* Allow buttons to wrap on small screens */
+    .table-container { -webkit-overflow-scrolling: touch; }
+    table td.action-buttons { flex-wrap: wrap; justify-content: center;}
+    #suppliersListModal .suppliers-modal-header { flex-direction: column; align-items: flex-start; gap: 10px; }
+    #suppliersListModal .suppliers-modal-header .button { width: 100%; }
 }
-
 @media (max-width: 480px) {
     .page-header h1 { font-size: 1.4em; }
-    table th, table td { padding: 8px 6px; } /* Further reduce table padding */
+    table th, table td { padding: 8px 6px; }
     .status-badge { padding: 3px 8px; font-size: 0.75em;}
-    .modal-actions { flex-direction: column; } /* Stack modal buttons */
+    .modal-actions { flex-direction: column; }
     .modal-actions .button { width: 100%; }
 }
