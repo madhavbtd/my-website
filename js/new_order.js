@@ -1,654 +1,617 @@
-// js/new_po.js - v4 (Auto PO Number Generation Added)
-
-// --- Global Firestore Functions (Made available by new_po.html script) ---
-const {
-    db, collection, doc, addDoc, getDoc, getDocs, updateDoc, serverTimestamp, Timestamp,
-    query, where, orderBy, limit
-} = window; // Access globally defined functions
-
-// --- DOM Elements ---
-const poForm = document.getElementById('poForm');
-const poPageTitle = document.getElementById('poPageTitle');
-const poBreadcrumbAction = document.getElementById('poBreadcrumbAction');
-const editPOIdInput = document.getElementById('editPOId'); // Hidden input for edit mode
-const supplierSearchInput = document.getElementById('supplierSearchInput');
-const selectedSupplierIdInput = document.getElementById('selectedSupplierId');
-const selectedSupplierNameInput = document.getElementById('selectedSupplierName');
-const supplierSuggestionsDiv = document.getElementById('supplierSuggestions');
-const poNumberInput = document.getElementById('poNumberInput'); // PO Number Field
-const poOrderDateInput = document.getElementById('poOrderDateInput');
-const poItemsTableBody = document.getElementById('poItemsTableBody');
-const itemRowTemplate = document.getElementById('item-row-template');
-const addItemBtn = document.getElementById('addItemBtn');
-const calculationPreviewArea = document.getElementById('calculationPreviewArea');
-const poNotesInput = document.getElementById('poNotesInput');
-const poTotalAmountSpan = document.getElementById('poTotalAmount');
-const savePOBtn = document.getElementById('savePOBtn');
-const poErrorMsg = document.getElementById('poErrorMsg');
-const addNewSupplierFromPOBtn = document.getElementById('addNewSupplierFromPO');
-
-let currentEditingPOId = null;
-let supplierSearchTimeout = null;
-let itemsDataCache = []; // Cache item details for calculation preview
-
-// Import calculation function if needed elsewhere (assuming it's mainly for PDF now)
-// import { calculateFlexDimensions } from './utils.js';
-// Make calculateFlexDimensions available globally if needed by utils.js used via script tag
-// window.calculateFlexDimensions = calculateFlexDimensions; // Not ideal, but works with current utils.js
-
-
-// --- Function to Generate Next PO Number ---
-async function generateNextPoNumber() {
-    if (!poNumberInput) return; // Ensure element exists
-    poNumberInput.value = "Generating..."; // Show loading state
-
-    // Query Firestore for the PO with the highest poNumber
-    // Option 1: Assuming poNumber is stored as a string like "1001", "1002"
-    // String sort might work for a limited range, but number sort is safer.
-    // Option 2: Sort by creation time to get the latest physically created PO. Often PO numbers increase with time.
-    // Let's try sorting by 'poNumber' field descending first. Ensure it's indexed in Firestore.
-    // If 'poNumber' is not numeric, string sort "999" > "1000". If numeric, 1000 > 999.
-
-    const q = query(
-        collection(db, "purchaseOrders"),
-        orderBy("poNumber", "desc"), // TRY THIS FIRST: Assumes poNumber might be number or string sort works
-        // orderBy("createdAt", "desc"), // ALTERNATIVE: If poNumber sort is unreliable
-        limit(1)
-    );
-
-    try {
-        const querySnapshot = await getDocs(q);
-        let nextPoNumber = 1001; // Default starting number
-
-        if (!querySnapshot.empty) {
-            const lastPO = querySnapshot.docs[0].data();
-            const lastPoNumberStr = lastPO.poNumber; // Get the last PO number string/number
-
-            if (lastPoNumberStr) {
-                const lastPoNumberInt = parseInt(lastPoNumberStr, 10);
-                if (!isNaN(lastPoNumberInt)) {
-                    nextPoNumber = lastPoNumberInt + 1;
-                } else {
-                    console.warn(`Last PO Number "${lastPoNumberStr}" is not a valid integer. Falling back to default.`);
-                    // Fallback logic? Maybe try sorting by createdAt if number fails?
-                }
-            } else {
-                 console.warn("Last PO found but has no 'poNumber' field. Falling back.");
-            }
-        } else {
-            console.log("No existing POs found. Starting with PO number 1001.");
-        }
-
-        poNumberInput.value = nextPoNumber.toString(); // Display the generated number
-
-    } catch (error) {
-        console.error("Error generating PO number:", error);
-        poNumberInput.value = "Error"; // Indicate error
-        showPOError("Could not generate PO Number. Please check connection or try again.");
-        // Optionally disable form submission if PO number fails?
-        // savePOBtn.disabled = true;
-    }
-}
-
-
-// --- Supplier Search Functionality ---
-async function searchSuppliers(searchTerm) {
-    if (!db || !collection || !query || !where || !orderBy || !getDocs) {
-         console.error("Firestore functions not available for supplier search."); return;
-    }
-    if (searchTerm.length < 1) { supplierSuggestionsDiv.style.display = 'none'; return; }
-
-    supplierSuggestionsDiv.innerHTML = '<div><i class="fas fa-spinner fa-spin"></i> Searching...</div>';
-    supplierSuggestionsDiv.style.display = 'block';
-
-    try {
-        // Basic prefix search (case-sensitive in Firestore default index)
-        // For case-insensitive, store a lowercase version or use more advanced search
-        const q = query(collection(db, "suppliers"),
-                      orderBy("name"), // Order results
-                      where("name", ">=", searchTerm),
-                      where("name", "<=", searchTerm + '\uf8ff'), // Firestore prefix trick
-                      limit(10)); // Limit results
-
-        const querySnapshot = await getDocs(q);
-        supplierSuggestionsDiv.innerHTML = ''; // Clear previous results
-        if (querySnapshot.empty) {
-            supplierSuggestionsDiv.innerHTML = '<div>No suppliers found.</div>';
-        } else {
-            querySnapshot.forEach((doc) => {
-                const supplier = doc.data();
-                const div = document.createElement('div');
-                div.textContent = `${supplier.name} (${supplier.companyName || 'N/A'})`;
-                div.dataset.id = doc.id;
-                div.dataset.name = supplier.name;
-                div.addEventListener('click', () => {
-                    supplierSearchInput.value = supplier.name; // Display selected name
-                    selectedSupplierIdInput.value = doc.id;     // Store ID
-                    selectedSupplierNameInput.value = supplier.name; // Store Name
-                    supplierSuggestionsDiv.style.display = 'none'; // Hide suggestions
-                });
-                supplierSuggestionsDiv.appendChild(div);
-            });
-        }
-    } catch (error) {
-        console.error("Error searching suppliers:", error);
-        supplierSuggestionsDiv.innerHTML = '<div class="error-message">Error searching.</div>';
-    }
-}
-
-// Debounce supplier search input
-if (supplierSearchInput) {
-    supplierSearchInput.addEventListener('keyup', (event) => {
-        clearTimeout(supplierSearchTimeout);
-        const searchTerm = event.target.value.trim();
-        // Clear hidden fields if input is cleared
-        if (!searchTerm) {
-             selectedSupplierIdInput.value = '';
-             selectedSupplierNameInput.value = '';
-             supplierSuggestionsDiv.style.display = 'none';
-             return;
-        }
-        // Reset hidden ID if user types something new after selecting
-        selectedSupplierIdInput.value = '';
-        selectedSupplierNameInput.value = '';
-
-        supplierSearchTimeout = setTimeout(() => {
-            searchSuppliers(searchTerm);
-        }, 300); // Wait 300ms after typing stops
-    });
-    // Hide suggestions if clicked outside
-    document.addEventListener('click', (event) => {
-        if (!supplierSearchInput.contains(event.target) && !supplierSuggestionsDiv.contains(event.target)) {
-            supplierSuggestionsDiv.style.display = 'none';
-        }
-    });
-}
-
-// Navigate to add supplier page (or open modal if implemented differently)
-if (addNewSupplierFromPOBtn) {
-    addNewSupplierFromPOBtn.addEventListener('click', () => {
-        // Redirect to supplier management page with a flag to open the modal
-        window.location.href = 'supplier_management.html#add';
-    });
-}
-
-// --- Item Row Management ---
-function addItemRow() {
-    if (!itemRowTemplate || !poItemsTableBody) return;
-    const templateContent = itemRowTemplate.content.cloneNode(true);
-    poItemsTableBody.appendChild(templateContent);
-    const newRow = poItemsTableBody.lastElementChild;
-    attachRowListeners(newRow);
-    updateItemsUI(); // Update visibility based on initial state
-    updateTotalAmount(); // Update total when row added (likely 0 initially)
-}
-
-function deleteItemRow(button) {
-    const row = button.closest('.item-row');
-    if (row) {
-        row.remove();
-        updateTotalAmount(); // Recalculate total after deletion
-        updateCalculationPreview(); // Update preview after deletion
-    }
-}
-
-function attachRowListeners(row) {
-    // Delete button
-    const deleteBtn = row.querySelector('.delete-item-btn');
-    if (deleteBtn) {
-        deleteBtn.addEventListener('click', () => deleteItemRow(deleteBtn));
-    }
-
-    // Inputs that affect amount or preview
-    const inputs = row.querySelectorAll('.unit-type-select, .dimension-input, .dimension-unit-select, .quantity-input, .rate-input');
-    inputs.forEach(input => {
-        input.addEventListener('input', () => {
-            calculateItemAmount(row); // Recalculate item amount on change
-            updateCalculationPreview(); // Update preview on change
-        });
-        input.addEventListener('change', () => { // Also handle change for selects/blur
-            calculateItemAmount(row);
-            updateCalculationPreview();
-        });
-    });
-
-    // Unit Type Select specific logic
-    const unitTypeSelect = row.querySelector('.unit-type-select');
-    if (unitTypeSelect) {
-        unitTypeSelect.addEventListener('change', () => updateItemsUI(row));
-    }
-    // Ensure initial state is correct
-    updateItemsUI(row);
-}
-
-// Update UI elements based on Unit Type (Sq Feet vs Qty)
-function updateItemsUI(row = null) {
-    const rowsToUpdate = row ? [row] : poItemsTableBody.querySelectorAll('.item-row');
-    const isAnySqFeet = Array.from(poItemsTableBody.querySelectorAll('.unit-type-select')).some(sel => sel.value === 'Sq Feet');
-
-    // Update table headers visibility
-    const sqFeetHeaders = document.querySelectorAll('.sq-feet-header');
-    sqFeetHeaders.forEach(th => th.style.display = isAnySqFeet ? '' : 'none');
-    document.querySelector('.qty-header').style.display = ''; // Always show Qty header for now
-
-    rowsToUpdate.forEach(r => {
-        const unitType = r.querySelector('.unit-type-select').value;
-        const sqFeetInputs = r.querySelectorAll('.sq-feet-input');
-        const qtyInput = r.querySelector('.qty-input');
-        const widthInput = r.querySelector('.width-input');
-        const heightInput = r.querySelector('.height-input');
-        const quantityInput = r.querySelector('.quantity-input');
-
-        if (unitType === 'Sq Feet') {
-            sqFeetInputs.forEach(el => el.style.display = '');
-            qtyInput.style.display = 'none';
-            // Make dimension inputs required, quantity not required
-            widthInput?.setAttribute('required', '');
-            heightInput?.setAttribute('required', '');
-            quantityInput?.removeAttribute('required');
-            quantityInput.value = ''; // Clear quantity if switching to Sq Feet
-        } else { // Qty
-            sqFeetInputs.forEach(el => el.style.display = 'none');
-            qtyInput.style.display = '';
-            // Make quantity required, dimensions not required
-            widthInput?.removeAttribute('required');
-            heightInput?.removeAttribute('required');
-            quantityInput?.setAttribute('required', '');
-            widthInput.value = ''; // Clear dimensions if switching to Qty
-            heightInput.value = '';
-        }
-    });
-}
-
-
-// --- Calculation Logic ---
-
-// Calculates amount for a single item row and updates its display
-function calculateItemAmount(row) {
-    const unitType = row.querySelector('.unit-type-select').value;
-    const rateInput = row.querySelector('.rate-input');
-    const rate = parseFloat(rateInput.value) || 0;
-    const itemAmountSpan = row.querySelector('.item-amount');
-    let itemAmount = 0;
-
-    // Basic validation: Rate is required
-    if (rate <= 0) {
-         rateInput.style.borderColor = 'red'; // Highlight error
-    } else {
-         rateInput.style.borderColor = ''; // Clear error highlight
-    }
-
-    if (unitType === 'Sq Feet') {
-        const widthInput = row.querySelector('.width-input');
-        const heightInput = row.querySelector('.height-input');
-        const unitSelect = row.querySelector('.dimension-unit-select');
-        const width = parseFloat(widthInput.value) || 0;
-        const height = parseFloat(heightInput.value) || 0;
-        const unit = unitSelect.value;
-
-        // Basic validation: Dimensions required for Sq Feet
-        let validDims = true;
-        if (width <= 0) { widthInput.style.borderColor = 'red'; validDims = false; } else { widthInput.style.borderColor = ''; }
-        if (height <= 0) { heightInput.style.borderColor = 'red'; validDims = false; } else { heightInput.style.borderColor = ''; }
-
-        if (rate > 0 && validDims) {
-            // Use calculateFlexDimensions (ensure it's loaded/available)
-            if (typeof calculateFlexDimensions === 'function') {
-                 const calcResult = calculateFlexDimensions(unit, width, height);
-                 const finalSqFt = parseFloat(calcResult.printSqFt) || 0; // Use calculated printSqFt
-                 itemAmount = finalSqFt * rate;
-            } else {
-                 console.warn("calculateFlexDimensions function not found. Using basic W*H.");
-                 // Fallback basic calculation (less accurate)
-                 let wFt = (unit === 'inches') ? width / 12 : width;
-                 let hFt = (unit === 'inches') ? height / 12 : height;
-                 itemAmount = wFt * hFt * rate;
-            }
-        }
-
-    } else { // Qty
-        const quantityInput = row.querySelector('.quantity-input');
-        const quantity = parseInt(quantityInput.value) || 0;
-
-        // Basic validation: Quantity required
-        if (quantity <= 0) { quantityInput.style.borderColor = 'red'; } else { quantityInput.style.borderColor = ''; }
-
-        if (rate > 0 && quantity > 0) {
-            itemAmount = quantity * rate;
-        }
-    }
-
-    itemAmountSpan.textContent = itemAmount.toFixed(2);
-    updateTotalAmount(); // Update overall total whenever an item amount changes
-}
-
-// Update the grand total amount display
-function updateTotalAmount() {
-    let total = 0;
-    poItemsTableBody.querySelectorAll('.item-row').forEach(row => {
-        const itemAmount = parseFloat(row.querySelector('.item-amount').textContent) || 0;
-        total += itemAmount;
-    });
-    poTotalAmountSpan.textContent = total.toFixed(2);
-}
-
-// Update the calculation preview area
-function updateCalculationPreview() {
-    if (!calculationPreviewArea) return;
-    itemsDataCache = []; // Clear cache
-    let previewHtml = '<h4>Calculation Preview:</h4>';
-    let hasContent = false;
-
-    poItemsTableBody.querySelectorAll('.item-row').forEach((row, index) => {
-        const productName = row.querySelector('.product-name').value || `Item ${index + 1}`;
-        const unitType = row.querySelector('.unit-type-select').value;
-        const rate = parseFloat(row.querySelector('.rate-input').value) || 0;
-        let itemDetails = `<div class="item-preview-entry"><strong>${productName}</strong>: `;
-        let calculationText = "N/A";
-
-        const itemCacheEntry = { name: productName, type: unitType }; // Start cache entry
-
-        if (unitType === 'Sq Feet' && rate > 0) {
-            const width = row.querySelector('.width-input').value;
-            const height = row.querySelector('.height-input').value;
-            const unit = row.querySelector('.dimension-unit-select').value;
-
-            itemCacheEntry.width = width;
-            itemCacheEntry.height = height;
-            itemCacheEntry.unit = unit;
-
-            if (parseFloat(width) > 0 && parseFloat(height) > 0 && typeof calculateFlexDimensions === 'function') {
-                const calc = calculateFlexDimensions(unit, width, height);
-                itemCacheEntry.calc = calc; // Store calculation result
-                calculationText = `Real Size: ${parseFloat(width).toFixed(2)}x${parseFloat(height).toFixed(2)} ${unit} (${calc.realSqFt} sq ft).
-                                   Print Size Used: ${calc.printWidth}x${calc.printHeight} ${calc.inputUnit}.
-                                   Billing Area: <strong>${calc.printSqFt} sq ft</strong> @ ₹${rate.toFixed(2)}/sq ft.`;
-                hasContent = true;
-            } else if (parseFloat(width) > 0 && parseFloat(height) > 0) {
-                 calculationText = `Real Size: ${parseFloat(width).toFixed(2)}x${parseFloat(height).toFixed(2)} ${unit}. Rate: ₹${rate.toFixed(2)}/sq ft. (Full calculation function missing/invalid).`;
-                 hasContent = true;
-            } else {
-                 calculationText = "Incomplete dimensions.";
-            }
-        } else if (unitType === 'Qty' && rate > 0) {
-            const quantity = row.querySelector('.quantity-input').value;
-            itemCacheEntry.quantity = quantity;
-            if (parseInt(quantity) > 0) {
-                 calculationText = `Quantity: <strong>${quantity}</strong> @ ₹${rate.toFixed(2)}/unit.`;
-                 hasContent = true;
-            } else {
-                 calculationText = "Invalid quantity.";
-            }
-        } else {
-            calculationText = "Incomplete rate or details.";
-        }
-        itemDetails += calculationText + '</div>';
-        previewHtml += itemDetails;
-        itemsDataCache.push(itemCacheEntry); // Add details to cache
-    });
-
-    calculationPreviewArea.innerHTML = hasContent ? previewHtml : ''; // Only show preview if there's content
-    calculationPreviewArea.style.display = hasContent ? 'block' : 'none';
-}
-
-
-// --- Form Submission ---
-async function savePO(event) {
-    event.preventDefault();
-    showPOError(''); // Clear previous errors
-    savePOBtn.disabled = true;
-    savePOBtn.querySelector('span').textContent = 'Saving...';
-
-    if (!db || !collection || !addDoc || !doc || !updateDoc || !serverTimestamp || !Timestamp) {
-        showPOError("Error: Database functions not loaded correctly.");
-        savePOBtn.disabled = false; savePOBtn.querySelector('span').textContent = 'Save Purchase Order';
-        return;
-    }
-
-    // --- Validation ---
-    const supplierId = selectedSupplierIdInput.value;
-    const orderDate = poOrderDateInput.value;
-    if (!supplierId) { showPOError("Please select a supplier from the suggestions."); supplierSearchInput.focus(); savePOBtn.disabled = false; savePOBtn.querySelector('span').textContent = 'Save Purchase Order'; return; }
-    if (!orderDate) { showPOError("Please select an Order Date."); poOrderDateInput.focus(); savePOBtn.disabled = false; savePOBtn.querySelector('span').textContent = 'Save Purchase Order'; return; }
-    if (poItemsTableBody.rows.length === 0) { showPOError("Please add at least one item to the Purchase Order."); addItemBtn.focus(); savePOBtn.disabled = false; savePOBtn.querySelector('span').textContent = 'Save Purchase Order'; return; }
-
-    let itemsValid = true;
-    const items = [];
-    poItemsTableBody.querySelectorAll('.item-row').forEach((row, index) => {
-        const productNameInput = row.querySelector('.product-name');
-        const rateInput = row.querySelector('.rate-input');
-        const unitType = row.querySelector('.unit-type-select').value;
-
-        const productName = productNameInput.value.trim();
-        const rate = parseFloat(rateInput.value) || 0;
-
-        // Validate common fields
-        if (!productName) { productNameInput.style.borderColor = 'red'; itemsValid = false; } else { productNameInput.style.borderColor = ''; }
-        if (rate <= 0) { rateInput.style.borderColor = 'red'; itemsValid = false; } else { rateInput.style.borderColor = ''; }
-
-        const item = {
-            productName: productName,
-            type: unitType,
-            rate: rate,
-            partyName: row.querySelector('.party-name').value.trim(),
-            designDetails: row.querySelector('.design-details').value.trim(),
-            itemAmount: parseFloat(row.querySelector('.item-amount').textContent) || 0,
-        };
-
-        if (unitType === 'Sq Feet') {
-            const widthInput = row.querySelector('.width-input');
-            const heightInput = row.querySelector('.height-input');
-            const unitSelect = row.querySelector('.dimension-unit-select');
-            const width = parseFloat(widthInput.value) || 0;
-            const height = parseFloat(heightInput.value) || 0;
-            const unit = unitSelect.value;
-
-            if (width <= 0) { widthInput.style.borderColor = 'red'; itemsValid = false; } else { widthInput.style.borderColor = ''; }
-            if (height <= 0) { heightInput.style.borderColor = 'red'; itemsValid = false; } else { heightInput.style.borderColor = ''; }
-
-            item.width = width;
-            item.height = height;
-            item.unit = unit;
-
-            // Add calculated print dimensions from cache or recalculate
-            const cachedItem = itemsDataCache[index];
-            if (cachedItem && cachedItem.type === 'Sq Feet' && cachedItem.calc) {
-                item.printWidth = parseFloat(cachedItem.calc.printWidth) || 0;
-                item.printHeight = parseFloat(cachedItem.calc.printHeight) || 0;
-                item.inputUnit = cachedItem.calc.inputUnit;
-                item.printSqFt = parseFloat(cachedItem.calc.printSqFt) || 0;
-            } else if (typeof calculateFlexDimensions === 'function') {
-                 // Recalculate if cache is missing (should not happen ideally)
-                 console.warn(`Recalculating dimensions for item ${index} during save.`);
-                 const calcResult = calculateFlexDimensions(unit, width, height);
-                 item.printWidth = parseFloat(calcResult.printWidth) || 0;
-                 item.printHeight = parseFloat(calcResult.printHeight) || 0;
-                 item.inputUnit = calcResult.inputUnit;
-                 item.printSqFt = parseFloat(calcResult.printSqFt) || 0;
-            } else {
-                 item.printSqFt = (width/ (unit === 'inches' ? 12:1)) * (height/ (unit === 'inches' ? 12:1)); // Basic fallback
-            }
-
-        } else { // Qty
-            const quantityInput = row.querySelector('.quantity-input');
-            const quantity = parseInt(quantityInput.value) || 0;
-            if (quantity <= 0) { quantityInput.style.borderColor = 'red'; itemsValid = false; } else { quantityInput.style.borderColor = ''; }
-            item.quantity = quantity;
-        }
-        items.push(item);
-    });
-
-    if (!itemsValid) {
-        showPOError("Please fill in all required fields for items (marked in red).");
-        savePOBtn.disabled = false; savePOBtn.querySelector('span').textContent = 'Save Purchase Order'; return;
-    }
-
-    // --- Prepare Data for Firestore ---
-    const poData = {
-        supplierId: supplierId,
-        supplierName: selectedSupplierNameInput.value, // Store supplier name for convenience
-        poNumber: poNumberInput.value.trim(), // Use the generated or existing number
-        orderDate: Timestamp.fromDate(new Date(orderDate)), // Convert date string to Firestore Timestamp
-        items: items,
-        totalAmount: parseFloat(poTotalAmountSpan.textContent) || 0,
-        notes: poNotesInput.value.trim(),
-        updatedAt: serverTimestamp(), // Use server timestamp for updates
-    };
-
-    try {
-        if (currentEditingPOId) { // --- Update Existing PO ---
-            const poRef = doc(db, "purchaseOrders", currentEditingPOId);
-            // Keep original status unless explicitly changed elsewhere
-            // poData.status = ??; // Need logic if status can be changed on edit form
-            await updateDoc(poRef, poData);
-            console.log("Purchase Order updated with ID: ", currentEditingPOId);
-            alert("Purchase Order updated successfully!");
-        } else { // --- Add New PO ---
-            poData.createdAt = serverTimestamp(); // Set creation timestamp only for new POs
-            poData.status = "New"; // Default status for new POs
-            const docRef = await addDoc(collection(db, "purchaseOrders"), poData);
-            console.log("Purchase Order added with ID: ", docRef.id);
-            alert(`Purchase Order ${poData.poNumber} created successfully!`);
-        }
-        // Redirect back to the PO list page
-        window.location.href = 'supplier_management.html';
-
-    } catch (error) {
-        console.error("Error saving Purchase Order: ", error);
-        showPOError("Error saving Purchase Order: " + error.message);
-        savePOBtn.disabled = false;
-        savePOBtn.querySelector('span').textContent = 'Save Purchase Order';
-    }
-}
-
-// --- Load PO Data for Editing ---
-async function loadPOForEditing(poId) {
-    currentEditingPOId = poId; // Set global editing ID
-    editPOIdInput.value = poId; // Set hidden input value
-    poPageTitle.textContent = 'Edit Purchase Order';
-    poBreadcrumbAction.textContent = 'Edit PO';
-    savePOBtn.querySelector('span').textContent = 'Update Purchase Order';
-    poNumberInput.readOnly = true; // Keep PO number readonly even in edit mode
-
-    if (!db || !doc || !getDoc) { showPOError("Database functions not loaded."); return; }
-
-    try {
-        const poRef = doc(db, "purchaseOrders", poId);
-        const docSnap = await getDoc(poRef);
-
-        if (docSnap.exists()) {
-            const poData = docSnap.data();
-
-            // Populate Supplier Info
-            selectedSupplierIdInput.value = poData.supplierId;
-            selectedSupplierNameInput.value = poData.supplierName || ''; // Use stored name
-            supplierSearchInput.value = poData.supplierName || ''; // Display supplier name
-            // Optionally fetch full supplier details if needed:
-            // if (poData.supplierId) {
-            //     const supplierSnap = await getDoc(doc(db, "suppliers", poData.supplierId));
-            //     if (supplierSnap.exists()) supplierSearchInput.value = supplierSnap.data().name;
-            // }
-
-            // Populate PO Details
-            poNumberInput.value = poData.poNumber || '';
-            if (poData.orderDate?.toDate) {
-                poOrderDateInput.valueAsDate = poData.orderDate.toDate();
-            }
-            poNotesInput.value = poData.notes || '';
-
-            // Populate Items
-            poItemsTableBody.innerHTML = ''; // Clear any existing rows
-            if (poData.items && poData.items.length > 0) {
-                poData.items.forEach(item => {
-                    if (!itemRowTemplate || !poItemsTableBody) return;
-                    const templateContent = itemRowTemplate.content.cloneNode(true);
-                    const newRow = templateContent.querySelector('.item-row'); // Get the row element
-
-                    // Populate fields
-                    newRow.querySelector('.product-name').value = item.productName || '';
-                    newRow.querySelector('.unit-type-select').value = item.type || 'Qty';
-                    newRow.querySelector('.rate-input').value = item.rate?.toFixed(2) || '0.00';
-                    newRow.querySelector('.party-name').value = item.partyName || '';
-                    newRow.querySelector('.design-details').value = item.designDetails || '';
-                    newRow.querySelector('.item-amount').textContent = item.itemAmount?.toFixed(2) || '0.00';
-
-                    if (item.type === 'Sq Feet') {
-                        newRow.querySelector('.width-input').value = item.width || '';
-                        newRow.querySelector('.height-input').value = item.height || '';
-                        newRow.querySelector('.dimension-unit-select').value = item.unit || 'feet';
-                    } else {
-                        newRow.querySelector('.quantity-input').value = item.quantity || '';
-                    }
-
-                    poItemsTableBody.appendChild(templateContent); // Append the populated template
-                    attachRowListeners(newRow); // Attach listeners to the new row
-                });
-            }
-            updateItemsUI(); // Update headers/visibility based on loaded items
-            updateTotalAmount(); // Calculate total based on loaded items
-            updateCalculationPreview(); // Show preview for loaded items
-
-        } else {
-            console.error("No such PO document!");
-            showPOError(`Error: Purchase Order with ID ${poId} not found.`);
-            savePOBtn.disabled = true; // Disable saving if PO not found
-        }
-    } catch (error) {
-        console.error("Error loading PO for editing:", error);
-        showPOError("Error loading Purchase Order data: " + error.message);
-        savePOBtn.disabled = true;
-    }
-}
-
-
-// Helper to show errors
-function showPOError(message) {
-    poErrorMsg.textContent = message;
-    poErrorMsg.style.display = message ? 'block' : 'none';
-}
+// js/new_order.js
+
+// Firestore functions
+const { db, collection, addDoc, doc, getDoc, updateDoc, getDocs, query, where, limit, orderBy } = window;
+
+// --- Global Variables ---
+let addedProducts = [];
+let isEditMode = false;
+let orderIdToEdit = null;
+let selectedCustomerId = null;
+let productCache = []; // Cache for product names
+let customerCache = []; // Cache for customer names/numbers
+let productFetchPromise = null; // To avoid multiple fetches
+let customerFetchPromise = null; // To avoid multiple fetches
+
+// --- DOM Element References ---
+const orderForm = document.getElementById('newOrderForm');
+const saveButton = document.getElementById('saveOrderBtn');
+const saveButtonText = saveButton ? saveButton.querySelector('span') : null;
+const formHeader = document.getElementById('formHeader');
+const headerText = document.getElementById('headerText');
+const hiddenEditOrderIdInput = document.getElementById('editOrderId');
+const selectedCustomerIdInput = document.getElementById('selectedCustomerId');
+const displayOrderIdInput = document.getElementById('display_order_id');
+const manualOrderIdInput = document.getElementById('manual_order_id');
+const customerNameInput = document.getElementById('full_name');
+const customerWhatsAppInput = document.getElementById('whatsapp_no');
+const customerAddressInput = document.getElementById('address');
+const customerContactInput = document.getElementById('contact_no');
+const customerSuggestionsNameBox = document.getElementById('customer-suggestions-name');
+const customerSuggestionsWhatsAppBox = document.getElementById('customer-suggestions-whatsapp');
+const productNameInput = document.getElementById('product_name_input');
+const quantityInput = document.getElementById('quantity_input');
+const addProductBtn = document.getElementById('add-product-btn');
+const productListContainer = document.getElementById('product-list');
+const productSuggestionsBox = document.getElementById('product-suggestions');
+const orderStatusCheckboxes = document.querySelectorAll('input[name="order_status"]');
+const orderStatusGroup = document.getElementById('order-status-group');
+const whatsappReminderPopup = document.getElementById('whatsapp-reminder-popup');
+const whatsappMsgPreview = document.getElementById('whatsapp-message-preview');
+const whatsappSendLink = document.getElementById('whatsapp-send-link');
+const popupCloseBtn = document.getElementById('popup-close-btn');
 
 
 // --- Initialization ---
 document.addEventListener('DOMContentLoaded', () => {
-    console.log("new_po.js: DOM loaded.");
-    itemsDataCache = []; // Initialize cache
+    console.log("[DEBUG] New Order DOM Loaded. Initializing...");
+    waitForDbConnection(initializeForm);
+    // Event Listeners
+    if (orderForm) orderForm.addEventListener('submit', handleFormSubmit);
+    if (addProductBtn) addProductBtn.addEventListener('click', handleAddProduct);
+    if (productListContainer) productListContainer.addEventListener('click', handleDeleteProduct);
+    // Blur listeners to hide suggestions
+    if (customerNameInput) customerNameInput.addEventListener('blur', () => hideSuggestionBox(customerSuggestionsNameBox));
+    if (customerWhatsAppInput) customerWhatsAppInput.addEventListener('blur', () => hideSuggestionBox(customerSuggestionsWhatsAppBox));
+    if (productNameInput) productNameInput.addEventListener('blur', () => hideSuggestionBox(productSuggestionsBox));
+    // Input listeners for searching
+    if (customerNameInput) customerNameInput.addEventListener('input', (e) => handleCustomerInput(e, 'name'));
+    if (customerWhatsAppInput) customerWhatsAppInput.addEventListener('input', (e) => handleCustomerInput(e, 'whatsapp'));
+    if (productNameInput) productNameInput.addEventListener('input', handleProductInput);
+    if (popupCloseBtn) popupCloseBtn.addEventListener('click', closeWhatsAppPopup);
+    if (whatsappReminderPopup) whatsappReminderPopup.addEventListener('click', (event) => { if (event.target === whatsappReminderPopup) closeWhatsAppPopup(); });
 
-    // Check for Firestore availability (should be set by HTML script)
-    if (!window.db || !window.collection) {
-         console.error("Firestore instance (db or collection) not found on window object.");
-         showPOError("Application Error: Database connection failed. Please refresh.");
-         if(savePOBtn) savePOBtn.disabled = true;
-         return;
-    }
-
-    // Add first item row automatically only if NOT editing
-    const urlParams = new URLSearchParams(window.location.search);
-    const editPOId = urlParams.get('editPOId');
-
-    if (editPOId) {
-        console.log("Loading PO for editing:", editPOId);
-        loadPOForEditing(editPOId);
-    } else {
-        console.log("Creating new PO.");
-        // Add initial item row for new POs
-        addItemRow();
-        // Set default order date to today
-        poOrderDateInput.valueAsDate = new Date();
-        // Generate the next PO Number
-        generateNextPoNumber(); // <-- कॉल करें
-    }
-
-    // Add Item button listener
-    if (addItemBtn) {
-        addItemBtn.addEventListener('click', addItemRow);
-    }
-
-    // Form submit listener
-    if (poForm) {
-        poForm.addEventListener('submit', savePO);
-    }
-
-     // Initial UI update for headers
-    updateItemsUI();
-    console.log("new_po.js: Initialized.");
+    // Global click listener to hide suggestion boxes when clicking outside
+    document.addEventListener('click', (event) => {
+        if (customerSuggestionsNameBox && !customerSuggestionsNameBox.contains(event.target) && event.target !== customerNameInput) {
+            hideSuggestionBox(customerSuggestionsNameBox);
+        }
+        if (customerSuggestionsWhatsAppBox && !customerSuggestionsWhatsAppBox.contains(event.target) && event.target !== customerWhatsAppInput) {
+            hideSuggestionBox(customerSuggestionsWhatsAppBox);
+        }
+        if (productSuggestionsBox && !productSuggestionsBox.contains(event.target) && event.target !== productNameInput) {
+            hideSuggestionBox(productSuggestionsBox);
+        }
+    });
 });
+
+// --- DB Connection Wait ---
+function waitForDbConnection(callback) {
+    if (window.db) { console.log("[DEBUG] DB connection confirmed immediately."); callback(); }
+    else { let attempts = 0; const maxAttempts = 20; const intervalId = setInterval(() => { attempts++; if (window.db) { clearInterval(intervalId); console.log("[DEBUG] DB connection confirmed after check."); callback(); } else if (attempts >= maxAttempts) { clearInterval(intervalId); console.error("[DEBUG] DB connection timeout."); alert("Database connection failed."); } }, 250); }
+}
+
+// --- Utility to Hide Suggestion Box (Removed Timeout) ---
+function hideSuggestionBox(box) {
+    // Hide immediately on blur or click outside
+    if (box) {
+         box.classList.remove('active');
+         box.style.display = 'none';
+    }
+    // No need for setTimeout or activeElement check here, rely on mousedown for selection clicks
+}
+
+
+// --- Initialize Form ---
+function initializeForm() {
+    const urlParams = new URLSearchParams(window.location.search);
+    orderIdToEdit = urlParams.get('editOrderId');
+    if (orderIdToEdit) {
+        isEditMode = true;
+        console.log("[DEBUG] Edit Mode Initializing. Order Firestore ID:", orderIdToEdit);
+        if(headerText) headerText.textContent = "Edit Order"; else if(formHeader) formHeader.textContent = "Edit Order";
+        if(saveButtonText) saveButtonText.textContent = "Update Order";
+        if(hiddenEditOrderIdInput) hiddenEditOrderIdInput.value = orderIdToEdit;
+        if(manualOrderIdInput) manualOrderIdInput.readOnly = true; // Cannot change manual ID in edit mode
+        loadOrderForEdit(orderIdToEdit);
+        handleStatusCheckboxes(true);
+    } else {
+        isEditMode = false;
+        console.log("[DEBUG] Add Mode Initializing.");
+        if(headerText) headerText.textContent = "New Order"; else if(formHeader) formHeader.textContent = "New Order";
+        if(saveButtonText) saveButtonText.textContent = "Save Order";
+        if(manualOrderIdInput) manualOrderIdInput.readOnly = false; // Can set manual ID for new orders
+        const orderDateInput = document.getElementById('order_date');
+        if (orderDateInput && !orderDateInput.value) { orderDateInput.value = new Date().toISOString().split('T')[0]; }
+        handleStatusCheckboxes(false);
+        renderProductList();
+        resetCustomerSelection();
+        displayOrderIdInput.value = ''; // Clear system ID field for new orders
+    }
+}
+
+// --- Load Order For Edit ---
+async function loadOrderForEdit(docId) {
+    console.log(`[DEBUG] Loading order data for edit from Firestore: ${docId}`);
+    try {
+        const orderRef = doc(db, "orders", docId);
+        const docSnap = await getDoc(orderRef);
+        if (docSnap.exists()) {
+            const data = docSnap.data();
+            console.log("[DEBUG] Order data for edit:", data);
+            // Fill form (customer, order details, urgent, status)
+            customerNameInput.value = data.customerDetails?.fullName || '';
+            customerAddressInput.value = data.customerDetails?.address || ''; // Changed from billingAddress for consistency if needed
+            customerWhatsAppInput.value = data.customerDetails?.whatsappNo || '';
+            customerContactInput.value = data.customerDetails?.contactNo || '';
+            selectedCustomerId = data.customerId || null;
+            if (selectedCustomerIdInput) selectedCustomerIdInput.value = selectedCustomerId;
+            // Don't lock customer fields in edit mode - allow changes
+            customerAddressInput.readOnly = false; customerContactInput.readOnly = false;
+
+            displayOrderIdInput.value = data.orderId || docId; // Show the existing system/saved Order ID
+            manualOrderIdInput.value = data.orderId || ''; // Display same ID in manual field, but keep it readOnly
+            orderForm.order_date.value = data.orderDate || '';
+            orderForm.delivery_date.value = data.deliveryDate || '';
+            orderForm.remarks.value = data.remarks || '';
+            const urgentVal = data.urgent || 'No';
+            const urgentRadio = orderForm.querySelector(`input[name="urgent"][value="${urgentVal}"]`);
+            if (urgentRadio) urgentRadio.checked = true;
+            orderStatusCheckboxes.forEach(cb => cb.checked = false);
+            if (data.status) {
+                const statusCheckbox = orderForm.querySelector(`input[name="order_status"][value="${data.status}"]`);
+                if (statusCheckbox) statusCheckbox.checked = true;
+            }
+            // Fill product list
+            addedProducts = data.products || [];
+            renderProductList();
+        } else {
+            console.error("[DEBUG] Order document not found for editing!"); alert("Error: Cannot find the order to edit."); window.location.href = 'order_history.html';
+        }
+    } catch (error) {
+        console.error("[DEBUG] Error loading order for edit:", error); alert("Error loading order data: " + error.message); window.location.href = 'order_history.html';
+    }
+}
+
+// --- Product Handling ---
+function handleAddProduct() {
+     const name = productNameInput.value.trim();
+    const quantity = quantityInput.value.trim();
+    if (!name) { alert("Please select or enter a product name."); productNameInput.focus(); return; }
+    if (!quantity || isNaN(quantity) || Number(quantity) <= 0) { alert("Please enter a valid quantity."); quantityInput.focus(); return; }
+    addedProducts.push({ name: name, quantity: Number(quantity) });
+    console.log("[DEBUG] Product added:", addedProducts);
+    renderProductList();
+    productNameInput.value = ''; quantityInput.value = ''; productNameInput.focus();
+    // Hide suggestion box after adding
+    hideSuggestionBox(productSuggestionsBox);
+    productNameInput.readOnly = false;
+ }
+function renderProductList() {
+     if (!productListContainer) return; productListContainer.innerHTML = '';
+    if (addedProducts.length === 0) { productListContainer.innerHTML = '<p class="empty-list-message">No products added yet.</p>'; return; }
+    addedProducts.forEach((product, index) => {
+        const listItem = document.createElement('div'); listItem.classList.add('product-list-item');
+        listItem.innerHTML = `<span>${index + 1}. ${product.name} - Qty: ${product.quantity}</span><button type="button" class="delete-product-btn" data-index="${index}" title="Delete Product"><i class="fas fa-trash-alt"></i></button>`;
+        productListContainer.appendChild(listItem);
+    });
+}
+function handleDeleteProduct(event) {
+     const deleteButton = event.target.closest('.delete-product-btn');
+    if (deleteButton) { const indexToDelete = parseInt(deleteButton.dataset.index, 10); if (!isNaN(indexToDelete) && indexToDelete >= 0 && indexToDelete < addedProducts.length) { addedProducts.splice(indexToDelete, 1); console.log("[DEBUG] Product deleted:", addedProducts); renderProductList(); } }
+}
+
+// --- Status Checkbox Handling ---
+function handleStatusCheckboxes(isEditing) {
+    const defaultStatus = "Order Received"; let defaultCheckbox = null;
+    orderStatusCheckboxes.forEach(checkbox => {
+         if (checkbox.value === defaultStatus) defaultCheckbox = checkbox;
+         // Status can always be changed, even for new orders that start default
+         checkbox.disabled = false; // Always enable status change
+         checkbox.closest('label').classList.remove('disabled'); // Remove disabled visual style
+         checkbox.removeEventListener('change', handleStatusChange);
+         checkbox.addEventListener('change', handleStatusChange);
+     });
+    // Only default check 'Order Received' if it's a truly new order and no status is loaded yet
+    if (!isEditing && !orderForm.querySelector('input[name="order_status"]:checked') && defaultCheckbox) {
+        defaultCheckbox.checked = true;
+    }
+}
+function handleStatusChange(event) { const changedCheckbox = event.target; if (changedCheckbox.checked) { orderStatusCheckboxes.forEach(otherCb => { if (otherCb !== changedCheckbox) otherCb.checked = false; }); } }
+
+// --- Autocomplete V2: Client-Side Filtering ---
+
+// --- Customer Autocomplete ---
+let customerSearchTimeout;
+function handleCustomerInput(event, type) {
+    const searchTerm = event.target.value.trim();
+    const suggestionBox = type === 'name' ? customerSuggestionsNameBox : customerSuggestionsWhatsAppBox;
+    if (!suggestionBox) return;
+
+    // Allow editing customer details even if selected
+    resetCustomerSelection(); // Make fields editable on input
+
+    if (searchTerm.length < 2) {
+        clearTimeout(customerSearchTimeout);
+        hideSuggestionBox(suggestionBox); // Use the function to hide
+        return;
+     }
+
+    clearTimeout(customerSearchTimeout);
+    customerSearchTimeout = setTimeout(() => {
+        console.log(`[DEBUG] Triggering customer filter for (${type}): "${searchTerm}"`);
+        getOrFetchCustomerCache().then(() => { filterAndRenderCustomerSuggestions(searchTerm, type, suggestionBox); }).catch(err => console.error("[DEBUG] Error during customer fetch/filter:", err));
+    }, 300);
+}
+async function getOrFetchCustomerCache() {
+    if (customerCache.length > 0) { console.log("[DEBUG] Using cached customer data."); return Promise.resolve(); }
+    if (customerFetchPromise) { console.log("[DEBUG] Waiting for existing customer fetch promise."); return customerFetchPromise; }
+    console.log("[DEBUG] Fetching initial customer data from Firestore...");
+    try {
+        if (!db || !collection || !query || !getDocs || !orderBy) { throw new Error("Firestore query functions unavailable for customers."); }
+        const customersRef = collection(db, "customers");
+        const q = query(customersRef, orderBy("fullName")); // Requires index on fullName
+        console.log("[DEBUG] Customer Fetch Query:", q);
+        customerFetchPromise = getDocs(q).then(snapshot => {
+            customerCache = [];
+            snapshot.forEach(doc => { const d = doc.data(); if (d.fullName && d.whatsappNo) customerCache.push({ id: doc.id, ...d }); });
+            console.log(`[DEBUG] Fetched and cached ${snapshot.size} documents -> ${customerCache.length} valid customers.`);
+            customerFetchPromise = null;
+        }).catch(err => { console.error("[DEBUG] Error fetching customers:", err); customerFetchPromise = null; throw err; });
+        return customerFetchPromise;
+    } catch (error) { console.error("[DEBUG] Error setting up customer fetch:", error); customerFetchPromise = null; return Promise.reject(error); }
+}
+function filterAndRenderCustomerSuggestions(term, type, box) {
+    const lowerTerm = term.toLowerCase();
+    const field = type === 'name' ? 'fullName' : 'whatsappNo';
+    console.log(`[DEBUG] Filtering ${customerCache.length} cached customers for term "${term}" on field "${field}"`);
+    const filtered = customerCache.filter(c => { const val = c[field] || ''; return val.toLowerCase().includes(lowerTerm); }).slice(0, 7);
+    console.log(`[DEBUG] Found ${filtered.length} customer suggestions.`);
+    renderCustomerSuggestions(filtered, term, box);
+}
+function renderCustomerSuggestions(suggestions, term, box) {
+     if (!box) return;
+     if (suggestions.length === 0) {
+         box.classList.remove('active'); // Hide container
+         box.style.display = 'none';
+         return;
+     }
+    const ul = document.createElement('ul');
+    suggestions.forEach(cust => {
+        const li = document.createElement('li'); const dName = `${cust.fullName} (${cust.whatsappNo})`;
+        try { li.innerHTML = dName.replace(new RegExp(`(${term.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')})`, 'gi'), '<strong>$1</strong>'); } catch { li.textContent = dName; }
+        li.dataset.customer = JSON.stringify(cust);
+        li.addEventListener('mousedown', (e) => { // Use mousedown to register before blur
+            e.preventDefault(); // Prevent input blur
+            fillCustomerData(cust);
+            hideSuggestionBox(box); // Hide box after selection
+        });
+        ul.appendChild(li);
+    });
+    box.innerHTML = '';
+    box.appendChild(ul);
+    box.classList.add('active'); // Show container
+    box.style.display = 'block'; // Explicitly show
+}
+function fillCustomerData(customer) {
+    if (!customer) { resetCustomerSelection(); return; }
+    console.log("[DEBUG] Filling customer data:", customer);
+    customerNameInput.value = customer.fullName || ''; customerWhatsAppInput.value = customer.whatsappNo || '';
+    customerAddressInput.value = customer.billingAddress || customer.address || ''; customerContactInput.value = customer.contactNo || '';
+    selectedCustomerId = customer.id; if(selectedCustomerIdInput) selectedCustomerIdInput.value = selectedCustomerId; // Store ID
+    // Explicitly Hide Boxes after filling
+    hideSuggestionBox(customerSuggestionsNameBox);
+    hideSuggestionBox(customerSuggestionsWhatsAppBox);
+    // Keep fields editable after filling
+    customerAddressInput.readOnly = false; customerContactInput.readOnly = false;
+}
+function resetCustomerSelection() {
+     selectedCustomerId = null; if(selectedCustomerIdInput) selectedCustomerIdInput.value = '';
+     // Keep input values, just make fields editable
+     customerAddressInput.readOnly = false; customerContactInput.readOnly = false;
+     console.log("[DEBUG] Customer selection reset (fields editable).");
+}
+
+// --- Product Autocomplete ---
+let productSearchTimeout;
+function handleProductInput(event) {
+    const searchTerm = event.target.value.trim();
+    if (!productSuggestionsBox) return;
+    productNameInput.readOnly = false;
+
+    if (searchTerm.length < 2) {
+        clearTimeout(productSearchTimeout);
+        hideSuggestionBox(productSuggestionsBox); // Use function to hide
+        return;
+    }
+
+    clearTimeout(productSearchTimeout);
+    productSearchTimeout = setTimeout(() => {
+        console.log(`[DEBUG] Triggering product filter for: "${searchTerm}"`);
+        getOrFetchProductCache().then(() => { filterAndRenderProductSuggestions(searchTerm, productSuggestionsBox); }).catch(err => console.error("[DEBUG] Error during product fetch/filter:", err));
+    }, 300);
+}
+async function getOrFetchProductCache() {
+    if (productCache.length > 0) { console.log("[DEBUG] Using cached product data."); return Promise.resolve(); }
+    if (productFetchPromise) { console.log("[DEBUG] Waiting for existing product fetch promise."); return productFetchPromise; }
+    console.log("[DEBUG] Fetching initial product data from Firestore...");
+    try {
+        if (!db || !collection || !query || !getDocs || !orderBy) { throw new Error("Firestore query functions unavailable for products."); }
+        const productsRef = collection(db, "products");
+        const q = query(productsRef, orderBy("printName"));
+        console.log("[DEBUG] Product Fetch Query:", q);
+        productFetchPromise = getDocs(q).then(snapshot => {
+            productCache = [];
+            snapshot.forEach(doc => { const d = doc.data(); if (d.printName) productCache.push({ id: doc.id, name: d.printName }); else console.warn("[DEBUG] Product doc missing 'printName':", doc.id);});
+            console.log(`[DEBUG] Fetched and cached ${snapshot.size} documents -> ${productCache.length} valid products.`);
+            productFetchPromise = null;
+        }).catch(err => { console.error("[DEBUG] Error fetching products:", err); productFetchPromise = null; throw err; });
+        return productFetchPromise;
+    } catch (error) { console.error("[DEBUG] Error setting up product fetch:", error); productFetchPromise = null; return Promise.reject(error); }
+}
+function filterAndRenderProductSuggestions(term, box) {
+    const lowerTerm = term.toLowerCase();
+    console.log(`[DEBUG] Filtering ${productCache.length} cached products for term "${term}"`);
+    const filtered = productCache.filter(p => (p.name || '').toLowerCase().includes(lowerTerm)).slice(0, 10);
+    console.log(`[DEBUG] Found ${filtered.length} product suggestions.`);
+    renderProductSuggestions(filtered, term, box);
+}
+function renderProductSuggestions(suggestions, term, box) {
+     if (!box) return;
+     if (suggestions.length === 0) {
+         box.classList.remove('active'); // Hide container
+         box.style.display = 'none';
+         return;
+     }
+    const ul = document.createElement('ul');
+    suggestions.forEach(prod => {
+        const li = document.createElement('li');
+        try { li.innerHTML = prod.name.replace(new RegExp(`(${term.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')})`, 'gi'), '<strong>$1</strong>'); } catch { li.textContent = prod.name; }
+        li.dataset.name = prod.name; // Store printName
+        li.addEventListener('mousedown', (e) => { // Use mousedown
+            e.preventDefault(); // Prevent blur
+            productNameInput.value = prod.name;
+            hideSuggestionBox(box); // Hide box on click
+            quantityInput.focus();
+        });
+        ul.appendChild(li);
+    });
+    box.innerHTML = '';
+    box.appendChild(ul);
+    box.classList.add('active'); // Show container
+    box.style.display = 'block'; // Explicitly show
+}
+// --- End Autocomplete ---
+
+// --- Form Submit Handler ---
+async function handleFormSubmit(event) {
+    event.preventDefault(); console.log("[DEBUG] Form submission initiated...");
+    if (!db || !collection || !addDoc || !doc || !updateDoc || !getDoc || !getDocs || !query || !orderBy || !limit ) { // Ensure all needed functions are checked
+        alert("Database functions unavailable. Cannot save order."); return;
+    }
+    if (!saveButton) return; saveButton.disabled = true; saveButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+    try {
+        // Get data
+        const formData = new FormData(orderForm);
+        // --- Read customer details DIRECTLY from input fields ---
+        const customerFullNameFromInput = customerNameInput.value.trim();
+        const customerWhatsAppFromInput = customerWhatsAppInput.value.trim();
+        const customerAddressFromInput = customerAddressInput.value.trim();
+        const customerContactFromInput = customerContactInput.value.trim();
+        // --- Use stored selectedCustomerId if available ---
+        const customerIdToUse = selectedCustomerId;
+
+         // Construct customerData using input values
+         const customerData = {
+             fullName: customerFullNameFromInput,
+             whatsappNo: customerWhatsAppFromInput,
+             address: customerAddressFromInput, // Use address from input
+             contactNo: customerContactFromInput // Use contact from input
+         };
+
+        const orderDetails = { manualOrderId: formData.get('manual_order_id')?.trim() || '', orderDate: formData.get('order_date') || '', deliveryDate: formData.get('delivery_date') || '', urgent: formData.get('urgent') || 'No', remarks: formData.get('remarks')?.trim() || '' };
+        const statusCheckbox = orderForm.querySelector('input[name="order_status"]:checked');
+        // Default status to 'Order Received' if nothing is checked (can happen in new mode if user unchecks it)
+        const selectedStatus = statusCheckbox ? statusCheckbox.value : 'Order Received';
+
+
+        // Determine Order ID
+        let orderIdToUse;
+        const existingSystemId = displayOrderIdInput.value; // Get ID potentially loaded in edit mode
+
+        // >> NEW LOGIC for Order ID Generation (if not editing and no manual ID) - V2 (No orderBy) <<
+        if (!isEditMode && !orderDetails.manualOrderId) {
+            console.log("[DEBUG] Generating new Order ID (V2). Checking Firestore without sorting...");
+            try {
+                const ordersRef = collection(db, "orders");
+                // Fetch documents without specific order - might need pagination for very large collections
+                // Fetching up to 2000 recent docs should be enough usually. Increase if needed.
+                 const q = query(ordersRef, limit(2000)); // Removed orderBy("createdAt")
+                const querySnapshot = await getDocs(q);
+                console.log(`[DEBUG] Fetched ${querySnapshot.size} documents to check for max numeric ID.`);
+                let maxNumericId = 0;
+
+                querySnapshot.forEach(doc => {
+                    const idString = doc.data().orderId;
+                    if (idString && /^\d+$/.test(idString)) { // Check if it's a string containing only digits
+                        const numericId = parseInt(idString, 10);
+                        if (!isNaN(numericId) && numericId > maxNumericId) {
+                            maxNumericId = numericId;
+                        }
+                    }
+                });
+                console.log(`[DEBUG] Max numeric ID found in fetched docs: ${maxNumericId}`);
+
+                if (maxNumericId >= 1000) { // Check if any numeric ID was found (start from 1001 even if max is less)
+                    orderIdToUse = (maxNumericId + 1).toString();
+                    console.log(`[DEBUG] New ID generated: ${orderIdToUse}`);
+                } else {
+                    orderIdToUse = "1001"; // Start from 1001 if no valid numeric ID >= 1000 found
+                    console.log(`[DEBUG] No existing numeric ID >= 1000 found. Starting with ${orderIdToUse}`);
+                }
+
+            } catch (err) {
+                console.error("[DEBUG] Error fetching/processing order IDs (V2):", err);
+                // Fallback to timestamp if Firestore query fails
+                orderIdToUse = Date.now().toString();
+                alert("Warning: Could not generate sequential Order ID due to error. Using fallback ID. Check console for details.");
+                console.error("Fallback ID generated:", orderIdToUse); // Log fallback ID
+            }
+
+        } else if (isEditMode) {
+            // In edit mode, use the ID that was loaded (either manual or system generated previously)
+            orderIdToUse = existingSystemId || orderIdToEdit; // Use displayed ID or the Firestore doc ID
+            console.log(`[DEBUG] Edit mode. Using existing Order ID: ${orderIdToUse}`);
+        } else {
+             // Use manual ID if provided by user for a new order
+            orderIdToUse = orderDetails.manualOrderId;
+            console.log(`[DEBUG] Manual Order ID provided for new order: ${orderIdToUse}`);
+        }
+        // >> END NEW LOGIC for Order ID <<
+
+
+        // ** Validation **
+        if (!customerData.fullName) { throw new Error("Full Name is required."); }
+        if (!customerData.whatsappNo) throw new Error("WhatsApp No required.");
+        if (addedProducts.length === 0) throw new Error("Add at least one product.");
+        if (!orderDetails.orderDate) throw new Error("Order Date required.");
+
+
+        // Prepare Payload
+        const orderDataPayload = {
+            orderId: orderIdToUse, // Use the determined ID
+            customerId: customerIdToUse || null, // Store ID if selected
+            customerDetails: customerData, // Store details captured from input
+            orderDate: orderDetails.orderDate,
+            deliveryDate: orderDetails.deliveryDate,
+            urgent: orderDetails.urgent,
+            remarks: orderDetails.remarks,
+            status: selectedStatus, // Use the determined status
+            products: addedProducts,
+            updatedAt: new Date() // Always update 'updatedAt'
+        };
+
+        // Save/Update
+        let orderDocRefPath;
+        if (isEditMode) {
+            if (!orderIdToEdit) throw new Error("Missing Firestore Document ID for update.");
+            const orderRef = doc(db, "orders", orderIdToEdit);
+            delete orderDataPayload.createdAt; // Don't update createdAt on edit
+             // Add createdAt field if it doesn't exist when editing (for consistency maybe?)
+             // Optional: const docSnap = await getDoc(orderRef); if (!docSnap.data()?.createdAt) orderDataPayload.createdAt = new Date();
+            await updateDoc(orderRef, orderDataPayload);
+            orderDocRefPath = orderRef.path;
+            console.log("[DEBUG] Order updated:", orderIdToEdit);
+            alert('Order updated successfully!');
+        } else {
+            // Add createdAt only for new orders if it's not added by serverTimestamp equivalent
+            if (!orderDataPayload.createdAt) {
+                 orderDataPayload.createdAt = new Date();
+            }
+            const newOrderRef = await addDoc(collection(db, "orders"), orderDataPayload);
+            orderDocRefPath = newOrderRef.path;
+            console.log("[DEBUG] New order saved:", newOrderRef.id);
+            alert('New order saved successfully!');
+            displayOrderIdInput.value = orderIdToUse; // Display the newly generated/used ID
+        }
+
+        // Post-save actions
+        // await saveToDailyReport(orderDataPayload, orderDocRefPath);
+
+        // Show WhatsApp reminder only if WhatsApp number exists
+        if (customerData.whatsappNo) {
+            showWhatsAppReminder(customerData, orderIdToUse, orderDetails.deliveryDate);
+             // Reset handled within showWhatsAppReminder or its skip path
+        } else {
+            console.warn("[DEBUG] WhatsApp number missing, skipping reminder.");
+             if (!isEditMode) { resetNewOrderForm(); } // Reset form if no reminder shown for new order
+        }
+
+    } catch (error) {
+        console.error("Error saving/updating order:", error);
+        alert("Error: " + error.message);
+    } finally {
+        saveButton.disabled = false;
+        const btnTxt = isEditMode ? "Update Order" : "Save Order";
+        if (saveButtonText) {
+             saveButtonText.textContent = btnTxt;
+        } else {
+            saveButton.innerHTML = `<i class="fas fa-save"></i> ${btnTxt}`;
+        }
+    }
+}
+
+
+// --- Reset Form ---
+function resetNewOrderForm() {
+     console.log("[DEBUG] Resetting form for New Order.");
+     isEditMode = false; // Ensure mode is reset
+     orderIdToEdit = null;
+     resetCustomerSelection();
+     customerNameInput.value = '';
+     customerWhatsAppInput.value = '';
+     customerAddressInput.value = '';
+     customerContactInput.value = '';
+     manualOrderIdInput.value = ''; // Clear manual ID
+     displayOrderIdInput.value = ''; // Clear system ID
+     orderForm.delivery_date.value = '';
+     orderForm.remarks.value = '';
+     addedProducts = [];
+     renderProductList();
+     orderStatusCheckboxes.forEach(cb => cb.checked = false); // Uncheck all status
+     handleStatusCheckboxes(false); // Re-apply default state for new order
+     const urgentNoRadio = orderForm.querySelector('input[name="urgent"][value="No"]');
+     if (urgentNoRadio) urgentNoRadio.checked = true;
+     const orderDateInput = document.getElementById('order_date');
+     if (orderDateInput) orderDateInput.value = new Date().toISOString().split('T')[0]; // Reset date
+     // Ensure header and button text are correct for 'New Order'
+     if(headerText) headerText.textContent = "New Order"; else if(formHeader) formHeader.textContent = "New Order";
+     if(saveButtonText) saveButtonText.textContent = "Save Order"; else if(saveButton) saveButton.innerHTML = '<i class="fas fa-save"></i> Save Order';
+     if(manualOrderIdInput) manualOrderIdInput.readOnly = false; // Make manual ID editable again
+     // Hide suggestion boxes
+     hideSuggestionBox(customerSuggestionsNameBox);
+     hideSuggestionBox(customerSuggestionsWhatsAppBox);
+     hideSuggestionBox(productSuggestionsBox);
+}
+
+
+// --- Post-Save Functions ---
+async function saveToDailyReport(orderData, orderPath) { console.log(`[DEBUG] Placeholder: Saving to daily_reports (Path: ${orderPath})`, orderData); try { /* ... */ console.log("[DEBUG] Placeholder: Called saveToDailyReport."); } catch (error) { console.error("[DEBUG] Placeholder: Error saving to daily_reports:", error); } }
+
+// --- UPDATED WhatsApp Reminder Function ---
+function showWhatsAppReminder(customer, orderId, deliveryDate) {
+    if (!whatsappReminderPopup || !whatsappMsgPreview || !whatsappSendLink) {
+        console.error("[DEBUG] WhatsApp popup elements missing.");
+         if (!isEditMode) { resetNewOrderForm(); } // Reset form even if popup fails for new order
+        return;
+    }
+    const customerName = customer.fullName || 'Customer';
+    const customerNumber = customer.whatsappNo?.replace(/[^0-9]/g, '');
+    // Check moved inside, reset form if number missing for NEW order
+    if (!customerNumber) {
+        console.warn("[DEBUG] WhatsApp No missing, skipping reminder.");
+        if (!isEditMode) { resetNewOrderForm(); } // Reset form if no reminder shown for new order
+        return;
+    }
+
+    const formattedDeliveryDate = deliveryDate ? new Date(deliveryDate).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}) : ' जल्द से जल्द';
+
+    // Using Order Received template specifically after saving NEW order
+    let message = `प्रिय ${customerName},
+नमस्कार,
+आपका ऑर्डर (Order No: ${orderId}) हमें सफलतापूर्वक प्राप्त हो गया है।
+हम इस ऑर्डर को ${formattedDeliveryDate} तक पूर्ण करने का प्रयास करेंगे।
+
+Dear ${customerName},
+We have successfully received your order (Order No: ${orderId}).
+We aim to complete it by ${formattedDeliveryDate}.
+
+धन्यवाद,
+Madhav Offset
+Head Office: Moodh Market, Batadu
+Mobile: 9549116541`;
+
+    whatsappMsgPreview.innerText = message;
+    const encodedMessage = encodeURIComponent(message);
+    const whatsappUrl = `https://wa.me/${customerNumber}?text=${encodedMessage}`;
+    whatsappSendLink.href = whatsappUrl;
+    whatsappReminderPopup.classList.add('active');
+    console.log("[DEBUG] WhatsApp reminder shown.");
+    // Reset form for NEW orders AFTER showing reminder
+    if (!isEditMode) { resetNewOrderForm(); }
+}
+// --- End of Updated Function ---
+
+function closeWhatsAppPopup() { if (whatsappReminderPopup) whatsappReminderPopup.classList.remove('active'); }
+
+console.log("new_order.js script loaded (ID Gen Fix Attempt V2)."); // Updated log
