@@ -1,11 +1,15 @@
-// js/supplier_management.js - v12 (Added Qty in List, Details Modal, and Print Button)
+// js/supplier_management.js - v13 (Corrected Firebase Imports)
 
-import { generatePoPdf } from './utils.js';
+import { generatePoPdf } from './utils.js'; // Assuming utils.js exists and is correct
+
+// Import ONLY db and auth from local init file
+import { db, auth } from './firebase-init.js';
+
+// Import Firestore functions DIRECTLY from the SDK
 import {
-    db, auth,
     collection, addDoc, doc, getDoc, getDocs, updateDoc, deleteDoc,
-    query, orderBy, where, Timestamp, serverTimestamp, limit // Added limit just in case for PDF supplier lookup
-} from './firebase-init.js';
+    query, orderBy, where, Timestamp, serverTimestamp, limit
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js"; // Using the specific SDK version
 
 // --- DOM Elements ---
 const viewSuppliersBtn = document.getElementById('viewSuppliersBtn');
@@ -108,6 +112,7 @@ async function openPoDetailsModal(poId) {
     poDetailsModal.classList.add('active');
 
     try {
+        // Now that imports are correct, db should be valid
         const poRef = doc(db, "purchaseOrders", poId);
         const docSnap = await getDoc(poRef);
 
@@ -218,18 +223,19 @@ function closeSuppliersListModal() {
 async function displaySupplierList() {
     const targetTableBody = supplierTableBodyModal;
     if (!targetTableBody) { console.error("Supplier modal table body not found!"); return; }
+    // Check if Firestore functions are available (they should be after fixing imports)
     if (!db || !collection || !getDocs || !query || !orderBy) {
         console.error("Firestore functions not available in displaySupplierList.");
         targetTableBody.innerHTML = '<tr><td colspan="5" class="error-message">Error: Cannot load suppliers list.</td></tr>';
         return;
     }
     targetTableBody.innerHTML = '<tr><td colspan="5"><i class="fas fa-spinner fa-spin"></i> Loading suppliers...</td></tr>';
-    suppliersDataCache = []; // Clear cache before reload
+    suppliersDataCache = [];
 
     try {
         const q = query(collection(db, "suppliers"), orderBy("name"));
         const querySnapshot = await getDocs(q);
-        targetTableBody.innerHTML = ''; // Clear loading message
+        targetTableBody.innerHTML = '';
 
         if (querySnapshot.empty) {
             targetTableBody.innerHTML = '<tr><td colspan="5">No suppliers found. Click "+ Add New Supplier" above to add one.</td></tr>';
@@ -238,7 +244,7 @@ async function displaySupplierList() {
         querySnapshot.forEach((docSnapshot) => {
             const supplier = docSnapshot.data();
             const supplierId = docSnapshot.id;
-            suppliersDataCache.push({ id: supplierId, ...supplier }); // Update cache
+            suppliersDataCache.push({ id: supplierId, ...supplier });
             const tr = document.createElement('tr');
             tr.setAttribute('data-id', supplierId);
             tr.innerHTML = `
@@ -271,7 +277,6 @@ function handleSupplierTableActions(event) {
         if (supplierData) {
             openSupplierModal('edit', supplierData, supplierId);
         } else {
-            // Fallback if not in cache (should ideally be there after displaySupplierList)
             console.warn(`Supplier ${supplierId} not found in cache for edit. Fetching...`);
             getDoc(doc(db, "suppliers", supplierId)).then(docSnap => {
                 if (docSnap.exists()) {
@@ -293,7 +298,6 @@ function handleSupplierTableActions(event) {
 // Save/Update Supplier
 async function saveSupplier(event) {
     event.preventDefault();
-    // Basic validation and function check
     if (!db || !collection || !addDoc || !doc || !updateDoc || !Timestamp) { showSupplierError("Error: Required functions missing."); return; }
     if (!saveSupplierBtn || !supplierNameInput || !supplierErrorMsg || !supplierIdInput || !supplierCompanyInput || !supplierWhatsappInput || !supplierEmailInput || !supplierAddressInput || !supplierGstInput) { console.error("Save Supplier prerequisites missing."); alert("Error: Cannot save supplier."); return; }
 
@@ -306,42 +310,37 @@ async function saveSupplier(event) {
         gstNo: supplierGstInput.value.trim(),
     };
 
-    // Name is required
     if (!supplierData.name) {
         showSupplierError("Supplier Name is required.");
         supplierNameInput.focus();
         return;
     }
 
-    // Disable button, clear error
     saveSupplierBtn.disabled = true;
     saveSupplierBtn.textContent = 'Saving...';
     supplierErrorMsg.style.display = 'none';
     supplierErrorMsg.textContent = '';
 
     try {
-        const supplierIdToUse = supplierIdInput.value; // Check if editing
+        const supplierIdToUse = supplierIdInput.value;
         if (supplierIdToUse) {
-            // Update existing supplier
-            supplierData.updatedAt = Timestamp.now(); // Use Firestore Timestamp
+            supplierData.updatedAt = Timestamp.now();
             const supplierRef = doc(db, "suppliers", supplierIdToUse);
             await updateDoc(supplierRef, supplierData);
             console.log("Supplier updated with ID: ", supplierIdToUse);
         } else {
-            // Add new supplier
-            supplierData.createdAt = Timestamp.now(); // Use Firestore Timestamp
+            supplierData.createdAt = Timestamp.now();
             supplierData.updatedAt = Timestamp.now();
             const docRef = await addDoc(collection(db, "suppliers"), supplierData);
             console.log("Supplier added with ID: ", docRef.id);
         }
         closeSupplierModal();
-        await displaySupplierList(); // Refresh supplier list in modal
-        await displayPoList(); // Refresh PO list as supplier name might change
+        await displaySupplierList();
+        await displayPoList();
     } catch (error) {
         console.error("Error saving supplier: ", error);
         showSupplierError("Error saving supplier: " + error.message);
     } finally {
-        // Re-enable button
         if(saveSupplierBtn) {
             saveSupplierBtn.disabled = false;
             saveSupplierBtn.textContent = 'Save Supplier';
@@ -358,8 +357,8 @@ async function deleteSupplier(supplierId, supplierName) {
             await deleteDoc(doc(db, "suppliers", supplierId));
             console.log("Supplier deleted: ", supplierId);
             alert(`Supplier "${supplierName || supplierId}" deleted successfully.`);
-            await displaySupplierList(); // Refresh list in modal
-            await displayPoList(); // Refresh PO list as supplier link is gone
+            await displaySupplierList();
+            await displayPoList();
         } catch (error) {
             console.error("Error deleting supplier: ", error);
             alert("Error deleting supplier: " + error.message);
@@ -378,7 +377,7 @@ async function handleDeletePO(poId, poNumber) {
              await deleteDoc(doc(db, "purchaseOrders", poId));
              console.log("Purchase Order deleted successfully:", poId);
              alert(`Purchase Order ${poNumber || poId} deleted successfully.`);
-             await displayPoList(); // Refresh PO list
+             await displayPoList();
          } catch (error) {
              console.error("Error deleting Purchase Order:", error);
              alert("Error deleting Purchase Order: " + error.message);
@@ -391,7 +390,12 @@ async function handleDeletePO(poId, poNumber) {
 // Display PO List with Filters (Includes Qty display logic from v11)
 async function displayPoList() {
     if (!poTableBody) { console.error("PO table body (poTableBody) not found!"); return; }
-    if (!db || !collection || !getDocs || !query || !orderBy || !where || !doc || !getDoc || !Timestamp) { console.error("Firestore functions not available in displayPoList."); poTableBody.innerHTML = `<tr><td colspan="8" class="error-message">Error: Required functions missing. Cannot load POs.</td></tr>`; return; }
+    // Check for Firestore functions again, they should be available now
+    if (!db || !collection || !getDocs || !query || !orderBy || !where || !doc || !getDoc || !Timestamp) {
+        console.error("Firestore functions not available in displayPoList (check imports).");
+        poTableBody.innerHTML = `<tr><td colspan="8" class="error-message">Error: Required functions missing. Cannot load POs.</td></tr>`;
+        return;
+    }
 
     poTableBody.innerHTML = `<tr><td colspan="8"><i class="fas fa-spinner fa-spin"></i> Loading purchase orders...</td></tr>`;
     if (poTotalsDisplay) poTotalsDisplay.innerHTML = '';
@@ -414,6 +418,7 @@ async function displayPoList() {
         if (startDateVal || endDateVal) { sortClauses = [orderBy("orderDate", "desc"), orderBy("createdAt", "desc")]; }
         else { sortClauses = [orderBy("createdAt", "desc")]; }
 
+        // Now the query function should be correctly imported
         finalQuery = query(baseQuery, ...conditions, ...sortClauses);
         const querySnapshot = await getDocs(finalQuery);
         let filteredDocs = querySnapshot.docs;
@@ -428,7 +433,7 @@ async function displayPoList() {
                  const poNumberMatch = po.poNumber?.toString().toLowerCase().includes(searchTerm);
                  const supplierNameFromId = suppliersMap.get(po.supplierId)?.toLowerCase() || '';
                  const supplierIdMatch = supplierNameFromId.includes(searchTerm);
-                 const legacySupplierNameMatch = po.supplierName?.toLowerCase().includes(searchTerm); // Handle legacy data
+                 const legacySupplierNameMatch = po.supplierName?.toLowerCase().includes(searchTerm);
                  return poNumberMatch || supplierIdMatch || legacySupplierNameMatch;
              });
              console.log(`Docs after client-side search filter: ${filteredDocs.length}`);
@@ -439,6 +444,7 @@ async function displayPoList() {
 
         if (filteredDocs.length === 0) {
             poTableBody.innerHTML = `<tr><td colspan="8">No purchase orders found matching your criteria.</td></tr>`;
+            if (poTotalsDisplay) poTotalsDisplay.innerHTML = ''; // Clear totals if no POs
             return;
         }
 
@@ -452,12 +458,12 @@ async function displayPoList() {
         filteredDocs.forEach(docRef_po => {
             const po = docRef_po.data();
             const poId = docRef_po.id;
-            cachedPOs[poId] = po; // Cache PO data
+            cachedPOs[poId] = po;
 
             let supplierName = po.supplierName || supplierNameMap.get(po.supplierId) || 'Unknown/Deleted';
             let orderDateStr = '-';
             if (po.orderDate?.toDate) { try { orderDateStr = po.orderDate.toDate().toLocaleDateString('en-GB'); } catch(e){} }
-            else if (po.createdAt?.toDate) { try { orderDateStr = po.createdAt.toDate().toLocaleDateString('en-GB') + ' (Created)';} catch(e){} } // Fallback to createdAt
+            else if (po.createdAt?.toDate) { try { orderDateStr = po.createdAt.toDate().toLocaleDateString('en-GB') + ' (Created)';} catch(e){} }
 
             let statusClass = (po.status || 'unknown').toLowerCase().replace(/\s+/g, '-');
             let statusText = po.status || 'Unknown';
@@ -465,7 +471,6 @@ async function displayPoList() {
             let amountStr = `₹ ${amount.toFixed(2)}`;
             grandTotalAmount += amount;
 
-            // Calculate Quantity Info and Print Sizes separately
             let printSizesStr = '-';
             let quantityInfoStr = '-';
 
@@ -480,33 +485,34 @@ async function displayPoList() {
                          const h = item.realHeight || item.height || '?';
                          const u = item.unit || item.inputUnit || 'units';
                          quantityEntries.push(`${w}x${h} ${u}: ${qty} Qty`);
-                         // Print Sizes Calculation
                          const pWidth = item.printWidth || item.width || '?';
                          const pHeight = item.printHeight || item.height || '?';
                          const pUnit = item.inputUnit || item.unit || 'units';
                          const wFormatted = !isNaN(parseFloat(pWidth)) ? parseFloat(pWidth).toFixed(2) : pWidth;
                          const hFormatted = !isNaN(parseFloat(pHeight)) ? parseFloat(pHeight).toFixed(2) : pHeight;
                          sizeEntries.push(`${wFormatted}x${hFormatted} ${pUnit}`);
-                     } else { // Qty type item
+                     } else {
                          quantityEntries.push(`${item.productName || 'Item'}: ${qty} Qty`);
                      }
                 });
 
                 if(quantityEntries.length > 0) quantityInfoStr = quantityEntries.join('<br>');
                 if(sizeEntries.length > 0) printSizesStr = sizeEntries.join('<br>');
-                else printSizesStr = '-'; // Explicitly set to '-' if no Sq Feet items
+                else printSizesStr = '-';
             }
 
             const tr = document.createElement('tr');
             tr.setAttribute('data-id', poId);
-            // Generate table row HTML (8 columns)
             tr.innerHTML = `
                 <td>${po.poNumber || 'N/A'}</td>
                 <td>${supplierName}</td>
                 <td>${orderDateStr}</td>
                 <td><span class="status-badge status-${statusClass}">${statusText}</span></td>
                 <td style="text-align: right;">${amountStr}</td>
-                <td>${quantityInfoStr}</td>   <td>${printSizesStr}</td>     <td class="action-buttons">   <button class="button view-details-button" data-poid="${poId}" title="View Details"><i class="fas fa-eye"></i></button>
+                <td>${quantityInfoStr}</td>
+                <td>${printSizesStr}</td>
+                <td class="action-buttons">
+                    <button class="button view-details-button" data-poid="${poId}" title="View Details"><i class="fas fa-eye"></i></button>
                     <a href="new_po.html?editPOId=${poId}" class="button edit-button" title="Edit PO"><i class="fas fa-edit"></i></a>
                     <button class="button status-button" data-poid="${poId}" data-ponumber="${po.poNumber}" data-currentstatus="${statusText}" title="Update Status"><i class="fas fa-sync-alt"></i></button>
                     <button class="button pdf-button" data-id="${poId}" title="Download PDF"><i class="fas fa-file-pdf"></i></button>
@@ -515,9 +521,8 @@ async function displayPoList() {
             poTableBody.appendChild(tr);
         });
 
-        // Display total amount
         if (poTotalsDisplay) { poTotalsDisplay.innerHTML = `<strong>Total Amount (Filtered):</strong> ₹ ${grandTotalAmount.toFixed(2)}`; }
-        console.log("Purchase Orders list displayed successfully with filters.");
+        console.log("Purchase Orders list displayed successfully."); // Updated log message
 
     } catch (error) {
         console.error("Error processing or displaying POs: ", error);
@@ -528,6 +533,7 @@ async function displayPoList() {
                  poTableBody.innerHTML = `<tr><td colspan="8" class="error-message">Error loading POs: ${error.message}</td></tr>`;
              }
         }
+         if (poTotalsDisplay) poTotalsDisplay.innerHTML = ''; // Clear totals on error
     }
 }
 
@@ -541,17 +547,17 @@ async function handleStatusUpdate(event) {
 
     saveStatusBtn.disabled = true;
     saveStatusBtn.textContent = 'Updating...';
-    showStatusError(''); // Clear previous errors
+    showStatusError('');
 
     try {
         const poRef = doc(db, "purchaseOrders", poId);
         await updateDoc(poRef, {
             status: newStatus,
-            updatedAt: serverTimestamp() // Use server timestamp
+            updatedAt: serverTimestamp()
         });
         console.log(`PO ${poId} status updated to ${newStatus}`);
         closeStatusModal();
-        await displayPoList(); // Refresh list
+        await displayPoList();
     } catch (error) {
         console.error("Error updating PO status:", error);
         showStatusError("Error updating status: " + error.message);
@@ -574,8 +580,13 @@ function showStatusError(message) {
 
 // --- Initialization on DOM Load ---
 document.addEventListener('DOMContentLoaded', () => {
-    console.log("Supplier Management v12: DOM loaded."); // Version updated
-    if (!db) { console.error("DB not available!"); return; }
+    console.log("Supplier Management v13: DOM loaded."); // Version updated
+    // Ensure db is available after fixing imports
+    if (!db) {
+         console.error("DB not available! Check Firebase initialization and imports.");
+         if(poTableBody) poTableBody.innerHTML = `<tr><td colspan="8" class="error-message">Critical Error: Database connection failed.</td></tr>`;
+         return;
+    }
 
     // Supplier Add/Edit Modal Listeners
     if (closeSupplierModalBtn) closeSupplierModalBtn.addEventListener('click', closeSupplierModal);
@@ -590,15 +601,14 @@ document.addEventListener('DOMContentLoaded', () => {
     if (statusUpdateModal) statusUpdateModal.addEventListener('click', (event) => { if (event.target === statusUpdateModal) closeStatusModal(); });
 
     // PO Details Modal Listeners (Includes Print Button)
-    const printPoDetailsBtn = document.getElementById('printPoDetailsBtn'); // Get Print Button
+    const printPoDetailsBtn = document.getElementById('printPoDetailsBtn');
     if (closePoDetailsModalBtn) closePoDetailsModalBtn.addEventListener('click', closePoDetailsModal);
     if (closePoDetailsBtn) closePoDetailsBtn.addEventListener('click', closePoDetailsModal);
     if (poDetailsModal) poDetailsModal.addEventListener('click', (event) => { if (event.target === poDetailsModal) closePoDetailsModal(); });
-    // Add Print Button Listener
     if (printPoDetailsBtn) {
         printPoDetailsBtn.addEventListener('click', () => {
             console.log("Print button clicked for PO Details Modal");
-            window.print(); // Trigger browser print, CSS will handle the content
+            window.print();
         });
     } else {
         console.warn("Print PO Details button not found.");
@@ -616,15 +626,13 @@ document.addEventListener('DOMContentLoaded', () => {
     if (poTableBody) {
         poTableBody.addEventListener('click', async (event) => {
             const targetElement = event.target;
-            const actionElement = targetElement.closest('button[data-id], button[data-poid], a.edit-button'); // Include edit anchor tag
+            const actionElement = targetElement.closest('button[data-id], button[data-poid], a.edit-button');
             if (!actionElement) return;
 
-            // Prevent default only for actual buttons
             if (actionElement.tagName === 'BUTTON') {
                 event.preventDefault();
             }
 
-            // Get PO ID (from button data or link href)
             let poId = actionElement.dataset.id || actionElement.dataset.poid;
             if (!poId && actionElement.tagName === 'A' && actionElement.classList.contains('edit-button')) {
                 try {
@@ -633,7 +641,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 } catch (e) { console.error("Could not extract PO ID from edit link href", e); }
             }
 
-            const poNumber = actionElement.dataset.ponumber; // Get PO Number if available
+            const poNumber = actionElement.dataset.ponumber;
 
             // --- Determine Action ---
             if (actionElement.classList.contains('view-details-button')) {
@@ -641,8 +649,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 else { console.error("Missing PO ID for View Details"); }
             }
             else if (actionElement.classList.contains('edit-button') && actionElement.tagName === 'A') {
-                // Let the link navigation happen
                 console.log(`Edit link clicked for PO ${poId}`);
+                // Allow default link behavior
             }
             else if (actionElement.classList.contains('status-button')) {
                 const currentStatus = actionElement.dataset.currentstatus;
@@ -661,17 +669,12 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                     if (!poDataForPdf) throw new Error(`PO data not found: ${poId}`);
 
-                    // --- Find Supplier for PDF ---
                     let supplierDataForPdf = null;
                     if (poDataForPdf.supplierId) {
                         const supplierSnap = await getDoc(doc(db, "suppliers", poDataForPdf.supplierId));
-                        if (supplierSnap.exists()) {
-                            supplierDataForPdf = supplierSnap.data();
-                        } else {
-                            console.warn(`PDF: Supplier data not found for ID: ${poDataForPdf.supplierId}`);
-                        }
+                        if (supplierSnap.exists()) { supplierDataForPdf = supplierSnap.data(); }
+                        else { console.warn(`PDF: Supplier data not found for ID: ${poDataForPdf.supplierId}`); }
                     }
-                    // Fallback: Try finding supplier by name if ID missing or failed
                     if (!supplierDataForPdf && poDataForPdf.supplierName) {
                          console.warn(`PDF: Attempting supplier lookup by name: ${poDataForPdf.supplierName}`);
                          const q = query(collection(db, "suppliers"), where("name", "==", poDataForPdf.supplierName), limit(1));
@@ -679,15 +682,10 @@ document.addEventListener('DOMContentLoaded', () => {
                          if (!supplierQuerySnap.empty) {
                               supplierDataForPdf = supplierQuerySnap.docs[0].data();
                               console.log(`PDF: Found supplier by name.`);
-                         } else {
-                             console.error(`PDF: Supplier ID missing and supplier not found by name: ${poDataForPdf.supplierName}`);
-                         }
+                         } else { console.error(`PDF: Supplier ID missing and supplier not found by name: ${poDataForPdf.supplierName}`); }
                     }
-                    // If still no supplier data, throw error
-                    if (!supplierDataForPdf) {
-                         throw new Error(`Could not find supplier information for PO ${poId}.`);
-                    }
-                    // --- Generate PDF ---
+                    if (!supplierDataForPdf) { throw new Error(`Could not find supplier information for PO ${poId}.`); }
+
                     await generatePoPdf(poDataForPdf, supplierDataForPdf);
 
                 } catch (error) { console.error("PDF generation error:", error); alert("Failed PDF: " + error.message); }
@@ -708,26 +706,38 @@ document.addEventListener('DOMContentLoaded', () => {
             if(poStatusFilter) poStatusFilter.value = '';
             if(poStartDateFilter) poStartDateFilter.value = '';
             if(poEndDateFilter) poEndDateFilter.value = '';
-            displayPoList(); // Reload list with cleared filters
+            displayPoList();
         });
     }
 
     // Initial data load
-    (async () => { try { await displayPoList(); } catch (e) { console.error("Error initial PO load:", e); } })();
+    (async () => {
+        try {
+            // Ensure dependent functions like query, getDocs are available
+            if (typeof query === 'function' && typeof getDocs === 'function') {
+                 await displayPoList();
+            } else {
+                 console.error("Firestore functions not ready for initial load.");
+                 if(poTableBody) poTableBody.innerHTML = `<tr><td colspan="8" class="error-message">Error: Application setup failed. Cannot load POs.</td></tr>`;
+            }
+        } catch (e) {
+             console.error("Error during initial PO load:", e);
+             if(poTableBody) poTableBody.innerHTML = `<tr><td colspan="8" class="error-message">Error loading initial POs: ${e.message}</td></tr>`;
+        }
+    })();
 
-    // Check for #add hash on load (for opening supplier modal)
+    // Check for #add hash on load
     if(window.location.hash === '#add') {
         setTimeout(() => {
             if(supplierModal) openSupplierModal('add');
             else console.warn("Supplier Add/Edit modal not found for #add hash.");
-            // Clean the hash from URL without reloading
             if (history.replaceState) {
                 history.replaceState(null, null, window.location.pathname + window.location.search);
             }
-        }, 150); // Small delay to ensure modal is ready
+        }, 150);
     }
 
-    console.log("Supplier Management v12 Initialized."); // Version updated
+    console.log("Supplier Management v13 Initialized."); // Version updated
 });
 
-console.log("supplier_management.js v12 module processed."); // Version updated
+console.log("supplier_management.js v13 module processed."); // Version updated
