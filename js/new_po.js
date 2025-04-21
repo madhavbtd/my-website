@@ -1,4 +1,4 @@
-// js/new_po.js - v5 (Fix Qty/SqFt Toggle, includes Auto PO#, Item Details, Enhanced Preview)
+// js/new_po.js - v6 (DEBUGGING PO Number Generation)
 
 // Assume Firebase functions are globally available via HTML script block
 const {
@@ -32,10 +32,10 @@ const poErrorMsg = document.getElementById('poErrorMsg');
 let supplierSearchDebounceTimer;
 let editingPOData = null;
 
-// --- Utility Functions ---
-
+// --- Utility Functions --- (Keep calculateFlexDimensions, updateTotalAmount, etc. as they are from the file you sent)
 // Local modified copy of calculateFlexDimensions
 function calculateFlexDimensions(unit, width, height) {
+    // ... (Keep the function exactly as it was in the file you sent) ...
     console.log(`Calculating flex: Unit=${unit}, W=${width}, H=${height}`);
     const mediaWidthsFt = [3, 4, 5, 6, 8, 10];
     let wFt = (unit === 'inches') ? parseFloat(width || 0) / 12 : parseFloat(width || 0);
@@ -62,9 +62,8 @@ function calculateFlexDimensions(unit, width, height) {
         printWidthFt: finalPrintWidthFt, printHeightFt: finalPrintHeightFt
     };
 }
-
-// Function to update total amount
 function updateTotalAmount() {
+    // ... (Keep the function exactly as it was in the file you sent) ...
     let total = 0;
     poItemsTableBody.querySelectorAll('.item-row').forEach(row => {
         const amountSpan = row.querySelector('.item-amount');
@@ -72,9 +71,8 @@ function updateTotalAmount() {
     });
     if (poTotalAmountSpan) { poTotalAmountSpan.textContent = total.toFixed(2); }
 }
-
-// Function updateFullCalculationPreview
 function updateFullCalculationPreview() {
+     // ... (Keep the function exactly as it was in the file you sent) ...
      if (!calculationPreviewArea || !poItemsTableBody) return;
      let previewHTML = '<h4>Calculation Details:</h4>';
      const itemRows = poItemsTableBody.querySelectorAll('.item-row');
@@ -116,9 +114,8 @@ function updateFullCalculationPreview() {
      if (!foundSqFt) { previewHTML += '<p style="color:grey;">Add items with Unit Type "Sq Feet" to see calculations.</p>'; }
      calculationPreviewArea.innerHTML = previewHTML;
 }
-
-// Function updateItemAmount
 function updateItemAmount(row) {
+    // ... (Keep the function exactly as it was in the file you sent) ...
     if (!row) return;
     const unitTypeSelect = row.querySelector('.unit-type-select');
     const amountSpan = row.querySelector('.item-amount');
@@ -147,103 +144,42 @@ function updateItemAmount(row) {
     updateTotalAmount();
     updateFullCalculationPreview();
 }
-
-// --- **** FIXED handleUnitTypeChange Function **** ---
 function handleUnitTypeChange(event) {
+     // ... (Keep the function exactly as it was in the file you sent) ...
     const row = event.target.closest('.item-row');
-    if (!row) {
-        console.error("handleUnitTypeChange: Could not find parent row.");
-        return;
-    }
-
+    if (!row) { console.error("handleUnitTypeChange: Could not find parent row."); return; }
     const unitType = event.target.value;
     console.log(`Unit type changed to: ${unitType} for row:`, row);
-
-    // Use querySelectorAll to find all potentially relevant cells in the row
     const cells = row.querySelectorAll('td');
-    // Use more specific selectors if possible, otherwise rely on index (less robust)
-    // Assuming the structure from new_po.html (v4):
-    // 0: Prod Name | 1: Unit Type | 2: Dimensions | 3: Dim Unit | 4: Qty | 5: Rate | 6: Party | 7: Design | 8: Amount | 9: Action
-    const sqFeetDimensionCell = cells.length > 2 ? cells[2] : null; // Contains WxH inputs
-    const sqFeetUnitCell = cells.length > 3 ? cells[3] : null;     // Contains Unit select (ft/in)
-    const qtyInputCell = row.querySelector('td:nth-child(5)');     // Qty TD (More reliable selector needed if columns change)
-                                                                   // Let's try getting the specific TD containing the .quantity-input
+    const sqFeetDimensionCell = cells.length > 2 ? cells[2] : null;
+    const sqFeetUnitCell = cells.length > 3 ? cells[3] : null;
     const qtyInputDirectParentCell = row.querySelector('.quantity-input')?.closest('td');
-
-
-    // Find corresponding headers
     const table = row.closest('table');
-    const headers = table?.querySelectorAll('thead th'); // Find headers within the same table
-
-    if (!headers || headers.length < 5) { // Need at least 5 headers for basic Qty/SqFt toggle
-        console.error("handleUnitTypeChange: Could not find table headers.");
-        return;
-    }
-    // Indices based on HTML v4 thead
-    const sqFeetHeader1 = headers[2]; // Dimensions Header
-    const sqFeetHeader2 = headers[3]; // Unit Header
-    const qtyHeader = headers[4];     // Qty Header
-
+    const headers = table?.querySelectorAll('thead th');
+    if (!headers || headers.length < 5) { console.error("handleUnitTypeChange: Could not find table headers."); return; }
+    const sqFeetHeader1 = headers[2];
+    const sqFeetHeader2 = headers[3];
+    const qtyHeader = headers[4];
     const rateInput = row.querySelector('.rate-input');
-
-    // Check if elements were found
-    if (!sqFeetDimensionCell || !sqFeetUnitCell || !qtyInputDirectParentCell || !sqFeetHeader1 || !sqFeetHeader2 || !qtyHeader) {
-        console.error("handleUnitTypeChange: Could not find all necessary cells/headers for unit type toggle. Check selectors/HTML structure.",
-                      {sqFeetDimensionCell, sqFeetUnitCell, qtyInputDirectParentCell, sqFeetHeader1, sqFeetHeader2, qtyHeader});
-        return;
-    }
-
+    if (!sqFeetDimensionCell || !sqFeetUnitCell || !qtyInputDirectParentCell || !sqFeetHeader1 || !sqFeetHeader2 || !qtyHeader) { console.error("handleUnitTypeChange: Could not find all necessary cells/headers for unit type toggle.", {sqFeetDimensionCell, sqFeetUnitCell, qtyInputDirectParentCell, sqFeetHeader1, sqFeetHeader2, qtyHeader}); return; }
     if (unitType === 'Sq Feet') {
         console.log("Switching to Sq Feet view");
-        // Show Sq Feet Cells
-        sqFeetDimensionCell.style.display = ''; // Use default display (usually 'table-cell')
-        sqFeetUnitCell.style.display = '';
-        // Hide Qty Cell
-        qtyInputDirectParentCell.style.display = 'none';
-
-        // Show/Hide Headers
-        sqFeetHeader1.classList.remove('hidden-col');
-        sqFeetHeader2.classList.remove('hidden-col');
-        qtyHeader.classList.add('hidden-col');
-
-        // Update Rate Placeholder
+        sqFeetDimensionCell.style.display = ''; sqFeetUnitCell.style.display = ''; qtyInputDirectParentCell.style.display = 'none';
+        sqFeetHeader1.classList.remove('hidden-col'); sqFeetHeader2.classList.remove('hidden-col'); qtyHeader.classList.add('hidden-col');
         if (rateInput) rateInput.placeholder = 'Rate/SqFt';
-
-        // Clear Qty Input
-        const quantityInputField = qtyInputDirectParentCell.querySelector('.quantity-input');
-        if (quantityInputField) quantityInputField.value = '';
-
+        const quantityInputField = qtyInputDirectParentCell.querySelector('.quantity-input'); if (quantityInputField) quantityInputField.value = '';
     } else { // 'Qty' selected
         console.log("Switching to Qty view");
-        // Hide Sq Feet Cells
-        sqFeetDimensionCell.style.display = 'none';
-        sqFeetUnitCell.style.display = 'none';
-        // Show Qty Cell
-        qtyInputDirectParentCell.style.display = '';
-
-        // Show/Hide Headers
-        sqFeetHeader1.classList.add('hidden-col');
-        sqFeetHeader2.classList.add('hidden-col');
-        qtyHeader.classList.remove('hidden-col');
-
-        // Update Rate Placeholder
+        sqFeetDimensionCell.style.display = 'none'; sqFeetUnitCell.style.display = 'none'; qtyInputDirectParentCell.style.display = '';
+        sqFeetHeader1.classList.add('hidden-col'); sqFeetHeader2.classList.add('hidden-col'); qtyHeader.classList.remove('hidden-col');
         if (rateInput) rateInput.placeholder = 'Rate/Unit';
-
-        // Clear Dimension Inputs
-        const widthInput = sqFeetDimensionCell.querySelector('.width-input');
-        const heightInput = sqFeetDimensionCell.querySelector('.height-input');
-        if (widthInput) widthInput.value = '';
-        if (heightInput) heightInput.value = '';
+        const widthInput = sqFeetDimensionCell.querySelector('.width-input'); const heightInput = sqFeetDimensionCell.querySelector('.height-input');
+        if (widthInput) widthInput.value = ''; if (heightInput) heightInput.value = '';
     }
-
-    // Update amount and preview (should happen regardless of type change)
     updateItemAmount(row);
 }
-// --- **** END FIXED Function **** ---
-
-
-// --- **** FIXED addItemRowEventListeners Function **** ---
 function addItemRowEventListeners(row) {
+    // ... (Keep the function exactly as it was in the file you sent) ...
     const unitTypeSelect = row.querySelector('.unit-type-select');
     const dimensionUnitSelect = row.querySelector('.dimension-unit-select');
     const widthInput = row.querySelector('.width-input');
@@ -251,125 +187,34 @@ function addItemRowEventListeners(row) {
     const quantityInput = row.querySelector('.quantity-input'); // Get the input itself
     const rateInput = row.querySelector('.rate-input');
     const deleteBtn = row.querySelector('.delete-item-btn');
-
-    // Inputs that trigger recalculation
     const recalcInputs = [dimensionUnitSelect, widthInput, heightInput, quantityInput, rateInput];
-    recalcInputs.forEach(input => {
-        if (input) {
-            input.addEventListener('input', () => updateItemAmount(row));
-            input.addEventListener('change', () => updateItemAmount(row));
-            input.addEventListener('blur', () => updateItemAmount(row));
-        }
-    });
-
-    // Unit Type Select - special handling
-    if (unitTypeSelect) {
-        unitTypeSelect.addEventListener('change', handleUnitTypeChange); // Use the FIXED handler
-    }
-
-    // Delete button listener
-    if (deleteBtn) {
-        deleteBtn.addEventListener('click', () => {
-            row.remove();
-            updateTotalAmount();
-            updateFullCalculationPreview();
-        });
-    }
-
-    // Set initial state for the row *after* attaching listeners
-    // This ensures the correct fields are visible when a row is added or loaded
-    if (unitTypeSelect) {
-       handleUnitTypeChange({ target: unitTypeSelect });
-    } else {
-        // Fallback if select not found
-        console.warn("Unit type select not found in row for initial state setting:", row);
-        updateFullCalculationPreview(); // Still update preview
-    }
+    recalcInputs.forEach(input => { if (input) { input.addEventListener('input', () => updateItemAmount(row)); input.addEventListener('change', () => updateItemAmount(row)); input.addEventListener('blur', () => updateItemAmount(row)); } });
+    if (unitTypeSelect) { unitTypeSelect.addEventListener('change', handleUnitTypeChange); }
+    if (deleteBtn) { deleteBtn.addEventListener('click', () => { row.remove(); updateTotalAmount(); updateFullCalculationPreview(); }); }
+    if (unitTypeSelect) { handleUnitTypeChange({ target: unitTypeSelect }); } else { console.warn("Unit type select not found in row for initial state setting:", row); updateFullCalculationPreview(); }
 }
-// --- **** END FIXED Function **** ---
 
-
-// --- Initialization on DOM Load ---
+// --- DOMContentLoaded Listener --- (Keep as is)
 document.addEventListener('DOMContentLoaded', () => {
+    // ... (Keep the function exactly as it was in the file you sent) ...
     console.log("new_po.js v5: DOM loaded.");
-    // Ensure dependencies are available
-    if (!window.db || !window.query || !window.orderBy || !window.limit || !window.getDocs || !window.Timestamp) {
-        console.error("new_po.js: Firestore (window.db) or essential functions not available!");
-        alert("Error initializing page. Core functionalities missing.");
-        if(poForm) poForm.style.opacity = '0.5'; if(savePOBtn) savePOBtn.disabled = true;
-        return;
-    }
+    if (!window.db || !window.query || !window.orderBy || !window.limit || !window.getDocs || !window.Timestamp) { console.error("new_po.js: Firestore (window.db) or essential functions not available!"); alert("Error initializing page. Core functionalities missing."); if(poForm) poForm.style.opacity = '0.5'; if(savePOBtn) savePOBtn.disabled = true; return; }
     console.log("new_po.js: Firestore connection and functions confirmed.");
-
-    // Set default order date only if creating new PO and date is empty
     const urlParamsInit = new URLSearchParams(window.location.search);
     const isEditingInit = urlParamsInit.has('editPOId');
-    if (!isEditingInit && poOrderDateInput && !poOrderDateInput.value) {
-       try { poOrderDateInput.value = new Date().toISOString().split('T')[0]; }
-       catch (e) { console.error("Error setting default date:", e); }
-    }
-
-    // Add Item Button Logic
-    if (addItemBtn && itemRowTemplate && poItemsTableBody) {
-        addItemBtn.addEventListener('click', () => {
-             const templateContent = itemRowTemplate.content.cloneNode(true);
-             poItemsTableBody.appendChild(templateContent);
-             const appendedRow = poItemsTableBody.lastElementChild;
-             if (appendedRow?.matches('.item-row')) {
-                 // Add listeners which will also call handleUnitTypeChange for initial state
-                 addItemRowEventListeners(appendedRow);
-                 // Focus the first input
-                 const firstInput = appendedRow.querySelector('.product-name');
-                 if(firstInput) firstInput.focus();
-             } else { console.error("Failed to get appended row or it's not an item-row"); }
-             // Preview is updated inside addItemRowEventListeners -> handleUnitTypeChange -> updateItemAmount
-        });
-        // Add one row initially only if creating new PO
-        if (!isEditingInit && poItemsTableBody.children.length === 0) {
-            addItemBtn.click();
-        }
-    } else { console.error("Add Item button, Item Row template or Table Body not found!"); }
-
-    // Supplier Auto Suggest Logic
-    if (supplierSearchInput && supplierSuggestionsDiv && selectedSupplierIdInput && selectedSupplierNameInput) {
-        supplierSearchInput.addEventListener('input', handleSupplierSearchInput);
-         document.addEventListener('click', (e) => {
-              if (supplierSuggestionsDiv && !supplierSearchInput.contains(e.target) && !supplierSuggestionsDiv.contains(e.target)) {
-                  supplierSuggestionsDiv.style.display = 'none';
-              }
-         });
-    } else { console.warn("Supplier search elements not found."); }
-
-    // Add New Supplier Button Link
-     if(addNewSupplierFromPOBtn) {
-         addNewSupplierFromPOBtn.addEventListener('click', () => {
-             window.open('supplier_management.html#add', '_blank');
-             alert("Supplier management page opened in new tab. Add supplier there and then search here.");
-         });
-     }
-
-    // Form Submission Logic
-    if (poForm) {
-        poForm.addEventListener('submit', handleSavePO);
-    } else { console.error("PO Form element not found!"); }
-
-    // Load PO Data if Editing
+    if (!isEditingInit && poOrderDateInput && !poOrderDateInput.value) { try { poOrderDateInput.value = new Date().toISOString().split('T')[0]; } catch (e) { console.error("Error setting default date:", e); } }
+    if (addItemBtn && itemRowTemplate && poItemsTableBody) { addItemBtn.addEventListener('click', () => { const templateContent = itemRowTemplate.content.cloneNode(true); poItemsTableBody.appendChild(templateContent); const appendedRow = poItemsTableBody.lastElementChild; if (appendedRow?.matches('.item-row')) { addItemRowEventListeners(appendedRow); const firstInput = appendedRow.querySelector('.product-name'); if(firstInput) firstInput.focus(); } else { console.error("Failed to get appended row or it's not an item-row"); } }); if (!isEditingInit && poItemsTableBody.children.length === 0) { addItemBtn.click(); } } else { console.error("Add Item button, Item Row template or Table Body not found!"); }
+    if (supplierSearchInput && supplierSuggestionsDiv && selectedSupplierIdInput && selectedSupplierNameInput) { supplierSearchInput.addEventListener('input', handleSupplierSearchInput); document.addEventListener('click', (e) => { if (supplierSuggestionsDiv && !supplierSearchInput.contains(e.target) && !supplierSuggestionsDiv.contains(e.target)) { supplierSuggestionsDiv.style.display = 'none'; } }); } else { console.warn("Supplier search elements not found."); }
+     if(addNewSupplierFromPOBtn) { addNewSupplierFromPOBtn.addEventListener('click', () => { window.open('supplier_management.html#add', '_blank'); alert("Supplier management page opened in new tab. Add supplier there and then search here."); }); }
+    if (poForm) { poForm.addEventListener('submit', handleSavePO); } else { console.error("PO Form element not found!"); }
     const editPOIdValue = urlParamsInit.get('editPOId');
-    if (editPOIdValue) {
-        loadPOForEditing(editPOIdValue); // This function now correctly sets initial states and updates preview
-    } else {
-        // Ensure PO number is clear and preview is updated for new PO
-        if(poNumberInput) poNumberInput.value = '';
-        if (poItemsTableBody.children.length > 0) { // Only update if rows exist (e.g., if first row added automatically)
-             updateFullCalculationPreview();
-        }
-    }
+    if (editPOIdValue) { loadPOForEditing(editPOIdValue); } else { if(poNumberInput) poNumberInput.value = ''; if (poItemsTableBody.children.length > 0) { updateFullCalculationPreview(); } }
     console.log("new_po.js: Basic setup and listeners added.");
-}); // End DOMContentLoaded
+});
 
-
-// --- Supplier Search Implementation (Keep unchanged from v4 response) ---
+// --- Supplier Search Implementation --- (Keep as is)
 function handleSupplierSearchInput() {
+    // ... (Keep the function exactly as it was in the file you sent) ...
      if (!supplierSearchInput || !supplierSuggestionsDiv || !selectedSupplierIdInput || !selectedSupplierNameInput) return;
      clearTimeout(supplierSearchDebounceTimer); const searchTerm = supplierSearchInput.value.trim();
      selectedSupplierIdInput.value = ''; selectedSupplierNameInput.value = '';
@@ -377,6 +222,7 @@ function handleSupplierSearchInput() {
      supplierSearchDebounceTimer = setTimeout(() => { fetchSupplierSuggestions(searchTerm); }, 350);
 }
 async function fetchSupplierSuggestions(searchTerm) {
+    // ... (Keep the function exactly as it was in the file you sent) ...
     if (!supplierSuggestionsDiv) return;
     supplierSuggestionsDiv.innerHTML = '<div>Loading...</div>'; supplierSuggestionsDiv.style.display = 'block';
     try {
@@ -403,129 +249,319 @@ async function fetchSupplierSuggestions(searchTerm) {
 }
 
 
-// --- Save PO Implementation handleSavePO (Keep unchanged from v4 response) ---
+// --- Save PO Implementation handleSavePO (DEBUGGING ADDED) ---
 async function handleSavePO(event) {
-    event.preventDefault(); console.log("Attempting to save PO..."); showPOError('');
-    // ... (Prerequisite checks - same as v4) ...
-    if (!poForm || !selectedSupplierIdInput || !poOrderDateInput || !poItemsTableBody || !poTotalAmountSpan || !savePOBtn || !db || !addDoc || !collection || !doc || !updateDoc || !Timestamp || !serverTimestamp || !query || !orderBy || !limit || !getDocs) { console.error("Save PO prerequisites missing."); showPOError("Critical error: Cannot save PO."); return; }
-    const editingPOId = editPOIdInput.value; const isEditing = !!editingPOId; let finalPoNumber = null;
-    savePOBtn.disabled = true; if (savePOBtnSpan) savePOBtnSpan.textContent = isEditing ? 'Updating...' : 'Processing...';
-    // Determine PO Number (same as v4)
-    if (isEditing) { const existingValue = poNumberInput.value.trim(); const numericValue = Number(existingValue); finalPoNumber = (!isNaN(numericValue)) ? numericValue : (existingValue || null); }
-    else { /* ... (v4 auto-generation code) ... */ if(savePOBtnSpan) savePOBtnSpan.textContent = 'Generating PO#...'; try { const q = query(collection(db, "purchaseOrders"), orderBy("poNumber", "desc"), limit(1)); const querySnapshot = await getDocs(q); let lastPoNumber = 1000; if (!querySnapshot.empty) { const lastPO = querySnapshot.docs[0].data(); const lastNum = Number(lastPO.poNumber); if (!isNaN(lastNum) && lastNum >= 1000) { lastPoNumber = lastNum; } else { console.warn("Last PO invalid.", lastPO.poNumber); } } else { console.log("No existing POs found."); } finalPoNumber = lastPoNumber + 1; poNumberInput.value = finalPoNumber; console.log("Generated PO Number:", finalPoNumber); } catch (error) { console.error("Error generating PO number:", error); showPOError("Error generating PO Number. " + error.message); savePOBtn.disabled = false; if (savePOBtnSpan) savePOBtnSpan.textContent = 'Save Purchase Order'; return; } }
-    savePOBtn.disabled = false; if (savePOBtnSpan) savePOBtnSpan.textContent = isEditing ? 'Update Purchase Order' : 'Save Purchase Order';
-    // Gather General Data (same as v4)
-    const supplierId = selectedSupplierIdInput.value; const supplierName = selectedSupplierNameInput.value; const orderDateValue = poOrderDateInput.value; const notes = poNotesInput.value.trim();
-    // Basic Validation (same as v4)
-    if (!supplierId || !supplierName) { showPOError("Please select a supplier."); supplierSearchInput.focus(); return; } if (!orderDateValue) { showPOError("Please select an order date."); poOrderDateInput.focus(); return; } const itemRows = poItemsTableBody.querySelectorAll('.item-row'); if (itemRows.length === 0) { showPOError("Please add at least one item."); return; } if (finalPoNumber === null && !isEditing) { showPOError("PO Number generation failed."); return;}
-    // Gather and Validate Item Data (same as v4 - includes Party/Design)
-    let itemsArray = []; let validationPassed = true; let calculatedTotalAmount = 0;
-    itemRows.forEach((row, index) => { /* ... (Keep the v4 loop code that gathers all item data including party/design and validates) ... */ if (!validationPassed) return; const productNameInput = row.querySelector('.product-name'); const unitTypeSelect = row.querySelector('.unit-type-select'); const rateInput = row.querySelector('.rate-input'); const itemAmountSpan = row.querySelector('.item-amount'); const partyNameInput = row.querySelector('.party-name'); const designDetailsInput = row.querySelector('.design-details'); const productName = productNameInput?.value.trim(); const unitType = unitTypeSelect?.value; const rate = parseFloat(rateInput?.value || 0); const itemAmount = parseFloat(itemAmountSpan?.textContent || 0);
-    if (!productName) { validationPassed = false; showPOError(`Item ${index + 1}: Product Name required.`); productNameInput?.focus(); return; } if (isNaN(rate) || rate < 0) { validationPassed = false; showPOError(`Item ${index + 1}: Valid Rate required.`); rateInput?.focus(); return; } if (isNaN(itemAmount)) { validationPassed = false; showPOError(`Item ${index + 1}: Amount calculation error.`); return; }
-    let itemData = { productName: productName, type: unitType, rate: rate, itemAmount: 0, partyName: partyNameInput?.value.trim() || '', designDetails: designDetailsInput?.value.trim() || '' }; let expectedAmount = 0;
-    if (unitType === 'Sq Feet') { const dimensionUnitSelect = row.querySelector('.dimension-unit-select'); const widthInput = row.querySelector('.width-input'); const heightInput = row.querySelector('.height-input'); const unit = dimensionUnitSelect?.value || 'feet'; const width = parseFloat(widthInput?.value || 0); const height = parseFloat(heightInput?.value || 0); if (isNaN(width) || width <= 0 || isNaN(height) || height <= 0) { validationPassed = false; showPOError(`Item ${index + 1}: Valid Width & Height required.`); widthInput?.focus(); return; } const calcResult = calculateFlexDimensions(unit, width, height); if(parseFloat(calcResult.printSqFt) <= 0) { validationPassed = false; showPOError(`Item ${index + 1}: Calculation error.`); widthInput?.focus(); return; } itemData.unit = unit; itemData.realWidth = width; itemData.realHeight = height; itemData.realSqFt = parseFloat(calcResult.realSqFt); itemData.printWidth = parseFloat(calcResult.printWidth); itemData.printHeight = parseFloat(calcResult.printHeight); itemData.printSqFt = parseFloat(calcResult.printSqFt); expectedAmount = itemData.printSqFt * itemData.rate; }
-    else { const quantityInput = row.querySelector('.quantity-input'); const quantity = parseInt(quantityInput?.value || 0); if (isNaN(quantity) || quantity <= 0) { validationPassed = false; showPOError(`Item ${index + 1}: Valid Quantity required.`); quantityInput?.focus(); return; } itemData.quantity = quantity; expectedAmount = itemData.quantity * itemData.rate; }
-    if (Math.abs(itemAmount - expectedAmount) > 0.01) { console.warn(`Item ${index + 1} amount mismatch: disp=${itemAmount.toFixed(2)}, calc=${expectedAmount.toFixed(2)}.`); itemData.itemAmount = parseFloat(expectedAmount.toFixed(2)); } else { itemData.itemAmount = parseFloat(itemAmount.toFixed(2)); }
-    itemsArray.push(itemData); calculatedTotalAmount += itemData.itemAmount; });
-    if (!validationPassed) { console.error("Validation errors."); return; }
-    savePOBtn.disabled = true; if (savePOBtnSpan) savePOBtnSpan.textContent = isEditing ? 'Updating...' : 'Saving...';
-    // Create Firestore Data Object (same as v4)
-    const poData = { supplierId: supplierId, supplierName: supplierName, poNumber: finalPoNumber, orderDate: Timestamp.fromDate(new Date(orderDateValue + 'T00:00:00')), items: itemsArray, totalAmount: parseFloat(calculatedTotalAmount.toFixed(2)), notes: notes, updatedAt: serverTimestamp() };
-    if (!isEditing) { poData.createdAt = serverTimestamp(); poData.status = 'New'; } else { poData.status = editingPOData?.status || 'New'; }
-    console.log("Final PO Data:", poData);
-    // Save to Firestore (same as v4)
-    try { let successMessage = ''; if (isEditing) { const poDocRef = doc(db, "purchaseOrders", editingPOId); await updateDoc(poDocRef, poData); successMessage = "PO updated!"; console.log(successMessage, "ID:", editingPOId);} else { if (typeof poData.poNumber !== 'number' || isNaN(poData.poNumber)) { throw new Error("PO number invalid."); } const poDocRef = await addDoc(collection(db, "purchaseOrders"), poData); successMessage = "PO saved!"; console.log(successMessage, "ID:", poDocRef.id); } alert(successMessage); window.location.href = 'supplier_management.html'; }
-    catch (error) { console.error("Error saving PO:", error); showPOError("Error saving: " + error.message); savePOBtn.disabled = false; if (savePOBtnSpan) savePOBtnSpan.textContent = isEditing ? 'Update PO' : 'Save PO'; }
-}
+    event.preventDefault();
+    console.log("DEBUG PO Gen: handleSavePO started."); // DEBUG
+    showPOError('');
+    // Prerequisite checks
+    if (!poForm || !selectedSupplierIdInput || !poOrderDateInput || !poItemsTableBody || !poTotalAmountSpan || !savePOBtn || !db || !addDoc || !collection || !doc || !updateDoc || !Timestamp || !serverTimestamp || !query || !orderBy || !limit || !getDocs) {
+        console.error("Save PO prerequisites missing.");
+        showPOError("Critical error: Cannot save PO.");
+        return;
+    }
+
+    const editingPOId = editPOIdInput.value;
+    const isEditing = !!editingPOId;
+    let finalPoNumber = null;
+
+    console.log("DEBUG PO Gen: Editing Mode:", isEditing); // DEBUG
+
+    savePOBtn.disabled = true;
+    if (savePOBtnSpan) savePOBtnSpan.textContent = isEditing ? 'Updating...' : 'Processing...';
+
+    // Determine PO Number
+    if (isEditing) {
+        const existingValue = poNumberInput.value.trim();
+        const numericValue = Number(existingValue);
+        finalPoNumber = (!isNaN(numericValue)) ? numericValue : (existingValue || null); // Use existing number or entered value
+        console.log("DEBUG PO Gen: Using existing PO number for edit:", finalPoNumber); // DEBUG
+    } else {
+        // --- Auto-generation logic for NEW PO ---
+        if (savePOBtnSpan) savePOBtnSpan.textContent = 'Generating PO#...';
+        console.log("DEBUG PO Gen: Starting PO number generation..."); // DEBUG
+        try {
+            // ***** DEBUGGING: Try sorting by createdAt first *****
+            // const q = query(collection(db, "purchaseOrders"), orderBy("poNumber", "desc"), limit(1));
+            const q = query(collection(db, "purchaseOrders"), orderBy("createdAt", "desc"), limit(1)); // <<< TRY THIS QUERY
+            console.log("DEBUG PO Gen: Querying Firestore for last PO (using createdAt)..."); // DEBUG
+
+            const querySnapshot = await getDocs(q);
+            let lastPoNumber = 1000; // Default starting point
+
+            if (!querySnapshot.empty) {
+                const lastPO = querySnapshot.docs[0].data();
+                console.log("DEBUG PO Gen: Last PO document found:", lastPO); // DEBUG
+                const lastPoNumberStr = lastPO.poNumber; // Get the poNumber field from the last document
+                console.log(`DEBUG PO Gen: Found last PO Number string/value: "${lastPoNumberStr}" (Type: ${typeof lastPoNumberStr})`); // DEBUG
+
+                if (lastPoNumberStr !== undefined && lastPoNumberStr !== null && lastPoNumberStr !== "") {
+                    const lastNum = Number(lastPoNumberStr); // Attempt to convert to Number
+                    console.log(`DEBUG PO Gen: Attempted conversion to number: ${lastNum}`); // DEBUG
+
+                    if (!isNaN(lastNum)) { // Check if conversion was successful
+                         // Use the successfully parsed number + 1, only if it's greater than the default start
+                         // This prevents falling back if the last number was simply < 1000
+                         lastPoNumber = lastNum; // Assign the valid parsed number
+                    } else {
+                         console.warn("DEBUG PO Gen: Last PO number is not a valid number (NaN). Falling back.");
+                         // Keep lastPoNumber = 1000 (default)
+                    }
+                } else {
+                     console.warn("DEBUG PO Gen: Last PO number field is missing, null, or empty. Falling back.");
+                      // Keep lastPoNumber = 1000 (default)
+                }
+            } else {
+                console.log("DEBUG PO Gen: No existing POs found in query result. Starting with default.");
+                // Keep lastPoNumber = 1000 (default)
+            }
+
+            finalPoNumber = lastPoNumber + 1; // Calculate the next number
+            // Optional: Ensure minimum number if needed
+             if (finalPoNumber < 1001) {
+                  console.log(`DEBUG PO Gen: Calculated number ${finalPoNumber} is less than 1001, adjusting.`);
+                  finalPoNumber = 1001;
+             }
+
+            poNumberInput.value = finalPoNumber; // Update the UI input field
+            console.log("DEBUG PO Gen: Generated PO Number:", finalPoNumber); // DEBUG
+
+        } catch (error) {
+            console.error("DEBUG PO Gen: Error during PO number generation:", error); // DEBUG
+            showPOError("Error generating PO Number. " + error.message);
+            savePOBtn.disabled = false;
+            if (savePOBtnSpan) savePOBtnSpan.textContent = 'Save Purchase Order';
+            return; // Stop saving if generation fails
+        }
+    }
+    // Re-enable button temporarily before final validation and save attempt
+    savePOBtn.disabled = false;
+    if (savePOBtnSpan) savePOBtnSpan.textContent = isEditing ? 'Update Purchase Order' : 'Save Purchase Order';
 
 
-// --- **** FIXED loadPOForEditing Function **** ---
+    // Gather General Data
+    const supplierId = selectedSupplierIdInput.value;
+    const supplierName = selectedSupplierNameInput.value;
+    const orderDateValue = poOrderDateInput.value;
+    const notes = poNotesInput.value.trim();
+
+    // Basic Validation
+    if (!supplierId || !supplierName) { showPOError("Please select a supplier."); supplierSearchInput.focus(); return; }
+    if (!orderDateValue) { showPOError("Please select an order date."); poOrderDateInput.focus(); return; }
+    const itemRows = poItemsTableBody.querySelectorAll('.item-row');
+    if (itemRows.length === 0) { showPOError("Please add at least one item."); return; }
+    // Validate the final determined PO number
+    if ((finalPoNumber === null || finalPoNumber === undefined || (typeof finalPoNumber === 'number' && isNaN(finalPoNumber)) ) && !isEditing) {
+         showPOError("Could not determine a valid PO Number. Cannot save.");
+         console.error("DEBUG PO Gen: finalPoNumber is invalid before saving:", finalPoNumber); // DEBUG
+         return;
+    }
+
+    // Gather and Validate Item Data
+    let itemsArray = [];
+    let validationPassed = true;
+    let calculatedTotalAmount = 0;
+    itemRows.forEach((row, index) => {
+        if (!validationPassed) return; // Stop processing if previous item failed
+        const productNameInput = row.querySelector('.product-name');
+        const unitTypeSelect = row.querySelector('.unit-type-select');
+        const rateInput = row.querySelector('.rate-input');
+        const itemAmountSpan = row.querySelector('.item-amount');
+        const partyNameInput = row.querySelector('.party-name');
+        const designDetailsInput = row.querySelector('.design-details');
+
+        const productName = productNameInput?.value.trim();
+        const unitType = unitTypeSelect?.value;
+        const rate = parseFloat(rateInput?.value || 0);
+        const itemAmount = parseFloat(itemAmountSpan?.textContent || 0); // Amount displayed
+
+        // --- Item Validation ---
+        if (!productName) { validationPassed = false; showPOError(`Item ${index + 1}: Product Name required.`); productNameInput?.focus(); return; }
+        if (isNaN(rate) || rate < 0) { validationPassed = false; showPOError(`Item ${index + 1}: Valid Rate required.`); rateInput?.focus(); return; }
+        if (isNaN(itemAmount)) { validationPassed = false; showPOError(`Item ${index + 1}: Amount calculation error.`); return; } // Should not happen if inputs are validated
+
+        let itemData = {
+            productName: productName,
+            type: unitType,
+            rate: rate,
+            itemAmount: 0, // Will be recalculated/verified
+            partyName: partyNameInput?.value.trim() || '',
+            designDetails: designDetailsInput?.value.trim() || ''
+        };
+        let expectedAmount = 0;
+
+        if (unitType === 'Sq Feet') {
+            const dimensionUnitSelect = row.querySelector('.dimension-unit-select');
+            const widthInput = row.querySelector('.width-input');
+            const heightInput = row.querySelector('.height-input');
+            const unit = dimensionUnitSelect?.value || 'feet';
+            const width = parseFloat(widthInput?.value || 0);
+            const height = parseFloat(heightInput?.value || 0);
+
+            if (isNaN(width) || width <= 0) { validationPassed = false; showPOError(`Item ${index + 1}: Valid Width required.`); widthInput?.focus(); return; }
+            if (isNaN(height) || height <= 0) { validationPassed = false; showPOError(`Item ${index + 1}: Valid Height required.`); heightInput?.focus(); return; }
+
+            const calcResult = calculateFlexDimensions(unit, width, height); // Assume this exists and works
+
+            if(parseFloat(calcResult.printSqFt) <= 0) { validationPassed = false; showPOError(`Item ${index + 1}: Calculation error (printSqFt is zero).`); widthInput?.focus(); return; }
+
+            itemData.unit = unit;
+            // Store both real and print dimensions for clarity/future use
+            itemData.realWidth = width; // Store original input width
+            itemData.realHeight = height; // Store original input height
+            itemData.realSqFt = parseFloat(calcResult.realSqFt);
+            itemData.printWidth = parseFloat(calcResult.printWidth); // Width on media in original unit
+            itemData.printHeight = parseFloat(calcResult.printHeight); // Height on media in original unit
+            itemData.printSqFt = parseFloat(calcResult.printSqFt); // Billing area
+            itemData.inputUnit = calcResult.inputUnit; // Unit used for input W/H
+
+            expectedAmount = itemData.printSqFt * itemData.rate;
+
+        } else { // Qty type
+            const quantityInput = row.querySelector('.quantity-input');
+            const quantity = parseInt(quantityInput?.value || 0);
+
+            if (isNaN(quantity) || quantity <= 0) { validationPassed = false; showPOError(`Item ${index + 1}: Valid Quantity required.`); quantityInput?.focus(); return; }
+
+            itemData.quantity = quantity;
+            expectedAmount = itemData.quantity * itemData.rate;
+        }
+
+        // Verify calculated amount against displayed amount (within tolerance)
+        if (Math.abs(itemAmount - expectedAmount) > 0.01) {
+            console.warn(`Item ${index + 1} amount mismatch on save: displayed=${itemAmount.toFixed(2)}, calculated=${expectedAmount.toFixed(2)}. Using calculated.`);
+            itemData.itemAmount = parseFloat(expectedAmount.toFixed(2));
+        } else {
+            itemData.itemAmount = parseFloat(itemAmount.toFixed(2)); // Use displayed if close enough
+        }
+
+        itemsArray.push(itemData);
+        calculatedTotalAmount += itemData.itemAmount; // Add verified/recalculated amount
+    }); // End itemRows.forEach
+
+    if (!validationPassed) {
+        console.error("Validation failed during item processing.");
+        // Button should be enabled by default if validation fails here
+        savePOBtn.disabled = false;
+        if (savePOBtnSpan) savePOBtnSpan.textContent = isEditing ? 'Update Purchase Order' : 'Save Purchase Order';
+        return; // Stop saving
+    }
+
+    // Final button disable before Firestore operation
+    savePOBtn.disabled = true;
+    if (savePOBtnSpan) savePOBtnSpan.textContent = isEditing ? 'Updating...' : 'Saving...';
+
+    // Create Firestore Data Object
+    const poData = {
+        supplierId: supplierId,
+        supplierName: supplierName,
+        poNumber: finalPoNumber, // Use the number determined earlier (MUST BE VALID NUMBER FOR NEW POs)
+        orderDate: Timestamp.fromDate(new Date(orderDateValue + 'T00:00:00')), // Store date part only as Timestamp
+        items: itemsArray,
+        totalAmount: parseFloat(calculatedTotalAmount.toFixed(2)),
+        notes: notes,
+        updatedAt: serverTimestamp() // Firestore server timestamp
+    };
+
+    // Add creation timestamp and default status ONLY for new documents
+    if (!isEditing) {
+        poData.createdAt = serverTimestamp(); // Firestore server timestamp
+        poData.status = 'New';
+    } else {
+        // Retain original status if editing, unless explicitly changed
+        poData.status = editingPOData?.status || 'New'; // Use loaded status or default to 'New'
+    }
+
+    console.log("DEBUG PO Gen: Final PO Data being sent to Firestore:", poData); // DEBUG
+
+    // Save to Firestore
+    try {
+        let successMessage = '';
+        if (isEditing) {
+            const poDocRef = doc(db, "purchaseOrders", editingPOId);
+            await updateDoc(poDocRef, poData);
+            successMessage = "Purchase Order updated successfully!";
+            console.log(successMessage, "ID:", editingPOId);
+        } else {
+             // Final check before adding new document
+             if (typeof poData.poNumber !== 'number' || isNaN(poData.poNumber) || poData.poNumber <= 0) {
+                  throw new Error(`Invalid PO number detected just before save: ${poData.poNumber}`);
+             }
+            const poDocRef = await addDoc(collection(db, "purchaseOrders"), poData);
+            successMessage = `Purchase Order ${poData.poNumber} created successfully!`;
+            console.log(successMessage, "ID:", poDocRef.id);
+        }
+        alert(successMessage);
+        window.location.href = 'supplier_management.html'; // Redirect on success
+
+    } catch (error) {
+        console.error("Error saving PO to Firestore:", error); // DEBUG
+        showPOError("Error saving Purchase Order: " + error.message);
+        // Re-enable button on failure
+        savePOBtn.disabled = false;
+        if (savePOBtnSpan) savePOBtnSpan.textContent = isEditing ? 'Update Purchase Order' : 'Save Purchase Order';
+    }
+} // End handleSavePO
+
+
+// --- Load PO For Editing Implementation --- (Keep as is)
 async function loadPOForEditing(poId) {
+    // ... (Keep the function exactly as it was in the file you sent) ...
     console.log(`Loading PO ${poId} for editing...`);
     if (!db || !doc || !getDoc || !poForm) { showPOError("Cannot load PO: Init error."); return; }
-
-    // Update UI text
     if (poPageTitle) poPageTitle.innerHTML = `<i class="fas fa-edit"></i> Edit Purchase Order`;
     if (poBreadcrumbAction) poBreadcrumbAction.textContent = `Edit PO #${poId}`;
     if (savePOBtnSpan) savePOBtnSpan.textContent = 'Update Purchase Order';
     editPOIdInput.value = poId;
     if (poNumberInput) poNumberInput.readOnly = false; // Allow editing PO number
-
     try {
         const poDocRef = doc(db, "purchaseOrders", poId);
         const poDocSnap = await getDoc(poDocRef);
         if (poDocSnap.exists()) {
-            editingPOData = poDocSnap.data();
-            console.log("PO Data loaded:", editingPOData);
-
-            // Populate top-level fields
+            editingPOData = poDocSnap.data(); console.log("PO Data loaded:", editingPOData);
             if(supplierSearchInput && editingPOData.supplierName) supplierSearchInput.value = editingPOData.supplierName;
             if(selectedSupplierIdInput && editingPOData.supplierId) selectedSupplierIdInput.value = editingPOData.supplierId;
             if(selectedSupplierNameInput && editingPOData.supplierName) selectedSupplierNameInput.value = editingPOData.supplierName;
             if(poNumberInput && editingPOData.poNumber !== undefined) { poNumberInput.value = editingPOData.poNumber; } else if (poNumberInput) { poNumberInput.value = ''; }
             if(poOrderDateInput && editingPOData.orderDate?.toDate) { poOrderDateInput.value = editingPOData.orderDate.toDate().toISOString().split('T')[0]; } else if (poOrderDateInput) { poOrderDateInput.value = ''; }
             if(poNotesInput && editingPOData.notes) poNotesInput.value = editingPOData.notes;
-
-            // Populate items table
-            poItemsTableBody.innerHTML = ''; // Clear any potential default rows first
+            poItemsTableBody.innerHTML = '';
             if (editingPOData.items?.length > 0) {
                 editingPOData.items.forEach(item => {
                     if (!itemRowTemplate) return;
                     const templateContent = itemRowTemplate.content.cloneNode(true);
                     poItemsTableBody.appendChild(templateContent);
                     const newRow = poItemsTableBody.lastElementChild;
-
                     if (newRow?.matches('.item-row')) {
-                        // Populate fields
                         const productNameInput = newRow.querySelector('.product-name'); if(productNameInput) productNameInput.value = item.productName || '';
-                        const unitTypeSelect = newRow.querySelector('.unit-type-select'); if(unitTypeSelect) unitTypeSelect.value = item.type || 'Qty'; // Set value FIRST
+                        const unitTypeSelect = newRow.querySelector('.unit-type-select'); if(unitTypeSelect) unitTypeSelect.value = item.type || 'Qty';
                         const rateInput = newRow.querySelector('.rate-input'); if(rateInput) rateInput.value = item.rate ?? '';
                         const partyNameInput = newRow.querySelector('.party-name'); if(partyNameInput) partyNameInput.value = item.partyName || '';
                         const designDetailsInput = newRow.querySelector('.design-details'); if(designDetailsInput) designDetailsInput.value = item.designDetails || '';
-
-                        // Populate type-specific fields *before* calling addItemRowEventListeners
                         if (item.type === 'Sq Feet') {
                            const dimensionUnitSelect = newRow.querySelector('.dimension-unit-select'); if(dimensionUnitSelect) dimensionUnitSelect.value = item.unit || 'feet';
-                           const widthInput = newRow.querySelector('.width-input'); if(widthInput) widthInput.value = item.realWidth ?? '';
-                           const heightInput = newRow.querySelector('.height-input'); if(heightInput) heightInput.value = item.realHeight ?? '';
+                           const widthInput = newRow.querySelector('.width-input'); if(widthInput) widthInput.value = item.realWidth ?? item.width ?? ''; // Use realWidth if available
+                           const heightInput = newRow.querySelector('.height-input'); if(heightInput) heightInput.value = item.realHeight ?? item.height ?? ''; // Use realHeight if available
                         } else {
-                           const quantityInput = newRow.querySelector('.quantity-input'); if(quantityInput) quantityInput.value = item.quantity ?? ''; // Target the INPUT
+                           const quantityInput = newRow.querySelector('.quantity-input'); if(quantityInput) quantityInput.value = item.quantity ?? '';
                         }
-
-                        // Attach listeners and set initial visibility state
-                        // This call is crucial and must happen AFTER values are set
                         addItemRowEventListeners(newRow);
-
-                        // Explicitly update amount for the loaded row as listeners might not fire initially
                         updateItemAmount(newRow);
                     }
                 });
-            } else { // No items saved
-                 if (addItemBtn) addItemBtn.click(); // Add a blank row
-            }
-
-            // Update totals and preview *after* all rows are processed and initialized
-            updateTotalAmount();
-            updateFullCalculationPreview();
-
-        } else {
-            console.error("No such PO document!"); showPOError("Error: Could not find PO to edit.");
-            if(savePOBtn) savePOBtn.disabled = true;
-        }
-    } catch (error) {
-        console.error("Error loading PO for editing:", error); showPOError("Error loading PO data: " + error.message);
-        if(savePOBtn) savePOBtn.disabled = true;
-    }
+            } else { if (addItemBtn) addItemBtn.click(); }
+            updateTotalAmount(); updateFullCalculationPreview();
+        } else { console.error("No such PO document!"); showPOError("Error: Could not find PO to edit."); if(savePOBtn) savePOBtn.disabled = true; }
+    } catch (error) { console.error("Error loading PO for editing:", error); showPOError("Error loading PO data: " + error.message); if(savePOBtn) savePOBtn.disabled = true; }
 }
-// --- **** END FIXED Function **** ---
 
-
-// Helper function to display errors on PO form
+// Helper function showPOError (Keep as is)
 function showPOError(message) {
+    // ... (Keep the function exactly as it was in the file you sent) ...
     if (poErrorMsg) {
         poErrorMsg.textContent = message;
         poErrorMsg.style.display = message ? 'block' : 'none';
     } else { if(message) alert(message); }
 }
 
-console.log("new_po.js v5 loaded and ready.");
+console.log("new_po.js v6 (DEBUG) loaded and ready.");
