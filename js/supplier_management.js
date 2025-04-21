@@ -1,4 +1,4 @@
-// js/supplier_management.js - v15 (Added Copy Content to PO Share Modal)
+// js/supplier_management.js - v17 (Removed Supplier Name from PO Share Info Bar)
 
 import { generatePoPdf } from './utils.js';
 
@@ -12,6 +12,7 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 // --- DOM Elements ---
+// (All DOM element variables remain the same as v16)
 const viewSuppliersBtn = document.getElementById('viewSuppliersBtn');
 const poTableBody = document.getElementById('poTableBody');
 const poSearchInput = document.getElementById('poSearchInput');
@@ -45,7 +46,7 @@ const statusUpdatePOId = document.getElementById('statusUpdatePOId');
 const currentPOStatusSpan = document.getElementById('currentPOStatus');
 const statusSelect = document.getElementById('statusSelect');
 const statusErrorMsg = document.getElementById('statusErrorMsg');
-const poDetailsModal = document.getElementById('poDetailsModal'); // Existing View Details Modal
+const poDetailsModal = document.getElementById('poDetailsModal');
 const poDetailsModalTitle = document.getElementById('poDetailsModalTitle');
 const closePoDetailsModalBtn = document.getElementById('closePoDetailsModal');
 const closePoDetailsBtn = document.getElementById('closePoDetailsBtn');
@@ -55,8 +56,6 @@ const closeSuppliersListModalBtn = document.getElementById('closeSuppliersListMo
 const addSupplierInModalBtn = document.getElementById('addSupplierInModalBtn');
 const supplierTableBodyModal = document.getElementById('supplierTableBodyModal');
 const closeSuppliersListBtnBottom = document.getElementById('closeSuppliersListBtnBottom');
-
-// PO Share Modal Elements
 const poShareModal = document.getElementById('poShareModal');
 const poShareModalTitle = document.getElementById('poShareModalTitle');
 const poShareInfo = document.getElementById('poShareInfo');
@@ -66,7 +65,7 @@ const poShareTermList = document.getElementById('poShareTermList');
 const closePoShareModal = document.getElementById('closePoShareModal');
 const closePoShareModalBtn = document.getElementById('closePoShareModalBtn');
 const printPoShareModalBtn = document.getElementById('printPoShareModalBtn');
-const copyPoShareModalBtn = document.getElementById('copyPoShareModalBtn'); // NEW Copy Button
+const copyPoShareModalBtn = document.getElementById('copyPoShareModalBtn');
 
 
 // --- Global State ---
@@ -75,7 +74,7 @@ let cachedPOs = {};
 let suppliersDataCache = [];
 
 // --- Modal Handling ---
-// (Existing modal functions: openSupplierModal, closeSupplierModal, openStatusModal, closeStatusModal, openPoDetailsModal, closePoDetailsModal, openSuppliersListModal, closeSuppliersListModal)
+// (Existing modal functions remain the same)
 function openSupplierModal(mode = 'add', supplierData = null, supplierId = null) { if (!supplierModal || !supplierForm || !supplierModalTitle || !supplierErrorMsg || !supplierIdInput || !supplierNameInput || !supplierCompanyInput || !supplierWhatsappInput || !supplierEmailInput || !supplierAddressInput || !supplierGstInput) { console.error("Supplier modal elements not found!"); alert("Error: Could not open supplier form."); return; } supplierForm.reset(); supplierErrorMsg.textContent = ''; supplierErrorMsg.style.display = 'none'; currentEditingSupplierId = null; if (mode === 'edit' && supplierData && supplierId) { supplierModalTitle.textContent = 'Edit Supplier'; supplierIdInput.value = supplierId; currentEditingSupplierId = supplierId; supplierNameInput.value = supplierData.name || ''; supplierCompanyInput.value = supplierData.companyName || ''; supplierWhatsappInput.value = supplierData.whatsappNo || ''; supplierEmailInput.value = supplierData.email || ''; supplierAddressInput.value = supplierData.address || ''; supplierGstInput.value = supplierData.gstNo || ''; } else { supplierModalTitle.textContent = 'Add New Supplier'; supplierIdInput.value = ''; } supplierModal.classList.add('active'); }
 function closeSupplierModal() { if (supplierModal) { supplierModal.classList.remove('active'); } }
 function openStatusModal(poId, currentStatus, poNumber) { if (!statusUpdateModal || !statusUpdateForm || !statusModalTitle || !statusUpdatePOId || !statusSelect || !currentPOStatusSpan) { console.error("Status update modal elements not found!"); alert("Error: Cannot open status update form."); return; } statusUpdateForm.reset(); statusErrorMsg.textContent = ''; statusErrorMsg.style.display = 'none'; statusModalTitle.textContent = `Update Status for PO #${poNumber || poId}`; statusUpdatePOId.value = poId; currentPOStatusSpan.textContent = currentStatus || 'N/A'; statusSelect.value = ""; const options = statusSelect.options; for (let i = 0; i < options.length; i++) { if (options[i].value === currentStatus) { break; } } statusUpdateModal.classList.add('active'); }
@@ -85,7 +84,7 @@ function closePoDetailsModal() { if (poDetailsModal) { poDetailsModal.classList.
 function openSuppliersListModal() { if (suppliersListModal) { suppliersListModal.classList.add('active'); displaySupplierList(); } else { console.error("Suppliers List Modal element not found!"); } }
 function closeSuppliersListModal() { if (suppliersListModal) { suppliersListModal.classList.remove('active'); } }
 
-// PO Share Modal Functions
+// --- PO Share Modal Functions ---
 async function openPoShareModal(poId) {
     if (!poShareModal || !poShareModalTitle || !poShareInfo || !poShareGreeting || !poShareItemsContainer || !poShareTermList || !copyPoShareModalBtn) {
         console.error("PO Share modal elements not found!"); alert("Error: Cannot open PO Share view."); return;
@@ -98,22 +97,20 @@ async function openPoShareModal(poId) {
     poShareGreeting.innerHTML = 'Loading greeting...';
     poShareItemsContainer.innerHTML = '<h3>Items</h3><p><i class="fas fa-spinner fa-spin"></i> Loading items...</p>';
     poShareTermList.innerHTML = '<li>Loading T&C...</li>';
-    copyPoShareModalBtn.dataset.poid = ''; // Clear previous ID
-    copyPoShareModalBtn.disabled = true; // Disable copy button initially
-    copyPoShareModalBtn.innerHTML = '<i class="fas fa-copy"></i> Copy Content'; // Reset button text/icon
-    copyPoShareModalBtn.classList.remove('copied', 'copying'); // Remove status classes
+    copyPoShareModalBtn.dataset.poid = '';
+    copyPoShareModalBtn.disabled = true;
+    copyPoShareModalBtn.innerHTML = '<i class="fas fa-copy"></i> Copy Content';
+    copyPoShareModalBtn.classList.remove('copied', 'copying');
 
     poShareModal.classList.add('active');
 
     try {
-        // Fetch PO Data
         const poRef = doc(db, "purchaseOrders", poId);
         const poDocSnap = await getDoc(poRef);
         if (!poDocSnap.exists()) { throw new Error(`Could not find Purchase Order with ID: ${poId}`); }
         const poData = poDocSnap.data();
         cachedPOs[poId] = poData;
 
-        // Fetch Supplier Data
         let supplierName = "Supplier"; let supplierData = null;
         if (poData.supplierId) {
             try { const supplierRef = doc(db, "suppliers", poData.supplierId); const supplierDocSnap = await getDoc(supplierRef); if (supplierDocSnap.exists()) { supplierData = supplierDocSnap.data(); supplierName = supplierData.name || supplierName; } else { console.warn(`Supplier document not found for ID: ${poData.supplierId}`); supplierName = poData.supplierName || supplierName; } }
@@ -123,7 +120,16 @@ async function openPoShareModal(poId) {
         // --- Populate Modal ---
         const poNumberDisplay = poData.poNumber ? `<span class="po-number-large">#${poData.poNumber}</span>` : 'N/A';
         let orderDateStr = 'N/A'; if (poData.orderDate?.toDate) { try { orderDateStr = poData.orderDate.toDate().toLocaleDateString('en-GB'); } catch(e){} }
-        poShareInfo.innerHTML = `<span>PO Number: ${poNumberDisplay}</span> <span>Order Date: ${orderDateStr}</span> <span>Supplier: ${supplierName}</span>`;
+
+        // *** UPDATED HTML for poShareInfo (Supplier Name removed) ***
+        poShareInfo.innerHTML = `
+            <span class="po-info-left">PO Number: ${poNumberDisplay}</span>
+            <span class="po-info-right">
+                <span>Order Date: ${orderDateStr}</span>
+                </span>
+        `;
+        // *** END UPDATE ***
+
         poShareGreeting.innerHTML = `Dear ${supplierName},<br>This Purchase Order is being shared with you. Please review the details below.`;
 
         let itemsHTML = '<p>No items found.</p>';
@@ -140,8 +146,6 @@ async function openPoShareModal(poId) {
         } else { poShareItemsContainer.innerHTML = `<h3>Items</h3><p>No items found for this PO.</p>`; }
 
         poShareTermList.innerHTML = `<li>Ensure prompt delivery of the order.</li> <li>The supplied material must match the approved sample and specifications.</li> <li>Maintain the specified quality standards.</li> <li>Payment may be withheld or rejected for defective/substandard goods.</li>`;
-
-        // Store PO ID on the copy button and enable it
         copyPoShareModalBtn.dataset.poid = poId;
         copyPoShareModalBtn.disabled = false;
 
@@ -150,141 +154,48 @@ async function openPoShareModal(poId) {
         poShareModalTitle.textContent = "Error"; poShareInfo.innerHTML = ''; poShareGreeting.innerHTML = '';
         poShareItemsContainer.innerHTML = `<p class="error-message">Error loading PO details: ${error.message}</p>`;
         poShareTermList.innerHTML = '';
-        copyPoShareModalBtn.disabled = true; // Disable copy button on error
+        copyPoShareModalBtn.disabled = true;
     }
 }
 
 function closePoShareModalFunction() { if (poShareModal) { poShareModal.classList.remove('active'); } }
 
-// --- NEW: Function to handle Copy Content ---
+// Copy Content Function
 async function handleCopyPoShareContent(event) {
     const button = event.currentTarget;
     const poId = button.dataset.poid;
-
     if (!poId) { alert("Error: Could not find PO ID to copy."); return; }
-    if (!navigator.clipboard || !navigator.clipboard.write) { alert("Error: Clipboard API not supported or not available in this context (e.g., non-HTTPS)."); return; }
+    if (!navigator.clipboard || !navigator.clipboard.write) { alert("Error: Clipboard API not supported or not available."); return; }
 
-    button.disabled = true;
-    button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Copying...';
-    button.classList.add('copying');
-    button.classList.remove('copied');
+    button.disabled = true; button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Copying...'; button.classList.add('copying'); button.classList.remove('copied');
 
     try {
-        // Re-fetch data to ensure freshness
-        const poRef = doc(db, "purchaseOrders", poId);
-        const poDocSnap = await getDoc(poRef);
-        if (!poDocSnap.exists()) { throw new Error("PO data not found."); }
-        const poData = poDocSnap.data();
-
-        let supplierName = "Supplier";
-        if (poData.supplierId) {
-            const supplierRef = doc(db, "suppliers", poData.supplierId);
-            const supplierDocSnap = await getDoc(supplierRef);
-            if (supplierDocSnap.exists()) { supplierName = supplierDocSnap.data().name || supplierName; }
-            else { supplierName = poData.supplierName || supplierName; }
-        } else { supplierName = poData.supplierName || supplierName; }
-
-        // --- Construct HTML for Clipboard ---
+        const poRef = doc(db, "purchaseOrders", poId); const poDocSnap = await getDoc(poRef); if (!poDocSnap.exists()) { throw new Error("PO data not found."); } const poData = poDocSnap.data();
+        let supplierName = "Supplier"; if (poData.supplierId) { const supplierRef = doc(db, "suppliers", poData.supplierId); const supplierDocSnap = await getDoc(supplierRef); if (supplierDocSnap.exists()) { supplierName = supplierDocSnap.data().name || supplierName; } else { supplierName = poData.supplierName || supplierName; } } else { supplierName = poData.supplierName || supplierName; }
         let orderDateStr = 'N/A'; if (poData.orderDate?.toDate) { try { orderDateStr = poData.orderDate.toDate().toLocaleDateString('en-GB'); } catch(e){} }
 
-        let htmlContent = `
-            <p><strong>Purchase Order #${poData.poNumber || 'N/A'}</strong></p>
-            <p><strong>Order Date:</strong> ${orderDateStr}<br>
-               <strong>Supplier:</strong> ${supplierName}</p>
-            <hr>
-            <p>Dear ${supplierName},<br>This Purchase Order is being shared with you. Please review the details below.</p>
-            <hr>
-            <h3>Items</h3>
-        `;
-
+        // *** UPDATED: HTML for Clipboard (Supplier name removed from header part) ***
+        let htmlContent = `<p><strong>Purchase Order #${poData.poNumber || 'N/A'}</strong></p><p><strong>Order Date:</strong> ${orderDateStr}</p><hr><p>Dear ${supplierName},<br>This Purchase Order is being shared with you. Please review the details below.</p><hr><h3>Items</h3>`;
         if (poData.items && poData.items.length > 0) {
-            // Simple table for email compatibility
-            htmlContent += `<table border="1" cellpadding="5" cellspacing="0" style="border-collapse: collapse; width: 100%;">
-                <thead>
-                    <tr style="background-color: #f2f2f2;">
-                        <th>#</th>
-                        <th>Product</th>
-                        <th>Type</th>
-                        <th>Details</th>
-                        <th>Rate</th>
-                        <th>Party</th>
-                        <th>Design</th>
-                        <th>Amount</th>
-                    </tr>
-                </thead>
-                <tbody>`;
+            htmlContent += `<table border="1" cellpadding="5" cellspacing="0" style="border-collapse: collapse; width: 100%;"><thead><tr style="background-color: #f2f2f2;"><th>#</th><th>Product</th><th>Type</th><th>Details</th><th>Rate</th><th>Party</th><th>Design</th><th>Amount</th></tr></thead><tbody>`;
             poData.items.forEach((item, index) => {
-                 let detailStr = ''; const qty = item.quantity || '?';
-                 if (item.type === 'Sq Feet') { const w = item.realWidth || item.width || '?'; const h = item.realHeight || item.height || '?'; const u = item.unit || item.inputUnit || 'units'; detailStr = `Qty: ${qty} (${w}x${h} ${u})`; }
-                 else { detailStr = `Qty: ${qty}`; }
-                 htmlContent += `
-                    <tr>
-                        <td>${index + 1}</td>
-                        <td>${item.productName || 'N/A'}</td>
-                        <td>${item.type || 'N/A'}</td>
-                        <td>${detailStr}</td>
-                        <td>${item.rate?.toFixed(2) ?? 'N/A'}</td>
-                        <td>${item.partyName || '-'}</td>
-                        <td>${item.designDetails || '-'}</td>
-                        <td align="right">${item.itemAmount?.toFixed(2) ?? 'N/A'}</td>
-                    </tr>`;
+                 let detailStr = ''; const qty = item.quantity || '?'; if (item.type === 'Sq Feet') { const w = item.realWidth || item.width || '?'; const h = item.realHeight || item.height || '?'; const u = item.unit || item.inputUnit || 'units'; detailStr = `Qty: ${qty} (${w}x${h} ${u})`; } else { detailStr = `Qty: ${qty}`; }
+                 htmlContent += `<tr><td>${index + 1}</td><td>${item.productName || 'N/A'}</td><td>${item.type || 'N/A'}</td><td>${detailStr}</td><td>${item.rate?.toFixed(2) ?? 'N/A'}</td><td>${item.partyName || '-'}</td><td>${item.designDetails || '-'}</td><td align="right">${item.itemAmount?.toFixed(2) ?? 'N/A'}</td></tr>`;
             });
             htmlContent += `</tbody></table>`;
-        } else {
-            htmlContent += `<p>No items found.</p>`;
-        }
+        } else { htmlContent += `<p>No items found.</p>`; }
+        htmlContent += `<hr><h3>Terms & Conditions</h3><ol><li>Ensure prompt delivery...</li><li>Material must match...</li><li>Maintain quality...</li><li>Payment withheld...</li></ol>`;
+        // *** END UPDATE ***
 
-        htmlContent += `<hr>
-            <h3>Terms & Conditions</h3>
-            <ol>
-                <li>Ensure prompt delivery of the order.</li>
-                <li>The supplied material must match the approved sample and specifications.</li>
-                <li>Maintain the specified quality standards.</li>
-                <li>Payment may be withheld or rejected for defective/substandard goods.</li>
-            </ol>
-        `;
-
-        // Create Blob for HTML content
-        const htmlBlob = new Blob([htmlContent], { type: 'text/html' });
-        // Optional: Create plain text fallback (basic version)
-        const textContent = `Purchase Order #${poData.poNumber || 'N/A'}\nOrder Date: ${orderDateStr}\nSupplier: ${supplierName}\n\nDear ${supplierName}, This Purchase Order...\n\nItems:\n${poData.items?.map((item, index) => `${index + 1}. ${item.productName} (${item.type}) - Qty: ${item.quantity || '?'}`).join('\n') || 'No items.'}\n\nTerms & Conditions:\n1. Ensure prompt delivery...\n2. Material must match...\n3. Maintain quality...\n4. Payment withheld...`;
-        const textBlob = new Blob([textContent], { type: 'text/plain' });
-
-
-        // Create ClipboardItem
-        const clipboardItem = new ClipboardItem({
-            'text/html': htmlBlob,
-            'text/plain': textBlob
-        });
-
-        // Write to clipboard
+        const textContent = `Purchase Order #${poData.poNumber || 'N/A'}\nOrder Date: ${orderDateStr}\n\nDear ${supplierName}, This Purchase Order...\n\nItems:\n${poData.items?.map((item, index) => `${index + 1}. ${item.productName} (${item.type}) - Qty: ${item.quantity || '?'}`).join('\n') || 'No items.'}\n\nTerms & Conditions:\n1. Ensure prompt delivery...\n2. Material must match...\n3. Maintain quality...\n4. Payment withheld...`;
+        const htmlBlob = new Blob([htmlContent], { type: 'text/html' }); const textBlob = new Blob([textContent], { type: 'text/plain' });
+        const clipboardItem = new ClipboardItem({ 'text/html': htmlBlob, 'text/plain': textBlob });
         await navigator.clipboard.write([clipboardItem]);
 
-        console.log("PO content copied to clipboard.");
-        button.innerHTML = '<i class="fas fa-check"></i> Copied!';
-        button.classList.add('copied');
-
-    } catch (error) {
-        console.error("Failed to copy PO content: ", error);
-        alert("Error: Could not copy content. " + error.message);
-        button.innerHTML = '<i class="fas fa-copy"></i> Copy Content'; // Reset text
-    } finally {
-        button.classList.remove('copying');
-        // Optionally reset button text after a delay
-        setTimeout(() => {
-            if (button.classList.contains('copied')) {
-                 button.innerHTML = '<i class="fas fa-copy"></i> Copy Content';
-                 button.classList.remove('copied');
-                 button.disabled = false;
-            } else {
-                 // If it wasn't copied successfully, just re-enable
-                 button.innerHTML = '<i class="fas fa-copy"></i> Copy Content';
-                 button.disabled = false;
-            }
-        }, 2000); // Reset after 2 seconds
-    }
+        console.log("PO content copied."); button.innerHTML = '<i class="fas fa-check"></i> Copied!'; button.classList.add('copied');
+    } catch (error) { console.error("Copy failed: ", error); alert("Error: Could not copy. " + error.message); button.innerHTML = '<i class="fas fa-copy"></i> Copy Content'; }
+    finally { button.classList.remove('copying'); setTimeout(() => { if (button.classList.contains('copied')) { button.innerHTML = '<i class="fas fa-copy"></i> Copy Content'; button.classList.remove('copied'); button.disabled = false; } else { button.innerHTML = '<i class="fas fa-copy"></i> Copy Content'; button.disabled = false; } }, 2000); }
 }
-// --- End of Copy Function ---
 
 
 // --- Firestore Operations ---
@@ -295,7 +206,7 @@ async function saveSupplier(event) { event.preventDefault(); if (!db || !collect
 async function deleteSupplier(supplierId, supplierName) { if (!db || !doc || !deleteDoc) { alert("Error: Required functions missing for deleting supplier."); return; } if (confirm(`Are you sure you want to delete supplier "${supplierName || supplierId}"? This cannot be undone.`)) { console.log(`Attempting to delete supplier: ${supplierId}`); try { await deleteDoc(doc(db, "suppliers", supplierId)); console.log("Supplier deleted: ", supplierId); alert(`Supplier "${supplierName || supplierId}" deleted successfully.`); await displaySupplierList(); await displayPoList(); } catch (error) { console.error("Error deleting supplier: ", error); alert("Error deleting supplier: " + error.message); } } else { console.log("Supplier delete cancelled."); } }
 async function handleDeletePO(poId, poNumber) { if (!db || !doc || !deleteDoc) { alert("Error: Required functions missing for deleting PO."); return; } if (confirm(`Are you sure you want to delete Purchase Order "${poNumber || poId}"? This cannot be undone.`)) { console.log(`Attempting to delete PO: ${poId}`); try { await deleteDoc(doc(db, "purchaseOrders", poId)); console.log("Purchase Order deleted successfully:", poId); alert(`Purchase Order ${poNumber || poId} deleted successfully.`); await displayPoList(); } catch (error) { console.error("Error deleting Purchase Order:", error); alert("Error deleting Purchase Order: " + error.message); } } else { console.log("PO deletion cancelled."); } }
 
-// UPDATED: Display PO List (Make PO Number Clickable)
+// Display PO List (Make PO Number Clickable)
 async function displayPoList() { if (!poTableBody) { console.error("PO table body (poTableBody) not found!"); return; } if (!db || !collection || !getDocs || !query || !orderBy || !where || !doc || !getDoc || !Timestamp) { console.error("Firestore functions not available in displayPoList (check imports)."); poTableBody.innerHTML = `<tr><td colspan="8" class="error-message">Error: Required functions missing. Cannot load POs.</td></tr>`; return; } poTableBody.innerHTML = `<tr><td colspan="8"><i class="fas fa-spinner fa-spin"></i> Loading purchase orders...</td></tr>`; if (poTotalsDisplay) poTotalsDisplay.innerHTML = ''; cachedPOs = {}; try { let conditions = []; let baseQuery = collection(db, "purchaseOrders"); let finalQuery; const searchTerm = poSearchInput.value.trim().toLowerCase(); const statusFilter = poStatusFilter.value; const startDateVal = poStartDateFilter.value; const endDateVal = poEndDateFilter.value; if (statusFilter) { conditions.push(where("status", "==", statusFilter)); } if (startDateVal) { try { const startDate = new Date(startDateVal + 'T00:00:00'); conditions.push(where("orderDate", ">=", Timestamp.fromDate(startDate))); } catch(e){ console.error("Invalid start date format"); } } if (endDateVal) { try { const endDate = new Date(endDateVal + 'T23:59:59'); conditions.push(where("orderDate", "<=", Timestamp.fromDate(endDate))); } catch(e){ console.error("Invalid end date format"); } } let sortClauses; if (startDateVal || endDateVal) { sortClauses = [orderBy("orderDate", "desc"), orderBy("createdAt", "desc")]; } else { sortClauses = [orderBy("createdAt", "desc")]; } finalQuery = query(baseQuery, ...conditions, ...sortClauses); const querySnapshot = await getDocs(finalQuery); let filteredDocs = querySnapshot.docs; if (searchTerm) { console.log(`Filtering client-side for search term: "${searchTerm}"`); const suppliersSnapshot = await getDocs(query(collection(db, "suppliers"), orderBy("name"))); const suppliersMap = new Map(suppliersSnapshot.docs.map(d => [d.id, d.data().name])); filteredDocs = querySnapshot.docs.filter(docRef_po => { const po = docRef_po.data(); const poNumberMatch = po.poNumber?.toString().toLowerCase().includes(searchTerm); const supplierNameFromId = suppliersMap.get(po.supplierId)?.toLowerCase() || ''; const supplierIdMatch = supplierNameFromId.includes(searchTerm); const legacySupplierNameMatch = po.supplierName?.toLowerCase().includes(searchTerm); return poNumberMatch || supplierIdMatch || legacySupplierNameMatch; }); console.log(`Docs after client-side search filter: ${filteredDocs.length}`); } poTableBody.innerHTML = ''; let grandTotalAmount = 0; if (filteredDocs.length === 0) { poTableBody.innerHTML = `<tr><td colspan="8">No purchase orders found matching your criteria.</td></tr>`; if (poTotalsDisplay) poTotalsDisplay.innerHTML = ''; return; } const supplierIdsToFetch = new Set(filteredDocs.map(d => d.data().supplierId).filter(id => !!id)); const supplierPromises = Array.from(supplierIdsToFetch).map(id => getDoc(doc(db, "suppliers", id))); const supplierSnaps = await Promise.all(supplierPromises); const supplierNameMap = new Map(supplierSnaps.map(snap => [snap.id, snap.exists() ? snap.data().name : 'Deleted Supplier'])); filteredDocs.forEach(docRef_po => { const po = docRef_po.data(); const poId = docRef_po.id; cachedPOs[poId] = po; let supplierName = po.supplierName || supplierNameMap.get(po.supplierId) || 'Unknown/Deleted'; let orderDateStr = '-'; if (po.orderDate?.toDate) { try { orderDateStr = po.orderDate.toDate().toLocaleDateString('en-GB'); } catch(e){} } else if (po.createdAt?.toDate) { try { orderDateStr = po.createdAt.toDate().toLocaleDateString('en-GB') + ' (Created)';} catch(e){} } let statusClass = (po.status || 'unknown').toLowerCase().replace(/\s+/g, '-'); let statusText = po.status || 'Unknown'; let amount = po.totalAmount || 0; let amountStr = `₹ ${amount.toFixed(2)}`; grandTotalAmount += amount; let printSizesStr = '-'; let quantityInfoStr = '-'; if (po.items && po.items.length > 0) { const sizeEntries = []; const quantityEntries = []; po.items.forEach(item => { const qty = item.quantity || '?'; if (item.type === 'Sq Feet') { const w = item.realWidth || item.width || '?'; const h = item.realHeight || item.height || '?'; const u = item.unit || item.inputUnit || 'units'; quantityEntries.push(`${w}x${h} ${u}: ${qty} Qty`); const pWidth = item.printWidth || item.width || '?'; const pHeight = item.printHeight || item.height || '?'; const pUnit = item.inputUnit || item.unit || 'units'; const wFormatted = !isNaN(parseFloat(pWidth)) ? parseFloat(pWidth).toFixed(2) : pWidth; const hFormatted = !isNaN(parseFloat(pHeight)) ? parseFloat(pHeight).toFixed(2) : pHeight; sizeEntries.push(`${wFormatted}x${hFormatted} ${pUnit}`); } else { quantityEntries.push(`${item.productName || 'Item'}: ${qty} Qty`); } }); if(quantityEntries.length > 0) quantityInfoStr = quantityEntries.join('<br>'); if(sizeEntries.length > 0) printSizesStr = sizeEntries.join('<br>'); else printSizesStr = '-'; } const tr = document.createElement('tr'); tr.setAttribute('data-id', poId); tr.innerHTML = `<td class="po-number-link" data-poid="${poId}" title="Click to view details">${po.poNumber || 'N/A'}</td><td>${supplierName}</td><td>${orderDateStr}</td><td><span class="status-badge status-${statusClass}">${statusText}</span></td><td style="text-align: right;">${amountStr}</td><td>${quantityInfoStr}</td><td>${printSizesStr}</td><td class="action-buttons"><button class="button view-details-button" data-poid="${poId}" title="View Basic Details"><i class="fas fa-eye"></i></button><a href="new_po.html?editPOId=${poId}" class="button edit-button" title="Edit PO"><i class="fas fa-edit"></i></a><button class="button status-button" data-poid="${poId}" data-ponumber="${po.poNumber}" data-currentstatus="${statusText}" title="Update Status"><i class="fas fa-sync-alt"></i></button><button class="button pdf-button" data-id="${poId}" title="Download PDF"><i class="fas fa-file-pdf"></i></button><button class="button delete-button" data-id="${poId}" data-ponumber="${po.poNumber}" title="Delete PO"><i class="fas fa-trash-alt"></i></button></td>`; poTableBody.appendChild(tr); }); if (poTotalsDisplay) { poTotalsDisplay.innerHTML = `<strong>Total Amount (Filtered):</strong> ₹ ${grandTotalAmount.toFixed(2)}`; } console.log("Purchase Orders list displayed successfully."); } catch (error) { console.error("Error processing or displaying POs: ", error); if (poTableBody) { if (error.code === 'failed-precondition') { poTableBody.innerHTML = `<tr><td colspan="8" class="error-message">Error: Required Firestore index missing. ${error.message} Please check Firestore console -> Indexes.</td></tr>`; } else { poTableBody.innerHTML = `<tr><td colspan="8" class="error-message">Error loading POs: ${error.message}</td></tr>`; } } if (poTotalsDisplay) poTotalsDisplay.innerHTML = ''; } }
 
 // Handle Status Update Submission
@@ -307,40 +218,39 @@ function showStatusError(message) { if(statusErrorMsg) { statusErrorMsg.textCont
 
 // --- Initialization on DOM Load ---
 document.addEventListener('DOMContentLoaded', () => {
-    console.log("Supplier Management v15: DOM loaded."); // Version updated
-    if (!db) { console.error("DB not available! Check Firebase initialization and imports."); if(poTableBody) poTableBody.innerHTML = `<tr><td colspan="8" class="error-message">Critical Error: Database connection failed.</td></tr>`; return; }
+    console.log("Supplier Management v17: DOM loaded."); // Version updated
+    if (!db) { console.error("DB not available!"); if(poTableBody) poTableBody.innerHTML = `<tr><td colspan="8" class="error-message">Critical Error: Database connection failed.</td></tr>`; return; }
 
-    // Supplier Add/Edit Modal Listeners
+    // Add/Edit Supplier Modal
     if (closeSupplierModalBtn) closeSupplierModalBtn.addEventListener('click', closeSupplierModal);
     if (cancelSupplierBtn) cancelSupplierBtn.addEventListener('click', closeSupplierModal);
     if (supplierForm) supplierForm.addEventListener('submit', saveSupplier);
     if (supplierModal) supplierModal.addEventListener('click', (event) => { if (event.target === supplierModal) closeSupplierModal(); });
 
-    // Status Modal Listeners
+    // Status Update Modal
     if (closeStatusModalBtn) closeStatusModalBtn.addEventListener('click', closeStatusModal);
     if (cancelStatusBtn) cancelStatusBtn.addEventListener('click', closeStatusModal);
     if (statusUpdateForm) statusUpdateForm.addEventListener('submit', handleStatusUpdate);
     if (statusUpdateModal) statusUpdateModal.addEventListener('click', (event) => { if (event.target === statusUpdateModal) closeStatusModal(); });
 
-    // PO Details Modal Listeners (Existing View)
+    // PO Details Modal (Existing View)
     const printPoDetailsBtn = document.getElementById('printPoDetailsBtn');
     if (closePoDetailsModalBtn) closePoDetailsModalBtn.addEventListener('click', closePoDetailsModal);
     if (closePoDetailsBtn) closePoDetailsBtn.addEventListener('click', closePoDetailsModal);
     if (poDetailsModal) poDetailsModal.addEventListener('click', (event) => { if (event.target === poDetailsModal) closePoDetailsModal(); });
-    if (printPoDetailsBtn) { printPoDetailsBtn.addEventListener('click', () => { console.log("Print button clicked for PO Details Modal"); document.body.classList.add('printing-po-details'); window.print(); document.body.classList.remove('printing-po-details'); }); }
+    if (printPoDetailsBtn) { printPoDetailsBtn.addEventListener('click', () => { document.body.classList.add('printing-po-details'); document.body.classList.remove('printing-po-share'); window.print(); document.body.classList.remove('printing-po-details'); }); }
     else { console.warn("Print PO Details button not found."); }
 
-    // PO Share Modal Listeners (NEW)
+    // PO Share Modal (New)
     if (closePoShareModal) closePoShareModal.addEventListener('click', closePoShareModalFunction);
     if (closePoShareModalBtn) closePoShareModalBtn.addEventListener('click', closePoShareModalFunction);
     if (poShareModal) poShareModal.addEventListener('click', (event) => { if (event.target === poShareModal) closePoShareModalFunction(); });
-    if (printPoShareModalBtn) { printPoShareModalBtn.addEventListener('click', () => { console.log("Print button clicked for PO Share Modal"); document.body.classList.add('printing-po-share'); window.print(); document.body.classList.remove('printing-po-share'); }); }
+    if (printPoShareModalBtn) { printPoShareModalBtn.addEventListener('click', () => { document.body.classList.remove('printing-po-details'); document.body.classList.add('printing-po-share'); window.print(); document.body.classList.remove('printing-po-share'); }); }
     else { console.warn("Print PO Share button not found."); }
-    // Add listener for the NEW copy button
     if (copyPoShareModalBtn) { copyPoShareModalBtn.addEventListener('click', handleCopyPoShareContent); }
     else { console.warn("Copy PO Share button not found."); }
 
-    // Suppliers List Modal Listeners
+    // Suppliers List Modal
     if (viewSuppliersBtn) viewSuppliersBtn.addEventListener('click', openSuppliersListModal);
     if (closeSuppliersListModalBtn) closeSuppliersListModalBtn.addEventListener('click', closeSuppliersListModal);
     if (closeSuppliersListBtnBottom) closeSuppliersListBtnBottom.addEventListener('click', closeSuppliersListModal);
@@ -348,38 +258,38 @@ document.addEventListener('DOMContentLoaded', () => {
     if (suppliersListModal) suppliersListModal.addEventListener('click', (event) => { if (event.target === suppliersListModal) closeSuppliersListModal(); });
     if (supplierTableBodyModal) { supplierTableBodyModal.addEventListener('click', handleSupplierTableActions); }
 
-    // PO Table Actions Listener (Event Delegation - Enhanced for PO Number Click)
+    // PO Table Actions Listener (Now includes PO Number click)
     if (poTableBody) {
         poTableBody.addEventListener('click', async (event) => {
             const targetCell = event.target.closest('td');
             const actionElement = event.target.closest('button[data-id], button[data-poid], a.edit-button');
 
-            // Handle PO Number Click to open Share Modal
+            // Handle PO Number Click
             if (targetCell && targetCell.classList.contains('po-number-link')) {
                 const poId = targetCell.dataset.poid;
-                if (poId) { console.log(`PO Number clicked: ${poId}. Opening Share Modal.`); openPoShareModal(poId); }
+                if (poId) { openPoShareModal(poId); }
                 else { console.error("Missing PO ID on clicked PO number cell."); }
-                return; // Stop further processing
+                return; // Stop processing other actions
             }
 
-            // Handle Action Buttons
+            // Handle Action Buttons/Links
             if (!actionElement) return;
             if (actionElement.tagName === 'BUTTON') { event.preventDefault(); }
             let poId = actionElement.dataset.id || actionElement.dataset.poid;
             if (!poId && actionElement.tagName === 'A' && actionElement.classList.contains('edit-button')) { try { const url = new URL(actionElement.href); poId = url.searchParams.get('editPOId'); } catch (e) { console.error("Could not extract PO ID", e); } }
             const poNumber = actionElement.dataset.ponumber;
 
-            if (actionElement.classList.contains('view-details-button')) { if (poId) { openPoDetailsModal(poId); } else { console.error("Missing PO ID for View Details"); } }
-            else if (actionElement.classList.contains('edit-button') && actionElement.tagName === 'A') { console.log(`Edit link clicked for PO ${poId}`); }
-            else if (actionElement.classList.contains('status-button')) { const currentStatus = actionElement.dataset.currentstatus; if (poId && currentStatus !== undefined) { openStatusModal(poId, currentStatus, poNumber); } else { console.error("Missing data for Status Update"); } }
+            if (actionElement.classList.contains('view-details-button')) { if (poId) { openPoDetailsModal(poId); } else { console.error("Missing PO ID"); } }
+            else if (actionElement.classList.contains('edit-button') && actionElement.tagName === 'A') { console.log(`Edit link clicked ${poId}`); }
+            else if (actionElement.classList.contains('status-button')) { const currentStatus = actionElement.dataset.currentstatus; if (poId && currentStatus !== undefined) { openStatusModal(poId, currentStatus, poNumber); } else { console.error("Missing data Status"); } }
             else if (actionElement.classList.contains('pdf-button')) {
-                 if (!poId) { console.error("Missing PO ID for PDF"); return; }
+                 if (!poId) { console.error("Missing PO ID PDF"); return; }
                  actionElement.disabled = true; actionElement.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
-                 try { let pD = cachedPOs[poId]; if (!pD) { const pS = await getDoc(doc(db, "purchaseOrders", poId)); if (pS.exists()) pD = pS.data(); } if (!pD) throw new Error(`PO ${poId}`); let sD = null; if (pD.supplierId) { const sS = await getDoc(doc(db, "suppliers", pD.supplierId)); if (sS.exists()) { sD = sS.data(); } else { console.warn(`PDF: Supplier ${pD.supplierId}`); } } if (!sD && pD.supplierName) { const q = query(collection(db, "suppliers"), where("name", "==", pD.supplierName), limit(1)); const sQS = await getDocs(q); if (!sQS.empty) { sD = sQS.docs[0].data(); } else { console.error(`PDF: Supplier ${pD.supplierName}`); } } if (!sD) { throw new Error(`Info PO ${poId}.`); } await generatePoPdf(pD, sD); }
+                 try { let pD = cachedPOs[poId]; if (!pD) { const pS = await getDoc(doc(db, "purchaseOrders", poId)); if (pS.exists()) pD = pS.data(); } if (!pD) throw new Error(`PO ${poId}`); let sD = null; if (pD.supplierId) { const sS = await getDoc(doc(db, "suppliers", pD.supplierId)); if (sS.exists()) { sD = sS.data(); } else { console.warn(`PDF: Sup ${pD.supplierId}`); } } if (!sD && pD.supplierName) { const q = query(collection(db, "suppliers"), where("name", "==", pD.supplierName), limit(1)); const sQS = await getDocs(q); if (!sQS.empty) { sD = sQS.docs[0].data(); } else { console.error(`PDF: Sup Name ${pD.supplierName}`); } } if (!sD) { throw new Error(`Info PO ${poId}.`); } await generatePoPdf(pD, sD); }
                  catch (error) { console.error("PDF gen:", error); alert("PDF Err: " + error.message); }
                  finally { actionElement.disabled = false; actionElement.innerHTML = '<i class="fas fa-file-pdf"></i>'; }
              }
-            else if (actionElement.classList.contains('delete-button')) { if (poId) { handleDeletePO(poId, poNumber); } else { console.error("Missing PO ID for Delete"); } }
+            else if (actionElement.classList.contains('delete-button')) { if (poId) { handleDeletePO(poId, poNumber); } else { console.error("Missing PO ID Delete"); } }
         });
     }
 
@@ -388,12 +298,12 @@ document.addEventListener('DOMContentLoaded', () => {
     if (poClearFilterBtn) { poClearFilterBtn.addEventListener('click', () => { if(poSearchInput) poSearchInput.value = ''; if(poStatusFilter) poStatusFilter.value = ''; if(poStartDateFilter) poStartDateFilter.value = ''; if(poEndDateFilter) poEndDateFilter.value = ''; displayPoList(); }); }
 
     // Initial data load
-    (async () => { try { if (typeof query === 'function' && typeof getDocs === 'function') { await displayPoList(); } else { console.error("Firestore functions not ready for initial load."); if(poTableBody) poTableBody.innerHTML = `<tr><td colspan="8" class="error-message">Error: Application setup failed. Cannot load POs.</td></tr>`; } } catch (e) { console.error("Error during initial PO load:", e); if(poTableBody) poTableBody.innerHTML = `<tr><td colspan="8" class="error-message">Error loading initial POs: ${e.message}</td></tr>`; } })();
+    (async () => { try { if (typeof query === 'function' && typeof getDocs === 'function') { await displayPoList(); } else { console.error("Firestore functions not ready."); if(poTableBody) poTableBody.innerHTML = `<tr><td colspan="8">Error: Setup fail.</td></tr>`; } } catch (e) { console.error("Initial load err:", e); if(poTableBody) poTableBody.innerHTML = `<tr><td colspan="8">Error loading: ${e.message}</td></tr>`; } })();
 
-    // Check for #add hash on load
-    if(window.location.hash === '#add') { setTimeout(() => { if(supplierModal) openSupplierModal('add'); else console.warn("Supplier Add/Edit modal not found for #add hash."); if (history.replaceState) { history.replaceState(null, null, window.location.pathname + window.location.search); } }, 150); }
+    // Check for #add hash
+    if(window.location.hash === '#add') { setTimeout(() => { if(supplierModal) openSupplierModal('add'); else console.warn("#add modal fail."); if (history.replaceState) { history.replaceState(null, null, window.location.pathname + window.location.search); } }, 150); }
 
-    console.log("Supplier Management v15 Initialized."); // Version updated
+    console.log("Supplier Management v17 Initialized."); // Version updated
 });
 
-console.log("supplier_management.js v15 module processed."); // Version updated
+console.log("supplier_management.js v17 module processed."); // Version updated
