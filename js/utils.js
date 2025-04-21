@@ -1,6 +1,6 @@
-// js/utils.js - v8 (Fixed cellPadding ReferenceError in didDrawCell)
+// js/utils.js - v9 (Improved PDF Design & Styling)
 
-// --- Function for Flex Calculation (यह फ़ंक्शन अपरिवर्तित है) ---
+// --- Function for Flex Calculation (No changes) ---
 function calculateFlexDimensions(unit, width, height) {
     // ... (Keep the function exactly as it was) ...
     console.log(`Calculating flex: Unit=${unit}, W=${width}, H=${height}`);
@@ -31,14 +31,14 @@ function calculateFlexDimensions(unit, width, height) {
 }
 
 
-// --- PDF Generation Function (New Design v8) ---
+// --- PDF Generation Function (New Design v9) ---
 async function generatePoPdf(poData, supplierData) {
     // 1. jsPDF Check & Init
     if (typeof window.jspdf === 'undefined' || typeof window.jspdf.jsPDF === 'undefined') { console.error("jsPDF library not found!"); alert("Error: PDF Library not loaded."); return; }
     if (typeof window.jspdf.jsPDF.API.autoTable !== 'function') { console.error("jsPDF autoTable plugin not found!"); alert("Error: PDF AutoTable Plugin not loaded."); return; }
     const { jsPDF } = window.jspdf;
 
-    console.log("Generating PDF (v8 Design) for PO:", poData);
+    console.log("Generating PDF (v9 Design) for PO:", poData);
     console.log("Supplier Data for PDF:", supplierData);
 
     if (!poData || !poData.items || !supplierData) { alert("Error: Missing data to generate PDF."); console.error("Missing PDF data"); return; }
@@ -58,63 +58,65 @@ async function generatePoPdf(poData, supplierData) {
         let currentY = margin;
 
         // --- Define Colors & Fonts ---
-        const headerColor = '#0056b3';
+        const headerColor = '#0056b3'; // Primary Blue (Used for accents)
         const textColor = '#333333';
-        const subTextColor = '#555555';
-        const borderColor = '#DDDDDD';
+        const subTextColor = '#666666'; // Lighter Gray for sub-text
+        const borderColor = '#E0E0E0'; // Lighter border
         const whiteColor = '#FFFFFF';
         const blackColor = '#000000';
-        const tableHeaderBG = '#F2F2F2';
+        const tableHeaderBG = '#F5F5F5'; // Very Light Grey Header BG
         const defaultFontSize = 9;
         const smallFontSize = 8;
-        const headerFontSize = 10;
+        const headerFontSize = 10; // For Table Header
 
         doc.setTextColor(textColor);
         doc.setFont('helvetica', 'normal');
         doc.setFontSize(defaultFontSize);
 
         // --- 1. Header ---
-        doc.setFontSize(11);
+        doc.setFontSize(12);
         doc.setFont(undefined, 'bold');
         doc.text(companyName, pageWidth - margin, currentY + 5, { align: 'right' });
-        currentY += 14;
+        currentY += 15;
         doc.setFontSize(defaultFontSize);
         doc.setFont(undefined, 'normal');
         const addressLines = doc.splitTextToSize(companyAddress, 180);
         doc.text(addressLines, pageWidth - margin, currentY, { align: 'right' });
-        currentY += (addressLines.length * 10) + 2;
+        currentY += (addressLines.length * 11) + 2; // Adjusted line height
         doc.text(companyContact, pageWidth - margin, currentY, { align: 'right' });
-        currentY += 15;
+        currentY += 20; // More space after header
 
         // Title
-        doc.setFontSize(16);
+        doc.setFontSize(18);
         doc.setFont(undefined, 'bold');
         doc.text("PURCHASE ORDER", pageWidth / 2, currentY, { align: 'center' });
-        currentY += 25;
+        currentY += 30;
 
         // --- 2. Supplier/PO Info ---
         const infoStartY = currentY;
         const halfWidth = contentWidth / 2;
-        const gap = 15;
+        const gap = 20; // Slightly more gap
 
         // Left Column: Supplier
         doc.setFontSize(smallFontSize);
         doc.setFont(undefined, 'bold');
+        doc.setTextColor(subTextColor); // Label in lighter color
         doc.text("Issued To:", margin, currentY);
-        currentY += 11;
+        currentY += 12;
+        doc.setTextColor(textColor); // Back to default color
         doc.setFontSize(defaultFontSize);
         doc.setFont(undefined, 'bold');
         if(supplierData.name) doc.text(supplierData.name, margin, currentY);
-        currentY += 12;
+        currentY += 13;
         doc.setFont(undefined, 'normal');
-        doc.setFontSize(smallFontSize + 1);
+        doc.setFontSize(defaultFontSize); // Use default size for address/contact
         if (supplierData.address) {
              const supAddressLines = doc.splitTextToSize(supplierData.address, halfWidth - gap);
              doc.text(supAddressLines, margin, currentY);
-             currentY += (supAddressLines.length * (smallFontSize+1)) + 2;
+             currentY += (supAddressLines.length * (defaultFontSize + 1)) + 2;
         } else { currentY += 10; }
-        if (supplierData.whatsappNo) { doc.text(`Contact: ${supplierData.whatsappNo}`, margin, currentY); currentY += (smallFontSize+1); }
-        if (supplierData.gstNo) { doc.text(`GST No.: ${supplierData.gstNo}`, margin, currentY); currentY += (smallFontSize+1); }
+        if (supplierData.whatsappNo) { doc.text(`Contact: ${supplierData.whatsappNo}`, margin, currentY); currentY += (defaultFontSize + 1); }
+        if (supplierData.gstNo) { doc.text(`GST No.: ${supplierData.gstNo}`, margin, currentY); currentY += (defaultFontSize + 1); }
         const leftColEndY = currentY;
 
         // Right Column: PO
@@ -127,22 +129,24 @@ async function generatePoPdf(poData, supplierData) {
 
         const drawInfoLine = (label, value) => {
             if (currentY > pageHeight - margin*2) { doc.addPage(); currentY = margin; }
+            doc.setFont(undefined, 'bold'); // Make label bold
             doc.text(label, col2X, currentY, { align: 'left', maxWidth: col2LabelWidth });
+            doc.setFont(undefined, 'normal'); // Value normal
             doc.text(`: ${value}`, col2ValueX, currentY);
-            currentY += 13;
+            currentY += 14; // Increased line height
         };
-        drawInfoLine("Order No.", String(poData.poNumber || 'N/A')); // Error fix applied
+        drawInfoLine("Order No.", String(poData.poNumber || 'N/A'));
         let orderDateStr = 'N/A';
         if (poData.orderDate?.toDate) { try { orderDateStr = poData.orderDate.toDate().toLocaleDateString('en-GB'); } catch(e){ console.error("Error formatting date:", e)} }
         drawInfoLine("Date", orderDateStr);
         drawInfoLine("Status", poData.status || 'N/A');
         const rightColEndY = currentY;
-        currentY = Math.max(leftColEndY, rightColEndY) + 20;
+        currentY = Math.max(leftColEndY, rightColEndY) + 25; // More space before table
 
         // --- 3. Prepare Table Data ---
         let totalQtySum = 0;
         const tableBody = [];
-        const detailedItemData = []; // Store details for hook
+        const detailedItemData = [];
 
         poData.items.forEach((item, index) => {
             let qtyStr = '-';
@@ -153,7 +157,6 @@ async function generatePoPdf(poData, supplierData) {
             if (item.type === 'Sq Feet') {
                 const area = item.printSqFt !== undefined ? parseFloat(item.printSqFt) : 0;
                 sqfStr = area.toFixed(2);
-                totalQtySum += 0;
                 const w = item.realWidth || item.width || '?';
                 const h = item.realHeight || item.height || '?';
                 const u = item.unit || item.inputUnit || 'units';
@@ -171,8 +174,8 @@ async function generatePoPdf(poData, supplierData) {
                 qtyStr = `${qty}`;
                 totalQtySum += qty;
             }
-            const rateStr = typeof item.rate === 'number' ? item.rate.toFixed(2) : '-';
-            const amountStr = typeof item.itemAmount === 'number' ? item.itemAmount.toFixed(2) : '-';
+            const rateStr = typeof item.rate === 'number' ? `₹${item.rate.toFixed(2)}` : '-'; // Add currency
+            const amountStr = typeof item.itemAmount === 'number' ? `₹${item.itemAmount.toFixed(2)}` : '-'; // Add currency
 
             tableBody.push([ index + 1, productName, qtyStr, sqfStr, rateStr, amountStr ]);
             detailedItemData.push({ flexDetails: flexDetailsLines });
@@ -180,22 +183,44 @@ async function generatePoPdf(poData, supplierData) {
 
         // Prepare summary rows
         const summaryRows = [];
-        if (totalQtySum > 0) {
-             summaryRows.push([ { content: `Total Qty: ${totalQtySum}`, colSpan: 2, styles: { halign: 'left', fontStyle: 'bold', fontSize: defaultFontSize} }, {}, {}, {}, {} ]);
-        }
+        // Remove Total Qty row to match sample invoice more closely
+        // if (totalQtySum > 0) {
+        //      summaryRows.push([ { content: `Total Qty: ${totalQtySum}`, colSpan: 2, styles: { halign: 'left', fontStyle: 'bold', fontSize: defaultFontSize} }, {}, {}, {}, {} ]);
+        // }
          const finalTotalAmountStr = poData.totalAmount !== undefined ? poData.totalAmount.toFixed(2) : '0.00';
-         summaryRows.push([ { content: 'GRAND TOTAL', colSpan: 5, styles: { halign: 'right', fontStyle: 'bold', fontSize: headerFontSize} }, { content: `₹ ${finalTotalAmountStr}`, styles: { halign: 'right', fontStyle: 'bold', fontSize: headerFontSize} } ]);
+         summaryRows.push([
+              { content: 'GRAND TOTAL', colSpan: 5, styles: { halign: 'right', fontStyle: 'bold', fontSize: headerFontSize} }, // Span 5 columns
+              { content: `₹ ${finalTotalAmountStr}`, styles: { halign: 'right', fontStyle: 'bold', fontSize: headerFontSize} } // Amount in last column
+         ]);
 
         // --- 4. Define Table Styles ---
-        const headStyles = { fillColor: tableHeaderBG, textColor: blackColor, fontStyle: 'bold', halign: 'center', valign: 'middle', fontSize: headerFontSize, cellPadding: {top: 6, right: 5, bottom: 6, left: 5}, lineWidth: 0.5, lineColor: borderColor };
-        const bodyStyles = { fontSize: defaultFontSize, textColor: textColor, cellPadding: {top: 4, right: 5, bottom: 4, left: 5}, valign: 'top', lineWidth: 0.5, lineColor: borderColor };
-        const columnStyles = { 0: { halign: 'center', cellWidth: 30 }, 1: { halign: 'left', cellWidth: 235 }, 2: { halign: 'right', cellWidth: 40 }, 3: { halign: 'right', cellWidth: 50 }, 4: { halign: 'right', cellWidth: 60 }, 5: { halign: 'right', cellWidth: 70 } };
+        const headStyles = {
+            fillColor: tableHeaderBG, textColor: blackColor, fontStyle: 'bold',
+            halign: 'center', valign: 'middle', fontSize: headerFontSize,
+            cellPadding: {top: 8, right: 5, bottom: 8, left: 5}, // More vertical padding
+            lineWidth: 0.5, lineColor: borderColor
+        };
+        const bodyStyles = {
+             fontSize: defaultFontSize, textColor: textColor,
+             cellPadding: {top: 5, right: 5, bottom: 5, left: 5}, // Adjusted padding
+             valign: 'top', lineWidth: 0.5, lineColor: borderColor
+        };
+        // Adjusted column widths and alignments
+        const columnStyles = {
+             0: { halign: 'center', cellWidth: 30 },    // S.No.
+             1: { halign: 'left', cellWidth: 235 },   // Particulars
+             2: { halign: 'right', cellWidth: 40 },   // Qty
+             3: { halign: 'right', cellWidth: 50 },   // Sqf
+             4: { halign: 'right', cellWidth: 60 },   // Unit Price
+             5: { halign: 'right', cellWidth: 70 }    // Amount
+        };
 
         // --- 5. Use didDrawCell Hook for Custom Rendering ---
-        let addPageRequired = false;
+        let addPageRequired = false; // Flag to handle manual page breaks if needed
+        const cellPadding = { top: 5, right: 5, bottom: 5, left: 5 }; // Define padding for hook calculations
+
         const didDrawCell = (data) => {
-            // Custom drawing for Particulars column (index 1) in the main body
-            // Check dataKey for robustness instead of index if possible
+            // Custom drawing for Particulars column (dataKey 1) in the main body
             if (data.column.dataKey === 1 && data.row.section === 'body') {
                 const itemIndex = data.row.index;
                 const itemDetails = detailedItemData[itemIndex];
@@ -204,17 +229,16 @@ async function generatePoPdf(poData, supplierData) {
                     const cell = data.cell;
                     const doc = data.doc;
 
-                    // --- <<< FIX: Use cell.padding() method >>> ---
-                    const topPadding = cell.padding('top');
-                    const leftPadding = cell.padding('left');
-                    // --- <<< END FIX >>> ---
+                    // Get cell's actual padding (use defined fallback if needed)
+                    const topPadding = cell.padding?.('top') ?? cellPadding.top;
+                    const leftPadding = cell.padding?.('left') ?? cellPadding.left;
 
-                    // Calculate starting Y position below the main product name line
-                    // Estimate productName line height based on defaultFontSize
-                    const approxProductNameHeight = defaultFontSize * 1.15 / doc.internal.scaleFactor; // Estimate height
-                    let lineY = cell.y + topPadding + approxProductNameHeight; // Start below product name
+                    // Estimate productName line height
+                    const productNameFontSize = cell.styles.fontSize || defaultFontSize;
+                    const productNameHeight = productNameFontSize * 1.15 / doc.internal.scaleFactor; // Approx height in points
+                    let lineY = cell.y + topPadding + productNameHeight - 2; // Start below product name, adjust offset slightly
 
-                    const lineStartX = cell.x + leftPadding; // Use calculated left padding
+                    const lineStartX = cell.x + leftPadding + 3; // Indent details slightly
 
                     // Store current styles
                     const originalSize = doc.getFontSize();
@@ -227,12 +251,13 @@ async function generatePoPdf(poData, supplierData) {
                     doc.setTextColor(subTextColor);
 
                     itemDetails.flexDetails.forEach(line => {
-                        // Check page boundary
+                        // Check page boundary BEFORE drawing
                         if (lineY + smallFontSize > pageHeight - margin) {
-                             addPageRequired = true; return; // Signal page break needed
+                             addPageRequired = true; // Signal page break
+                             return; // Stop drawing details for this item on this page
                         }
                         doc.text(line.trim(), lineStartX, lineY);
-                        lineY += smallFontSize + 2; // Move Y for next line (adjust spacing)
+                        lineY += smallFontSize + 2; // Move Y for next line
                     });
 
                     // Restore original styles
@@ -242,28 +267,28 @@ async function generatePoPdf(poData, supplierData) {
                 }
             }
         };
-         // --- 6. Use didParseCell Hook for dynamic cell height ---
+
+        // --- 6. Use didParseCell Hook for dynamic cell height ---
         const didParseCell = (data) => {
-            // Adjust height for Particulars column (index 1)
              if (data.column.dataKey === 1 && data.row.section === 'body') {
                  const itemIndex = data.row.index;
                  if (detailedItemData[itemIndex] && detailedItemData[itemIndex].flexDetails.length > 0) {
                       const cell = data.cell;
-                      const topPadding = cell.padding('top');
-                      const bottomPadding = cell.padding('bottom');
-                      // Estimate required height
-                      const baseHeight = defaultFontSize * 1.15; // Approx height for product name
-                      const detailLineHeight = smallFontSize * 1.15; // Approx height for detail line
-                      const spacing = 2 * detailedItemData[itemIndex].flexDetails.length; // Spacing between detail lines
+                      const topPadding = cell.padding?.('top') ?? cellPadding.top;
+                      const bottomPadding = cell.padding?.('bottom') ?? cellPadding.bottom;
+
+                      const baseHeight = (cell.styles.fontSize || defaultFontSize) * 1.15;
+                      const detailLineHeight = smallFontSize * 1.15;
+                      const spacing = 2 * detailedItemData[itemIndex].flexDetails.length;
                       const requiredHeight = baseHeight + (detailedItemData[itemIndex].flexDetails.length * detailLineHeight) + spacing;
-                      // Apply if greater than default calculated height
+
+                      // Update cell height if calculated height is larger
                       if (requiredHeight > cell.height) {
                            cell.height = requiredHeight;
                       }
                  }
              }
-             // Style summary rows (Done via separate autoTable call now for simplicity)
-        };
+         };
 
         // --- 7. Call autoTable for Items ---
         doc.autoTable({
@@ -274,13 +299,13 @@ async function generatePoPdf(poData, supplierData) {
             headStyles: headStyles,
             bodyStyles: bodyStyles,
             columnStyles: columnStyles,
-            didDrawCell: didDrawCell,     // Hook for drawing flex details
-            didParseCell: didParseCell,   // Hook for adjusting cell height
+            didDrawCell: didDrawCell,
+            didParseCell: didParseCell,
             margin: { left: margin, right: margin }
         });
         currentY = doc.lastAutoTable.finalY;
 
-        // Check if a page break is needed before summary
+        // Check if a page break is needed *before* drawing summary
         if (addPageRequired || currentY > pageHeight - 80) {
              doc.addPage(); currentY = margin; addPageRequired = false;
         }
@@ -289,11 +314,12 @@ async function generatePoPdf(poData, supplierData) {
          doc.autoTable({
             body: summaryRows,
             startY: currentY,
-            theme: 'grid',
+            theme: 'grid', // Use grid theme to draw borders
             showHead: false,
             bodyStyles: {
-                 fontSize: defaultFontSize, textColor: textColor,
-                 cellPadding: {top: 5, right: 5, bottom: 5, left: 5},
+                 fontSize: defaultFontSize + 1, // Slightly larger font for total
+                 textColor: textColor,
+                 cellPadding: {top: 6, right: 5, bottom: 6, left: 5}, // More padding
                  valign: 'middle', lineWidth: 0.5, lineColor: borderColor, fontStyle: 'bold'
              },
              columnStyles: columnStyles,
@@ -328,9 +354,8 @@ async function generatePoPdf(poData, supplierData) {
          });
 
         // --- 10. Signature ---
-         const signatureY = pageHeight - margin - 10;
-         // If currentY is already past where signature should start, add new page
-         if (currentY > signatureY - 10 ) { doc.addPage(); currentY = margin; }
+         const signatureY = pageHeight - margin - 20; // Move signature up slightly
+         if (currentY > signatureY - 10 ) { doc.addPage(); }
 
         doc.setFontSize(defaultFontSize);
         doc.setFont(undefined, 'bold');
@@ -339,10 +364,10 @@ async function generatePoPdf(poData, supplierData) {
         // --- 11. Save PDF ---
         const filename = `PO-${poData.poNumber || poData.id?.substring(0, 6) || 'PurchaseOrder'}.pdf`;
         doc.save(filename);
-        console.log("PDF Generated (v8 Design):", filename);
+        console.log("PDF Generated (v9 Design):", filename);
 
     } catch (error) {
-        console.error("Error generating PDF (v8 Design):", error);
+        console.error("Error generating PDF (v9 Design):", error);
         alert(`Could not generate PDF. Error: ${error.message}. Check console for more details.`);
     }
 }
