@@ -63,7 +63,6 @@
             <div class="form-layout-columns">
                  <div class="form-column">
                      <div class="form-section-card">
-                         {/* Customer Details Content */}
                          <div class="section-title">1. Customer Details</div>
                          <div class="form-row">
                              <div class="form-group form-group-half">
@@ -100,7 +99,6 @@
                  </div>
                  <div class="form-column">
                      <div class="form-section-card">
-                          {/* Order Details Content */}
                          <div class="section-title">2. Order Details</div>
                          <div class="form-row">
                              <div class="form-group form-group-half">
@@ -139,7 +137,7 @@
                  </div>
             </div>
 
-            {/* Updated Order Status Section */}
+            {/* Order Status Section */}
             <div class="form-section-inline" id="orderStatusSection">
                 <div id="order-status-group" class="form-group order-status-group">
                     <label><input type="checkbox" name="order_status" value="Order Received"><span>Order Received</span></label>
@@ -154,6 +152,7 @@
              </div>
 
             <div class="form-section-card">
+                 {/* Section 3 Title */}
                 <div class="section-title">3. Product & Job Details</div>
                 <div class="table-container order-items-table">
                     <table id="orderItemsTable">
@@ -164,13 +163,13 @@
                                 <th style="width: 15%;" class="sq-feet-header hidden-col">Dimensions (W x H) *</th>
                                 <th style="width: 8%;" class="sq-feet-header hidden-col">Unit *</th>
                                 <th style="width: 9%;">Quantity *</th>
-                                <th style="width: 13%;">Rate * <span class="min-rate-header-info">(Min: ?)</span></th>
+                                <th style="width: 13%;">Rate *</th> {/* Removed Min Rate Header Info */}
                                 <th style="width: 12%;">Amount</th>
                                 <th style="width: 5%;">Action</th>
                             </tr>
                         </thead>
                         <tbody id="orderItemsTableBody">
-                            {/* Comment Removed */}
+                            {/* Table rows added by JS */}
                         </tbody>
                     </table>
                 </div>
@@ -187,38 +186,39 @@
                            </div>
                        </div>
                     </div>
+                    {/* Updated Summary Panel Structure */}
                      <div class="summary-right">
-                         <div class="section-title" style="margin-bottom: 15px; border: none; padding-bottom: 0;">4. Order Summary & Payment</div>
-                         <div class="summary-rows">
-                             <div class="summary-row">
-                                 <span class="summary-label">Subtotal:</span>
-                                 <span class="summary-value-box subtotal-box">
-                                     ₹ <span id="summarySubtotal">0.00</span>
-                                 </span>
-                             </div>
-                             <div class="summary-row">
-                                 <label for="summaryDiscountPercent" class="summary-label">Discount (%):</label>
-                                 <input type="number" id="summaryDiscountPercent" class="summary-input" step="0.01" min="0" max="100" placeholder="%">
-                             </div>
-                              <div class="summary-row">
-                                 <label for="summaryDiscountAmount" class="summary-label">Discount Amount:</label>
-                                 <input type="number" id="summaryDiscountAmount" class="summary-input" step="0.01" min="0" placeholder="Amount">
-                             </div>
-                             <div class="summary-row summary-highlight summary-final">
-                                 <span class="summary-label">Final Amount:</span>
-                                 <span class="summary-value-box final-amount-box">
-                                     ₹ <span id="summaryFinalAmount">0.00</span>
-                                 </span>
-                             </div>
-                              <div class="summary-row">
-                                 <label for="summaryAdvancePayment" class="summary-label">Advance Payment:</label>
-                                 <input type="number" id="summaryAdvancePayment" class="summary-input" step="0.01" min="0" placeholder="Amount Received">
-                             </div>
-                             <div class="summary-row summary-highlight summary-balance">
-                                 <span class="summary-label">Total Balance Due:</span>
-                                 <span class="summary-value">₹ <span id="summaryTotalBalance">0.00</span></span>
-                             </div>
-                         </div>
+                         <div class="section-title summary-title">4. Order Summary & Payment</div>
+                         <div class="summary-grid">
+                            {/* Row 1: Subtotal */}
+                            <div class="summary-label">Subtotal:</div>
+                            <div class="summary-value summary-subtotal">
+                                ₹ <span id="summarySubtotal">0.00</span>
+                            </div>
+
+                            {/* Row 2: Discount */}
+                            <label for="summaryDiscountPercent" class="summary-label">Discount (%):</label>
+                            <input type="number" id="summaryDiscountPercent" class="summary-input" step="0.01" min="0" max="100" placeholder="%">
+
+                            <label for="summaryDiscountAmount" class="summary-label">Discount Amount:</label>
+                            <input type="number" id="summaryDiscountAmount" class="summary-input" step="0.01" min="0" placeholder="Amount">
+
+                            {/* Row 3: Final Amount */}
+                            <div class="summary-label summary-highlight-label">Final Amount:</div>
+                            <div class="summary-value summary-final-amount">
+                                ₹ <span id="summaryFinalAmount">0.00</span>
+                            </div>
+
+                            {/* Row 4: Advance Payment */}
+                            <label for="summaryAdvancePayment" class="summary-label">Advance Payment:</label>
+                            <input type="number" id="summaryAdvancePayment" class="summary-input" step="0.01" min="0" placeholder="Amount Received">
+
+                            {/* Row 5: Balance Due */}
+                            <div class="summary-label summary-highlight-label">Total Balance Due:</div>
+                            <div class="summary-value summary-balance-due">
+                                ₹ <span id="summaryTotalBalance">0.00</span>
+                            </div>
+                        </div>
                          <div id="creditLimitWarning" class="error-message" style="display: none; margin-top: 15px; text-align:left;"></div>
                      </div>
                  </div>
@@ -244,7 +244,8 @@
             <td class="sq-feet-input" style="display: none;"> <div class="dimension-input-container"> <input type="number" step="0.01" class="form-input dimension-input width-input" placeholder="W"> <span style="padding: 0 2px;">x</span> <input type="number" step="0.01" class="form-input dimension-input height-input" placeholder="H"> </div> </td>
             <td class="sq-feet-input" style="display: none;"> <select class="form-input dimension-unit-select"> <option value="feet" selected>Feet</option> <option value="inches">Inches</option> </select> </td>
             <td> <input type="number" step="1" class="form-input quantity-input" placeholder="Qty" min="1" value="1"> </td>
-            <td> <div class="rate-input-wrapper"> <input type="number" step="0.01" class="form-input rate-input" placeholder="Rate" required> <span class="min-rate-info">(Min: ₹<span class="min-rate-value">--</span>)</span> </div> </td>
+            {/* Updated Rate Column: Removed min-rate-info span */}
+            <td> <div class="rate-input-wrapper"> <input type="number" step="0.01" class="form-input rate-input" placeholder="Rate" required> </div> </td>
             <td style="text-align: right; font-weight: 600; vertical-align: middle;"> ₹<span class="item-amount">0.00</span> </td>
             <td style="text-align: center; vertical-align: middle;"> <button type="button" class="button delete-item-btn" title="Remove Item"><i class="fas fa-trash-alt"></i></button> </td>
         </tr>
