@@ -8,18 +8,19 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="css/order_history.css"> <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" integrity="sha512-9usAa10IRO0HhonpyAIVpjrylPvoDwiPUiKdWk5t3PyolY1cOd4DSE0Ga+ri4AuTroPR5aQvXU9xC6qOPnzFeg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link rel="stylesheet" href="css/order_history.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" integrity="sha512-9usAa10IRO0HhonpyAIVpjrylPvoDwiPUiKdWk5t3PyolY1cOd4DSE0Ga+ri4AuTroPR5aQvXU9xC6qOPnzFeg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
 
     <script type="module">
         // Import Firebase services
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
         // Import other services like Firestore if needed by the page
-        import { getFirestore, collection, doc, deleteDoc, updateDoc, onSnapshot, query, orderBy, Timestamp, arrayUnion } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js"; // Added Firestore imports needed for original script
+        import { getFirestore, collection, doc, deleteDoc, updateDoc, onSnapshot, query, orderBy, Timestamp, arrayUnion, writeBatch } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js"; // Added Firestore imports needed for original script + writeBatch
 
         // **** Your Firebase Configuration ****
          const firebaseConfig = {
-           apiKey: "AIzaSyBQj5rQmE77kKKGYixP8y3Hcimz8tiAqzQ", // Your apiKey
+           apiKey: "AIzaSyBQj5rQmE77kKKGYixP8y3Hcimz8tiAqzQ", // Your apiKey - **सुरक्षा के लिए इसे सीधे कोड में न रखें**
            authDomain: "madhav-multyprint.firebaseapp.com", // Your authDomain
            projectId: "madhav-multyprint", // Your projectId
            storageBucket: "madhav-multyprint.appspot.com", // Your storageBucket
@@ -57,6 +58,7 @@
              window.orderBy = orderBy;
              window.Timestamp = Timestamp; // Ensure Timestamp is available
              window.arrayUnion = arrayUnion; // Ensure arrayUnion is available
+             window.writeBatch = writeBatch; // **Make writeBatch available**
 
 
              // ---->> Authentication State Check (Core Security) <<----
@@ -81,9 +83,8 @@
              });
              // ---->> Auth check end <<----
 
-             // --- Logout Link Logic (Include if a logout link exists on this page) ---
-             // Assuming no logout link on this specific page based on original code,
-             // but you can add it here if needed, similar to index.html
+             // --- Logout Link Logic ---
+             // (यहाँ शामिल नहीं किया गया है, मान लिया गया है कि इस पेज पर लॉगआउट लिंक नहीं है)
 
 
              // --- Optional: Make user info available globally ---
@@ -94,10 +95,6 @@
         } catch(e) {
             console.error("Firebase setup / Auth check error:", e);
             alert("Error loading application. Please try again later."); // English alert
-            // Optional: Redirect to login on critical error
-            // if (window.location.pathname.split('/').pop().toLowerCase() !== 'login.html') {
-            //    window.location.replace('login.html');
-            // }
         }
     </script>
     </head>
@@ -113,6 +110,7 @@
         </div>
 
         <div class="actions-bar">
+             <button id="exportCsvBtn" class="button export-button"><i class="fas fa-file-csv"></i> Export to CSV</button>
              <a href="new_order.html" class="button add-new-button"><i class="fas fa-plus"></i> Add New Order</a>
         </div>
 
@@ -136,7 +134,7 @@
                      <option value="Printing">Printing</option>
                     <option value="Ready for Working">Ready for Working</option> <option value="Delivered">Delivered</option>
                     <option value="Completed">Completed</option>
-                </select>
+                    </select>
                  </div>
               <div class="filter-group filter-sort">
                 <label for="sort-orders"><i class="fas fa-sort"></i> Sort by:</label>
@@ -154,10 +152,30 @@
             </div>
         </div>
 
+        <div class="bulk-actions-bar" id="bulkActionsBar" style="display: none;"> <span id="selectedCount">0 items selected</span>
+             <div class="bulk-actions-controls">
+                 <label for="bulkStatusSelect" class="bulk-label">Change status to:</label>
+                 <select id="bulkStatusSelect" class="bulk-select">
+                     <option value="" disabled selected>Select Status</option>
+                     <option value="Order Received">Order Received</option>
+                     <option value="Designing">Designing</option>
+                     <option value="Verification">Verification</option>
+                     <option value="Design Approved">Design Approved</option>
+                     <option value="Printing">Printing</option>
+                     <option value="Ready for Working">Ready for Working</option>
+                     <option value="Delivered">Delivered</option>
+                     <option value="Completed">Completed</option>
+                 </select>
+                 <button id="bulkUpdateStatusBtn" class="button bulk-button bulk-update"><i class="fas fa-sync-alt"></i> Update Selected</button>
+                 <button id="bulkDeleteBtn" class="button bulk-button bulk-delete"><i class="fas fa-trash-alt"></i> Delete Selected</button>
+             </div>
+        </div>
+
         <div class="table-container">
             <table id="orderTable">
                  <thead>
                     <tr>
+                        <th class="col-checkbox"><input type="checkbox" id="selectAllCheckbox" title="Select All Visible"></th>
                         <th>Order ID</th>
                         <th>Customer Name</th>
                          <th>Products</th>
@@ -171,20 +189,25 @@
                 </thead>
                  <tbody id="orderTableBody">
                     <tr>
-                        <td colspan="9" id="loadingMessage">Loading orders...</td> </tr>
+                        <td colspan="10" id="loadingMessage">Loading orders...</td>
+                    </tr>
                 </tbody>
             </table>
         </div>
 
-        <div class="order-summary-counts">
-             <span>Total: <strong id="total-orders">0</strong></span> |
-            <span>Completed/Delivered: <strong id="completed-delivered-orders">0</strong></span> |
-             <span>Pending: <strong id="pending-orders">0</strong></span>
+        <div class="summary-reporting-container">
+            <div class="order-summary-counts">
+                 <span>Total Displayed: <strong id="total-orders">0</strong></span> |
+                <span>Completed/Delivered: <strong id="completed-delivered-orders">0</strong></span> |
+                 <span>Pending: <strong id="pending-orders">0</strong></span>
+            </div>
+            <div id="reportingSection" class="reporting-section">
+                <h4>Displayed Orders Report</h4>
+                <div id="statusCountsReport"><p>Loading report...</p></div>
+                </div>
         </div>
 
-    </div>
-
-    <div id="detailsModal" class="modal">
+    </div> <div id="detailsModal" class="modal">
         <div class="modal-content">
             <span class="close-btn" id="closeDetailsModal" title="Close">&times;</span>
             <h2>Order Details & Actions</h2>
@@ -192,14 +215,16 @@
             <div class="modal-info">
                   <p><strong>Order ID:</strong> <span id="modalDisplayOrderId"></span></p>
                  <p><strong>Customer:</strong> <span id="modalCustomerName"></span></p>
-                 <p><strong>WhatsApp:</strong> <span id="modalCustomerWhatsApp"></span></p> </div>
+                 <p><strong>WhatsApp:</strong> <span id="modalCustomerWhatsApp"></span></p>
+             </div>
             <div class="modal-section" id="modalProductSection">
                 <label>Products:</label>
                 <div id="modalProductList"><p>Loading...</p></div>
              </div>
              <div class="modal-section" id="modalStatusHistorySection">
                 <label>Status History:</label>
-                <div id="modalStatusHistoryList"><p>Loading history...</p></div> </div>
+                <div id="modalStatusHistoryList"><p>Loading history...</p></div>
+             </div>
             <div class="modal-section">
                  <label for="modalOrderStatus">Update Status:</label>
                  <select id="modalOrderStatus">
@@ -208,7 +233,8 @@
                      <option value="Verification">Verification</option>
                      <option value="Design Approved">Design Approved</option>
                      <option value="Printing">Printing</option>
-                       <option value="Ready for Working">Ready for Working</option> <option value="Delivered">Delivered</option>
+                       <option value="Ready for Working">Ready for Working</option>
+                       <option value="Delivered">Delivered</option>
                      <option value="Completed">Completed</option>
                  </select>
                   <button id="modalUpdateStatusBtn" class="button update-status-button"><i class="fas fa-sync-alt"></i> Update Status</button>

@@ -1,6 +1,7 @@
 /* === order_history.css === */
+/* Includes Phase 1 Styles + Phase 2 Styles */
 
-/* --- Global Styles & Variables (Ensure consistency with new_order.css) --- */
+/* --- Global Styles & Variables --- */
 :root {
     --primary-color: #0056b3; /* Darker Blue */
     --secondary-color: #6c757d; /* Grey */
@@ -16,25 +17,27 @@
     --border-radius: 6px;
     --box-shadow: 0 2px 5px rgba(0, 0, 0, 0.08);
     --box-shadow-lg: 0 4px 12px rgba(0, 0, 0, 0.1);
+    --highlight-color: #fff3cd; /* Yellow for highlighting */
+    --selected-row-bg: #e0ecf8; /* Light blue for selected rows */
 }
 
 body {
     font-family: var(--font-family);
     margin: 0;
-    padding: 20px; /* Added body padding */
+    padding: 20px;
     background-color: #f0f2f5;
     color: var(--text-color);
     line-height: 1.5;
-    font-size: 15px; /* Base font size */
+    font-size: 15px;
 }
 
 .container {
     background-color: #fff;
-    padding: 25px 30px; /* Increased padding */
+    padding: 25px 30px;
     border-radius: var(--border-radius);
     box-shadow: var(--box-shadow-lg);
     width: 100%;
-    max-width: 1300px; /* Adjusted max-width for potentially wider table */
+    max-width: 1300px;
     margin: 20px auto;
     box-sizing: border-box;
 }
@@ -45,7 +48,7 @@ body {
     color: white;
     padding: 15px 20px;
     border-radius: var(--border-radius) var(--border-radius) 0 0;
-    margin: -25px -30px 25px -30px; /* Adjust for container padding */
+    margin: -25px -30px 25px -30px;
     font-size: 1.25em;
     font-weight: 600;
     text-align: center;
@@ -55,13 +58,13 @@ body {
     gap: 10px;
 }
 .header-icon { font-size: 1.15em; }
-h1 { margin: 0; font-size: 1em; /* Match font size within header */ }
+h1 { margin: 0; font-size: 1em; }
 
 .breadcrumb {
     font-size: 0.9em;
     color: var(--text-muted);
-    margin-bottom: 25px; /* Increased spacing */
-    padding-bottom: 15px; /* Increased spacing */
+    margin-bottom: 25px;
+    padding-bottom: 15px;
     border-bottom: 1px solid var(--border-color);
 }
 .breadcrumb a { color: var(--primary-color); text-decoration: none; font-weight: 500; }
@@ -72,7 +75,7 @@ h1 { margin: 0; font-size: 1em; /* Match font size within header */ }
 /* --- Actions Bar & Filter Bar --- */
 .actions-bar {
     display: flex;
-    justify-content: flex-end; /* Move Add button to the right */
+    justify-content: flex-end;
     align-items: center;
     margin-bottom: 20px;
     flex-wrap: wrap;
@@ -82,50 +85,44 @@ h1 { margin: 0; font-size: 1em; /* Match font size within header */ }
 .filter-bar {
     display: flex;
     flex-wrap: wrap;
-    gap: 15px 20px; /* Row and column gap */
-    padding: 20px 25px; /* Increased padding */
+    gap: 15px 20px;
+    padding: 20px 25px;
     background-color: #ffffff;
     border: 1px solid var(--border-color);
     border-radius: var(--border-radius);
-    margin-bottom: 30px; /* Increased spacing */
-    align-items: flex-end; /* Align items to bottom */
-    box-shadow: var(--box-shadow); /* Add shadow */
+    margin-bottom: 15px; /* Reduced margin below filter */
+    align-items: flex-end;
+    box-shadow: var(--box-shadow);
 }
 
 .filter-group {
     display: flex;
     flex-direction: column;
     gap: 5px;
-    flex-grow: 1; /* Allow groups to grow */
-    min-width: 150px; /* Minimum width */
+    flex-grow: 1;
+    min-width: 150px;
 }
-/* Specific widths for certain filters */
 .filter-group:has(#filterDate) { min-width: 160px; flex-grow: 0.5;}
 .filter-group:has(#filterStatus) { min-width: 170px; flex-grow: 0.8; }
 .filter-group.filter-sort { min-width: 200px; flex-grow: 1; }
-.filter-group:has(#filterSearch) { flex-grow: 1.5; } /* Allow search to be wider */
+.filter-group:has(#filterSearch) { flex-grow: 1.5; }
 
 .filter-group label {
-    font-size: 0.88em; /* Adjusted size */
+    font-size: 0.88em;
     font-weight: 500;
     color: var(--text-color);
     white-space: nowrap;
     margin-bottom: 3px;
 }
-.filter-group label i {
-    margin-right: 5px;
-    color: var(--primary-color);
-    width: 1.1em; /* Ensure icons align */
-    text-align: center;
-}
+.filter-group label i { margin-right: 5px; color: var(--primary-color); width: 1.1em; text-align: center; }
 .filter-group input[type="date"],
 .filter-group input[type="text"],
 .filter-group select {
-    padding: 8px 12px; /* Consistent padding */
+    padding: 8px 12px;
     border: 1px solid #ced4da;
     border-radius: var(--border-radius);
     font-size: 0.9em;
-    height: 38px; /* Consistent height */
+    height: 38px;
     background-color: #fff;
     box-sizing: border-box;
     width: 100%;
@@ -141,20 +138,20 @@ h1 { margin: 0; font-size: 1em; /* Match font size within header */ }
 
 /* --- Buttons (General & Specific) --- */
 .button {
-    padding: 8px 18px; /* Adjusted padding */
+    padding: 8px 18px;
     font-size: 0.9em;
     border: none;
     border-radius: var(--border-radius);
     cursor: pointer;
-    font-weight: 500; /* Slightly lighter weight */
+    font-weight: 500;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 6px; /* Adjusted gap */
+    gap: 6px;
     text-decoration: none;
-    transition: background-color 0.2s ease, box-shadow 0.2s ease, transform 0.1s ease;
+    transition: background-color 0.2s ease, box-shadow 0.2s ease, transform 0.1s ease, opacity 0.2s ease; /* Added opacity transition */
     white-space: nowrap;
-    height: 38px; /* Match input height */
+    height: 38px;
     box-shadow: var(--box-shadow);
 }
 .button:hover {
@@ -166,163 +163,176 @@ h1 { margin: 0; font-size: 1em; /* Match font size within header */ }
     box-shadow: var(--box-shadow);
 }
 .button:disabled {
-    opacity: 0.6;
+    opacity: 0.5; /* More pronounced disabled state */
     cursor: not-allowed;
     box-shadow: none;
     transform: none;
+    background-color: #adb5bd; /* Grey background when disabled */
+    color: #fff;
 }
+.button:disabled:hover { /* Prevent hover effect when disabled */
+    background-color: #adb5bd;
+    box-shadow: none;
+    transform: none;
+}
+
 .button i { margin-right: 4px; font-size: 0.95em; }
 
-.add-new-button {
-    background-color: var(--success-color);
-    color: white;
-    font-weight: 600; /* Make Add button bolder */
-}
+.add-new-button { background-color: var(--success-color); color: white; font-weight: 600; }
 .add-new-button:hover { background-color: #218838; }
 
-.clear-filters-button {
-    background-color: var(--secondary-color);
-    color: white;
-    align-self: flex-end; /* Align to bottom */
-    flex-grow: 0; /* Don't allow to grow */
-}
+.export-button { background-color: #5bc0de; color: white; } /* Info blue for export */
+.export-button:hover { background-color: #31b0d5; }
+
+.clear-filters-button { background-color: var(--secondary-color); color: white; align-self: flex-end; flex-grow: 0; }
 .clear-filters-button:hover { background-color: #5a6268; }
+
+/* === Bulk Actions Bar Styles (NEW) === */
+.bulk-actions-bar {
+    display: flex; /* Changed from none, JS will control visibility */
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 20px;
+    background-color: var(--light-bg);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    margin-bottom: 20px; /* Spacing below bar */
+    flex-wrap: wrap;
+    gap: 15px;
+    box-shadow: var(--box-shadow);
+}
+.bulk-actions-bar #selectedCount {
+    font-weight: 600;
+    color: var(--primary-color);
+    font-size: 0.95em;
+}
+.bulk-actions-controls {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+.bulk-label {
+    font-size: 0.9em;
+    font-weight: 500;
+    margin-right: 5px;
+}
+.bulk-select {
+    padding: 6px 10px;
+    border: 1px solid #ced4da;
+    border-radius: var(--border-radius);
+    font-size: 0.85em;
+    height: 36px; /* Slightly smaller */
+    min-width: 150px;
+}
+.bulk-button {
+    padding: 6px 15px; /* Smaller padding */
+    font-size: 0.85em;
+    height: 36px; /* Match select height */
+}
+.bulk-update { background-color: var(--warning-color); color: #333; }
+.bulk-update:hover { background-color: #e0a800; }
+.bulk-delete { background-color: var(--danger-color); color: white; }
+.bulk-delete:hover { background-color: #c82333; }
 
 
 /* --- Table Styles --- */
 .table-container {
     width: 100%;
-    overflow-x: auto; /* Keep horizontal scroll */
+    overflow-x: auto;
     border: 1px solid var(--border-color);
     border-radius: var(--border-radius);
-    margin-bottom: 30px; /* Increased spacing */
+    margin-bottom: 20px; /* Adjusted spacing */
     background-color: #fff;
-    box-shadow: var(--box-shadow); /* Add shadow */
+    box-shadow: var(--box-shadow);
 }
 
 #orderTable {
     width: 100%;
-    border-collapse: collapse; /* Use collapse for cleaner lines */
-    font-size: 0.9em; /* Adjusted base size */
-    /* table-layout: fixed; */ /* Removed fixed layout for better auto-sizing initially */
-    border: none; /* Remove table border, rely on container border */
+    border-collapse: collapse;
+    font-size: 0.9em;
+    border: none;
 }
 
 #orderTable thead {
     background-color: var(--light-bg);
-    border-bottom: 2px solid var(--border-color); /* Stronger header separator */
+    border-bottom: 2px solid var(--border-color);
 }
 
 #orderTable th {
-    padding: 12px 15px; /* Adjusted padding */
+    padding: 12px 15px;
     text-align: left;
-    font-weight: 600; /* Bolder headers */
+    font-weight: 600;
     color: var(--text-color);
-    white-space: nowrap; /* Keep headers nowrap */
-    border-bottom: 1px solid var(--border-color); /* Add bottom border to headers */
+    white-space: nowrap;
+    border-bottom: 1px solid var(--border-color);
 }
 
 #orderTable td {
-    padding: 10px 15px; /* Adjusted padding */
+    padding: 10px 15px;
     text-align: left;
-    vertical-align: middle; /* Ensure vertical alignment */
-    border-bottom: 1px solid #e9ecef; /* Lighter row separator */
+    vertical-align: middle;
+    border-bottom: 1px solid #e9ecef;
     color: var(--text-color);
-    word-wrap: break-word; /* Allow long text to wrap */
+    word-wrap: break-word;
 }
 
 #orderTable tbody tr {
     transition: background-color 0.15s ease;
 }
-#orderTable tbody tr:last-child td {
-    border-bottom: none; /* Remove border on last row */
+#orderTable tbody tr:last-child td { border-bottom: none; }
+
+/* Row Hover and Selection Styles */
+#orderTable tbody tr:hover { background-color: #f1f1f1; }
+#orderTable tbody tr.selected-row {
+    background-color: var(--selected-row-bg) !important; /* Use important to override hover */
+    font-weight: 500;
 }
-#orderTable tbody tr:hover {
-    background-color: #f1f1f1; /* Keep hover effect */
+#orderTable tbody tr.selected-row td {
+     /* Optional: Slightly darken text on selected row */
+     /* color: #1a4a7a; */
 }
 
-/* Column Widths (Example - adjust as needed based on content) */
-/* Let browser decide initially, uncomment and adjust if needed */
-/*
-#orderTable th:nth-child(1), #orderTable td:nth-child(1) { width: 12%; } /* Order ID */
-/* #orderTable th:nth-child(2), #orderTable td:nth-child(2) { width: 18%; } /* Customer Name / Mobile */
-/* #orderTable th:nth-child(3), #orderTable td:nth-child(3) { width: 20%; } /* Products */
-/* #orderTable th:nth-child(4), #orderTable td:nth-child(4) { width: 9%; } /* Order Date */
-/* #orderTable th:nth-child(5), #orderTable td:nth-child(5) { width: 9%; } /* Delivery Date */
-/* #orderTable th:nth-child(6), #orderTable td:nth-child(6) { width: 7%; text-align: center;} /* Priority */
-/* #orderTable th:nth-child(7), #orderTable td:nth-child(7) { width: 10%; } /* Status */
-/* #orderTable th:nth-child(8), #orderTable td:nth-child(8) { width: 10%; text-align: center;} /* Action */
-/* #orderTable th:nth-child(9), #orderTable td:nth-child(9) { width: 5%; text-align: center;} /* Send Wtsp */
+
+/* Table Column Specific Styles (Checkbox added) */
+th.col-checkbox, td.col-checkbox {
+    width: 40px; /* Fixed width for checkbox column */
+    text-align: center;
+    padding-left: 10px;
+    padding-right: 10px;
+}
+th.col-checkbox input, td.col-checkbox input {
+    cursor: pointer;
+    transform: scale(1.1); /* Make checkbox slightly larger */
+}
 
 /* Styles inside Table Cells */
-.customer-name-display {
-    display: block;
-    font-weight: 600; /* Bolder name */
-    margin-bottom: 3px;
-    color: var(--text-color);
-}
-.customer-mobile-inline {
-    display: block;
-    font-size: 0.9em;
-    color: var(--text-muted);
-}
-#loadingMessage, #noOrdersMessage {
-    text-align: center;
-    color: var(--text-muted);
-    font-style: italic;
-    padding: 30px !important; /* Increased padding */
-    font-size: 1em;
+.customer-name-display { display: block; font-weight: 600; margin-bottom: 3px; color: var(--text-color); }
+.customer-mobile-inline { display: block; font-size: 0.9em; color: var(--text-muted); }
+#loadingMessage, #noOrdersMessage { text-align: center; color: var(--text-muted); font-style: italic; padding: 30px !important; font-size: 1em; }
+
+/* Search Highlighting Style (NEW) */
+mark {
+    background-color: var(--highlight-color);
+    padding: 0.1em 0.2em; /* Small padding */
+    border-radius: 3px;
+    color: inherit; /* Keep original text color */
+    font-weight: 600; /* Make highlighted text bold */
+    box-shadow: 0 0 0 1px var(--highlight-color); /* Ensure background covers fully */
 }
 
-/* --- Action Buttons & Icons in Table --- */
-.details-edit-button {
-    background-color: var(--primary-color);
-    color: white;
-    padding: 5px 10px; /* Smaller padding */
-    font-size: 0.85em;
-    border-radius: var(--border-radius);
-    white-space: nowrap;
-    box-shadow: none; /* Remove shadow for table buttons */
-    height: auto; /* Auto height */
-}
-.details-edit-button:hover { background-color: #00418a; transform: none; box-shadow: none;} /* Darker blue on hover */
+
+/* Action Buttons & Icons in Table */
+.details-edit-button { background-color: var(--primary-color); color: white; padding: 5px 10px; font-size: 0.85em; border-radius: var(--border-radius); white-space: nowrap; box-shadow: none; height: auto; }
+.details-edit-button:hover { background-color: #00418a; transform: none; box-shadow: none;}
 .details-edit-button:active { transform: none; }
 
-.whatsapp-button {
-    background-color: #25d366;
-    color: white;
-    border: none;
-    border-radius: 50%; /* Keep circular */
-    width: 30px; /* Slightly larger */
-    height: 30px;
-    font-size: 1em; /* Adjust icon size */
-    text-align: center;
-    cursor: pointer;
-    padding: 0;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    transition: background-color 0.2s ease;
-    vertical-align: middle;
-    box-shadow: none; /* Remove shadow */
-}
+.whatsapp-button { background-color: #25d366; color: white; border: none; border-radius: 50%; width: 30px; height: 30px; font-size: 1em; text-align: center; cursor: pointer; padding: 0; display: inline-flex; align-items: center; justify-content: center; transition: background-color 0.2s ease; vertical-align: middle; box-shadow: none; }
 .whatsapp-button:hover { background-color: #1ebe57; transform: none; box-shadow: none;}
-.whatsapp-button:active { transform: scale(0.95); } /* Add slight press effect */
+.whatsapp-button:active { transform: scale(0.95); }
 
-/* --- Status Badge & Priority --- */
-.status-badge {
-    font-weight: 500; /* Adjusted weight */
-    padding: 5px 12px; /* Adjusted padding */
-    border-radius: 15px; /* Pill shape */
-    font-size: 0.85em; /* Adjusted size */
-    color: white;
-    background-color: var(--secondary-color);
-    white-space: nowrap;
-    display: inline-block;
-    line-height: 1.2; /* Adjust line height */
-    text-align: center;
-}
-/* Consistent Status Colors (from new_order.css) */
+/* Status Badge & Priority (No changes from Phase 1) */
+.status-badge { font-weight: 500; padding: 5px 12px; border-radius: 15px; font-size: 0.85em; color: white; background-color: var(--secondary-color); white-space: nowrap; display: inline-block; line-height: 1.2; text-align: center; }
 .status-badge.status-order-received { background-color: var(--secondary-color); }
 .status-badge.status-designing { background-color: var(--warning-color); color: #333; }
 .status-badge.status-verification { background-color: #fd7e14; }
@@ -331,300 +341,126 @@ h1 { margin: 0; font-size: 1em; /* Match font size within header */ }
 .status-badge.status-printing { background-color: var(--info-color); }
 .status-badge.status-delivered { background-color: var(--success-color); }
 .status-badge.status-completed { background-color: var(--success-color); }
-.status-badge.status-cancelled { background-color: var(--danger-color); } /* Added cancelled */
-.status-badge.status-unknown { background-color: #adb5bd; } /* Added unknown */
+.status-badge.status-cancelled { background-color: var(--danger-color); }
+.status-badge.status-unknown { background-color: #adb5bd; }
 
 .priority-yes { color: var(--danger-color); font-weight: 600; }
 .priority-no { color: var(--text-muted); }
 
-/* --- Order Summary Counts Panel --- */
-.order-summary-counts {
-    margin-top: 25px; /* Adjusted spacing */
-    padding: 18px 25px; /* Increased padding */
+/* --- Order Summary & Reporting Section (NEW Combined Layout) --- */
+.summary-reporting-container {
+    display: flex;
+    flex-direction: column; /* Stack summary and reporting */
+    gap: 20px; /* Gap between summary and report */
+    margin-top: 25px;
+}
+
+.order-summary-counts, .reporting-section {
+    padding: 18px 25px;
     background-color: #ffffff;
     border: 1px solid var(--border-color);
     border-radius: var(--border-radius);
+    box-shadow: var(--box-shadow);
+}
+
+.order-summary-counts {
     font-size: 0.95em;
     color: var(--text-color);
-    box-shadow: var(--box-shadow);
     display: flex;
-    justify-content: space-around; /* Space out items */
+    justify-content: space-around;
     align-items: center;
-    flex-wrap: wrap; /* Allow wrapping */
-    gap: 20px 30px; /* Row and column gap */
+    flex-wrap: wrap;
+    gap: 20px 30px;
 }
-.order-summary-counts span {
-    margin-left: 0;
-    font-weight: 500; /* Slightly bolder text */
-}
-.order-summary-counts strong {
-    color: var(--primary-color);
-    font-weight: 700;
-    margin-left: 6px;
-    font-size: 1.1em; /* Larger numbers */
-}
+.order-summary-counts span { margin-left: 0; font-weight: 500; }
+.order-summary-counts strong { color: var(--primary-color); font-weight: 700; margin-left: 6px; font-size: 1.1em; }
 
-/* --- Modal Styles (Details & WhatsApp - Consistent) --- */
-.modal, .popup-overlay {
-    display: none;
-    position: fixed;
-    z-index: 1050;
-    left: 0;
-    top: 0;
-    width: 100%;
-    height: 100%;
-    overflow: auto; /* Use auto */
-    background-color: rgba(0, 0, 0, 0.65); /* Darker overlay */
-    align-items: center;
-    justify-content: center;
-    padding: 20px;
-    box-sizing: border-box;
-}
-.modal.active, .popup-overlay.active {
-    display: flex;
-}
-
-.modal-content {
-    background-color: #fefefe;
-    margin: auto;
-    padding: 25px 30px; /* Consistent padding */
-    border: none; /* Remove border */
-    width: 95%; /* Responsive width */
-    max-width: 650px; /* Increased max-width for details modal */
-    border-radius: var(--border-radius);
-    position: relative;
-    box-shadow: var(--box-shadow-lg);
-    z-index: 1051;
-    animation: popupFadeIn 0.3s ease-out; /* Consistent animation */
-}
-@keyframes popupFadeIn {
-    from { opacity: 0; transform: scale(0.95); }
-    to { opacity: 1; transform: scale(1); }
-}
-
-/* Specific width for WhatsApp popup */
-#whatsapp-reminder-popup .popup-content {
-    max-width: 480px;
-}
-
-.close-btn, #whatsapp-reminder-popup .popup-close {
-    color: #aaa;
-    position: absolute;
-    top: 12px;
-    right: 15px;
-    font-size: 30px;
-    font-weight: bold;
-    cursor: pointer;
-    line-height: 1;
-    background: none;
-    border: none;
-    padding: 0;
-    transition: color 0.2s ease;
-}
-.close-btn:hover, .close-btn:focus,
-#whatsapp-reminder-popup .popup-close:hover,
-#whatsapp-reminder-popup .popup-close:focus {
-    color: black;
-    text-decoration: none;
-}
-
-#detailsModal h2 {
-    margin-top: 0;
-    margin-bottom: 25px; /* Increased spacing */
-    font-size: 1.35em; /* Larger title */
-    color: var(--text-color);
-    text-align: center;
-    border-bottom: 1px solid var(--border-color);
-    padding-bottom: 15px; /* Increased padding */
-    font-weight: 600;
-}
-#whatsapp-reminder-popup h4 {
+.reporting-section h4 {
     margin-top: 0;
     margin-bottom: 15px;
-    color: var(--success-color);
-    font-size: 1.4em;
-    font-weight: 600;
-    text-align: center;
-}
-
-.modal-info {
-    margin-bottom: 20px; /* Increased spacing */
-    background-color: var(--light-bg);
-    padding: 15px 20px; /* Increased padding */
-    border-radius: var(--border-radius);
-    border: 1px solid #e9ecef; /* Lighter border */
-}
-.modal-info p { margin: 10px 0; font-size: 0.95em; }
-.modal-info p strong {
-    font-weight: 600;
+    font-size: 1.1em;
     color: var(--primary-color);
-    min-width: 90px; /* Adjust as needed */
-    display: inline-block;
-    margin-right: 5px;
-}
-#modalCustomerWhatsApp { color: #007bff; font-weight: 500; }
-
-.modal-section {
-    margin-bottom: 20px; /* Increased spacing */
-    padding-bottom: 20px; /* Increased spacing */
-    border-bottom: 1px solid #eee;
-}
-.modal-section:last-of-type { /* Target last section */
-    border-bottom: none;
-    padding-bottom: 0;
-    margin-bottom: 0;
-}
-.modal-section label {
-    display: block;
-    margin-bottom: 10px; /* Increased spacing */
     font-weight: 600;
-    font-size: 0.95em; /* Larger label */
-    color: var(--text-color);
+    border-bottom: 1px solid #eee;
+    padding-bottom: 8px;
 }
-.modal-section select {
-    width: calc(100% - 180px); /* Adjust width based on button */
-    max-width: 280px; /* Max width */
-    padding: 8px 12px;
-    border: 1px solid #ced4da;
-    border-radius: var(--border-radius);
-    font-size: 0.9em;
-    height: 38px;
-    margin-right: 10px;
-    vertical-align: middle;
-    box-sizing: border-box;
-    color: var(--text-color);
-}
-.update-status-button {
-    background-color: var(--warning-color);
-    color: #333;
-    vertical-align: middle;
-    padding: 8px 15px; /* Adjusted padding */
-    height: 38px;
-    border-radius: var(--border-radius);
-    font-weight: 500; /* Adjusted weight */
-}
-.update-status-button:hover { background-color: #e0a800; }
-
-.modal-actions {
-    display: flex;
-    justify-content: space-between;
-    gap: 15px; /* Increased gap */
-    flex-wrap: wrap;
-    margin-top: 10px; /* Add margin above actions */
-}
-.edit-full-button, .delete-button {
-    flex-grow: 1; /* Allow buttons to grow */
-    border-radius: var(--border-radius);
-    padding: 9px 18px; /* Adjusted padding */
-    font-size: 0.95em; /* Adjusted font size */
-    font-weight: 600; /* Bolder buttons */
-    height: 40px; /* Consistent height */
-}
-.edit-full-button {
-    background-color: #5bc0de; /* Info Blue */
-    color: white;
-}
-.edit-full-button:hover { background-color: #31b0d5; }
-.delete-button {
-    background-color: var(--danger-color);
-    color: white;
-}
-.delete-button:hover { background-color: #c82333; }
-
-/* Modal Lists Styling */
-#modalProductList, #modalStatusHistoryList {
-    background-color: var(--light-bg);
-    border: 1px solid #e9ecef;
-    border-radius: var(--border-radius);
-    padding: 12px 18px; /* Increased padding */
-    max-height: 150px; /* Increased max height */
-    overflow-y: auto;
-    font-size: 0.9em;
-}
-#modalProductList ul, #modalStatusHistoryList ul {
+#statusCountsReport ul {
     list-style: none;
     padding: 0;
     margin: 0;
+    font-size: 0.9em;
+    column-count: 2; /* Display counts in two columns if space allows */
+    column-gap: 20px;
 }
-#modalProductList li, #modalStatusHistoryList li {
+#statusCountsReport li {
     margin-bottom: 8px;
-    padding-bottom: 8px; /* Add padding bottom */
-    border-bottom: 1px dotted #ccc; /* Dotted separator */
+    color: var(--text-color);
 }
-#modalProductList li:last-child, #modalStatusHistoryList li:last-child {
-    margin-bottom: 0;
-    padding-bottom: 0;
-    border-bottom: none;
+#statusCountsReport li strong {
+    font-weight: 600;
+    color: var(--text-color); /* Make count number stand out */
 }
-/* Product List specific */
+#statusCountsReport p { /* Style for loading/no data message */
+    color: var(--text-muted);
+    font-style: italic;
+}
+
+/* --- Modal Styles (No changes needed from Phase 1 CSS, already consistent) --- */
+.modal, .popup-overlay { /* ... Existing consistent styles ... */ display: none; position: fixed; z-index: 1050; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.65); align-items: center; justify-content: center; padding: 20px; box-sizing: border-box; }
+.modal.active, .popup-overlay.active { display: flex; }
+.modal-content { background-color: #fefefe; margin: auto; padding: 25px 30px; border: none; width: 95%; max-width: 650px; border-radius: var(--border-radius); position: relative; box-shadow: var(--box-shadow-lg); z-index: 1051; animation: popupFadeIn 0.3s ease-out; }
+#whatsapp-reminder-popup .modal-content { max-width: 480px; }
+.close-btn, #whatsapp-reminder-popup .popup-close { color: #aaa; position: absolute; top: 12px; right: 15px; font-size: 30px; font-weight: bold; cursor: pointer; line-height: 1; background: none; border: none; padding: 0; transition: color 0.2s ease; }
+.close-btn:hover, .close-btn:focus, #whatsapp-reminder-popup .popup-close:hover, #whatsapp-reminder-popup .popup-close:focus { color: black; text-decoration: none; }
+#detailsModal h2 { margin-top: 0; margin-bottom: 25px; font-size: 1.35em; color: var(--text-color); text-align: center; border-bottom: 1px solid var(--border-color); padding-bottom: 15px; font-weight: 600; }
+#whatsapp-reminder-popup h4 { margin-top: 0; margin-bottom: 15px; color: var(--success-color); font-size: 1.4em; font-weight: 600; text-align: center; }
+.modal-info { margin-bottom: 20px; background-color: var(--light-bg); padding: 15px 20px; border-radius: var(--border-radius); border: 1px solid #e9ecef; }
+.modal-info p { margin: 10px 0; font-size: 0.95em; }
+.modal-info p strong { font-weight: 600; color: var(--primary-color); min-width: 90px; display: inline-block; margin-right: 5px; }
+#modalCustomerWhatsApp { color: #007bff; font-weight: 500; }
+.modal-section { margin-bottom: 20px; padding-bottom: 20px; border-bottom: 1px solid #eee; }
+.modal-section:last-of-type { border-bottom: none; padding-bottom: 0; margin-bottom: 0; }
+.modal-section label { display: block; margin-bottom: 10px; font-weight: 600; font-size: 0.95em; color: var(--text-color); }
+.modal-section select { width: calc(100% - 180px); max-width: 280px; padding: 8px 12px; border: 1px solid #ced4da; border-radius: var(--border-radius); font-size: 0.9em; height: 38px; margin-right: 10px; vertical-align: middle; box-sizing: border-box; color: var(--text-color); }
+.update-status-button { background-color: var(--warning-color); color: #333; vertical-align: middle; padding: 8px 15px; height: 38px; border-radius: var(--border-radius); font-weight: 500; }
+.update-status-button:hover { background-color: #e0a800; }
+.modal-actions { display: flex; justify-content: space-between; gap: 15px; flex-wrap: wrap; margin-top: 10px; }
+.edit-full-button, .delete-button { flex-grow: 1; border-radius: var(--border-radius); padding: 9px 18px; font-size: 0.95em; font-weight: 600; height: 40px; }
+.edit-full-button { background-color: #5bc0de; color: white; }
+.edit-full-button:hover { background-color: #31b0d5; }
+.delete-button { background-color: var(--danger-color); color: white; }
+.delete-button:hover { background-color: #c82333; }
+#modalProductList, #modalStatusHistoryList { background-color: var(--light-bg); border: 1px solid #e9ecef; border-radius: var(--border-radius); padding: 12px 18px; max-height: 150px; overflow-y: auto; font-size: 0.9em; }
+#modalProductList ul, #modalStatusHistoryList ul { list-style: none; padding: 0; margin: 0; }
+#modalProductList li, #modalStatusHistoryList li { margin-bottom: 8px; padding-bottom: 8px; border-bottom: 1px dotted #ccc; }
+#modalProductList li:last-child, #modalStatusHistoryList li:last-child { margin-bottom: 0; padding-bottom: 0; border-bottom: none; }
 #modalProductList .product-name { display: block; font-weight: 600; color: var(--text-color); margin-bottom: 3px; }
 #modalProductList .product-qty-details { display: block; font-size: 0.95em; color: var(--text-muted); }
 #modalProductList .no-products { color: var(--text-muted); font-style: italic; text-align: center; padding: 10px 0;}
-/* Status History specific */
 #modalStatusHistoryList { max-height: 180px; font-size: 0.88em; }
 #modalStatusHistoryList li { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 5px; }
 #modalStatusHistoryList .history-status { font-weight: 600; color: var(--text-color); margin-right: 10px; }
 #modalStatusHistoryList .history-time { color: var(--text-muted); font-size: 0.95em; white-space: nowrap; }
 #modalStatusHistoryList .no-history { color: var(--text-muted); font-style: italic; text-align: center; padding: 10px 0;}
-
-/* WhatsApp Popup Specifics */
-#whatsapp-reminder-popup p {
-    margin-bottom: 20px;
-    color: var(--text-muted);
-    font-size: 1.05em;
-    text-align: center;
-}
-.message-preview {
-    margin-top: 15px;
-    margin-bottom: 25px;
-    font-size: 0.95em;
-    background-color: #e9f5ff;
-    padding: 15px;
-    border-radius: var(--border-radius);
-    text-align: left;
-    border: 1px solid #bde0ff;
-    white-space: pre-wrap;
-    word-wrap: break-word;
-    max-height: 180px; /* Consistent max height */
-    overflow-y: auto;
-    line-height: 1.4;
-}
-.whatsapp-send-btn {
-    background-color: #25d366;
-    color: #fff;
-    text-decoration: none;
-    padding: 10px 25px;
-    border-radius: var(--border-radius);
-    display: inline-flex;
-    align-items: center;
-    gap: 10px;
-    font-weight: 600;
-    transition: background-color 0.2s ease, box-shadow 0.2s ease, transform 0.1s ease;
-    margin: 0 auto;
-    border: none;
-    cursor: pointer;
-    font-size: 1em;
-    box-shadow: var(--box-shadow);
-    height: auto; /* Auto height for this button */
-}
-.whatsapp-send-btn:hover {
-    background-color: #1ebe57;
-    box-shadow: var(--box-shadow-lg);
-    transform: translateY(-1px);
-}
-.whatsapp-send-btn:active {
-    transform: translateY(0px);
-    box-shadow: var(--box-shadow);
-}
+#whatsapp-reminder-popup p { margin-bottom: 20px; color: var(--text-muted); font-size: 1.05em; text-align: center; }
+.message-preview { margin-top: 15px; margin-bottom: 25px; font-size: 0.95em; background-color: #e9f5ff; padding: 15px; border-radius: var(--border-radius); text-align: left; border: 1px solid #bde0ff; white-space: pre-wrap; word-wrap: break-word; max-height: 180px; overflow-y: auto; line-height: 1.4; }
+.whatsapp-send-btn { background-color: #25d366; color: #fff; text-decoration: none; padding: 10px 25px; border-radius: var(--border-radius); display: inline-flex; align-items: center; gap: 10px; font-weight: 600; transition: background-color 0.2s ease, box-shadow 0.2s ease, transform 0.1s ease; margin: 0 auto; border: none; cursor: pointer; font-size: 1em; box-shadow: var(--box-shadow); height: auto; }
+.whatsapp-send-btn:hover { background-color: #1ebe57; box-shadow: var(--box-shadow-lg); transform: translateY(-1px); }
+.whatsapp-send-btn:active { transform: translateY(0px); box-shadow: var(--box-shadow); }
 .whatsapp-send-btn i { font-size: 1.2em; }
+
+@keyframes popupFadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
 
 
 /* --- Responsive Adjustments --- */
 @media (max-width: 992px) {
     .filter-bar { flex-direction: column; align-items: stretch; gap: 15px; }
     .filter-group { min-width: 100%; }
-    .filter-group input, .filter-group select { width: 100%; } /* Ensure full width */
-    .clear-filters-button { margin-top: 10px; } /* Add margin when stacked */
+    .filter-group input, .filter-group select { width: 100%; }
+    .clear-filters-button { margin-top: 10px; }
+    .bulk-actions-bar { flex-direction: column; align-items: stretch; } /* Stack bulk actions */
+    .bulk-actions-controls { justify-content: space-between; }
+    #statusCountsReport ul { column-count: 1; } /* Single column report on medium screens */
 }
 
 @media (max-width: 768px) {
@@ -632,16 +468,21 @@ h1 { margin: 0; font-size: 1em; /* Match font size within header */ }
     .container { max-width: 100%; padding: 20px; margin: 10px 0;}
     .header { margin: -20px -20px 20px -20px; font-size: 1.15em;}
     .breadcrumb { margin-bottom: 20px; padding-bottom: 12px;}
-    .actions-bar { justify-content: flex-start; } /* Keep add button left on mobile */
+    .actions-bar { justify-content: space-between; } /* Space between add/export */
     #orderTable { font-size: 0.88em; }
-    #orderTable th, #orderTable td { padding: 8px 10px; white-space: normal; } /* Reduce padding, allow wrapping */
+    #orderTable th, #orderTable td { padding: 8px 10px; white-space: normal; }
     .button { font-size: 0.88em; padding: 7px 12px; gap: 5px; height: 36px; }
     .modal-content { width: 95%; padding: 20px; }
     .order-summary-counts{ justify-content: space-between; font-size: 0.9em; padding: 15px 20px;}
-    .update-status-button { width: auto; } /* Allow button to size naturally */
-    .modal-section select { width: calc(100% - 140px); } /* Adjust select width */
+    .update-status-button { width: auto; }
+    .modal-section select { width: calc(100% - 140px); }
     .modal-actions { gap: 10px; }
     .edit-full-button, .delete-button { font-size: 0.9em; padding: 8px 15px; height: 38px;}
+    .bulk-actions-controls { flex-direction: column; align-items: stretch; gap: 10px;} /* Stack bulk controls */
+    .bulk-select { width: 100%; }
+    .bulk-button { width: 100%; }
+    .summary-reporting-container { gap: 15px; }
+    .order-summary-counts, .reporting-section { padding: 15px 20px; }
 }
 
 @media (max-width: 480px) {
@@ -650,6 +491,8 @@ h1 { margin: 0; font-size: 1em; /* Match font size within header */ }
     .header { padding: 12px 15px; font-size: 1.1em; margin: -15px -15px 15px -15px;}
     .filter-bar { padding: 15px; }
     #orderTable th, #orderTable td { padding: 6px 8px; font-size: 0.85em;}
+    th.col-checkbox, td.col-checkbox { width: 30px; padding: 6px 5px;} /* Narrow checkbox column */
+    th.col-checkbox input, td.col-checkbox input { transform: scale(1); }
     .status-badge { padding: 4px 8px; font-size: 0.8em; }
     .details-edit-button { padding: 4px 8px; font-size: 0.8em; }
     .whatsapp-button { width: 26px; height: 26px; font-size: 0.9em; }
@@ -660,6 +503,8 @@ h1 { margin: 0; font-size: 1em; /* Match font size within header */ }
     #whatsapp-reminder-popup .modal-content { padding: 20px 15px; }
     .message-preview { font-size: 0.9em; }
     .whatsapp-send-btn { width: 100%; justify-content: center; font-size: 0.95em; padding: 10px 20px;}
-    .order-summary-counts span { width: 100%; text-align: center; } /* Stack summary items */
+    .order-summary-counts span { width: 100%; text-align: center; }
     .order-summary-counts strong { margin-left: 8px; }
+    .actions-bar { flex-direction: column; align-items: stretch; gap: 10px;} /* Stack action buttons */
+    .actions-bar > * { width: 100%; justify-content: center;}
 }
