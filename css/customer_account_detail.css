@@ -1,11 +1,11 @@
-/* css/customer_account_detail.css (Version 2.2 - Font, Modal Design, Button Size Fix) */
+/* css/customer_account_detail.css (Version 2.2 - Font, Modal Design, Button Size, Confirm Modals) */
 
 /* --- सुनिश्चित करें कि Poppins फॉन्ट हर जगह लागू हो --- */
 body, input, button, select, textarea {
     font-family: var(--font-family, 'Poppins', sans-serif); /* वेरिएबल का उपयोग करें (order_history.css से) */
 }
 
-/* === पिछले वर्ज़न (V2.0) के स्टाइल यहाँ रहेंगे === */
+/* === पिछले वर्ज़न के स्टाइल यहाँ रहेंगे === */
 
 /* Status Badge Styles */
 .status-badge {
@@ -29,7 +29,7 @@ body, input, button, select, textarea {
 .info-box h2 {
     font-size: 1.1em; color: var(--primary-color, #0056b3); margin-top: 0;
     margin-bottom: 15px; padding-bottom: 10px; border-bottom: 1px solid #eee;
-    display: flex; align-items: center; gap: 8px; font-weight: 600; /* Title थोड़ा बोल्ड */
+    display: flex; align-items: center; gap: 8px; font-weight: 600;
 }
 .info-box p { margin-bottom: 10px; font-size: 0.95em; line-height: 1.5; }
 .info-box p strong { font-weight: 600; color: #333; min-width: 110px; display: inline-block; }
@@ -43,82 +43,81 @@ body, input, button, select, textarea {
 .order-row-clickable { cursor: pointer; transition: background-color 0.15s ease; }
 .order-row-clickable:hover { background-color: #f0f8ff; }
 
-/* --- वर्ज़न 2.2 में जोड़ा गया --- */
+/* --- वर्ज़न 2.2 में अपडेट/जोड़ा गया --- */
 
-/* 1. टॉप एक्शन बटन साइज़ एक समान करें */
+/* 1. टॉप एक्शन बटन साइज़ और अलाइनमेंट */
+.cust-detail-actions {
+    align-items: center; /* वर्टीकल अलाइनमेंट */
+    min-height: 50px;    /* बार की न्यूनतम ऊंचाई */
+    flex-wrap: wrap;     /* बटन रैप हों */
+    gap: 10px;           /* बटनों के बीच गैप */
+}
 .cust-detail-actions .button,
 .cust-detail-actions a.button {
-    min-width: 160px;       /* <<< न्यूनतम चौड़ाई सेट करें (एडजस्ट कर सकते हैं) */
-    justify-content: center; /* आइकन और टेक्स्ट को बीच में रखें */
+    min-width: 160px;       /* <<< न्यूनतम चौड़ाई */
+    height: 38px;           /* <<< निश्चित ऊंचाई */
+    box-sizing: border-box; /* पैडिंग/बॉर्डर ऊंचाई में शामिल */
+    justify-content: center;/* आइकन/टेक्स्ट सेंटर में */
+    padding: 8px 15px;      /* पैडिंग (ऊंचाई के साथ एडजस्ट करें) */
 }
 
 /* 2. पॉपअप (Modal) डिज़ाइन सुधार */
 .modal .modal-content {
-    padding: 25px 30px; /* अंदर थोड़ा ज़्यादा स्पेस */
-    box-shadow: 0 5px 15px rgba(0,0,0,0.2); /* थोड़ी गहरी शैडो */
+    padding: 25px 30px; /* अंदर स्पेस */
+    box-shadow: 0 5px 15px rgba(0,0,0,0.2); /* शैडो */
 }
-
 .modal h2 { /* पॉपअप टाइटल स्टाइल */
-    font-weight: 600;
-    font-size: 1.25em;   /* थोड़ा बड़ा */
-    color: var(--primary-color, #0056b3); /* प्राइमरी कलर */
-    text-align: center;
-    margin-top: 0;
-    margin-bottom: 30px;  /* टाइटल के नीचे ज़्यादा स्पेस */
-    padding-bottom: 15px;
-    border-bottom: 1px solid var(--border-color, #eee);
+    font-weight: 600; font-size: 1.25em; color: var(--primary-color, #0056b3);
+    text-align: center; margin-top: 0; margin-bottom: 30px; padding-bottom: 15px;
+    border-bottom: 1px solid var(--border-color, #eee); display: flex;
+    align-items: center; justify-content: center; gap: 10px;
 }
-
-/* पॉपअप फॉर्म में स्पेसिंग */
-.modal .form-group {
-    margin-bottom: 20px; /* फील्ड्स के बीच ज़्यादा स्पेस */
-}
-.modal .form-group label {
-    margin-bottom: 8px;  /* लेबल और इनपुट के बीच स्पेस */
-    font-weight: 500;    /* स्टैंडर्ड फॉन्ट वेट */
-    color: #333;
-}
-.modal .form-group input[type="text"],
-.modal .form-group input[type="tel"],
-.modal .form-group input[type="email"],
-.modal .form-group input[type="number"],
-.modal .form-group input[type="date"],
-.modal .form-group select,
+.modal .form-group { margin-bottom: 20px; }
+.modal .form-group label { margin-bottom: 8px; font-weight: 500; color: #333; }
+.modal .form-group input[type="text"], .modal .form-group input[type="tel"],
+.modal .form-group input[type="email"], .modal .form-group input[type="number"],
+.modal .form-group input[type="date"], .modal .form-group select,
 .modal .form-group textarea {
-    font-size: 1em; /* इनपुट फॉन्ट साइज़ */
-    padding: 9px 12px; /* इनपुट में पैडिंग */
+    font-size: 1em; padding: 9px 12px; border: 1px solid #ccc; border-radius: 4px;
 }
+.modal .form-group input:focus, .modal .form-group select:focus,
+.modal .form-group textarea:focus {
+    border-color: var(--primary-color, #0056b3);
+    box-shadow: 0 0 0 0.2rem rgba(0, 86, 179, 0.25); outline: none;
+}
+.modal .modal-actions { margin-top: 30px; padding-top: 20px; border-top: 1px solid var(--border-color, #eee); justify-content: flex-end; }
 
+/* Modal Header Icons/Colors */
+.modal h2 .warning-icon { color: var(--warning-color, #ffc107); }
+.modal h2 .danger-icon { color: var(--danger-color, #dc3545); }
+.modal h2 .info-icon { color: var(--info-color, #17a2b8); }
+.modal h2 .success-icon { color: var(--success-color, #28a745); }
+#addPaymentModal .modal-content h2 { color: var(--success-color, #28a745); }
+#customerEditModal .modal-content h2 { color: var(--info-color, #17a2b8); }
+#detailsModal .modal-content h2 { color: var(--primary-color, #0056b3); }
 
-/* पॉपअप एक्शन बटन सेक्शन */
-.modal .modal-actions {
-    margin-top: 30px;     /* फॉर्म और बटन के बीच ज़्यादा स्पेस */
-    padding-top: 20px;    /* बटन के ऊपर स्पेस */
-    border-top: 1px solid var(--border-color, #eee);
-    justify-content: flex-end; /* बटन दाईं ओर */
-}
+/* Edit Customer Modal Width */
+#customerEditModal .modal-content { max-width: 550px; }
 
-/* ग्राहक एडिट पॉपअप की चौड़ाई एडजस्ट करें (Optional) */
-#customerEditModal .modal-content {
-    max-width: 550px; /* इसे एडजस्ट करें अगर ज़रूरत हो */
-}
+/* Order Detail Modal Section Spacing */
+#detailsModal .modal-section { margin-bottom: 25px; padding-bottom: 20px; border-bottom: 1px solid #eee; }
+#detailsModal .modal-section:last-of-type { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+#detailsModal .modal-section label { font-weight: 600; color: var(--primary-color, #0056b3); margin-bottom: 10px; display: block; }
 
-/* ऑर्डर डिटेल पॉपअप में सेक्शन स्पेसिंग */
-#detailsModal .modal-section {
-    margin-bottom: 25px;
-    padding-bottom: 20px;
-    border-bottom: 1px solid #eee;
+/* 3. कन्फर्मेशन पॉपअप के लिए स्टाइल */
+.warning-message {
+    font-weight: 500; color: var(--danger-color, #dc3545); background-color: #f8d7da;
+    border: 1px solid var(--danger-color, #dc3545); border-radius: var(--border-radius, 6px);
+    padding: 10px 15px; margin-top: 15px; margin-bottom: 15px; font-size: 0.9em;
 }
-#detailsModal .modal-section:last-of-type {
-     border-bottom: none;
-     margin-bottom: 0;
-     padding-bottom: 0;
+.confirmation-check {
+    margin-top: 20px; margin-bottom: 20px; display: flex; align-items: center;
+    justify-content: flex-start; gap: 8px; background-color: #fff9e6;
+    padding: 10px 15px; border-radius: var(--border-radius, 6px);
+    border: 1px solid var(--warning-color, #ffc107);
 }
-#detailsModal .modal-section label { /* सेक्शन लेबल स्टाइल */
-    font-weight: 600;
-    color: var(--primary-color, #0056b3);
-    margin-bottom: 10px;
-    display: block;
-}
+.confirmation-check input[type="checkbox"] { transform: scale(1.2); cursor: pointer; margin: 0; flex-shrink: 0; }
+.confirmation-check label { font-size: 0.9em; color: var(--text-color, #343a40); cursor: pointer; margin: 0; font-weight: 500; line-height: 1.3; }
+#confirmToggleBtn:disabled, #confirmDeleteBtn:disabled { background-color: #adb5bd; cursor: not-allowed; opacity: 0.6; }
 
 /* --- वर्ज़न 2.2 समाप्त --- */
