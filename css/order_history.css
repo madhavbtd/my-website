@@ -33,21 +33,38 @@ h1 { margin: 0; font-size: 1em; }
 .filter-group input:focus, .filter-group select:focus { border-color: var(--primary-color); outline: 0; box-shadow: 0 0 0 0.2rem rgba(0, 86, 179, 0.25); }
 
 /* --- बटन --- */
-.button { padding: 8px 18px; font-size: 0.9em; border: none; border-radius: var(--border-radius); cursor: pointer; font-weight: 500; display: inline-flex; align-items: center; justify-content: center; gap: 6px; text-decoration: none; transition: background-color 0.2s ease, box-shadow 0.2s ease, transform 0.1s ease, opacity 0.2s ease; white-space: nowrap; height: 38px; box-shadow: var(--box-shadow); }
+/* === बदलाव यहाँ है === */
+.button {
+    padding: 8px 18px;
+    font-size: 0.9em;
+    border: none;
+    border-radius: var(--border-radius);
+    cursor: pointer;
+    font-weight: 500; /* दोनों बटन के लिए base font-weight */
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    text-decoration: none;
+    transition: background-color 0.2s ease, box-shadow 0.2s ease, transform 0.1s ease, opacity 0.2s ease;
+    white-space: nowrap;
+    height: 38px;
+    box-shadow: var(--box-shadow);
+    /* min-width: 160px; <-- यह लाइन हटा दी गई है */
+}
 .button:hover { box-shadow: var(--box-shadow-lg); transform: translateY(-1px); }
 .button:active { transform: translateY(0px); box-shadow: var(--box-shadow); }
 .button:disabled { opacity: 0.5; cursor: not-allowed; box-shadow: none; transform: none; background-color: #adb5bd; color: #fff; }
 .button:disabled:hover { background-color: #adb5bd; box-shadow: none; transform: none; }
 .button i { margin-right: 4px; font-size: 0.95em; }
 
-/* === बदलाव यहाँ है === */
 .add-new-button {
-    background-color: var(--primary-color); /* प्राथमिक नीला रंग */
+    background-color: var(--success-color); /* बदला हुआ: हरा रंग */
     color: white;
-    /* font-weight: 600; <-- यह लाइन हटा दी गई है */
+    /* font-weight: 600; <-- सुनिश्चित करें कि यह लाइन यहाँ न हो */
 }
 .add-new-button:hover {
-    background-color: #00418a; /* गहरा नीला */
+    background-color: #218838; /* बदला हुआ: गहरा हरा */
 }
 /* === बदलाव समाप्त === */
 
@@ -186,5 +203,5 @@ mark { background-color: var(--highlight-color); padding: 0.1em 0.2em; border-ra
 
 /* --- रेस्पॉन्सिव समायोजन --- */
 @media (max-width: 992px) { .filter-bar { flex-direction: column; align-items: stretch; gap: 15px; } .filter-group { min-width: 100%; } .filter-group input, .filter-group select { width: 100%; } .clear-filters-button { margin-top: 10px; } .bulk-actions-bar { flex-direction: column; align-items: stretch; } .bulk-actions-controls { justify-content: space-between; } #statusCountsReport ul { column-count: 1; } }
-@media (max-width: 768px) { body { padding: 15px; font-size: 14px; } .container { max-width: 100%; padding: 20px; margin: 10px 0;} .header { margin: -20px -20px 20px -20px; font-size: 1.15em;} .breadcrumb { margin-bottom: 20px; padding-bottom: 12px;} .actions-bar { justify-content: space-between; } #orderTable { font-size: 0.88em; } #orderTable th, #orderTable td { padding: 8px 10px; white-space: normal; } .button { font-size: 0.88em; padding: 7px 12px; gap: 5px; height: 36px; } .modal-content { width: 95%; padding: 20px; } .order-summary-counts{ justify-content: space-between; font-size: 0.9em; padding: 15px 20px;} .update-status-button { width: auto; } .modal-section select { width: calc(100% - 140px); } .modal-actions { gap: 10px; } .edit-full-button, .delete-button { font-size: 0.9em; padding: 8px 15px; height: 38px;} .bulk-actions-controls { flex-direction: column; align-items: stretch; gap: 10px;} .bulk-select { width: 100%; } .bulk-button { width: 100%; } .summary-reporting-container { gap: 15px; } .order-summary-counts, .reporting-section { padding: 15px 20px; } }
+@media (max-width: 768px) { body { padding: 15px; font-size: 14px; } .container { max-width: 100%; padding: 20px; margin: 10px 0;} .header { margin: -20px -20px 20px -20px; font-size: 1.15em;} .breadcrumb { margin-bottom: 20px; padding-bottom: 12px;} .actions-bar { justify-content: space-between; } #orderTable { font-size: 0.88em; } #orderTable th, #orderTable td { padding: 8px 10px; white-space: normal; } .button { font-size: 0.88em; padding: 7px 12px; gap: 5px; height: 36px; /* min-width is removed, so it inherits auto */ } .modal-content { width: 95%; padding: 20px; } .order-summary-counts{ justify-content: space-between; font-size: 0.9em; padding: 15px 20px;} .update-status-button { width: auto; } .modal-section select { width: calc(100% - 140px); } .modal-actions { gap: 10px; } .edit-full-button, .delete-button { font-size: 0.9em; padding: 8px 15px; height: 38px;} .bulk-actions-controls { flex-direction: column; align-items: stretch; gap: 10px;} .bulk-select { width: 100%; } .bulk-button { width: 100%; } .summary-reporting-container { gap: 15px; } .order-summary-counts, .reporting-section { padding: 15px 20px; } }
 @media (max-width: 480px) { body { padding: 10px; } .container { padding: 15px; } .header { padding: 12px 15px; font-size: 1.1em; margin: -15px -15px 15px -15px;} .filter-bar { padding: 15px; } #orderTable th, #orderTable td { padding: 6px 8px; font-size: 0.85em;} th.col-checkbox, td.col-checkbox { width: 30px; padding: 6px 5px;} th.col-checkbox input, td.col-checkbox input { transform: scale(1); } .status-badge { padding: 4px 8px; font-size: 0.8em; } .details-edit-button { padding: 4px 8px; font-size: 0.8em; } .whatsapp-button { width: 26px; height: 26px; font-size: 0.9em; } .modal-content { padding: 20px 15px; } #detailsModal h2 { font-size: 1.2em; margin-bottom: 20px; padding-bottom: 10px;} .modal-actions { flex-direction: column; } .modal-actions .button { width: 100%; justify-content: center;} #whatsapp-reminder-popup .modal-content { padding...}
