@@ -1,4 +1,4 @@
-/* css/customer_account_detail.css (Version 2.3.4 - Added Scrollbars) */
+/* css/customer_account_detail.css (Version 2.4 - Improved Table Design & Scrollbars) */
 
 /* --- Poppins Font --- */
 body, input, button, select, textarea {
@@ -20,7 +20,7 @@ body, input, button, select, textarea {
 #summary-balance.balance-credit { color: var(--success-color, #28a745); font-weight: bold; }
 #summary-balance.balance-info { color: var(--text-muted, #6c757d); font-weight: normal; font-style: italic; }
 .order-row-clickable { cursor: pointer; transition: background-color 0.15s ease; }
-.order-row-clickable:hover { background-color: #f0f8ff; }
+.order-row-clickable:hover { background-color: #f0f8ff; } /* Hover effect from V2.3 */
 .cust-detail-actions { align-items: center; min-height: 50px; flex-wrap: wrap; gap: 12px; padding: 15px 20px; background-color: #f8f9fa; border: 1px solid #e9ecef; border-radius: var(--border-radius, 6px); margin-bottom: 30px; }
 .cust-detail-actions .button, .cust-detail-actions a.button { min-width: 150px; height: 40px; box-sizing: border-box; justify-content: center; padding: 8px 18px; font-weight: 500; border: none; color: white; box-shadow: 0 2px 4px rgba(0,0,0,0.1); transition: all 0.2s ease; }
 .cust-detail-actions .button:hover, .cust-detail-actions a.button:hover { transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.15); }
@@ -63,30 +63,95 @@ body, input, button, select, textarea {
 #customerEditForm .modal-actions { grid-column: 1 / -1; }
 @media (max-width: 600px) { #customerEditForm { grid-template-columns: 1fr; gap: 0px; } #customerEditForm .form-group-address, #customerEditForm .form-group-notes, #customerEditForm .form-group-credit-radio, #creditLimitEditGroup, #customerEditForm .modal-actions { grid-column: auto; } }
 
+/* --- >>> वर्ज़न 2.4: टेबल डिज़ाइन सुधार और स्क्रॉलबार <<< --- */
+.history-section h2 { /* टेबल हेडिंग्स को बेहतर करें */
+    font-size: 1.2em;
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid var(--primary-color, #0056b3);
+    color: var(--primary-color, #0056b3);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
 
-/* --- >>> नया जोड़ा गया: हिस्ट्री टेबल के लिए स्क्रॉलबार <<< --- */
 .history-section .table-container {
-    max-height: 400px; /* <<< टेबल की अधिकतम ऊंचाई (आप इसे बदल सकते हैं) */
-    overflow-y: auto;  /* <<< वर्टीकल स्क्रॉलबार जोड़ें */
-    border: 1px solid var(--border-color, #dee2e6); /* बॉर्डर रखें */
+    max-height: 400px; /* <<< टेबल की अधिकतम ऊंचाई (एडजस्ट करें) */
+    overflow-y: auto;  /* <<< वर्टीकल स्क्रॉलबार */
+    border: 1px solid var(--border-color, #dee2e6);
     border-radius: var(--border-radius, 6px);
-    margin-bottom: 20px;
-    background-color: #fff; /* सुनिश्चित करें कि बैकग्राउंड हो */
+    margin-bottom: 30px; /* टेबल के नीचे स्पेस */
+    background-color: #fff;
+    padding: 0; /* कंटेनर से पैडिंग हटाएँ */
+    box-shadow: none; /* साफ़ लुक के लिए शैडो हटाएं */
 }
 
-/* Optional: कस्टम स्क्रॉलबार स्टाइल (Webkit ब्राउज़र जैसे Chrome, Safari, Edge) */
-.history-section .table-container::-webkit-scrollbar {
-     width: 8px; /* स्क्रॉलबार की चौड़ाई */
+/* टेबल का अपना बॉर्डर हटाएं */
+.history-section table {
+    width: 100%;
+    border-collapse: collapse;
+    border: none;
+    font-size: 0.9em;
 }
-.history-section .table-container::-webkit-scrollbar-track {
-     background: #f1f1f1; /* ट्रैक का रंग */
-     border-radius: 10px;
+
+/* टेबल हेडर (thead) स्टाइल */
+.history-section thead th {
+    background-color: var(--light-bg, #f8f9fa);
+    padding: 12px 15px; /* पैडिंग */
+    text-align: left;
+    font-weight: 600; /* बोल्ड */
+    color: var(--text-color, #343a40);
+    border-bottom: 2px solid var(--border-color, #dee2e6); /* नीचे मोटी लाइन */
+    position: sticky; /* स्क्रॉल करते समय हेडर ऊपर चिपका रहे */
+    top: 0;
+    z-index: 1; /* यह सुनिश्चित करता है कि हेडर स्क्रॉलिंग सामग्री के ऊपर हो */
 }
-.history-section .table-container::-webkit-scrollbar-thumb {
-     background: #ccc; /* स्क्रॉल बार का रंग */
-     border-radius: 10px;
+
+/* टेबल बॉडी रो (tbody tr) स्टाइल */
+.history-section tbody tr {
+    border-bottom: 1px solid #eff2f5; /* पंक्तियों के बीच हल्की लाइन */
+    transition: background-color 0.15s ease;
 }
-.history-section .table-container::-webkit-scrollbar-thumb:hover {
-     background: #aaa; /* माउस ले जाने पर रंग */
+.history-section tbody tr:last-child {
+    border-bottom: none; /* आखिरी पंक्ति के नीचे लाइन न हो */
 }
-/* --- >>> स्क्रॉलबार समाप्त <<< --- */
+.history-section tbody tr:hover {
+    background-color: #f5f8fa; /* माउस ले जाने पर हल्का रंग */
+}
+
+/* टेबल सेल (td) स्टाइल */
+.history-section td {
+    padding: 12px 15px; /* पैडिंग */
+    text-align: left;
+    vertical-align: middle;
+    color: var(--text-muted, #6c757d); /* डेटा के लिए हल्का रंग */
+    line-height: 1.4;
+}
+
+/* विशिष्ट कॉलम स्टाइल */
+#customerOrderTable td:nth-child(1), /* Order ID */
+#customerPaymentTable td:nth-child(2) /* Amount Paid */ {
+    font-weight: 500; /* थोड़ा बोल्ड */
+    color: var(--text-color, #343a40); /* गहरा रंग */
+}
+#customerOrderTable td:nth-child(3), /* Products */
+#customerPaymentTable td:nth-child(4) /* Notes */ {
+    white-space: normal; /* टेक्स्ट रैप हो सके */
+    min-width: 150px;
+}
+#customerPaymentTable td:last-child { /* Payment टेबल का एक्शन कॉलम */
+     text-align: center;
+     width: 60px; /* फिक्स चौड़ाई */
+}
+.delete-payment-btn { /* पेमेंट डिलीट बटन स्टाइल */
+    padding: 4px 8px;
+    font-size: 0.85em;
+    line-height: 1;
+}
+
+/* कस्टम स्क्रॉलबार स्टाइल (Optional) */
+.history-section .table-container::-webkit-scrollbar { width: 8px; }
+.history-section .table-container::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 10px; }
+.history-section .table-container::-webkit-scrollbar-thumb { background: #ccc; border-radius: 10px; }
+.history-section .table-container::-webkit-scrollbar-thumb:hover { background: #aaa; }
+/* --- >>> टेबल डिज़ाइन और स्क्रॉलबार समाप्त <<< --- */
