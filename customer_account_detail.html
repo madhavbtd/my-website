@@ -15,6 +15,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
         import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+        // Import ALL Firestore functions needed
         import { getFirestore, doc, getDoc, collection, query, where, getDocs, orderBy, updateDoc, deleteDoc, Timestamp, arrayUnion, addDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
         const firebaseConfig = { /* --- आपकी Firebase कॉन्फ़िगरेशन यहाँ --- */
@@ -24,21 +25,25 @@
              storageBucket: "madhav-multyprint.appspot.com",
              messagingSenderId: "104988349637",
              appId: "1:104988349637:web:faf045b77c6786a4e70cac"
-         };
+        };
 
         let app; let auth; let db;
 
         try {
+            // Initialize Firebase App
             if (!window.firebaseAppInitialized) {
                 app = initializeApp(firebaseConfig); window.firebaseAppInitialized = true; window.firebaseApp = app;
-                console.log("Firebase initialized (customer_account_detail - V2.1.1).");
-            } else { app = window.firebaseApp; console.log("Firebase already initialized (customer_account_detail - V2.1.1)."); }
+                console.log("Firebase initialized (customer_account_detail - V2.1.2).");
+            } else { app = window.firebaseApp; console.log("Firebase already initialized (customer_account_detail - V2.1.2)."); }
             auth = getAuth(app); db = getFirestore(app);
 
             // Make Firestore functions global
             window.db = db; window.doc = doc; window.getDoc = getDoc;
             window.collection = collection; window.query = query; window.where = where;
-            window.getDocs = getDocs; window.orderBy = firestoreOrderBy; // Alias orderBy
+            window.getDocs = getDocs;
+            // --- >>> यहाँ बदलाव किया गया है <<< ---
+            window.orderBy = orderBy; // <-- 'firestoreOrderBy' की जगह 'orderBy' इस्तेमाल करें
+            // --- >>> बदलाव समाप्त <<< ---
             window.updateDoc = updateDoc; window.deleteDoc = deleteDoc;
             window.Timestamp = Timestamp; window.arrayUnion = arrayUnion;
             window.addDoc = addDoc;
@@ -48,12 +53,15 @@
                 const currentPage = window.location.pathname.split('/').pop() || 'index.html';
                 if (!user && currentPage.toLowerCase() !== 'login.html') { window.location.replace('login.html'); }
                 else if (user) {
-                    console.log(`User logged in. V2.1.1 OK.`);
+                    console.log(`User logged in. V2.1.2 OK.`);
                     if (typeof initializeCustomerDetailPage === 'function') { initializeCustomerDetailPage(user); }
                     else { setTimeout(() => { typeof initializeCustomerDetailPage === 'function' ? initializeCustomerDetailPage(user) : console.error("Init function missing!"); }, 100); }
                 }
             });
-        } catch(e) { console.error("Firebase setup error:", e); alert("App Error."); }
+        } catch(e) {
+            console.error("Firebase setup error:", e); // Log the actual error
+            alert("App Error."); // Show generic alert
+         }
     </script>
 </head>
 <body>
