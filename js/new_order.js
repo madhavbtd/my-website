@@ -1,5 +1,4 @@
-
-// js/new_order.js - v2.3.0 (Implements Status Dropdown with Color Change)
+// js/new_order.js - v2.3.1 (Added customerId null check)
 
 // --- Firebase Functions ---
 const {
@@ -11,7 +10,7 @@ const {
 let isEditMode = false;
 let orderIdToEdit = null;
 let currentOrderData = null;
-let selectedCustomerId = null;
+let selectedCustomerId = null; // <<<--- यह वेरिएबल सही ढंग से सेट होना चाहिए
 let selectedCustomerData = null;
 let productCache = [];
 let customerCache = [];
@@ -30,7 +29,7 @@ const saveButtonText = saveButton ? saveButton.querySelector('span') : null;
 const headerText = document.getElementById('headerText');
 const breadcrumbAction = document.getElementById('breadcrumbAction');
 const hiddenEditOrderIdInput = document.getElementById('editOrderId');
-const selectedCustomerIdInput = document.getElementById('selectedCustomerId');
+const selectedCustomerIdInput = document.getElementById('selectedCustomerId'); // Hidden input to store ID
 const displayOrderIdInput = document.getElementById('display_order_id');
 const manualOrderIdInput = document.getElementById('manual_order_id');
 const customerNameInput = document.getElementById('full_name');
@@ -58,7 +57,6 @@ const summaryFinalAmountSpan = document.getElementById('summaryFinalAmount');
 const summaryAdvancePaymentInput = document.getElementById('summaryAdvancePayment');
 const summaryTotalBalanceSpan = document.getElementById('summaryTotalBalance');
 const creditLimitWarningDiv = document.getElementById('creditLimitWarning');
-// *** CHANGE: Reference Status Select Dropdown ***
 const orderStatusSelect = document.getElementById('orderStatusSelect');
 const formErrorMsg = document.getElementById('formErrorMsg');
 const whatsappReminderPopup = document.getElementById('whatsapp-reminder-popup');
@@ -75,7 +73,7 @@ const statusList = [
 
 // --- Initialization ---
 document.addEventListener('DOMContentLoaded', () => {
-    console.log("New Order DOM Loaded (v2.3.0 - Status Dropdown). Initializing...");
+    console.log("New Order DOM Loaded (v2.3.1 - Customer ID Check). Initializing...");
     if (!orderForm || !addItemBtn || !orderItemsTableBody || !itemRowTemplate || !calculationPreviewArea || !calculationPreviewContent || !orderStatusSelect) {
         console.error("Critical DOM elements missing! Check HTML IDs.", { orderForm: !!orderForm, addItemBtn: !!addItemBtn, orderItemsTableBody: !!orderItemsTableBody, itemRowTemplate: !!itemRowTemplate, calculationPreviewArea: !!calculationPreviewArea, calculationPreviewContent: !!calculationPreviewContent, orderStatusSelect: !!orderStatusSelect });
         alert("Page structure error. Cannot initialize order form.");
@@ -90,7 +88,6 @@ document.addEventListener('DOMContentLoaded', () => {
     orderItemsTableBody.addEventListener('input', handleItemTableInput);
     orderItemsTableBody.addEventListener('change', handleItemTableChange);
     orderItemsTableBody.addEventListener('focusin', (event) => { if (event.target.matches('.product-name')) activeProductInput = event.target; });
-    // Note: Product suggestion click handled by listener on productSuggestionsDiv (added later)
     if (customerNameInput) { customerNameInput.addEventListener('input', (e) => handleCustomerInput(e, 'name')); customerNameInput.addEventListener('blur', () => setTimeout(() => { if(customerSuggestionsNameBox && !customerSuggestionsNameBox.matches(':hover')) hideSuggestionBox(customerSuggestionsNameBox); }, 150)); } else { console.warn("Customer name input not found."); }
     if (customerWhatsAppInput) { customerWhatsAppInput.addEventListener('input', (e) => handleCustomerInput(e, 'whatsapp')); customerWhatsAppInput.addEventListener('blur', () => setTimeout(() => { if(customerSuggestionsWhatsAppBox && !customerSuggestionsWhatsAppBox.matches(':hover')) hideSuggestionBox(customerSuggestionsWhatsAppBox); }, 150)); } else { console.warn("Customer whatsapp input not found."); }
     if (summaryDiscountPercentInput) summaryDiscountPercentInput.addEventListener('input', handleDiscountInput); else { console.warn("Discount % input not found."); }
@@ -100,7 +97,6 @@ document.addEventListener('DOMContentLoaded', () => {
     if (whatsappReminderPopup) whatsappReminderPopup.addEventListener('click', (event) => { if (event.target === whatsappReminderPopup) closeWhatsAppPopup(); });
     document.addEventListener('click', handleGlobalClick); // Handles clicks outside suggestion boxes
 
-    // *** ADD: Listener for status dropdown change ***
     orderStatusSelect.addEventListener('change', (event) => {
         updateStatusDropdownColor(event.target.value);
     });
@@ -115,7 +111,7 @@ function handleGlobalClick(event) {
     if (productSuggestionsDiv && activeProductInput && !productSuggestionsDiv.contains(event.target) && event.target !== activeProductInput) {
         hideProductSuggestions();
     }
-    // Hide customer suggestions (might need adjustment if click handling changes)
+    // Hide customer suggestions
     if (customerSuggestionsNameBox && customerNameInput && !customerSuggestionsNameBox.contains(event.target) && event.target !== customerNameInput) {
          hideSuggestionBox(customerSuggestionsNameBox);
     }
@@ -142,7 +138,7 @@ function initializeForm() {
         if(saveButtonText)saveButtonText.textContent="Update Order";
         if(hiddenEditOrderIdInput)hiddenEditOrderIdInput.value=orderIdToEdit;
         if(manualOrderIdInput)manualOrderIdInput.readOnly=true;
-        loadOrderForEdit(orderIdToEdit); // loadOrderForEdit will set status and color
+        loadOrderForEdit(orderIdToEdit);
     } else {
         isEditMode=false;
         console.log("Add Mode.");
@@ -151,7 +147,6 @@ function initializeForm() {
         if(saveButtonText)saveButtonText.textContent="Save Order";
         if(manualOrderIdInput)manualOrderIdInput.readOnly=false;
         if(orderDateInput&&!orderDateInput.value)orderDateInput.value=new Date().toISOString().split('T')[0];
-        // *** CHANGE: Set default status and color for dropdown ***
         const defaultStatus = "Order Received";
         orderStatusSelect.value = defaultStatus;
         updateStatusDropdownColor(defaultStatus); // Set initial color
@@ -176,14 +171,21 @@ async function loadOrderForEdit(docId) {
         if(s.exists()){
             currentOrderData=s.data();
             console.log("Order loaded:",currentOrderData);
-            selectedCustomerId=currentOrderData.customerId||null;
-            if(selectedCustomerIdInput)selectedCustomerIdInput.value=selectedCustomerId;
+            selectedCustomerId=currentOrderData.customerId||null; // <<<--- Load existing customerId
+            if(selectedCustomerIdInput)selectedCustomerIdInput.value=selectedCustomerId || ''; // Update hidden input too
             if(currentOrderData.customerDetails){
                 customerNameInput.value=currentOrderData.customerDetails.fullName||'';
                 customerWhatsAppInput.value=currentOrderData.customerDetails.whatsappNo||'';
                 customerAddressInput.value=currentOrderData.customerDetails.address||'';
                 customerContactInput.value=currentOrderData.customerDetails.contactNo||'';
-                if(selectedCustomerId){fetchAndDisplayCustomerDetails(selectedCustomerId);}else{resetCustomerSelectionUI();}
+                if(selectedCustomerId){
+                    fetchAndDisplayCustomerDetails(selectedCustomerId);
+                }else{
+                    console.warn("Order loaded but customerId is missing/null in data.");
+                    resetCustomerSelectionUI(); // Reset if ID is missing
+                }
+            } else {
+                 resetCustomerSelectionUI(); // Reset if no customer details
             }
             displayOrderIdInput.value=currentOrderData.orderId||docId;
             manualOrderIdInput.value=currentOrderData.orderId||'';
@@ -193,12 +195,9 @@ async function loadOrderForEdit(docId) {
             const uV=currentOrderData.urgent||'No';
             const uR=orderForm.querySelector(`input[name="urgent"][value="${uV}"]`);
             if(uR)uR.checked=true;
-
-            // *** CHANGE: Set status dropdown value and color ***
             const loadedStatus = currentOrderData.status || "Order Received";
             orderStatusSelect.value = loadedStatus;
             updateStatusDropdownColor(loadedStatus); // Set color based on loaded status
-
             if(!orderItemsTableBody){console.error("Item table body missing!");return;}
             orderItemsTableBody.innerHTML='';
             if(currentOrderData.items&&Array.isArray(currentOrderData.items)){
@@ -231,16 +230,15 @@ function handleItemTableClick(event) {
          if(r){ r.remove(); hideProductSuggestions(); updateOrderSummary(); updateCalculationPreview(); }
      }
 }
-
-// Renamed from handleSuggestionMouseDown
-function handleSuggestionClick(event) {
+function handleSuggestionClick(event) { // Was handleSuggestionMouseDown
      const pLI = event.target.closest('.product-suggestions-list li[data-product]');
      const cLI = event.target.closest('.suggestions-box li[data-customer-id]'); // For customer suggestions
      if (pLI) {
-         event.preventDefault();
+         event.preventDefault(); // Prevent input blur
          try { const pD = JSON.parse(pLI.dataset.product || '{}'); if (activeProductInput) selectProductSuggestion(pD, activeProductInput); } catch (e) { console.error("Error parsing/selecting product:", e); }
      } else if (cLI) {
-         event.preventDefault(); try { fillCustomerData(cLI.dataset); const b = cLI.closest('.suggestions-box'); if (b) hideSuggestionBox(b); } catch(e) { console.error("Error selecting customer:", e); }
+         event.preventDefault(); // Prevent input blur
+         try { fillCustomerData(cLI.dataset); const b = cLI.closest('.suggestions-box'); if (b) hideSuggestionBox(b); } catch(e) { console.error("Error selecting customer:", e); }
      }
 }
 function handleItemTableInput(event) { const t=event.target,r=t.closest('.item-row'); if(!r)return; if(t.matches('.product-name')){activeProductInput=t;handleProductSearchInput(event);}else if(t.matches('.quantity-input, .rate-input, .width-input, .height-input')){updateItemAmount(r);}}
@@ -260,15 +258,41 @@ function handleDiscountInput(event) { if(isDiscountInputProgrammaticChange)retur
 
 // --- Customer Autocomplete & Details ---
 async function getOrFetchCustomerCache() { if(customerCache.length>0)return Promise.resolve(); if(customerFetchPromise)return customerFetchPromise; console.log("Fetching customers..."); try{if(!db||!collection||!query||!getDocs||!orderBy)throw new Error("DB func missing"); const q=query(collection(db,"customers"),orderBy("fullName")); customerFetchPromise=getDocs(q).then(s=>{customerCache=s.docs.map(d=>({id:d.id,...d.data()})); console.log(`Cached ${customerCache.length} customers.`); customerFetchPromise=null;}).catch(e=>{console.error(e);customerFetchPromise=null;throw e;}); return customerFetchPromise;}catch(e){console.error(e);customerFetchPromise=null;return Promise.reject(e);}}
-function handleCustomerInput(event, type) { const i=event.target,t=i.value.trim(),b=type==='name'?customerSuggestionsNameBox:customerSuggestionsWhatsAppBox; if(!b)return; resetCustomerSelectionUI(false); if(t.length<1){clearTimeout(customerSearchDebounceTimer); hideSuggestionBox(b);return;} clearTimeout(customerSearchDebounceTimer); customerSearchDebounceTimer=setTimeout(()=>{getOrFetchCustomerCache().then(()=>filterAndRenderCustomerSuggestions(t,type,b,i)).catch(e=>console.error(e));},300);}
+function handleCustomerInput(event, type) { const i=event.target,t=i.value.trim(),b=type==='name'?customerSuggestionsNameBox:customerSuggestionsWhatsAppBox; if(!b)return; // resetCustomerSelectionUI(false); // Don't reset UI on every input, only when selecting
+ if(t.length<1){clearTimeout(customerSearchDebounceTimer); hideSuggestionBox(b); selectedCustomerId = null; selectedCustomerIdInput.value = ''; /* Reset ID if input cleared */ resetCustomerSelectionUI(false); return;} clearTimeout(customerSearchDebounceTimer); customerSearchDebounceTimer=setTimeout(()=>{getOrFetchCustomerCache().then(()=>filterAndRenderCustomerSuggestions(t,type,b,i)).catch(e=>console.error(e));},300);}
 function filterAndRenderCustomerSuggestions(term, type, box, inputElement) { const l=term.toLowerCase(), f=type==='name'?'fullName':'whatsappNo', d=customerCache.filter(c=>String(c[f]||'').toLowerCase().includes(l)).slice(0,10); renderCustomerSuggestions(d,term,box,inputElement);}
-function renderCustomerSuggestions(suggestions, term, box, inputElement) { if(!box)return; const ul=box.querySelector('ul')||document.createElement('ul'); ul.innerHTML=''; if(suggestions.length===0){ul.innerHTML='<li class="no-suggestions">No matching customers found.</li>';}else{suggestions.forEach(c=>{const li=document.createElement('li'); const dN=`${c.fullName} (${c.whatsappNo})`; try{li.innerHTML=dN.replace(new RegExp(`(${term.replace(/[-\/\^$*+?.()|[\]{}]/g,'\$&')})`,'gi'),'<strong>$1</strong>');}catch{li.textContent=dN;} li.dataset.customerId=c.id; li.dataset.customerName=c.fullName; li.dataset.customerWhatsapp=c.whatsappNo; li.dataset.customerAddress=c.billingAddress||c.address||''; li.dataset.customerContact=c.contactNo||''; li.addEventListener('click',(e)=>{e.preventDefault();fillCustomerData(li.dataset);hideSuggestionBox(box);}); ul.appendChild(li);});} if(!box.contains(ul))box.appendChild(ul); box.classList.add('active'); box.style.display='block'; const iR=inputElement.getBoundingClientRect(); box.style.position='absolute'; box.style.left='0'; box.style.top=`${iR.height}px`; box.style.width=`${iR.width}px`; box.style.zIndex='1000';}
-function fillCustomerData(customerData) { if (!customerData || !customerData.customerId) { resetCustomerSelectionUI(); return; } console.log("Filling customer:", customerData); customerNameInput.value = customerData.customerName || ''; customerWhatsAppInput.value = customerData.customerWhatsapp || ''; customerAddressInput.value = customerData.customerAddress || ''; customerContactInput.value = customerData.customerContact || ''; selectedCustomerId = customerData.customerId; if (selectedCustomerIdInput) selectedCustomerIdInput.value = selectedCustomerId; fetchAndDisplayCustomerDetails(selectedCustomerId); }
-async function fetchAndDisplayCustomerDetails(customerId) { console.log("Fetching details:", customerId); resetCustomerSelectionUI(false); if (!customerId) return; try { let c = customerCache.find(c => c.id === customerId); if (!c) { const d = await getDoc(doc(db, "customers", customerId)); if (d.exists()) c = { id: d.id, ...d.data() }; else { console.warn("Cust not found in DB:", customerId); return; } } selectedCustomerData = c; let b = 'N/A'; /* TODO: Needs calculateCustomerBalance(customerId) */ if(customerBalanceArea) { customerCurrentBalanceSpan.textContent = (b !== 'N/A') ? formatCurrency(b) : 'N/A'; customerCurrentBalanceSpan.classList.toggle('positive-balance', b < 0); customerBalanceArea.style.display = 'block'; } if(viewCustomerAccountLink && customerAccountLinkArea) { viewCustomerAccountLink.href = `customer_account_detail.html?id=${encodeURIComponent(customerId)}`; customerAccountLinkArea.style.display = 'block'; } checkCreditLimit(); } catch(e) { console.error("Fetch details error:", e); resetCustomerSelectionUI(); } }
+function renderCustomerSuggestions(suggestions, term, box, inputElement) { if(!box)return; const ul=box.querySelector('ul')||document.createElement('ul'); ul.innerHTML=''; if(suggestions.length===0){ul.innerHTML='<li class="no-suggestions">No matching customers found.</li>';}else{suggestions.forEach(c=>{const li=document.createElement('li'); const dN=`${c.fullName} (${c.whatsappNo})`; try{li.innerHTML=dN.replace(new RegExp(`(${term.replace(/[-\/\^$*+?.()|[\]{}]/g,'\$&')})`,'gi'),'<strong>$1</strong>');}catch{li.textContent=dN;} li.dataset.customerId=c.id; li.dataset.customerName=c.fullName; li.dataset.customerWhatsapp=c.whatsappNo; li.dataset.customerAddress=c.billingAddress||c.address||''; li.dataset.customerContact=c.contactNo||''; // Removed mousedown, click is handled by handleSuggestionClick
+ ul.appendChild(li);});} if(!box.contains(ul))box.appendChild(ul); box.classList.add('active'); box.style.display='block'; const iR=inputElement.getBoundingClientRect(); box.style.position='absolute'; box.style.left='0'; box.style.top=`${iR.height}px`; box.style.width=`${iR.width}px`; box.style.zIndex='1000'; box.removeEventListener('click', handleSuggestionClick); // Remove previous if any
+ box.addEventListener('click', handleSuggestionClick); // Add listener here
+}
+function fillCustomerData(customerData) {
+    if (!customerData || !customerData.customerId) {
+        console.warn("fillCustomerData called with invalid data or missing customerId.");
+        resetCustomerSelectionUI(); // Reset if data is invalid
+        return;
+    }
+    console.log("Filling customer:", customerData.customerId, customerData.customerName);
+    customerNameInput.value = customerData.customerName || '';
+    customerWhatsAppInput.value = customerData.customerWhatsapp || '';
+    customerAddressInput.value = customerData.customerAddress || '';
+    customerContactInput.value = customerData.customerContact || '';
+    selectedCustomerId = customerData.customerId; // <<<--- Set the global variable
+    if (selectedCustomerIdInput) {
+        selectedCustomerIdInput.value = selectedCustomerId; // Set the hidden input value
+        console.log("Hidden input selectedCustomerId set to:", selectedCustomerIdInput.value);
+    } else {
+        console.error("Hidden input #selectedCustomerId not found!");
+    }
+    fetchAndDisplayCustomerDetails(selectedCustomerId); // Fetch balance etc.
+}
+async function fetchAndDisplayCustomerDetails(customerId) { console.log("Fetching details for:", customerId); // resetCustomerSelectionUI(false); // Don't reset here
+ if (!customerId) { console.warn("fetchAndDisplayCustomerDetails called without customerId."); return; } try { let c = customerCache.find(c => c.id === customerId); if (!c) { console.log("Customer not in cache, fetching from DB:", customerId); const d = await getDoc(doc(db, "customers", customerId)); if (d.exists()) { c = { id: d.id, ...d.data() }; console.log("Fetched from DB:", c); } else { console.warn("Customer not found in DB:", customerId); resetCustomerSelectionUI(); return; } } else { console.log("Customer found in cache:", c); } selectedCustomerData = c; // Keep full data if needed // TODO: Implement calculateCustomerBalance(customerId) function // let balance = await calculateCustomerBalance(customerId);
+ let balance = 'N/A'; // Placeholder
+ if(customerBalanceArea) { customerCurrentBalanceSpan.textContent = (balance !== 'N/A') ? formatCurrency(balance) : 'N/A'; /* customerCurrentBalanceSpan.classList.toggle('positive-balance', balance < 0); */ customerBalanceArea.style.display = 'block'; } if(viewCustomerAccountLink && customerAccountLinkArea) { viewCustomerAccountLink.href = `customer_account_detail.html?id=${encodeURIComponent(customerId)}`; customerAccountLinkArea.style.display = 'block'; } checkCreditLimit(); } catch(e) { console.error("Fetch details error:", e); resetCustomerSelectionUI(); } }
 function resetCustomerSelectionUI(clearInputs = true) { console.log("Resetting customer UI."); selectedCustomerId = null; selectedCustomerData = null; if (selectedCustomerIdInput) selectedCustomerIdInput.value = ''; if (customerAccountLinkArea) customerAccountLinkArea.style.display = 'none'; if (customerBalanceArea) customerBalanceArea.style.display = 'none'; if (customerCurrentBalanceSpan) customerCurrentBalanceSpan.textContent = ''; if (creditLimitWarningDiv) creditLimitWarningDiv.style.display = 'none'; if (clearInputs) { if(customerNameInput) customerNameInput.value = ''; if(customerWhatsAppInput) customerWhatsAppInput.value = ''; if(customerAddressInput) customerAddressInput.value = ''; if(customerContactInput) customerContactInput.value = ''; } }
 
 // --- Credit Limit Check ---
-function checkCreditLimit() { if(!selectedCustomerData||!selectedCustomerData.creditAllowed){if(creditLimitWarningDiv)creditLimitWarningDiv.style.display='none';return;} const cl=parseFloat(selectedCustomerData.creditLimit||0); const cbT=customerCurrentBalanceSpan?.textContent||'0'; const cb=isNaN(parseFloat(cbT.replace(/[^0-9.-]+/g,"")))?0:parseFloat(cbT.replace(/[^0-9.-]+/g,"")); const faT=summaryFinalAmountSpan?.textContent||'0'; const nOV=parseFloat(faT)||0; if(isNaN(cb)||isNaN(nOV)){if(creditLimitWarningDiv)creditLimitWarningDiv.style.display='none';return;} const pb=cb+nOV; console.log(`Credit Check: L=${cl}, CB=${cb}, NOV=${nOV}, PB=${pb}`); if(cl>0&&pb>cl){if(creditLimitWarningDiv){creditLimitWarningDiv.textContent=`Warning: Exceeds credit limit of ${formatCurrency(cl)}. Potential Balance: ${formatCurrency(pb)}.`; creditLimitWarningDiv.style.display='block';}}else{if(creditLimitWarningDiv)creditLimitWarningDiv.style.display='none';}}
+function checkCreditLimit() { if(!selectedCustomerData||!selectedCustomerData.creditAllowed){if(creditLimitWarningDiv)creditLimitWarningDiv.style.display='none';return;} const cl=parseFloat(selectedCustomerData.creditLimit||0); const cbT=customerCurrentBalanceSpan?.textContent||'0'; const cb=isNaN(parseFloat(cbT.replace(/[^0-9.-]+/g,"")))?0:parseFloat(cbT.replace(/[^0-9.-]+/g,"")); const faT=summaryFinalAmountSpan?.textContent||'0'; const nOV=parseFloat(faT)||0; if(isNaN(cb)||isNaN(nOV)){if(creditLimitWarningDiv)creditLimitWarningDiv.style.display='none';return;} const pb=cb+nOV; console.log(`Credit Check: Limit=${cl}, CurrentBal=${cb}, NewOrderVal=${nOV}, PotentialBal=${pb}`); if(cl>0&&pb>cl){if(creditLimitWarningDiv){creditLimitWarningDiv.textContent=`Warning: Exceeds credit limit of ${formatCurrency(cl)}. Potential Balance: ${formatCurrency(pb)}.`; creditLimitWarningDiv.style.display='block';}}else{if(creditLimitWarningDiv)creditLimitWarningDiv.style.display='none';}}
 
 
 // --- Product Autocomplete ---
@@ -278,7 +302,7 @@ function getOrCreateProductSuggestionsDiv() {
         productSuggestionsDiv.className = 'product-suggestions-list';
         productSuggestionsDiv.style.display = 'none';
         document.body.appendChild(productSuggestionsDiv);
-        productSuggestionsDiv.addEventListener('click', handleSuggestionClick); // Using 'click' now
+        productSuggestionsDiv.addEventListener('click', handleSuggestionClick); // Add listener here
     }
     return productSuggestionsDiv;
 }
@@ -307,11 +331,12 @@ function selectProductSuggestion(productData, inputElement) {
         uTS.value = dUT;
         hideProductSuggestions();
         const cE = new Event('change', { bubbles: true });
-        uTS.dispatchEvent(cE);
+        uTS.dispatchEvent(cE); // Trigger change event for unit type
+        updateItemAmount(r); // Update amount immediately
         let nI = null;
         if (dUT === 'Sq Feet') nI = r.querySelector('.width-input');
-        if (!nI) nI = qI;
-        if (nI) { nI.focus(); if (typeof nI.select === 'function') nI.select(); } else { rI.focus(); }
+        if (!nI) nI = qI; // Focus quantity if not sq feet
+        if (nI) { nI.focus(); if (typeof nI.select === 'function') nI.select(); } else { rI.focus(); } // Fallback to rate
     } catch (error) { console.error("Error inside selectProductSuggestion:", error); hideProductSuggestions(); }
 }
 
@@ -323,6 +348,7 @@ function updateStatusDropdownColor(statusValue) {
         const className = `status-select-${status.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`;
         orderStatusSelect.classList.remove(className);
     });
+    orderStatusSelect.classList.remove('status-select-default');
 
     // Add the class for the current status
     if (statusValue) {
@@ -330,7 +356,7 @@ function updateStatusDropdownColor(statusValue) {
         orderStatusSelect.classList.add(currentClassName);
         console.log(`Applied class: ${currentClassName}`);
     } else {
-         orderStatusSelect.classList.add('status-select-default'); // Optional: add a default class if needed
+         orderStatusSelect.classList.add('status-select-default'); // Add a default class if no status
          console.log("Applied default status class");
     }
 }
@@ -338,114 +364,181 @@ function updateStatusDropdownColor(statusValue) {
 // --- Form Submit Handler ---
 async function handleFormSubmit(event) {
     event.preventDefault();
-    console.log("Submit...");
+    console.log("Submit initiated...");
     showFormError('');
-    if(!db||!addDoc||!doc||!updateDoc||!Timestamp||!getDoc||!getDocs||!collection||!query||!limit){showFormError("DB func error.");return;}
-    if(!saveButton){console.error("Save btn missing");return;}
+    if(!db||!addDoc||!doc||!updateDoc||!Timestamp||!getDoc||!getDocs||!collection||!query||!limit){showFormError("Database functions are not available. Please check connection.");return;}
+    if(!saveButton){console.error("Save button element is missing!");return;}
+
+    // Disable button immediately
     saveButton.disabled=true;
+    const originalButtonText = saveButtonText ? saveButtonText.textContent : 'Save Order';
+    const originalButtonHTML = saveButton.innerHTML;
     if(saveButtonText)saveButtonText.textContent=isEditMode?'Updating...':'Saving...';else saveButton.innerHTML='<i class="fas fa-spinner fa-spin"></i> Saving...';
 
     try{
-        const cFN=customerNameInput.value.trim();const cW=customerWhatsAppInput.value.trim();let cId=selectedCustomerId;
-        if(!cFN)throw new Error("Customer Name required.");if(!cW)throw new Error("WhatsApp No required.");
+        const cFN=customerNameInput.value.trim();
+        const cW=customerWhatsAppInput.value.trim();
+        let cId=selectedCustomerId; // Use the global variable directly
+
+        // ----- >>> VALIDATION CHECKS <<< -----
+        if(!cFN) throw new Error("Customer Name is required.");
+        if(!cW) throw new Error("WhatsApp No is required.");
+
+        // ----- >>> CUSTOMER ID CHECK <<< -----
+        if (!cId) {
+            console.error("customerId is null or undefined before saving!");
+            showFormError("Customer is not selected or linked properly. Please search and select the customer again from the suggestions.");
+            // Re-enable button and return
+            saveButton.disabled = false;
+            if(saveButtonText) saveButtonText.textContent = originalButtonText; else saveButton.innerHTML = originalButtonHTML;
+            return; // Stop submission
+        }
+        console.log('Proceeding to save order with customerId:', cId);
+        // ----- >>> END CUSTOMER ID CHECK <<< -----
+
         const cD={fullName:cFN,whatsappNo:cW,address:customerAddressInput.value.trim()||'',contactNo:customerContactInput.value.trim()||''};
-        const oDV=orderDateInput.value;const dDV=deliveryDateInput.value||'';
+        const oDV=orderDateInput.value;
+        const dDV=deliveryDateInput.value||'';
         const uV=orderForm.querySelector('input[name="urgent"]:checked')?.value||'No';
         const rV=remarksInput.value.trim()||'';
-        // *** CHANGE: Get status from dropdown ***
-        const sS = orderStatusSelect.value;
-        if(!oDV)throw new Error("Order Date required.");
+        const sS = orderStatusSelect.value; // Status from dropdown
+
+        if(!oDV) throw new Error("Order Date is required.");
 
         let oId;const mId=manualOrderIdInput.value.trim();const eId=displayOrderIdInput.value;
-        if(isEditMode){oId=currentOrderData?.orderId||eId||orderIdToEdit;}else if(mId){oId=mId;}else{oId=Date.now().toString();console.log(`Generated ID: ${oId}`);}
+        if(isEditMode){oId=currentOrderData?.orderId||eId||orderIdToEdit;}else if(mId){oId=mId;}else{oId=Date.now().toString();console.log(`Generated Order ID: ${oId}`);}
 
         const items=[];const rows=orderItemsTableBody.querySelectorAll('.item-row');
-        if(rows.length===0)throw new Error("Add at least one item.");
-        let valid=true;
+        if(rows.length===0)throw new Error("Please add at least one item to the order.");
+
+        let validItems=true;
         rows.forEach((row,idx)=>{
-            if(!valid)return;
+            if(!validItems)return; // Stop processing if an error was found
             const pNI=row.querySelector('.product-name'),uTS=row.querySelector('.unit-type-select'),qI=row.querySelector('.quantity-input'),rI=row.querySelector('.rate-input'),dUS=row.querySelector('.dimension-unit-select'),wI=row.querySelector('.width-input'),hI=row.querySelector('.height-input');
-            const pN=pNI?.value.trim(),uT=uTS?.value,q=parseInt(qI?.value||0),r=parseFloat(rI?.value||0),mR=parseFloat(rI?.dataset.minRate||-1);
-            if(!pN){valid=false;showFormError(`Item ${idx+1}: Product Name req.`);pNI?.focus();return;}
-            if(isNaN(q)||q<=0){valid=false;showFormError(`Item ${idx+1}: Valid Qty req.`);qI?.focus();return;}
-            if(isNaN(r)||r<0){valid=false;showFormError(`Item ${idx+1}: Valid Rate req.`);rI?.focus();return;}
-            if(mR>=0&&r<mR){valid=false;showFormError(`Item ${idx+1}: Rate (${formatCurrency(r)}) < Minimum (${formatCurrency(mR)}).`);rI?.focus();return;}
+            const pN=pNI?.value.trim(),uT=uTS?.value,q=parseInt(qI?.value||0),r=parseFloat(rI?.value||''),mR=parseFloat(rI?.dataset.minRate||-1); // Use parseFloat('') which results in NaN if empty
+
+            if(!pN){validItems=false;showFormError(`Item ${idx+1}: Product Name is required.`);pNI?.focus();return;}
+            if(isNaN(q)||q<=0){validItems=false;showFormError(`Item ${idx+1}: A valid Quantity (positive number) is required.`);qI?.focus();return;}
+            if(isNaN(r)||r<0){validItems=false;showFormError(`Item ${idx+1}: A valid Rate (non-negative number) is required.`);rI?.focus();return;}
+            // Allow rate to be 0, but check against minRate if applicable
+            if(mR>=0&&r<mR && Math.abs(r - mR) > 0.001 ){ // Added tolerance for float comparison
+               validItems=false;showFormError(`Item ${idx+1}: Rate (${formatCurrency(r)}) is less than Minimum Sale Price (${formatCurrency(mR)}).`);rI?.focus();return;
+            }
+
             const iD={productName:pN,unitType:uT,quantity:q,rate:r,minSalePrice:mR>=0?mR:null};
             if(uT==='Sq Feet'){
                 const dU=dUS?.value||'feet',w=parseFloat(wI?.value||0),h=parseFloat(hI?.value||0);
-                if(isNaN(w)||w<=0){valid=false;showFormError(`Item ${idx+1}: Valid Width req.`);wI?.focus();return;}
-                if(isNaN(h)||h<=0){valid=false;showFormError(`Item ${idx+1}: Valid Height req.`);hI?.focus();return;}
+                if(isNaN(w)||w<=0){validItems=false;showFormError(`Item ${idx+1}: Valid Width (positive number) is required for Sq Feet.`);wI?.focus();return;}
+                if(isNaN(h)||h<=0){validItems=false;showFormError(`Item ${idx+1}: Valid Height (positive number) is required for Sq Feet.`);hI?.focus();return;}
                 const cR=calculateFlexDimensions(dU,w,h);
                 iD.dimensionUnit=dU;iD.width=w;iD.height=h;iD.realSqFt=cR.realSqFt;iD.printSqFt=cR.printSqFt;
                 iD.itemAmount=parseFloat((cR.printSqFt*q*r).toFixed(2));
             }else{iD.itemAmount=parseFloat((q*r).toFixed(2));}
             items.push(iD);
         });
-        if(!valid){saveButton.disabled=false;if(saveButtonText)saveButtonText.textContent=isEditMode?'Update Order':'Save Order';else saveButton.innerHTML=`<i class="fas fa-save"></i> ${isEditMode?'Update Order':'Save Order'}`;return;}
 
+        if(!validItems){
+            // Re-enable button if item validation failed
+            saveButton.disabled=false;
+            if(saveButtonText) saveButtonText.textContent = originalButtonText; else saveButton.innerHTML = originalButtonHTML;
+            return; // Stop submission
+        }
+
+        // Calculate totals
         let subT=0;items.forEach(i=>{subT+=i.itemAmount;});
         let dP=parseFloat(summaryDiscountPercentInput?.value||0),dA=parseFloat(summaryDiscountAmountInput?.value||0);
         let cDA=0;if(!isNaN(dP)&&dP>0)cDA=parseFloat((subT*(dP/100)).toFixed(2));else if(!isNaN(dA)&&dA>0)cDA=dA;
         cDA=Math.max(0,Math.min(cDA,subT));
         let fA=parseFloat((subT-cDA).toFixed(2)),aP=parseFloat(summaryAdvancePaymentInput?.value||0),tB=parseFloat((fA-aP).toFixed(2));
 
-        const payload={orderId:oId,customerId:cId||null,customerDetails:cD,orderDate:oDV,deliveryDate:dDV,urgent:uV,remarks:rV,status:sS,items:items,subTotal:subT,discountPercentage:dP||0,discountAmount:cDA||0,finalAmount:fA,advancePayment:aP||0,totalBalance:tB,updatedAt:Timestamp.now()};
-        if(!isEditMode)payload.createdAt=Timestamp.now();
+        // Prepare Firestore payload
+        const payload={
+            orderId:oId,
+            customerId:cId, // <<<--- Use the validated cId
+            customerDetails:cD,
+            orderDate:oDV,
+            deliveryDate:dDV,
+            urgent:uV,
+            remarks:rV,
+            status:sS,
+            items:items,
+            subTotal:subT,
+            discountPercentage:dP||0,
+            discountAmount:cDA||0,
+            finalAmount:fA,
+            advancePayment:aP||0,
+            totalBalance:tB,
+            updatedAt:Timestamp.now()
+        };
+        if(!isEditMode){
+            payload.createdAt=Timestamp.now();
+        }
 
+        // Save to Firestore
         let savedId,msg;
         if(isEditMode){
-            if(!orderIdToEdit)throw new Error("Missing ID for update.");
-            await updateDoc(doc(db,"orders",orderIdToEdit),payload);savedId=orderIdToEdit;msg=`Order ${oId} updated!`;
+            if(!orderIdToEdit)throw new Error("Internal Error: Missing Order ID for update.");
+            await updateDoc(doc(db,"orders",orderIdToEdit),payload);savedId=orderIdToEdit;msg=`Order ${oId} updated successfully!`;
         } else {
-            const ref=await addDoc(collection(db,"orders"),payload);savedId=ref.id;msg=`Order ${oId} created!`;displayOrderIdInput.value=oId;
+            const ref=await addDoc(collection(db,"orders"),payload);savedId=ref.id;msg=`Order ${oId} created successfully!`;displayOrderIdInput.value=oId; // Display auto-generated ID if applicable
         }
-        console.log(msg,"Doc ID:",savedId);
+        console.log(msg,"Firestore Doc ID:",savedId);
 
+        // Add advance payment if applicable
         if(aP>0){
-            console.log("Adding advance payment...");
+            console.log("Adding advance payment record...");
             try{const pD={customerId:cId,orderRefId:savedId,orderId:oId,amountPaid:aP,paymentDate:Timestamp.fromDate(new Date(oDV+'T00:00:00')),paymentMethod:"Order Advance",notes:`Advance for Order #${oId}`,createdAt:Timestamp.now()};
-                if(!pD.customerId){alert("Order saved, advance not recorded (Customer ID missing).");}else{await addDoc(collection(db,"payments"),pD);console.log("Advance payment added.");}}catch(pE){console.error("Adv payment error:",pE);alert(`Order saved, error recording advance: ${pE.message}`);}
+                await addDoc(collection(db,"payments"),pD);console.log("Advance payment record added.");}catch(pE){console.error("Advance payment saving error:",pE);alert(`Order saved, but failed to record advance payment: ${pE.message}`);}
         }
-        alert(msg);
+
+        alert(msg); // Show success message to user
+
+        // Show WhatsApp reminder or reset form
         if(cD.whatsappNo){showWhatsAppReminder(cD,oId,dDV);}else{if(!isEditMode)resetNewOrderForm();}
+
     } catch(error) {
-        console.error("Submit error:",error);showFormError("Error: "+error.message);
-    } finally {
-        saveButton.disabled=false;const txt=isEditMode?"Update Order":"Save Order";
-        if(saveButtonText)saveButtonText.textContent=txt;else saveButton.innerHTML=`<i class="fas fa-save"></i> ${txt}`;
+        console.error("Form submission error:",error);
+        showFormError("Error saving order: "+error.message); // Show specific error
+        // Re-enable button on error
+        saveButton.disabled=false;
+        if(saveButtonText) saveButtonText.textContent = originalButtonText; else saveButton.innerHTML = originalButtonHTML;
     }
+    // 'finally' block is removed as button re-enabling is handled in error cases and after success (implicitly by form reset/redirect)
 }
 
 // --- Reset Form ---
 function resetNewOrderForm() {
-    console.log("Resetting form.");
+    console.log("Resetting form for new order.");
     orderForm.reset();
     if(orderItemsTableBody) orderItemsTableBody.innerHTML='';
     selectedCustomerId=null; selectedCustomerData=null; currentOrderData=null;
     isEditMode=false; orderIdToEdit=null;
     if(hiddenEditOrderIdInput)hiddenEditOrderIdInput.value='';
     if(selectedCustomerIdInput)selectedCustomerIdInput.value='';
+    if(displayOrderIdInput) displayOrderIdInput.value = ''; // Clear display ID too
     if(headerText)headerText.textContent="New Order";
     if(breadcrumbAction)breadcrumbAction.textContent="New Order";
     if(saveButtonText)saveButtonText.textContent="Save Order"; else if(saveButton)saveButton.innerHTML=`<i class="fas fa-save"></i> Save Order`;
     if(manualOrderIdInput)manualOrderIdInput.readOnly=false;
     if(orderDateInput)orderDateInput.value=new Date().toISOString().split('T')[0];
-    // *** CHANGE: Reset status dropdown and color ***
     const defaultStatus = "Order Received";
     orderStatusSelect.value = defaultStatus;
     updateStatusDropdownColor(defaultStatus);
-    resetCustomerSelectionUI(true);
-    updateOrderSummary();
-    handleAddItem();
-    showFormError('');
+    resetCustomerSelectionUI(true); // Clear customer inputs
+    updateOrderSummary(); // Recalculate summary (should be zero)
+    handleAddItem(); // Add one blank item row
+    showFormError(''); // Clear any previous errors
     hideProductSuggestions();
     if(customerSuggestionsNameBox) hideSuggestionBox(customerSuggestionsNameBox);
     if(customerSuggestionsWhatsAppBox) hideSuggestionBox(customerSuggestionsWhatsAppBox);
+    window.scrollTo(0, 0); // Scroll to top
 }
 
 // --- WhatsApp Reminder Functions ---
-function showWhatsAppReminder(customer, orderId, deliveryDate) { if(!whatsappReminderPopup||!whatsappMsgPreview||!whatsappSendLink){if(!isEditMode)resetNewOrderForm();return;} const cN=customer.fullName||'Customer',cNum=customer.whatsappNo?.replace(/[^0-9]/g,''); if(!cNum){if(!isEditMode)resetNewOrderForm();return;} const fDD=deliveryDate?new Date(deliveryDate).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}):' जल्द से जल्द'; let msg=`प्रिय ${cN},\nआपका ऑर्डर (Order ID: ${orderId}) सफलतापूर्वक सहेज लिया गया है। डिलीवरी की अनुमानित तिथि: ${fDD}.\nधन्यवाद,\nMadhav Offset`; whatsappMsgPreview.innerText=msg; const eM=encodeURIComponent(msg); const wUrl=`https://wa.me/${cNum}?text=${eM}`; whatsappSendLink.href=wUrl; whatsappReminderPopup.classList.add('active'); whatsappSendLink.onclick=()=>{if(!isEditMode)resetNewOrderForm(); closeWhatsAppPopup();}; popupCloseBtn.onclick=()=>{if(!isEditMode)resetNewOrderForm(); closeWhatsAppPopup();}; whatsappReminderPopup.onclick=(e)=>{if(e.target===whatsappReminderPopup){if(!isEditMode)resetNewOrderForm(); closeWhatsAppPopup();}}; }
-function closeWhatsAppPopup() { if(whatsappReminderPopup)whatsappReminderPopup.classList.remove('active'); whatsappSendLink.onclick=null; popupCloseBtn.onclick=null; whatsappReminderPopup.onclick=null; if(whatsappReminderPopup)whatsappReminderPopup.addEventListener('click',(e)=>{if(e.target===whatsappReminderPopup)closeWhatsAppPopup();}); if(popupCloseBtn)popupCloseBtn.addEventListener('click',closeWhatsAppPopup); }
+function showWhatsAppReminder(customer, orderId, deliveryDate) { if(!whatsappReminderPopup||!whatsappMsgPreview||!whatsappSendLink){console.warn("WhatsApp popup elements not found.");if(!isEditMode)resetNewOrderForm();return;} const cN=customer.fullName||'Customer',cNum=customer.whatsappNo?.replace(/[^0-9]/g,''); if(!cNum){console.warn("Cannot send WhatsApp, number missing/invalid.");if(!isEditMode)resetNewOrderForm();return;} const fDD=deliveryDate?new Date(deliveryDate).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}):' जल्द से जल्द'; let msg=`प्रिय ${cN},\nआपका ऑर्डर (Order ID: ${orderId}) सफलतापूर्वक सहेज लिया गया है। डिलीवरी की अनुमानित तिथि: ${fDD}.\nधन्यवाद,\nMadhav Offset`; whatsappMsgPreview.innerText=msg; const eM=encodeURIComponent(msg); const wUrl=`https://wa.me/91${cNum}?text=${eM}`; // Assuming Indian numbers, add 91 prefix
+ whatsappSendLink.href=wUrl; whatsappReminderPopup.classList.add('active'); // Add event listeners specifically here
+ whatsappSendLink.onclick=()=>{if(!isEditMode)resetNewOrderForm(); closeWhatsAppPopup();}; popupCloseBtn.onclick=()=>{if(!isEditMode)resetNewOrderForm(); closeWhatsAppPopup();}; whatsappReminderPopup.onclick=(e)=>{if(e.target===whatsappReminderPopup){if(!isEditMode)resetNewOrderForm(); closeWhatsAppPopup();}}; }
+function closeWhatsAppPopup() { if(whatsappReminderPopup){whatsappReminderPopup.classList.remove('active'); // Clean up listeners to prevent multiple resets
+ whatsappSendLink.onclick=null; popupCloseBtn.onclick=null; whatsappReminderPopup.onclick=null;} }
 
-console.log("new_order.js script loaded (v2.3.0 - Status Dropdown).");
-
+console.log("new_order.js script loaded (v2.3.1 - Customer ID Check).");
