@@ -1,110 +1,301 @@
-/* General Body Styles */
-body { font-family: 'Poppins', "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif; margin: 0; padding: 15px; background-color: #f0f2f5; color: #333; line-height: 1.45; }
-.container { background-color: #fff; padding: 20px 25px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); width: 100%; max-width: 1250px; margin: 20px auto; box-sizing: border-box; }
+/* === order_history.css === */
 
-/* Breadcrumb Style */
-.breadcrumb { font-size: 0.9em; color: #6c757d; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 1px solid #dee2e6; }
-.breadcrumb a { color: #0056b3; text-decoration: none; }
+/* --- Global Styles & Variables (Ensure consistency with new_order.css) --- */
+:root {
+    --primary-color: #0056b3; /* Darker Blue */
+    --secondary-color: #6c757d; /* Grey */
+    --success-color: #28a745; /* Green */
+    --warning-color: #ffc107; /* Yellow */
+    --info-color: #17a2b8; /* Teal */
+    --danger-color: #dc3545; /* Red */
+    --light-bg: #f8f9fa;
+    --border-color: #dee2e6;
+    --text-color: #343a40;
+    --text-muted: #6c757d;
+    --font-family: 'Poppins', "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
+    --border-radius: 6px;
+    --box-shadow: 0 2px 5px rgba(0, 0, 0, 0.08);
+    --box-shadow-lg: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+body {
+    font-family: var(--font-family);
+    margin: 0;
+    padding: 20px; /* Added body padding */
+    background-color: #f0f2f5;
+    color: var(--text-color);
+    line-height: 1.5;
+    font-size: 15px; /* Base font size */
+}
+
+.container {
+    background-color: #fff;
+    padding: 25px 30px; /* Increased padding */
+    border-radius: var(--border-radius);
+    box-shadow: var(--box-shadow-lg);
+    width: 100%;
+    max-width: 1300px; /* Adjusted max-width for potentially wider table */
+    margin: 20px auto;
+    box-sizing: border-box;
+}
+
+/* --- Header & Breadcrumb (Consistent) --- */
+.header {
+    background-color: var(--primary-color);
+    color: white;
+    padding: 15px 20px;
+    border-radius: var(--border-radius) var(--border-radius) 0 0;
+    margin: -25px -30px 25px -30px; /* Adjust for container padding */
+    font-size: 1.25em;
+    font-weight: 600;
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+}
+.header-icon { font-size: 1.15em; }
+h1 { margin: 0; font-size: 1em; /* Match font size within header */ }
+
+.breadcrumb {
+    font-size: 0.9em;
+    color: var(--text-muted);
+    margin-bottom: 25px; /* Increased spacing */
+    padding-bottom: 15px; /* Increased spacing */
+    border-bottom: 1px solid var(--border-color);
+}
+.breadcrumb a { color: var(--primary-color); text-decoration: none; font-weight: 500; }
 .breadcrumb a:hover { text-decoration: underline; }
-.breadcrumb span { margin-left: 5px; }
-.breadcrumb span::before { content: "/"; margin-right: 5px; color: #6c757d; }
+.breadcrumb span { margin-left: 5px; color: var(--text-color); }
+.breadcrumb span::before { content: "/"; margin-right: 5px; color: var(--text-muted); }
 
-.header { background-color: #0056b3; color: white; padding: 12px 15px; border-radius: 6px 6px 0 0; margin: -20px -25px 25px -25px; font-size: 1.2em; font-weight: 600; text-align: center; display: flex; align-items: center; justify-content: center; gap: 10px; }
-.header-icon { font-size: 1.1em; }
-h1 { margin: 0; font-size: 1.2em; }
-.actions-bar { display: flex; justify-content: flex-start; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 15px; }
+/* --- Actions Bar & Filter Bar --- */
+.actions-bar {
+    display: flex;
+    justify-content: flex-end; /* Move Add button to the right */
+    align-items: center;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+    gap: 15px;
+}
 
-/* Filter Bar Styling (Card Look) */
 .filter-bar {
     display: flex;
     flex-wrap: wrap;
-    gap: 15px;
-    padding: 15px 20px;
+    gap: 15px 20px; /* Row and column gap */
+    padding: 20px 25px; /* Increased padding */
     background-color: #ffffff;
-    border: 1px solid #e0e0e0;
-    border-radius: 6px;
-    margin-bottom: 25px;
-    align-items: flex-end;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    margin-bottom: 30px; /* Increased spacing */
+    align-items: flex-end; /* Align items to bottom */
+    box-shadow: var(--box-shadow); /* Add shadow */
 }
 
-.filter-group { display: flex; flex-direction: column; gap: 5px; flex-grow: 1; min-width: 140px; }
-.filter-group:has(#filterStatus) { min-width: 160px; flex-grow: 0.5;}
-.filter-group.filter-sort { min-width: 180px; }
-.filter-group label { font-size: 0.85em; font-weight: 500; color: #495057; white-space: nowrap; margin-bottom: 3px; }
-.filter-group label i { margin-right: 4px; color: #0056b3; }
-.filter-group input[type="date"], .filter-group input[type="text"], .filter-group select { padding: 7px 10px; border: 1px solid #ced4da; border-radius: 4px; font-size: 0.9em; height: 36px; background-color: #fff; box-sizing: border-box; width: 100%; }
-.filter-group input:focus, .filter-group select:focus { border-color: #80bdff; outline: 0; box-shadow: 0 0 0 0.2rem rgba(0,123,255,.25); }
-.clear-filters-button { background-color: #6c757d; color: white; padding: 7px 14px; height: 36px; align-self: flex-end; flex-grow: 0; font-size: 0.9em; border-radius: 4px; border:none; } /* Added border radius/none */
-.clear-filters-button:hover { background-color: #5a6268; }
+.filter-group {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    flex-grow: 1; /* Allow groups to grow */
+    min-width: 150px; /* Minimum width */
+}
+/* Specific widths for certain filters */
+.filter-group:has(#filterDate) { min-width: 160px; flex-grow: 0.5;}
+.filter-group:has(#filterStatus) { min-width: 170px; flex-grow: 0.8; }
+.filter-group.filter-sort { min-width: 200px; flex-grow: 1; }
+.filter-group:has(#filterSearch) { flex-grow: 1.5; } /* Allow search to be wider */
 
-.button { padding: 8px 15px; font-size: 0.9em; border: none; border-radius: 4px; cursor: pointer; font-weight: 600; display: inline-flex; align-items: center; gap: 5px; text-decoration: none; transition: background-color 0.2s ease; white-space: nowrap; }
-.button:disabled { opacity: 0.6; cursor: not-allowed; }
-.button i { margin-right: 3px; }
-.add-new-button { background-color: #28a745; color: white; height: 36px; padding: 7px 14px;}
+.filter-group label {
+    font-size: 0.88em; /* Adjusted size */
+    font-weight: 500;
+    color: var(--text-color);
+    white-space: nowrap;
+    margin-bottom: 3px;
+}
+.filter-group label i {
+    margin-right: 5px;
+    color: var(--primary-color);
+    width: 1.1em; /* Ensure icons align */
+    text-align: center;
+}
+.filter-group input[type="date"],
+.filter-group input[type="text"],
+.filter-group select {
+    padding: 8px 12px; /* Consistent padding */
+    border: 1px solid #ced4da;
+    border-radius: var(--border-radius);
+    font-size: 0.9em;
+    height: 38px; /* Consistent height */
+    background-color: #fff;
+    box-sizing: border-box;
+    width: 100%;
+    color: var(--text-color);
+}
+.filter-group input::placeholder { color: #aaa; opacity: 1; }
+.filter-group input:focus,
+.filter-group select:focus {
+    border-color: var(--primary-color);
+    outline: 0;
+    box-shadow: 0 0 0 0.2rem rgba(0, 86, 179, 0.25);
+}
+
+/* --- Buttons (General & Specific) --- */
+.button {
+    padding: 8px 18px; /* Adjusted padding */
+    font-size: 0.9em;
+    border: none;
+    border-radius: var(--border-radius);
+    cursor: pointer;
+    font-weight: 500; /* Slightly lighter weight */
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px; /* Adjusted gap */
+    text-decoration: none;
+    transition: background-color 0.2s ease, box-shadow 0.2s ease, transform 0.1s ease;
+    white-space: nowrap;
+    height: 38px; /* Match input height */
+    box-shadow: var(--box-shadow);
+}
+.button:hover {
+    box-shadow: var(--box-shadow-lg);
+    transform: translateY(-1px);
+}
+.button:active {
+    transform: translateY(0px);
+    box-shadow: var(--box-shadow);
+}
+.button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    box-shadow: none;
+    transform: none;
+}
+.button i { margin-right: 4px; font-size: 0.95em; }
+
+.add-new-button {
+    background-color: var(--success-color);
+    color: white;
+    font-weight: 600; /* Make Add button bolder */
+}
 .add-new-button:hover { background-color: #218838; }
 
-/* Table Styles */
-.table-container { width: 100%; overflow-x: auto; border: 1px solid #e0e0e0; border-radius: 6px; margin-bottom: 25px; background-color: #fff; /* Added border/radius */ }
+.clear-filters-button {
+    background-color: var(--secondary-color);
+    color: white;
+    align-self: flex-end; /* Align to bottom */
+    flex-grow: 0; /* Don't allow to grow */
+}
+.clear-filters-button:hover { background-color: #5a6268; }
+
+
+/* --- Table Styles --- */
+.table-container {
+    width: 100%;
+    overflow-x: auto; /* Keep horizontal scroll */
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    margin-bottom: 30px; /* Increased spacing */
+    background-color: #fff;
+    box-shadow: var(--box-shadow); /* Add shadow */
+}
+
 #orderTable {
     width: 100%;
-    border-collapse: collapse; /* Changed from separate */
-    font-size: 0.9em;
-    table-layout: fixed;
+    border-collapse: collapse; /* Use collapse for cleaner lines */
+    font-size: 0.9em; /* Adjusted base size */
+    /* table-layout: fixed; */ /* Removed fixed layout for better auto-sizing initially */
+    border: none; /* Remove table border, rely on container border */
 }
-#orderTable thead { background-color: #f8f9fa; border-bottom: 2px solid #dee2e6; }
 
-/* --- Table Cell Border Update --- */
-#orderTable th, #orderTable td {
-    border: 1px solid #e9ecef; /* Apply border to all sides */
-    padding: 10px 12px; /* Adjusted padding */
+#orderTable thead {
+    background-color: var(--light-bg);
+    border-bottom: 2px solid var(--border-color); /* Stronger header separator */
+}
+
+#orderTable th {
+    padding: 12px 15px; /* Adjusted padding */
     text-align: left;
-    vertical-align: middle; /* Align all content vertically center */
-    overflow: hidden; /* Keep for safety */
-    text-overflow: ellipsis; /* Keep for safety */
+    font-weight: 600; /* Bolder headers */
+    color: var(--text-color);
+    white-space: nowrap; /* Keep headers nowrap */
+    border-bottom: 1px solid var(--border-color); /* Add bottom border to headers */
 }
-/* Remove alternating color as borders provide separation */
-#orderTable tbody tr:nth-child(even) { background-color: transparent; }
-/* --- End Table Cell Border Update --- */
 
-#orderTable th { font-weight: 600; color: #495057; white-space: nowrap; padding: 12px; }
-#orderTable tbody tr:hover { background-color: #f1f1f1; transition: background-color 0.15s ease;}
-#orderTable td { color: #212529; }
+#orderTable td {
+    padding: 10px 15px; /* Adjusted padding */
+    text-align: left;
+    vertical-align: middle; /* Ensure vertical alignment */
+    border-bottom: 1px solid #e9ecef; /* Lighter row separator */
+    color: var(--text-color);
+    word-wrap: break-word; /* Allow long text to wrap */
+}
 
+#orderTable tbody tr {
+    transition: background-color 0.15s ease;
+}
+#orderTable tbody tr:last-child td {
+    border-bottom: none; /* Remove border on last row */
+}
+#orderTable tbody tr:hover {
+    background-color: #f1f1f1; /* Keep hover effect */
+}
 
-/* --- Column Widths (Adjusted Order ID, Customer, Products) --- */
-#orderTable th:nth-child(1), #orderTable td:nth-child(1) { width: 14%; }  /* Order ID - Increased */
-#orderTable th:nth-child(2), #orderTable td:nth-child(2) { width: 16%; white-space: normal;} /* Customer Name / Mobile - Decreased */
-#orderTable th:nth-child(3), #orderTable td:nth-child(3) { width: 16%; white-space: normal; } /* Products - Decreased */
-#orderTable th:nth-child(4), #orderTable td:nth-child(4) { width: 9%; white-space: nowrap;} /* Order Date */
-#orderTable th:nth-child(5), #orderTable td:nth-child(5) { width: 9%; white-space: nowrap;} /* Delivery Date */
-#orderTable th:nth-child(6), #orderTable td:nth-child(6) { width: 6%; text-align: center;} /* Priority */
-#orderTable th:nth-child(7), #orderTable td:nth-child(7) { width: 11%; } /* Status */
-#orderTable th:nth-child(8), #orderTable td:nth-child(8) { width: 12%; text-align: center;} /* Action */
-#orderTable th:nth-child(9), #orderTable td:nth-child(9) { width: 7%; text-align: center;} /* Send Wtsp */
-/* --- End Column Widths Adjustment --- */
+/* Column Widths (Example - adjust as needed based on content) */
+/* Let browser decide initially, uncomment and adjust if needed */
+/*
+#orderTable th:nth-child(1), #orderTable td:nth-child(1) { width: 12%; } /* Order ID */
+/* #orderTable th:nth-child(2), #orderTable td:nth-child(2) { width: 18%; } /* Customer Name / Mobile */
+/* #orderTable th:nth-child(3), #orderTable td:nth-child(3) { width: 20%; } /* Products */
+/* #orderTable th:nth-child(4), #orderTable td:nth-child(4) { width: 9%; } /* Order Date */
+/* #orderTable th:nth-child(5), #orderTable td:nth-child(5) { width: 9%; } /* Delivery Date */
+/* #orderTable th:nth-child(6), #orderTable td:nth-child(6) { width: 7%; text-align: center;} /* Priority */
+/* #orderTable th:nth-child(7), #orderTable td:nth-child(7) { width: 10%; } /* Status */
+/* #orderTable th:nth-child(8), #orderTable td:nth-child(8) { width: 10%; text-align: center;} /* Action */
+/* #orderTable th:nth-child(9), #orderTable td:nth-child(9) { width: 5%; text-align: center;} /* Send Wtsp */
 
+/* Styles inside Table Cells */
+.customer-name-display {
+    display: block;
+    font-weight: 600; /* Bolder name */
+    margin-bottom: 3px;
+    color: var(--text-color);
+}
+.customer-mobile-inline {
+    display: block;
+    font-size: 0.9em;
+    color: var(--text-muted);
+}
+#loadingMessage, #noOrdersMessage {
+    text-align: center;
+    color: var(--text-muted);
+    font-style: italic;
+    padding: 30px !important; /* Increased padding */
+    font-size: 1em;
+}
 
-/* Styles inside Customer Name/Mobile cell */
-.customer-name-display { display: block; font-weight: 700; margin-bottom: 3px; }
-.customer-mobile-inline { display: block; font-size: 0.85em; color: #555; }
+/* --- Action Buttons & Icons in Table --- */
+.details-edit-button {
+    background-color: var(--primary-color);
+    color: white;
+    padding: 5px 10px; /* Smaller padding */
+    font-size: 0.85em;
+    border-radius: var(--border-radius);
+    white-space: nowrap;
+    box-shadow: none; /* Remove shadow for table buttons */
+    height: auto; /* Auto height */
+}
+.details-edit-button:hover { background-color: #00418a; transform: none; box-shadow: none;} /* Darker blue on hover */
+.details-edit-button:active { transform: none; }
 
-#loadingMessage, #noOrdersMessage { text-align: center; color: #666; font-style: italic; padding: 25px !important; }
-
-/* Action Buttons & Icons Update */
-.details-edit-button { background-color: #007bff; color: white; padding: 4px 8px; font-size: 0.8em; border-radius: 4px; white-space: nowrap; } /* Added nowrap */
-.details-edit-button:hover { background-color: #0056b3; }
-
-/* --- WhatsApp Button Alignment Fix --- */
 .whatsapp-button {
     background-color: #25d366;
     color: white;
     border: none;
-    border-radius: 50%;
-    width: 28px;
-    height: 28px;
-    font-size: 0.9em;
-    /* line-height: 28px; */ /* Removed line-height */
+    border-radius: 50%; /* Keep circular */
+    width: 30px; /* Slightly larger */
+    height: 30px;
+    font-size: 1em; /* Adjust icon size */
     text-align: center;
     cursor: pointer;
     padding: 0;
@@ -113,93 +304,362 @@ h1 { margin: 0; font-size: 1.2em; }
     justify-content: center;
     transition: background-color 0.2s ease;
     vertical-align: middle;
+    box-shadow: none; /* Remove shadow */
 }
-.whatsapp-button:hover { background-color: #1ebe57; }
-/* Ensure parent TD has correct alignment */
-#orderTable td:nth-child(8), #orderTable td:nth-child(9) { text-align: center; vertical-align: middle; } /* Ensure middle alignment */
-/* --- End WhatsApp Button Alignment Fix --- */
+.whatsapp-button:hover { background-color: #1ebe57; transform: none; box-shadow: none;}
+.whatsapp-button:active { transform: scale(0.95); } /* Add slight press effect */
 
-
-/* Status Badge & Priority */
-.status-badge { font-weight: 600; padding: 4px 10px; border-radius: 12px; font-size: 0.8em; color: white; background-color: #6c757d; white-space: nowrap; display: inline-block; }
-.status-badge.status-order-received { background-color: #6c757d; }
-.status-badge.status-designing { background-color: #ffc107; color: #333;}
+/* --- Status Badge & Priority --- */
+.status-badge {
+    font-weight: 500; /* Adjusted weight */
+    padding: 5px 12px; /* Adjusted padding */
+    border-radius: 15px; /* Pill shape */
+    font-size: 0.85em; /* Adjusted size */
+    color: white;
+    background-color: var(--secondary-color);
+    white-space: nowrap;
+    display: inline-block;
+    line-height: 1.2; /* Adjust line height */
+    text-align: center;
+}
+/* Consistent Status Colors (from new_order.css) */
+.status-badge.status-order-received { background-color: var(--secondary-color); }
+.status-badge.status-designing { background-color: var(--warning-color); color: #333; }
 .status-badge.status-verification { background-color: #fd7e14; }
 .status-badge.status-design-approved { background-color: #20c997; }
-.status-badge.status-ready-for-working { background-color: #0dcaf0; color: #333;}
-.status-badge.status-printing { background-color: #17a2b8; }
-.status-badge.status-delivered { background-color: #28a745; }
-.status-badge.status-completed { background-color: #28a745; }
-.status-badge.status-cancelled { background-color: #dc3545; }
+.status-badge.status-ready-for-working { background-color: #0dcaf0; color: #333; }
+.status-badge.status-printing { background-color: var(--info-color); }
+.status-badge.status-delivered { background-color: var(--success-color); }
+.status-badge.status-completed { background-color: var(--success-color); }
+.status-badge.status-cancelled { background-color: var(--danger-color); } /* Added cancelled */
+.status-badge.status-unknown { background-color: #adb5bd; } /* Added unknown */
 
-.priority-yes { color: #dc3545; font-weight: bold; }
-.priority-no { color: #6c757d; }
+.priority-yes { color: var(--danger-color); font-weight: 600; }
+.priority-no { color: var(--text-muted); }
 
-/* Order Summary Counts Style Update */
+/* --- Order Summary Counts Panel --- */
 .order-summary-counts {
-    margin-top: 20px;
-    padding: 15px 20px;
-    background-color: #fff;
-    border: 1px solid #e0e0e0;
-    border-radius: 6px;
+    margin-top: 25px; /* Adjusted spacing */
+    padding: 18px 25px; /* Increased padding */
+    background-color: #ffffff;
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
     font-size: 0.95em;
-    color: #495057;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    color: var(--text-color);
+    box-shadow: var(--box-shadow);
     display: flex;
-    justify-content: space-around;
+    justify-content: space-around; /* Space out items */
     align-items: center;
-    flex-wrap: wrap;
-    gap: 20px; /* Increased gap */
+    flex-wrap: wrap; /* Allow wrapping */
+    gap: 20px 30px; /* Row and column gap */
 }
-.order-summary-counts span { margin-left: 0; }
-.order-summary-counts strong { color: #0056b3; font-weight: 700; margin-left: 5px; }
+.order-summary-counts span {
+    margin-left: 0;
+    font-weight: 500; /* Slightly bolder text */
+}
+.order-summary-counts strong {
+    color: var(--primary-color);
+    font-weight: 700;
+    margin-left: 6px;
+    font-size: 1.1em; /* Larger numbers */
+}
 
+/* --- Modal Styles (Details & WhatsApp - Consistent) --- */
+.modal, .popup-overlay {
+    display: none;
+    position: fixed;
+    z-index: 1050;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto; /* Use auto */
+    background-color: rgba(0, 0, 0, 0.65); /* Darker overlay */
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    box-sizing: border-box;
+}
+.modal.active, .popup-overlay.active {
+    display: flex;
+}
 
-/* Modal Styles */
-.modal, .popup-overlay { /* ... (No changes needed in modal styles) ... */ display: none; position: fixed; z-index: 1050; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.5); align-items: center; justify-content: center; padding: 15px; box-sizing: border-box; }
-.modal.active, .popup-overlay.active { display: flex; }
-.modal-content { background-color: #fefefe; margin: auto; padding: 25px 30px; border: 1px solid #ccc; width: 90%; max-width: 600px; border-radius: 8px; position: relative; box-shadow: 0 5px 15px rgba(0,0,0,0.2); z-index: 1051; }
-#whatsapp-reminder-popup .modal-content { max-width: 450px; }
-.close-btn, #whatsapp-reminder-popup .popup-close { color: #aaa; position: absolute; top: 10px; right: 15px; font-size: 28px; font-weight: bold; cursor: pointer; line-height: 1; background: none; border: none; padding: 0; }
-.close-btn:hover, .close-btn:focus, #whatsapp-reminder-popup .popup-close:hover, #whatsapp-reminder-popup .popup-close:focus { color: black; text-decoration: none; }
-#detailsModal h2 { margin-top: 0; margin-bottom: 20px; font-size: 1.3em; color: #333; text-align: center; border-bottom: 1px solid #eee; padding-bottom: 10px; }
-#whatsapp-reminder-popup h4 { margin-top: 0; margin-bottom: 10px; color: #28a745; font-size: 1.3em; text-align: center; }
-.modal-info { margin-bottom: 15px; background-color: #f8f9fa; padding: 12px 18px; border-radius: 4px; border: 1px solid #eee; }
-.modal-info p { margin: 8px 0; font-size: 0.95em; }
-.modal-info p strong { font-weight: 600; color: #0056b3; min-width: 80px; display: inline-block;}
+.modal-content {
+    background-color: #fefefe;
+    margin: auto;
+    padding: 25px 30px; /* Consistent padding */
+    border: none; /* Remove border */
+    width: 95%; /* Responsive width */
+    max-width: 650px; /* Increased max-width for details modal */
+    border-radius: var(--border-radius);
+    position: relative;
+    box-shadow: var(--box-shadow-lg);
+    z-index: 1051;
+    animation: popupFadeIn 0.3s ease-out; /* Consistent animation */
+}
+@keyframes popupFadeIn {
+    from { opacity: 0; transform: scale(0.95); }
+    to { opacity: 1; transform: scale(1); }
+}
+
+/* Specific width for WhatsApp popup */
+#whatsapp-reminder-popup .popup-content {
+    max-width: 480px;
+}
+
+.close-btn, #whatsapp-reminder-popup .popup-close {
+    color: #aaa;
+    position: absolute;
+    top: 12px;
+    right: 15px;
+    font-size: 30px;
+    font-weight: bold;
+    cursor: pointer;
+    line-height: 1;
+    background: none;
+    border: none;
+    padding: 0;
+    transition: color 0.2s ease;
+}
+.close-btn:hover, .close-btn:focus,
+#whatsapp-reminder-popup .popup-close:hover,
+#whatsapp-reminder-popup .popup-close:focus {
+    color: black;
+    text-decoration: none;
+}
+
+#detailsModal h2 {
+    margin-top: 0;
+    margin-bottom: 25px; /* Increased spacing */
+    font-size: 1.35em; /* Larger title */
+    color: var(--text-color);
+    text-align: center;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 15px; /* Increased padding */
+    font-weight: 600;
+}
+#whatsapp-reminder-popup h4 {
+    margin-top: 0;
+    margin-bottom: 15px;
+    color: var(--success-color);
+    font-size: 1.4em;
+    font-weight: 600;
+    text-align: center;
+}
+
+.modal-info {
+    margin-bottom: 20px; /* Increased spacing */
+    background-color: var(--light-bg);
+    padding: 15px 20px; /* Increased padding */
+    border-radius: var(--border-radius);
+    border: 1px solid #e9ecef; /* Lighter border */
+}
+.modal-info p { margin: 10px 0; font-size: 0.95em; }
+.modal-info p strong {
+    font-weight: 600;
+    color: var(--primary-color);
+    min-width: 90px; /* Adjust as needed */
+    display: inline-block;
+    margin-right: 5px;
+}
 #modalCustomerWhatsApp { color: #007bff; font-weight: 500; }
-.modal-section { margin-bottom: 15px; padding-bottom: 15px; border-bottom: 1px solid #eee; }
-.modal-section:last-child { border-bottom: none; padding-bottom: 0; margin-bottom: 0; }
-.modal-section label { display: block; margin-bottom: 8px; font-weight: 600; font-size: 0.9em; color: #495057; }
-.modal-section select { width: calc(100% - 170px); max-width: 250px; padding: 8px 10px; border: 1px solid #ced4da; border-radius: 4px; font-size: 0.9em; height: 38px; margin-right: 10px; vertical-align: middle; box-sizing: border-box; }
-.update-status-button { background-color: #ffc107; color: #333; vertical-align: middle; padding: 8px 12px; height: 38px; border-radius: 4px;}
-.update-status-button:hover { background-color: #e0a800; }
-.modal-actions { display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
-.edit-full-button { background-color: #5bc0de; color: white; flex-grow: 1; border-radius: 4px; padding: 9px 15px;}
-.edit-full-button:hover { background-color: #31b0d5; }
-.delete-button { background-color: #dc3545; color: white; flex-grow: 1; border-radius: 4px; padding: 9px 15px;}
-.delete-button:hover { background-color: #c82333; }
-#modalProductList { background-color: #f8f9fa; border: 1px solid #e9ecef; border-radius: 4px; padding: 10px 15px; max-height: 120px; overflow-y: auto; font-size: 0.9em; }
-#modalProductList ul { list-style: none; padding: 0; margin: 0; }
-#modalProductList li { margin-bottom: 8px; padding-bottom: 5px; border-bottom: 1px dotted #ddd; }
-#modalProductList li:last-child { margin-bottom: 0; padding-bottom: 0; border-bottom: none; }
-#modalProductList .product-name { display: block; font-weight: 600; color: #333; margin-bottom: 2px; }
-#modalProductList .product-qty-details { display: block; font-size: 0.9em; color: #555; padding-left: 5px; }
-#modalProductList .no-products { color: #6c757d; font-style: italic; text-align: center;}
-#modalStatusHistorySection { margin-top: 15px; }
-#modalStatusHistoryList { background-color: #f8f9fa; border: 1px solid #e9ecef; border-radius: 4px; padding: 10px 15px; max-height: 150px; overflow-y: auto; font-size: 0.85em; }
-#modalStatusHistoryList ul { list-style: none; padding: 0; margin: 0; }
-#modalStatusHistoryList li { padding: 4px 0; border-bottom: 1px dotted #ddd; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 5px; }
-#modalStatusHistoryList li:last-child { border-bottom: none; }
-#modalStatusHistoryList .history-status { font-weight: 600; color: #333; margin-right: 10px; }
-#modalStatusHistoryList .history-time { color: #555; font-size: 0.9em; white-space: nowrap; }
-#modalStatusHistoryList .no-history { color: #6c757d; font-style: italic; text-align: center;}
-#whatsapp-reminder-popup p { margin-bottom: 15px; color: #555; text-align: center;}
-.message-preview { margin-top: 15px; margin-bottom: 20px; font-size: .95em; background-color: #e9f5ff; padding: 12px; border-radius: 5px; text-align: left; border: 1px solid #bde0ff; white-space: pre-wrap; word-wrap: break-word; max-height: 150px; overflow-y: auto; }
-.whatsapp-send-btn { background-color: #25d366; color: #fff; text-decoration: none; padding: 10px 20px; border-radius: 5px; display: inline-flex; align-items: center; gap: 8px; font-weight: 700; transition: background-color .2s ease; margin: 0 auto; }
-.whatsapp-send-btn:hover { background-color: #1ebe57; }
 
-/* Responsive Adjustments */
-@media (max-width: 992px) { .filter-bar { flex-direction: column; align-items: stretch; } .filter-group { min-width: 100%; } }
-@media (max-width: 768px) { .container { max-width: 95%; padding: 15px; } .actions-bar { justify-content: center; } #orderTable { font-size: 0.85em; table-layout: auto; } #orderTable th, #orderTable td { width: auto !important; white-space: normal;} .button { font-size: 0.85em; padding: 7px 12px; } .modal-content { width: 95%; padding: 20px; } .order-summary-counts{ justify-content: center;} }
-@media (max-width: 480px) { .filter-bar { padding: 10px; } .modal-actions { flex-direction: column; } .modal-actions .button { width: 100%; justify-content: center;} #whatsapp-reminder-popup .modal-content { padding: 20px 15px; } .message-preview { font-size: 0.9em; } .whatsapp-send-btn { width: 100%; justify-content: center; } }
+.modal-section {
+    margin-bottom: 20px; /* Increased spacing */
+    padding-bottom: 20px; /* Increased spacing */
+    border-bottom: 1px solid #eee;
+}
+.modal-section:last-of-type { /* Target last section */
+    border-bottom: none;
+    padding-bottom: 0;
+    margin-bottom: 0;
+}
+.modal-section label {
+    display: block;
+    margin-bottom: 10px; /* Increased spacing */
+    font-weight: 600;
+    font-size: 0.95em; /* Larger label */
+    color: var(--text-color);
+}
+.modal-section select {
+    width: calc(100% - 180px); /* Adjust width based on button */
+    max-width: 280px; /* Max width */
+    padding: 8px 12px;
+    border: 1px solid #ced4da;
+    border-radius: var(--border-radius);
+    font-size: 0.9em;
+    height: 38px;
+    margin-right: 10px;
+    vertical-align: middle;
+    box-sizing: border-box;
+    color: var(--text-color);
+}
+.update-status-button {
+    background-color: var(--warning-color);
+    color: #333;
+    vertical-align: middle;
+    padding: 8px 15px; /* Adjusted padding */
+    height: 38px;
+    border-radius: var(--border-radius);
+    font-weight: 500; /* Adjusted weight */
+}
+.update-status-button:hover { background-color: #e0a800; }
+
+.modal-actions {
+    display: flex;
+    justify-content: space-between;
+    gap: 15px; /* Increased gap */
+    flex-wrap: wrap;
+    margin-top: 10px; /* Add margin above actions */
+}
+.edit-full-button, .delete-button {
+    flex-grow: 1; /* Allow buttons to grow */
+    border-radius: var(--border-radius);
+    padding: 9px 18px; /* Adjusted padding */
+    font-size: 0.95em; /* Adjusted font size */
+    font-weight: 600; /* Bolder buttons */
+    height: 40px; /* Consistent height */
+}
+.edit-full-button {
+    background-color: #5bc0de; /* Info Blue */
+    color: white;
+}
+.edit-full-button:hover { background-color: #31b0d5; }
+.delete-button {
+    background-color: var(--danger-color);
+    color: white;
+}
+.delete-button:hover { background-color: #c82333; }
+
+/* Modal Lists Styling */
+#modalProductList, #modalStatusHistoryList {
+    background-color: var(--light-bg);
+    border: 1px solid #e9ecef;
+    border-radius: var(--border-radius);
+    padding: 12px 18px; /* Increased padding */
+    max-height: 150px; /* Increased max height */
+    overflow-y: auto;
+    font-size: 0.9em;
+}
+#modalProductList ul, #modalStatusHistoryList ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+#modalProductList li, #modalStatusHistoryList li {
+    margin-bottom: 8px;
+    padding-bottom: 8px; /* Add padding bottom */
+    border-bottom: 1px dotted #ccc; /* Dotted separator */
+}
+#modalProductList li:last-child, #modalStatusHistoryList li:last-child {
+    margin-bottom: 0;
+    padding-bottom: 0;
+    border-bottom: none;
+}
+/* Product List specific */
+#modalProductList .product-name { display: block; font-weight: 600; color: var(--text-color); margin-bottom: 3px; }
+#modalProductList .product-qty-details { display: block; font-size: 0.95em; color: var(--text-muted); }
+#modalProductList .no-products { color: var(--text-muted); font-style: italic; text-align: center; padding: 10px 0;}
+/* Status History specific */
+#modalStatusHistoryList { max-height: 180px; font-size: 0.88em; }
+#modalStatusHistoryList li { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 5px; }
+#modalStatusHistoryList .history-status { font-weight: 600; color: var(--text-color); margin-right: 10px; }
+#modalStatusHistoryList .history-time { color: var(--text-muted); font-size: 0.95em; white-space: nowrap; }
+#modalStatusHistoryList .no-history { color: var(--text-muted); font-style: italic; text-align: center; padding: 10px 0;}
+
+/* WhatsApp Popup Specifics */
+#whatsapp-reminder-popup p {
+    margin-bottom: 20px;
+    color: var(--text-muted);
+    font-size: 1.05em;
+    text-align: center;
+}
+.message-preview {
+    margin-top: 15px;
+    margin-bottom: 25px;
+    font-size: 0.95em;
+    background-color: #e9f5ff;
+    padding: 15px;
+    border-radius: var(--border-radius);
+    text-align: left;
+    border: 1px solid #bde0ff;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    max-height: 180px; /* Consistent max height */
+    overflow-y: auto;
+    line-height: 1.4;
+}
+.whatsapp-send-btn {
+    background-color: #25d366;
+    color: #fff;
+    text-decoration: none;
+    padding: 10px 25px;
+    border-radius: var(--border-radius);
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 600;
+    transition: background-color 0.2s ease, box-shadow 0.2s ease, transform 0.1s ease;
+    margin: 0 auto;
+    border: none;
+    cursor: pointer;
+    font-size: 1em;
+    box-shadow: var(--box-shadow);
+    height: auto; /* Auto height for this button */
+}
+.whatsapp-send-btn:hover {
+    background-color: #1ebe57;
+    box-shadow: var(--box-shadow-lg);
+    transform: translateY(-1px);
+}
+.whatsapp-send-btn:active {
+    transform: translateY(0px);
+    box-shadow: var(--box-shadow);
+}
+.whatsapp-send-btn i { font-size: 1.2em; }
+
+
+/* --- Responsive Adjustments --- */
+@media (max-width: 992px) {
+    .filter-bar { flex-direction: column; align-items: stretch; gap: 15px; }
+    .filter-group { min-width: 100%; }
+    .filter-group input, .filter-group select { width: 100%; } /* Ensure full width */
+    .clear-filters-button { margin-top: 10px; } /* Add margin when stacked */
+}
+
+@media (max-width: 768px) {
+    body { padding: 15px; font-size: 14px; }
+    .container { max-width: 100%; padding: 20px; margin: 10px 0;}
+    .header { margin: -20px -20px 20px -20px; font-size: 1.15em;}
+    .breadcrumb { margin-bottom: 20px; padding-bottom: 12px;}
+    .actions-bar { justify-content: flex-start; } /* Keep add button left on mobile */
+    #orderTable { font-size: 0.88em; }
+    #orderTable th, #orderTable td { padding: 8px 10px; white-space: normal; } /* Reduce padding, allow wrapping */
+    .button { font-size: 0.88em; padding: 7px 12px; gap: 5px; height: 36px; }
+    .modal-content { width: 95%; padding: 20px; }
+    .order-summary-counts{ justify-content: space-between; font-size: 0.9em; padding: 15px 20px;}
+    .update-status-button { width: auto; } /* Allow button to size naturally */
+    .modal-section select { width: calc(100% - 140px); } /* Adjust select width */
+    .modal-actions { gap: 10px; }
+    .edit-full-button, .delete-button { font-size: 0.9em; padding: 8px 15px; height: 38px;}
+}
+
+@media (max-width: 480px) {
+    body { padding: 10px; }
+    .container { padding: 15px; }
+    .header { padding: 12px 15px; font-size: 1.1em; margin: -15px -15px 15px -15px;}
+    .filter-bar { padding: 15px; }
+    #orderTable th, #orderTable td { padding: 6px 8px; font-size: 0.85em;}
+    .status-badge { padding: 4px 8px; font-size: 0.8em; }
+    .details-edit-button { padding: 4px 8px; font-size: 0.8em; }
+    .whatsapp-button { width: 26px; height: 26px; font-size: 0.9em; }
+    .modal-content { padding: 20px 15px; }
+    #detailsModal h2 { font-size: 1.2em; margin-bottom: 20px; padding-bottom: 10px;}
+    .modal-actions { flex-direction: column; }
+    .modal-actions .button { width: 100%; justify-content: center;}
+    #whatsapp-reminder-popup .modal-content { padding: 20px 15px; }
+    .message-preview { font-size: 0.9em; }
+    .whatsapp-send-btn { width: 100%; justify-content: center; font-size: 0.95em; padding: 10px 20px;}
+    .order-summary-counts span { width: 100%; text-align: center; } /* Stack summary items */
+    .order-summary-counts strong { margin-left: 8px; }
+}
