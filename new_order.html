@@ -8,8 +8,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
-    {/* Link to your updated CSS file */}
-    <link rel="stylesheet" href="css/new_order.css">
+    <link rel="stylesheet" href="css/new_order.css"> {/* Link to your updated CSS file */}
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" integrity="sha512-9usAa10IRO0HhonpyAIVpjrylPvoDwiPUiKdWk5t3PyolY1cOd4DSE0Ga+ri4AuTroPR5aQvXU9xC6qOPnzFeg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
 
     <script type="module">
@@ -137,7 +136,7 @@
                  </div>
             </div>
 
-            {/* Order Status Section */}
+           
             <div class="form-section-inline" id="orderStatusSection">
                 <div id="order-status-group" class="form-group order-status-group">
                     <label><input type="checkbox" name="order_status" value="Order Received"><span>Order Received</span></label>
@@ -152,7 +151,7 @@
              </div>
 
             <div class="form-section-card">
-                 {/* Section 3 Title */}
+               
                 <div class="section-title">3. Product & Job Details</div>
                 <div class="table-container order-items-table">
                     <table id="orderItemsTable">
@@ -186,34 +185,34 @@
                            </div>
                        </div>
                     </div>
-                    {/* Updated Summary Panel Structure */}
+                     
                      <div class="summary-right">
                          <div class="section-title summary-title">4. Order Summary & Payment</div>
                          <div class="summary-grid">
-                            {/* Row 1: Subtotal */}
+                          
                             <div class="summary-label">Subtotal:</div>
                             <div class="summary-value summary-subtotal">
                                 ₹ <span id="summarySubtotal">0.00</span>
                             </div>
 
-                            {/* Row 2: Discount */}
+                            
                             <label for="summaryDiscountPercent" class="summary-label">Discount (%):</label>
                             <input type="number" id="summaryDiscountPercent" class="summary-input" step="0.01" min="0" max="100" placeholder="%">
 
                             <label for="summaryDiscountAmount" class="summary-label">Discount Amount:</label>
                             <input type="number" id="summaryDiscountAmount" class="summary-input" step="0.01" min="0" placeholder="Amount">
 
-                            {/* Row 3: Final Amount */}
+                            
                             <div class="summary-label summary-highlight-label">Final Amount:</div>
                             <div class="summary-value summary-final-amount">
                                 ₹ <span id="summaryFinalAmount">0.00</span>
                             </div>
 
-                            {/* Row 4: Advance Payment */}
+                            
                             <label for="summaryAdvancePayment" class="summary-label">Advance Payment:</label>
                             <input type="number" id="summaryAdvancePayment" class="summary-input" step="0.01" min="0" placeholder="Amount Received">
 
-                            {/* Row 5: Balance Due */}
+                            
                             <div class="summary-label summary-highlight-label">Total Balance Due:</div>
                             <div class="summary-value summary-balance-due">
                                 ₹ <span id="summaryTotalBalance">0.00</span>
@@ -244,8 +243,7 @@
             <td class="sq-feet-input" style="display: none;"> <div class="dimension-input-container"> <input type="number" step="0.01" class="form-input dimension-input width-input" placeholder="W"> <span style="padding: 0 2px;">x</span> <input type="number" step="0.01" class="form-input dimension-input height-input" placeholder="H"> </div> </td>
             <td class="sq-feet-input" style="display: none;"> <select class="form-input dimension-unit-select"> <option value="feet" selected>Feet</option> <option value="inches">Inches</option> </select> </td>
             <td> <input type="number" step="1" class="form-input quantity-input" placeholder="Qty" min="1" value="1"> </td>
-            {/* Updated Rate Column: Removed min-rate-info span */}
-            <td> <div class="rate-input-wrapper"> <input type="number" step="0.01" class="form-input rate-input" placeholder="Rate" required> </div> </td>
+            <td> <div class="rate-input-wrapper"> <input type="number" step="0.01" class="form-input rate-input" placeholder="Rate" required> </div> </td> {/* Removed min-rate-info span */}
             <td style="text-align: right; font-weight: 600; vertical-align: middle;"> ₹<span class="item-amount">0.00</span> </td>
             <td style="text-align: center; vertical-align: middle;"> <button type="button" class="button delete-item-btn" title="Remove Item"><i class="fas fa-trash-alt"></i></button> </td>
         </tr>
@@ -255,8 +253,7 @@
          <div class="popup-content"> <button id="popup-close-btn" class="popup-close" title="Close">&times;</button> <h4>Order Saved Successfully!</h4> <p>Send update to customer?</p> <div id="whatsapp-message-preview" class="message-preview"></div> <a href="#" id="whatsapp-send-link" class="button whatsapp-send-btn" target="_blank"> <i class="fab fa-whatsapp"></i> Send on WhatsApp </a> </div>
     </div>
 
-    {/* Link to your JS file (unchanged) */}
-    <script src="js/new_order.js" type="module" defer></script>
+    <script src="js/new_order.js" type="module" defer></script> {/* JS Link (Unchanged) */}
 
 </body>
 </html>
