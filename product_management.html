@@ -8,21 +8,69 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="css/customer_management.css"> <link rel="stylesheet" href="css/order_history.css"> <link rel="stylesheet" href="css/product_management.css"> <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="css/customer_management.css">
+    <link rel="stylesheet" href="css/order_history.css">
+    <link rel="stylesheet" href="css/product_management.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 
     <script type="module">
+        // Firebase Initialization (जैसा पहले था)
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
         import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-        import { getFirestore, collection, doc, addDoc, updateDoc, deleteDoc, onSnapshot, query, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js"; // Removed unused getDoc, runTransaction
+        import { getFirestore, collection, doc, addDoc, updateDoc, deleteDoc, onSnapshot, query, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
         const firebaseConfig = { /* --- आपकी Firebase कॉन्फ़िगरेशन --- */ apiKey: "AIzaSyBQj5rQmE77kKKGYixP8y3Hcimz8tiAqzQ", authDomain: "madhav-multyprint.firebaseapp.com", projectId: "madhav-multyprint", storageBucket: "madhav-multyprint.appspot.com", messagingSenderId: "104988349637", appId: "1:104988349637:web:faf045b77c6786a4e70cac" };
+
         let app; let auth; let db;
         try {
-            if (!window.firebaseAppInitialized) { app = initializeApp(firebaseConfig); window.firebaseAppInitialized = true; window.firebaseApp = app; console.log("Firebase initialized (product_management - V2.0)."); } else { app = window.firebaseApp; console.log("Firebase already initialized (product_management - V2.0)."); }
-            auth = getAuth(app); db = getFirestore(app);
-            window.db = db; window.auth = auth; window.collection = collection; window.doc = doc; window.addDoc = addDoc; window.updateDoc = updateDoc; window.deleteDoc = deleteDoc; window.onSnapshot = onSnapshot; window.query = query; window.orderBy = orderBy; window.serverTimestamp = serverTimestamp; // Corrected
-            onAuthStateChanged(auth, (user) => { const page = window.location.pathname.split('/').pop() || 'index.html'; if (!user && page.toLowerCase() !== 'login.html') { window.location.replace('login.html'); } else if (user) { console.log(`User logged in on ${page}. V2.0 OK.`); if (typeof initializeProductManagement === 'function') initializeProductManagement(); } });
-        } catch(e) { console.error("Firebase setup error:", e); alert("App Error."); }
+            // सुनिश्चित करें कि Firebase केवल एक बार इनिशियलाइज़ हो
+            if (!window.firebaseAppInitialized) {
+                app = initializeApp(firebaseConfig);
+                window.firebaseAppInitialized = true;
+                window.firebaseApp = app; // ऐप को ग्लोबल स्कोप में रखें
+                console.log("Firebase initialized (product_management - V2.2).");
+            } else {
+                app = window.firebaseApp; // पहले से इनिशियलाइज़ ऐप का उपयोग करें
+                console.log("Firebase already initialized (product_management - V2.2).");
+            }
+
+            auth = getAuth(app);
+            db = getFirestore(app);
+
+            // Firebase फंक्शन्स को ग्लोबल विंडो ऑब्जेक्ट में असाइन करें ताकि JS फ़ाइल उन्हें एक्सेस कर सके
+            window.db = db;
+            window.auth = auth;
+            window.collection = collection;
+            window.doc = doc;
+            window.addDoc = addDoc;
+            window.updateDoc = updateDoc;
+            window.deleteDoc = deleteDoc;
+            window.onSnapshot = onSnapshot;
+            window.query = query;
+            window.orderBy = orderBy;
+            window.serverTimestamp = serverTimestamp;
+
+            // Auth State Listener (जैसा पहले था)
+            onAuthStateChanged(auth, (user) => {
+                const page = window.location.pathname.split('/').pop() || 'index.html';
+                if (!user && page.toLowerCase() !== 'login.html') {
+                    window.location.replace('login.html');
+                } else if (user) {
+                    console.log(`User logged in on ${page}. V2.2 OK.`);
+                    // जब auth तैयार हो, तब product management को इनिशियलाइज़ करें
+                    if (typeof initializeProductManagement === 'function') {
+                         initializeProductManagement();
+                    } else {
+                         console.warn("initializeProductManagement function not found yet.");
+                         // वैकल्पिक: कुछ देर प्रतीक्षा करके पुनः प्रयास करें
+                         // setTimeout(() => { if(typeof initializeProductManagement === 'function') initializeProductManagement() }, 500);
+                    }
+                }
+            });
+        } catch(e) {
+            console.error("Firebase setup error:", e);
+            alert("App Initialization Error. Check console."); // अधिक वर्णनात्मक त्रुटि
+        }
     </script>
 </head>
 <body>
@@ -53,10 +101,10 @@
                     <option value="createdAt_asc">Oldest First</option>
                     <option value="printName_asc">Name (A-Z)</option>
                     <option value="printName_desc">Name (Z-A)</option>
-                     <option value="salePrice_asc">Sale Price (Low-High)</option> {/* Updated */}
-                    <option value="salePrice_desc">Sale Price (High-Low)</option>{/* Updated */}
-                     <option value="purchasePrice_asc">Purchase Price (Low-High)</option>{/* New */}
-                    <option value="purchasePrice_desc">Purchase Price (High-Low)</option>{/* New */}
+                     <option value="salePrice_asc">Sale Price (Low-High)</option>
+                    <option value="salePrice_desc">Sale Price (High-Low)</option>
+                     <option value="purchasePrice_asc">Purchase Price (Low-High)</option>
+                    <option value="purchasePrice_desc">Purchase Price (High-Low)</option>
                  </select>
             </div>
             <div class="filter-group">
@@ -70,19 +118,17 @@
             <table id="productTable">
                 <thead>
                      <tr>
-                        {/* Updated Columns */}
                         <th>Print Name</th>
                         <th>Sale Price</th>
                         <th>Purchase Price</th>
                         <th>Unit</th>
                         <th>HSN/SAC</th>
                         <th>GST%</th>
-                        <th>Actions</th>
-                    </tr>
+                        </tr>
                  </thead>
                 <tbody id="productTableBody">
                     <tr>
-                        <td colspan="7" id="loadingMessage">Loading products...</td> {/* Updated Colspan */}
+                        <td colspan="6" id="loadingMessage">Loading products...</td>
                     </tr>
                  </tbody>
             </table>
@@ -90,15 +136,16 @@
     </div>
 
     <div id="productModal" class="modal">
-        <div class="modal-content large-modal"> {/* Wider modal */}
+        <div class="modal-content large-modal">
             <span class="close-btn" id="closeProductModal" title="Close">&times;</span>
             <h2 id="modalTitle"><i class="fas fa-box-open info-icon"></i> Add New Product</h2>
             <form id="productForm">
                 <input type="hidden" id="editProductId">
 
-                <div class="form-columns"> {/* Container for columns */}
+                <div class="form-columns-3">
+                    {/* Column 1: Product Details */}
                     <div class="form-column">
-                        <h3>Product Details</h3>
+                         <h3>Product Details</h3>
                          <div class="form-group">
                             <label for="productPrintName">Print Name <span class="required">*</span>:</label>
                             <input type="text" id="productPrintName" required placeholder="Name shown in order form">
@@ -115,7 +162,10 @@
                             <label for="productItemCode">Item Code:</label>
                             <input type="text" id="productItemCode" placeholder="Optional item code">
                         </div>
+                    </div>
 
+                    {/* Column 2: Price Details */}
+                    <div class="form-column">
                         <h3>Price Details</h3>
                          <div class="form-group price-group">
                             <label for="productPurchasePrice">Purchase Price:</label>
@@ -135,14 +185,15 @@
                         </div>
                     </div>
 
+                    {/* Column 3: Stock, Unit & GST */}
                     <div class="form-column">
-                        <h3>Stock & Unit</h3>
+                         <h3>Stock, Unit & GST</h3>
                         <div class="form-group">
                             <label for="productUnit">Unit <span class="required">*</span>:</label>
                             <select id="productUnit" required>
                                 <option value="">-- Select Unit --</option>
                                 <option value="NOS">NOS</option>
-                                <option value="QTY">QTY</option> {/* Added QTY */}
+                                <option value="QTY">QTY</option>
                                 <option value="Sq.Ft.">Sq.Ft.</option>
                                 {/* Add other units */}
                             </select>
@@ -151,8 +202,6 @@
                             <label for="productOpeningStock">Opening Stock:</label>
                             <input type="number" id="productOpeningStock" placeholder="0" step="1" min="0">
                         </div>
-
-                        <h3>GST & Other Details</h3>
                         <div class="form-group">
                             <label for="productHsnSacCode">HSN / SAC Code:</label>
                             <input type="text" id="productHsnSacCode" placeholder="e.g., 4911">
@@ -165,13 +214,13 @@
                             <label for="productSaleDiscount">Sale Discount (%):</label>
                             <input type="number" id="productSaleDiscount" placeholder="e.g., 5" step="0.01" min="0" max="100">
                         </div>
-
                     </div>
-                </div> {/* End form-columns */}
+                </div> {/* End form-columns-3 */}
 
+                {/* Full Width Sections */}
                 <div class="form-group full-width">
                     <label for="productDescription">Product Description:</label>
-                    <textarea id="productDescription" rows="3" placeholder="Enter any additional details"></textarea>
+                    <textarea id="productDescription" rows="2" placeholder="Enter any additional details"></textarea>
                 </div>
 
                 <div class="form-group full-width">
@@ -185,21 +234,47 @@
                      </div>
                 </div>
 
-                {/* Old Category Field - can be hidden or removed */}
+                {/* Legacy Category Field (Hidden) */}
                 <div class="form-group" style="display: none;">
                     <label for="productCategory">Category (Legacy):</label>
                     <input type="text" id="productCategory" placeholder="e.g., Visiting Card, Banner">
                 </div>
 
+                {/* Modal Actions: Delete Button Added */}
                 <div class="modal-actions">
-                    <button type="submit" id="saveProductBtn" class="button save-button">
-                        <i class="fas fa-save"></i> <span>Save Product</span>
+                    <button type="button" id="deleteProductBtn" class="button delete-button-modal" style="display: none;"> {/* Initially hidden */}
+                        <i class="fas fa-trash-alt"></i> Delete Product
                     </button>
-                     <button type="button" id="cancelProductBtn" class="button cancel-button">
-                        Cancel
-                    </button>
+                    <div class="modal-actions-right">
+                        <button type="button" id="cancelProductBtn" class="button cancel-button">
+                           Cancel
+                        </button>
+                        <button type="submit" id="saveProductBtn" class="button save-button">
+                           <i class="fas fa-save"></i> <span>Save Product</span>
+                        </button>
+                   </div>
                  </div>
             </form>
+        </div>
+    </div>
+
+    <div id="deleteConfirmModal" class="modal confirmation-modal">
+        <div class="modal-content small-modal">
+            <span class="close-btn" id="closeDeleteConfirmModal" title="Close">&times;</span>
+            <h2><i class="fas fa-exclamation-triangle warning-icon"></i> Confirm Deletion</h2>
+            <p id="deleteWarningMessage">Are you sure you want to delete this product? This action cannot be undone.</p>
+            <div class="confirmation-checkbox-area">
+                 <input type="checkbox" id="deleteConfirmCheckbox">
+                 <label for="deleteConfirmCheckbox">Yes, I understand and want to delete this product.</label>
+            </div>
+            <div class="modal-actions">
+                 <button type="button" id="cancelDeleteFinalBtn" class="button cancel-button">
+                    Cancel
+                </button>
+                <button type="button" id="confirmDeleteFinalBtn" class="button delete-confirm-button" disabled>
+                    <i class="fas fa-trash-alt"></i> Confirm Delete
+                </button>
+            </div>
         </div>
     </div>
 
