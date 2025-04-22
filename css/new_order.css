@@ -1,6 +1,6 @@
-/* === new_order.css - v2.0 (PO Style Items, Discount, Advance) === */
+/* === new_order.css - v2.1 (PO Style Items, Discount, Advance) === */
 
-/* --- Global Styles & Variables (Keep as before) --- */
+/* --- Global Styles & Variables --- */
 :root {
     --primary-color: #0056b3; /* Darker Blue */
     --secondary-color: #495057; /* Dark grey text */
@@ -45,7 +45,7 @@ body {
     position: relative;
 }
 
-/* --- Header & Breadcrumb (Keep as before) --- */
+/* --- Header & Breadcrumb --- */
 .header { background-color: var(--primary-color); color: white; padding: 15px 20px; border-radius: var(--border-radius) var(--border-radius) 0 0; margin: -25px -30px 25px -30px; font-size: 1.25em; font-weight: 600; text-align: center; display: flex; align-items: center; justify-content: center; gap: 10px; }
 .header-icon { font-size: 1.15em; }
 .breadcrumb { font-size: 0.9em; color: var(--text-muted); margin-bottom: 30px; padding-bottom: 15px; border-bottom: 1px solid var(--border-color); }
@@ -54,7 +54,7 @@ body {
 .breadcrumb span { margin-left: 5px; color: var(--text-color); }
 .breadcrumb span::before { content: "/"; margin-right: 5px; color: var(--text-muted); }
 
-/* --- Form Layout & Sections (Keep as before) --- */
+/* --- Form Layout & Sections --- */
 .form-layout-columns { display: flex; flex-direction: column; gap: 25px; margin-bottom: 30px; }
 .form-column { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 25px; }
 @media (min-width: 992px) { /* Adjusted breakpoint for wider layout */
@@ -63,7 +63,7 @@ body {
 .form-section-card { border: 1px solid var(--border-color); border-radius: var(--border-radius); padding: 20px 25px; background-color: #ffffff; box-shadow: var(--box-shadow); margin-bottom: 25px; }
 .section-title { font-size: 1.1em; color: var(--primary-color); margin-top: 0; margin-bottom: 20px; font-weight: 600; border-bottom: 1px solid #e5e5e5; padding-bottom: 8px; display: flex; align-items: center; gap: 8px; }
 
-/* --- Basic Form Elements (Keep similar) --- */
+/* --- Basic Form Elements --- */
 .form-row { display: flex; flex-wrap: wrap; gap: 20px 25px; margin-bottom: 20px; }
 .form-row:last-child { margin-bottom: 0; }
 .form-group { display: flex; flex-direction: column; flex: 1; min-width: 150px; position: relative; /* For suggestions */ }
@@ -93,248 +93,86 @@ body {
 #customerBalanceArea strong { color: var(--danger-color); font-weight: 600; }
 #customerBalanceArea strong.positive-balance { color: var(--success-color); } /* Add class via JS if balance is credit */
 
-/* --- Item Table Styling (from new_po.css, adapted) --- */
-.table-container.order-items-table {
-    margin-bottom: 15px; /* Space before Add Item button */
-    border: 1px solid var(--medium-grey);
-    border-radius: var(--border-radius);
-    overflow: hidden; /* Hide overflow for radius */
-    /* Add horizontal scroll on smaller screens */
-    overflow-x: auto;
-   -webkit-overflow-scrolling: touch;
-}
-#orderItemsTable {
-    width: 100%;
-    min-width: 800px; /* Ensure table has min width for scroll */
-    border-collapse: collapse;
-    border-spacing: 0;
-}
-#orderItemsTable thead th {
-    background-color: var(--light-bg);
-    padding: 10px 12px; /* Compact padding */
-    font-size: 0.8em; /* Smaller header */
-    font-weight: 600;
-    text-align: left;
-    border-bottom: 2px solid var(--medium-grey);
-    white-space: nowrap;
-    color: var(--secondary-color);
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    position: sticky; /* Sticky header */
-    top: 0;
-    z-index: 10;
-}
- #orderItemsTable thead th .min-rate-header-info {
-     font-size: 0.9em;
-     font-weight: normal;
-     text-transform: none;
-     color: var(--text-muted);
-     display: block; /* Show on new line */
-     margin-top: 2px;
- }
-#orderItemsTable tbody td {
-    padding: 6px 10px; /* Compact padding */
-    border-bottom: 1px solid var(--medium-grey);
-    vertical-align: top; /* Align top for multiline */
-    background-color: var(--white-color);
-    font-size: 0.9em; /* Compact */
-}
+/* --- Item Table Styling --- */
+.table-container.order-items-table { margin-bottom: 15px; border: 1px solid var(--medium-grey); border-radius: var(--border-radius); overflow: hidden; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+#orderItemsTable { width: 100%; min-width: 800px; border-collapse: collapse; border-spacing: 0; }
+#orderItemsTable thead th { background-color: var(--light-bg); padding: 10px 12px; font-size: 0.8em; font-weight: 600; text-align: left; border-bottom: 2px solid var(--medium-grey); white-space: nowrap; color: var(--secondary-color); text-transform: uppercase; letter-spacing: 0.5px; position: sticky; top: 0; z-index: 10; }
+ #orderItemsTable thead th .min-rate-header-info { font-size: 0.9em; font-weight: normal; text-transform: none; color: var(--text-muted); display: block; margin-top: 2px; }
+#orderItemsTable tbody td { padding: 6px 10px; border-bottom: 1px solid var(--medium-grey); vertical-align: top; background-color: var(--white-color); font-size: 0.9em; }
 #orderItemsTable tbody tr:last-child td { border-bottom: none; }
 #orderItemsTable tbody tr:hover td { background-color: #f1f8ff; }
-
-/* Inputs within table */
-#orderItemsTable .form-input {
-    padding: 6px 8px; /* Smaller padding */
-    font-size: 0.9em;
-    border-radius: 4px;
-    width: 100%;
-    box-sizing: border-box;
-    min-height: 34px; /* Smaller height */
-    border: 1px solid #d8dde2;
-}
+#orderItemsTable .form-input { padding: 6px 8px; font-size: 0.9em; border-radius: 4px; width: 100%; box-sizing: border-box; min-height: 34px; border: 1px solid #d8dde2; }
 #orderItemsTable .form-input:focus { border-color: var(--primary-color); box-shadow: var(--focus-shadow); }
 #orderItemsTable .dimension-input-container { display: flex; align-items: center; gap: 4px; }
-#orderItemsTable .dimension-input { width: 65px !important; text-align: right; } /* Force width */
-#orderItemsTable .quantity-input { width: 70px !important; text-align: right; } /* Force width */
-#orderItemsTable .rate-input { width: 90px !important; text-align: right; } /* Force width */
-#orderItemsTable .dimension-unit-select { width: 70px !important; } /* Force width */
+#orderItemsTable .dimension-input { width: 65px !important; text-align: right; }
+#orderItemsTable .quantity-input { width: 70px !important; text-align: right; }
+#orderItemsTable .rate-input { width: 90px !important; text-align: right; }
+#orderItemsTable .dimension-unit-select { width: 70px !important; }
 #orderItemsTable .item-amount { font-weight: 600; text-align: right; white-space: nowrap; color: var(--secondary-color); }
-#orderItemsTable td:nth-last-child(2) { text-align: right; vertical-align: middle;} /* Amount cell */
-#orderItemsTable td:last-child { text-align: center; vertical-align: middle;} /* Action cell */
-
-/* Rate input specific */
+#orderItemsTable td:nth-last-child(2) { text-align: right; vertical-align: middle;}
+#orderItemsTable td:last-child { text-align: center; vertical-align: middle;}
 .rate-input-wrapper { position: relative; }
-.min-rate-info {
-    font-size: 0.75em;
-    display: block; /* Show on new line */
-    color: var(--text-muted);
-    text-align: right;
-    padding-top: 2px;
-    line-height: 1;
-}
+.min-rate-info { font-size: 0.75em; display: block; color: var(--text-muted); text-align: right; padding-top: 2px; line-height: 1; }
 .min-rate-info .min-rate-value { font-weight: 500; }
-
-/* Class for hiding Sq Ft elements */
 .hidden-col { display: none; }
-
-/* Add/Delete Item Buttons */
 .add-item-button { background-color: var(--info-color); color: var(--white-color); margin-top: 12px; padding: 8px 15px; font-size: 0.9em; border-radius: var(--border-radius); border: none; cursor: pointer; font-weight: 500; transition: background-color 0.2s ease; display: inline-flex; align-items: center; gap: 6px; }
 .add-item-button:hover { background-color: #117a8b; }
 .delete-item-btn { background-color: transparent; color: var(--danger-color); border: none; padding: 5px; font-size: 1em; cursor: pointer; opacity: 0.65; transition: opacity 0.2s ease, color 0.2s ease; border-radius: 4px; line-height: 1; }
 .delete-item-btn:hover { opacity: 1; color: #a71d2a; background-color: #fce8e6; }
 .delete-item-btn i { vertical-align: middle; display: block; }
+.input-error { border-color: var(--danger-color) !important; background-color: #fff7f7; }
+.input-error:focus { box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25); }
 
-/* Input Error Style */
-.input-error {
-     border-color: var(--danger-color) !important;
-     background-color: #fff7f7;
-}
-.input-error:focus {
-    box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25); /* Red focus */
-}
-
-
-/* --- Product Suggestions (Positioned by JS) --- */
-.suggestions-box { /* Base class for customer/product suggestions */
-    position: relative; /* Needed for absolute positioning of ul */
-}
-.suggestions-box ul {
-    position: absolute;
-    list-style: none;
-    margin: 1px 0 0 0;
-    padding: 0;
-    border: 1px solid #ced4da;
-    background-color: white;
-    max-height: 180px;
-    overflow-y: auto;
-    z-index: 1000;
-    border-radius: 0 0 var(--border-radius) var(--border-radius);
-    box-shadow: var(--box-shadow-lg);
-    width: 100%; /* Default width */
-    box-sizing: border-box;
-    display: none; /* Hidden by default */
-}
-.suggestions-box.active ul { /* Show when active */
-    display: block;
-}
-.suggestions-box li {
-    padding: 8px 12px; /* Compact padding */
-    font-size: 0.9em;
-    cursor: pointer;
-    border-bottom: 1px solid #f0f0f0;
-    transition: background-color 0.15s ease;
-}
+/* --- Suggestions Boxes --- */
+.suggestions-box { position: relative; } /* Container for customer suggestions */
+.suggestions-box ul { position: absolute; list-style: none; margin: 1px 0 0 0; padding: 0; border: 1px solid #ced4da; background-color: white; max-height: 180px; overflow-y: auto; z-index: 1000; border-radius: 0 0 var(--border-radius) var(--border-radius); box-shadow: var(--box-shadow-lg); width: 100%; box-sizing: border-box; display: none; }
+.suggestions-box.active ul { display: block; }
+.suggestions-box li { padding: 8px 12px; font-size: 0.9em; cursor: pointer; border-bottom: 1px solid #f0f0f0; transition: background-color 0.15s ease; }
 .suggestions-box li:last-child { border-bottom: none; }
 .suggestions-box li:hover, .suggestions-box li.selected { background-color: #e9ecef; }
 .suggestions-box li strong { font-weight: 600; color: var(--primary-color); }
 .suggestions-box li.no-suggestions { color: var(--text-muted); font-style: italic; cursor: default; }
 .suggestions-box li.no-suggestions:hover { background-color: transparent; }
 
-/* Product suggestions specific container (positioned globally by JS) */
-.product-suggestions-list {
-    position: absolute; /* Positioned by JS */
-    list-style: none;
-    margin: 0;
-    padding: 0;
-    border: 1px solid var(--primary-color);
-    background-color: white;
-    max-height: 200px;
-    overflow-y: auto;
-    z-index: 1050; /* High z-index */
-    border-radius: 0 0 var(--border-radius) var(--border-radius);
-    box-shadow: var(--box-shadow-lg);
-    display: none; /* Controlled by JS */
-}
- .product-suggestions-list ul { margin: 0; padding: 0; } /* Reset ul margin/padding */
- .product-suggestions-list li { /* Inherit styles from .suggestions-box li */
-    padding: 8px 12px; font-size: 0.9em; cursor: pointer; border-bottom: 1px solid #f0f0f0; transition: background-color 0.15s ease; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
- }
+/* Product suggestions specific container (positioned globally) */
+.product-suggestions-list { position: absolute; list-style: none; margin: 0; padding: 0; border: 1px solid var(--primary-color); background-color: white; max-height: 200px; overflow-y: auto; z-index: 1050; border-radius: 0 0 var(--border-radius) var(--border-radius); box-shadow: var(--box-shadow-lg); display: none; }
+ .product-suggestions-list ul { margin: 0; padding: 0; }
+ .product-suggestions-list li { padding: 8px 12px; font-size: 0.9em; cursor: pointer; border-bottom: 1px solid #f0f0f0; transition: background-color 0.15s ease; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
  .product-suggestions-list li:last-child { border-bottom: none; }
  .product-suggestions-list li:hover { background-color: #e9ecef; }
  .product-suggestions-list li strong { font-weight: 600; color: var(--primary-color); }
  .product-suggestions-list li.no-suggestions { color: var(--text-muted); font-style: italic; cursor: default; }
  .product-suggestions-list li.no-suggestions:hover { background-color: transparent; }
 
-
 /* --- Order Summary Section --- */
-#orderSummarySection {
-    margin-top: 20px;
-    padding-top: 20px;
-    border-top: 1px solid var(--border-color);
-}
-.summary-grid {
-    display: grid;
-    grid-template-columns: auto 1fr; /* Label and Value/Input */
-    gap: 10px 15px; /* Row gap, Column gap */
-    align-items: center;
-    max-width: 500px; /* Limit width of summary */
-    margin-left: auto; /* Align to right */
-}
-.summary-label {
-    font-weight: 500;
-    text-align: right;
-    font-size: 0.95em;
-    color: var(--text-muted);
-}
-.summary-value {
-    font-weight: 600;
-    text-align: right;
-    font-size: 1em;
-}
-.summary-input input[type="number"] {
-    padding: 6px 10px;
-    font-size: 0.9em;
-    height: 36px;
-    text-align: right;
-    border-radius: 4px;
-    max-width: 150px; /* Limit width of input fields */
-    margin-left: auto; /* Push input to right */
-    display: block;
-}
-.summary-total {
-    font-weight: 700;
-    font-size: 1.1em;
-    color: var(--primary-color);
-}
-.summary-balance {
-    font-weight: 700;
-    font-size: 1.2em;
-    color: var(--success-color);
-}
+#orderSummarySection { margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--border-color); }
+.summary-grid { display: grid; grid-template-columns: auto 1fr; gap: 10px 15px; align-items: center; max-width: 500px; margin-left: auto; }
+.summary-label { font-weight: 500; text-align: right; font-size: 0.95em; color: var(--text-muted); }
+.summary-value { font-weight: 600; text-align: right; font-size: 1em; }
+.summary-input input[type="number"] { padding: 6px 10px; font-size: 0.9em; height: 36px; text-align: right; border-radius: 4px; max-width: 150px; margin-left: auto; display: block; border: 1px solid #ced4da; }
+.summary-input input[type="number"]:focus { border-color: var(--primary-color); outline: 0; box-shadow: var(--focus-shadow); }
+.summary-total { font-weight: 700; font-size: 1.1em; color: var(--primary-color); }
+.summary-balance { font-weight: 700; font-size: 1.2em; color: var(--success-color); }
 #orderSummarySection .summary-label.summary-total,
-#orderSummarySection .summary-label.summary-balance {
-    color: var(--text-color);
-    font-weight: 600;
-}
-#creditLimitWarning.error-message {
-     background-color: #fff3cd; /* Warning color */
-     color: #856404;
-     border-color: #ffeeba;
-     font-size: 0.9em;
-}
+#orderSummarySection .summary-label.summary-balance { color: var(--text-color); font-weight: 600; }
+#creditLimitWarning.error-message { background-color: #fff3cd; color: #856404; border-color: #ffeeba; font-size: 0.9em; }
 
-
-/* --- Order Status (Keep similar, maybe adjust grid) --- */
-#order-status-group { /* Styles from v1 */
-    gap: 10px; padding: 15px; border: 1px solid var(--border-color); border-radius: var(--border-radius); background-color: var(--light-bg); display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-}
+/* --- Order Status --- */
+#order-status-group { gap: 10px; padding: 15px; border: 1px solid var(--border-color); border-radius: var(--border-radius); background-color: var(--light-bg); display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); }
 #order-status-group label { margin-bottom: 0; border: 1px solid transparent; border-radius: var(--border-radius); padding: 8px 10px; cursor: pointer; transition: all 0.2s ease; display: flex; justify-content: center; align-items: center; font-size: 0.85em; text-align: center; font-weight: 500; color: white; background-color: var(--secondary-color); box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
 #order-status-group label:hover { opacity: 0.85; box-shadow: 0 2px 4px rgba(0,0,0,0.15); }
 #order-status-group label input[type="checkbox"] { display: none; }
-/* Status Colors */
 #order-status-group label:has(input[value="Order Received"]) { background-color: var(--secondary-color); border-color: #5a6268; }
 #order-status-group label:has(input[value="Designing"]) { background-color: var(--warning-color); border-color: #e0a800; color: #333; }
-#order-status-group label:has(input[value="Verification"]) { background-color: #fd7e14; border-color: #d96d12; } /* Orange */
-#order-status-group label:has(input[value="Design Approved"]) { background-color: #20c997; border-color: #1aa882; } /* Teal */
-#order-status-group label:has(input[value="Ready for Working"]) { background-color: #0dcaf0; border-color: #0baccc; color: #333; } /* Light Blue */
+#order-status-group label:has(input[value="Verification"]) { background-color: #fd7e14; border-color: #d96d12; }
+#order-status-group label:has(input[value="Design Approved"]) { background-color: #20c997; border-color: #1aa882; }
+#order-status-group label:has(input[value="Ready for Working"]) { background-color: #0dcaf0; border-color: #0baccc; color: #333; }
 #order-status-group label:has(input[value="Printing"]) { background-color: var(--info-color); border-color: #138496; }
 #order-status-group label:has(input[value="Delivered"]) { background-color: var(--success-color); border-color: #218838; }
-#order-status-group label:has(input[value="Completed"]) { background-color: var(--primary-color); border-color: #00418a; } /* Changed to primary */
-/* Checked State */
+#order-status-group label:has(input[value="Completed"]) { background-color: var(--primary-color); border-color: #00418a; }
 #order-status-group label:has(input[type="checkbox"]:checked) { box-shadow: inset 0 0 0 3px rgba(255, 255, 255, 0.6), 0 0 0 2px var(--primary-color); font-weight: 600; transform: scale(1.02); }
 
-
-/* --- Buttons Container (Keep as before) --- */
+/* --- Buttons & Error --- */
 .button-container { padding-top: 25px; margin-top: 30px; border-top: 1px solid var(--border-color); display: flex; justify-content: flex-end; gap: 15px; flex-wrap: wrap; }
 .save-button, .cancel-button { padding: 10px 25px; font-size: 1em; border: none; border-radius: var(--border-radius); cursor: pointer; font-weight: 600; display: inline-flex; align-items: center; justify-content: center; gap: 8px; transition: background-color 0.2s ease, box-shadow 0.2s ease, transform 0.1s ease; box-shadow: var(--box-shadow); min-width: 120px; }
 .save-button:hover, .cancel-button:hover { box-shadow: var(--box-shadow-lg); transform: translateY(-1px); }
@@ -343,13 +181,11 @@ body {
 .save-button:hover { background-color: #00418a; }
 .save-button:disabled { background-color: #a0cfff; cursor: not-allowed; opacity: 0.7; box-shadow: none; transform: none; }
 .save-button .fa-spinner { animation: fa-spin 1s infinite linear; }
-.cancel-button { background-color: var(--secondary-color); color: white; }
+.cancel-button { background-color: var(--darker-grey); color: white; }
 .cancel-button:hover { background-color: #5a6268; }
-
-/* --- Error Message --- */
 .error-message { color: var(--danger-color); background-color: #fdecea; border: 1px solid var(--danger-color); border-radius: var(--border-radius); padding: 10px 15px; font-weight: 500; text-align: center; margin-top: 20px; font-size: 0.9em; }
 
-/* --- WhatsApp Popup (Keep as before) --- */
+/* --- WhatsApp Popup --- */
 .popup-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.65); z-index: 1050; justify-content: center; align-items: center; padding: 20px; box-sizing: border-box; }
 .popup-overlay.active { display: flex; }
 .popup-content { background-color: #fff; padding: 30px 35px; border-radius: var(--border-radius); box-shadow: var(--box-shadow-lg); text-align: center; position: relative; max-width: 480px; width: 100%; animation: popupFadeIn 0.3s ease-out; }
@@ -364,42 +200,7 @@ body {
 .whatsapp-send-btn:active { transform: translateY(0px); box-shadow: var(--box-shadow); }
 .whatsapp-send-btn i { font-size: 1.2em; }
 
-
 /* --- Responsive Adjustments --- */
-@media (max-width: 992px) {
-    .form-layout-columns { flex-direction: column; } /* Stack columns */
-    .summary-grid { max-width: none; margin-left: 0; } /* Full width summary on smaller screens */
-}
-
-@media (max-width: 767px) {
-    body { padding: 15px; font-size: 14px;}
-    .container { padding: 20px; max-width: 100%; margin: 10px 0; }
-    .header { margin: -20px -20px 20px -20px; font-size: 1.15em; }
-    .form-row { flex-direction: column; gap: 15px; margin-bottom: 15px; }
-    .form-group-half { flex-basis: auto; }
-    .button-container { justify-content: space-between; gap: 10px; }
-    .save-button, .cancel-button { width: calc(50% - 5px); max-width: none; padding: 10px 15px; font-size: 0.95em;}
-    .form-section-card { padding: 15px 20px; margin-bottom: 20px;}
-    #order-status-group { grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 8px; padding: 10px; } /* Adjust status grid */
-    .summary-grid { grid-template-columns: auto 1fr; } /* Keep 2 columns */
-    .summary-input input[type="number"] { max-width: 120px; }
-    #orderItemsTable { min-width: 700px; } /* Still need min-width for scroll */
-    .table-container.order-items-table { margin-left: -20px; margin-right: -20px; padding-left: 0; padding-right: 0; border-left: none; border-right: none; border-radius: 0; }
-}
-
-@media (max-width: 480px) {
-    body { padding: 10px; }
-    .container { padding: 15px; }
-    .header { padding: 12px 15px; font-size: 1.1em; margin: -15px -15px 15px -15px;}
-    .button-container { flex-direction: column; align-items: stretch; }
-    .save-button, .cancel-button { width: 100%; max-width: none; }
-    #order-status-group label { font-size: 0.8em; padding: 6px 8px; } /* Smaller status labels */
-    .summary-grid { grid-template-columns: 1fr; gap: 8px; text-align: left; } /* Stack summary */
-    .summary-label { text-align: left; }
-    .summary-value { text-align: left; }
-    .summary-input input[type="number"] { max-width: none; margin-left: 0; }
-    #orderItemsTable { min-width: 600px; } /* Further reduce min-width */
-    #orderItemsTable thead th { font-size: 0.75em; padding: 8px 10px; }
-    #orderItemsTable tbody td { font-size: 0.85em; padding: 5px 8px; }
-    .table-container.order-items-table { margin-left: -15px; margin-right: -15px; }
-}
+@media (max-width: 992px) { .form-layout-columns { flex-direction: column; } .summary-grid { max-width: none; margin-left: 0; } }
+@media (max-width: 767px) { body { padding: 15px; font-size: 14px;} .container { padding: 20px; max-width: 100%; margin: 10px 0; } .header { margin: -20px -20px 20px -20px; font-size: 1.15em; } .form-row { flex-direction: column; gap: 15px; margin-bottom: 15px; } .form-group-half { flex-basis: auto; } .button-container { justify-content: space-between; gap: 10px; } .save-button, .cancel-button { width: calc(50% - 5px); max-width: none; padding: 10px 15px; font-size: 0.95em;} .form-section-card { padding: 15px 20px; margin-bottom: 20px;} #order-status-group { grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 8px; padding: 10px; } .summary-grid { grid-template-columns: auto 1fr; } .summary-input input[type="number"] { max-width: 120px; } #orderItemsTable { min-width: 700px; } .table-container.order-items-table { margin-left: -20px; margin-right: -20px; padding-left: 0; padding-right: 0; border-left: none; border-right: none; border-radius: 0; } }
+@media (max-width: 480px) { body { padding: 10px; } .container { padding: 15px; } .header { padding: 12px 15px; font-size: 1.1em; margin: -15px -15px 15px -15px;} .button-container { flex-direction: column; align-items: stretch; } .save-button, .cancel-button { width: 100%; max-width: none; } #order-status-group label { font-size: 0.8em; padding: 6px 8px; } .summary-grid { grid-template-columns: 1fr; gap: 8px; text-align: left; } .summary-label { text-align: left; } .summary-value { text-align: left; } .summary-input input[type="number"] { max-width: none; margin-left: 0; } #orderItemsTable { min-width: 600px; } #orderItemsTable thead th { font-size: 0.75em; padding: 8px 10px; } #orderItemsTable tbody td { font-size: 0.85em; padding: 5px 8px; } .table-container.order-items-table { margin-left: -15px; margin-right: -15px; } }
