@@ -48,8 +48,8 @@ const remarksInput = document.getElementById('remarks');
 const orderItemsTableBody = document.getElementById('orderItemsTableBody');
 const itemRowTemplate = document.getElementById('item-row-template');
 const addItemBtn = document.getElementById('addItemBtn');
-const calculationPreviewArea = document.getElementById('calculationPreviewArea'); // For Sq Ft preview
-const calculationPreviewContent = document.getElementById('calculationPreviewContent'); // Inner div for content
+const calculationPreviewArea = document.getElementById('calculationPreviewArea');
+const calculationPreviewContent = document.getElementById('calculationPreviewContent');
 const summarySubtotalSpan = document.getElementById('summarySubtotal');
 const summaryDiscountPercentInput = document.getElementById('summaryDiscountPercent');
 const summaryDiscountAmountInput = document.getElementById('summaryDiscountAmount');
@@ -67,16 +67,8 @@ const popupCloseBtn = document.getElementById('popup-close-btn');
 // --- Initialization ---
 document.addEventListener('DOMContentLoaded', () => {
     console.log("New Order DOM Loaded (v2.2.0). Initializing...");
-    // Check essential elements needed for core functionality
     if (!orderForm || !addItemBtn || !orderItemsTableBody || !itemRowTemplate || !calculationPreviewArea || !calculationPreviewContent) {
-        console.error("Critical DOM elements missing! Check HTML IDs.", {
-            orderForm: !!orderForm,
-            addItemBtn: !!addItemBtn,
-            orderItemsTableBody: !!orderItemsTableBody,
-            itemRowTemplate: !!itemRowTemplate,
-            calculationPreviewArea: !!calculationPreviewArea,
-            calculationPreviewContent: !!calculationPreviewContent
-        });
+        console.error("Critical DOM elements missing! Check HTML IDs.", { orderForm: !!orderForm, addItemBtn: !!addItemBtn, orderItemsTableBody: !!orderItemsTableBody, itemRowTemplate: !!itemRowTemplate, calculationPreviewArea: !!calculationPreviewArea, calculationPreviewContent: !!calculationPreviewContent });
         alert("Page structure error. Cannot initialize order form.");
         return;
     }
@@ -85,23 +77,18 @@ document.addEventListener('DOMContentLoaded', () => {
     // Event Listeners
     orderForm.addEventListener('submit', handleFormSubmit);
     addItemBtn.addEventListener('click', handleAddItem);
-    // Event delegation for item table
     orderItemsTableBody.addEventListener('click', handleItemTableClick);
     orderItemsTableBody.addEventListener('input', handleItemTableInput);
     orderItemsTableBody.addEventListener('change', handleItemTableChange);
     orderItemsTableBody.addEventListener('focusin', (event) => { if (event.target.matches('.product-name')) activeProductInput = event.target; });
     orderItemsTableBody.addEventListener('mousedown', handleSuggestionMouseDown);
-    // Customer Autocomplete Listeners
     if (customerNameInput) { customerNameInput.addEventListener('input', (e) => handleCustomerInput(e, 'name')); customerNameInput.addEventListener('blur', () => setTimeout(() => { if(customerSuggestionsNameBox && !customerSuggestionsNameBox.matches(':hover')) hideSuggestionBox(customerSuggestionsNameBox); }, 150)); } else { console.warn("Customer name input not found."); }
     if (customerWhatsAppInput) { customerWhatsAppInput.addEventListener('input', (e) => handleCustomerInput(e, 'whatsapp')); customerWhatsAppInput.addEventListener('blur', () => setTimeout(() => { if(customerSuggestionsWhatsAppBox && !customerSuggestionsWhatsAppBox.matches(':hover')) hideSuggestionBox(customerSuggestionsWhatsAppBox); }, 150)); } else { console.warn("Customer whatsapp input not found."); }
-    // Summary Field Listeners
     if (summaryDiscountPercentInput) summaryDiscountPercentInput.addEventListener('input', handleDiscountInput); else { console.warn("Discount % input not found."); }
     if (summaryDiscountAmountInput) summaryDiscountAmountInput.addEventListener('input', handleDiscountInput); else { console.warn("Discount Amount input not found."); }
     if (summaryAdvancePaymentInput) summaryAdvancePaymentInput.addEventListener('input', updateOrderSummary); else { console.warn("Advance Payment input not found."); }
-    // WhatsApp Popup Listener
     if (popupCloseBtn) popupCloseBtn.addEventListener('click', closeWhatsAppPopup);
     if (whatsappReminderPopup) whatsappReminderPopup.addEventListener('click', (event) => { if (event.target === whatsappReminderPopup) closeWhatsAppPopup(); });
-    // Global click listener for hiding product suggestions
     document.addEventListener('click', handleGlobalClick);
 });
 
@@ -125,96 +112,22 @@ function preFetchCaches() { /* ... Same as v2.1.1 ... */ console.log("Pre-fetchi
 // --- Load Order For Edit ---
 async function loadOrderForEdit(docId) { /* ... Same as v2.1.1 ... */ console.log(`Loading order: ${docId}`); showFormError(''); if(!db||!doc||!getDoc){showFormError("DB func error.");return;} try{const r=doc(db,"orders",docId);const s=await getDoc(r); if(s.exists()){currentOrderData=s.data();console.log("Order loaded:",currentOrderData);selectedCustomerId=currentOrderData.customerId||null;if(selectedCustomerIdInput)selectedCustomerIdInput.value=selectedCustomerId;if(currentOrderData.customerDetails){customerNameInput.value=currentOrderData.customerDetails.fullName||'';customerWhatsAppInput.value=currentOrderData.customerDetails.whatsappNo||'';customerAddressInput.value=currentOrderData.customerDetails.address||'';customerContactInput.value=currentOrderData.customerDetails.contactNo||'';if(selectedCustomerId){fetchAndDisplayCustomerDetails(selectedCustomerId);}else{resetCustomerSelectionUI();}} displayOrderIdInput.value=currentOrderData.orderId||docId;manualOrderIdInput.value=currentOrderData.orderId||'';orderDateInput.value=currentOrderData.orderDate||'';deliveryDateInput.value=currentOrderData.deliveryDate||'';remarksInput.value=currentOrderData.remarks||'';const uV=currentOrderData.urgent||'No';const uR=orderForm.querySelector(`input[name="urgent"][value="${uV}"]`);if(uR)uR.checked=true; handleStatusCheckboxes(true);orderStatusCheckboxes.forEach(c=>c.checked=false);if(currentOrderData.status){const sC=orderForm.querySelector(`input[name="order_status"][value="${currentOrderData.status}"]`);if(sC)sC.checked=true;} if(!orderItemsTableBody){console.error("Item table body missing!");return;} orderItemsTableBody.innerHTML=''; if(currentOrderData.items&&Array.isArray(currentOrderData.items)){currentOrderData.items.forEach(i=>{const nR=addItemRow(false); if(nR)populateItemRow(nR,i);else console.error("Failed to add row for item:",i);});} if(orderItemsTableBody.children.length===0){handleAddItem();} if(summaryDiscountPercentInput)summaryDiscountPercentInput.value=currentOrderData.discountPercentage||''; if(summaryDiscountAmountInput)summaryDiscountAmountInput.value=currentOrderData.discountAmount||''; if(summaryAdvancePaymentInput)summaryAdvancePaymentInput.value=currentOrderData.advancePayment||''; updateOrderSummary();}else{console.error("Order doc not found!");showFormError("Error: Order not found.");if(saveButton)saveButton.disabled=true;}}catch(e){console.error("Load order error:",e);showFormError("Error loading data: "+e.message);if(saveButton)saveButton.disabled=true;}}
 
-
 // --- Item Handling ---
 function handleAddItem() { /* ... Same as v2.1.1 ... */ console.log("Adding item..."); if(!itemRowTemplate || !orderItemsTableBody){console.error("Template or body missing!");showFormError("Error: Page setup incomplete.");return;} const nR=addItemRow(true); if(nR){console.log("Row added.");updateOrderSummary();}else{console.error("Failed adding row.");}}
 function addItemRow(focus = true) { /* ... Same as v2.1.1 ... */ if (!itemRowTemplate || !orderItemsTableBody) { console.error("addItemRow: Prereqs missing!"); return null; } try { const tC = itemRowTemplate.content.cloneNode(true), nRE = tC.querySelector('.item-row'); if (!nRE) { console.error("Template missing .item-row"); return null; } orderItemsTableBody.appendChild(nRE); const aR = orderItemsTableBody.lastElementChild; if (!aR || !aR.matches('.item-row')) { console.error("Append failed."); return null; } const uS = aR.querySelector('.unit-type-select'); if (uS) handleUnitTypeChange({ target: uS }); if (focus) aR.querySelector('.product-name')?.focus(); console.log("Row added."); return aR; } catch (e) { console.error("addItemRow error:", e); showFormError(`Create item row error: ${e.message}`); return null; } }
 function populateItemRow(row, itemData) { /* ... Same as v2.1.1 ... */ if(!row||!itemData)return;console.log("Populating:",itemData);try{row.querySelector('.product-name').value=itemData.productName||'';row.querySelector('.unit-type-select').value=itemData.unitType||'Qty';row.querySelector('.quantity-input').value=itemData.quantity||1;const rI=row.querySelector('.rate-input');rI.value=itemData.rate!==undefined?itemData.rate:'';const mR=itemData.minSalePrice;row.querySelector('.min-rate-value').textContent=mR!==undefined&&mR!==null?parseFloat(mR).toFixed(2):'--';rI.dataset.minRate=mR!==undefined&&mR!==null?mR:'-1';if(itemData.unitType==='Sq Feet'){row.querySelector('.dimension-unit-select').value=itemData.dimensionUnit||'feet';row.querySelector('.width-input').value=itemData.width||'';row.querySelector('.height-input').value=itemData.height||'';}handleUnitTypeChange({target:row.querySelector('.unit-type-select')});updateItemAmount(row);}catch(e){console.error("Populate err:",e);}}
-function handleItemTableClick(event) { /* ... Same as v2.1.1 ... */ if (event.target.closest('.delete-item-btn')) { const r=event.target.closest('.item-row'); if(r){r.remove();hideProductSuggestions();updateOrderSummary();updateCalculationPreview(); /* Update preview on delete */}}}
+function handleItemTableClick(event) { /* ... Update preview on delete ... */ if (event.target.closest('.delete-item-btn')) { const r=event.target.closest('.item-row'); if(r){r.remove();hideProductSuggestions();updateOrderSummary();updateCalculationPreview(); /* Update preview on delete */}}}
 function handleSuggestionMouseDown(event) { /* ... Same as v2.1.1 ... */ const pLI=event.target.closest('.product-suggestions-list li[data-product]'),cLI=event.target.closest('.suggestions-box li[data-customer-id]');if(pLI){event.preventDefault();const pD=JSON.parse(pLI.dataset.product||'{}');if(activeProductInput)selectProductSuggestion(pD,activeProductInput);}else if(cLI){event.preventDefault();fillCustomerData(cLI.dataset);const b=cLI.closest('.suggestions-box');if(b)hideSuggestionBox(b);}}
-function handleItemTableInput(event) { /* ... Same as v2.1.1 ... */ const t=event.target,r=t.closest('.item-row'); if(!r)return; if(t.matches('.product-name')){activeProductInput=t;handleProductSearchInput(event);}else if(t.matches('.quantity-input, .rate-input, .width-input, .height-input')){updateItemAmount(r);}} // updateItemAmount now calls updateCalculationPreview
-function handleItemTableChange(event){ /* ... Same as v2.1.1 ... */ const t=event.target,r=t.closest('.item-row'); if(!r)return; if(t.matches('.unit-type-select'))handleUnitTypeChange(event); else if(t.matches('.dimension-unit-select'))updateItemAmount(r);} // updateItemAmount now calls updateCalculationPreview
-
+function handleItemTableInput(event) { /* ... Same as v2.1.1 ... */ const t=event.target,r=t.closest('.item-row'); if(!r)return; if(t.matches('.product-name')){activeProductInput=t;handleProductSearchInput(event);}else if(t.matches('.quantity-input, .rate-input, .width-input, .height-input')){updateItemAmount(r);}} // updateItemAmount calls updateCalculationPreview
+function handleItemTableChange(event){ /* ... Same as v2.1.1 ... */ const t=event.target,r=t.closest('.item-row'); if(!r)return; if(t.matches('.unit-type-select'))handleUnitTypeChange(event); else if(t.matches('.dimension-unit-select'))updateItemAmount(r);} // updateItemAmount calls updateCalculationPreview
 
 // --- Sq Ft Calculation Logic ---
-function calculateFlexDimensions(unit, width, height) { /* ... Same as v2.1.1 ... */ const m=[3,4,5,6,8,10]; let w=(unit==='inches')?parseFloat(width||0)/12:parseFloat(width||0), h=(unit==='inches')?parseFloat(height||0)/12:parseFloat(height||0); if(isNaN(w)||isNaN(h)||w<=0||h<=0) return{realSqFt:0, printSqFt:0}; const r=w*h; let b={pW:0,pH:0,pS:Infinity}; const fW=m.find(x=>x>=w); let pW1=fW||w, pH1=h, pS1=pW1*pH1; const fH=m.find(x=>x>=h); let pW2=w, pH2=fH||h, pS2=pW2*pH2; if(pS1<=pS2){b.pW=pW1; b.pH=pH1; b.pS=pS1;} else{b.pW=pW2; b.pH=pH2; b.pS=pS2;} return{realSqFt:r, printWidthFt:b.pW, printHeightFt:b.pH, printSqFt:b.pS};}
+function calculateFlexDimensions(unit, width, height) { /* ... Same as v2.2.0 ... */ const m=[3,4,5,6,8,10]; let w=(unit==='inches')?parseFloat(width||0)/12:parseFloat(width||0), h=(unit==='inches')?parseFloat(height||0)/12:parseFloat(height||0); if(isNaN(w)||isNaN(h)||w<=0||h<=0) return{realSqFt:0, printSqFt:0, realWidthFt:0, realHeightFt:0, printWidthFt:0, printHeightFt:0}; const r=w*h; let b={pW:0,pH:0,pS:Infinity}; const fW=m.find(x=>x>=w); let pW1=fW||w, pH1=h, pS1=pW1*pH1; const fH=m.find(x=>x>=h); let pW2=w, pH2=fH||h, pS2=pW2*pH2; if(pS1<=pS2){b.pW=pW1; b.pH=pH1; b.pS=pS1;} else{b.pW=pW2; b.pH=pH2; b.pS=pS2;} return{realSqFt:r, printWidthFt:b.pW, printHeightFt:b.pH, printSqFt:b.pS, realWidthFt: w, realHeightFt: h };}
 function handleUnitTypeChange(event) { /* ... Same as v2.1.1 ... */ const r=event.target.closest('.item-row'); if(!r)return; const uT=event.target.value; r.querySelectorAll('.sq-feet-input').forEach(e=>e.style.display=(uT==='Sq Feet')?'':'none'); r.closest('table')?.querySelectorAll('thead th.sq-feet-header').forEach(h=>h.classList.toggle('hidden-col',uT!=='Sq Feet')); r.querySelector('.rate-input').placeholder=(uT==='Sq Feet')?'Rate/SqFt':'Rate/Unit'; if(uT!=='Sq Feet'){r.querySelector('.width-input').value=''; r.querySelector('.height-input').value='';} updateItemAmount(r);}
-function updateItemAmount(row) { /* ... Same as v2.1.1 + calls updateCalculationPreview ... */ if (!row) return; const uTS=row.querySelector('.unit-type-select'),aS=row.querySelector('.item-amount'),rI=row.querySelector('.rate-input'),qI=row.querySelector('.quantity-input'),mR=parseFloat(rI?.dataset.minRate||-1); let cA=0,rV=parseFloat(rI?.value||0),q=parseInt(qI?.value||1); if(isNaN(q)||q<1)q=1; try{if(mR>=0&&rV<mR){rI.classList.add('input-error');rI.title=`Rate < Min: ${formatCurrency(mR)}`;}else{rI.classList.remove('input-error');rI.title='';} if(uTS?.value==='Sq Feet'){const dUS=row.querySelector('.dimension-unit-select'),wI=row.querySelector('.width-input'),hI=row.querySelector('.height-input'); const u=dUS?.value||'feet',w=parseFloat(wI?.value||0),h=parseFloat(hI?.value||0); if(w>0&&h>0&&rV>=0){const cR=calculateFlexDimensions(u,w,h);cA=parseFloat(cR.printSqFt||0)*q*rV;}}else{if(rV>=0)cA=q*rV;}}catch(e){console.error("Amt calc error:",e);cA=0;} if(aS)aS.textContent=cA.toFixed(2); updateOrderSummary(); updateCalculationPreview(); /* Call preview update */}
+function updateItemAmount(row) { /* ... Same as v2.2.0 ... */ if (!row) return; const uTS=row.querySelector('.unit-type-select'),aS=row.querySelector('.item-amount'),rI=row.querySelector('.rate-input'),qI=row.querySelector('.quantity-input'),mR=parseFloat(rI?.dataset.minRate||-1); let cA=0,rV=parseFloat(rI?.value||0),q=parseInt(qI?.value||1); if(isNaN(q)||q<1)q=1; try{if(mR>=0&&rV<mR){rI.classList.add('input-error');rI.title=`Rate < Min: ${formatCurrency(mR)}`;}else{rI.classList.remove('input-error');rI.title='';} if(uTS?.value==='Sq Feet'){const dUS=row.querySelector('.dimension-unit-select'),wI=row.querySelector('.width-input'),hI=row.querySelector('.height-input'); const u=dUS?.value||'feet',w=parseFloat(wI?.value||0),h=parseFloat(hI?.value||0); if(w>0&&h>0&&rV>=0){const cR=calculateFlexDimensions(u,w,h);cA=parseFloat(cR.printSqFt||0)*q*rV;}}else{if(rV>=0)cA=q*rV;}}catch(e){console.error("Amt calc error:",e);cA=0;} if(aS)aS.textContent=cA.toFixed(2); updateOrderSummary(); updateCalculationPreview(); }
 
-
-// --- Calculation Preview Logic (NEW) ---
-function updateCalculationPreview() {
-    if (!calculationPreviewArea || !calculationPreviewContent || !orderItemsTableBody) {
-        console.warn("Calculation preview elements missing.");
-        return;
-    }
-
-    let entriesHTML = '';
-    const itemRows = orderItemsTableBody.querySelectorAll('.item-row');
-    let foundSqFt = false;
-
-    itemRows.forEach((row, index) => {
-        const unitTypeSelect = row.querySelector('.unit-type-select');
-        if (unitTypeSelect?.value === 'Sq Feet') {
-            foundSqFt = true;
-            const productNameInput = row.querySelector('.product-name');
-            const productName = productNameInput?.value.trim() || `Item ${index + 1}`;
-            const dimensionUnitSelect = row.querySelector('.dimension-unit-select');
-            const widthInput = row.querySelector('.width-input');
-            const heightInput = row.querySelector('.height-input');
-            const quantityInput = row.querySelector('.quantity-input');
-
-            const unit = dimensionUnitSelect?.value || 'feet';
-            const width = parseFloat(widthInput?.value || 0);
-            const height = parseFloat(heightInput?.value || 0);
-            let quantity = parseInt(quantityInput?.value || 1);
-             if (isNaN(quantity) || quantity < 1) quantity = 1;
-
-            let entryContent = `<div class="item-preview-entry"><strong>${productName}:</strong><br>`; // Wrap each item
-
-            if (width > 0 && height > 0) {
-                const calcResult = calculateFlexDimensions(unit, width, height);
-                if (calcResult && parseFloat(calcResult.printSqFt) > 0) {
-                    const realSqFtNum = parseFloat(calcResult.realSqFt);
-                    const printSqFtNum = parseFloat(calcResult.printSqFt);
-                    const wastageSqFt = (printSqFtNum - realSqFtNum);
-                    const tolerance = 0.01;
-
-                    // Convert print dimensions back to input unit for display consistency if needed
-                    // let displayPrintW = (unit === 'inches') ? calcResult.printWidthFt * 12 : calcResult.printWidthFt;
-                    // let displayPrintH = (unit === 'inches') ? calcResult.printHeightFt * 12 : calcResult.printHeightFt;
-
-                    let wastageDesc = (wastageSqFt > tolerance)
-                        ? `<span style="color: orange;">Wastage: ${wastageSqFt.toFixed(2)} sq ft/item</span>`
-                        : `<span style="color: green;">Wastage: ${wastageSqFt.toFixed(2)} sq ft/item</span>`;
-
-                    entryContent += `&nbsp; Qty: ${quantity}<br>`;
-                    // Show dimensions in feet for clarity in calculation
-                    entryContent += `&nbsp; Real: ${calcResult.realWidthFt?.toFixed(2) ?? '?'}ft x ${calcResult.realHeightFt?.toFixed(2) ?? '?'}ft = ${realSqFtNum.toFixed(2)} sq ft/item<br>`;
-                    entryContent += `&nbsp; Print: ${calcResult.printWidthFt.toFixed(2)}ft x ${calcResult.printHeightFt.toFixed(2)}ft = ${printSqFtNum.toFixed(2)} sq ft/item<br>`;
-                    entryContent += `&nbsp; Total Print Area: ${(printSqFtNum * quantity).toFixed(2)} sq ft<br>`;
-                    entryContent += `&nbsp; ${wastageDesc}`;
-                } else {
-                    entryContent += `&nbsp; <span style="color:orange;">Invalid dimensions or calc error.</span>`;
-                }
-            } else {
-                entryContent += `&nbsp; <span style="color:grey;">Enter valid width & height.</span>`;
-            }
-            entryContent += `</div>`; // Close item-preview-entry
-            entriesHTML += entryContent;
-        }
-    });
-
-    if (foundSqFt) {
-        calculationPreviewContent.innerHTML = entriesHTML || '<p style="color:grey;">Enter dimensions.</p>'; // Show entries or placeholder
-        calculationPreviewArea.style.display = 'block'; // Show the area
-    } else {
-        calculationPreviewArea.style.display = 'none'; // Hide if no SqFt items
-        // Optional: Reset content when hidden
-        // calculationPreviewContent.innerHTML = '<p style="color:grey;">Add Sq Feet items...</p>';
-    }
-}
-
+// --- Calculation Preview Logic ---
+function updateCalculationPreview() { /* ... Same as v2.2.0 ... */ if (!calculationPreviewArea || !calculationPreviewContent || !orderItemsTableBody) { console.warn("Calc preview elements missing."); return; } let entriesHTML = ''; const itemRows = orderItemsTableBody.querySelectorAll('.item-row'); let foundSqFt = false; itemRows.forEach((row, index) => { const unitTypeSelect = row.querySelector('.unit-type-select'); if (unitTypeSelect?.value === 'Sq Feet') { foundSqFt = true; const productNameInput = row.querySelector('.product-name'); const productName = productNameInput?.value.trim() || `Item ${index + 1}`; const dimensionUnitSelect = row.querySelector('.dimension-unit-select'); const widthInput = row.querySelector('.width-input'); const heightInput = row.querySelector('.height-input'); const quantityInput = row.querySelector('.quantity-input'); const unit = dimensionUnitSelect?.value || 'feet'; const width = parseFloat(widthInput?.value || 0); const height = parseFloat(heightInput?.value || 0); let quantity = parseInt(quantityInput?.value || 1); if (isNaN(quantity) || quantity < 1) quantity = 1; let entryContent = `<div class="item-preview-entry"><strong>${productName}:</strong><br>`; if (width > 0 && height > 0) { const calcResult = calculateFlexDimensions(unit, width, height); if (calcResult && parseFloat(calcResult.printSqFt) > 0) { const realSqFtNum = parseFloat(calcResult.realSqFt); const printSqFtNum = parseFloat(calcResult.printSqFt); const wastageSqFt = (printSqFtNum - realSqFtNum); const tolerance = 0.01; let wastageDesc = (wastageSqFt > tolerance) ? `<span style="color: orange;">Wastage: ${wastageSqFt.toFixed(2)} sq ft/item</span>` : `<span style="color: green;">Wastage: ${wastageSqFt.toFixed(2)} sq ft/item</span>`; entryContent += `&nbsp; Qty: ${quantity}<br>`; entryContent += `&nbsp; Real: ${calcResult.realWidthFt?.toFixed(2) ?? '?'}ft x ${calcResult.realHeightFt?.toFixed(2) ?? '?'}ft = ${realSqFtNum.toFixed(2)} sq ft/item<br>`; entryContent += `&nbsp; Print: ${calcResult.printWidthFt.toFixed(2)}ft x ${calcResult.printHeightFt.toFixed(2)}ft = ${printSqFtNum.toFixed(2)} sq ft/item<br>`; entryContent += `&nbsp; Total Print Area: ${(printSqFtNum * quantity).toFixed(2)} sq ft<br>`; entryContent += `&nbsp; ${wastageDesc}`; } else { entryContent += `&nbsp; <span style="color:orange;">Invalid dimensions or calc error.</span>`; } } else { entryContent += `&nbsp; <span style="color:grey;">Enter valid width & height.</span>`; } entryContent += `</div>`; entriesHTML += entryContent; } }); if (foundSqFt) { calculationPreviewContent.innerHTML = entriesHTML || '<p style="color:grey;">Enter dimensions.</p>'; calculationPreviewArea.style.display = 'block'; } else { calculationPreviewArea.style.display = 'none'; } }
 
 // --- Order Summary Calculation ---
 function updateOrderSummary() { /* ... Same as v2.1.1 ... */ let s=0; if(orderItemsTableBody) orderItemsTableBody.querySelectorAll('.item-row .item-amount').forEach(sp=>s+=parseFloat(sp.textContent||0)); let dP=parseFloat(summaryDiscountPercentInput?.value||0),dA=parseFloat(summaryDiscountAmountInput?.value||0),cDA=0; if(!isDiscountInputProgrammaticChange){if(document.activeElement===summaryDiscountPercentInput&&!isNaN(dP)){cDA=s*(dP/100); isDiscountInputProgrammaticChange=true; if(summaryDiscountAmountInput) summaryDiscountAmountInput.value=cDA.toFixed(2); isDiscountInputProgrammaticChange=false;}else if(document.activeElement===summaryDiscountAmountInput&&!isNaN(dA)){cDA=dA; if(s>0){const cP=(cDA/s)*100; isDiscountInputProgrammaticChange=true; if(summaryDiscountPercentInput) summaryDiscountPercentInput.value=cP.toFixed(2); isDiscountInputProgrammaticChange=false;}else{isDiscountInputProgrammaticChange=true; if(summaryDiscountPercentInput) summaryDiscountPercentInput.value=''; isDiscountInputProgrammaticChange=false;}}else{if(!isNaN(dP)&&dP>0)cDA=s*(dP/100); else if(!isNaN(dA)&&dA>0)cDA=dA; else cDA=0;}} cDA=Math.max(0,Math.min(cDA,s)); const fA=s-cDA,aP=parseFloat(summaryAdvancePaymentInput?.value||0),tB=fA-aP; if(summarySubtotalSpan)summarySubtotalSpan.textContent=s.toFixed(2); if(summaryFinalAmountSpan)summaryFinalAmountSpan.textContent=fA.toFixed(2); if(summaryTotalBalanceSpan)summaryTotalBalanceSpan.textContent=tB.toFixed(2); checkCreditLimit();}
@@ -257,5 +170,4 @@ function resetNewOrderForm() { /* ... Same as v2.1.1 ... */ console.log("Resetti
 function showWhatsAppReminder(customer, orderId, deliveryDate) { /* ... Same as v2.1.1 ... */ if(!whatsappReminderPopup||!whatsappMsgPreview||!whatsappSendLink){if(!isEditMode)resetNewOrderForm();return;} const cN=customer.fullName||'Customer',cNum=customer.whatsappNo?.replace(/[^0-9]/g,''); if(!cNum){if(!isEditMode)resetNewOrderForm();return;} const fDD=deliveryDate?new Date(deliveryDate).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}):' जल्द से जल्द'; let msg=`प्रिय ${cN},\nआपका ऑर्डर (Order ID: ${orderId}) सफलतापूर्वक सहेज लिया गया है। डिलीवरी की अनुमानित तिथि: ${fDD}.\nधन्यवाद,\nMadhav Offset`; whatsappMsgPreview.innerText=msg; const eM=encodeURIComponent(msg); const wUrl=`https://wa.me/${cNum}?text=${eM}`; whatsappSendLink.href=wUrl; whatsappReminderPopup.classList.add('active'); whatsappSendLink.onclick=()=>{if(!isEditMode)resetNewOrderForm(); closeWhatsAppPopup();}; popupCloseBtn.onclick=()=>{if(!isEditMode)resetNewOrderForm(); closeWhatsAppPopup();}; whatsappReminderPopup.onclick=(e)=>{if(e.target===whatsappReminderPopup){if(!isEditMode)resetNewOrderForm(); closeWhatsAppPopup();}}; }
 function closeWhatsAppPopup() { /* ... Same as v2.1.1 ... */ if(whatsappReminderPopup)whatsappReminderPopup.classList.remove('active'); whatsappSendLink.onclick=null; popupCloseBtn.onclick=null; whatsappReminderPopup.onclick=null; if(whatsappReminderPopup)whatsappReminderPopup.addEventListener('click',(e)=>{if(e.target===whatsappReminderPopup)closeWhatsAppPopup();}); if(popupCloseBtn)popupCloseBtn.addEventListener('click',closeWhatsAppPopup); }
 
-
-console.log("new_order.js script loaded (v2.2.0)."); // Version updated
+console.log("new_order.js script loaded (v2.2.0).");

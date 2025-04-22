@@ -11,7 +11,7 @@
     <link rel="stylesheet" href="css/new_order.css"> <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" integrity="sha512-9usAa10IRO0HhonpyAIVpjrylPvoDwiPUiKdWk5t3PyolY1cOd4DSE0Ga+ri4AuTroPR5aQvXU9xC6qOPnzFeg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
 
     <script type="module">
-        // --- Firebase Setup ---
+        // --- Firebase Setup (Same as before) ---
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
         import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
         import { getFirestore, collection, addDoc, doc, updateDoc, getDocs, query, where, getDoc, orderBy, limit, Timestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
@@ -59,80 +59,82 @@
             <input type="hidden" id="selectedCustomerId" name="selectedCustomerId">
 
             <div class="form-layout-columns">
-                <div class="form-column">
-                    <div class="form-section-card">
-                        <div class="section-title">1. Customer Details</div>
-                        <div class="form-row">
-                            <div class="form-group form-group-half">
-                                <label for="full_name">Full Name *</label>
-                                <input type="text" id="full_name" name="full_name" required autocomplete="off" placeholder="Search or enter customer name...">
-                                <div id="customer-suggestions-name" class="suggestions-box"><ul></ul></div>
+                 <div class="form-column">
+                     <div class="form-section-card">
+                         {/* Customer Details Content */}
+                         <div class="section-title">1. Customer Details</div>
+                         <div class="form-row">
+                             <div class="form-group form-group-half">
+                                 <label for="full_name">Full Name *</label>
+                                 <input type="text" id="full_name" name="full_name" required autocomplete="off" placeholder="Search or enter customer name...">
+                                 <div id="customer-suggestions-name" class="suggestions-box"><ul></ul></div>
+                             </div>
+                             <div class="form-group form-group-half">
+                                 <label for="whatsapp_no">WhatsApp No *</label>
+                                 <input type="text" id="whatsapp_no" name="whatsapp_no" required autocomplete="off" placeholder="Search or enter WhatsApp no...">
+                                 <div id="customer-suggestions-whatsapp" class="suggestions-box"><ul></ul></div>
+                             </div>
+                         </div>
+                          <div class="form-row">
+                             <div class="form-group form-group-half">
+                                 <label for="address">Address</label>
+                                 <input type="text" id="address" name="address" placeholder="Autofills or enter address">
+                             </div>
+                             <div class="form-group form-group-half">
+                                 <label for="contact_no">Contact No</label>
+                                 <input type="text" id="contact_no" name="contact_no" placeholder="Autofills or enter contact">
+                             </div>
+                          </div>
+                          <div class="form-row">
+                              <div class="form-group form-group-full" id="customerAccountLinkArea" style="margin-top: -10px; margin-bottom: 5px; display: none;">
+                                  <a href="#" id="viewCustomerAccountLink" target="_blank" class="link-button">View Full Account Details</a>
+                              </div>
+                              <div class="form-group form-group-full" id="customerBalanceArea" style="display: none; font-size: 0.9em; margin-bottom: 5px;">
+                                  Current Balance: <strong id="customerCurrentBalance"></strong>
+                              </div>
+                          </div>
+                         <p class="info-text">*Search existing customer or enter details for a new one.</p>
+                    </div>
+                 </div>
+                 <div class="form-column">
+                     <div class="form-section-card">
+                          {/* Order Details Content */}
+                         <div class="section-title">2. Order Details</div>
+                         <div class="form-row">
+                             <div class="form-group form-group-half">
+                                <label for="manual_order_id">Order ID (Manual)</label>
+                                <input type="text" id="manual_order_id" name="manual_order_id" placeholder="Optional - Auto-generated if empty">
                             </div>
-                            <div class="form-group form-group-half">
-                                <label for="whatsapp_no">WhatsApp No *</label>
-                                <input type="text" id="whatsapp_no" name="whatsapp_no" required autocomplete="off" placeholder="Search or enter WhatsApp no...">
-                                <div id="customer-suggestions-whatsapp" class="suggestions-box"><ul></ul></div>
+                             <div class="form-group form-group-half">
+                                <label for="display_order_id">Order ID (System)</label>
+                                <input type="text" id="display_order_id" name="display_order_id" readonly placeholder="Auto-generated or Existing">
                             </div>
                         </div>
                          <div class="form-row">
-                            <div class="form-group form-group-half">
-                                <label for="address">Address</label>
-                                <input type="text" id="address" name="address" placeholder="Autofills or enter address">
+                             <div class="form-group form-group-half">
+                                <label for="order_date">Order Date *</label>
+                                <input type="date" id="order_date" name="order_date" required>
                             </div>
                             <div class="form-group form-group-half">
-                                <label for="contact_no">Contact No</label>
-                                <input type="text" id="contact_no" name="contact_no" placeholder="Autofills or enter contact">
+                                <label for="delivery_date">Delivery Date</label>
+                                <input type="date" id="delivery_date" name="delivery_date">
                             </div>
-                         </div>
-                         <div class="form-row">
-                             <div class="form-group form-group-full" id="customerAccountLinkArea" style="margin-top: -10px; margin-bottom: 5px; display: none;">
-                                 <a href="#" id="viewCustomerAccountLink" target="_blank" class="link-button">View Full Account Details</a>
-                             </div>
-                             <div class="form-group form-group-full" id="customerBalanceArea" style="display: none; font-size: 0.9em; margin-bottom: 5px;">
-                                 Current Balance: <strong id="customerCurrentBalance"></strong>
-                             </div>
-                         </div>
-                        <p class="info-text">*Search existing customer or enter details for a new one.</p>
-                    </div>
-                </div>
-                <div class="form-column">
-                    <div class="form-section-card">
-                        <div class="section-title">2. Order Details</div>
+                        </div>
                         <div class="form-row">
-                            <div class="form-group form-group-half">
-                               <label for="manual_order_id">Order ID (Manual)</label>
-                               <input type="text" id="manual_order_id" name="manual_order_id" placeholder="Optional - Auto-generated if empty">
-                           </div>
-                            <div class="form-group form-group-half">
-                               <label for="display_order_id">Order ID (System)</label>
-                               <input type="text" id="display_order_id" name="display_order_id" readonly placeholder="Auto-generated or Existing">
-                           </div>
-                       </div>
-                        <div class="form-row">
-                            <div class="form-group form-group-half">
-                               <label for="order_date">Order Date *</label>
-                               <input type="date" id="order_date" name="order_date" required>
-                           </div>
-                           <div class="form-group form-group-half">
-                               <label for="delivery_date">Delivery Date</label>
-                               <input type="date" id="delivery_date" name="delivery_date">
-                           </div>
-                       </div>
-                       <div class="form-row">
-                           <div class="form-group priority-group" style="flex-basis: 150px;">
-                                <label>Urgent?</label>
-                                <div class="radio-group">
-                                      <label><input type="radio" name="urgent" value="Yes"> Yes</label>
-                                     <label><input type="radio" name="urgent" value="No" checked> No</label>
-                                 </div>
+                            <div class="form-group priority-group" style="flex-basis: 150px;">
+                                 <label>Urgent?</label>
+                                 <div class="radio-group">
+                                       <label><input type="radio" name="urgent" value="Yes"> Yes</label>
+                                      <label><input type="radio" name="urgent" value="No" checked> No</label>
+                                  </div>
+                             </div>
+                            <div class="form-group remarks-group" style="flex: 1;">
+                                 <label for="remarks">Remarks</label>
+                                <textarea id="remarks" name="remarks" placeholder="Any specific notes..."></textarea>
                             </div>
-                           <div class="form-group remarks-group" style="flex: 1;">
-                                <label for="remarks">Remarks</label>
-                               <textarea id="remarks" name="remarks" placeholder="Any specific notes..."></textarea>
-                           </div>
-                       </div>
-                    </div>
-                </div>
+                        </div>
+                     </div>
+                 </div>
             </div> <div class="form-section-inline" id="orderStatusSection">
                 <div id="order-status-group" class="form-group order-status-group">
                     <label><input type="checkbox" name="order_status" value="Order Received"><span>Order Received</span></label>
@@ -145,7 +147,6 @@
                     <label><input type="checkbox" name="order_status" value="Completed"><span>Completed</span></label>
                 </div>
              </div>
-
 
             <div class="form-section-card">
                 <div class="section-title">3. Product & Job Details</div>
@@ -164,7 +165,8 @@
                             </tr>
                         </thead>
                         <tbody id="orderItemsTableBody">
-                            </tbody>
+                            {/* Item rows added by JS */}
+                        </tbody>
                     </table>
                 </div>
                 <button type="button" id="addItemBtn" class="button add-item-button"><i class="fas fa-plus"></i> Add Item</button>
@@ -185,7 +187,9 @@
                          <div class="summary-rows">
                              <div class="summary-row">
                                  <span class="summary-label">Subtotal:</span>
-                                 <span class="summary-value">₹ <span id="summarySubtotal">0.00</span></span>
+                                 <span class="summary-value-box subtotal-box">
+                                     ₹ <span id="summarySubtotal">0.00</span>
+                                 </span>
                              </div>
                              <div class="summary-row">
                                  <label for="summaryDiscountPercent" class="summary-label">Discount (%):</label>
@@ -197,7 +201,9 @@
                              </div>
                              <div class="summary-row summary-highlight summary-final">
                                  <span class="summary-label">Final Amount:</span>
-                                 <span class="summary-value">₹ <span id="summaryFinalAmount">0.00</span></span>
+                                 <span class="summary-value-box final-amount-box">
+                                     ₹ <span id="summaryFinalAmount">0.00</span>
+                                 </span>
                              </div>
                               <div class="summary-row">
                                  <label for="summaryAdvancePayment" class="summary-label">Advance Payment:</label>
@@ -243,5 +249,7 @@
          <div class="popup-content"> <button id="popup-close-btn" class="popup-close" title="Close">&times;</button> <h4>Order Saved Successfully!</h4> <p>Send update to customer?</p> <div id="whatsapp-message-preview" class="message-preview"></div> <a href="#" id="whatsapp-send-link" class="button whatsapp-send-btn" target="_blank"> <i class="fab fa-whatsapp"></i> Send on WhatsApp </a> </div>
     </div>
 
-    <script src="js/new_order.js" type="module" defer></script> </body>
+    <script src="js/new_order.js" type="module" defer></script>
+
+</body>
 </html>
