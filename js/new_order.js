@@ -1,5 +1,5 @@
 
-// js/new_order.js - v2.2.1 (Changes click handler for suggestions)
+// js/new_order.js - v2.3.0 (Implements Status Dropdown with Color Change)
 
 // --- Firebase Functions ---
 const {
@@ -58,18 +58,26 @@ const summaryFinalAmountSpan = document.getElementById('summaryFinalAmount');
 const summaryAdvancePaymentInput = document.getElementById('summaryAdvancePayment');
 const summaryTotalBalanceSpan = document.getElementById('summaryTotalBalance');
 const creditLimitWarningDiv = document.getElementById('creditLimitWarning');
-const orderStatusCheckboxes = document.querySelectorAll('input[name="order_status"]');
+// *** CHANGE: Reference Status Select Dropdown ***
+const orderStatusSelect = document.getElementById('orderStatusSelect');
 const formErrorMsg = document.getElementById('formErrorMsg');
 const whatsappReminderPopup = document.getElementById('whatsapp-reminder-popup');
 const whatsappMsgPreview = document.getElementById('whatsapp-message-preview');
 const whatsappSendLink = document.getElementById('whatsapp-send-link');
 const popupCloseBtn = document.getElementById('popup-close-btn');
 
+// --- Status Definitions (for color mapping) ---
+const statusList = [
+    "Order Received", "Designing", "Verification", "Design Approved",
+    "Printing", "Ready for Working", "Delivered", "Completed"
+];
+
+
 // --- Initialization ---
 document.addEventListener('DOMContentLoaded', () => {
-    console.log("New Order DOM Loaded (v2.2.1). Initializing...");
-    if (!orderForm || !addItemBtn || !orderItemsTableBody || !itemRowTemplate || !calculationPreviewArea || !calculationPreviewContent) {
-        console.error("Critical DOM elements missing! Check HTML IDs.", { orderForm: !!orderForm, addItemBtn: !!addItemBtn, orderItemsTableBody: !!orderItemsTableBody, itemRowTemplate: !!itemRowTemplate, calculationPreviewArea: !!calculationPreviewArea, calculationPreviewContent: !!calculationPreviewContent });
+    console.log("New Order DOM Loaded (v2.3.0 - Status Dropdown). Initializing...");
+    if (!orderForm || !addItemBtn || !orderItemsTableBody || !itemRowTemplate || !calculationPreviewArea || !calculationPreviewContent || !orderStatusSelect) {
+        console.error("Critical DOM elements missing! Check HTML IDs.", { orderForm: !!orderForm, addItemBtn: !!addItemBtn, orderItemsTableBody: !!orderItemsTableBody, itemRowTemplate: !!itemRowTemplate, calculationPreviewArea: !!calculationPreviewArea, calculationPreviewContent: !!calculationPreviewContent, orderStatusSelect: !!orderStatusSelect });
         alert("Page structure error. Cannot initialize order form.");
         return;
     }
@@ -78,11 +86,11 @@ document.addEventListener('DOMContentLoaded', () => {
     // Event Listeners
     orderForm.addEventListener('submit', handleFormSubmit);
     addItemBtn.addEventListener('click', handleAddItem);
-    orderItemsTableBody.addEventListener('click', handleItemTableClick); // Catches delete button clicks too
+    orderItemsTableBody.addEventListener('click', handleItemTableClick); // Catches delete button clicks
     orderItemsTableBody.addEventListener('input', handleItemTableInput);
     orderItemsTableBody.addEventListener('change', handleItemTableChange);
     orderItemsTableBody.addEventListener('focusin', (event) => { if (event.target.matches('.product-name')) activeProductInput = event.target; });
-    // Note: Suggestion click handled by listener on productSuggestionsDiv (added later)
+    // Note: Product suggestion click handled by listener on productSuggestionsDiv (added later)
     if (customerNameInput) { customerNameInput.addEventListener('input', (e) => handleCustomerInput(e, 'name')); customerNameInput.addEventListener('blur', () => setTimeout(() => { if(customerSuggestionsNameBox && !customerSuggestionsNameBox.matches(':hover')) hideSuggestionBox(customerSuggestionsNameBox); }, 150)); } else { console.warn("Customer name input not found."); }
     if (customerWhatsAppInput) { customerWhatsAppInput.addEventListener('input', (e) => handleCustomerInput(e, 'whatsapp')); customerWhatsAppInput.addEventListener('blur', () => setTimeout(() => { if(customerSuggestionsWhatsAppBox && !customerSuggestionsWhatsAppBox.matches(':hover')) hideSuggestionBox(customerSuggestionsWhatsAppBox); }, 150)); } else { console.warn("Customer whatsapp input not found."); }
     if (summaryDiscountPercentInput) summaryDiscountPercentInput.addEventListener('input', handleDiscountInput); else { console.warn("Discount % input not found."); }
@@ -91,6 +99,11 @@ document.addEventListener('DOMContentLoaded', () => {
     if (popupCloseBtn) popupCloseBtn.addEventListener('click', closeWhatsAppPopup);
     if (whatsappReminderPopup) whatsappReminderPopup.addEventListener('click', (event) => { if (event.target === whatsappReminderPopup) closeWhatsAppPopup(); });
     document.addEventListener('click', handleGlobalClick); // Handles clicks outside suggestion boxes
+
+    // *** ADD: Listener for status dropdown change ***
+    orderStatusSelect.addEventListener('change', (event) => {
+        updateStatusDropdownColor(event.target.value);
+    });
 });
 
 // --- DB Connection Wait ---
@@ -102,7 +115,13 @@ function handleGlobalClick(event) {
     if (productSuggestionsDiv && activeProductInput && !productSuggestionsDiv.contains(event.target) && event.target !== activeProductInput) {
         hideProductSuggestions();
     }
-    // Note: Customer suggestion box hiding is handled by blur + setTimeout on the inputs themselves
+    // Hide customer suggestions (might need adjustment if click handling changes)
+    if (customerSuggestionsNameBox && customerNameInput && !customerSuggestionsNameBox.contains(event.target) && event.target !== customerNameInput) {
+         hideSuggestionBox(customerSuggestionsNameBox);
+    }
+     if (customerSuggestionsWhatsAppBox && customerWhatsAppInput && !customerSuggestionsWhatsAppBox.contains(event.target) && event.target !== customerWhatsAppInput) {
+         hideSuggestionBox(customerSuggestionsWhatsAppBox);
+    }
 }
 
 // --- Utility Functions ---
@@ -111,62 +130,121 @@ function formatCurrency(amount) { const n=Number(amount||0); return `₹${n.toLo
 function showFormError(message) { if(formErrorMsg){formErrorMsg.textContent=message;formErrorMsg.style.display=message?'block':'none';if(message)formErrorMsg.scrollIntoView({behavior:'smooth',block:'center'});}else if(message){alert(message);}}
 
 // --- Form Initialization ---
-function initializeForm() { console.log("Running initializeForm..."); const uP=new URLSearchParams(window.location.search); orderIdToEdit=uP.get('editOrderId'); if(orderIdToEdit){isEditMode=true; console.log("Edit Mode:", orderIdToEdit); if(headerText)headerText.textContent="Edit Order"; if(breadcrumbAction)breadcrumbAction.textContent="Edit Order"; if(saveButtonText)saveButtonText.textContent="Update Order"; if(hiddenEditOrderIdInput)hiddenEditOrderIdInput.value=orderIdToEdit; if(manualOrderIdInput)manualOrderIdInput.readOnly=true; loadOrderForEdit(orderIdToEdit);}else{isEditMode=false; console.log("Add Mode."); if(headerText)headerText.textContent="New Order"; if(breadcrumbAction)breadcrumbAction.textContent="New Order"; if(saveButtonText)saveButtonText.textContent="Save Order"; if(manualOrderIdInput)manualOrderIdInput.readOnly=false; if(orderDateInput&&!orderDateInput.value)orderDateInput.value=new Date().toISOString().split('T')[0]; handleStatusCheckboxes(false); resetCustomerSelectionUI(); if(orderItemsTableBody&&orderItemsTableBody.children.length===0){handleAddItem();}else if(!orderItemsTableBody){console.error("Table body missing!");} updateOrderSummary();} preFetchCaches(); }
+function initializeForm() {
+    console.log("Running initializeForm...");
+    const uP=new URLSearchParams(window.location.search);
+    orderIdToEdit=uP.get('editOrderId');
+    if(orderIdToEdit){
+        isEditMode=true;
+        console.log("Edit Mode:", orderIdToEdit);
+        if(headerText)headerText.textContent="Edit Order";
+        if(breadcrumbAction)breadcrumbAction.textContent="Edit Order";
+        if(saveButtonText)saveButtonText.textContent="Update Order";
+        if(hiddenEditOrderIdInput)hiddenEditOrderIdInput.value=orderIdToEdit;
+        if(manualOrderIdInput)manualOrderIdInput.readOnly=true;
+        loadOrderForEdit(orderIdToEdit); // loadOrderForEdit will set status and color
+    } else {
+        isEditMode=false;
+        console.log("Add Mode.");
+        if(headerText)headerText.textContent="New Order";
+        if(breadcrumbAction)breadcrumbAction.textContent="New Order";
+        if(saveButtonText)saveButtonText.textContent="Save Order";
+        if(manualOrderIdInput)manualOrderIdInput.readOnly=false;
+        if(orderDateInput&&!orderDateInput.value)orderDateInput.value=new Date().toISOString().split('T')[0];
+        // *** CHANGE: Set default status and color for dropdown ***
+        const defaultStatus = "Order Received";
+        orderStatusSelect.value = defaultStatus;
+        updateStatusDropdownColor(defaultStatus); // Set initial color
+        resetCustomerSelectionUI();
+        if(orderItemsTableBody&&orderItemsTableBody.children.length===0){handleAddItem();}else if(!orderItemsTableBody){console.error("Table body missing!");}
+        updateOrderSummary();
+    }
+    preFetchCaches();
+}
 
 // --- Pre-fetch Caches ---
 function preFetchCaches() { console.log("Pre-fetching caches..."); getOrFetchCustomerCache().catch(e=>console.error("Cust cache fetch err:", e)); getOrFetchProductCache().catch(e=>console.error("Prod cache fetch err:", e));}
 
 // --- Load Order For Edit ---
-async function loadOrderForEdit(docId) { console.log(`Loading order: ${docId}`); showFormError(''); if(!db||!doc||!getDoc){showFormError("DB func error.");return;} try{const r=doc(db,"orders",docId);const s=await getDoc(r); if(s.exists()){currentOrderData=s.data();console.log("Order loaded:",currentOrderData);selectedCustomerId=currentOrderData.customerId||null;if(selectedCustomerIdInput)selectedCustomerIdInput.value=selectedCustomerId;if(currentOrderData.customerDetails){customerNameInput.value=currentOrderData.customerDetails.fullName||'';customerWhatsAppInput.value=currentOrderData.customerDetails.whatsappNo||'';customerAddressInput.value=currentOrderData.customerDetails.address||'';customerContactInput.value=currentOrderData.customerDetails.contactNo||'';if(selectedCustomerId){fetchAndDisplayCustomerDetails(selectedCustomerId);}else{resetCustomerSelectionUI();}} displayOrderIdInput.value=currentOrderData.orderId||docId;manualOrderIdInput.value=currentOrderData.orderId||'';orderDateInput.value=currentOrderData.orderDate||'';deliveryDateInput.value=currentOrderData.deliveryDate||'';remarksInput.value=currentOrderData.remarks||'';const uV=currentOrderData.urgent||'No';const uR=orderForm.querySelector(`input[name="urgent"][value="${uV}"]`);if(uR)uR.checked=true; handleStatusCheckboxes(true);orderStatusCheckboxes.forEach(c=>c.checked=false);if(currentOrderData.status){const sC=orderForm.querySelector(`input[name="order_status"][value="${currentOrderData.status}"]`);if(sC)sC.checked=true;} if(!orderItemsTableBody){console.error("Item table body missing!");return;} orderItemsTableBody.innerHTML=''; if(currentOrderData.items&&Array.isArray(currentOrderData.items)){currentOrderData.items.forEach(i=>{const nR=addItemRow(false); if(nR)populateItemRow(nR,i);else console.error("Failed to add row for item:",i);});} if(orderItemsTableBody.children.length===0){handleAddItem();} if(summaryDiscountPercentInput)summaryDiscountPercentInput.value=currentOrderData.discountPercentage||''; if(summaryDiscountAmountInput)summaryDiscountAmountInput.value=currentOrderData.discountAmount||''; if(summaryAdvancePaymentInput)summaryAdvancePaymentInput.value=currentOrderData.advancePayment||''; updateOrderSummary();}else{console.error("Order doc not found!");showFormError("Error: Order not found.");if(saveButton)saveButton.disabled=true;}}catch(e){console.error("Load order error:",e);showFormError("Error loading data: "+e.message);if(saveButton)saveButton.disabled=true;}}
+async function loadOrderForEdit(docId) {
+    console.log(`Loading order: ${docId}`);
+    showFormError('');
+    if(!db||!doc||!getDoc){showFormError("DB func error.");return;}
+    try{
+        const r=doc(db,"orders",docId);
+        const s=await getDoc(r);
+        if(s.exists()){
+            currentOrderData=s.data();
+            console.log("Order loaded:",currentOrderData);
+            selectedCustomerId=currentOrderData.customerId||null;
+            if(selectedCustomerIdInput)selectedCustomerIdInput.value=selectedCustomerId;
+            if(currentOrderData.customerDetails){
+                customerNameInput.value=currentOrderData.customerDetails.fullName||'';
+                customerWhatsAppInput.value=currentOrderData.customerDetails.whatsappNo||'';
+                customerAddressInput.value=currentOrderData.customerDetails.address||'';
+                customerContactInput.value=currentOrderData.customerDetails.contactNo||'';
+                if(selectedCustomerId){fetchAndDisplayCustomerDetails(selectedCustomerId);}else{resetCustomerSelectionUI();}
+            }
+            displayOrderIdInput.value=currentOrderData.orderId||docId;
+            manualOrderIdInput.value=currentOrderData.orderId||'';
+            orderDateInput.value=currentOrderData.orderDate||'';
+            deliveryDateInput.value=currentOrderData.deliveryDate||'';
+            remarksInput.value=currentOrderData.remarks||'';
+            const uV=currentOrderData.urgent||'No';
+            const uR=orderForm.querySelector(`input[name="urgent"][value="${uV}"]`);
+            if(uR)uR.checked=true;
+
+            // *** CHANGE: Set status dropdown value and color ***
+            const loadedStatus = currentOrderData.status || "Order Received";
+            orderStatusSelect.value = loadedStatus;
+            updateStatusDropdownColor(loadedStatus); // Set color based on loaded status
+
+            if(!orderItemsTableBody){console.error("Item table body missing!");return;}
+            orderItemsTableBody.innerHTML='';
+            if(currentOrderData.items&&Array.isArray(currentOrderData.items)){
+                currentOrderData.items.forEach(i=>{const nR=addItemRow(false); if(nR)populateItemRow(nR,i);else console.error("Failed to add row for item:",i);});
+            }
+            if(orderItemsTableBody.children.length===0){handleAddItem();}
+            if(summaryDiscountPercentInput)summaryDiscountPercentInput.value=currentOrderData.discountPercentage||'';
+            if(summaryDiscountAmountInput)summaryDiscountAmountInput.value=currentOrderData.discountAmount||'';
+            if(summaryAdvancePaymentInput)summaryAdvancePaymentInput.value=currentOrderData.advancePayment||'';
+            updateOrderSummary();
+        } else {
+            console.error("Order doc not found!");
+            showFormError("Error: Order not found.");
+            if(saveButton)saveButton.disabled=true;
+        }
+    } catch(e) {
+        console.error("Load order error:",e);
+        showFormError("Error loading data: "+e.message);
+        if(saveButton)saveButton.disabled=true;
+    }
+}
 
 // --- Item Handling ---
 function handleAddItem() { console.log("Adding item..."); if(!itemRowTemplate || !orderItemsTableBody){console.error("Template or body missing!");showFormError("Error: Page setup incomplete.");return;} const nR=addItemRow(true); if(nR){console.log("Row added.");updateOrderSummary();}else{console.error("Failed adding row.");}}
 function addItemRow(focus = true) { if (!itemRowTemplate || !orderItemsTableBody) { console.error("addItemRow: Prereqs missing!"); return null; } try { const tC = itemRowTemplate.content.cloneNode(true), nRE = tC.querySelector('.item-row'); if (!nRE) { console.error("Template missing .item-row"); return null; } orderItemsTableBody.appendChild(nRE); const aR = orderItemsTableBody.lastElementChild; if (!aR || !aR.matches('.item-row')) { console.error("Append failed."); return null; } const uS = aR.querySelector('.unit-type-select'); if (uS) handleUnitTypeChange({ target: uS }); if (focus) aR.querySelector('.product-name')?.focus(); return aR; } catch (e) { console.error("addItemRow error:", e); showFormError(`Create item row error: ${e.message}`); return null; } }
-function populateItemRow(row, itemData) { if(!row||!itemData)return;console.log("Populating:",itemData);try{row.querySelector('.product-name').value=itemData.productName||'';row.querySelector('.unit-type-select').value=itemData.unitType||'Qty';row.querySelector('.quantity-input').value=itemData.quantity||1;const rI=row.querySelector('.rate-input');rI.value=itemData.rate!==undefined?itemData.rate:'';const mR=itemData.minSalePrice; // const mRVS=row.querySelector('.min-rate-value'); // Element removed in HTML
- // if (mRVS) mRVS.textContent=mR!==undefined&&mR!==null?parseFloat(mR).toFixed(2):'--'; // Element removed in HTML
- if(rI) rI.dataset.minRate=mR!==undefined&&mR!==null?mR:'-1';if(itemData.unitType==='Sq Feet'){row.querySelector('.dimension-unit-select').value=itemData.dimensionUnit||'feet';row.querySelector('.width-input').value=itemData.width||'';row.querySelector('.height-input').value=itemData.height||'';}handleUnitTypeChange({target:row.querySelector('.unit-type-select')});updateItemAmount(row);}catch(e){console.error("Populate err:",e);}}
-function handleItemTableClick(event) { // Handles clicks within the table body
+function populateItemRow(row, itemData) { if(!row||!itemData)return;console.log("Populating:",itemData);try{row.querySelector('.product-name').value=itemData.productName||'';row.querySelector('.unit-type-select').value=itemData.unitType||'Qty';row.querySelector('.quantity-input').value=itemData.quantity||1;const rI=row.querySelector('.rate-input');rI.value=itemData.rate!==undefined?itemData.rate:'';const mR=itemData.minSalePrice; if(rI) rI.dataset.minRate=mR!==undefined&&mR!==null?mR:'-1';if(itemData.unitType==='Sq Feet'){row.querySelector('.dimension-unit-select').value=itemData.dimensionUnit||'feet';row.querySelector('.width-input').value=itemData.width||'';row.querySelector('.height-input').value=itemData.height||'';}handleUnitTypeChange({target:row.querySelector('.unit-type-select')});updateItemAmount(row);}catch(e){console.error("Populate err:",e);}}
+function handleItemTableClick(event) {
      if (event.target.closest('.delete-item-btn')) {
          const r=event.target.closest('.item-row');
-         if(r){
-             r.remove();
-             hideProductSuggestions(); // Hide if suggestion was open for this row
-             updateOrderSummary();
-             updateCalculationPreview();
-         }
+         if(r){ r.remove(); hideProductSuggestions(); updateOrderSummary(); updateCalculationPreview(); }
      }
-     // Note: Click on suggestion items is handled by handleSuggestionClick directly
 }
 
-// Renamed from handleSuggestionMouseDown to handleSuggestionClick as listener changed
+// Renamed from handleSuggestionMouseDown
 function handleSuggestionClick(event) {
      const pLI = event.target.closest('.product-suggestions-list li[data-product]');
      const cLI = event.target.closest('.suggestions-box li[data-customer-id]'); // For customer suggestions
-
      if (pLI) {
-         event.preventDefault(); // Prevent any default action if needed
-         try {
-             const productDataString = pLI.dataset.product || '{}';
-             const pD = JSON.parse(productDataString);
-             if (activeProductInput) {
-                 selectProductSuggestion(pD, activeProductInput);
-             } else {
-                 console.error("Cannot select product suggestion: No active product input found.");
-             }
-         } catch (e) {
-             console.error("Error parsing product data or calling selectProductSuggestion:", e);
-         }
-     } else if (cLI) {
-         // Handle customer suggestion selection (keep existing logic)
          event.preventDefault();
-         fillCustomerData(cLI.dataset);
-         const b = cLI.closest('.suggestions-box');
-         if (b) hideSuggestionBox(b);
+         try { const pD = JSON.parse(pLI.dataset.product || '{}'); if (activeProductInput) selectProductSuggestion(pD, activeProductInput); } catch (e) { console.error("Error parsing/selecting product:", e); }
+     } else if (cLI) {
+         event.preventDefault(); try { fillCustomerData(cLI.dataset); const b = cLI.closest('.suggestions-box'); if (b) hideSuggestionBox(b); } catch(e) { console.error("Error selecting customer:", e); }
      }
 }
-
-function handleItemTableInput(event) { const t=event.target,r=t.closest('.item-row'); if(!r)return; if(t.matches('.product-name')){activeProductInput=t;handleProductSearchInput(event);}else if(t.matches('.quantity-input, .rate-input, .width-input, .height-input')){updateItemAmount(r);}} // updateItemAmount calls updateCalculationPreview
-function handleItemTableChange(event){ const t=event.target,r=t.closest('.item-row'); if(!r)return; if(t.matches('.unit-type-select'))handleUnitTypeChange(event); else if(t.matches('.dimension-unit-select'))updateItemAmount(r);} // updateItemAmount calls updateCalculationPreview
+function handleItemTableInput(event) { const t=event.target,r=t.closest('.item-row'); if(!r)return; if(t.matches('.product-name')){activeProductInput=t;handleProductSearchInput(event);}else if(t.matches('.quantity-input, .rate-input, .width-input, .height-input')){updateItemAmount(r);}}
+function handleItemTableChange(event){ const t=event.target,r=t.closest('.item-row'); if(!r)return; if(t.matches('.unit-type-select'))handleUnitTypeChange(event); else if(t.matches('.dimension-unit-select'))updateItemAmount(r);}
 
 // --- Sq Ft Calculation Logic ---
 function calculateFlexDimensions(unit, width, height) { const m=[3,4,5,6,8,10]; let w=(unit==='inches')?parseFloat(width||0)/12:parseFloat(width||0), h=(unit==='inches')?parseFloat(height||0)/12:parseFloat(height||0); if(isNaN(w)||isNaN(h)||w<=0||h<=0) return{realSqFt:0, printSqFt:0, realWidthFt:0, realHeightFt:0, printWidthFt:0, printHeightFt:0}; const r=w*h; let b={pW:0,pH:0,pS:Infinity}; const fW=m.find(x=>x>=w); let pW1=fW||w, pH1=h, pS1=pW1*pH1; const fH=m.find(x=>x>=h); let pW2=w, pH2=fH||h, pS2=pW2*pH2; if(pS1<=pS2){b.pW=pW1; b.pH=pH1; b.pS=pS1;} else{b.pW=pW2; b.pH=pH2; b.pS=pS2;} return{realSqFt:r, printWidthFt:b.pW, printHeightFt:b.pH, printSqFt:b.pS, realWidthFt: w, realHeightFt: h };}
@@ -200,8 +278,7 @@ function getOrCreateProductSuggestionsDiv() {
         productSuggestionsDiv.className = 'product-suggestions-list';
         productSuggestionsDiv.style.display = 'none';
         document.body.appendChild(productSuggestionsDiv);
-        // *** CHANGE: Use 'click' instead of 'mousedown' ***
-        productSuggestionsDiv.addEventListener('click', handleSuggestionClick);
+        productSuggestionsDiv.addEventListener('click', handleSuggestionClick); // Using 'click' now
     }
     return productSuggestionsDiv;
 }
@@ -213,23 +290,12 @@ function filterAndRenderProductSuggestions(term, inputElement) { const s=getOrCr
 function renderProductSuggestions(suggestions, term, suggestionsContainer) { if(!suggestionsContainer)return; const ul=document.createElement('ul'); if(suggestions.length===0){ul.innerHTML='<li class="no-suggestions">No matching products found.</li>';}else{suggestions.forEach(p=>{const li=document.createElement('li'); try{li.innerHTML=p.name.replace(new RegExp(`(${term.replace(/[-\/\^$*+?.()|[\]{}]/g,'\$&')})`,'gi'),'<strong>$1</strong>');}catch{li.textContent=p.name;} li.dataset.product=JSON.stringify(p); ul.appendChild(li);});} suggestionsContainer.innerHTML=''; suggestionsContainer.appendChild(ul); suggestionsContainer.style.display='block';}
 
 function selectProductSuggestion(productData, inputElement) {
-    console.log("selectProductSuggestion called. Data:", productData); // Keep this log for basic check
+    console.log("selectProductSuggestion called. Data:", productData);
     try {
         const r = inputElement.closest('.item-row');
-        if (!r || !productData) {
-            hideProductSuggestions();
-            return;
-        }
-        const pNI = r.querySelector('.product-name');
-        const uTS = r.querySelector('.unit-type-select');
-        const rI = r.querySelector('.rate-input');
-        const qI = r.querySelector('.quantity-input');
-
-        if (!pNI || !uTS || !rI || !qI ) {
-             console.error("Error in selectProductSuggestion: One or more elements not found in the row!");
-            hideProductSuggestions();
-            return;
-        }
+        if (!r || !productData) { hideProductSuggestions(); return; }
+        const pNI = r.querySelector('.product-name'), uTS = r.querySelector('.unit-type-select'), rI = r.querySelector('.rate-input'), qI = r.querySelector('.quantity-input');
+        if (!pNI || !uTS || !rI || !qI ) { console.error("Error in selectProductSuggestion: Row elements missing!"); hideProductSuggestions(); return; }
 
         pNI.value = productData.name || '';
         rI.value = productData.salePrice !== undefined ? productData.salePrice : '';
@@ -237,48 +303,149 @@ function selectProductSuggestion(productData, inputElement) {
         rI.dataset.minRate = mR !== undefined && mR !== null ? mR : '-1';
 
         let dUT = 'Qty';
-        if (productData.unit) {
-            const uL = String(productData.unit).toLowerCase();
-            if (uL.includes('sq') || uL.includes('ft')) dUT = 'Sq Feet';
-        }
+        if (productData.unit) { const uL = String(productData.unit).toLowerCase(); if (uL.includes('sq') || uL.includes('ft')) dUT = 'Sq Feet'; }
         uTS.value = dUT;
-
-        hideProductSuggestions(); // Hide after selection
-
-        // Trigger change event to update UI (like Sq Ft fields visibility) and calculations
+        hideProductSuggestions();
         const cE = new Event('change', { bubbles: true });
         uTS.dispatchEvent(cE);
-
-        // Set focus to the next logical input
         let nI = null;
         if (dUT === 'Sq Feet') nI = r.querySelector('.width-input');
-        if (!nI) nI = qI; // Fallback to quantity if not Sq Feet or width input not found
-        if (nI) {
-            nI.focus();
-            if (typeof nI.select === 'function') nI.select();
-        } else {
-            rI.focus(); // Fallback to rate input if others aren't found
-        }
+        if (!nI) nI = qI;
+        if (nI) { nI.focus(); if (typeof nI.select === 'function') nI.select(); } else { rI.focus(); }
+    } catch (error) { console.error("Error inside selectProductSuggestion:", error); hideProductSuggestions(); }
+}
 
-    } catch (error) {
-        console.error("Error inside selectProductSuggestion:", error);
-        hideProductSuggestions(); // Ensure suggestions are hidden on error
+// --- Status Dropdown Handling ---
+function updateStatusDropdownColor(statusValue) {
+    if (!orderStatusSelect) return;
+    // Remove all existing status classes
+    statusList.forEach(status => {
+        const className = `status-select-${status.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`;
+        orderStatusSelect.classList.remove(className);
+    });
+
+    // Add the class for the current status
+    if (statusValue) {
+        const currentClassName = `status-select-${statusValue.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`;
+        orderStatusSelect.classList.add(currentClassName);
+        console.log(`Applied class: ${currentClassName}`);
+    } else {
+         orderStatusSelect.classList.add('status-select-default'); // Optional: add a default class if needed
+         console.log("Applied default status class");
     }
 }
 
-// --- Status Checkbox Handling ---
-function handleStatusCheckboxes(isEditing) { const dS="Order Received";let dC=null;orderStatusCheckboxes.forEach(c=>{if(c.value===dS)dC=c;c.disabled=false;c.closest('label').classList.remove('disabled');c.removeEventListener('change',handleStatusChange);c.addEventListener('change',handleStatusChange);});const iAC=Array.from(orderStatusCheckboxes).some(c=>c.checked);if(!isEditing&&!iAC&&dC)dC.checked=true;}
-function handleStatusChange(event) { const cC=event.target;if(cC.checked){orderStatusCheckboxes.forEach(oC=>{if(oC!==cC)oC.checked=false;});}}
-
 // --- Form Submit Handler ---
-async function handleFormSubmit(event) { event.preventDefault();console.log("Submit...");showFormError('');if(!db||!addDoc||!doc||!updateDoc||!Timestamp||!getDoc||!getDocs||!collection||!query||!limit){showFormError("DB func error.");return;} if(!saveButton){console.error("Save btn missing");return;} saveButton.disabled=true;if(saveButtonText)saveButtonText.textContent=isEditMode?'Updating...':'Saving...';else saveButton.innerHTML='<i class="fas fa-spinner fa-spin"></i> Saving...'; try{const cFN=customerNameInput.value.trim();const cW=customerWhatsAppInput.value.trim();let cId=selectedCustomerId;if(!cFN)throw new Error("Customer Name required.");if(!cW)throw new Error("WhatsApp No required.");const cD={fullName:cFN,whatsappNo:cW,address:customerAddressInput.value.trim()||'',contactNo:customerContactInput.value.trim()||''};const oDV=orderDateInput.value;const dDV=deliveryDateInput.value||'';const uV=orderForm.querySelector('input[name="urgent"]:checked')?.value||'No';const rV=remarksInput.value.trim()||'';const sC=orderForm.querySelector('input[name="order_status"]:checked');const sS=sC?sC.value:'Order Received';if(!oDV)throw new Error("Order Date required."); let oId;const mId=manualOrderIdInput.value.trim();const eId=displayOrderIdInput.value; if(isEditMode){oId=currentOrderData?.orderId||eId||orderIdToEdit;}else if(mId){oId=mId;}else{oId=Date.now().toString();console.log(`Generated ID: ${oId}`);} const items=[];const rows=orderItemsTableBody.querySelectorAll('.item-row');if(rows.length===0)throw new Error("Add at least one item."); let valid=true; rows.forEach((row,idx)=>{if(!valid)return;const pNI=row.querySelector('.product-name'),uTS=row.querySelector('.unit-type-select'),qI=row.querySelector('.quantity-input'),rI=row.querySelector('.rate-input'),dUS=row.querySelector('.dimension-unit-select'),wI=row.querySelector('.width-input'),hI=row.querySelector('.height-input');const pN=pNI?.value.trim(),uT=uTS?.value,q=parseInt(qI?.value||0),r=parseFloat(rI?.value||0),mR=parseFloat(rI?.dataset.minRate||-1);if(!pN){valid=false;showFormError(`Item ${idx+1}: Product Name req.`);pNI?.focus();return;}if(isNaN(q)||q<=0){valid=false;showFormError(`Item ${idx+1}: Valid Qty req.`);qI?.focus();return;}if(isNaN(r)||r<0){valid=false;showFormError(`Item ${idx+1}: Valid Rate req.`);rI?.focus();return;}if(mR>=0&&r<mR){valid=false;showFormError(`Item ${idx+1}: Rate (${formatCurrency(r)}) < Minimum (${formatCurrency(mR)}).`);rI?.focus();return;}const iD={productName:pN,unitType:uT,quantity:q,rate:r,minSalePrice:mR>=0?mR:null};if(uT==='Sq Feet'){const dU=dUS?.value||'feet',w=parseFloat(wI?.value||0),h=parseFloat(hI?.value||0);if(isNaN(w)||w<=0){valid=false;showFormError(`Item ${idx+1}: Valid Width req.`);wI?.focus();return;}if(isNaN(h)||h<=0){valid=false;showFormError(`Item ${idx+1}: Valid Height req.`);hI?.focus();return;}const cR=calculateFlexDimensions(dU,w,h);iD.dimensionUnit=dU;iD.width=w;iD.height=h;iD.realSqFt=cR.realSqFt;iD.printSqFt=cR.printSqFt;iD.itemAmount=parseFloat((cR.printSqFt*q*r).toFixed(2));}else{iD.itemAmount=parseFloat((q*r).toFixed(2));}items.push(iD);}); if(!valid){saveButton.disabled=false;if(saveButtonText)saveButtonText.textContent=isEditMode?'Update Order':'Save Order';else saveButton.innerHTML=`<i class="fas fa-save"></i> ${isEditMode?'Update Order':'Save Order'}`;return;} let subT=0;items.forEach(i=>{subT+=i.itemAmount;});let dP=parseFloat(summaryDiscountPercentInput?.value||0),dA=parseFloat(summaryDiscountAmountInput?.value||0);let cDA=0;if(!isNaN(dP)&&dP>0)cDA=parseFloat((subT*(dP/100)).toFixed(2));else if(!isNaN(dA)&&dA>0)cDA=dA;cDA=Math.max(0,Math.min(cDA,subT));let fA=parseFloat((subT-cDA).toFixed(2)),aP=parseFloat(summaryAdvancePaymentInput?.value||0),tB=parseFloat((fA-aP).toFixed(2));const payload={orderId:oId,customerId:cId||null,customerDetails:cD,orderDate:oDV,deliveryDate:dDV,urgent:uV,remarks:rV,status:sS,items:items,subTotal:subT,discountPercentage:dP||0,discountAmount:cDA||0,finalAmount:fA,advancePayment:aP||0,totalBalance:tB,updatedAt:Timestamp.now()};if(!isEditMode)payload.createdAt=Timestamp.now();let savedId,msg;if(isEditMode){if(!orderIdToEdit)throw new Error("Missing ID for update.");await updateDoc(doc(db,"orders",orderIdToEdit),payload);savedId=orderIdToEdit;msg=`Order ${oId} updated!`;}else{const ref=await addDoc(collection(db,"orders"),payload);savedId=ref.id;msg=`Order ${oId} created!`;displayOrderIdInput.value=oId;}console.log(msg,"Doc ID:",savedId);if(aP>0){console.log("Adding advance payment...");try{const pD={customerId:cId,orderRefId:savedId,orderId:oId,amountPaid:aP,paymentDate:Timestamp.fromDate(new Date(oDV+'T00:00:00')),paymentMethod:"Order Advance",notes:`Advance for Order #${oId}`,createdAt:Timestamp.now()};if(!pD.customerId){alert("Order saved, advance not recorded (Customer ID missing).");}else{await addDoc(collection(db,"payments"),pD);console.log("Advance payment added.");}}catch(pE){console.error("Adv payment error:",pE);alert(`Order saved, error recording advance: ${pE.message}`);}}alert(msg);if(cD.whatsappNo){showWhatsAppReminder(cD,oId,dDV);}else{if(!isEditMode)resetNewOrderForm();}}catch(error){console.error("Submit error:",error);showFormError("Error: "+error.message);}finally{saveButton.disabled=false;const txt=isEditMode?"Update Order":"Save Order";if(saveButtonText)saveButtonText.textContent=txt;else saveButton.innerHTML=`<i class="fas fa-save"></i> ${txt}`;}}
+async function handleFormSubmit(event) {
+    event.preventDefault();
+    console.log("Submit...");
+    showFormError('');
+    if(!db||!addDoc||!doc||!updateDoc||!Timestamp||!getDoc||!getDocs||!collection||!query||!limit){showFormError("DB func error.");return;}
+    if(!saveButton){console.error("Save btn missing");return;}
+    saveButton.disabled=true;
+    if(saveButtonText)saveButtonText.textContent=isEditMode?'Updating...':'Saving...';else saveButton.innerHTML='<i class="fas fa-spinner fa-spin"></i> Saving...';
+
+    try{
+        const cFN=customerNameInput.value.trim();const cW=customerWhatsAppInput.value.trim();let cId=selectedCustomerId;
+        if(!cFN)throw new Error("Customer Name required.");if(!cW)throw new Error("WhatsApp No required.");
+        const cD={fullName:cFN,whatsappNo:cW,address:customerAddressInput.value.trim()||'',contactNo:customerContactInput.value.trim()||''};
+        const oDV=orderDateInput.value;const dDV=deliveryDateInput.value||'';
+        const uV=orderForm.querySelector('input[name="urgent"]:checked')?.value||'No';
+        const rV=remarksInput.value.trim()||'';
+        // *** CHANGE: Get status from dropdown ***
+        const sS = orderStatusSelect.value;
+        if(!oDV)throw new Error("Order Date required.");
+
+        let oId;const mId=manualOrderIdInput.value.trim();const eId=displayOrderIdInput.value;
+        if(isEditMode){oId=currentOrderData?.orderId||eId||orderIdToEdit;}else if(mId){oId=mId;}else{oId=Date.now().toString();console.log(`Generated ID: ${oId}`);}
+
+        const items=[];const rows=orderItemsTableBody.querySelectorAll('.item-row');
+        if(rows.length===0)throw new Error("Add at least one item.");
+        let valid=true;
+        rows.forEach((row,idx)=>{
+            if(!valid)return;
+            const pNI=row.querySelector('.product-name'),uTS=row.querySelector('.unit-type-select'),qI=row.querySelector('.quantity-input'),rI=row.querySelector('.rate-input'),dUS=row.querySelector('.dimension-unit-select'),wI=row.querySelector('.width-input'),hI=row.querySelector('.height-input');
+            const pN=pNI?.value.trim(),uT=uTS?.value,q=parseInt(qI?.value||0),r=parseFloat(rI?.value||0),mR=parseFloat(rI?.dataset.minRate||-1);
+            if(!pN){valid=false;showFormError(`Item ${idx+1}: Product Name req.`);pNI?.focus();return;}
+            if(isNaN(q)||q<=0){valid=false;showFormError(`Item ${idx+1}: Valid Qty req.`);qI?.focus();return;}
+            if(isNaN(r)||r<0){valid=false;showFormError(`Item ${idx+1}: Valid Rate req.`);rI?.focus();return;}
+            if(mR>=0&&r<mR){valid=false;showFormError(`Item ${idx+1}: Rate (${formatCurrency(r)}) < Minimum (${formatCurrency(mR)}).`);rI?.focus();return;}
+            const iD={productName:pN,unitType:uT,quantity:q,rate:r,minSalePrice:mR>=0?mR:null};
+            if(uT==='Sq Feet'){
+                const dU=dUS?.value||'feet',w=parseFloat(wI?.value||0),h=parseFloat(hI?.value||0);
+                if(isNaN(w)||w<=0){valid=false;showFormError(`Item ${idx+1}: Valid Width req.`);wI?.focus();return;}
+                if(isNaN(h)||h<=0){valid=false;showFormError(`Item ${idx+1}: Valid Height req.`);hI?.focus();return;}
+                const cR=calculateFlexDimensions(dU,w,h);
+                iD.dimensionUnit=dU;iD.width=w;iD.height=h;iD.realSqFt=cR.realSqFt;iD.printSqFt=cR.printSqFt;
+                iD.itemAmount=parseFloat((cR.printSqFt*q*r).toFixed(2));
+            }else{iD.itemAmount=parseFloat((q*r).toFixed(2));}
+            items.push(iD);
+        });
+        if(!valid){saveButton.disabled=false;if(saveButtonText)saveButtonText.textContent=isEditMode?'Update Order':'Save Order';else saveButton.innerHTML=`<i class="fas fa-save"></i> ${isEditMode?'Update Order':'Save Order'}`;return;}
+
+        let subT=0;items.forEach(i=>{subT+=i.itemAmount;});
+        let dP=parseFloat(summaryDiscountPercentInput?.value||0),dA=parseFloat(summaryDiscountAmountInput?.value||0);
+        let cDA=0;if(!isNaN(dP)&&dP>0)cDA=parseFloat((subT*(dP/100)).toFixed(2));else if(!isNaN(dA)&&dA>0)cDA=dA;
+        cDA=Math.max(0,Math.min(cDA,subT));
+        let fA=parseFloat((subT-cDA).toFixed(2)),aP=parseFloat(summaryAdvancePaymentInput?.value||0),tB=parseFloat((fA-aP).toFixed(2));
+
+        const payload={orderId:oId,customerId:cId||null,customerDetails:cD,orderDate:oDV,deliveryDate:dDV,urgent:uV,remarks:rV,status:sS,items:items,subTotal:subT,discountPercentage:dP||0,discountAmount:cDA||0,finalAmount:fA,advancePayment:aP||0,totalBalance:tB,updatedAt:Timestamp.now()};
+        if(!isEditMode)payload.createdAt=Timestamp.now();
+
+        let savedId,msg;
+        if(isEditMode){
+            if(!orderIdToEdit)throw new Error("Missing ID for update.");
+            await updateDoc(doc(db,"orders",orderIdToEdit),payload);savedId=orderIdToEdit;msg=`Order ${oId} updated!`;
+        } else {
+            const ref=await addDoc(collection(db,"orders"),payload);savedId=ref.id;msg=`Order ${oId} created!`;displayOrderIdInput.value=oId;
+        }
+        console.log(msg,"Doc ID:",savedId);
+
+        if(aP>0){
+            console.log("Adding advance payment...");
+            try{const pD={customerId:cId,orderRefId:savedId,orderId:oId,amountPaid:aP,paymentDate:Timestamp.fromDate(new Date(oDV+'T00:00:00')),paymentMethod:"Order Advance",notes:`Advance for Order #${oId}`,createdAt:Timestamp.now()};
+                if(!pD.customerId){alert("Order saved, advance not recorded (Customer ID missing).");}else{await addDoc(collection(db,"payments"),pD);console.log("Advance payment added.");}}catch(pE){console.error("Adv payment error:",pE);alert(`Order saved, error recording advance: ${pE.message}`);}
+        }
+        alert(msg);
+        if(cD.whatsappNo){showWhatsAppReminder(cD,oId,dDV);}else{if(!isEditMode)resetNewOrderForm();}
+    } catch(error) {
+        console.error("Submit error:",error);showFormError("Error: "+error.message);
+    } finally {
+        saveButton.disabled=false;const txt=isEditMode?"Update Order":"Save Order";
+        if(saveButtonText)saveButtonText.textContent=txt;else saveButton.innerHTML=`<i class="fas fa-save"></i> ${txt}`;
+    }
+}
 
 // --- Reset Form ---
-function resetNewOrderForm() { console.log("Resetting form."); orderForm.reset(); if(orderItemsTableBody) orderItemsTableBody.innerHTML=''; selectedCustomerId=null; selectedCustomerData=null; currentOrderData=null; isEditMode=false; orderIdToEdit=null; if(hiddenEditOrderIdInput)hiddenEditOrderIdInput.value=''; if(selectedCustomerIdInput)selectedCustomerIdInput.value=''; if(headerText)headerText.textContent="New Order"; if(breadcrumbAction)breadcrumbAction.textContent="New Order"; if(saveButtonText)saveButtonText.textContent="Save Order"; else if(saveButton)saveButton.innerHTML=`<i class="fas fa-save"></i> Save Order`; if(manualOrderIdInput)manualOrderIdInput.readOnly=false; if(orderDateInput)orderDateInput.value=new Date().toISOString().split('T')[0]; handleStatusCheckboxes(false); resetCustomerSelectionUI(true); updateOrderSummary(); handleAddItem(); showFormError(''); hideProductSuggestions(); if(customerSuggestionsNameBox) hideSuggestionBox(customerSuggestionsNameBox); if(customerSuggestionsWhatsAppBox) hideSuggestionBox(customerSuggestionsWhatsAppBox); }
+function resetNewOrderForm() {
+    console.log("Resetting form.");
+    orderForm.reset();
+    if(orderItemsTableBody) orderItemsTableBody.innerHTML='';
+    selectedCustomerId=null; selectedCustomerData=null; currentOrderData=null;
+    isEditMode=false; orderIdToEdit=null;
+    if(hiddenEditOrderIdInput)hiddenEditOrderIdInput.value='';
+    if(selectedCustomerIdInput)selectedCustomerIdInput.value='';
+    if(headerText)headerText.textContent="New Order";
+    if(breadcrumbAction)breadcrumbAction.textContent="New Order";
+    if(saveButtonText)saveButtonText.textContent="Save Order"; else if(saveButton)saveButton.innerHTML=`<i class="fas fa-save"></i> Save Order`;
+    if(manualOrderIdInput)manualOrderIdInput.readOnly=false;
+    if(orderDateInput)orderDateInput.value=new Date().toISOString().split('T')[0];
+    // *** CHANGE: Reset status dropdown and color ***
+    const defaultStatus = "Order Received";
+    orderStatusSelect.value = defaultStatus;
+    updateStatusDropdownColor(defaultStatus);
+    resetCustomerSelectionUI(true);
+    updateOrderSummary();
+    handleAddItem();
+    showFormError('');
+    hideProductSuggestions();
+    if(customerSuggestionsNameBox) hideSuggestionBox(customerSuggestionsNameBox);
+    if(customerSuggestionsWhatsAppBox) hideSuggestionBox(customerSuggestionsWhatsAppBox);
+}
 
 // --- WhatsApp Reminder Functions ---
 function showWhatsAppReminder(customer, orderId, deliveryDate) { if(!whatsappReminderPopup||!whatsappMsgPreview||!whatsappSendLink){if(!isEditMode)resetNewOrderForm();return;} const cN=customer.fullName||'Customer',cNum=customer.whatsappNo?.replace(/[^0-9]/g,''); if(!cNum){if(!isEditMode)resetNewOrderForm();return;} const fDD=deliveryDate?new Date(deliveryDate).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}):' जल्द से जल्द'; let msg=`प्रिय ${cN},\nआपका ऑर्डर (Order ID: ${orderId}) सफलतापूर्वक सहेज लिया गया है। डिलीवरी की अनुमानित तिथि: ${fDD}.\nधन्यवाद,\nMadhav Offset`; whatsappMsgPreview.innerText=msg; const eM=encodeURIComponent(msg); const wUrl=`https://wa.me/${cNum}?text=${eM}`; whatsappSendLink.href=wUrl; whatsappReminderPopup.classList.add('active'); whatsappSendLink.onclick=()=>{if(!isEditMode)resetNewOrderForm(); closeWhatsAppPopup();}; popupCloseBtn.onclick=()=>{if(!isEditMode)resetNewOrderForm(); closeWhatsAppPopup();}; whatsappReminderPopup.onclick=(e)=>{if(e.target===whatsappReminderPopup){if(!isEditMode)resetNewOrderForm(); closeWhatsAppPopup();}}; }
 function closeWhatsAppPopup() { if(whatsappReminderPopup)whatsappReminderPopup.classList.remove('active'); whatsappSendLink.onclick=null; popupCloseBtn.onclick=null; whatsappReminderPopup.onclick=null; if(whatsappReminderPopup)whatsappReminderPopup.addEventListener('click',(e)=>{if(e.target===whatsappReminderPopup)closeWhatsAppPopup();}); if(popupCloseBtn)popupCloseBtn.addEventListener('click',closeWhatsAppPopup); }
 
-console.log("new_order.js script loaded (v2.2.1).");
+console.log("new_order.js script loaded (v2.3.0 - Status Dropdown).");
 

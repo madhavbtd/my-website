@@ -121,6 +121,20 @@
                             </div>
                         </div>
                         <div class="form-row">
+                             <!-- Status Dropdown Moved Here -->
+                             <div class="form-group form-group-half">
+                                 <label for="orderStatusSelect">Status</label>
+                                 <select id="orderStatusSelect" name="order_status" class="form-input status-select">
+                                     <option value="Order Received">Order Received</option>
+                                     <option value="Designing">Designing</option>
+                                     <option value="Verification">Verification</option>
+                                     <option value="Design Approved">Design Approved</option>
+                                     <option value="Printing">Printing</option>
+                                     <option value="Ready for Working">Ready for Working</option>
+                                     <option value="Delivered">Delivered</option>
+                                     <option value="Completed">Completed</option>
+                                 </select>
+                             </div>
                             <div class="form-group priority-group" style="flex-basis: 150px;">
                                  <label>Urgent?</label>
                                  <div class="radio-group">
@@ -128,28 +142,18 @@
                                       <label><input type="radio" name="urgent" value="No" checked> No</label>
                                   </div>
                              </div>
-                            <div class="form-group remarks-group" style="flex: 1;">
+                        </div>
+                         <div class="form-row">
+                             <div class="form-group remarks-group form-group-full">
                                  <label for="remarks">Remarks</label>
                                 <textarea id="remarks" name="remarks" placeholder="Any specific notes..."></textarea>
                             </div>
-                        </div>
+                         </div>
                      </div>
                  </div>
             </div>
 
-
-            <div class="form-section-inline" id="orderStatusSection">
-                <div id="order-status-group" class="form-group order-status-group">
-                    <label><input type="checkbox" name="order_status" value="Order Received"><span>Order Received</span></label>
-                    <label><input type="checkbox" name="order_status" value="Designing"><span>Designing</span></label>
-                    <label><input type="checkbox" name="order_status" value="Verification"><span>Verification</span></label>
-                    <label><input type="checkbox" name="order_status" value="Design Approved"><span>Design Approved</span></label>
-                    <label><input type="checkbox" name="order_status" value="Printing"><span>Printing</span></label>
-                    <label><input type="checkbox" name="order_status" value="Ready for Working"><span>Ready for Working</span></label>
-                    <label><input type="checkbox" name="order_status" value="Delivered"><span>Delivered</span></label>
-                    <label><input type="checkbox" name="order_status" value="Completed"><span>Completed</span></label>
-                </div>
-             </div>
+            <!-- Removed the old inline status section -->
 
             <div class="form-section-card">
 

@@ -1,4 +1,5 @@
-/* === new_order.css - v2.6 (Final Status Bar Layout, Comments Removed, Summary Redesign Kept) === */
+
+/* === new_order.css - v2.7 (Status Dropdown Implementation) === */
 
 /* --- Global Styles & Variables --- */
 :root {
@@ -21,15 +22,18 @@
     --box-shadow: 0 2px 5px rgba(0, 0, 0, 0.08);
     --box-shadow-lg: 0 4px 12px rgba(0, 0, 0, 0.1);
     --focus-shadow: 0 0 0 0.2rem rgba(0, 86, 179, 0.25);
-    /* Color variables for statuses */
-    --status-order-received: #6c757d; /* Bootstrap Secondary */
-    --status-designing: #ffc107; /* Bootstrap Warning */
-    --status-verification: #fd7e14; /* Bootstrap Orange */
-    --status-design-approved: #20c997; /* Bootstrap Teal */
-    --status-printing: #17a2b8; /* Bootstrap Info */
-    --status-ready-working: #6f42c1; /* Bootstrap Purple */
-    --status-delivered: #0dcaf0; /* Bootstrap Cyan */
-    --status-completed: #28a745; /* Bootstrap Success */
+    /* Color variables for statuses (used for dropdown background) */
+    --status-order-received-bg: #6c757d; /* Bootstrap Secondary */
+    --status-designing-bg: #ffc107; /* Bootstrap Warning */
+    --status-verification-bg: #fd7e14; /* Bootstrap Orange */
+    --status-design-approved-bg: #20c997; /* Bootstrap Teal */
+    --status-printing-bg: #17a2b8; /* Bootstrap Info */
+    --status-ready-working-bg: #6f42c1; /* Bootstrap Purple */
+    --status-delivered-bg: #0dcaf0; /* Bootstrap Cyan */
+    --status-completed-bg: #28a745; /* Bootstrap Success */
+    /* Text colors for statuses */
+    --status-light-text: #ffffff;
+    --status-dark-text: #343a40;
 }
 
 body { font-family:var(--font-family);margin:0;padding:20px;background-color:var(--body-bg);color:var(--text-color);line-height:1.5;font-size:15px; }
@@ -49,14 +53,6 @@ body { font-family:var(--font-family);margin:0;padding:20px;background-color:var
 .form-section-card { border:1px solid var(--border-color);border-radius:var(--border-radius);padding:20px 25px;background-color:var(--white-color);box-shadow:var(--box-shadow);margin-bottom:25px;display:flex;flex-direction:column;flex-grow:1; }
 .form-section-card > *:last-child { margin-bottom: 0; }
 .section-title { font-size:1.1em;color:var(--primary-color);margin-top:0;margin-bottom:20px;font-weight:600;border-bottom:1px solid #e5e5e5;padding-bottom:8px;display:flex;align-items:center;gap:8px;flex-shrink:0; }
-
-/* Inline section for status */
-.form-section-inline {
-    margin-bottom: 25px;
-    padding: 10px 0; /* Padding around the status bar */
-    border-bottom: 1px solid var(--border-color);
-    overflow: hidden;
-}
 
 /* --- Basic Form Elements --- */
 .form-row { display:flex;flex-wrap:wrap;gap:15px 20px;margin-bottom:15px; }
@@ -240,79 +236,62 @@ input[type=number] { -moz-appearance:textfield; }
     text-align: left;
 }
 
-/* --- ** FINAL: Order Status (Pill Shape, Horizontal Scroll) ** --- */
-#orderStatusSection {
-    padding: 10px 0;
-    margin-bottom: 25px;
-    border-bottom: 1px solid var(--border-color);
-    overflow: hidden;
-}
-/* Container for the scrolling buttons */
-#order-status-group {
-    gap: 10px; /* Space between pills */
-    padding: 5px 5px 10px 5px; /* Top, Sides, Bottom (for scrollbar) */
-    border: none;
-    background-color: transparent;
-    display: flex; /* Core: Arrange items horizontally */
-    flex-wrap: nowrap; /* Core: Prevent wrapping to next line */
-    justify-content: flex-start; /* Align items to the start */
-    overflow-x: auto; /* Core: Enable horizontal scrolling */
-    -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
-    scrollbar-width: thin; /* Firefox scrollbar style */
-    scrollbar-color: #ccc #f1f1f1; /* Firefox scrollbar colors */
-}
-/* Scrollbar styling for Webkit browsers (Chrome, Safari) */
-#order-status-group::-webkit-scrollbar { height: 6px; }
-#order-status-group::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 10px; }
-#order-status-group::-webkit-scrollbar-thumb { background: #ccc; border-radius: 10px; }
-#order-status-group::-webkit-scrollbar-thumb:hover { background: #aaa; }
-
-/* Style for each status label (acting as a pill button) */
-#order-status-group label {
-    margin-bottom: 0;
-    border: 1px solid var(--border-color);
-    border-radius: 50px; /* Make it pill-shaped */
-    padding: 6px 16px; /* Adjust padding for pill shape */
-    cursor: pointer;
-    transition: all 0.2s ease;
-    display: inline-flex;
-    justify-content: center;
-    align-items: center;
-    font-size: 0.85em;
-    text-align: center;
+/* --- ** NEW: Order Status Dropdown Styles ** --- */
+.status-select {
+    /* Inherits basic .form-input styles */
+    appearance: none; /* Remove default system appearance */
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23007bff%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E'); /* Custom arrow */
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    background-size: 8px 10px;
+    padding-right: 30px; /* Make space for arrow */
     font-weight: 500;
-    white-space: nowrap; /* Prevent text wrapping */
-    flex-shrink: 0; /* Prevent pills from shrinking */
-    /* Default (unchecked) state */
-    color: var(--text-muted);
-    background-color: var(--white-color);
-    box-shadow: 0 1px 2px rgba(0,0,0,0.05); /* Subtle shadow */
+    transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
 }
-#order-status-group label:hover {
-    background-color: var(--light-bg);
-    border-color: #adb5bd;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.08);
-}
-/* Hide the actual checkbox */
-#order-status-group label input[type="checkbox"] { display: none; }
 
-/* Checked State Styling */
-#order-status-group label:has(input[type="checkbox"]:checked) {
-    font-weight: 600;
-    color: var(--white-color); /* Default white text */
-    border-color: transparent;
-    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.15); /* Inner shadow when active */
+/* Default appearance if no status class applied */
+.status-select.status-select-default,
+.status-select:not([class*="status-select-"]) { /* Apply default if no specific class */
+    background-color: #fff;
+    color: var(--text-color);
+    border: 1px solid #ced4da;
 }
-/* Apply specific background colors when checked */
-#order-status-group label:has(input[value="Order Received"]:checked) { background-color: var(--status-order-received); }
-#order-status-group label:has(input[value="Designing"]:checked) { background-color: var(--status-designing); color: #333; } /* Dark text */
-#order-status-group label:has(input[value="Verification"]:checked) { background-color: var(--status-verification); }
-#order-status-group label:has(input[value="Design Approved"]:checked) { background-color: var(--status-design-approved); }
-#order-status-group label:has(input[value="Printing"]:checked) { background-color: var(--status-printing); }
-#order-status-group label:has(input[value="Ready for Working"]:checked) { background-color: var(--status-ready-working); }
-#order-status-group label:has(input[value="Delivered"]:checked) { background-color: var(--status-delivered); color: #333; } /* Dark text */
-#order-status-group label:has(input[value="Completed"]:checked) { background-color: var(--status-completed); }
-/* --- End of Final Status Bar Styles --- */
+
+/* Status-specific background and text colors */
+.status-select.status-select-order-received { background-color: var(--status-order-received-bg); color: var(--status-light-text); border-color: var(--status-order-received-bg); }
+.status-select.status-select-designing { background-color: var(--status-designing-bg); color: var(--status-dark-text); border-color: var(--status-designing-bg); }
+.status-select.status-select-verification { background-color: var(--status-verification-bg); color: var(--status-light-text); border-color: var(--status-verification-bg); }
+.status-select.status-select-design-approved { background-color: var(--status-design-approved-bg); color: var(--status-light-text); border-color: var(--status-design-approved-bg); }
+.status-select.status-select-printing { background-color: var(--status-printing-bg); color: var(--status-light-text); border-color: var(--status-printing-bg); }
+.status-select.status-select-ready-for-working { background-color: var(--status-ready-working-bg); color: var(--status-light-text); border-color: var(--status-ready-working-bg); }
+.status-select.status-select-delivered { background-color: var(--status-delivered-bg); color: var(--status-dark-text); border-color: var(--status-delivered-bg); }
+.status-select.status-select-completed { background-color: var(--status-completed-bg); color: var(--status-light-text); border-color: var(--status-completed-bg); }
+
+/* Adjust dropdown arrow color based on background */
+.status-select.status-select-order-received,
+.status-select.status-select-verification,
+.status-select.status-select-design-approved,
+.status-select.status-select-printing,
+.status-select.status-select-ready-for-working,
+.status-select.status-select-completed {
+    background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23ffffff%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E'); /* White arrow */
+}
+.status-select.status-select-designing,
+.status-select.status-select-delivered {
+    background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23343a40%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E'); /* Dark arrow */
+}
+/* --- End of Status Dropdown Styles --- */
+
+/* --- REMOVED old status bar styles --- */
+/* #orderStatusSection { ... } */
+/* #order-status-group { ... } */
+/* #order-status-group label { ... } */
+/* #order-status-group label:hover { ... } */
+/* #order-status-group label input[type="checkbox"] { ... } */
+/* #order-status-group label:has(...) { ... } */
+/* --- End of REMOVED styles --- */
 
 
 /* --- Buttons & Error --- */
@@ -350,7 +329,7 @@ input[type=number] { -moz-appearance:textfield; }
     .summary-right { flex-basis: auto; margin-left: 0; }
     .summary-left { min-width: auto; }
     #calculationPreviewArea { height: auto; max-height: 250px; }
-    #order-status-group label { font-size: 0.8em; padding: 5px 14px;} /* Adjust size */
+    /* #order-status-group label { font-size: 0.8em; padding: 5px 14px;} */ /* Removed */
 }
 @media (max-width: 767px) {
     body { padding: 15px; font-size: 14px;}
@@ -361,7 +340,7 @@ input[type=number] { -moz-appearance:textfield; }
     .button-container { justify-content: space-between; gap: 10px; }
     .save-button, .cancel-button { width: calc(50% - 5px); max-width: none; padding: 10px 15px; font-size: 0.95em;}
     .form-section-card { padding: 15px 20px; margin-bottom: 20px;}
-    #order-status-group label { font-size: 0.78em; padding: 4px 12px; } /* Adjust size */
+    /* #order-status-group label { font-size: 0.78em; padding: 4px 12px; } */ /* Removed */
     .summary-right { padding: 0; flex-basis: auto; }
     .summary-title { padding: 10px 15px; font-size: 1em; }
     .summary-grid { padding: 15px; gap: 8px 10px; }
@@ -380,8 +359,8 @@ input[type=number] { -moz-appearance:textfield; }
     .header { padding: 12px 15px; font-size: 1.1em; margin: -15px -15px 15px -15px;}
     .button-container { flex-direction: column; align-items: stretch; }
     .save-button, .cancel-button { width: 100%; max-width: none; }
-    #order-status-group { justify-content: flex-start; }
-    #order-status-group label { font-size: 0.75em; padding: 4px 10px; } /* Adjust size */
+    /* #order-status-group { justify-content: flex-start; } */ /* Removed */
+    /* #order-status-group label { font-size: 0.75em; padding: 4px 10px; } */ /* Removed */
     .summary-grid { grid-template-columns: 1fr; text-align: left; padding: 15px; }
     .summary-grid .summary-label, .summary-grid label.summary-label { text-align: left; grid-column: 1 / -1; margin-bottom: 0; }
     .summary-grid .summary-value, .summary-grid .summary-input { text-align: left; grid-column: 1 / -1; }
