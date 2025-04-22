@@ -1,4 +1,4 @@
-/* css/customer_account_detail.css (Version 1) */
+/* css/customer_account_detail.css (Version 2.0) */
 
 /* Status Badge Styles (using variables potentially defined in order_history.css) */
 /* Make sure :root variables are defined in a loaded CSS file */
@@ -68,13 +68,18 @@
 }
 
 /* बकाया राशि के लिए स्टाइल */
-.balance-due {
-    color: var(--danger-color, #dc3545); /* लाल रंग */
+#summary-balance.balance-due { /* जब बकाया हो */
+    color: var(--danger-color, #dc3545);
     font-weight: bold;
 }
-.balance-paid { /* अगर बैलेंस क्रेडिट में है तो इस्तेमाल कर सकते हैं */
-     color: var(--success-color, #28a745); /* हरा रंग */
+#summary-balance.balance-credit { /* जब एडवांस पेमेंट हो */
+     color: var(--success-color, #28a745);
      font-weight: bold;
+}
+#summary-balance.balance-info { /* जब सिर्फ पेमेंट दिखे (ऑर्डर वैल्यू N/A) */
+     color: var(--text-muted, #6c757d);
+     font-weight: normal;
+     font-style: italic;
 }
 
 /* इस पेज के एक्शन बार के लिए स्टाइल */
@@ -85,6 +90,8 @@
     border: 1px solid #e9ecef;
     border-radius: 4px;
     margin-bottom: 20px;
+    flex-wrap: wrap; /* Ensure buttons wrap on smaller screens */
+    gap: 10px; /* Add gap between buttons */
 }
 
 /* अलग-अलग बटन के रंग (order_history.css से मेल खाते हुए) */
@@ -104,3 +111,8 @@ a.button.disabled {
     pointer-events: none; /* क्लिक करने से रोकता है */
     opacity: 0.6;        /* थोड़ा धुंधला दिखाता है */
 }
+
+/* --- वर्ज़न 2.0 में जोड़ा गया --- */
+/* Style for clickable order rows */
+.order-row-clickable {
+    cursor: pointer;

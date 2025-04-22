@@ -3,88 +3,65 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Customer Account Details</title>
-
-    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <title>Customer Account Details</title> <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 
-    <link rel="stylesheet" href="css/customer_management.css"> <link rel="stylesheet" href="css/order_history.css"> <link rel="stylesheet" href="css/customer_account_detail.css"> <script type="module">
+    <link rel="stylesheet" href="css/customer_management.css">
+    <link rel="stylesheet" href="css/order_history.css"> <link rel="stylesheet" href="css/customer_account_detail.css">
+
+    <script type="module">
         // Import Firebase services
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
         import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-        // Import Firestore services needed for THIS page
-        import { getFirestore, doc, getDoc, collection, query, where, getDocs, orderBy } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+        // Import ALL Firestore functions needed by page and adapted modal logic
+        import { getFirestore, doc, getDoc, collection, query, where, getDocs, orderBy, updateDoc, deleteDoc, Timestamp, arrayUnion } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
         // **** Your Firebase Configuration ****
         const firebaseConfig = {
-            apiKey: "AIzaSyBQj5rQmE77kKKGYixP8y3Hcimz8tiAqzQ", // Your apiKey
-            authDomain: "madhav-multyprint.firebaseapp.com", // Your authDomain
-            projectId: "madhav-multyprint", // Your projectId
-            storageBucket: "madhav-multyprint.appspot.com", // Your storageBucket
-            messagingSenderId: "104988349637", // Your messagingSenderId
-            appId: "1:104988349637:web:faf045b77c6786a4e70cac" // Your appId
+            apiKey: "AIzaSyBQj5rQmE77kKKGYixP8y3Hcimz8tiAqzQ",
+            authDomain: "madhav-multyprint.firebaseapp.com",
+            projectId: "madhav-multyprint",
+            storageBucket: "madhav-multyprint.appspot.com",
+            messagingSenderId: "104988349637",
+            appId: "1:104988349637:web:faf045b77c6786a4e70cac"
         };
 
-        let app;
-        let auth;
-        let db;
+        let app; let auth; let db;
 
         try {
-            // Initialize Firebase App (only once)
+            // Initialize Firebase App
             if (!window.firebaseAppInitialized) {
                 app = initializeApp(firebaseConfig);
-                window.firebaseAppInitialized = true;
-                window.firebaseApp = app;
-                console.log("Firebase initialized on this page (customer_account_detail - V1.1a).");
+                window.firebaseAppInitialized = true; window.firebaseApp = app;
+                console.log("Firebase initialized (customer_account_detail - V2.0).");
             } else {
                 app = window.firebaseApp;
-                console.log("Firebase already initialized on this page (customer_account_detail - V1.1a).");
+                console.log("Firebase already initialized (customer_account_detail - V2.0).");
             }
-            auth = getAuth(app);
-            db = getFirestore(app);
+            auth = getAuth(app); db = getFirestore(app);
 
-            // Make DB and key Firestore functions global for the detail script
-            window.db = db;
-            window.doc = doc;
-            window.getDoc = getDoc;
-            window.collection = collection; // Needed for Phase 2
-            window.query = query;           // Needed for Phase 2
-            window.where = where;           // Needed for Phase 2
-            window.getDocs = getDocs;         // Needed for Phase 2
-            window.orderBy = orderBy;       // Needed for Phase 2
-            // Add other Firestore functions (addDoc, updateDoc, etc.) when needed
+            // Make Firestore functions global for the detail script
+            window.db = db; window.doc = doc; window.getDoc = getDoc;
+            window.collection = collection; window.query = query; window.where = where;
+            window.getDocs = getDocs; window.orderBy = orderBy;
+            window.updateDoc = updateDoc; window.deleteDoc = deleteDoc;
+            window.Timestamp = Timestamp; window.arrayUnion = arrayUnion; // Needed for modal actions
 
-            // ---->> Authentication State Check <<----
+            // Auth Check
             onAuthStateChanged(auth, (user) => {
                 const currentPage = window.location.pathname.split('/').pop() || 'index.html';
                 if (!user && currentPage.toLowerCase() !== 'login.html') {
-                    console.log(`User not logged in on ${currentPage}. Redirecting...`);
                     window.location.replace('login.html');
                 } else if (user) {
-                    console.log(`User is logged in on ${currentPage}. OK to proceed.`);
-                    // Trigger page load logic AFTER auth check passes
+                     console.log(`User logged in. V2.0 OK.`);
                     if (typeof initializeCustomerDetailPage === 'function') {
                         initializeCustomerDetailPage(user);
-                    } else {
-                        setTimeout(() => {
-                             if (typeof initializeCustomerDetailPage === 'function') {
-                                initializeCustomerDetailPage(user);
-                             } else {
-                                console.error("initializeCustomerDetailPage function not found after delay.");
-                                alert("Error initializing page script.");
-                             }
-                        }, 100);
-                    }
+                    } else { setTimeout(() => { typeof initializeCustomerDetailPage === 'function' ? initializeCustomerDetailPage(user) : console.error("Init function missing!"); }, 100); }
                 }
             });
-            // ---->> Auth check end <<----
-
-        } catch(e) {
-            console.error("Firebase setup / Auth check error:", e);
-            alert("Error loading application. Please try again later.");
-        }
+        } catch(e) { console.error("Firebase setup error:", e); alert("App Error."); }
     </script>
 </head>
 <body>
@@ -117,7 +94,6 @@
                 <p><strong>State:</strong> <span id="cust-detail-state">...</span></p>
                 <p><strong>Account Status:</strong> <span id="cust-detail-status" class="status-badge">...</span></p>
             </div>
-
             <div class="info-box account-summary-box">
                  <h2><i class="fas fa-calculator"></i> Account Summary</h2>
                  <p><strong>Total Order Value:</strong> <span id="summary-total-orders">N/A</span></p>
@@ -143,19 +119,18 @@
                             <th>Order Date</th>
                             <th>Products</th>
                             <th>Status</th>
-                            <th>Action</th>
-                        </tr>
+                            </tr>
                     </thead>
                     <tbody id="customerOrderTableBody">
-                         <tr><td colspan="5" style="text-align: center;">Loading orders...</td></tr>
-                         </tbody>
+                        <tr><td colspan="4" style="text-align: center;">Loading orders...</td></tr>
+                    </tbody>
                 </table>
             </div>
 
             <h2 style="margin-top: 30px;"><i class="fas fa-money-check-alt"></i> Payment History</h2>
             <div class="table-container">
                 <table id="customerPaymentTable">
-                    <thead>
+                     <thead>
                         <tr>
                             <th>Payment Date</th>
                             <th>Amount Paid</th>
@@ -166,11 +141,49 @@
                     </thead>
                     <tbody id="customerPaymentTableBody">
                          <tr><td colspan="5" style="text-align: center;">Loading payments...</td></tr>
-                         </tbody>
+                    </tbody>
                 </table>
             </div>
         </div>
 
-    </div> <script src="js/customer_account_detail.js" type="module" defer></script>
+    </div> <div id="detailsModal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" id="closeDetailsModal" title="Close">&times;</span>
+            <h2>Order Details & Actions</h2>
+            <input type="hidden" id="modalOrderId">
+            <div class="modal-info">
+                  <p><strong>Order ID:</strong> <span id="modalDisplayOrderId"></span></p>
+                 <p><strong>Customer:</strong> <span id="modalCustomerName"></span></p>
+                 <p><strong>WhatsApp:</strong> <span id="modalCustomerWhatsApp"></span></p>
+             </div>
+            <div class="modal-section" id="modalProductSection">
+                <label>Products:</label>
+                <div id="modalProductList"><p>Loading...</p></div>
+             </div>
+             <div class="modal-section" id="modalStatusHistorySection">
+                <label>Status History:</label>
+                <div id="modalStatusHistoryList"><p>Loading history...</p></div>
+             </div>
+            <div class="modal-section">
+                 <label for="modalOrderStatus">Update Status:</label>
+                 <select id="modalOrderStatus">
+                     <option value="Order Received">Order Received</option>
+                     <option value="Designing">Designing</option>
+                     <option value="Verification">Verification</option>
+                     <option value="Design Approved">Design Approved</option>
+                     <option value="Printing">Printing</option>
+                     <option value="Ready for Working">Ready for Working</option>
+                     <option value="Delivered">Delivered</option>
+                     <option value="Completed">Completed</option>
+                 </select>
+                  <button id="modalUpdateStatusBtn" class="button update-status-button"><i class="fas fa-sync-alt"></i> Update Status</button>
+            </div>
+            <div class="modal-section modal-actions">
+                  <button id="modalEditFullBtn" class="button edit-full-button"><i class="fas fa-edit"></i> Edit Full Order</button>
+                  <button id="modalDeleteBtn" class="button delete-button"><i class="fas fa-trash-alt"></i> Delete Order</button>
+             </div>
+        </div>
+    </div>
+    <script src="js/customer_account_detail.js" type="module" defer></script>
 </body>
 </html>
