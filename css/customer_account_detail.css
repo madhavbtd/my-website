@@ -1,118 +1,124 @@
-/* css/customer_account_detail.css (Version 2.0) */
+/* css/customer_account_detail.css (Version 2.2 - Font, Modal Design, Button Size Fix) */
 
-/* Status Badge Styles (using variables potentially defined in order_history.css) */
-/* Make sure :root variables are defined in a loaded CSS file */
+/* --- सुनिश्चित करें कि Poppins फॉन्ट हर जगह लागू हो --- */
+body, input, button, select, textarea {
+    font-family: var(--font-family, 'Poppins', sans-serif); /* वेरिएबल का उपयोग करें (order_history.css से) */
+}
+
+/* === पिछले वर्ज़न (V2.0) के स्टाइल यहाँ रहेंगे === */
+
+/* Status Badge Styles */
 .status-badge {
-    font-weight: 500;
-    padding: 3px 10px; /* थोड़ा छोटा */
-    border-radius: 12px; /* गोल */
-    font-size: 0.8em;   /* थोड़ा छोटा फॉन्ट */
-    color: white;
-    background-color: var(--secondary-color, #6c757d); /* Default Grey */
-    white-space: nowrap;
-    display: inline-block;
-    line-height: 1.2;
-    text-align: center;
-    vertical-align: middle;
+    font-weight: 500; padding: 3px 10px; border-radius: 12px; font-size: 0.8em;
+    color: white; background-color: var(--secondary-color, #6c757d); white-space: nowrap;
+    display: inline-block; line-height: 1.2; text-align: center; vertical-align: middle;
 }
+.status-badge.status-active { background-color: var(--success-color, #28a745); }
+.status-badge.status-inactive { background-color: var(--secondary-color, #6c757d); }
 
-.status-badge.status-active {
-    background-color: var(--success-color, #28a745); /* Green */
-}
-
-.status-badge.status-inactive {
-    background-color: var(--secondary-color, #6c757d); /* Grey */
-}
-
-/* Layout for the main info grid */
+/* Main Info Grid Layout */
 .customer-info-grid {
-    display: grid;
-    /* स्क्रीन के साइज़ के हिसाब से कॉलम एडजस्ट होंगे */
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: 20px; /* बॉक्स के बीच में जगह */
-    margin-bottom: 30px; /* नीचे मार्जिन */
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 20px; margin-bottom: 30px;
 }
-
-/* Style for each info box */
 .info-box {
-    background-color: #ffffff;
-    border: 1px solid var(--border-color, #dee2e6);
-    border-radius: var(--border-radius, 6px);
-    padding: 15px 20px;
+    background-color: #ffffff; border: 1px solid var(--border-color, #dee2e6);
+    border-radius: var(--border-radius, 6px); padding: 15px 20px;
     box-shadow: var(--box-shadow, 0 2px 5px rgba(0, 0, 0, 0.08));
 }
-
 .info-box h2 {
-    font-size: 1.1em;
-    color: var(--primary-color, #0056b3);
-    margin-top: 0;
-    margin-bottom: 15px;
-    padding-bottom: 8px;
-    border-bottom: 1px solid #eee;
-    display: flex;       /* Icon और टेक्स्ट को एक लाइन में लाने के लिए */
-    align-items: center; /* Icon और टेक्स्ट को वर्टिकली सेंटर करने के लिए */
-    gap: 8px;            /* Icon और टेक्स्ट के बीच जगह */
+    font-size: 1.1em; color: var(--primary-color, #0056b3); margin-top: 0;
+    margin-bottom: 15px; padding-bottom: 10px; border-bottom: 1px solid #eee;
+    display: flex; align-items: center; gap: 8px; font-weight: 600; /* Title थोड़ा बोल्ड */
+}
+.info-box p { margin-bottom: 10px; font-size: 0.95em; line-height: 1.5; }
+.info-box p strong { font-weight: 600; color: #333; min-width: 110px; display: inline-block; }
+
+/* Balance Styles */
+#summary-balance.balance-due { color: var(--danger-color, #dc3545); font-weight: bold; }
+#summary-balance.balance-credit { color: var(--success-color, #28a745); font-weight: bold; }
+#summary-balance.balance-info { color: var(--text-muted, #6c757d); font-weight: normal; font-style: italic; }
+
+/* Clickable Order Row Style */
+.order-row-clickable { cursor: pointer; transition: background-color 0.15s ease; }
+.order-row-clickable:hover { background-color: #f0f8ff; }
+
+/* --- वर्ज़न 2.2 में जोड़ा गया --- */
+
+/* 1. टॉप एक्शन बटन साइज़ एक समान करें */
+.cust-detail-actions .button,
+.cust-detail-actions a.button {
+    min-width: 160px;       /* <<< न्यूनतम चौड़ाई सेट करें (एडजस्ट कर सकते हैं) */
+    justify-content: center; /* आइकन और टेक्स्ट को बीच में रखें */
 }
 
-.info-box p {
-    margin-bottom: 8px;
-    font-size: 0.95em;
-    line-height: 1.5;
+/* 2. पॉपअप (Modal) डिज़ाइन सुधार */
+.modal .modal-content {
+    padding: 25px 30px; /* अंदर थोड़ा ज़्यादा स्पेस */
+    box-shadow: 0 5px 15px rgba(0,0,0,0.2); /* थोड़ी गहरी शैडो */
 }
-/* जानकारी के लेबल (जैसे "WhatsApp:") को थोड़ा व्यवस्थित करने के लिए */
-.info-box p strong {
+
+.modal h2 { /* पॉपअप टाइटल स्टाइल */
     font-weight: 600;
+    font-size: 1.25em;   /* थोड़ा बड़ा */
+    color: var(--primary-color, #0056b3); /* प्राइमरी कलर */
+    text-align: center;
+    margin-top: 0;
+    margin-bottom: 30px;  /* टाइटल के नीचे ज़्यादा स्पेस */
+    padding-bottom: 15px;
+    border-bottom: 1px solid var(--border-color, #eee);
+}
+
+/* पॉपअप फॉर्म में स्पेसिंग */
+.modal .form-group {
+    margin-bottom: 20px; /* फील्ड्स के बीच ज़्यादा स्पेस */
+}
+.modal .form-group label {
+    margin-bottom: 8px;  /* लेबल और इनपुट के बीच स्पेस */
+    font-weight: 500;    /* स्टैंडर्ड फॉन्ट वेट */
     color: #333;
-    min-width: 110px; /* ताकि लेबल एक सीध में दिखें */
-    display: inline-block; /* min-width काम करने के लिए */
+}
+.modal .form-group input[type="text"],
+.modal .form-group input[type="tel"],
+.modal .form-group input[type="email"],
+.modal .form-group input[type="number"],
+.modal .form-group input[type="date"],
+.modal .form-group select,
+.modal .form-group textarea {
+    font-size: 1em; /* इनपुट फॉन्ट साइज़ */
+    padding: 9px 12px; /* इनपुट में पैडिंग */
 }
 
-/* बकाया राशि के लिए स्टाइल */
-#summary-balance.balance-due { /* जब बकाया हो */
-    color: var(--danger-color, #dc3545);
-    font-weight: bold;
-}
-#summary-balance.balance-credit { /* जब एडवांस पेमेंट हो */
-     color: var(--success-color, #28a745);
-     font-weight: bold;
-}
-#summary-balance.balance-info { /* जब सिर्फ पेमेंट दिखे (ऑर्डर वैल्यू N/A) */
-     color: var(--text-muted, #6c757d);
-     font-weight: normal;
-     font-style: italic;
+
+/* पॉपअप एक्शन बटन सेक्शन */
+.modal .modal-actions {
+    margin-top: 30px;     /* फॉर्म और बटन के बीच ज़्यादा स्पेस */
+    padding-top: 20px;    /* बटन के ऊपर स्पेस */
+    border-top: 1px solid var(--border-color, #eee);
+    justify-content: flex-end; /* बटन दाईं ओर */
 }
 
-/* इस पेज के एक्शन बार के लिए स्टाइल */
-.cust-detail-actions {
-    justify-content: flex-start; /* बटन बाईं ओर से शुरू हों */
-    padding: 15px;              /* थोड़ा स्पेस */
-    background-color: #f8f9fa;    /* हल्का बैकग्राउंड */
-    border: 1px solid #e9ecef;
-    border-radius: 4px;
-    margin-bottom: 20px;
-    flex-wrap: wrap; /* Ensure buttons wrap on smaller screens */
-    gap: 10px; /* Add gap between buttons */
+/* ग्राहक एडिट पॉपअप की चौड़ाई एडजस्ट करें (Optional) */
+#customerEditModal .modal-content {
+    max-width: 550px; /* इसे एडजस्ट करें अगर ज़रूरत हो */
 }
 
-/* अलग-अलग बटन के रंग (order_history.css से मेल खाते हुए) */
-.info-button { background-color: var(--info-color, #17a2b8); color: white; }
-.info-button:hover { background-color: #138496; }
-.success-button { background-color: var(--success-color, #28a745); color: white; }
-.success-button:hover { background-color: #218838; }
-.primary-button { background-color: var(--primary-color, #0056b3); color: white; }
-.primary-button:hover { background-color: #00418a; }
-.secondary-button { background-color: var(--secondary-color, #6c757d); color: white; }
-.secondary-button:hover { background-color: #5a6268; }
-.danger-button { background-color: var(--danger-color, #dc3545); color: white; }
-.danger-button:hover { background-color: #c82333; }
-
-/* Disabled लिंक बटन के लिए */
-a.button.disabled {
-    pointer-events: none; /* क्लिक करने से रोकता है */
-    opacity: 0.6;        /* थोड़ा धुंधला दिखाता है */
+/* ऑर्डर डिटेल पॉपअप में सेक्शन स्पेसिंग */
+#detailsModal .modal-section {
+    margin-bottom: 25px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid #eee;
+}
+#detailsModal .modal-section:last-of-type {
+     border-bottom: none;
+     margin-bottom: 0;
+     padding-bottom: 0;
+}
+#detailsModal .modal-section label { /* सेक्शन लेबल स्टाइल */
+    font-weight: 600;
+    color: var(--primary-color, #0056b3);
+    margin-bottom: 10px;
+    display: block;
 }
 
-/* --- वर्ज़न 2.0 में जोड़ा गया --- */
-/* Style for clickable order rows */
-.order-row-clickable {
-    cursor: pointer;
+/* --- वर्ज़न 2.2 समाप्त --- */
