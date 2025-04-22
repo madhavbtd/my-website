@@ -15,40 +15,36 @@
         // Import Firebase services
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-        // Import other services like Firestore if needed by the page
-        import { getFirestore, collection, doc, deleteDoc, updateDoc, onSnapshot, query, orderBy, Timestamp, arrayUnion, writeBatch } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js"; // Added Firestore imports needed for original script + writeBatch
+        import { getFirestore, collection, doc, deleteDoc, updateDoc, onSnapshot, query, orderBy, Timestamp, arrayUnion, writeBatch } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-        // **** Your Firebase Configuration ****
+        // **** Firebase कॉन्फ़िगरेशन ****
          const firebaseConfig = {
-           apiKey: "AIzaSyBQj5rQmE77kKKGYixP8y3Hcimz8tiAqzQ", // Your apiKey - **सुरक्षा के लिए इसे सीधे कोड में न रखें**
-           authDomain: "madhav-multyprint.firebaseapp.com", // Your authDomain
-           projectId: "madhav-multyprint", // Your projectId
-           storageBucket: "madhav-multyprint.appspot.com", // Your storageBucket
-           messagingSenderId: "104988349637", // Your messagingSenderId
-           appId: "1:104988349637:web:faf045b77c6786a4e70cac" // Your appId
+           apiKey: "AIzaSyBQj5rQmE77kKKGYixP8y3Hcimz8tiAqzQ", // ** सुरक्षा के लिए इसे सीधे कोड में न रखें **
+           authDomain: "madhav-multyprint.firebaseapp.com",
+           projectId: "madhav-multyprint",
+           storageBucket: "madhav-multyprint.appspot.com",
+           messagingSenderId: "104988349637",
+           appId: "1:104988349637:web:faf045b77c6786a4e70cac"
          };
 
         let app;
         let auth;
-        let db; // Example for Firestore
+        let db;
 
         try {
-             // Initialize Firebase App (only once per page load)
              if (!window.firebaseAppInitialized) {
                  app = initializeApp(firebaseConfig);
                  window.firebaseAppInitialized = true;
-                 window.firebaseApp = app; // Store globally
+                 window.firebaseApp = app;
                  console.log("Firebase initialized on this page (order_history).");
              } else {
-                 app = window.firebaseApp; // Use existing instance
+                 app = window.firebaseApp;
                  console.log("Firebase already initialized on this page (order_history).");
              }
              auth = getAuth(app);
-             db = getFirestore(app); // Initialize Firestore (or other services)
-             window.db = db; // Make global if needed by other scripts on the page
-             window.auth = auth; // Make auth global
-
-             // Make other Firestore functions globally available if order_history.js needs them
+             db = getFirestore(app);
+             window.db = db;
+             window.auth = auth;
              window.collection = collection;
              window.doc = doc;
              window.deleteDoc = deleteDoc;
@@ -56,45 +52,26 @@
              window.onSnapshot = onSnapshot;
              window.query = query;
              window.orderBy = orderBy;
-             window.Timestamp = Timestamp; // Ensure Timestamp is available
-             window.arrayUnion = arrayUnion; // Ensure arrayUnion is available
-             window.writeBatch = writeBatch; // **Make writeBatch available**
+             window.Timestamp = Timestamp;
+             window.arrayUnion = arrayUnion;
+             window.writeBatch = writeBatch;
 
-
-             // ---->> Authentication State Check (Core Security) <<----
+             // ** प्रमाणीकरण जांच **
              onAuthStateChanged(auth, (user) => {
-                 const currentPage = window.location.pathname.split('/').pop() || 'index.html'; // Get current file name
-
-                 if (user) {
-                     // User is logged in. Allow page to load.
-                     console.log(`User is logged in on ${currentPage}:`, user.uid);
-                     // Initialize page-specific functions if needed
-                     // e.g., if (typeof initializeOrderHistory === 'function') { initializeOrderHistory(user); }
-
-                 } else {
-                     // User is not logged in.
-                     console.log(`User is not logged in on ${currentPage}. Redirecting to login...`);
-                     // Redirect to login.html from all protected pages (but NOT from login.html itself)
-                     if (currentPage.toLowerCase() !== 'login.html') {
-                        // Make sure 'login.html' path is correct relative to your files
-                        window.location.replace('login.html');
-                     }
+                 const currentPage = window.location.pathname.split('/').pop() || 'index.html';
+                 if (!user && currentPage.toLowerCase() !== 'login.html') {
+                     console.log(`User not logged in on ${currentPage}. Redirecting...`);
+                     window.location.replace('login.html');
+                 } else if (user) {
+                     console.log(`User logged in on ${currentPage}:`, user.uid);
                  }
              });
-             // ---->> Auth check end <<----
 
-             // --- Logout Link Logic ---
-             // (यहाँ शामिल नहीं किया गया है, मान लिया गया है कि इस पेज पर लॉगआउट लिंक नहीं है)
-
-
-             // --- Optional: Make user info available globally ---
-             window.getCurrentUser = () => {
-                 return auth.currentUser;
-             };
+             window.getCurrentUser = () => auth.currentUser;
 
         } catch(e) {
             console.error("Firebase setup / Auth check error:", e);
-            alert("Error loading application. Please try again later."); // English alert
+            alert("Error loading application. Please try again later.");
         }
     </script>
     </head>
@@ -132,9 +109,10 @@
                     <option value="Verification">Verification</option>
                     <option value="Design Approved">Design Approved</option>
                      <option value="Printing">Printing</option>
-                    <option value="Ready for Working">Ready for Working</option> <option value="Delivered">Delivered</option>
+                    <option value="Ready for Working">Ready for Working</option>
+                    <option value="Delivered">Delivered</option>
                     <option value="Completed">Completed</option>
-                    </select>
+                </select>
                  </div>
               <div class="filter-group filter-sort">
                 <label for="sort-orders"><i class="fas fa-sort"></i> Sort by:</label>
@@ -152,7 +130,8 @@
             </div>
         </div>
 
-        <div class="bulk-actions-bar" id="bulkActionsBar" style="display: none;"> <span id="selectedCount">0 items selected</span>
+        <div class="bulk-actions-bar" id="bulkActionsBar" style="display: none;">
+             <span id="selectedCount">0 items selected</span>
              <div class="bulk-actions-controls">
                  <label for="bulkStatusSelect" class="bulk-label">Change status to:</label>
                  <select id="bulkStatusSelect" class="bulk-select">
@@ -166,8 +145,8 @@
                      <option value="Delivered">Delivered</option>
                      <option value="Completed">Completed</option>
                  </select>
-                 <button id="bulkUpdateStatusBtn" class="button bulk-button bulk-update"><i class="fas fa-sync-alt"></i> Update Selected</button>
-                 <button id="bulkDeleteBtn" class="button bulk-button bulk-delete"><i class="fas fa-trash-alt"></i> Delete Selected</button>
+                 <button id="bulkUpdateStatusBtn" class="button bulk-button bulk-update" disabled><i class="fas fa-sync-alt"></i> Update Selected</button>
+                 <button id="bulkDeleteBtn" class="button bulk-button bulk-delete" disabled><i class="fas fa-trash-alt"></i> Delete Selected</button>
              </div>
         </div>
 
@@ -175,6 +154,7 @@
             <table id="orderTable">
                  <thead>
                     <tr>
+                        {/* --- सही किया गया हेडर रो --- */}
                         <th class="col-checkbox"><input type="checkbox" id="selectAllCheckbox" title="Select All Visible"></th>
                         <th>Order ID</th>
                         <th>Customer Name</th>
@@ -183,13 +163,13 @@
                         <th>Delivery Date</th>
                         <th>Priority</th>
                          <th>Status</th>
-                        <th>Action</th>
-                        <th>Send Wtsp</th>
+                        <th>Action</th> {/* Details/Edit बटन के लिए */}
+                        <th>Send Wtsp</th> {/* WhatsApp आइकन के लिए */}
                     </tr>
                 </thead>
                  <tbody id="orderTableBody">
                     <tr>
-                        <td colspan="10" id="loadingMessage">Loading orders...</td>
+                        <td colspan="10" id="loadingMessage">Loading orders...</td> {/* Colspan 10 */}
                     </tr>
                 </tbody>
             </table>
@@ -204,7 +184,7 @@
             <div id="reportingSection" class="reporting-section">
                 <h4>Displayed Orders Report</h4>
                 <div id="statusCountsReport"><p>Loading report...</p></div>
-                </div>
+            </div>
         </div>
 
     </div> <div id="detailsModal" class="modal">
@@ -253,6 +233,26 @@
             <p>Send update to customer?</p>
              <div id="whatsapp-message-preview" class="message-preview"></div>
             <a href="#" id="whatsapp-send-link" class="button whatsapp-send-btn" target="_blank"><i class="fab fa-whatsapp"></i> Send on WhatsApp</a>
+        </div>
+    </div>
+
+    <div id="bulkDeleteConfirmModal" class="modal">
+        <div class="modal-content small-modal">
+            <span class="close-btn" id="closeBulkDeleteModal" title="Close">&times;</span>
+            <h2><i class="fas fa-exclamation-triangle warning-icon"></i> Confirm Deletion</h2>
+            <p>You are about to permanently delete the following <strong id="bulkDeleteCount">0</strong> order(s):</p>
+            <ul id="bulkDeleteOrderList" class="order-list-preview">
+                {/* चयनित ऑर्डर यहाँ JS द्वारा डाले जाएंगे */}
+            </ul>
+            <p class="warning-message">This action cannot be undone.</p>
+            <div class="confirmation-check">
+                <input type="checkbox" id="confirmDeleteCheckbox">
+                <label for="confirmDeleteCheckbox">I understand and want to permanently delete these orders.</label>
+            </div>
+            <div class="modal-actions">
+                <button id="cancelBulkDeleteBtn" class="button cancel-button">Cancel</button>
+                <button id="confirmBulkDeleteBtn" class="button delete-button" disabled><i class="fas fa-trash-alt"></i> Delete Orders</button>
+            </div>
         </div>
     </div>
 
