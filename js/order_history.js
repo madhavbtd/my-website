@@ -1,5 +1,5 @@
 // js/order_history.js
-// अंतिम सही किया गया संस्करण - टेबल रो जनरेशन फिक्स शामिल है
+// अंतिम सही किया गया संस्करण - RegExp और Row Generation फिक्स शामिल है
 
 // Firebase फ़ंक्शंस को ग्लोबल माना गया है
 const {
@@ -66,7 +66,7 @@ let selectedOrderIds = new Set();
 
 // --- इनिशियलाइज़ेशन ---
 document.addEventListener('DOMContentLoaded', () => {
-    console.log("[DEBUG] Order History DOM Loaded. Initializing final CORRECTED version.");
+    console.log("[DEBUG] Order History DOM Loaded. Initializing final CORRECTED version (RegExp & RowGen fix).");
 
     const urlParams = new URLSearchParams(window.location.search);
     orderIdToOpenFromUrl = urlParams.get('openModalForId');
@@ -79,7 +79,6 @@ document.addEventListener('DOMContentLoaded', () => {
         listenForOrders();
 
         // --- इवेंट लिस्टनर्स ---
-        // (सभी लिस्टनर पहले जैसे ही रहेंगे)
         if (sortSelect) sortSelect.addEventListener('change', handleSortChange);
         if (filterDateInput) filterDateInput.addEventListener('change', handleFilterChange);
         if (filterSearchInput) filterSearchInput.addEventListener('input', handleSearchInput);
@@ -143,12 +142,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // --- DB कनेक्शन प्रतीक्षा ---
 function waitForDbConnection(callback) {
-    // ... पहले जैसा ही ...
     if (window.db) { callback(); } else { let a = 0, m = 20, i = setInterval(() => { a++; if (window.db) { clearInterval(i); callback(); } else if (a >= m) { clearInterval(i); console.error("DB connection timeout (order_history.js)"); alert("Database connection failed."); } }, 250); }
 }
 
 // --- सॉर्टिंग और फ़िल्टरिंग हैंडलर्स ---
-// ... ये सभी पहले जैसे ही रहेंगे ...
 function handleSortChange() { if (!sortSelect) return; const [field, direction] = sortSelect.value.split('_'); if (field && direction) { currentSortField = field; currentSortDirection = direction; applyFiltersAndRender(); } }
 function handleFilterChange() { applyFiltersAndRender(); }
 function handleSearchInput() { clearTimeout(searchDebounceTimer); searchDebounceTimer = setTimeout(applyFiltersAndRender, 300); }
@@ -156,7 +153,6 @@ function clearFilters() { if (filterDateInput) filterDateInput.value = ''; if (f
 
 // --- Firestore लिस्टनर ---
 function listenForOrders() {
-    // ... पहले जैसा ही ...
     if (unsubscribeOrders) { unsubscribeOrders(); unsubscribeOrders = null; console.log("[DEBUG] पिछला लिस्टनर अनसब्सक्राइब किया गया।"); }
     if (!db || !collection || !query || !orderBy || !onSnapshot) { console.error("Firestore लिस्टनर फ़ंक्शन मौजूद नहीं हैं।"); return; }
     if (orderTableBody) orderTableBody.innerHTML = `<tr><td colspan="10" id="loadingMessage">ऑर्डर लोड हो रहे हैं...</td></tr>`;
@@ -175,7 +171,6 @@ function listenForOrders() {
 
 // --- फ़िल्टर, सॉर्ट, रेंडर फ़ंक्शन ---
 function applyFiltersAndRender() {
-    // ... पहले जैसा ही ...
     if (!allOrdersCache) { console.warn("[DEBUG] applyFiltersAndRender कॉल हुआ लेकिन कैश खाली है।"); return; }
     const filterDateValue = filterDateInput ? filterDateInput.value : ''; const filterSearchValue = filterSearchInput ? filterSearchInput.value.trim().toLowerCase() : ''; const filterStatusValue = filterStatusSelect ? filterStatusSelect.value : ''; currentStatusFilter = filterStatusValue;
     let filteredOrders = allOrdersCache.filter(order => { if (filterStatusValue && order.status !== filterStatusValue) return false; if (filterDateValue && order.orderDate !== filterDateValue) return false; if (filterSearchValue) { const orderIdString = String(order.orderId || ''); const customerNameString = order.customerDetails?.fullName || ''; const firestoreIdString = order.id || ''; const productsString = (order.products || []).map(p => String(p.name || '')).join(' ').toLowerCase(); const mobileString = String(order.customerDetails?.whatsappNo || ''); if (!(orderIdString.toLowerCase().includes(filterSearchValue) || customerNameString.toLowerCase().includes(filterSearchValue) || firestoreIdString.toLowerCase().includes(filterSearchValue) || productsString.includes(filterSearchValue) || mobileString.includes(filterSearchValue))) return false; } return true; });
@@ -189,90 +184,71 @@ function applyFiltersAndRender() {
 
 // --- ऑर्डर काउंट और रिपोर्ट अपडेट करें ---
 function updateOrderCountsAndReport(displayedOrders) {
-    // ... पहले जैसा ही ...
     const total = displayedOrders.length; let completedDelivered = 0; const statusCounts = {}; displayedOrders.forEach(order => { const status = order.status || 'Unknown'; if (status === 'Completed' || status === 'Delivered') completedDelivered++; statusCounts[status] = (statusCounts[status] || 0) + 1; }); const pending = total - completedDelivered; if (totalOrdersSpan) totalOrdersSpan.textContent = total; if (completedOrdersSpan) completedOrdersSpan.textContent = completedDelivered; if (pendingOrdersSpan) pendingOrdersSpan.textContent = pending; if (statusCountsReportContainer) { if (total === 0) { statusCountsReportContainer.innerHTML = '<p>रिपोर्ट के लिए कोई ऑर्डर नहीं।</p>'; } else { let reportHtml = '<ul>'; Object.keys(statusCounts).sort().forEach(status => { reportHtml += `<li>${escapeHtml(status)}: <strong>${statusCounts[status]}</strong></li>`; }); reportHtml += '</ul>'; statusCountsReportContainer.innerHTML = reportHtml; } }
 }
 
 // --- HTML एस्केप हेल्पर ---
-function escapeHtml(unsafe) {
-    if (typeof unsafe !== 'string') { unsafe = String(unsafe || ''); }
-   return unsafe.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
-}
+function escapeHtml(unsafe) { if (typeof unsafe !== 'string') { unsafe = String(unsafe || ''); } return unsafe.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;"); }
 
 // --- हाईलाइटिंग फ़ंक्शन ---
-function highlightMatch(text, term) {
-    if (!term || !text) return text; // यदि टर्म या टेक्स्ट नहीं है तो वापस जाएं
-    // Ensure text is a string before calling replace
-    const stringText = typeof text === 'string' ? text : String(text);
-    try {
-        const escapedTerm = term.replace(/[-\/\\^<span class="math-inline">\*\+?\.\(\)\|\[\\\]\{\}\]/g, '\\\\</span>&');
-        const regex = new RegExp(`(${escapedTerm})`, 'gi');
-        return stringText.replace(regex, '<mark>$1</mark>');
-    } catch (e) {
-        console.warn("Highlighting regex error:", e);
-        return stringText; // Fallback to original string text
-    }
-}
+function highlightMatch(text, term) { if (!term || !text) return text; const stringText = typeof text === 'string' ? text : String(text); try { const escapedTerm = term.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&'); const regex = new RegExp(`(${escapedTerm})`, 'gi'); return stringText.replace(regex, '<mark>$1</mark>'); } catch (e) { console.warn("Highlighting regex error:", e); return stringText; } }
 
 
 // --- सिंगल ऑर्डर रो डिस्प्ले करें (अंतिम सही किया गया संस्करण) ---
 function displayOrderRow(firestoreId, data, searchTerm = '') {
-    if (!orderTableBody) return;
+    if (!orderTableBody || !data) return;
     const tableRow = document.createElement('tr');
     tableRow.setAttribute('data-id', firestoreId);
     if (selectedOrderIds.has(firestoreId)) tableRow.classList.add('selected-row');
 
-    const customerName = data.customerDetails?.fullName || 'N/A';
-    const customerMobile = data.customerDetails?.whatsappNo || '-';
+    const customerDetails = data.customerDetails || {};
+    const customerName = customerDetails.fullName || 'N/A';
+    const customerMobile = customerDetails.whatsappNo || '-';
     let orderDateStr = '-';
-    try { if (data.orderDate) orderDateStr = new Date(data.orderDate).toLocaleDateString('en-GB'); } catch(e) { /*無視*/ }
+    try { if (data.orderDate) orderDateStr = new Date(data.orderDate).toLocaleDateString('en-GB'); } catch(e) { console.warn(`Invalid orderDate format for ${firestoreId}: ${data.orderDate}`); }
     let deliveryDateStr = '-';
-    try { if (data.deliveryDate) deliveryDateStr = new Date(data.deliveryDate).toLocaleDateString('en-GB'); } catch(e) { /*無視*/ }
+    try { if (data.deliveryDate) deliveryDateStr = new Date(data.deliveryDate).toLocaleDateString('en-GB'); } catch(e) { console.warn(`Invalid deliveryDate format for ${firestoreId}: ${data.deliveryDate}`); }
     const displayId = data.orderId || `(Sys: ${firestoreId.substring(0, 6)}...)`;
     const status = data.status || 'Unknown';
     const priority = data.urgent === 'Yes' ? 'Yes' : 'No';
-
     let productsHtml = '-';
-    if (Array.isArray(data.products) && data.products.length > 0) {
-        productsHtml = data.products.map(p => {
-            const name = escapeHtml(String(p.name || 'Unnamed'));
-            const quantity = escapeHtml(String(p.quantity || '?'));
-            return `${highlightMatch(name, searchTerm)} (${highlightMatch(quantity, searchTerm)})`;
-        }).join('<br>');
+    const products = data.products || [];
+    if (Array.isArray(products) && products.length > 0) {
+        productsHtml = products.map(p => { const product = p || {}; const name = escapeHtml(String(product.name || 'Unnamed')); const quantity = escapeHtml(String(product.quantity || '?')); return `${highlightMatch(name, searchTerm)} (${highlightMatch(quantity, searchTerm)})`; }).join('<br>');
     }
-
     const statusClass = `status-${status.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`;
     const priorityClass = priority === 'Yes' ? 'priority-yes' : 'priority-no';
 
-    // ** टेबल रो HTML - ध्यान से जांचा गया, कोई कमेंट नहीं **
-    tableRow.innerHTML = `
-        <td class="col-checkbox"><input type="checkbox" class="row-selector" data-id="${firestoreId}" ${selectedOrderIds.has(firestoreId) ? 'checked' : ''}></td>
-        <td>${highlightMatch(escapeHtml(displayId), searchTerm)}</td>
-        <td>
-            <span class="customer-name-display">${highlightMatch(escapeHtml(customerName), searchTerm)}</span>
-            <span class="customer-mobile-inline">${highlightMatch(escapeHtml(customerMobile), searchTerm)}</span>
-        </td>
-        <td>${productsHtml}</td>
-        <td>${orderDateStr}</td>
-        <td>${deliveryDateStr}</td>
-        <td class="${priorityClass}">${priority}</td>
-        <td><span class="status-badge ${statusClass}">${highlightMatch(escapeHtml(status), searchTerm)}</span></td>
-        <td><button type="button" class="button details-edit-button"><i class="fas fa-info-circle"></i> Details/Edit</button></td>
-        <td><button type="button" class="button whatsapp-button" title="Send Status on WhatsApp"><i class="fab fa-whatsapp"></i></button></td>
-    `;
-    orderTableBody.appendChild(tableRow);
+    try {
+        // ** बिल्कुल साफ innerHTML, कोई कमेंट नहीं **
+        tableRow.innerHTML = `
+            <td class="col-checkbox"><input type="checkbox" class="row-selector" data-id="${firestoreId}" ${selectedOrderIds.has(firestoreId) ? 'checked' : ''}></td>
+            <td>${highlightMatch(escapeHtml(displayId), searchTerm)}</td>
+            <td>
+                <span class="customer-name-display">${highlightMatch(escapeHtml(customerName), searchTerm)}</span>
+                <span class="customer-mobile-inline">${highlightMatch(escapeHtml(customerMobile), searchTerm)}</span>
+            </td>
+            <td>${productsHtml}</td>
+            <td>${orderDateStr}</td>
+            <td>${deliveryDateStr}</td>
+            <td class="${priorityClass}">${priority}</td>
+            <td><span class="status-badge ${statusClass}">${highlightMatch(escapeHtml(status), searchTerm)}</span></td>
+            <td><button type="button" class="button details-edit-button"><i class="fas fa-info-circle"></i> Details/Edit</button></td>
+            <td><button type="button" class="button whatsapp-button" title="Send Status on WhatsApp"><i class="fab fa-whatsapp"></i></button></td>
+        `;
+        orderTableBody.appendChild(tableRow);
+    } catch (error) {
+        console.error(`Error creating table row HTML for order ${firestoreId}:`, error, data);
+        const errorRow = document.createElement('tr'); errorRow.innerHTML = `<td colspan="10" style="color: red; text-align: left;">Error displaying order: ${firestoreId}. Check console.</td>`; orderTableBody.appendChild(errorRow);
+    }
 }
 
 
 // --- मोडल 1 हैंडलिंग ---
 function openDetailsModal(firestoreId, orderData) { /* ... पहले जैसा ही ... */
-    if (!orderData || !detailsModal) { console.error("Order data or modal element missing:", firestoreId); return; }
-    if (!modalOrderIdInput || !modalDisplayOrderIdSpan || !modalCustomerNameSpan || !modalCustomerWhatsAppSpan || !modalOrderStatusSelect || !modalProductListContainer || !modalStatusHistoryListContainer) { console.error("One or more modal elements not found!"); return; }
-    console.log("[DEBUG] Opening details modal for:", firestoreId);
-    modalOrderIdInput.value = firestoreId; modalDisplayOrderIdSpan.textContent = orderData.orderId || `(Sys: ${firestoreId.substring(0, 6)}...)`; modalCustomerNameSpan.textContent = orderData.customerDetails?.fullName || 'N/A'; modalCustomerWhatsAppSpan.textContent = orderData.customerDetails?.whatsappNo || 'N/A'; modalOrderStatusSelect.value = orderData.status || '';
+    if (!orderData || !detailsModal) { console.error("Order data or modal element missing:", firestoreId); return; } if (!modalOrderIdInput || !modalDisplayOrderIdSpan || !modalCustomerNameSpan || !modalCustomerWhatsAppSpan || !modalOrderStatusSelect || !modalProductListContainer || !modalStatusHistoryListContainer) { console.error("One or more modal elements not found!"); return; } console.log("[DEBUG] Opening details modal for:", firestoreId); modalOrderIdInput.value = firestoreId; modalDisplayOrderIdSpan.textContent = orderData.orderId || `(Sys: ${firestoreId.substring(0, 6)}...)`; modalCustomerNameSpan.textContent = orderData.customerDetails?.fullName || 'N/A'; modalCustomerWhatsAppSpan.textContent = orderData.customerDetails?.whatsappNo || 'N/A'; modalOrderStatusSelect.value = orderData.status || '';
     modalProductListContainer.innerHTML = ''; const products = orderData.products; if (Array.isArray(products) && products.length > 0) { const ul = document.createElement('ul'); ul.style.listStyle = 'none'; ul.style.padding = '0'; ul.style.margin = '0'; products.forEach(product => { const li = document.createElement('li'); li.style.marginBottom = '5px'; li.style.paddingBottom = '5px'; li.style.borderBottom = '1px dotted #eee'; const nameSpan = document.createElement('span'); nameSpan.textContent = product.name || 'Unnamed Product'; nameSpan.style.fontWeight = '600'; const qtySpan = document.createElement('span'); qtySpan.textContent = ` - Qty: ${product.quantity || '?'}`; qtySpan.style.fontSize = '0.9em'; qtySpan.style.color = '#555'; li.append(nameSpan, qtySpan); ul.appendChild(li); }); if(ul.lastChild) ul.lastChild.style.borderBottom = 'none'; modalProductListContainer.appendChild(ul); } else { modalProductListContainer.innerHTML = '<p class="no-products">No products listed.</p>'; }
-    modalStatusHistoryListContainer.innerHTML = ''; const history = orderData.statusHistory; if (Array.isArray(history) && history.length > 0) { const sortedHistory = [...history].sort((a, b) => (b.timestamp?.toDate ? b.timestamp.toDate().getTime() : 0) - (a.timestamp?.toDate ? a.timestamp.toDate().getTime() : 0)); const ul = document.createElement('ul'); ul.style.listStyle = 'none'; ul.style.padding = '0'; ul.style.margin = '0'; ul.style.maxHeight = '150px'; ul.style.overflowY = 'auto'; sortedHistory.forEach(entry => { const li = document.createElement('li'); li.style.display = 'flex'; li.style.justifyContent = 'space-between'; li.style.fontSize = '0.9em'; li.style.padding = '3px 0'; li.style.borderBottom = '1px dotted #eee'; const statusSpan = document.createElement('span'); statusSpan.className = 'history-status'; statusSpan.textContent = entry.status || '?'; statusSpan.style.fontWeight = '500'; const timeSpan = document.createElement('span'); timeSpan.className = 'history-time'; timeSpan.style.color = '#777'; if (entry.timestamp && entry.timestamp.toDate) { const d=entry.timestamp.toDate(); timeSpan.textContent = d.toLocaleDateString('en-GB',{day:'numeric',month:'short'}) + ' ' + d.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit',hour12:true}); } else { timeSpan.textContent = '?'; } li.append(statusSpan, timeSpan); ul.appendChild(li); }); if(ul.lastChild) ul.lastChild.style.borderBottom = 'none'; modalStatusHistoryListContainer.appendChild(ul); } else { modalStatusHistoryListContainer.innerHTML = '<p class="no-history">No status history.</p>'; }
-    detailsModal.style.display = 'flex';
+    modalStatusHistoryListContainer.innerHTML = ''; const history = orderData.statusHistory; if (Array.isArray(history) && history.length > 0) { const sortedHistory = [...history].sort((a, b) => (b.timestamp?.toDate ? b.timestamp.toDate().getTime() : 0) - (a.timestamp?.toDate ? a.timestamp.toDate().getTime() : 0)); const ul = document.createElement('ul'); ul.style.listStyle = 'none'; ul.style.padding = '0'; ul.style.margin = '0'; ul.style.maxHeight = '150px'; ul.style.overflowY = 'auto'; sortedHistory.forEach(entry => { const li = document.createElement('li'); li.style.display = 'flex'; li.style.justifyContent = 'space-between'; li.style.fontSize = '0.9em'; li.style.padding = '3px 0'; li.style.borderBottom = '1px dotted #eee'; const statusSpan = document.createElement('span'); statusSpan.className = 'history-status'; statusSpan.textContent = entry.status || '?'; statusSpan.style.fontWeight = '500'; const timeSpan = document.createElement('span'); timeSpan.className = 'history-time'; timeSpan.style.color = '#777'; if (entry.timestamp && entry.timestamp.toDate) { const d=entry.timestamp.toDate(); timeSpan.textContent = d.toLocaleDateString('en-GB',{day:'numeric',month:'short'}) + ' ' + d.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit',hour12:true}); } else { timeSpan.textContent = '?'; } li.append(statusSpan, timeSpan); ul.appendChild(li); }); if(ul.lastChild) ul.lastChild.style.borderBottom = 'none'; modalStatusHistoryListContainer.appendChild(ul); } else { modalStatusHistoryListContainer.innerHTML = '<p class="no-history">No status history.</p>'; } detailsModal.style.display = 'flex';
 }
 function closeDetailsModal() { if (detailsModal) detailsModal.style.display = 'none'; }
 
@@ -296,9 +272,33 @@ function closeWhatsAppPopup() { if (whatsappReminderPopup) whatsappReminderPopup
 function sendWhatsAppMessage(firestoreId, orderData) { /* ... पहले जैसा ही ... */
     if (!orderData?.customerDetails?.whatsappNo) { alert("WhatsApp number not found."); return; } const cust = orderData.customerDetails; const orderId = orderData.orderId || `Sys:${firestoreId.substring(0,6)}`; const status = orderData.status; const deliveryDate = orderData.deliveryDate; const name = cust.fullName || 'Customer'; const num = cust.whatsappNo.replace(/[^0-9]/g, ''); let msg = getWhatsAppMessageTemplate(status, name, orderId, deliveryDate); const url = `https://wa.me/${num}?text=${encodeURIComponent(msg)}`; window.open(url, '_blank');
 }
-function getWhatsAppMessageTemplate(status, customerName, orderId, deliveryDate) { /* ... पहले जैसा ही ... */
-    const namePh = "[Customer Name]"; const orderPh = "[ORDER_NO]"; const deliveryPh = "[DELIVERY_DATE]"; const company = "Madhav Offset"; const address = "Head Office: Moodh Market, Batadu"; const mobile = "9549116541"; const signature = `धन्यवाद,\n${company}\n${address}\nMobile: ${mobile}`; let template = ""; let deliveryTxt = deliveryDate ? new Date(deliveryDate).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}) : "जल्द से जल्द"; switch (status) { case "Order Received": template = `प्रिय ${namePh},\nनमस्कार,\nआपका ऑर्डर (Order No: ${orderPh}) हमें सफलतापूर्वक प्राप्त हो गया है।\nहम इस ऑर्डर को ${deliveryPh} तक पूर्ण करने का प्रयास करेंगे।\n\nDear ${namePh},\nWe have successfully received your order (Order No: ${orderPh}).\nWe aim to complete it by ${deliveryPh}.`; break; case "Designing": template = `प्रिय ${namePh},\nआपके ऑर्डर (Order No: ${orderPh}) का डिज़ाइन तैयार किया जा रहा है।\nजैसे ही डिज़ाइन तैयार होगा, हम आपसे पुष्टि के लिए संपर्क करेंगे।\n\nDear ${namePh},\nThe design for your order (Order No: ${orderPh}) is in progress.\nWe’ll contact you for confirmation once it’s ready.`; break; case "Verification": template = `प्रिय ${namePh},\nआपके ऑर्डर (Order No: ${orderPh}) की डिज़ाइन आपके साथ साझा कर दी गई है।\nकृपया डिज़ाइन को ध्यानपूर्वक जाँचे और हमें अपनी अनुमति प्रदान करें।\nएक बार ‘OK’ कर देने के बाद किसी भी प्रकार का संशोधन संभव नहीं होगा।\n\nDear ${namePh},\nWe have shared the design for your order (Order No: ${orderPh}) with you.\nPlease review it carefully and provide your approval.\nOnce you confirm with ‘OK’, no further changes will be possible.`; break; case "Design Approved": template = `प्रिय ${namePh},\nआपके ऑर्डर (Order No: ${orderPh}) की डिज़ाइन स्वीकृत कर दी गई है।\nअब यह प्रिंटिंग प्रक्रिया के लिए आगे बढ़ाया जा रहा है।\n\nDear ${namePh},\nYour design for Order No: ${orderPh} has been approved.\nIt is now moving forward to the printing stage.`; break; case "Ready for Working": template = `प्रिय ${namePh},\nनमस्कार,\nआपके ऑर्डर (Order No: ${orderPh}) की प्रिंटिंग पूरी हो गई है।\nआप ऑफिस/कार्यालय आकर अपना प्रोडक्ट ले जा सकते हैं।\n\nDear ${namePh},\nThe printing for your order (Order No: ${orderPh}) is complete.\nYou can now collect your product from our office.`; break; case "Printing": template = `प्रिय ${namePh},\nआपका ऑर्डर (Order No: ${orderPh}) प्रिंट हो रहा है।\nपूरा होते ही आपको सूचित किया जाएगा।\n\nDear ${namePh},\nYour order (Order No: ${orderPh}) is currently being printed.\nWe will notify you once it’s done.`; break; case "Delivered": template = `प्रिय ${namePh},\nआपका ऑर्डर (Order No: ${orderPh}) सफलतापूर्वक डिलीवर कर दिया गया है।\nकृपया पुष्टि करें कि आपने ऑर्डर प्राप्त कर लिया है।\nआपके सहयोग के लिए धन्यवाद।\nहमें आशा है कि आप हमें शीघ्र ही फिर से सेवा का अवसर देंगे।\n\nDear ${namePh},\nYour order (Order No: ${orderPh}) has been successfully delivered.\nPlease confirm the receipt.\nThank you for your support.\nWe hope to have the opportunity to serve you again soon.`; break; case "Completed": template = `प्रिय ${namePh},\nआपका ऑर्डर (Order No: ${orderPh}) सफलतापूर्वक पूर्ण हो चुका है।\nआपके सहयोग के लिए धन्यवाद।\n\nDear ${namePh},\nYour order (Order No: ${orderPh}) has been successfully completed.\nThank you for your support.`; break; default: template = `प्रिय ${namePh},\nआपके ऑर्डर (Order No: ${orderPh}) का वर्तमान स्टेटस है: ${status}.\n\nDear ${namePh},\nThe current status for your order (Order No: ${orderPh}) is: ${status}.`; } let msg = template.replace(new RegExp(namePh.replace(/[-\/\\^<span class="math-inline">\*\+?\.\(\)\|\[\\\]\{\}\]/g, '\\\\$&'\), 'g'\), customerName\); msg \= msg\.replace\(new RegExp\(orderPh\.replace\(/\[\-\\/\\\\^</span>*+?.()|[\]{}]/g, '\\<span class="math-inline">&'\), 'g'\), orderId\); msg \= msg\.replace\(new RegExp\(deliveryPh\.replace\(/\[\-\\/\\\\^</span>*+?.()|[\]{}]/g, '\\$&'), 'g'), deliveryTxt); msg += `\n\n${signature}`; return msg;
+
+// --- WhatsApp मैसेज टेम्पलेट (RegExp फिक्स के साथ) ---
+function getWhatsAppMessageTemplate(status, customerName, orderId, deliveryDate) {
+    const namePlaceholder = "[Customer Name]";
+    const orderNoPlaceholder = "[ORDER_NO]";
+    const deliveryDatePlaceholder = "[DELIVERY_DATE]";
+    const companyName = "Madhav Offset";
+    const companyAddress = "Head Office: Moodh Market, Batadu";
+    const companyMobile = "9549116541";
+    const signature = `धन्यवाद,\n${companyName}\n${companyAddress}\nMobile: ${companyMobile}`;
+    let template = "";
+    let deliveryDateText = "जल्द से जल्द"; // Default
+     try { if(deliveryDate) deliveryDateText = new Date(deliveryDate).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}); } catch(e) { console.warn("Could not format delivery date:", deliveryDate); }
+
+    // Helper function to replace all occurrences without complex regex
+    function replaceAll(str, find, replace) { return str.split(find).join(replace); }
+
+    // Status Templates (पहले जैसे ही)
+    switch (status) { case "Order Received": template = `प्रिय ${namePlaceholder},\nनमस्कार,\nआपका ऑर्डर (Order No: ${orderNoPlaceholder}) हमें सफलतापूर्वक प्राप्त हो गया है।\nहम इस ऑर्डर को ${deliveryDatePlaceholder} तक पूर्ण करने का प्रयास करेंगे।\n\nDear ${namePlaceholder},\nWe have successfully received your order (Order No: ${orderNoPlaceholder}).\nWe aim to complete it by ${deliveryDatePlaceholder}.`; break; case "Designing": template = `प्रिय ${namePlaceholder},\nआपके ऑर्डर (Order No: ${orderNoPlaceholder}) का डिज़ाइन तैयार किया जा रहा है।\nजैसे ही डिज़ाइन तैयार होगा, हम आपसे पुष्टि के लिए संपर्क करेंगे।\n\nDear ${namePlaceholder},\nThe design for your order (Order No: ${orderNoPlaceholder}) is in progress.\nWe’ll contact you for confirmation once it’s ready.`; break; case "Verification": template = `प्रिय ${namePlaceholder},\nआपके ऑर्डर (Order No: ${orderNoPlaceholder}) की डिज़ाइन आपके साथ साझा कर दी गई है।\nकृपया डिज़ाइन को ध्यानपूर्वक जाँचे और हमें अपनी अनुमति प्रदान करें।\nएक बार ‘OK’ कर देने के बाद किसी भी प्रकार का संशोधन संभव नहीं होगा।\n\nDear ${namePlaceholder},\nWe have shared the design for your order (Order No: ${orderNoPlaceholder}) with you.\nPlease review it carefully and provide your approval.\nOnce you confirm with ‘OK’, no further changes will be possible.`; break; case "Design Approved": template = `प्रिय ${namePlaceholder},\nआपके ऑर्डर (Order No: ${orderNoPlaceholder}) की डिज़ाइन स्वीकृत कर दी गई है।\nअब यह प्रिंटिंग प्रक्रिया के लिए आगे बढ़ाया जा रहा है।\n\nDear ${namePlaceholder},\nYour design for Order No: ${orderNoPlaceholder} has been approved.\nIt is now moving forward to the printing stage.`; break; case "Ready for Working": template = `प्रिय ${namePlaceholder},\nनमस्कार,\nआपके ऑर्डर (Order No: ${orderNoPlaceholder}) की प्रिंटिंग पूरी हो गई है।\nआप ऑफिस/कार्यालय आकर अपना प्रोडक्ट ले जा सकते हैं।\n\nDear ${namePlaceholder},\nThe printing for your order (Order No: ${orderNoPlaceholder}) is complete.\nYou can now collect your product from our office.`; break; case "Printing": template = `प्रिय ${namePlaceholder},\nआपका ऑर्डर (Order No: ${orderNoPlaceholder}) प्रिंट हो रहा है।\nपूरा होते ही आपको सूचित किया जाएगा।\n\nDear ${namePlaceholder},\nYour order (Order No: ${orderNoPlaceholder}) is currently being printed.\nWe will notify you once it’s done.`; break; case "Delivered": template = `प्रिय ${namePlaceholder},\nआपका ऑर्डर (Order No: ${orderNoPlaceholder}) सफलतापूर्वक डिलीवर कर दिया गया है।\nकृपया पुष्टि करें कि आपने ऑर्डर प्राप्त कर लिया है।\nआपके सहयोग के लिए धन्यवाद।\nहमें आशा है कि आप हमें शीघ्र ही फिर से सेवा का अवसर देंगे।\n\nDear ${namePlaceholder},\nYour order (Order No: ${orderNoPlaceholder}) has been successfully delivered.\nPlease confirm the receipt.\nThank you for your support.\nWe hope to have the opportunity to serve you again soon.`; break; case "Completed": template = `प्रिय ${namePlaceholder},\nआपका ऑर्डर (Order No: ${orderNoPlaceholder}) सफलतापूर्वक पूर्ण हो चुका है।\nआपके सहयोग के लिए धन्यवाद।\n\nDear ${namePlaceholder},\nYour order (Order No: ${orderNoPlaceholder}) has been successfully completed.\nThank you for your support.`; break; default: template = `प्रिय ${namePlaceholder},\nआपके ऑर्डर (Order No: ${orderNoPlaceholder}) का वर्तमान स्टेटस है: ${status}.\n\nDear ${namePlaceholder},\nThe current status for your order (Order No: ${orderNoPlaceholder}) is: ${status}.`; }
+
+    // प्लेसहोल्डर बदलें (सुरक्षित तरीके से)
+    let message = replaceAll(template, namePlaceholder, customerName);
+    message = replaceAll(message, orderNoPlaceholder, orderId);
+    message = replaceAll(message, deliveryDatePlaceholder, deliveryDateText);
+    message += `\n\n${signature}`; return message;
 }
+
 
 // --- बल्क एक्शन फ़ंक्शंस ---
 function handleSelectAllChange(event) { /* ... पहले जैसा ही ... */
@@ -323,7 +323,7 @@ async function executeBulkDelete(idsToDelete) { /* ... पहले जैसा
 
 // --- बल्क स्टेटस अपडेट (लिमिट के साथ) ---
 async function handleBulkUpdateStatus() { /* ... सीमा जांच शामिल ... */
-    const idsToUpdate = Array.from(selectedOrderIds); const newStatus = bulkStatusSelect.value; const MAX_STATUS_UPDATE_LIMIT = 10; if (idsToUpdate.length > MAX_STATUS_UPDATE_LIMIT) { alert(`आप एक बार में अधिकतम ${MAX_STATUS_UPDATE_LIMIT} ऑर्डर का स्टेटस अपडेट कर सकते हैं।`); return; } if (idsToUpdate.length === 0) { alert("अपडेट करने के लिए कृपया ऑर्डर चुनें।"); return; } if (!newStatus) { alert("अपडेट करने के लिए कृपया स्टेटस चुनें।"); return; } if (!confirm(`क्या आप वाकई ${idsToUpdate.length} चयनित ऑर्डर का स्टेटस "${newStatus}" में बदलना चाहते हैं?`)) { return; } console.log(`Bulk status update to "${newStatus}" for:`, idsToUpdate); if (bulkUpdateStatusBtn) { bulkUpdateStatusBtn.disabled = true; bulkUpdateStatusBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Updating...'; } const batch = writeBatch(db); const now = Timestamp.now(); const historyEntry = { status: newStatus, timestamp: now }; idsToUpdate.forEach(id => { const docRef = doc(db, "orders", id); batch.update(docRef, { status: newStatus, updatedAt: now, statusHistory: arrayUnion(historyEntry) }); }); try { await batch.commit(); console.log("Bulk status update successful."); alert(`${idsToUpdate.length} order(s) status updated.`); selectedOrderIds.clear(); updateBulkActionsBar(); } catch (e) { console.error("Bulk status update error:", e); alert(`Error updating: ${e.message}`); } finally { if (bulkUpdateStatusBtn) { bulkUpdateStatusBtn.disabled = false; bulkUpdateStatusBtn.innerHTML = '<i class="fas fa-sync-alt"></i> Update Selected (Max 10)'; } if (bulkStatusSelect) bulkStatusSelect.value = ''; updateBulkActionsBar(); } // Reset button text
+    const idsToUpdate = Array.from(selectedOrderIds); const newStatus = bulkStatusSelect.value; const MAX_STATUS_UPDATE_LIMIT = 10; if (idsToUpdate.length > MAX_STATUS_UPDATE_LIMIT) { alert(`आप एक बार में अधिकतम ${MAX_STATUS_UPDATE_LIMIT} ऑर्डर का स्टेटस अपडेट कर सकते हैं।`); return; } if (idsToUpdate.length === 0) { alert("अपडेट करने के लिए कृपया ऑर्डर चुनें।"); return; } if (!newStatus) { alert("अपडेट करने के लिए कृपया स्टेटस चुनें।"); return; } if (!confirm(`क्या आप वाकई ${idsToUpdate.length} चयनित ऑर्डर का स्टेटस "${newStatus}" में बदलना चाहते हैं?`)) { return; } console.log(`Bulk status update to "${newStatus}" for:`, idsToUpdate); if (bulkUpdateStatusBtn) { bulkUpdateStatusBtn.disabled = true; bulkUpdateStatusBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Updating...'; } const batch = writeBatch(db); const now = Timestamp.now(); const historyEntry = { status: newStatus, timestamp: now }; idsToUpdate.forEach(id => { const docRef = doc(db, "orders", id); batch.update(docRef, { status: newStatus, updatedAt: now, statusHistory: arrayUnion(historyEntry) }); }); try { await batch.commit(); console.log("Bulk status update successful."); alert(`${idsToUpdate.length} order(s) status updated.`); selectedOrderIds.clear(); updateBulkActionsBar(); } catch (e) { console.error("Bulk status update error:", e); alert(`Error updating: ${e.message}`); } finally { if (bulkUpdateStatusBtn) { bulkUpdateStatusBtn.disabled = false; bulkUpdateStatusBtn.innerHTML = '<i class="fas fa-sync-alt"></i> Update Selected (Max 10)'; } if (bulkStatusSelect) bulkStatusSelect.value = ''; updateBulkActionsBar(); }
 }
 
 // --- CSV एक्सपोर्ट फ़ंक्शन ---
@@ -339,6 +339,5 @@ function attemptOpenModalFromUrl() { /* ... पहले जैसा ही ...
 // --- बल्क डिलीट मोडल बंद करने का फ़ंक्शन ---
 function closeBulkDeleteModal() { if (bulkDeleteConfirmModal) bulkDeleteConfirmModal.style.display = 'none'; }
 
-
 // --- अंतिम लॉग ---
-console.log("order_history.js script (Final Corrected Version) loaded.");
+console.log("order_history.js script (Final Corrected Version - RegExp & RowGen fix) loaded.");

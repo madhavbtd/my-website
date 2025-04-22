@@ -151,11 +151,11 @@
         </div>
 
         <div class="table-container">
-            
+             {/* --- यहाँ से वह कमेंट लाइन हटा दी गई है --- */}
             <table id="orderTable">
                  <thead>
                     <tr>
-                        
+                        {/* --- सही किया गया हेडर रो --- */}
                         <th class="col-checkbox"><input type="checkbox" id="selectAllCheckbox" title="Select All Visible"></th>
                         <th>Order ID</th>
                         <th>Customer Name</th>
@@ -164,13 +164,13 @@
                         <th>Delivery Date</th>
                         <th>Priority</th>
                          <th>Status</th>
-                        
-                        
+                        <th>Action</th> {/* Details/Edit बटन के लिए */}
+                        <th>Send Wtsp</th> {/* WhatsApp आइकन के लिए */}
                     </tr>
                 </thead>
                  <tbody id="orderTableBody">
                     <tr>
-                        <td colspan="10" id="loadingMessage">Loading orders...</td>
+                        <td colspan="10" id="loadingMessage">Loading orders...</td> {/* Colspan 10 */}
                     </tr>
                 </tbody>
             </table>
