@@ -1,220 +1,140 @@
+/* product_management.css (Version 2.0 - Added fields layout & styles) */
+
 /* General Body Styles */
 body {
-    /* ----- इस लाइन को बदलें ----- */
     font-family: 'Poppins', "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
-    /* ----- बदलाव खत्म ----- */
-
-    /* बाकी स्टाइल वैसे ही रहने दें */
-    margin: 0;
-    padding: 15px;
-    background-color: #f0f2f5;
-    color: #333;
-    line-height: 1.45;
+    margin: 0; padding: 20px; background-color: #f0f2f5; color: #333; line-height: 1.5;
 }
 
 /* Container */
-.container {
-    background-color: #fff;
-    padding: 20px 25px;
-    border-radius: 5px;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-    width: 100%;
-    max-width: 1000px;
-    margin: 20px auto;
-    box-sizing: border-box;
-}
+.container { background-color: #fff; padding: 25px 30px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); width: 100%; max-width: 1100px; /* टेबल के लिए थोड़ी ज़्यादा चौड़ाई */ margin: 20px auto; box-sizing: border-box; }
 
 /* Header */
-.header {
-    background-color: #6f42c1; /* Product Management color - Purple */
-    color: white;
-    padding: 10px 15px;
-    border-radius: 4px 4px 0 0;
-    margin: -20px -25px 20px -25px;
-    font-size: 1.15em;
-    font-weight: 600;
-    text-align: center;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-}
-.header-icon { font-size: 1em; }
-h1 { margin: 0; font-size: 1.2em; }
+.header { background-color: #6f42c1; /* Product Purple */ color: white; padding: 15px 20px; border-radius: 8px 8px 0 0; margin: -25px -30px 25px -30px; font-size: 1.25em; font-weight: 600; text-align: center; display: flex; align-items: center; justify-content: center; gap: 10px; }
+.header-icon { font-size: 1.1em; }
+h1 { margin: 0; font-size: 1.1em; }
 
-/* --- Breadcrumb Styles --- */ /* <<-- नया जोड़ा गया */
-.breadcrumb-container {
-  font-size: 14px;  /* फॉन्ट साइज़ */
-  color: #555555;   /* टेक्स्ट का रंग */
-  margin-bottom: 20px; /* ब्रेडक्रम्ब और फिल्टर बार के बीच जगह */
-  padding: 5px 0;     /* थोड़ा ऊपर-नीचे स्पेस */
-}
-
-.breadcrumb-container a {
-  color: #007bff;   /* 'Home' लिंक का रंग */
-  text-decoration: none; /* लिंक के नीचे लाइन नहीं */
-}
-
-.breadcrumb-container a:hover {
-  text-decoration: underline; /* माउस ले जाने पर अंडरलाइन */
-}
-/* --- Breadcrumb Styles End --- */ /* <<-- नया जोड़ा गया */
+/* Breadcrumb */
+.breadcrumb-container { font-size: 0.9em; color: #555; margin-bottom: 25px; padding: 5px 0; }
+.breadcrumb-container a { color: var(--primary-color, #0056b3); text-decoration: none; }
+.breadcrumb-container a:hover { text-decoration: underline; }
+.breadcrumb-container span::before { content: "/"; margin: 0 5px; color: #888; }
 
 
 /* Filter Bar */
-.filter-bar {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 15px;
-    padding: 15px;
-    background-color: #f8f9fa;
-    border: 1px solid #e9ecef;
-    border-radius: 4px;
-    margin-bottom: 20px;
-    align-items: flex-end;
-}
+.filter-bar { display: flex; flex-wrap: wrap; gap: 15px 20px; padding: 18px 20px; background-color: #f8f9fa; border: 1px solid #e9ecef; border-radius: 6px; margin-bottom: 25px; align-items: flex-end; }
+.filter-group { display: flex; flex-direction: column; gap: 6px; flex-grow: 1; min-width: 160px; }
+.filter-group.filter-sort { min-width: 200px; flex-grow: 0.8; }
+.filter-group label { font-size: 0.88em; font-weight: 500; color: #495057; }
+.filter-group label i { margin-right: 5px; color: #6f42c1; }
+.filter-group input[type="text"], .filter-group select { padding: 8px 12px; border: 1px solid #ced4da; border-radius: 5px; font-size: 0.9em; height: 38px; background-color: #fff; box-sizing: border-box; width: 100%; }
+.filter-group input:focus, .filter-group select:focus { border-color: #6f42c1; outline: 0; box-shadow: 0 0 0 0.2rem rgba(111, 66, 193, 0.25); }
 
-.filter-group {
-    display: flex;
-    flex-direction: column;
-    gap: 5px;
-    flex-grow: 1;
-    min-width: 150px;
-}
-.filter-group.filter-sort {
-    min-width: 180px;
-}
-.filter-group label {
-    font-size: 0.85em;
-    font-weight: 500;
-    color: #495057;
-    white-space: nowrap;
-}
-.filter-group label i {
-    margin-right: 4px;
-    color: #6f42c1; /* Match header color */
-}
-.filter-group input[type="text"],
-.filter-group select {
-    padding: 6px 9px;
-    border: 1px solid #ced4da;
-    border-radius: 3px;
-    font-size: 0.9em;
-    height: 34px;
-    background-color: #fff;
-    box-sizing: border-box;
-    width: 100%;
-}
-/* Add New Product button specific styling */
-.filter-group .add-new-button {
-    height: 34px;
-    align-self: flex-end;
-    background-color: #28a745;
-    color: white;
-    flex-grow: 0;
-}
+/* Filter Bar Buttons */
+.filter-group .button { height: 38px; align-self: flex-end; flex-grow: 0; font-weight: 500; border-radius: 5px; box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
+.filter-group .add-new-button { background-color: var(--success-color, #28a745); color: white; }
 .filter-group .add-new-button:hover { background-color: #218838; }
-
-
-/* Clear Filters Button */
-.clear-filters-button {
-    background-color: #6c757d;
-    color: white;
-    padding: 6px 12px;
-    height: 34px;
-    align-self: flex-end;
-    flex-grow: 0;
-}
+.clear-filters-button { background-color: var(--secondary-color, #6c757d); color: white; }
 .clear-filters-button:hover { background-color: #5a6268; }
 
-
 /* General Button Styles */
-.button {
-    padding: 8px 15px;
-    font-size: 0.9em;
-    border: none;
-    border-radius: 3px;
-    cursor: pointer;
-    font-weight: 600;
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-    text-decoration: none;
-    transition: background-color 0.2s ease;
-    white-space: nowrap;
+.button { padding: 8px 18px; font-size: 0.9em; border: none; border-radius: 5px; cursor: pointer; font-weight: 500; display: inline-flex; align-items: center; justify-content: center; gap: 6px; text-decoration: none; transition: all 0.2s ease; white-space: nowrap; line-height: 1.5; }
+.button:disabled { opacity: 0.6; cursor: not-allowed; box-shadow: none; transform: none; }
+.button i { margin-right: 4px; }
+
+/* --- >>> Table Styles (V2.0 - Updated Columns) <<< --- */
+.table-container { width: 100%; overflow-x: auto; border: 1px solid var(--border-color, #dee2e6); border-radius: var(--border-radius, 6px); background-color: #fff; margin-bottom: 20px; }
+#productTable { width: 100%; border-collapse: collapse; border: none; font-size: 0.9em; }
+#productTable thead th {
+    background-color: var(--light-bg, #f8f9fa); padding: 12px 15px; text-align: left; font-weight: 600; color: var(--text-color, #343a40); border-bottom: 2px solid var(--border-color, #dee2e6); white-space: nowrap; position: sticky; top: 0; z-index: 1;
 }
-.button:disabled { opacity: 0.6; cursor: not-allowed; }
-.button i { margin-right: 3px; }
-
-
-/* Table Styles */
-.table-container { width: 100%; overflow-x: auto; }
-#productTable { width: 100%; border-collapse: collapse; margin-top: 0; font-size: 0.9em; }
-#productTable thead { background-color: #e9ecef; }
-#productTable th, #productTable td { border: 1px solid #dee2e6; padding: 10px 12px; text-align: left; vertical-align: middle; white-space: nowrap; }
-#productTable td:nth-child(1), /* Name */
-#productTable td:nth-child(3)  /* Category */
-{ white-space: normal; } /* Allow wrapping */
-#productTable td:nth-child(2) { text-align: right; } /* Align Price right */
-#productTable th { font-weight: 600; color: #495057; }
-#productTable tbody tr:nth-child(even) { background-color: #f8f9fa; }
-#productTable tbody tr:hover { background-color: #f1f1f1; }
-#productTable td { color: #212529; }
-#loadingMessage, #noProductsMessage { text-align: center; color: #666; font-style: italic; padding: 20px !important; }
-
+#productTable tbody tr { border-bottom: 1px solid #eff2f5; transition: background-color 0.15s ease; }
+#productTable tbody tr:last-child { border-bottom: none; }
+#productTable tbody tr:hover { background-color: #f5f8fa; }
+#productTable td { padding: 12px 15px; text-align: left; vertical-align: middle; color: #333; line-height: 1.4; }
+#loadingMessage, #noProductsMessage { text-align: center; color: #666; font-style: italic; padding: 25px !important; }
+/* Column specific styles */
+#productTable th:nth-child(1), /* Name */
+#productTable td:nth-child(1) { min-width: 150px; white-space: normal; font-weight: 500; color: #222;}
+#productTable th:nth-child(2), /* Sale Price */
+#productTable td:nth-child(2),
+#productTable th:nth-child(3), /* Purchase Price */
+#productTable td:nth-child(3),
+#productTable th:nth-child(6), /* GST% */
+#productTable td:nth-child(6) { text-align: right; width: 110px; } /* Price/GST alignment and width */
+#productTable th:nth-child(4), /* Unit */
+#productTable td:nth-child(4) { width: 80px; text-align: center; }
+#productTable th:nth-child(5), /* HSN */
+#productTable td:nth-child(5) { width: 100px; }
+#productTable th:last-child, /* Actions */
+#productTable td:last-child { text-align: center; width: 100px; }
 /* Action Buttons within Table */
-.action-button { background: none; border: none; cursor: pointer; padding: 5px; font-size: 1.1em; margin: 0 4px; vertical-align: middle; }
-.edit-button { color: #ffc107; }
-.edit-button:hover { color: #e0a800; }
-.delete-button { color: #dc3545; }
-.delete-button:hover { color: #c82333; }
+.action-button { background: none; border: none; cursor: pointer; padding: 5px; font-size: 1.1em; margin: 0 4px; vertical-align: middle; transition: color 0.2s ease; }
+.edit-button { color: var(--info-color, #17a2b8); } .edit-button:hover { color: #117a8b; }
+.delete-button { color: var(--danger-color, #dc3545); } .delete-button:hover { color: #c82333; }
+/* --- >>> End Table Styles <<< --- */
 
 
-/* --- Modal Styles (Add/Edit Product) --- */
-.modal { display: none; position: fixed; z-index: 1050; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.5); align-items: center; justify-content: center; padding: 15px; box-sizing: border-box; }
+/* --- Modal Styles (V2.0 - Updated Layout) --- */
+.modal { display: none; position: fixed; z-index: 1050; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.55); align-items: center; justify-content: center; padding: 20px; box-sizing: border-box; }
 .modal.active { display: flex; }
+.modal-content { background-color: #fff; margin: auto; padding: 30px 35px; border: none; width: 95%; max-width: 600px; border-radius: 8px; position: relative; box-shadow: 0 5px 20px rgba(0,0,0,0.25); z-index: 1051; }
+/* Wider modal for product form */
+.modal-content.large-modal { max-width: 900px; }
 
-.modal-content { background-color: #fefefe; margin: auto; padding: 25px 30px; border: 1px solid #ccc; width: 90%; max-width: 500px; border-radius: 8px; position: relative; box-shadow: 0 5px 15px rgba(0,0,0,0.2); z-index: 1051; }
-
-.close-btn { color: #aaa; position: absolute; top: 10px; right: 15px; font-size: 28px; font-weight: bold; cursor: pointer; line-height: 1; background: none; border: none; padding: 0; }
-.close-btn:hover, .close-btn:focus { color: black; text-decoration: none; }
-
-.modal h2 { margin-top: 0; margin-bottom: 20px; font-size: 1.3em; color: #333; text-align: center; border-bottom: 1px solid #eee; padding-bottom: 10px; }
+.close-btn { color: #aaa; position: absolute; top: 12px; right: 18px; font-size: 30px; font-weight: bold; cursor: pointer; line-height: 1; background: none; border: none; padding: 0; transition: color 0.2s ease; }
+.close-btn:hover, .close-btn:focus { color: #555; }
+.modal h2 { font-weight: 600; font-size: 1.3em; color: #6f42c1; text-align: center; margin-top: 0; margin-bottom: 30px; padding-bottom: 15px; border-bottom: 1px solid #eee; display: flex; align-items: center; justify-content: center; gap: 10px; }
+.modal h2 .info-icon { color: #6f42c1; }
 
 /* Form Styles within Modal */
-#productForm .form-group { margin-bottom: 15px; }
-#productForm label { display: block; margin-bottom: 5px; font-weight: 600; font-size: 0.9em; color: #495057; }
-#productForm input[type="text"],
-#productForm input[type="number"] {
-    width: 100%;
-    padding: 8px 10px;
-    border: 1px solid #ced4da;
-    border-radius: 3px;
-    font-size: 0.95em;
-    box-sizing: border-box;
-}
-#productForm .required { color: #dc3545; margin-left: 2px; font-weight: bold; }
+#productForm h3 { font-size: 1.1em; color: #444; margin-top: 20px; margin-bottom: 18px; padding-bottom: 8px; border-bottom: 1px solid #eee; font-weight: 500; }
+#productForm h3:first-of-type { margin-top: 5px; }
 
+/* 2-Column Layout for Form */
+#productForm .form-columns { display: grid; grid-template-columns: 1fr 1fr; gap: 0 30px; }
+#productForm .form-column { display: flex; flex-direction: column; }
+#productForm .form-group { margin-bottom: 18px; }
+#productForm .form-group.full-width { grid-column: 1 / -1; margin-top: 10px;}
 
-.modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; padding-top: 15px; border-top: 1px solid #eee; }
-.save-button { background-color: #28a745; color: white; }
+#productForm label { display: block; margin-bottom: 6px; font-weight: 500; font-size: 0.9em; color: #495057; }
+#productForm input[type="text"], #productForm input[type="number"], #productForm select, #productForm textarea { width: 100%; padding: 9px 12px; border: 1px solid #ccc; border-radius: 5px; font-size: 0.95em; box-sizing: border-box; background-color: #fff; /* Ensure background */ transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out; }
+#productForm textarea { resize: vertical; min-height: 70px; }
+#productForm .required { color: #dc3545; margin-left: 3px; font-weight: bold; }
+#productForm input:focus, #productForm select:focus, #productForm textarea:focus { border-color: #6f42c1; box-shadow: 0 0 0 0.2rem rgba(111, 66, 193, 0.25); outline: none; }
+
+/* Price Group Specific Styling */
+.price-group { position: relative; }
+.price-group input[type="number"] { padding-left: 28px; }
+.price-group::before { content: '₹'; position: absolute; left: 10px; top: calc(50% + 7px); /* Adjust vertical align based on label height */ transform: translateY(-50%); color: #777; font-size: 0.95em; z-index: 2; pointer-events: none; }
+
+/* Settings Checkboxes Layout */
+.settings-checkboxes { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px 15px; margin-top: 5px; padding: 15px; background-color: #f8f9fa; border: 1px solid #eee; border-radius: 5px; }
+.settings-checkboxes label { display: flex; align-items: center; gap: 8px; font-weight: normal; font-size: 0.9em; cursor: pointer; margin: 0;}
+.settings-checkboxes input[type="checkbox"] { width: 16px; height: 16px; cursor: pointer; flex-shrink: 0; accent-color: #6f42c1; /* Modern checkbox color */ }
+
+/* Modal Actions */
+.modal-actions { display: flex; justify-content: flex-end; gap: 12px; margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee; }
+.save-button { background-color: var(--success-color, #28a745); color: white; padding: 10px 20px;}
 .save-button:hover { background-color: #218838; }
-.cancel-button { background-color: #6c757d; color: white; }
+.cancel-button { background-color: var(--secondary-color, #6c757d); color: white; padding: 10px 20px;}
 .cancel-button:hover { background-color: #5a6268; }
 
-
-/* --- Responsive Adjustments --- */
+/* --- Responsive --- */
 @media (max-width: 768px) {
-    .container { max-width: 95%; padding: 15px; }
+    .container { max-width: 95%; padding: 20px; }
     .filter-bar { flex-direction: column; align-items: stretch; }
-    #productTable { font-size: 0.85em; }
-    #productTable th, #productTable td { padding: 8px; white-space: normal; }
-    #productTable td:nth-child(2) { text-align: left; } /* Reset price alignment */
-    .button { font-size: 0.85em; padding: 7px 12px; }
-    .modal-content { width: 95%; padding: 20px; }
+    #productTable { font-size: 0.88em; }
+    #productTable th, #productTable td { padding: 10px 8px; }
+    #productTable th:last-child, #productTable td:last-child { width: 80px; }
+    .modal-content { width: 95%; padding: 25px 20px; }
+    #productForm .form-columns { grid-template-columns: 1fr; gap: 0; } /* Stack columns */
+    #productForm .form-group.full-width { grid-column: auto; }
+    .settings-checkboxes { grid-template-columns: 1fr; } /* Stack checkboxes */
 }
-
 @media (max-width: 480px) {
     .modal-actions { flex-direction: column; }
     .modal-actions .button { width: 100%; justify-content: center; }
+    .button { font-size: 0.9em; padding: 9px 15px;}
+    .price-group::before { top: calc(50% + 6px); } /* Adjust symbol on small screens */
 }
