@@ -1,4 +1,4 @@
-/* css/customer_account_detail.css (Version 2.3.1 - Edit Cust Layout Fix & Comment Cleanup Prep) */
+/* css/customer_account_detail.css (Version 2.3.4 - Added Scrollbars) */
 
 /* --- Poppins Font --- */
 body, input, button, select, textarea {
@@ -27,14 +27,14 @@ body, input, button, select, textarea {
 .cust-detail-actions #editCustomerBtn { background-color: var(--info-color, #17a2b8); } .cust-detail-actions #editCustomerBtn:hover { background-color: #117a8b; }
 .cust-detail-actions #addPaymentBtn { background-color: var(--success-color, #28a745); } .cust-detail-actions #addPaymentBtn:hover { background-color: #1e7e34; }
 .cust-detail-actions #addNewOrderLink { background-color: var(--primary-color, #0056b3); } .cust-detail-actions #addNewOrderLink:hover { background-color: #00418a; }
-.cust-detail-actions #toggleStatusBtn.secondary-button { background-color: var(--warning-color, #ffc107); color: #212529; } /* Disable Action */
+.cust-detail-actions #toggleStatusBtn.secondary-button { background-color: var(--warning-color, #ffc107); color: #212529; }
 .cust-detail-actions #toggleStatusBtn.secondary-button:hover { background-color: #e0a800; }
-.cust-detail-actions #toggleStatusBtn.success-button { background-color: var(--success-color, #28a745); color: white; } /* Enable Action */
+.cust-detail-actions #toggleStatusBtn.success-button { background-color: var(--success-color, #28a745); color: white; }
 .cust-detail-actions #toggleStatusBtn.success-button:hover { background-color: #1e7e34; }
 .cust-detail-actions #deleteCustomerBtn { background-color: var(--danger-color, #dc3545); } .cust-detail-actions #deleteCustomerBtn:hover { background-color: #bd2130; }
 .modal .modal-content { padding: 30px 35px; border-radius: 8px; border: none; box-shadow: 0 5px 15px rgba(0,0,0,0.2); }
 .modal h2 { font-weight: 600; font-size: 1.3em; text-align: center; margin-top: 0; margin-bottom: 35px; padding-bottom: 18px; border-bottom: 1px solid #eee; display: flex; align-items: center; justify-content: center; gap: 12px; }
-.modal .form-group { margin-bottom: 18px; /* थोड़ा कम मार्जिन ग्रिड के लिए */ }
+.modal .form-group { margin-bottom: 18px; }
 .modal .form-group label { margin-bottom: 8px; font-weight: 500; color: #444; font-size: 0.9em; }
 .modal .form-group input[type="text"], .modal .form-group input[type="tel"], .modal .form-group input[type="email"], .modal .form-group input[type="number"], .modal .form-group input[type="date"], .modal .form-group select, .modal .form-group textarea { font-size: 0.95em; padding: 10px 14px; border: 1px solid #ccc; border-radius: 5px; width: 100%; box-sizing: border-box; }
 .modal .form-group input:focus, .modal .form-group select:focus, .modal .form-group textarea:focus { border-color: var(--primary-color, #0056b3); box-shadow: 0 0 0 0.2rem rgba(0, 86, 179, 0.25); outline: none; }
@@ -48,59 +48,45 @@ body, input, button, select, textarea {
 #confirmToggleStatusModal .modal-content h2 { color: var(--warning-color, #ffc107); }
 #confirmDeleteModal .modal-content h2 { color: var(--danger-color, #dc3545); }
 .modal h2 .warning-icon { color: var(--warning-color, #ffc107); } .modal h2 .danger-icon { color: var(--danger-color, #dc3545); } .modal h2 .info-icon { color: var(--info-color, #17a2b8); } .modal h2 .success-icon { color: var(--success-color, #28a745); }
-#customerEditModal .modal-content { max-width: 700px; /* चौड़ाई थोड़ी बढ़ा सकते हैं 2 कॉलम के लिए */ }
+#customerEditModal .modal-content { max-width: 700px; }
 #detailsModal .modal-section { margin-bottom: 25px; padding-bottom: 20px; border-bottom: 1px solid #eee; } #detailsModal .modal-section:last-of-type { border-bottom: none; margin-bottom: 0; padding-bottom: 0; } #detailsModal .modal-section label { font-weight: 600; color: var(--primary-color, #0056b3); margin-bottom: 10px; display: block; }
 .warning-message { font-weight: 500; color: #856404; background-color: #fff3cd; border: 1px solid #ffeeba; border-radius: var(--border-radius, 6px); padding: 12px 18px; margin-top: 15px; margin-bottom: 20px; font-size: 0.9em; text-align: center; } #confirmDeleteModal .warning-message { color: var(--danger-color, #dc3545); background-color: #f8d7da; border: 1px solid #f5c6cb; }
 .confirmation-check { margin-top: 25px; margin-bottom: 25px; display: flex; align-items: flex-start; gap: 10px; background-color: #f8f9fa; padding: 15px; border-radius: 6px; border: 1px solid #dee2e6; }
 .confirmation-check input[type="checkbox"] { transform: scale(1.1); cursor: pointer; margin: 0; margin-top: 3px; flex-shrink: 0; }
 .confirmation-check label { font-size: 0.9em; color: #333; cursor: pointer; margin: 0; font-weight: 500; line-height: 1.4; }
-#confirmToggleBtn.secondary-button { background-color: var(--warning-color, #ffc107); color: #212529; }
-#confirmToggleBtn.success-button { background-color: var(--success-color, #28a745); color: white; }
+#confirmToggleBtn.secondary-button { background-color: var(--warning-color, #ffc107); color: #212529; } #confirmToggleBtn.success-button { background-color: var(--success-color, #28a745); color: white; }
 #confirmDeleteBtn { background-color: var(--danger-color, #dc3545); color: white; }
 #confirmToggleBtn:disabled, #confirmDeleteBtn:disabled { background-color: #adb5bd; cursor: not-allowed; opacity: 0.65; }
+#customerEditForm { display: grid; grid-template-columns: 1fr 1fr; gap: 0px 25px; align-items: start; }
+#customerEditForm .form-group { margin-bottom: 20px; }
+#customerEditForm .form-group-address, #customerEditForm .form-group-notes, #customerEditForm .form-group-credit-radio, #creditLimitEditGroup { grid-column: 1 / -1; }
+#customerEditForm .modal-actions { grid-column: 1 / -1; }
+@media (max-width: 600px) { #customerEditForm { grid-template-columns: 1fr; gap: 0px; } #customerEditForm .form-group-address, #customerEditForm .form-group-notes, #customerEditForm .form-group-credit-radio, #creditLimitEditGroup, #customerEditForm .modal-actions { grid-column: auto; } }
 
 
-/* --- >>> नया जोड़ा गया: Edit Customer Modal 2-कॉलम लेआउट <<< --- */
-#customerEditForm {
-    display: grid;
-    grid-template-columns: 1fr 1fr; /* 2 बराबर कॉलम */
-    gap: 0px 25px; /* कॉलम के बीच 25px गैप, रो के बीच 0 */
-    align-items: start;
+/* --- >>> नया जोड़ा गया: हिस्ट्री टेबल के लिए स्क्रॉलबार <<< --- */
+.history-section .table-container {
+    max-height: 400px; /* <<< टेबल की अधिकतम ऊंचाई (आप इसे बदल सकते हैं) */
+    overflow-y: auto;  /* <<< वर्टीकल स्क्रॉलबार जोड़ें */
+    border: 1px solid var(--border-color, #dee2e6); /* बॉर्डर रखें */
+    border-radius: var(--border-radius, 6px);
+    margin-bottom: 20px;
+    background-color: #fff; /* सुनिश्चित करें कि बैकग्राउंड हो */
 }
 
-#customerEditForm .form-group {
-    margin-bottom: 20px; /* फील्ड्स के बीच वर्टीकल स्पेस */
+/* Optional: कस्टम स्क्रॉलबार स्टाइल (Webkit ब्राउज़र जैसे Chrome, Safari, Edge) */
+.history-section .table-container::-webkit-scrollbar {
+     width: 8px; /* स्क्रॉलबार की चौड़ाई */
 }
-
-/* ये फील्ड्स पूरी चौड़ाई लेंगे */
-#customerEditForm .form-group:has(#customerEditAddress),
-#customerEditForm .form-group:has(#customerEditNotes),
-#customerEditForm .form-group:has(input[name="creditAllowedEdit"]) {
-    grid-column: 1 / -1; /* Grid में पूरी चौड़ाई (1 से लेकर आखिर तक) */
+.history-section .table-container::-webkit-scrollbar-track {
+     background: #f1f1f1; /* ट्रैक का रंग */
+     border-radius: 10px;
 }
-/* Credit Limit वाला ग्रुप भी पूरी चौड़ाई ले, यदि वह अकेला है */
-#creditLimitEditGroup {
-     grid-column: 1 / -1;
+.history-section .table-container::-webkit-scrollbar-thumb {
+     background: #ccc; /* स्क्रॉल बार का रंग */
+     border-radius: 10px;
 }
-
-
-#customerEditForm .modal-actions {
-    grid-column: 1 / -1; /* एक्शन बटन भी पूरी चौड़ाई लें */
+.history-section .table-container::-webkit-scrollbar-thumb:hover {
+     background: #aaa; /* माउस ले जाने पर रंग */
 }
-
-/* Responsive: छोटे स्क्रीन पर 1 कॉलम करें */
-@media (max-width: 600px) {
-    #customerEditForm {
-        grid-template-columns: 1fr; /* 1 कॉलम */
-        gap: 0px; /* कॉलम गैप खत्म */
-    }
-     /* फुल विड्थ की ज़रूरत नहीं */
-    #customerEditForm .form-group:has(#customerEditAddress),
-    #customerEditForm .form-group:has(#customerEditNotes),
-    #customerEditForm .form-group:has(input[name="creditAllowedEdit"]),
-    #creditLimitEditGroup,
-    #customerEditForm .modal-actions {
-        grid-column: auto;
-    }
-}
-/* --- >>> लेआउट समाप्त <<< --- */
+/* --- >>> स्क्रॉलबार समाप्त <<< --- */
