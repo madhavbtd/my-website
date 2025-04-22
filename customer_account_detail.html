@@ -10,15 +10,12 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 
-    <link rel="stylesheet" href="css/customer_management.css">
-    <link rel="stylesheet" href="css/order_history.css"> <link rel="stylesheet" href="css/customer_account_detail.css">
-
-    <script type="module">
+    <link rel="stylesheet" href="css/customer_management.css"> <link rel="stylesheet" href="css/order_history.css"> <link rel="stylesheet" href="css/customer_account_detail.css"> <script type="module">
         // Import Firebase services
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
         import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
         // Import Firestore services needed for THIS page
-        import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+        import { getFirestore, doc, getDoc, collection, query, where, getDocs, orderBy } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
         // **** Your Firebase Configuration ****
         const firebaseConfig = {
@@ -40,10 +37,10 @@
                 app = initializeApp(firebaseConfig);
                 window.firebaseAppInitialized = true;
                 window.firebaseApp = app;
-                console.log("Firebase initialized on this page (customer_account_detail - V1).");
+                console.log("Firebase initialized on this page (customer_account_detail - V1.1a).");
             } else {
                 app = window.firebaseApp;
-                console.log("Firebase already initialized on this page (customer_account_detail - V1).");
+                console.log("Firebase already initialized on this page (customer_account_detail - V1.1a).");
             }
             auth = getAuth(app);
             db = getFirestore(app);
@@ -52,7 +49,12 @@
             window.db = db;
             window.doc = doc;
             window.getDoc = getDoc;
-            // Later: window.collection, window.query, window.where, window.addDoc, etc.
+            window.collection = collection; // Needed for Phase 2
+            window.query = query;           // Needed for Phase 2
+            window.where = where;           // Needed for Phase 2
+            window.getDocs = getDocs;         // Needed for Phase 2
+            window.orderBy = orderBy;       // Needed for Phase 2
+            // Add other Firestore functions (addDoc, updateDoc, etc.) when needed
 
             // ---->> Authentication State Check <<----
             onAuthStateChanged(auth, (user) => {
@@ -66,7 +68,6 @@
                     if (typeof initializeCustomerDetailPage === 'function') {
                         initializeCustomerDetailPage(user);
                     } else {
-                        // Wait a bit for the script to load, then try again
                         setTimeout(() => {
                              if (typeof initializeCustomerDetailPage === 'function') {
                                 initializeCustomerDetailPage(user);
@@ -74,7 +75,7 @@
                                 console.error("initializeCustomerDetailPage function not found after delay.");
                                 alert("Error initializing page script.");
                              }
-                        }, 100); // Small delay
+                        }, 100);
                     }
                 }
             });
@@ -119,9 +120,9 @@
 
             <div class="info-box account-summary-box">
                  <h2><i class="fas fa-calculator"></i> Account Summary</h2>
-                 <p><strong>Total Order Value:</strong> <span id="summary-total-orders">Loading...</span></p>
+                 <p><strong>Total Order Value:</strong> <span id="summary-total-orders">N/A</span></p>
                  <p><strong>Total Paid Amount:</strong> <span id="summary-total-paid">Loading...</span></p>
-                 <p><strong>Outstanding Balance:</strong> <strong id="summary-balance" class="balance-due">Loading...</strong></p>
+                 <p><strong>Outstanding Balance:</strong> <strong id="summary-balance" class="balance-due">N/A</strong></p>
                  <hr>
                  <p><strong>Credit Allowed:</strong> <span id="cust-detail-credit-allowed">...</span></p>
                  <p><strong>Credit Limit:</strong> <span id="cust-detail-credit-limit">...</span></p>
@@ -137,11 +138,17 @@
             <div class="table-container">
                 <table id="customerOrderTable">
                     <thead>
-                        <tr><th>Order ID</th><th>Order Date</th><th>Products</th><th>Amount</th><th>Status</th><th>Action</th></tr>
+                        <tr>
+                            <th>Order ID</th>
+                            <th>Order Date</th>
+                            <th>Products</th>
+                            <th>Status</th>
+                            <th>Action</th>
+                        </tr>
                     </thead>
                     <tbody id="customerOrderTableBody">
-                        <tr><td colspan="6" style="text-align: center;">Loading orders...</td></tr>
-                    </tbody>
+                         <tr><td colspan="5" style="text-align: center;">Loading orders...</td></tr>
+                         </tbody>
                 </table>
             </div>
 
@@ -149,11 +156,17 @@
             <div class="table-container">
                 <table id="customerPaymentTable">
                     <thead>
-                        <tr><th>Payment Date</th><th>Amount Paid</th><th>Method</th><th>Notes</th><th>Action</th></tr>
+                        <tr>
+                            <th>Payment Date</th>
+                            <th>Amount Paid</th>
+                            <th>Method</th>
+                            <th>Notes</th>
+                            <th>Action</th>
+                        </tr>
                     </thead>
                     <tbody id="customerPaymentTableBody">
-                        <tr><td colspan="5" style="text-align: center;">Loading payments...</td></tr>
-                    </tbody>
+                         <tr><td colspan="5" style="text-align: center;">Loading payments...</td></tr>
+                         </tbody>
                 </table>
             </div>
         </div>
