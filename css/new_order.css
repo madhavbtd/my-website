@@ -1,391 +1,225 @@
-/* === new_order.css === */
+/* === new_order.css - v2.0 (PO Style Items, Discount, Advance) === */
 
-/* --- Global Styles & Variables --- */
+/* --- Global Styles & Variables (Keep as before) --- */
 :root {
     --primary-color: #0056b3; /* Darker Blue */
-    --secondary-color: #6c757d; /* Grey */
+    --secondary-color: #495057; /* Dark grey text */
     --success-color: #28a745; /* Green */
     --warning-color: #ffc107; /* Yellow */
     --info-color: #17a2b8; /* Teal */
     --danger-color: #dc3545; /* Red */
     --light-bg: #f8f9fa;
+    --medium-grey: #e9ecef;
+    --darker-grey: #6c757d;
     --border-color: #dee2e6;
     --text-color: #343a40;
     --text-muted: #6c757d;
+    --white-color: #ffffff;
+    --body-bg: #f4f7f9;
     --font-family: 'Poppins', "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
     --border-radius: 6px;
     --box-shadow: 0 2px 5px rgba(0, 0, 0, 0.08);
     --box-shadow-lg: 0 4px 12px rgba(0, 0, 0, 0.1);
+    --focus-shadow: 0 0 0 0.2rem rgba(0, 86, 179, 0.25);
 }
 
 body {
     font-family: var(--font-family);
     margin: 0;
-    padding: 20px; /* Added body padding */
-    background-color: #f0f2f5;
+    padding: 20px;
+    background-color: var(--body-bg);
     color: var(--text-color);
     line-height: 1.5;
-    font-size: 15px; /* Base font size */
+    font-size: 15px;
 }
 
 .container {
-    background-color: #fff;
-    padding: 25px 30px; /* Increased padding */
+    background-color: var(--white-color);
+    padding: 25px 30px;
     border-radius: var(--border-radius);
     box-shadow: var(--box-shadow-lg);
     width: 100%;
-    max-width: 1150px; /* Slightly increased max-width */
+    max-width: 1280px; /* Increased width for table */
     margin: 20px auto;
     box-sizing: border-box;
     position: relative;
 }
 
-/* --- Header & Breadcrumb --- */
-.header {
-    background-color: var(--primary-color);
-    color: white;
-    padding: 15px 20px; /* Adjusted padding */
-    border-radius: var(--border-radius) var(--border-radius) 0 0;
-    margin: -25px -30px 25px -30px; /* Adjust for container padding */
-    font-size: 1.25em;
-    font-weight: 600;
-    text-align: center;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
-}
-.header-icon {
-    font-size: 1.15em; /* Slightly larger icon */
-}
+/* --- Header & Breadcrumb (Keep as before) --- */
+.header { background-color: var(--primary-color); color: white; padding: 15px 20px; border-radius: var(--border-radius) var(--border-radius) 0 0; margin: -25px -30px 25px -30px; font-size: 1.25em; font-weight: 600; text-align: center; display: flex; align-items: center; justify-content: center; gap: 10px; }
+.header-icon { font-size: 1.15em; }
+.breadcrumb { font-size: 0.9em; color: var(--text-muted); margin-bottom: 30px; padding-bottom: 15px; border-bottom: 1px solid var(--border-color); }
+.breadcrumb a { color: var(--primary-color); text-decoration: none; font-weight: 500; }
+.breadcrumb a:hover { text-decoration: underline; }
+.breadcrumb span { margin-left: 5px; color: var(--text-color); }
+.breadcrumb span::before { content: "/"; margin-right: 5px; color: var(--text-muted); }
 
-.breadcrumb {
-    font-size: 0.9em;
-    color: var(--text-muted);
-    margin-bottom: 30px; /* Increased spacing */
-    padding-bottom: 15px; /* Increased spacing */
-    border-bottom: 1px solid var(--border-color);
+/* --- Form Layout & Sections (Keep as before) --- */
+.form-layout-columns { display: flex; flex-direction: column; gap: 25px; margin-bottom: 30px; }
+.form-column { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 25px; }
+@media (min-width: 992px) { /* Adjusted breakpoint for wider layout */
+    .form-layout-columns { flex-direction: row; }
 }
-.breadcrumb a {
-    color: var(--primary-color);
-    text-decoration: none;
-    font-weight: 500;
-}
-.breadcrumb a:hover {
-    text-decoration: underline;
-}
-.breadcrumb span {
-    margin-left: 5px;
-    color: var(--text-color); /* Make current page slightly darker */
-}
-.breadcrumb span::before {
-    content: "/";
-    margin-right: 5px;
-    color: var(--text-muted);
-}
+.form-section-card { border: 1px solid var(--border-color); border-radius: var(--border-radius); padding: 20px 25px; background-color: #ffffff; box-shadow: var(--box-shadow); margin-bottom: 25px; }
+.section-title { font-size: 1.1em; color: var(--primary-color); margin-top: 0; margin-bottom: 20px; font-weight: 600; border-bottom: 1px solid #e5e5e5; padding-bottom: 8px; display: flex; align-items: center; gap: 8px; }
 
-/* --- Form Layout & Sections --- */
-.form-layout-columns {
-    display: flex;
-    flex-direction: column;
-    gap: 25px; /* Increased gap */
-    margin-bottom: 30px; /* Increased spacing */
-}
-.form-column {
-    flex: 1;
-    min-width: 0;
-    display: flex;
-    flex-direction: column;
-    gap: 25px; /* Increased gap */
-}
-@media (min-width: 800px) { /* Adjusted breakpoint */
-    .form-layout-columns {
-        flex-direction: row;
-    }
-}
-
-.form-section-card {
-    border: 1px solid var(--border-color);
-    border-radius: var(--border-radius);
-    padding: 20px 25px; /* Increased padding */
-    background-color: #ffffff;
-    box-shadow: var(--box-shadow); /* Added subtle shadow */
-    transition: box-shadow 0.3s ease;
-}
-.form-section-card:hover {
-    box-shadow: var(--box-shadow-lg); /* Enhance shadow on hover */
-}
-
-.section-title {
-    font-size: 1.1em; /* Slightly larger */
-    color: var(--primary-color);
-    margin-top: 0;
-    margin-bottom: 20px; /* Increased spacing */
-    font-weight: 600;
-    border-bottom: 1px solid #e5e5e5;
-    padding-bottom: 8px; /* Increased padding */
-    display: flex; /* For potential icon alignment */
-    align-items: center;
-    gap: 8px;
-}
-/* Example: Add icons via HTML if desired: */
-/* .section-title::before { content: '\f007'; font-family: 'Font Awesome 6 Free'; font-weight: 900; margin-right: 8px; } */
-
-/* --- Form Elements --- */
-.form-row {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 20px 25px; /* Increased gap */
-    margin-bottom: 20px; /* Increased spacing */
-}
-.form-row:last-child {
-    margin-bottom: 0;
-}
-.form-group {
-    display: flex;
-    flex-direction: column;
-    flex: 1;
-    min-width: 150px;
-    position: relative; /* Keep relative for suggestion box */
-}
-.form-group-half {
-    flex: 1 1 calc(50% - 12.5px); /* Adjust for gap */
-}
-.form-group label {
-    font-size: 0.9em; /* Slightly larger label */
-    text-align: left;
-    margin-bottom: 6px; /* Increased spacing */
-    color: var(--text-color);
-    font-weight: 500;
-}
+/* --- Basic Form Elements (Keep similar) --- */
+.form-row { display: flex; flex-wrap: wrap; gap: 20px 25px; margin-bottom: 20px; }
+.form-row:last-child { margin-bottom: 0; }
+.form-group { display: flex; flex-direction: column; flex: 1; min-width: 150px; position: relative; /* For suggestions */ }
+.form-group-half { flex: 1 1 calc(50% - 12.5px); }
+.form-group-full { flex: 1 1 100%; }
+.form-group label { font-size: 0.9em; text-align: left; margin-bottom: 6px; color: var(--text-color); font-weight: 500; }
 .form-group input[type="text"],
 .form-group input[type="date"],
 .form-group input[type="number"],
 .form-group select,
-.form-group textarea {
-    padding: 9px 12px; /* Increased padding */
-    border: 1px solid #ced4da;
-    border-radius: var(--border-radius);
-    box-sizing: border-box;
-    font-size: 0.95em; /* Slightly larger input text */
-    height: 40px; /* Increased height */
-    width: 100%;
-    background-color: #fff;
-    transition: border-color 0.2s ease, box-shadow 0.2s ease;
-    color: var(--text-color);
-}
+.form-group textarea { padding: 9px 12px; border: 1px solid #ced4da; border-radius: var(--border-radius); box-sizing: border-box; font-size: 0.95em; height: 40px; width: 100%; background-color: #fff; transition: border-color 0.2s ease, box-shadow 0.2s ease; color: var(--text-color); }
 .form-group input::placeholder,
-.form-group textarea::placeholder {
-    color: #aaa; /* Lighter placeholder */
-    opacity: 1;
-}
+.form-group textarea::placeholder { color: #aaa; opacity: 1; }
 .form-group input:focus,
 .form-group textarea:focus,
-.form-group select:focus {
-    border-color: var(--primary-color);
-    outline: 0;
-    box-shadow: 0 0 0 0.2rem rgba(0, 86, 179, 0.25); /* Adjusted focus shadow color */
-}
-.form-group input[readonly],
-.form-group select:disabled,
-.form-group textarea[readonly] {
-    background-color: var(--light-bg);
-    cursor: not-allowed;
-    opacity: 0.8;
-}
-.form-group textarea {
-    height: auto;
-    min-height: 70px; /* Increased min-height */
-    resize: vertical;
-}
-.info-text {
-    flex-basis: 100%;
-    font-size: 0.85em; /* Slightly larger */
-    color: var(--text-muted);
-    margin-left: 0;
-    margin-top: 5px;
-    margin-bottom: 5px;
-    text-align: left;
-    padding-left: 0;
-}
-
-/* Specific Groups */
-.priority-group { flex: 1; min-width: 120px; max-width: 200px; }
-.remarks-group { flex: 2; min-width: 200px; }
-.priority-group label:first-of-type { margin-bottom: 10px; }
+.form-group select:focus { border-color: var(--primary-color); outline: 0; box-shadow: var(--focus-shadow); }
+.form-group input[readonly] { background-color: var(--light-bg); cursor: not-allowed; opacity: 0.8; }
+.form-group textarea { height: auto; min-height: 40px; resize: vertical; } /* Make remarks smaller */
+.info-text { flex-basis: 100%; font-size: 0.85em; color: var(--text-muted); margin-top: 5px; padding-left: 0; }
+.link-button { font-size: 0.9em; background: none; border: none; color: var(--primary-color); cursor: pointer; padding: 0; text-align: left; }
+.link-button:hover { text-decoration: underline; color: #003d80; }
 .radio-group { display: flex; gap: 25px; align-items: center; padding-top: 5px; }
-.radio-group label { margin-bottom: 0; font-weight: normal; font-size: 0.95em; display: inline-flex; align-items: center; cursor: pointer;}
-.radio-group input[type="radio"] { margin-right: 7px; transform: scale(1.1); cursor: pointer; } /* Slightly larger radios */
-.remarks-group textarea { min-height: 40px; height: auto; }
+.radio-group label { margin-bottom: 0; font-weight: normal; font-size: 0.95em; }
+.radio-group input[type="radio"] { margin-right: 7px; }
 
-/* --- Order Status Checkboxes Redesign --- */
-#order-status-group {
-    gap: 12px; /* Increased gap */
-    padding: 15px; /* Increased padding */
-    border: 1px solid var(--border-color);
+/* --- Customer Balance / Link --- */
+#customerBalanceArea strong { color: var(--danger-color); font-weight: 600; }
+#customerBalanceArea strong.positive-balance { color: var(--success-color); } /* Add class via JS if balance is credit */
+
+/* --- Item Table Styling (from new_po.css, adapted) --- */
+.table-container.order-items-table {
+    margin-bottom: 15px; /* Space before Add Item button */
+    border: 1px solid var(--medium-grey);
     border-radius: var(--border-radius);
+    overflow: hidden; /* Hide overflow for radius */
+    /* Add horizontal scroll on smaller screens */
+    overflow-x: auto;
+   -webkit-overflow-scrolling: touch;
+}
+#orderItemsTable {
+    width: 100%;
+    min-width: 800px; /* Ensure table has min width for scroll */
+    border-collapse: collapse;
+    border-spacing: 0;
+}
+#orderItemsTable thead th {
     background-color: var(--light-bg);
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); /* Responsive columns */
-}
-#order-status-group label {
-    margin-bottom: 0;
-    border: 1px solid transparent; /* Base border */
-    border-radius: var(--border-radius);
-    padding: 8px 12px; /* Adjusted padding */
-    cursor: pointer;
-    transition: all 0.2s ease;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    font-size: 0.88em; /* Adjusted font size */
-    text-align: center;
-    font-weight: 500;
-    color: white;
-    background-color: var(--secondary-color); /* Default color */
-    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
-}
-#order-status-group label:hover {
-    opacity: 0.85;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.15);
-}
-#order-status-group label input[type="checkbox"] {
-    display: none; /* Hide original checkbox */
-}
-
-/* Status Colors */
-#order-status-group label:has(input[value="Order Received"]) { background-color: var(--secondary-color); border-color: #5a6268; }
-#order-status-group label:has(input[value="Designing"]) { background-color: var(--warning-color); border-color: #e0a800; color: #333; }
-#order-status-group label:has(input[value="Verification"]) { background-color: #fd7e14; border-color: #d96d12; }
-#order-status-group label:has(input[value="Design Approved"]) { background-color: #20c997; border-color: #1aa882; }
-#order-status-group label:has(input[value="Ready for Working"]) { background-color: #0dcaf0; border-color: #0baccc; color: #333; }
-#order-status-group label:has(input[value="Printing"]) { background-color: var(--info-color); border-color: #138496; }
-#order-status-group label:has(input[value="Delivered"]) { background-color: var(--success-color); border-color: #218838; }
-#order-status-group label:has(input[value="Completed"]) { background-color: var(--success-color); border-color: #218838; }
-
-/* Checked State */
-#order-status-group label:has(input[type="checkbox"]:checked) {
-    box-shadow: inset 0 0 0 3px rgba(255, 255, 255, 0.6), 0 0 0 2px var(--primary-color); /* Enhanced checked style */
+    padding: 10px 12px; /* Compact padding */
+    font-size: 0.8em; /* Smaller header */
     font-weight: 600;
-    transform: scale(1.02); /* Slight scale effect when checked */
-}
-
-/* --- Product Input Area --- */
-.product-input-area {
-    padding: 15px 0px; /* Adjusted padding */
-    margin-top: 0;
-    margin-bottom: 15px; /* Adjusted spacing */
-}
-.product-entry-group {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 15px; /* Increased gap */
-    align-items: flex-end;
-}
-.product-entry-group .form-group { margin-bottom: 0; }
-.product-name-group { flex: 1 1 300px; position: relative; }
-.product-qty-group { flex: 0 0 90px; } /* Adjusted width */
-.product-name-group label, .product-qty-group label { font-weight: 500; font-size: 0.9em; margin-bottom: 6px; }
-#quantity_input { max-width: 90px; text-align: center; }
-.add-product-button {
-    height: 40px; /* Match input height */
-    font-size: 0.95em;
-    padding: 0 15px; /* Adjusted padding */
-    border: none;
-    border-radius: var(--border-radius);
-    cursor: pointer;
-    background-color: var(--success-color);
-    color: white;
+    text-align: left;
+    border-bottom: 2px solid var(--medium-grey);
     white-space: nowrap;
-    display: inline-flex;
-    align-items: center;
-    gap: 6px; /* Increased gap */
-    transition: background-color 0.2s ease, box-shadow 0.2s ease;
-    font-weight: 500;
-    box-shadow: var(--box-shadow);
+    color: var(--secondary-color);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    position: sticky; /* Sticky header */
+    top: 0;
+    z-index: 10;
 }
-.add-product-button:hover {
-    background-color: #218838;
-    box-shadow: var(--box-shadow-lg);
+ #orderItemsTable thead th .min-rate-header-info {
+     font-size: 0.9em;
+     font-weight: normal;
+     text-transform: none;
+     color: var(--text-muted);
+     display: block; /* Show on new line */
+     margin-top: 2px;
+ }
+#orderItemsTable tbody td {
+    padding: 6px 10px; /* Compact padding */
+    border-bottom: 1px solid var(--medium-grey);
+    vertical-align: top; /* Align top for multiline */
+    background-color: var(--white-color);
+    font-size: 0.9em; /* Compact */
 }
-.add-product-button i { font-size: 1em; }
+#orderItemsTable tbody tr:last-child td { border-bottom: none; }
+#orderItemsTable tbody tr:hover td { background-color: #f1f8ff; }
 
-/* --- Product List --- */
-.product-list-container {
-    margin-top: 20px; /* Increased spacing */
-    border-top: 1px solid var(--border-color);
-    padding-top: 20px; /* Increased spacing */
-    margin-bottom: 0;
+/* Inputs within table */
+#orderItemsTable .form-input {
+    padding: 6px 8px; /* Smaller padding */
+    font-size: 0.9em;
+    border-radius: 4px;
+    width: 100%;
+    box-sizing: border-box;
+    min-height: 34px; /* Smaller height */
+    border: 1px solid #d8dde2;
 }
-.product-list-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    background-color: var(--light-bg);
-    padding: 10px 15px; /* Increased padding */
-    border-radius: var(--border-radius);
-    margin-bottom: 8px; /* Increased spacing */
-    font-size: 0.95em; /* Slightly larger font */
-    border: 1px solid #e9ecef;
-    transition: background-color 0.2s ease;
-}
-.product-list-item:hover {
-    background-color: #e9ecef; /* Subtle hover */
-}
-.product-list-item span {
-    flex-grow: 1;
-    margin-right: 15px; /* Increased spacing */
-    word-break: break-word;
-    color: var(--text-color);
-}
-.product-list-item .delete-product-btn {
-    background: none;
-    border: none;
-    color: var(--danger-color);
-    cursor: pointer;
-    font-size: 1.2em; /* Larger icon */
-    padding: 0 5px;
-    line-height: 1;
-    transition: color 0.2s ease;
-}
-.product-list-item .delete-product-btn:hover {
-    color: #a71d2a; /* Darker red on hover */
-}
-.empty-list-message {
+#orderItemsTable .form-input:focus { border-color: var(--primary-color); box-shadow: var(--focus-shadow); }
+#orderItemsTable .dimension-input-container { display: flex; align-items: center; gap: 4px; }
+#orderItemsTable .dimension-input { width: 65px !important; text-align: right; } /* Force width */
+#orderItemsTable .quantity-input { width: 70px !important; text-align: right; } /* Force width */
+#orderItemsTable .rate-input { width: 90px !important; text-align: right; } /* Force width */
+#orderItemsTable .dimension-unit-select { width: 70px !important; } /* Force width */
+#orderItemsTable .item-amount { font-weight: 600; text-align: right; white-space: nowrap; color: var(--secondary-color); }
+#orderItemsTable td:nth-last-child(2) { text-align: right; vertical-align: middle;} /* Amount cell */
+#orderItemsTable td:last-child { text-align: center; vertical-align: middle;} /* Action cell */
+
+/* Rate input specific */
+.rate-input-wrapper { position: relative; }
+.min-rate-info {
+    font-size: 0.75em;
+    display: block; /* Show on new line */
     color: var(--text-muted);
-    font-style: italic;
-    text-align: center;
-    padding: 15px 0;
-    font-size: 0.95em;
+    text-align: right;
+    padding-top: 2px;
+    line-height: 1;
+}
+.min-rate-info .min-rate-value { font-weight: 500; }
+
+/* Class for hiding Sq Ft elements */
+.hidden-col { display: none; }
+
+/* Add/Delete Item Buttons */
+.add-item-button { background-color: var(--info-color); color: var(--white-color); margin-top: 12px; padding: 8px 15px; font-size: 0.9em; border-radius: var(--border-radius); border: none; cursor: pointer; font-weight: 500; transition: background-color 0.2s ease; display: inline-flex; align-items: center; gap: 6px; }
+.add-item-button:hover { background-color: #117a8b; }
+.delete-item-btn { background-color: transparent; color: var(--danger-color); border: none; padding: 5px; font-size: 1em; cursor: pointer; opacity: 0.65; transition: opacity 0.2s ease, color 0.2s ease; border-radius: 4px; line-height: 1; }
+.delete-item-btn:hover { opacity: 1; color: #a71d2a; background-color: #fce8e6; }
+.delete-item-btn i { vertical-align: middle; display: block; }
+
+/* Input Error Style */
+.input-error {
+     border-color: var(--danger-color) !important;
+     background-color: #fff7f7;
+}
+.input-error:focus {
+    box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25); /* Red focus */
 }
 
-/* --- Autocomplete Suggestions --- */
-.suggestions-box {
-    position: relative;
-    display: none;
-}
-.suggestions-box.active {
-    display: block;
+
+/* --- Product Suggestions (Positioned by JS) --- */
+.suggestions-box { /* Base class for customer/product suggestions */
+    position: relative; /* Needed for absolute positioning of ul */
 }
 .suggestions-box ul {
     position: absolute;
-    top: 100%;
-    left: 0;
-    width: 100%;
     list-style: none;
-    margin: 3px 0 0 0;
-    padding: 5px 0; /* Add padding */
+    margin: 1px 0 0 0;
+    padding: 0;
     border: 1px solid #ced4da;
     background-color: white;
-    max-height: 180px; /* Increased height */
+    max-height: 180px;
     overflow-y: auto;
     z-index: 1000;
     border-radius: 0 0 var(--border-radius) var(--border-radius);
-    box-shadow: var(--box-shadow-lg); /* Consistent shadow */
+    box-shadow: var(--box-shadow-lg);
+    width: 100%; /* Default width */
+    box-sizing: border-box;
+    display: none; /* Hidden by default */
+}
+.suggestions-box.active ul { /* Show when active */
+    display: block;
 }
 .suggestions-box li {
-    padding: 9px 15px; /* Increased padding */
-    font-size: 0.9em; /* Adjusted font size */
+    padding: 8px 12px; /* Compact padding */
+    font-size: 0.9em;
     cursor: pointer;
     border-bottom: 1px solid #f0f0f0;
     transition: background-color 0.15s ease;
@@ -393,185 +227,164 @@ body {
 .suggestions-box li:last-child { border-bottom: none; }
 .suggestions-box li:hover, .suggestions-box li.selected { background-color: #e9ecef; }
 .suggestions-box li strong { font-weight: 600; color: var(--primary-color); }
+.suggestions-box li.no-suggestions { color: var(--text-muted); font-style: italic; cursor: default; }
+.suggestions-box li.no-suggestions:hover { background-color: transparent; }
 
-/* --- Buttons Container --- */
-.button-container {
-    padding-top: 25px; /* Increased spacing */
-    margin-top: 30px; /* Increased spacing */
-    border-top: 1px solid var(--border-color);
-    display: flex;
-    justify-content: flex-end;
-    gap: 15px; /* Increased gap */
-    flex-wrap: wrap; /* Allow wrapping on small screens */
-}
-.save-button, .cancel-button {
-    padding: 10px 25px; /* Increased padding */
-    font-size: 1em; /* Larger font */
-    border: none;
-    border-radius: var(--border-radius);
-    cursor: pointer;
-    font-weight: 600;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center; /* Center content */
-    gap: 8px; /* Increased gap */
-    transition: background-color 0.2s ease, box-shadow 0.2s ease, transform 0.1s ease;
-    box-shadow: var(--box-shadow);
-    min-width: 120px; /* Minimum width */
-}
-.save-button:hover, .cancel-button:hover {
+/* Product suggestions specific container (positioned globally by JS) */
+.product-suggestions-list {
+    position: absolute; /* Positioned by JS */
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    border: 1px solid var(--primary-color);
+    background-color: white;
+    max-height: 200px;
+    overflow-y: auto;
+    z-index: 1050; /* High z-index */
+    border-radius: 0 0 var(--border-radius) var(--border-radius);
     box-shadow: var(--box-shadow-lg);
-    transform: translateY(-1px); /* Slight lift effect */
+    display: none; /* Controlled by JS */
 }
-.save-button:active, .cancel-button:active {
-    transform: translateY(0px); /* Push down effect */
-    box-shadow: var(--box-shadow);
+ .product-suggestions-list ul { margin: 0; padding: 0; } /* Reset ul margin/padding */
+ .product-suggestions-list li { /* Inherit styles from .suggestions-box li */
+    padding: 8px 12px; font-size: 0.9em; cursor: pointer; border-bottom: 1px solid #f0f0f0; transition: background-color 0.15s ease; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+ }
+ .product-suggestions-list li:last-child { border-bottom: none; }
+ .product-suggestions-list li:hover { background-color: #e9ecef; }
+ .product-suggestions-list li strong { font-weight: 600; color: var(--primary-color); }
+ .product-suggestions-list li.no-suggestions { color: var(--text-muted); font-style: italic; cursor: default; }
+ .product-suggestions-list li.no-suggestions:hover { background-color: transparent; }
+
+
+/* --- Order Summary Section --- */
+#orderSummarySection {
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid var(--border-color);
 }
-.save-button {
-    background-color: var(--primary-color); /* Use primary color */
-    color: white;
+.summary-grid {
+    display: grid;
+    grid-template-columns: auto 1fr; /* Label and Value/Input */
+    gap: 10px 15px; /* Row gap, Column gap */
+    align-items: center;
+    max-width: 500px; /* Limit width of summary */
+    margin-left: auto; /* Align to right */
 }
-.save-button:hover { background-color: #00418a; } /* Darker blue */
-.save-button:disabled {
-    background-color: #a0cfff;
-    cursor: not-allowed;
-    opacity: 0.7;
-    box-shadow: none;
-    transform: none;
+.summary-label {
+    font-weight: 500;
+    text-align: right;
+    font-size: 0.95em;
+    color: var(--text-muted);
 }
-.save-button .fa-spinner {
-    animation: fa-spin 1s infinite linear;
+.summary-value {
+    font-weight: 600;
+    text-align: right;
+    font-size: 1em;
 }
-.cancel-button {
-    background-color: var(--secondary-color);
-    color: white;
+.summary-input input[type="number"] {
+    padding: 6px 10px;
+    font-size: 0.9em;
+    height: 36px;
+    text-align: right;
+    border-radius: 4px;
+    max-width: 150px; /* Limit width of input fields */
+    margin-left: auto; /* Push input to right */
+    display: block;
 }
+.summary-total {
+    font-weight: 700;
+    font-size: 1.1em;
+    color: var(--primary-color);
+}
+.summary-balance {
+    font-weight: 700;
+    font-size: 1.2em;
+    color: var(--success-color);
+}
+#orderSummarySection .summary-label.summary-total,
+#orderSummarySection .summary-label.summary-balance {
+    color: var(--text-color);
+    font-weight: 600;
+}
+#creditLimitWarning.error-message {
+     background-color: #fff3cd; /* Warning color */
+     color: #856404;
+     border-color: #ffeeba;
+     font-size: 0.9em;
+}
+
+
+/* --- Order Status (Keep similar, maybe adjust grid) --- */
+#order-status-group { /* Styles from v1 */
+    gap: 10px; padding: 15px; border: 1px solid var(--border-color); border-radius: var(--border-radius); background-color: var(--light-bg); display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+}
+#order-status-group label { margin-bottom: 0; border: 1px solid transparent; border-radius: var(--border-radius); padding: 8px 10px; cursor: pointer; transition: all 0.2s ease; display: flex; justify-content: center; align-items: center; font-size: 0.85em; text-align: center; font-weight: 500; color: white; background-color: var(--secondary-color); box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
+#order-status-group label:hover { opacity: 0.85; box-shadow: 0 2px 4px rgba(0,0,0,0.15); }
+#order-status-group label input[type="checkbox"] { display: none; }
+/* Status Colors */
+#order-status-group label:has(input[value="Order Received"]) { background-color: var(--secondary-color); border-color: #5a6268; }
+#order-status-group label:has(input[value="Designing"]) { background-color: var(--warning-color); border-color: #e0a800; color: #333; }
+#order-status-group label:has(input[value="Verification"]) { background-color: #fd7e14; border-color: #d96d12; } /* Orange */
+#order-status-group label:has(input[value="Design Approved"]) { background-color: #20c997; border-color: #1aa882; } /* Teal */
+#order-status-group label:has(input[value="Ready for Working"]) { background-color: #0dcaf0; border-color: #0baccc; color: #333; } /* Light Blue */
+#order-status-group label:has(input[value="Printing"]) { background-color: var(--info-color); border-color: #138496; }
+#order-status-group label:has(input[value="Delivered"]) { background-color: var(--success-color); border-color: #218838; }
+#order-status-group label:has(input[value="Completed"]) { background-color: var(--primary-color); border-color: #00418a; } /* Changed to primary */
+/* Checked State */
+#order-status-group label:has(input[type="checkbox"]:checked) { box-shadow: inset 0 0 0 3px rgba(255, 255, 255, 0.6), 0 0 0 2px var(--primary-color); font-weight: 600; transform: scale(1.02); }
+
+
+/* --- Buttons Container (Keep as before) --- */
+.button-container { padding-top: 25px; margin-top: 30px; border-top: 1px solid var(--border-color); display: flex; justify-content: flex-end; gap: 15px; flex-wrap: wrap; }
+.save-button, .cancel-button { padding: 10px 25px; font-size: 1em; border: none; border-radius: var(--border-radius); cursor: pointer; font-weight: 600; display: inline-flex; align-items: center; justify-content: center; gap: 8px; transition: background-color 0.2s ease, box-shadow 0.2s ease, transform 0.1s ease; box-shadow: var(--box-shadow); min-width: 120px; }
+.save-button:hover, .cancel-button:hover { box-shadow: var(--box-shadow-lg); transform: translateY(-1px); }
+.save-button:active, .cancel-button:active { transform: translateY(0px); box-shadow: var(--box-shadow); }
+.save-button { background-color: var(--primary-color); color: white; }
+.save-button:hover { background-color: #00418a; }
+.save-button:disabled { background-color: #a0cfff; cursor: not-allowed; opacity: 0.7; box-shadow: none; transform: none; }
+.save-button .fa-spinner { animation: fa-spin 1s infinite linear; }
+.cancel-button { background-color: var(--secondary-color); color: white; }
 .cancel-button:hover { background-color: #5a6268; }
 
-/* --- WhatsApp Popup (Improved Styling) --- */
-.popup-overlay {
-    display: none;
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.65); /* Darker overlay */
-    z-index: 1050;
-    justify-content: center;
-    align-items: center;
-    padding: 20px;
-    box-sizing: border-box;
-}
+/* --- Error Message --- */
+.error-message { color: var(--danger-color); background-color: #fdecea; border: 1px solid var(--danger-color); border-radius: var(--border-radius); padding: 10px 15px; font-weight: 500; text-align: center; margin-top: 20px; font-size: 0.9em; }
+
+/* --- WhatsApp Popup (Keep as before) --- */
+.popup-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.65); z-index: 1050; justify-content: center; align-items: center; padding: 20px; box-sizing: border-box; }
 .popup-overlay.active { display: flex; }
-.popup-content {
-    background-color: #fff;
-    padding: 30px 35px; /* Increased padding */
-    border-radius: var(--border-radius);
-    box-shadow: var(--box-shadow-lg);
-    text-align: center;
-    position: relative;
-    max-width: 480px; /* Slightly wider */
-    width: 100%;
-    animation: popupFadeIn 0.3s ease-out; /* Add fade-in animation */
-}
-@keyframes popupFadeIn {
-    from { opacity: 0; transform: scale(0.95); }
-    to { opacity: 1; transform: scale(1); }
-}
-.popup-close {
-    position: absolute;
-    top: 12px;
-    right: 15px;
-    font-size: 30px;
-    color: #aaa;
-    background: none;
-    border: none;
-    cursor: pointer;
-    line-height: 1;
-    transition: color 0.2s ease;
-}
+.popup-content { background-color: #fff; padding: 30px 35px; border-radius: var(--border-radius); box-shadow: var(--box-shadow-lg); text-align: center; position: relative; max-width: 480px; width: 100%; animation: popupFadeIn 0.3s ease-out; }
+@keyframes popupFadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+.popup-close { position: absolute; top: 12px; right: 15px; font-size: 30px; color: #aaa; background: none; border: none; cursor: pointer; line-height: 1; transition: color 0.2s ease; }
 .popup-close:hover { color: #333; }
-.popup-content h4 {
-    margin-top: 0;
-    margin-bottom: 15px; /* Increased spacing */
-    color: var(--success-color);
-    font-size: 1.4em; /* Larger heading */
-    font-weight: 600;
-}
-.popup-content p {
-    margin-bottom: 20px; /* Increased spacing */
-    color: var(--text-muted);
-    font-size: 1.05em; /* Larger text */
-}
-.message-preview {
-    margin-top: 20px; /* Increased spacing */
-    margin-bottom: 25px; /* Increased spacing */
-    font-size: 0.95em;
-    background-color: #e9f5ff; /* Lighter blue */
-    padding: 15px; /* Increased padding */
-    border-radius: var(--border-radius);
-    text-align: left;
-    border: 1px solid #bde0ff;
-    white-space: pre-wrap;
-    word-wrap: break-word;
-    max-height: 200px; /* Increased max height */
-    overflow-y: auto;
-    line-height: 1.4;
-}
-.whatsapp-send-btn {
-    background-color: #25d366; /* WhatsApp Green */
-    color: #fff;
-    text-decoration: none;
-    padding: 10px 25px; /* Adjusted padding */
-    border-radius: var(--border-radius);
-    display: inline-flex;
-    align-items: center;
-    gap: 10px; /* Increased gap */
-    font-weight: 600; /* Bold text */
-    transition: background-color 0.2s ease, box-shadow 0.2s ease, transform 0.1s ease;
-    border: none;
-    cursor: pointer;
-    font-size: 1em;
-    box-shadow: var(--box-shadow);
-}
-.whatsapp-send-btn:hover {
-    background-color: #1ebe57;
-    box-shadow: var(--box-shadow-lg);
-    transform: translateY(-1px);
-}
-.whatsapp-send-btn:active {
-    transform: translateY(0px);
-    box-shadow: var(--box-shadow);
-}
-.whatsapp-send-btn i {
-    font-size: 1.2em; /* Larger WhatsApp icon */
-}
+.popup-content h4 { margin-top: 0; margin-bottom: 15px; color: var(--success-color); font-size: 1.4em; font-weight: 600; }
+.popup-content p { margin-bottom: 20px; color: var(--text-muted); font-size: 1.05em; }
+.message-preview { margin-top: 20px; margin-bottom: 25px; font-size: 0.95em; background-color: #e9f5ff; padding: 15px; border-radius: var(--border-radius); text-align: left; border: 1px solid #bde0ff; white-space: pre-wrap; word-wrap: break-word; max-height: 200px; overflow-y: auto; line-height: 1.4; }
+.whatsapp-send-btn { background-color: #25d366; color: #fff; text-decoration: none; padding: 10px 25px; border-radius: var(--border-radius); display: inline-flex; align-items: center; gap: 10px; font-weight: 600; transition: background-color 0.2s ease, box-shadow 0.2s ease, transform 0.1s ease; border: none; cursor: pointer; font-size: 1em; box-shadow: var(--box-shadow); }
+.whatsapp-send-btn:hover { background-color: #1ebe57; box-shadow: var(--box-shadow-lg); transform: translateY(-1px); }
+.whatsapp-send-btn:active { transform: translateY(0px); box-shadow: var(--box-shadow); }
+.whatsapp-send-btn i { font-size: 1.2em; }
 
 
 /* --- Responsive Adjustments --- */
 @media (max-width: 992px) {
-    .form-layout-columns { flex-direction: column; } /* Ensure stacking */
+    .form-layout-columns { flex-direction: column; } /* Stack columns */
+    .summary-grid { max-width: none; margin-left: 0; } /* Full width summary on smaller screens */
 }
 
 @media (max-width: 767px) {
     body { padding: 15px; font-size: 14px;}
     .container { padding: 20px; max-width: 100%; margin: 10px 0; }
     .header { margin: -20px -20px 20px -20px; font-size: 1.15em; }
-    .breadcrumb { margin-bottom: 25px; padding-bottom: 12px; }
     .form-row { flex-direction: column; gap: 15px; margin-bottom: 15px; }
     .form-group-half { flex-basis: auto; }
-    .priority-group { max-width: none; }
-    .radio-group { padding-top: 0; gap: 20px; }
-    .button-container { justify-content: space-between; gap: 10px; } /* Space between on mobile */
+    .button-container { justify-content: space-between; gap: 10px; }
     .save-button, .cancel-button { width: calc(50% - 5px); max-width: none; padding: 10px 15px; font-size: 0.95em;}
-    .form-section-card { padding: 15px 20px; }
-    #order-status-group { grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; padding: 12px; }
-    .popup-content { padding: 25px 20px; }
-    .product-entry-group { flex-direction: column; align-items: stretch; gap: 15px;}
-    .product-qty-group { max-width: none; }
-    #quantity_input { max-width: none; }
-    .add-product-button { justify-content: center; }
+    .form-section-card { padding: 15px 20px; margin-bottom: 20px;}
+    #order-status-group { grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 8px; padding: 10px; } /* Adjust status grid */
+    .summary-grid { grid-template-columns: auto 1fr; } /* Keep 2 columns */
+    .summary-input input[type="number"] { max-width: 120px; }
+    #orderItemsTable { min-width: 700px; } /* Still need min-width for scroll */
+    .table-container.order-items-table { margin-left: -20px; margin-right: -20px; padding-left: 0; padding-right: 0; border-left: none; border-right: none; border-radius: 0; }
 }
 
 @media (max-width: 480px) {
@@ -580,15 +393,13 @@ body {
     .header { padding: 12px 15px; font-size: 1.1em; margin: -15px -15px 15px -15px;}
     .button-container { flex-direction: column; align-items: stretch; }
     .save-button, .cancel-button { width: 100%; max-width: none; }
-    #order-status-group label { font-size: 0.85em; padding: 8px 10px; }
-    .popup-content { padding: 20px 15px; }
-    .popup-content h4 { font-size: 1.25em; }
-    .popup-content p { font-size: 1em; }
-    .whatsapp-send-btn { width: 100%; justify-content: center; font-size: 0.95em; padding: 10px 20px;}
-    .form-group input[type="text"],
-    .form-group input[type="date"],
-    .form-group input[type="number"],
-    .form-group select,
-    .form-group textarea { height: 38px; font-size: 0.9em; padding: 8px 10px;}
-    .add-product-button { height: 38px; font-size: 0.9em; }
+    #order-status-group label { font-size: 0.8em; padding: 6px 8px; } /* Smaller status labels */
+    .summary-grid { grid-template-columns: 1fr; gap: 8px; text-align: left; } /* Stack summary */
+    .summary-label { text-align: left; }
+    .summary-value { text-align: left; }
+    .summary-input input[type="number"] { max-width: none; margin-left: 0; }
+    #orderItemsTable { min-width: 600px; } /* Further reduce min-width */
+    #orderItemsTable thead th { font-size: 0.75em; padding: 8px 10px; }
+    #orderItemsTable tbody td { font-size: 0.85em; padding: 5px 8px; }
+    .table-container.order-items-table { margin-left: -15px; margin-right: -15px; }
 }

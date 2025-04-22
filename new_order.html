@@ -11,231 +11,229 @@
     <link rel="stylesheet" href="css/new_order.css"> <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" integrity="sha512-9usAa10IRO0HhonpyAIVpjrylPvoDwiPUiKdWk5t3PyolY1cOd4DSE0Ga+ri4AuTroPR5aQvXU9xC6qOPnzFeg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
 
     <script type="module">
-        // Import Firebase services
+        // --- Firebase Setup (Same as before) ---
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-        // Import other services like Firestore if needed by the page
-        import { getFirestore, collection, addDoc, doc, updateDoc, deleteDoc, onSnapshot, getDocs, query, where, getDoc, orderBy, limit } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js"; // Added Firestore imports needed for original script
+        import { getFirestore, collection, addDoc, doc, updateDoc, deleteDoc, onSnapshot, getDocs, query, where, getDoc, orderBy, limit, Timestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js"; // Added Timestamp
 
-        // **** Your Firebase Configuration ****
-         const firebaseConfig = {
-           apiKey: "AIzaSyBQj5rQmE77kKKGYixP8y3Hcimz8tiAqzQ", // Your apiKey
-           authDomain: "madhav-multyprint.firebaseapp.com", // Your authDomain
-           projectId: "madhav-multyprint", // Your projectId
-           storageBucket: "madhav-multyprint.appspot.com", // Your storageBucket
-           messagingSenderId: "104988349637", // Your messagingSenderId
-           appId: "1:104988349637:web:faf045b77c6786a4e70cac" // Your appId
-         };
+        const firebaseConfig = { /* --- Your Firebase Config --- */ apiKey: "AIzaSyBQj5rQmE77kKKGYixP8y3Hcimz8tiAqzQ", authDomain: "madhav-multyprint.firebaseapp.com", projectId: "madhav-multyprint", storageBucket: "madhav-multyprint.appspot.com", messagingSenderId: "104988349637", appId: "1:104988349637:web:faf045b77c6786a4e70cac" };
 
-        let app;
-        let auth;
-        let db; // Example for Firestore
-
+        let app; let auth; let db;
         try {
-             // Initialize Firebase App (only once per page load)
-             if (!window.firebaseAppInitialized) {
-                 app = initializeApp(firebaseConfig);
-                 window.firebaseAppInitialized = true;
-                 window.firebaseApp = app; // Store globally
-                 console.log("Firebase initialized on this page (new_order).");
-             } else {
-                 app = window.firebaseApp; // Use existing instance
-                 console.log("Firebase already initialized on this page (new_order).");
-             }
-             auth = getAuth(app);
-             db = getFirestore(app); // Initialize Firestore (or other services)
-             window.db = db; // Make global if needed by other scripts on the page
-             window.auth = auth; // Make auth global
+            if (!window.firebaseAppInitialized) { app = initializeApp(firebaseConfig); window.firebaseAppInitialized = true; window.firebaseApp = app; } else { app = window.firebaseApp; }
+            auth = getAuth(app); db = getFirestore(app);
+            window.db = db; window.auth = auth; window.collection = collection; window.addDoc = addDoc; window.doc = doc; window.updateDoc = updateDoc; window.deleteDoc = deleteDoc; window.onSnapshot = onSnapshot; window.getDocs = getDocs; window.query = query; window.where = where; window.getDoc = getDoc; window.orderBy = orderBy; window.limit = limit; window.Timestamp = Timestamp;
 
-             // Make other Firestore functions globally available if new_order.js needs them
-             window.collection = collection;
-             window.addDoc = addDoc;
-             window.doc = doc;
-             window.updateDoc = updateDoc;
-             window.deleteDoc = deleteDoc;
-             window.onSnapshot = onSnapshot;
-             window.getDocs = getDocs;
-             window.query = query;
-             window.where = where;
-             window.getDoc = getDoc;
-             window.orderBy = orderBy;
-             window.limit = limit;
-
-
-             // ---->> Authentication State Check (Core Security) <<----
-             onAuthStateChanged(auth, (user) => {
-                 const currentPage = window.location.pathname.split('/').pop() || 'index.html'; // Get current file name
-
-                 if (user) {
-                     // User is logged in. Allow page to load.
-                     console.log(`User is logged in on ${currentPage}:`, user.uid);
-                     // Initialize page-specific functions if needed
-                     // e.g., if (typeof initializeNewOrderForm === 'function') { initializeNewOrderForm(user); }
-
-                 } else {
-                     // User is not logged in.
-                     console.log(`User is not logged in on ${currentPage}. Redirecting to login...`);
-                     // Redirect to login.html from all protected pages (but NOT from login.html itself)
-                     if (currentPage.toLowerCase() !== 'login.html') {
-                        // Make sure 'login.html' path is correct relative to your files
-                        window.location.replace('login.html');
-                     }
-                 }
-             });
-             // ---->> Auth check end <<----
-
-             // --- Logout Link Logic (Include if a logout link exists on this page too) ---
-             // Assuming no logout link on this specific page based on original code,
-             // but you can add it here if needed, similar to index.html
-
-
-             // --- Optional: Make user info available globally ---
-             window.getCurrentUser = () => {
-                 return auth.currentUser;
-             };
-
-        } catch(e) {
-            console.error("Firebase setup / Auth check error:", e);
-            alert("Error loading application. Please try again later."); // English alert
-            // Optional: Redirect to login on critical error
-            // if (window.location.pathname.split('/').pop().toLowerCase() !== 'login.html') {
-            //    window.location.replace('login.html');
-            // }
-        }
+            onAuthStateChanged(auth, (user) => {
+                const currentPage = window.location.pathname.split('/').pop() || 'index.html';
+                if (!user && currentPage.toLowerCase() !== 'login.html') { window.location.replace('login.html'); }
+                else if (user) { console.log(`User logged in on ${currentPage}`); }
+            });
+            window.getCurrentUser = () => auth.currentUser;
+        } catch(e) { console.error("Firebase setup / Auth check error:", e); alert("Error loading application."); }
     </script>
-    </head>
+</head>
 <body>
     <div class="container">
         <div class="header" id="formHeader">
-             <i class="fas fa-file-alt header-icon"></i>
-             <span id="headerText">New Order</span>
+            <i class="fas fa-file-alt header-icon"></i>
+            <span id="headerText">New Order</span>
         </div>
 
         <div class="breadcrumb">
-            <a href="order_history.html">Order History</a> / <span>New/Edit Order</span>
+            <a href="order_history.html">Order History</a> / <span id="breadcrumbAction">New Order</span>
         </div>
+
         <form id="newOrderForm">
             <input type="hidden" id="editOrderId" name="editOrderId">
             <input type="hidden" id="selectedCustomerId" name="selectedCustomerId">
 
             <div class="form-layout-columns">
-
                 <div class="form-column">
-
                     <div class="form-section-card">
                         <div class="section-title">1. Customer Details</div>
                         <div class="form-row">
                             <div class="form-group form-group-half">
-                                <label for="full_name">Full Name:</label>
-                                <input type="text" id="full_name" name="full_name" required autocomplete="off" placeholder="Enter customer name...">
+                                <label for="full_name">Full Name *</label>
+                                <input type="text" id="full_name" name="full_name" required autocomplete="off" placeholder="Search or enter customer name...">
                                 <div id="customer-suggestions-name" class="suggestions-box"></div>
                             </div>
                             <div class="form-group form-group-half">
-                                <label for="address">Address:</label>
-                                <input type="text" id="address" name="address" readonly placeholder="Autofills when customer selected">
-                            </div>
-                        </div>
-                        <div class="form-row">
-                            <div class="form-group form-group-half">
-                                <label for="whatsapp_no">WhatsApp No:</label>
-                                <input type="text" id="whatsapp_no" name="whatsapp_no" required autocomplete="off" placeholder="Enter WhatsApp number...">
+                                <label for="whatsapp_no">WhatsApp No *</label>
+                                <input type="text" id="whatsapp_no" name="whatsapp_no" required autocomplete="off" placeholder="Search or enter WhatsApp no...">
                                 <div id="customer-suggestions-whatsapp" class="suggestions-box"></div>
-                            </div>
-                            <div class="form-group form-group-half">
-                                <label for="contact_no">Contact No:</label>
-                                <input type="text" id="contact_no" name="contact_no" readonly placeholder="Autofills when customer selected">
-                            </div>
-                        </div>
-                        <p class="info-text">*New customer cannot be added here, only select an existing one.</p>
-                    </div>
-
-                    <div class="form-section-card">
-                        <div class="section-title">3. Order Status</div>
-                        <div id="order-status-group" class="form-group order-status-group">
-                            <label><input type="checkbox" name="order_status" value="Order Received"><span>Order Received</span></label>
-                            <label><input type="checkbox" name="order_status" value="Designing"><span>Designing</span></label>
-                            <label><input type="checkbox" name="order_status" value="Verification"><span>Verification</span></label>
-                            <label><input type="checkbox" name="order_status" value="Design Approved"><span>Design Approved</span></label>
-                            <label><input type="checkbox" name="order_status" value="Printing"><span>Printing</span></label>
-                            <label><input type="checkbox" name="order_status" value="Ready for Working"><span>Ready for Working</span></label> <label><input type="checkbox" name="order_status" value="Delivered"><span>Delivered</span></label>
-                            <label><input type="checkbox" name="order_status" value="Completed"><span>Completed</span></label>
-                        </div>
-                         </div>
-
-                </div><div class="form-column">
-
-                    <div class="form-section-card">
-                        <div class="section-title">2. Order Details</div>
-                        <div class="form-row">
-                             <div class="form-group form-group-half">
-                                <label for="manual_order_id">Order ID (Manual):</label>
-                                <input type="text" id="manual_order_id" name="manual_order_id" placeholder="Optional - Auto-generated if empty">
-                            </div>
-                             <div class="form-group form-group-half">
-                                <label for="display_order_id">Order ID (System):</label>
-                                <input type="text" id="display_order_id" name="display_order_id" readonly placeholder="Auto-generated or Existing">
                             </div>
                         </div>
                          <div class="form-row">
-                             <div class="form-group form-group-half">
-                                <label for="order_date">Order Date:</label>
-                                <input type="date" id="order_date" name="order_date" required>
+                            <div class="form-group form-group-half">
+                                <label for="address">Address</label>
+                                <input type="text" id="address" name="address" placeholder="Autofills or enter address">
                             </div>
                             <div class="form-group form-group-half">
-                                <label for="delivery_date">Delivery Date:</label>
-                                <input type="date" id="delivery_date" name="delivery_date">
+                                <label for="contact_no">Contact No</label>
+                                <input type="text" id="contact_no" name="contact_no" placeholder="Autofills or enter contact">
                             </div>
-                        </div>
+                         </div>
+                         <div class="form-row">
+                             <div class="form-group form-group-full" id="customerAccountLinkArea" style="margin-top: -10px; margin-bottom: 5px; display: none;">
+                                 <a href="#" id="viewCustomerAccountLink" target="_blank" class="link-button">View Full Account Details</a>
+                             </div>
+                             <div class="form-group form-group-full" id="customerBalanceArea" style="display: none; font-size: 0.9em; margin-bottom: 5px;">
+                                 Current Balance: <strong id="customerCurrentBalance"></strong>
+                             </div>
+                         </div>
+                        <p class="info-text">*Search existing customer or enter details for a new one.</p>
                     </div>
-
+                </div>
+                <div class="form-column">
                     <div class="form-section-card">
-                        <div class="section-title">5. Priority & Remarks</div>
+                        <div class="section-title">2. Order Details</div>
                         <div class="form-row">
-                            <div class="form-group priority-group">
+                            <div class="form-group form-group-half">
+                               <label for="manual_order_id">Order ID (Manual)</label>
+                               <input type="text" id="manual_order_id" name="manual_order_id" placeholder="Optional - Auto-generated if empty">
+                           </div>
+                            <div class="form-group form-group-half">
+                               <label for="display_order_id">Order ID (System)</label>
+                               <input type="text" id="display_order_id" name="display_order_id" readonly placeholder="Auto-generated or Existing">
+                           </div>
+                       </div>
+                        <div class="form-row">
+                            <div class="form-group form-group-half">
+                               <label for="order_date">Order Date *</label>
+                               <input type="date" id="order_date" name="order_date" required>
+                           </div>
+                           <div class="form-group form-group-half">
+                               <label for="delivery_date">Delivery Date</label>
+                               <input type="date" id="delivery_date" name="delivery_date">
+                           </div>
+                       </div>
+                       <div class="form-row">
+                           <div class="form-group priority-group" style="flex-basis: 150px;">
                                 <label>Urgent?</label>
                                 <div class="radio-group">
                                       <label><input type="radio" name="urgent" value="Yes"> Yes</label>
                                      <label><input type="radio" name="urgent" value="No" checked> No</label>
                                  </div>
                             </div>
-                            <div class="form-group remarks-group">
-                                 <label for="remarks">Remarks:</label>
-                                <textarea id="remarks" name="remarks" placeholder="Any specific notes..."></textarea>
-                            </div>
-                        </div>
+                           <div class="form-group remarks-group" style="flex: 1;">
+                                <label for="remarks">Remarks</label>
+                               <textarea id="remarks" name="remarks" placeholder="Any specific notes..."></textarea>
+                           </div>
+                       </div>
                     </div>
-
-                </div></div><div class="form-section-card">
-                <div class="section-title">4. Product & Job Details</div>
-                <div class="product-input-area">
-                    <div class="product-entry-group">
-                        <div class="form-group product-name-group">
-                            <label for="product_name_input">Product Name:</label>
-                             <input type="text" id="product_name_input" name="product_name_input" placeholder="Enter product name..." autocomplete="off">
-                            <div id="product-suggestions" class="suggestions-box"></div>
-                        </div>
-                         <div class="form-group product-qty-group">
-                             <label for="quantity_input">Qty:</label>
-                            <input type="number" id="quantity_input" name="quantity_input" placeholder="Qty">
-                        </div>
-                        <button type="button" id="add-product-btn" class="add-product-button">
-                             <i class="fas fa-plus"></i> Add Product
-                        </button>
-                    </div>
-                     <p class="info-text">*New product cannot be added here, only select an existing one.</p>
                 </div>
-                <div id="product-list" class="product-list-container">
+            </div>
+
+            <div class="form-section-card">
+                <div class="section-title">3. Product & Job Details</div>
+                <div class="table-container order-items-table">
+                    <table id="orderItemsTable">
+                        <thead>
+                            <tr>
+                                <th style="width: 25%;">Product Name *</th>
+                                <th style="width: 10%;">Unit Type *</th>
+                                <th style="width: 15%;" class="sq-feet-header hidden-col">Dimensions (W x H) *</th>
+                                <th style="width: 8%;" class="sq-feet-header hidden-col">Unit *</th>
+                                <th style="width: 8%;">Quantity *</th>
+                                <th style="width: 12%;">Rate * <span class="min-rate-header-info">(Min: ?)</span></th>
+                                <th style="width: 12%;">Amount</th>
+                                <th style="width: 5%;">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="orderItemsTableBody">
+                            </tbody>
+                    </table>
+                </div>
+                <button type="button" id="addItemBtn" class="button add-item-button"><i class="fas fa-plus"></i> Add Item</button>
+
+                <div id="calculationPreviewArea" class="calculation-preview compact-preview" style="display: none;">
                     </div>
-            </div><div class="button-container">
-                <button type="submit" class="save-button" id="saveOrderBtn">
-                     <i class="fas fa-save"></i> <span>Save Order</span>
-                </button>
+            </div>
+
+            <div class="form-section-card" id="orderSummarySection">
+                <div class="section-title">4. Order Summary & Payment</div>
+                <div class="summary-grid">
+                    <div class="summary-label">Subtotal:</div>
+                    <div class="summary-value">₹ <span id="summarySubtotal">0.00</span></div>
+
+                    <div class="summary-label">Discount (%):</div>
+                    <div class="summary-input"><input type="number" id="summaryDiscountPercent" step="0.01" min="0" max="100" placeholder="%"></div>
+
+                    <div class="summary-label">Discount Amount:</div>
+                    <div class="summary-input"><input type="number" id="summaryDiscountAmount" step="0.01" min="0" placeholder="Amount"></div>
+
+                    <div class="summary-label summary-total">Final Amount:</div>
+                    <div class="summary-value summary-total">₹ <span id="summaryFinalAmount">0.00</span></div>
+
+                    <div class="summary-label">Advance Payment:</div>
+                    <div class="summary-input"><input type="number" id="summaryAdvancePayment" step="0.01" min="0" placeholder="Amount Received"></div>
+
+                    <div class="summary-label summary-balance">Total Balance Due:</div>
+                    <div class="summary-value summary-balance">₹ <span id="summaryTotalBalance">0.00</span></div>
+                </div>
+                <div id="creditLimitWarning" class="error-message" style="display: none; margin-top: 15px; text-align:left;"></div>
+            </div>
+
+            <div class="form-section-card">
+                <div class="section-title">5. Order Status</div>
+                <div id="order-status-group" class="form-group order-status-group">
+                    <label><input type="checkbox" name="order_status" value="Order Received"><span>Order Received</span></label>
+                    <label><input type="checkbox" name="order_status" value="Designing"><span>Designing</span></label>
+                    <label><input type="checkbox" name="order_status" value="Verification"><span>Verification</span></label>
+                    <label><input type="checkbox" name="order_status" value="Design Approved"><span>Design Approved</span></label>
+                    <label><input type="checkbox" name="order_status" value="Printing"><span>Printing</span></label>
+                    <label><input type="checkbox" name="order_status" value="Ready for Working"><span>Ready for Working</span></label>
+                    <label><input type="checkbox" name="order_status" value="Delivered"><span>Delivered</span></label>
+                    <label><input type="checkbox" name="order_status" value="Completed"><span>Completed</span></label>
+                </div>
+             </div>
+
+            <div class="button-container">
                 <button type="button" onclick="window.location.href='order_history.html'" class="cancel-button">
                     Cancel
                 </button>
+                <button type="submit" class="save-button" id="saveOrderBtn">
+                    <i class="fas fa-save"></i> <span>Save Order</span>
+                </button>
             </div>
+             <div id="formErrorMsg" class="error-message" style="display: none; margin-top: 15px;"></div>
         </form>
     </div>
+
+    <template id="item-row-template">
+        <tr class="item-row">
+            <td> <input type="text" class="form-input product-name" placeholder="Search product..." required autocomplete="off">
+                 <div class="suggestions-box product-suggestions"></div> </td>
+            <td> <select class="form-input unit-type-select">
+                    <option value="Qty" selected>Qty</option>
+                    <option value="Sq Feet">Sq Feet</option>
+                    </select>
+            </td>
+            <td class="sq-feet-input" style="display: none;"> <div class="dimension-input-container">
+                    <input type="number" step="0.01" class="form-input dimension-input width-input" placeholder="W" style="width: 65px;">
+                    <span style="align-self: center; padding: 0 2px;">x</span>
+                    <input type="number" step="0.01" class="form-input dimension-input height-input" placeholder="H" style="width: 65px;">
+                </div>
+            </td>
+            <td class="sq-feet-input" style="display: none;"> <select class="form-input dimension-unit-select" style="width: 70px;">
+                    <option value="feet" selected>Feet</option>
+                    <option value="inches">Inches</option>
+                </select>
+            </td>
+            <td> <input type="number" step="1" class="form-input quantity-input" placeholder="Qty" min="1" value="1" style="width: 70px; text-align: right;">
+             </td>
+            <td> <div class="rate-input-wrapper">
+                    <input type="number" step="0.01" class="form-input rate-input" placeholder="Rate" required style="width: 90px; text-align: right;">
+                    <span class="min-rate-info" style="font-size: 0.75em; display: block; color: #6c757d; text-align: right; padding-top: 2px;">(Min: ₹<span class="min-rate-value">--</span>)</span>
+                </div>
+            </td>
+            <td style="text-align: right; font-weight: 600; vertical-align: middle;"> ₹<span class="item-amount">0.00</span>
+            </td>
+            <td style="text-align: center; vertical-align: middle;"> <button type="button" class="button delete-item-btn" title="Remove Item"><i class="fas fa-trash-alt"></i></button>
+            </td>
+        </tr>
+    </template>
 
     <div id="whatsapp-reminder-popup" class="popup-overlay">
          <div class="popup-content">
@@ -249,6 +247,5 @@
         </div>
     </div>
 
-    <script src="js/new_order.js" type="module" defer></script>
-</body>
+    <script src="js/new_order.js" type="module" defer></script> </body>
 </html>
