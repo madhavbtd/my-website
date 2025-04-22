@@ -151,11 +151,9 @@
         </div>
 
         <div class="table-container">
-             {/* --- यहाँ से वह कमेंट लाइन हटा दी गई है --- */}
-            <table id="orderTable">
+             <table id="orderTable">
                  <thead>
                     <tr>
-                        {/* --- सही किया गया हेडर रो --- */}
                         <th class="col-checkbox"><input type="checkbox" id="selectAllCheckbox" title="Select All Visible"></th>
                         <th>Order ID</th>
                         <th>Customer Name</th>
@@ -164,14 +162,11 @@
                         <th>Delivery Date</th>
                         <th>Priority</th>
                          <th>Status</th>
-                        <th>Action</th> {/* Details/Edit बटन के लिए */}
-                        <th>Send Wtsp</th> {/* WhatsApp आइकन के लिए */}
-                    </tr>
+                        <th>Action</th> <th>Send Wtsp</th> </tr>
                 </thead>
                  <tbody id="orderTableBody">
                     <tr>
-                        <td colspan="10" id="loadingMessage">Loading orders...</td> {/* Colspan 10 */}
-                    </tr>
+                        <td colspan="10" id="loadingMessage">Loading orders...</td> </tr>
                 </tbody>
             </table>
         </div>
@@ -243,8 +238,7 @@
             <h2><i class="fas fa-exclamation-triangle warning-icon"></i> Confirm Deletion</h2>
             <p>You are about to permanently delete the following <strong id="bulkDeleteCount">0</strong> order(s):</p>
             <ul id="bulkDeleteOrderList" class="order-list-preview">
-                {/* चयनित ऑर्डर यहाँ JS द्वारा डाले जाएंगे */}
-            </ul>
+                 {/* चयनित ऑर्डर यहाँ JS द्वारा डाले जाएंगे */} </ul>
             <p class="warning-message">This action cannot be undone.</p>
             <div class="confirmation-check">
                 <input type="checkbox" id="confirmDeleteCheckbox">
