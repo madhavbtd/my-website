@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Customer Account Details</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
+    <link rel="stylesheet" href="css/customer_management.css">
+    <link rel="stylesheet" href="css/order_history.css"> <link rel="stylesheet" href="css/customer_account_detail.css">
+
+    <script type="module">
+        // Import Firebase services
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+        // Import Firestore services needed for THIS page
+        import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+        // **** Your Firebase Configuration ****
+        const firebaseConfig = {
+            apiKey: "AIzaSyBQj5rQmE77kKKGYixP8y3Hcimz8tiAqzQ", // Your apiKey
+            authDomain: "madhav-multyprint.firebaseapp.com", // Your authDomain
+            projectId: "madhav-multyprint", // Your projectId
+            storageBucket: "madhav-multyprint.appspot.com", // Your storageBucket
+            messagingSenderId: "104988349637", // Your messagingSenderId
+            appId: "1:104988349637:web:faf045b77c6786a4e70cac" // Your appId
+        };
+
+        let app;
+        let auth;
+        let db;
+
+        try {
+            // Initialize Firebase App (only once)
+            if (!window.firebaseAppInitialized) {
+                app = initializeApp(firebaseConfig);
+                window.firebaseAppInitialized = true;
+                window.firebaseApp = app;
+                console.log("Firebase initialized on this page (customer_account_detail - V1).");
+            } else {
+                app = window.firebaseApp;
+                console.log("Firebase already initialized on this page (customer_account_detail - V1).");
+            }
+            auth = getAuth(app);
+            db = getFirestore(app);
+
+            // Make DB and key Firestore functions global for the detail script
+            window.db = db;
+            window.doc = doc;
+            window.getDoc = getDoc;
+            // Later: window.collection, window.query, window.where, window.addDoc, etc.
+
+            // ---->> Authentication State Check <<----
+            onAuthStateChanged(auth, (user) => {
+                const currentPage = window.location.pathname.split('/').pop() || 'index.html';
+                if (!user && currentPage.toLowerCase() !== 'login.html') {
+                    console.log(`User not logged in on ${currentPage}. Redirecting...`);
+                    window.location.replace('login.html');
+                } else if (user) {
+                    console.log(`User is logged in on ${currentPage}. OK to proceed.`);
+                    // Trigger page load logic AFTER auth check passes
+                    if (typeof initializeCustomerDetailPage === 'function') {
+                        initializeCustomerDetailPage(user);
+                    } else {
+                        // Wait a bit for the script to load, then try again
+                        setTimeout(() => {
+                             if (typeof initializeCustomerDetailPage === 'function') {
+                                initializeCustomerDetailPage(user);
+                             } else {
+                                console.error("initializeCustomerDetailPage function not found after delay.");
+                                alert("Error initializing page script.");
+                             }
+                        }, 100); // Small delay
+                    }
+                }
+            });
+            // ---->> Auth check end <<----
+
+        } catch(e) {
+            console.error("Firebase setup / Auth check error:", e);
+            alert("Error loading application. Please try again later.");
+        }
+    </script>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <i class="fas fa-user-tie header-icon"></i>
+            <h1>Customer Account: <span id="cust-detail-name-header">Loading...</span></h1>
+        </div>
+        <div class="breadcrumb-container">
+            <a href="index.html">Home</a> / <a href="customer_management.html">Customers</a> / <span id="cust-detail-name-breadcrumb">Details</span>
+        </div>
+
+        <div class="actions-bar cust-detail-actions">
+            <button id="editCustomerBtn" class="button info-button" disabled><i class="fas fa-edit"></i> Edit Details</button>
+            <button id="addPaymentBtn" class="button success-button" disabled><i class="fas fa-plus"></i> Add Payment</button>
+            <a href="new_order.html" id="addNewOrderLink" class="button primary-button disabled"><i class="fas fa-shopping-cart"></i> Add New Order</a>
+            <button id="toggleStatusBtn" class="button secondary-button" disabled><i class="fas fa-toggle-on"></i> <span>Loading...</span></button>
+            <button id="deleteCustomerBtn" class="button danger-button" disabled><i class="fas fa-trash-alt"></i> Delete Customer</button>
+        </div>
+
+        <div class="customer-info-grid">
+            <div class="info-box customer-details-box">
+                <h2><i class="fas fa-info-circle"></i> Customer Details</h2>
+                <p><strong>Customer ID:</strong> <span id="cust-detail-id">...</span></p>
+                <p><strong>WhatsApp:</strong> <span id="cust-detail-whatsapp">...</span></p>
+                <p><strong>Contact No:</strong> <span id="cust-detail-contact">...</span></p>
+                <p><strong>Email:</strong> <span id="cust-detail-email">...</span></p>
+                <p><strong>Address:</strong> <span id="cust-detail-address">...</span></p>
+                <p><strong>City:</strong> <span id="cust-detail-city">...</span></p>
+                <p><strong>State:</strong> <span id="cust-detail-state">...</span></p>
+                <p><strong>Account Status:</strong> <span id="cust-detail-status" class="status-badge">...</span></p>
+            </div>
+
+            <div class="info-box account-summary-box">
+                 <h2><i class="fas fa-calculator"></i> Account Summary</h2>
+                 <p><strong>Total Order Value:</strong> <span id="summary-total-orders">Loading...</span></p>
+                 <p><strong>Total Paid Amount:</strong> <span id="summary-total-paid">Loading...</span></p>
+                 <p><strong>Outstanding Balance:</strong> <strong id="summary-balance" class="balance-due">Loading...</strong></p>
+                 <hr>
+                 <p><strong>Credit Allowed:</strong> <span id="cust-detail-credit-allowed">...</span></p>
+                 <p><strong>Credit Limit:</strong> <span id="cust-detail-credit-limit">...</span></p>
+            </div>
+            <div class="info-box customer-notes-box">
+                 <h2><i class="fas fa-sticky-note"></i> Remarks / Notes</h2>
+                 <p id="cust-detail-notes">...</p>
+            </div>
+        </div>
+
+        <div class="history-section">
+            <h2><i class="fas fa-history"></i> Order History</h2>
+            <div class="table-container">
+                <table id="customerOrderTable">
+                    <thead>
+                        <tr><th>Order ID</th><th>Order Date</th><th>Products</th><th>Amount</th><th>Status</th><th>Action</th></tr>
+                    </thead>
+                    <tbody id="customerOrderTableBody">
+                        <tr><td colspan="6" style="text-align: center;">Loading orders...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <h2 style="margin-top: 30px;"><i class="fas fa-money-check-alt"></i> Payment History</h2>
+            <div class="table-container">
+                <table id="customerPaymentTable">
+                    <thead>
+                        <tr><th>Payment Date</th><th>Amount Paid</th><th>Method</th><th>Notes</th><th>Action</th></tr>
+                    </thead>
+                    <tbody id="customerPaymentTableBody">
+                        <tr><td colspan="5" style="text-align: center;">Loading payments...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div> <script src="js/customer_account_detail.js" type="module" defer></script>
+</body>
+</html>

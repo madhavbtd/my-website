@@ -1,0 +1,106 @@
+/* css/customer_account_detail.css (Version 1) */
+
+/* Status Badge Styles (using variables potentially defined in order_history.css) */
+/* Make sure :root variables are defined in a loaded CSS file */
+.status-badge {
+    font-weight: 500;
+    padding: 3px 10px; /* थोड़ा छोटा */
+    border-radius: 12px; /* गोल */
+    font-size: 0.8em;   /* थोड़ा छोटा फॉन्ट */
+    color: white;
+    background-color: var(--secondary-color, #6c757d); /* Default Grey */
+    white-space: nowrap;
+    display: inline-block;
+    line-height: 1.2;
+    text-align: center;
+    vertical-align: middle;
+}
+
+.status-badge.status-active {
+    background-color: var(--success-color, #28a745); /* Green */
+}
+
+.status-badge.status-inactive {
+    background-color: var(--secondary-color, #6c757d); /* Grey */
+}
+
+/* Layout for the main info grid */
+.customer-info-grid {
+    display: grid;
+    /* स्क्रीन के साइज़ के हिसाब से कॉलम एडजस्ट होंगे */
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 20px; /* बॉक्स के बीच में जगह */
+    margin-bottom: 30px; /* नीचे मार्जिन */
+}
+
+/* Style for each info box */
+.info-box {
+    background-color: #ffffff;
+    border: 1px solid var(--border-color, #dee2e6);
+    border-radius: var(--border-radius, 6px);
+    padding: 15px 20px;
+    box-shadow: var(--box-shadow, 0 2px 5px rgba(0, 0, 0, 0.08));
+}
+
+.info-box h2 {
+    font-size: 1.1em;
+    color: var(--primary-color, #0056b3);
+    margin-top: 0;
+    margin-bottom: 15px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #eee;
+    display: flex;       /* Icon और टेक्स्ट को एक लाइन में लाने के लिए */
+    align-items: center; /* Icon और टेक्स्ट को वर्टिकली सेंटर करने के लिए */
+    gap: 8px;            /* Icon और टेक्स्ट के बीच जगह */
+}
+
+.info-box p {
+    margin-bottom: 8px;
+    font-size: 0.95em;
+    line-height: 1.5;
+}
+/* जानकारी के लेबल (जैसे "WhatsApp:") को थोड़ा व्यवस्थित करने के लिए */
+.info-box p strong {
+    font-weight: 600;
+    color: #333;
+    min-width: 110px; /* ताकि लेबल एक सीध में दिखें */
+    display: inline-block; /* min-width काम करने के लिए */
+}
+
+/* बकाया राशि के लिए स्टाइल */
+.balance-due {
+    color: var(--danger-color, #dc3545); /* लाल रंग */
+    font-weight: bold;
+}
+.balance-paid { /* अगर बैलेंस क्रेडिट में है तो इस्तेमाल कर सकते हैं */
+     color: var(--success-color, #28a745); /* हरा रंग */
+     font-weight: bold;
+}
+
+/* इस पेज के एक्शन बार के लिए स्टाइल */
+.cust-detail-actions {
+    justify-content: flex-start; /* बटन बाईं ओर से शुरू हों */
+    padding: 15px;              /* थोड़ा स्पेस */
+    background-color: #f8f9fa;    /* हल्का बैकग्राउंड */
+    border: 1px solid #e9ecef;
+    border-radius: 4px;
+    margin-bottom: 20px;
+}
+
+/* अलग-अलग बटन के रंग (order_history.css से मेल खाते हुए) */
+.info-button { background-color: var(--info-color, #17a2b8); color: white; }
+.info-button:hover { background-color: #138496; }
+.success-button { background-color: var(--success-color, #28a745); color: white; }
+.success-button:hover { background-color: #218838; }
+.primary-button { background-color: var(--primary-color, #0056b3); color: white; }
+.primary-button:hover { background-color: #00418a; }
+.secondary-button { background-color: var(--secondary-color, #6c757d); color: white; }
+.secondary-button:hover { background-color: #5a6268; }
+.danger-button { background-color: var(--danger-color, #dc3545); color: white; }
+.danger-button:hover { background-color: #c82333; }
+
+/* Disabled लिंक बटन के लिए */
+a.button.disabled {
+    pointer-events: none; /* क्लिक करने से रोकता है */
+    opacity: 0.6;        /* थोड़ा धुंधला दिखाता है */
+}
