@@ -8,7 +8,9 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="css/new_order.css"> <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" integrity="sha512-9usAa10IRO0HhonpyAIVpjrylPvoDwiPUiKdWk5t3PyolY1cOd4DSE0Ga+ri4AuTroPR5aQvXU9xC6qOPnzFeg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    {/* Link to your updated CSS file */}
+    <link rel="stylesheet" href="css/new_order.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" integrity="sha512-9usAa10IRO0HhonpyAIVpjrylPvoDwiPUiKdWk5t3PyolY1cOd4DSE0Ga+ri4AuTroPR5aQvXU9xC6qOPnzFeg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
 
     <script type="module">
         // --- Firebase Setup (Same as before) ---
@@ -135,7 +137,10 @@
                         </div>
                      </div>
                  </div>
-            </div> <div class="form-section-inline" id="orderStatusSection">
+            </div>
+
+            {/* Updated Order Status Section */}
+            <div class="form-section-inline" id="orderStatusSection">
                 <div id="order-status-group" class="form-group order-status-group">
                     <label><input type="checkbox" name="order_status" value="Order Received"><span>Order Received</span></label>
                     <label><input type="checkbox" name="order_status" value="Designing"><span>Designing</span></label>
@@ -165,7 +170,7 @@
                             </tr>
                         </thead>
                         <tbody id="orderItemsTableBody">
-                            {/* Item rows added by JS */}
+                            {/* Comment Removed */}
                         </tbody>
                     </table>
                 </div>
@@ -249,6 +254,7 @@
          <div class="popup-content"> <button id="popup-close-btn" class="popup-close" title="Close">&times;</button> <h4>Order Saved Successfully!</h4> <p>Send update to customer?</p> <div id="whatsapp-message-preview" class="message-preview"></div> <a href="#" id="whatsapp-send-link" class="button whatsapp-send-btn" target="_blank"> <i class="fab fa-whatsapp"></i> Send on WhatsApp </a> </div>
     </div>
 
+    {/* Link to your JS file (unchanged) */}
     <script src="js/new_order.js" type="module" defer></script>
 
 </body>
