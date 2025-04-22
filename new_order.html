@@ -11,7 +11,7 @@
     <link rel="stylesheet" href="css/new_order.css"> <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" integrity="sha512-9usAa10IRO0HhonpyAIVpjrylPvoDwiPUiKdWk5t3PyolY1cOd4DSE0Ga+ri4AuTroPR5aQvXU9xC6qOPnzFeg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
 
     <script type="module">
-        // --- Firebase Setup (Same as before) ---
+        // --- Firebase Setup ---
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
         import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
         import { getFirestore, collection, addDoc, doc, updateDoc, getDocs, query, where, getDoc, orderBy, limit, Timestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
@@ -133,12 +133,22 @@
                        </div>
                     </div>
                 </div>
-            </div>
+            </div> <div class="form-section-inline" id="orderStatusSection">
+                <div id="order-status-group" class="form-group order-status-group">
+                    <label><input type="checkbox" name="order_status" value="Order Received"><span>Order Received</span></label>
+                    <label><input type="checkbox" name="order_status" value="Designing"><span>Designing</span></label>
+                    <label><input type="checkbox" name="order_status" value="Verification"><span>Verification</span></label>
+                    <label><input type="checkbox" name="order_status" value="Design Approved"><span>Design Approved</span></label>
+                    <label><input type="checkbox" name="order_status" value="Printing"><span>Printing</span></label>
+                    <label><input type="checkbox" name="order_status" value="Ready for Working"><span>Ready for Working</span></label>
+                    <label><input type="checkbox" name="order_status" value="Delivered"><span>Delivered</span></label>
+                    <label><input type="checkbox" name="order_status" value="Completed"><span>Completed</span></label>
+                </div>
+             </div>
 
-            {/* Item Entry Section */}
+
             <div class="form-section-card">
                 <div class="section-title">3. Product & Job Details</div>
-                {/* Added div for scroll */}
                 <div class="table-container order-items-table">
                     <table id="orderItemsTable">
                         <thead>
@@ -154,71 +164,56 @@
                             </tr>
                         </thead>
                         <tbody id="orderItemsTableBody">
-                            {/* Item rows added by JS */}
-                        </tbody>
+                            </tbody>
                     </table>
                 </div>
                 <button type="button" id="addItemBtn" class="button add-item-button"><i class="fas fa-plus"></i> Add Item</button>
-
-                {/* Calculation Preview Area ADDED */}
-                <div id="calculationPreviewArea" class="calculation-preview" style="display: none; margin-top: 15px;">
-                    <h4>Calculation Details:</h4>
-                    <div id="calculationPreviewContent">
-                        <p style="color:grey;">Add items with Unit Type "Sq Feet" to see calculations.</p>
-                    </div>
-                </div>
             </div>
 
-            {/* Order Summary and Payment Section */}
-            <div class="form-section-card" id="orderSummarySection">
-                <div class="section-title">4. Order Summary & Payment</div>
-                {/* Restructured for better styling */}
-                <div class="order-summary-wrapper">
+             <div class="form-section-card" id="calculationAndSummarySection">
+                 <div class="order-summary-wrapper">
                     <div class="summary-left">
-                         {/* Optional: Add notes or other fields here */}
+                        <div id="calculationPreviewArea" class="calculation-preview" style="display: none;">
+                           <h4>Calculation Details:</h4>
+                           <div id="calculationPreviewContent">
+                               <p style="color:grey;">Add Sq Feet items to see calculations.</p>
+                           </div>
+                       </div>
                     </div>
-                    <div class="summary-right">
-                        <div class="summary-grid">
-                            <div class="summary-label">Subtotal:</div>
-                            <div class="summary-value">₹ <span id="summarySubtotal">0.00</span></div>
-
-                            <div class="summary-label">Discount (%):</div>
-                            <div class="summary-input"><input type="number" id="summaryDiscountPercent" step="0.01" min="0" max="100" placeholder="%"></div>
-
-                            <div class="summary-label">Discount Amount:</div>
-                            <div class="summary-input"><input type="number" id="summaryDiscountAmount" step="0.01" min="0" placeholder="Amount"></div>
-
-                            <div class="summary-label summary-highlight summary-final">Final Amount:</div>
-                            <div class="summary-value summary-highlight summary-final">₹ <span id="summaryFinalAmount">0.00</span></div>
-
-                            <div class="summary-label">Advance Payment:</div>
-                            <div class="summary-input"><input type="number" id="summaryAdvancePayment" step="0.01" min="0" placeholder="Amount Received"></div>
-
-                            <div class="summary-label summary-highlight summary-balance">Total Balance Due:</div>
-                            <div class="summary-value summary-highlight summary-balance">₹ <span id="summaryTotalBalance">0.00</span></div>
-                        </div>
-                    </div>
-                </div>
-                <div id="creditLimitWarning" class="error-message" style="display: none; margin-top: 15px; text-align:left;"></div>
+                     <div class="summary-right">
+                         <div class="section-title" style="margin-bottom: 15px; border: none; padding-bottom: 0;">4. Order Summary & Payment</div>
+                         <div class="summary-rows">
+                             <div class="summary-row">
+                                 <span class="summary-label">Subtotal:</span>
+                                 <span class="summary-value">₹ <span id="summarySubtotal">0.00</span></span>
+                             </div>
+                             <div class="summary-row">
+                                 <label for="summaryDiscountPercent" class="summary-label">Discount (%):</label>
+                                 <input type="number" id="summaryDiscountPercent" class="summary-input" step="0.01" min="0" max="100" placeholder="%">
+                             </div>
+                              <div class="summary-row">
+                                 <label for="summaryDiscountAmount" class="summary-label">Discount Amount:</label>
+                                 <input type="number" id="summaryDiscountAmount" class="summary-input" step="0.01" min="0" placeholder="Amount">
+                             </div>
+                             <div class="summary-row summary-highlight summary-final">
+                                 <span class="summary-label">Final Amount:</span>
+                                 <span class="summary-value">₹ <span id="summaryFinalAmount">0.00</span></span>
+                             </div>
+                              <div class="summary-row">
+                                 <label for="summaryAdvancePayment" class="summary-label">Advance Payment:</label>
+                                 <input type="number" id="summaryAdvancePayment" class="summary-input" step="0.01" min="0" placeholder="Amount Received">
+                             </div>
+                             <div class="summary-row summary-highlight summary-balance">
+                                 <span class="summary-label">Total Balance Due:</span>
+                                 <span class="summary-value">₹ <span id="summaryTotalBalance">0.00</span></span>
+                             </div>
+                         </div>
+                         <div id="creditLimitWarning" class="error-message" style="display: none; margin-top: 15px; text-align:left;"></div>
+                     </div>
+                 </div>
             </div>
 
-            {/* Order Status Section */}
-             <div class="form-section-card">
-                <div class="section-title">5. Order Status</div>
-                <div id="order-status-group" class="form-group order-status-group">
-                    {/* Style changed via CSS, structure remains */}
-                    <label><input type="checkbox" name="order_status" value="Order Received"><span>Order Received</span></label>
-                    <label><input type="checkbox" name="order_status" value="Designing"><span>Designing</span></label>
-                    <label><input type="checkbox" name="order_status" value="Verification"><span>Verification</span></label>
-                    <label><input type="checkbox" name="order_status" value="Design Approved"><span>Design Approved</span></label>
-                    <label><input type="checkbox" name="order_status" value="Printing"><span>Printing</span></label>
-                    <label><input type="checkbox" name="order_status" value="Ready for Working"><span>Ready for Working</span></label>
-                    <label><input type="checkbox" name="order_status" value="Delivered"><span>Delivered</span></label>
-                    <label><input type="checkbox" name="order_status" value="Completed"><span>Completed</span></label>
-                </div>
-             </div>
 
-            {/* Action Buttons */}
             <div class="button-container">
                 <button type="button" onclick="window.location.href='order_history.html'" class="cancel-button">
                     Cancel
@@ -231,28 +226,22 @@
         </form>
     </div>
 
-    {/* Item Row Template (Adjusted input sizes slightly) */}
     <template id="item-row-template">
         <tr class="item-row">
             <td> <input type="text" class="form-input product-name" placeholder="Search product..." required autocomplete="off"> </td>
             <td> <select class="form-input unit-type-select"> <option value="Qty" selected>Qty</option> <option value="Sq Feet">Sq Feet</option> </select> </td>
-            <td class="sq-feet-input" style="display: none;"> <div class="dimension-input-container"> <input type="number" step="0.01" class="form-input dimension-input width-input" placeholder="W" style="width: 70px;"> <span style="padding: 0 2px;">x</span> <input type="number" step="0.01" class="form-input dimension-input height-input" placeholder="H" style="width: 70px;"> </div> </td>
-            <td class="sq-feet-input" style="display: none;"> <select class="form-input dimension-unit-select" style="width: 75px;"> <option value="feet" selected>Feet</option> <option value="inches">Inches</option> </select> </td>
-            <td> <input type="number" step="1" class="form-input quantity-input" placeholder="Qty" min="1" value="1" style="width: 75px; text-align: right;"> </td>
-            <td> <div class="rate-input-wrapper"> <input type="number" step="0.01" class="form-input rate-input" placeholder="Rate" required style="width: 95px; text-align: right;"> <span class="min-rate-info">(Min: ₹<span class="min-rate-value">--</span>)</span> </div> </td>
+            <td class="sq-feet-input" style="display: none;"> <div class="dimension-input-container"> <input type="number" step="0.01" class="form-input dimension-input width-input" placeholder="W"> <span style="padding: 0 2px;">x</span> <input type="number" step="0.01" class="form-input dimension-input height-input" placeholder="H"> </div> </td>
+            <td class="sq-feet-input" style="display: none;"> <select class="form-input dimension-unit-select"> <option value="feet" selected>Feet</option> <option value="inches">Inches</option> </select> </td>
+            <td> <input type="number" step="1" class="form-input quantity-input" placeholder="Qty" min="1" value="1"> </td>
+            <td> <div class="rate-input-wrapper"> <input type="number" step="0.01" class="form-input rate-input" placeholder="Rate" required> <span class="min-rate-info">(Min: ₹<span class="min-rate-value">--</span>)</span> </div> </td>
             <td style="text-align: right; font-weight: 600; vertical-align: middle;"> ₹<span class="item-amount">0.00</span> </td>
             <td style="text-align: center; vertical-align: middle;"> <button type="button" class="button delete-item-btn" title="Remove Item"><i class="fas fa-trash-alt"></i></button> </td>
         </tr>
     </template>
 
-    {/* WhatsApp Reminder Popup */}
     <div id="whatsapp-reminder-popup" class="popup-overlay">
-        {/* Content unchanged */}
          <div class="popup-content"> <button id="popup-close-btn" class="popup-close" title="Close">&times;</button> <h4>Order Saved Successfully!</h4> <p>Send update to customer?</p> <div id="whatsapp-message-preview" class="message-preview"></div> <a href="#" id="whatsapp-send-link" class="button whatsapp-send-btn" target="_blank"> <i class="fab fa-whatsapp"></i> Send on WhatsApp </a> </div>
     </div>
 
-    {/* JS Files */}
-    <script src="js/new_order.js" type="module" defer></script> {/* Needs updated JS */}
-
-</body>
+    <script src="js/new_order.js" type="module" defer></script> </body>
 </html>
