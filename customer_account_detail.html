@@ -8,57 +8,47 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 
-    <link rel="stylesheet" href="css/customer_management.css">
-    <link rel="stylesheet" href="css/order_history.css"> <link rel="stylesheet" href="css/customer_account_detail.css">
+    <link rel="stylesheet" href="css/customer_management.css"> <link rel="stylesheet" href="css/order_history.css"> <link rel="stylesheet" href="css/customer_account_detail.css">
 
     <script type="module">
-        // Import Firebase services
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
         import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-        // Import ALL Firestore functions needed by page and adapted modal logic
-        import { getFirestore, doc, getDoc, collection, query, where, getDocs, orderBy, updateDoc, deleteDoc, Timestamp, arrayUnion } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+        import { getFirestore, doc, getDoc, collection, query, where, getDocs, orderBy, updateDoc, deleteDoc, Timestamp, arrayUnion, addDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js"; // Added addDoc
 
-        // **** Your Firebase Configuration ****
-        const firebaseConfig = {
-            apiKey: "AIzaSyBQj5rQmE77kKKGYixP8y3Hcimz8tiAqzQ",
-            authDomain: "madhav-multyprint.firebaseapp.com",
-            projectId: "madhav-multyprint",
-            storageBucket: "madhav-multyprint.appspot.com",
-            messagingSenderId: "104988349637",
-            appId: "1:104988349637:web:faf045b77c6786a4e70cac"
+        const firebaseConfig = { /* --- आपकी Firebase कॉन्फ़िगरेशन यहाँ --- */
+             apiKey: "AIzaSyBQj5rQmE77kKKGYixP8y3Hcimz8tiAqzQ",
+             authDomain: "madhav-multyprint.firebaseapp.com",
+             projectId: "madhav-multyprint",
+             storageBucket: "madhav-multyprint.appspot.com",
+             messagingSenderId: "104988349637",
+             appId: "1:104988349637:web:faf045b77c6786a4e70cac"
         };
 
         let app; let auth; let db;
 
         try {
-            // Initialize Firebase App
             if (!window.firebaseAppInitialized) {
-                app = initializeApp(firebaseConfig);
-                window.firebaseAppInitialized = true; window.firebaseApp = app;
-                console.log("Firebase initialized (customer_account_detail - V2.0).");
-            } else {
-                app = window.firebaseApp;
-                console.log("Firebase already initialized (customer_account_detail - V2.0).");
-            }
+                app = initializeApp(firebaseConfig); window.firebaseAppInitialized = true; window.firebaseApp = app;
+                console.log("Firebase initialized (customer_account_detail - V2.1).");
+            } else { app = window.firebaseApp; console.log("Firebase already initialized (customer_account_detail - V2.1)."); }
             auth = getAuth(app); db = getFirestore(app);
 
-            // Make Firestore functions global for the detail script
+            // Make Firestore functions global
             window.db = db; window.doc = doc; window.getDoc = getDoc;
             window.collection = collection; window.query = query; window.where = where;
-            window.getDocs = getDocs; window.orderBy = orderBy;
+            window.getDocs = getDocs; window.orderBy = firestoreOrderBy; // Alias orderBy
             window.updateDoc = updateDoc; window.deleteDoc = deleteDoc;
-            window.Timestamp = Timestamp; window.arrayUnion = arrayUnion; // Needed for modal actions
+            window.Timestamp = Timestamp; window.arrayUnion = arrayUnion;
+            window.addDoc = addDoc; // Needed for adding payments
 
             // Auth Check
             onAuthStateChanged(auth, (user) => {
                 const currentPage = window.location.pathname.split('/').pop() || 'index.html';
-                if (!user && currentPage.toLowerCase() !== 'login.html') {
-                    window.location.replace('login.html');
-                } else if (user) {
-                     console.log(`User logged in. V2.0 OK.`);
-                    if (typeof initializeCustomerDetailPage === 'function') {
-                        initializeCustomerDetailPage(user);
-                    } else { setTimeout(() => { typeof initializeCustomerDetailPage === 'function' ? initializeCustomerDetailPage(user) : console.error("Init function missing!"); }, 100); }
+                if (!user && currentPage.toLowerCase() !== 'login.html') { window.location.replace('login.html'); }
+                else if (user) {
+                    console.log(`User logged in. V2.1 OK.`);
+                    if (typeof initializeCustomerDetailPage === 'function') { initializeCustomerDetailPage(user); }
+                    else { setTimeout(() => { typeof initializeCustomerDetailPage === 'function' ? initializeCustomerDetailPage(user) : console.error("Init function missing!"); }, 100); }
                 }
             });
         } catch(e) { console.error("Firebase setup error:", e); alert("App Error."); }
@@ -66,122 +56,128 @@
 </head>
 <body>
     <div class="container">
-        <div class="header">
-            <i class="fas fa-user-tie header-icon"></i>
-            <h1>Customer Account: <span id="cust-detail-name-header">Loading...</span></h1>
-        </div>
-        <div class="breadcrumb-container">
-            <a href="index.html">Home</a> / <a href="customer_management.html">Customers</a> / <span id="cust-detail-name-breadcrumb">Details</span>
-        </div>
+        <div class="header"> <i class="fas fa-user-tie header-icon"></i> <h1>Customer Account: <span id="cust-detail-name-header">Loading...</span></h1> </div>
+         <div class="breadcrumb-container"> <a href="index.html">Home</a> / <a href="customer_management.html">Customers</a> / <span id="cust-detail-name-breadcrumb">Details</span> </div>
 
         <div class="actions-bar cust-detail-actions">
-            <button id="editCustomerBtn" class="button info-button" disabled><i class="fas fa-edit"></i> Edit Details</button>
-            <button id="addPaymentBtn" class="button success-button" disabled><i class="fas fa-plus"></i> Add Payment</button>
-            <a href="new_order.html" id="addNewOrderLink" class="button primary-button disabled"><i class="fas fa-shopping-cart"></i> Add New Order</a>
+            <button id="editCustomerBtn" class="button info-button" disabled><i class="fas fa-user-edit"></i> Edit Details</button> {/* बदला हुआ आइकन */}
+            <button id="addPaymentBtn" class="button success-button" disabled><i class="fas fa-money-bill-wave"></i> Add Payment</button> {/* बदला हुआ आइकन */}
+            <a href="new_order.html" id="addNewOrderLink" class="button primary-button disabled"><i class="fas fa-plus-circle"></i> Add New Order</a> {/* बदला हुआ आइकन */}
             <button id="toggleStatusBtn" class="button secondary-button" disabled><i class="fas fa-toggle-on"></i> <span>Loading...</span></button>
-            <button id="deleteCustomerBtn" class="button danger-button" disabled><i class="fas fa-trash-alt"></i> Delete Customer</button>
+            <button id="deleteCustomerBtn" class="button danger-button" disabled><i class="fas fa-user-times"></i> Delete Customer</button> {/* बदला हुआ आइकन */}
         </div>
 
         <div class="customer-info-grid">
-            <div class="info-box customer-details-box">
-                <h2><i class="fas fa-info-circle"></i> Customer Details</h2>
-                <p><strong>Customer ID:</strong> <span id="cust-detail-id">...</span></p>
-                <p><strong>WhatsApp:</strong> <span id="cust-detail-whatsapp">...</span></p>
-                <p><strong>Contact No:</strong> <span id="cust-detail-contact">...</span></p>
-                <p><strong>Email:</strong> <span id="cust-detail-email">...</span></p>
-                <p><strong>Address:</strong> <span id="cust-detail-address">...</span></p>
-                <p><strong>City:</strong> <span id="cust-detail-city">...</span></p>
-                <p><strong>State:</strong> <span id="cust-detail-state">...</span></p>
-                <p><strong>Account Status:</strong> <span id="cust-detail-status" class="status-badge">...</span></p>
-            </div>
-            <div class="info-box account-summary-box">
-                 <h2><i class="fas fa-calculator"></i> Account Summary</h2>
-                 <p><strong>Total Order Value:</strong> <span id="summary-total-orders">N/A</span></p>
-                 <p><strong>Total Paid Amount:</strong> <span id="summary-total-paid">Loading...</span></p>
-                 <p><strong>Outstanding Balance:</strong> <strong id="summary-balance" class="balance-due">N/A</strong></p>
-                 <hr>
-                 <p><strong>Credit Allowed:</strong> <span id="cust-detail-credit-allowed">...</span></p>
-                 <p><strong>Credit Limit:</strong> <span id="cust-detail-credit-limit">...</span></p>
-            </div>
-            <div class="info-box customer-notes-box">
-                 <h2><i class="fas fa-sticky-note"></i> Remarks / Notes</h2>
-                 <p id="cust-detail-notes">...</p>
-            </div>
+             <div class="info-box customer-details-box"> <h2><i class="fas fa-info-circle"></i> Customer Details</h2> <p><strong>Customer ID:</strong> <span id="cust-detail-id">...</span></p> <p><strong>WhatsApp:</strong> <span id="cust-detail-whatsapp">...</span></p> <p><strong>Contact No:</strong> <span id="cust-detail-contact">...</span></p> <p><strong>Email:</strong> <span id="cust-detail-email">...</span></p> <p><strong>Address:</strong> <span id="cust-detail-address">...</span></p> <p><strong>City:</strong> <span id="cust-detail-city">...</span></p> <p><strong>State:</strong> <span id="cust-detail-state">...</span></p> <p><strong>Account Status:</strong> <span id="cust-detail-status" class="status-badge">...</span></p> </div>
+             <div class="info-box account-summary-box"> <h2><i class="fas fa-calculator"></i> Account Summary</h2> <p><strong>Total Order Value:</strong> <span id="summary-total-orders">N/A</span></p> <p><strong>Total Paid Amount:</strong> <span id="summary-total-paid">Loading...</span></p> <p><strong>Outstanding Balance:</strong> <strong id="summary-balance" class="balance-due">N/A</strong></p> <hr> <p><strong>Credit Allowed:</strong> <span id="cust-detail-credit-allowed">...</span></p> <p><strong>Credit Limit:</strong> <span id="cust-detail-credit-limit">...</span></p> </div>
+             <div class="info-box customer-notes-box"> <h2><i class="fas fa-sticky-note"></i> Remarks / Notes</h2> <p id="cust-detail-notes">...</p> </div>
         </div>
 
         <div class="history-section">
             <h2><i class="fas fa-history"></i> Order History</h2>
-            <div class="table-container">
-                <table id="customerOrderTable">
-                    <thead>
-                        <tr>
-                            <th>Order ID</th>
-                            <th>Order Date</th>
-                            <th>Products</th>
-                            <th>Status</th>
-                            </tr>
-                    </thead>
-                    <tbody id="customerOrderTableBody">
-                        <tr><td colspan="4" style="text-align: center;">Loading orders...</td></tr>
-                    </tbody>
-                </table>
-            </div>
-
+            <div class="table-container"> <table id="customerOrderTable"> <thead> <tr> <th>Order ID</th> <th>Order Date</th> <th>Products</th> <th>Status</th> </tr> </thead> <tbody id="customerOrderTableBody"> <tr><td colspan="4" style="text-align: center;">Loading orders...</td></tr> </tbody> </table> </div>
             <h2 style="margin-top: 30px;"><i class="fas fa-money-check-alt"></i> Payment History</h2>
-            <div class="table-container">
-                <table id="customerPaymentTable">
-                     <thead>
-                        <tr>
-                            <th>Payment Date</th>
-                            <th>Amount Paid</th>
-                            <th>Method</th>
-                            <th>Notes</th>
-                            <th>Action</th>
-                        </tr>
-                    </thead>
-                    <tbody id="customerPaymentTableBody">
-                         <tr><td colspan="5" style="text-align: center;">Loading payments...</td></tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
+            <div class="table-container"> <table id="customerPaymentTable"> <thead> <tr> <th>Payment Date</th> <th>Amount Paid</th> <th>Method</th> <th>Notes</th> <th>Action</th> </tr> </thead> <tbody id="customerPaymentTableBody"> <tr><td colspan="5" style="text-align: center;">Loading payments...</td></tr> </tbody> </table> </div>
+         </div>
 
     </div> <div id="detailsModal" class="modal">
+         <div class="modal-content"> <span class="close-btn" id="closeDetailsModal" title="Close">&times;</span> <h2>Order Details & Actions</h2> <input type="hidden" id="modalOrderId"> <div class="modal-info"> <p><strong>Order ID:</strong> <span id="modalDisplayOrderId"></span></p> <p><strong>Customer:</strong> <span id="modalCustomerName"></span></p> <p><strong>WhatsApp:</strong> <span id="modalCustomerWhatsApp"></span></p> </div> <div class="modal-section" id="modalProductSection"> <label>Products:</label> <div id="modalProductList"><p>Loading...</p></div> </div> <div class="modal-section" id="modalStatusHistorySection"> <label>Status History:</label> <div id="modalStatusHistoryList"><p>Loading history...</p></div> </div> <div class="modal-section"> <label for="modalOrderStatus">Update Status:</label> <select id="modalOrderStatus"> <option value="Order Received">Order Received</option> <option value="Designing">Designing</option> <option value="Verification">Verification</option> <option value="Design Approved">Design Approved</option> <option value="Printing">Printing</option> <option value="Ready for Working">Ready for Working</option> <option value="Delivered">Delivered</option> <option value="Completed">Completed</option> </select> <button id="modalUpdateStatusBtn" class="button update-status-button"><i class="fas fa-sync-alt"></i> Update Status</button> </div> <div class="modal-section modal-actions"> <button id="modalEditFullBtn" class="button edit-full-button"><i class="fas fa-edit"></i> Edit Full Order</button> <button id="modalDeleteBtn" class="button delete-button"><i class="fas fa-trash-alt"></i> Delete Order</button> </div> </div>
+    </div>
+    <div id="addPaymentModal" class="modal">
+        <div class="modal-content small-modal"> {/* छोटा साइज़ */ }
+            <span class="close-btn" id="closePaymentModal" title="Close">&times;</span>
+            <h2>Add New Payment for <span id="payment-modal-cust-name">Customer</span></h2>
+            <form id="addPaymentForm">
+                <div class="form-group">
+                    <label for="paymentAmount">Amount Paid <span class="required">*</span>:</label>
+                    <input type="number" id="paymentAmount" step="0.01" required placeholder="e.g., 500.00">
+                </div>
+                <div class="form-group">
+                    <label for="paymentDate">Payment Date <span class="required">*</span>:</label>
+                    <input type="date" id="paymentDate" required>
+                </div>
+                <div class="form-group">
+                    <label for="paymentMethod">Payment Method:</label>
+                    <select id="paymentMethod">
+                        <option value="Cash">Cash</option>
+                        <option value="Online">Online</option>
+                        <option value="Cheque">Cheque</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="paymentNotes">Notes:</label>
+                    <textarea id="paymentNotes" rows="2" placeholder="Optional payment notes"></textarea>
+                </div>
+                <div class="modal-actions">
+                    <button type="submit" id="savePaymentBtn" class="button save-button"><i class="fas fa-save"></i> Save Payment</button>
+                    <button type="button" id="cancelPaymentBtn" class="button cancel-button">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    <div id="customerEditModal" class="modal"> {/* बदला हुआ ID */}
         <div class="modal-content">
-            <span class="close-btn" id="closeDetailsModal" title="Close">&times;</span>
-            <h2>Order Details & Actions</h2>
-            <input type="hidden" id="modalOrderId">
-            <div class="modal-info">
-                  <p><strong>Order ID:</strong> <span id="modalDisplayOrderId"></span></p>
-                 <p><strong>Customer:</strong> <span id="modalCustomerName"></span></p>
-                 <p><strong>WhatsApp:</strong> <span id="modalCustomerWhatsApp"></span></p>
-             </div>
-            <div class="modal-section" id="modalProductSection">
-                <label>Products:</label>
-                <div id="modalProductList"><p>Loading...</p></div>
-             </div>
-             <div class="modal-section" id="modalStatusHistorySection">
-                <label>Status History:</label>
-                <div id="modalStatusHistoryList"><p>Loading history...</p></div>
-             </div>
-            <div class="modal-section">
-                 <label for="modalOrderStatus">Update Status:</label>
-                 <select id="modalOrderStatus">
-                     <option value="Order Received">Order Received</option>
-                     <option value="Designing">Designing</option>
-                     <option value="Verification">Verification</option>
-                     <option value="Design Approved">Design Approved</option>
-                     <option value="Printing">Printing</option>
-                     <option value="Ready for Working">Ready for Working</option>
-                     <option value="Delivered">Delivered</option>
-                     <option value="Completed">Completed</option>
-                 </select>
-                  <button id="modalUpdateStatusBtn" class="button update-status-button"><i class="fas fa-sync-alt"></i> Update Status</button>
-            </div>
-            <div class="modal-section modal-actions">
-                  <button id="modalEditFullBtn" class="button edit-full-button"><i class="fas fa-edit"></i> Edit Full Order</button>
-                  <button id="modalDeleteBtn" class="button delete-button"><i class="fas fa-trash-alt"></i> Delete Order</button>
-             </div>
+            <span class="close-btn" id="closeCustomerEditModal" title="Close">&times;</span> {/* बदला हुआ ID */}
+             <h2 id="customerEditModalTitle">Edit Customer</h2> {/* बदला हुआ ID */}
+            <form id="customerEditForm"> {/* बदला हुआ ID */}
+                {/* Hidden input to store Firestore customer ID being edited */}
+                <input type="hidden" id="editCustPageCustomerId"> {/* बदला हुआ ID */}
+
+                <div class="form-group">
+                    <label for="customerEditFullName">Full Name <span class="required">*</span>:</label>
+                    <input type="text" id="customerEditFullName" required> {/* बदला हुआ ID */}
+                 </div>
+                <div class="form-group">
+                     <label for="customerEditWhatsApp">WhatsApp No <span class="required">*</span>:</label>
+                    <input type="tel" id="customerEditWhatsApp" required placeholder="e.g., 91XXXXXXXXXX"> {/* बदला हुआ ID */}
+                </div>
+                 <div class="form-group">
+                    <label for="customerEditContact">Contact No:</label>
+                    <input type="tel" id="customerEditContact" placeholder="Optional alternate number"> {/* बदला हुआ ID */}
+                </div>
+                 <div class="form-group">
+                     <label for="customerEditAddress">Address:</label>
+                    <textarea id="customerEditAddress" rows="3" placeholder="Optional address details"></textarea> {/* बदला हुआ ID */}
+                </div>
+                {/* === क्रेडिट और अन्य फील्ड्स यहाँ जोड़ें === */}
+                 <div class="form-group">
+                    <label for="customerEditEmail">Email:</label>
+                    <input type="email" id="customerEditEmail" placeholder="Optional email address">
+                </div>
+                 <div class="form-group">
+                    <label for="customerEditCity">City:</label>
+                    <input type="text" id="customerEditCity">
+                </div>
+                 <div class="form-group">
+                    <label for="customerEditState">State:</label>
+                    <input type="text" id="customerEditState">
+                </div>
+                 <div class="form-group">
+                    <label>Credit Allowed:</label>
+                    <div>
+                        <input type="radio" id="creditEditYes" name="creditAllowedEdit" value="yes"> <label for="creditEditYes">Yes</label>
+                        <input type="radio" id="creditEditNo" name="creditAllowedEdit" value="no" checked> <label for="creditEditNo">No</label>
+                    </div>
+                </div>
+                 <div class="form-group" id="creditLimitEditGroup" style="display: none;"> {/* JS इसे दिखाएगा/छिपाएगा */}
+                    <label for="customerEditCreditLimit">Credit Limit:</label>
+                    <input type="number" id="customerEditCreditLimit" step="0.01" placeholder="e.g., 5000.00">
+                </div>
+                 <div class="form-group">
+                    <label for="customerEditNotes">Remarks / Notes:</label>
+                    <textarea id="customerEditNotes" rows="2"></textarea>
+                </div>
+                {/* कस्टमर ID यहाँ एडिट नहीं किया जाएगा */}
+
+                <div class="modal-actions">
+                    <button type="submit" id="saveCustomerEditBtn" class="button save-button"> {/* बदला हुआ ID */}
+                        <i class="fas fa-save"></i> <span>Update Customer</span> </button>
+                     <button type="button" id="cancelCustomerEditBtn" class="button cancel-button"> {/* बदला हुआ ID */}
+                        Cancel
+                    </button>
+                </div>
+             </form>
         </div>
     </div>
     <script src="js/customer_account_detail.js" type="module" defer></script>
