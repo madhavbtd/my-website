@@ -39,8 +39,18 @@ h1 { margin: 0; font-size: 1em; }
 .button:disabled { opacity: 0.5; cursor: not-allowed; box-shadow: none; transform: none; background-color: #adb5bd; color: #fff; }
 .button:disabled:hover { background-color: #adb5bd; box-shadow: none; transform: none; }
 .button i { margin-right: 4px; font-size: 0.95em; }
-.add-new-button { background-color: var(--success-color); color: white; font-weight: 600; }
-.add-new-button:hover { background-color: #218838; }
+
+/* === बदलाव यहाँ है === */
+.add-new-button {
+    background-color: var(--primary-color); /* बदला हुआ */
+    color: white;
+    font-weight: 600;
+}
+.add-new-button:hover {
+    background-color: #00418a; /* बदला हुआ */
+}
+/* === बदलाव समाप्त === */
+
 .export-button { background-color: #5bc0de; color: white; }
 .export-button:hover { background-color: #31b0d5; }
 .clear-filters-button { background-color: var(--secondary-color); color: white; align-self: flex-end; flex-grow: 0; }
