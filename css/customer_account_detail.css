@@ -1,123 +1,168 @@
-/* css/customer_account_detail.css (Version 2.2 - Font, Modal Design, Button Size, Confirm Modals) */
+/* css/customer_account_detail.css (Version 2.3 - Layout, Color & Design Enhancements) */
 
 /* --- सुनिश्चित करें कि Poppins फॉन्ट हर जगह लागू हो --- */
 body, input, button, select, textarea {
-    font-family: var(--font-family, 'Poppins', sans-serif); /* वेरिएबल का उपयोग करें (order_history.css से) */
+    font-family: var(--font-family, 'Poppins', sans-serif);
 }
 
 /* === पिछले वर्ज़न के स्टाइल यहाँ रहेंगे === */
-
-/* Status Badge Styles */
-.status-badge {
-    font-weight: 500; padding: 3px 10px; border-radius: 12px; font-size: 0.8em;
-    color: white; background-color: var(--secondary-color, #6c757d); white-space: nowrap;
-    display: inline-block; line-height: 1.2; text-align: center; vertical-align: middle;
-}
+.status-badge { font-weight: 500; padding: 3px 10px; border-radius: 12px; font-size: 0.8em; color: white; background-color: var(--secondary-color, #6c757d); white-space: nowrap; display: inline-block; line-height: 1.2; text-align: center; vertical-align: middle; }
 .status-badge.status-active { background-color: var(--success-color, #28a745); }
 .status-badge.status-inactive { background-color: var(--secondary-color, #6c757d); }
-
-/* Main Info Grid Layout */
-.customer-info-grid {
-    display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: 20px; margin-bottom: 30px;
-}
-.info-box {
-    background-color: #ffffff; border: 1px solid var(--border-color, #dee2e6);
-    border-radius: var(--border-radius, 6px); padding: 15px 20px;
-    box-shadow: var(--box-shadow, 0 2px 5px rgba(0, 0, 0, 0.08));
-}
-.info-box h2 {
-    font-size: 1.1em; color: var(--primary-color, #0056b3); margin-top: 0;
-    margin-bottom: 15px; padding-bottom: 10px; border-bottom: 1px solid #eee;
-    display: flex; align-items: center; gap: 8px; font-weight: 600;
-}
-.info-box p { margin-bottom: 10px; font-size: 0.95em; line-height: 1.5; }
-.info-box p strong { font-weight: 600; color: #333; min-width: 110px; display: inline-block; }
-
-/* Balance Styles */
-#summary-balance.balance-due { color: var(--danger-color, #dc3545); font-weight: bold; }
-#summary-balance.balance-credit { color: var(--success-color, #28a745); font-weight: bold; }
-#summary-balance.balance-info { color: var(--text-muted, #6c757d); font-weight: normal; font-style: italic; }
 
 /* Clickable Order Row Style */
 .order-row-clickable { cursor: pointer; transition: background-color 0.15s ease; }
 .order-row-clickable:hover { background-color: #f0f8ff; }
 
-/* --- वर्ज़न 2.2 में अपडेट/जोड़ा गया --- */
+/* === वर्ज़न 2.3 में बदलाव/सुधार === */
 
-/* 1. टॉप एक्शन बटन साइज़ और अलाइनमेंट */
+/* 1. पेज लेआउट सुधार (ग्रिड) */
+.customer-info-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr); /* Default to 3 columns */
+    /* Example: 2 columns layout - grid-template-columns: 3fr 2fr; */
+    /* Choose layout based on preference */
+    gap: 25px;
+    margin-bottom: 30px;
+}
+.info-box {
+    background-color: #ffffff; border: 1px solid var(--border-color, #e0e0e0); /* Lighter border */
+    border-radius: var(--border-radius, 8px); /* Slightly more rounded */
+    padding: 20px 25px; /* More padding */
+    box-shadow: var(--box-shadow, 0 3px 8px rgba(0, 0, 0, 0.06)); /* Softer shadow */
+}
+/* Example for 2-column layout (adjust if using 3 columns) */
+/* .customer-details-box { grid-column: 1 / 2; grid-row: 1 / 3; }
+.account-summary-box { grid-column: 2 / 3; grid-row: 1 / 2; }
+.customer-notes-box { grid-column: 2 / 3; grid-row: 2 / 3; } */
+
+.info-box h2 {
+    font-size: 1.15em; /* Slightly larger title */
+    color: var(--primary-color, #0056b3); margin-top: 0;
+    margin-bottom: 20px; /* More space below title */
+    padding-bottom: 12px; border-bottom: 1px solid #eee;
+    display: flex; align-items: center; gap: 10px; font-weight: 600;
+}
+.info-box h2 i { /* Icon color within title */
+     color: var(--primary-color, #0056b3);
+     opacity: 0.8;
+}
+.info-box p { margin-bottom: 12px; font-size: 0.95em; line-height: 1.6; color: #555; /* Slightly lighter text */}
+.info-box p strong { font-weight: 600; color: #222; min-width: 110px; display: inline-block; margin-right: 5px;}
+
+/* Responsive Grid Layout */
+@media (max-width: 992px) { /* Adjust breakpoint if needed */
+     .customer-info-grid { grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); } /* Fallback to auto-fit */
+     .customer-details-box, .account-summary-box, .customer-notes-box { grid-column: auto; grid-row: auto; }
+}
+
+
+/* 2. टॉप एक्शन बटन स्टाइल */
 .cust-detail-actions {
-    align-items: center; /* वर्टीकल अलाइनमेंट */
-    min-height: 50px;    /* बार की न्यूनतम ऊंचाई */
-    flex-wrap: wrap;     /* बटन रैप हों */
-    gap: 10px;           /* बटनों के बीच गैप */
+    align-items: center; min-height: 50px; flex-wrap: wrap; gap: 12px; /* Slightly more gap */
+    padding: 15px 20px; background-color: #f8f9fa; border: 1px solid #e9ecef;
+    border-radius: var(--border-radius, 6px); margin-bottom: 30px; /* More space below */
 }
 .cust-detail-actions .button,
 .cust-detail-actions a.button {
-    min-width: 160px;       /* <<< न्यूनतम चौड़ाई */
-    height: 38px;           /* <<< निश्चित ऊंचाई */
-    box-sizing: border-box; /* पैडिंग/बॉर्डर ऊंचाई में शामिल */
-    justify-content: center;/* आइकन/टेक्स्ट सेंटर में */
-    padding: 8px 15px;      /* पैडिंग (ऊंचाई के साथ एडजस्ट करें) */
+    min-width: 150px;       /* न्यूनतम चौड़ाई */
+    height: 40px;           /* थोड़ी ज़्यादा ऊंचाई */
+    box-sizing: border-box;
+    justify-content: center;
+    padding: 8px 18px;      /* पैडिंग */
+    font-weight: 500;       /* स्टैंडर्ड वेट */
+    border: none;           /* हटाया गया बॉर्डर */
+    color: white;           /* <<< सफ़ेद टेक्स्ट */
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1); /* हल्का शैडो */
+    transition: all 0.2s ease; /* स्मूथ ट्रांजीशन */
+}
+ .cust-detail-actions .button:hover,
+ .cust-detail-actions a.button:hover {
+    transform: translateY(-2px); /* हल्का सा ऊपर उठेगा */
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15); /* गहरा शैडो */
 }
 
-/* 2. पॉपअप (Modal) डिज़ाइन सुधार */
+/* नए बटन कलर्स (उदाहरण) */
+.cust-detail-actions #editCustomerBtn { background-color: var(--info-color, #17a2b8); }
+.cust-detail-actions #editCustomerBtn:hover { background-color: #117a8b; }
+
+.cust-detail-actions #addPaymentBtn { background-color: var(--success-color, #28a745); }
+.cust-detail-actions #addPaymentBtn:hover { background-color: #1e7e34; }
+
+.cust-detail-actions #addNewOrderLink { background-color: var(--primary-color, #0056b3); }
+.cust-detail-actions #addNewOrderLink:hover { background-color: #00418a; }
+
+.cust-detail-actions #toggleStatusBtn { background-color: var(--warning-color, #ffc107); color: #212529; } /* वार्निंग कलर */
+.cust-detail-actions #toggleStatusBtn:hover { background-color: #e0a800; }
+/* जब इनेबल हो तो हरा कर सकते हैं (JS द्वारा क्लास बदलें) */
+ .cust-detail-actions #toggleStatusBtn.status-inactive-btn { background-color: var(--success-color, #28a745); color: white; }
+ .cust-detail-actions #toggleStatusBtn.status-inactive-btn:hover { background-color: #1e7e34; }
+
+
+.cust-detail-actions #deleteCustomerBtn { background-color: var(--danger-color, #dc3545); }
+.cust-detail-actions #deleteCustomerBtn:hover { background-color: #bd2130; }
+
+
+/* 3. पॉपअप (Modal) डिज़ाइन सुधार */
 .modal .modal-content {
-    padding: 25px 30px; /* अंदर स्पेस */
-    box-shadow: 0 5px 15px rgba(0,0,0,0.2); /* शैडो */
+    padding: 30px 35px; /* ज़्यादा पैडिंग */
+    border-radius: 8px; /* ज़्यादा राउंडेड */
+    border: none; /* बॉर्डर हटाया */
 }
-.modal h2 { /* पॉपअप टाइटल स्टाइल */
-    font-weight: 600; font-size: 1.25em; color: var(--primary-color, #0056b3);
-    text-align: center; margin-top: 0; margin-bottom: 30px; padding-bottom: 15px;
-    border-bottom: 1px solid var(--border-color, #eee); display: flex;
-    align-items: center; justify-content: center; gap: 10px;
+.modal h2 { /* पॉपअप टाइटल */
+    font-weight: 600; font-size: 1.3em; text-align: center; margin-top: 0;
+    margin-bottom: 35px; padding-bottom: 18px; border-bottom: 1px solid #eee;
+    display: flex; align-items: center; justify-content: center; gap: 12px;
 }
-.modal .form-group { margin-bottom: 20px; }
-.modal .form-group label { margin-bottom: 8px; font-weight: 500; color: #333; }
+/* अलग पॉपअप के लिए अलग टाइटल कलर */
+#detailsModal .modal-content h2 { color: var(--primary-color, #0056b3); } /* Order Details */
+#addPaymentModal .modal-content h2 { color: var(--success-color, #28a745); } /* Add Payment */
+#customerEditModal .modal-content h2 { color: var(--info-color, #17a2b8); } /* Edit Customer */
+#confirmToggleStatusModal .modal-content h2 { color: var(--warning-color, #ffc107); } /* Disable */
+#confirmDeleteModal .modal-content h2 { color: var(--danger-color, #dc3545); } /* Delete */
+
+/* पॉपअप फॉर्म स्टाइल */
+.modal .form-group { margin-bottom: 22px; }
+.modal .form-group label { margin-bottom: 8px; font-weight: 500; color: #444; font-size: 0.9em; }
 .modal .form-group input[type="text"], .modal .form-group input[type="tel"],
 .modal .form-group input[type="email"], .modal .form-group input[type="number"],
 .modal .form-group input[type="date"], .modal .form-group select,
 .modal .form-group textarea {
-    font-size: 1em; padding: 9px 12px; border: 1px solid #ccc; border-radius: 4px;
+    font-size: 0.95em; padding: 10px 14px; border: 1px solid #ccc; border-radius: 5px;
+    width: 100%; box-sizing: border-box;
 }
-.modal .form-group input:focus, .modal .form-group select:focus,
-.modal .form-group textarea:focus {
-    border-color: var(--primary-color, #0056b3);
-    box-shadow: 0 0 0 0.2rem rgba(0, 86, 179, 0.25); outline: none;
+ /* रेडियो बटन स्टाइल */
+ .modal .form-group input[type="radio"] { margin-right: 5px; vertical-align: middle; }
+ .modal .form-group label[for*="creditEdit"] { margin-right: 15px; font-weight: normal; font-size: 0.95em; }
+
+
+/* पॉपअप एक्शन बटन */
+.modal .modal-actions { margin-top: 35px; padding-top: 20px; border-top: 1px solid #eee; }
+.modal .modal-actions .button { font-weight: 500; padding: 10px 20px; height: auto; } /* बटन पैडिंग */
+
+
+/* 4. कन्फर्मेशन पॉपअप स्टाइल */
+.warning-message { /* बेहतर वार्निंग मेसेज */
+    font-weight: 500; color: #856404; background-color: #fff3cd; border: 1px solid #ffeeba;
+    border-radius: var(--border-radius, 6px); padding: 12px 18px; margin-top: 15px;
+    margin-bottom: 20px; font-size: 0.9em; text-align: center;
 }
-.modal .modal-actions { margin-top: 30px; padding-top: 20px; border-top: 1px solid var(--border-color, #eee); justify-content: flex-end; }
-
-/* Modal Header Icons/Colors */
-.modal h2 .warning-icon { color: var(--warning-color, #ffc107); }
-.modal h2 .danger-icon { color: var(--danger-color, #dc3545); }
-.modal h2 .info-icon { color: var(--info-color, #17a2b8); }
-.modal h2 .success-icon { color: var(--success-color, #28a745); }
-#addPaymentModal .modal-content h2 { color: var(--success-color, #28a745); }
-#customerEditModal .modal-content h2 { color: var(--info-color, #17a2b8); }
-#detailsModal .modal-content h2 { color: var(--primary-color, #0056b3); }
-
-/* Edit Customer Modal Width */
-#customerEditModal .modal-content { max-width: 550px; }
-
-/* Order Detail Modal Section Spacing */
-#detailsModal .modal-section { margin-bottom: 25px; padding-bottom: 20px; border-bottom: 1px solid #eee; }
-#detailsModal .modal-section:last-of-type { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
-#detailsModal .modal-section label { font-weight: 600; color: var(--primary-color, #0056b3); margin-bottom: 10px; display: block; }
-
-/* 3. कन्फर्मेशन पॉपअप के लिए स्टाइल */
-.warning-message {
-    font-weight: 500; color: var(--danger-color, #dc3545); background-color: #f8d7da;
-    border: 1px solid var(--danger-color, #dc3545); border-radius: var(--border-radius, 6px);
-    padding: 10px 15px; margin-top: 15px; margin-bottom: 15px; font-size: 0.9em;
+#confirmDeleteModal .warning-message { /* डिलीट वार्निंग ज़्यादा खतरनाक */
+    color: var(--danger-color, #dc3545); background-color: #f8d7da; border: 1px solid #f5c6cb;
 }
-.confirmation-check {
-    margin-top: 20px; margin-bottom: 20px; display: flex; align-items: center;
-    justify-content: flex-start; gap: 8px; background-color: #fff9e6;
-    padding: 10px 15px; border-radius: var(--border-radius, 6px);
-    border: 1px solid var(--warning-color, #ffc107);
+.confirmation-check { /* चेकबॉक्स एरिया */
+    margin-top: 25px; margin-bottom: 25px; display: flex; align-items: flex-start; /* Align items top */
+    gap: 10px; background-color: #f8f9fa; padding: 15px; border-radius: 6px;
+    border: 1px solid #dee2e6;
 }
-.confirmation-check input[type="checkbox"] { transform: scale(1.2); cursor: pointer; margin: 0; flex-shrink: 0; }
-.confirmation-check label { font-size: 0.9em; color: var(--text-color, #343a40); cursor: pointer; margin: 0; font-weight: 500; line-height: 1.3; }
-#confirmToggleBtn:disabled, #confirmDeleteBtn:disabled { background-color: #adb5bd; cursor: not-allowed; opacity: 0.6; }
+.confirmation-check input[type="checkbox"] { transform: scale(1.1); cursor: pointer; margin: 0; margin-top: 3px; flex-shrink: 0; }
+.confirmation-check label { font-size: 0.9em; color: #333; cursor: pointer; margin: 0; font-weight: 500; line-height: 1.4; }
 
-/* --- वर्ज़न 2.2 समाप्त --- */
+/* कन्फर्मेशन बटन कलर */
+#confirmToggleBtn.secondary-button { background-color: var(--warning-color, #ffc107); color: #212529; } /* Disable के लिए */
+#confirmToggleBtn.success-button { background-color: var(--success-color, #28a745); color: white; } /* Enable के लिए */
+#confirmDeleteBtn { background-color: var(--danger-color, #dc3545); color: white; } /* Delete के लिए */
+
+#confirmToggleBtn:disabled, #confirmDeleteBtn:disabled { background-color: #adb5bd; cursor: not-allowed; opacity: 0.65; }
+
+/* --- वर्ज़न 2.3 समाप्त --- */
