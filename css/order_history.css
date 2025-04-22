@@ -115,8 +115,8 @@ mark { background-color: var(--highlight-color); padding: 0.1em 0.2em; border-ra
 .modal, .popup-overlay { display: none; position: fixed; z-index: 1050; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.65); align-items: center; justify-content: center; padding: 20px; box-sizing: border-box; }
 .modal.active, .popup-overlay.active { display: flex; }
 .modal-content { background-color: #fefefe; margin: auto; padding: 25px 30px; border: none; width: 95%; max-width: 650px; border-radius: var(--border-radius); position: relative; box-shadow: var(--box-shadow-lg); z-index: 1051; animation: popupFadeIn 0.3s ease-out; }
-#whatsapp-reminder-popup .modal-content, .modal-content.small-modal { max-width: 480px; } /* छोटा मोडल */
-.modal-content.small-modal { max-width: 550px; } /* बल्क डिलीट के लिए थोड़ा बड़ा */
+#whatsapp-reminder-popup .modal-content, .modal-content.small-modal { max-width: 480px; }
+.modal-content.small-modal { max-width: 550px; }
 .close-btn, #whatsapp-reminder-popup .popup-close { color: #aaa; position: absolute; top: 12px; right: 15px; font-size: 30px; font-weight: bold; cursor: pointer; line-height: 1; background: none; border: none; padding: 0; transition: color 0.2s ease; }
 .close-btn:hover, .close-btn:focus, #whatsapp-reminder-popup .popup-close:hover, #whatsapp-reminder-popup .popup-close:focus { color: black; text-decoration: none; }
 #detailsModal h2 { margin-top: 0; margin-bottom: 25px; font-size: 1.35em; color: var(--text-color); text-align: center; border-bottom: 1px solid var(--border-color); padding-bottom: 15px; font-weight: 600; }
@@ -137,8 +137,8 @@ mark { background-color: var(--highlight-color); padding: 0.1em 0.2em; border-ra
 .edit-full-button:hover { background-color: #31b0d5; }
 .delete-button { background-color: var(--danger-color); color: white; }
 .delete-button:hover { background-color: #c82333; }
-.cancel-button { background-color: var(--secondary-color); color: white; } /* जोड़ा गया */
-.cancel-button:hover { background-color: #5a6268; } /* जोड़ा गया */
+.cancel-button { background-color: var(--secondary-color); color: white; }
+.cancel-button:hover { background-color: #5a6268; }
 #modalProductList, #modalStatusHistoryList { background-color: var(--light-bg); border: 1px solid #e9ecef; border-radius: var(--border-radius); padding: 12px 18px; max-height: 150px; overflow-y: auto; font-size: 0.9em; }
 #modalProductList ul, #modalStatusHistoryList ul { list-style: none; padding: 0; margin: 0; }
 #modalProductList li, #modalStatusHistoryList li { margin-bottom: 8px; padding-bottom: 8px; border-bottom: 1px dotted #ccc; }

@@ -178,7 +178,24 @@ function listenForOrders() {
         console.log("[DEBUG] ऑर्डर्स के लिए Firestore लिस्टनर सेट किया जा रहा है...");
         unsubscribeOrders = onSnapshot(q, (snapshot) => {
             console.log(`[DEBUG] ऑर्डर स्नैपशॉट मिला। कुल ${snapshot.size} डॉक्यूमेंट्स।`);
-            allOrdersCache = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })); // सरलीकृत मैपिंग
+            // Firestore Timestamp ऑब्जेक्ट्स को बनाए रखने के लिए विस्तृत मैपिंग
+             allOrdersCache = snapshot.docs.map(doc => {
+                const data = doc.data();
+                return {
+                    id: doc.id,
+                    orderId: data.orderId || '',
+                    customerDetails: data.customerDetails || {},
+                    products: data.products || [],
+                    orderDate: data.orderDate || null, // इन्हें स्ट्रिंग माना जाता है
+                    deliveryDate: data.deliveryDate || null, // इन्हें स्ट्रिंग माना जाता है
+                    urgent: data.urgent || 'No',
+                    status: data.status || 'Unknown',
+                    statusHistory: data.statusHistory || [],
+                    // Timestamps को सुरक्षित रूप से एक्सेस करें
+                    createdAt: data.createdAt || null,
+                    updatedAt: data.updatedAt || null
+                };
+            });
             console.log(`[DEBUG] allOrdersCache ${allOrdersCache.length} ऑर्डर्स के साथ पॉप्युलेट हुआ।`);
             selectedOrderIds.clear(); updateBulkActionsBar(); if (selectAllCheckbox) selectAllCheckbox.checked = false;
             applyFiltersAndRender(); attemptOpenModalFromUrl();
@@ -204,7 +221,7 @@ function applyFiltersAndRender() {
     // फ़िल्टर
     let filteredOrders = allOrdersCache.filter(order => {
         if (filterStatusValue && order.status !== filterStatusValue) return false;
-        if (filterDateValue && order.orderDate !== filterDateValue) return false;
+        if (filterDateValue && order.orderDate !== filterDateValue) return false; // स्ट्रिंग तुलना
         if (filterSearchValue) {
             const orderIdString = String(order.orderId || '');
             const customerNameString = order.customerDetails?.fullName || '';
@@ -227,12 +244,24 @@ function applyFiltersAndRender() {
         filteredOrders.sort((a, b) => {
             let valA = a[currentSortField];
             let valB = b[currentSortField];
+
+            // Timestamps हैंडल करें
             if (valA && typeof valA.toDate === 'function') valA = valA.toDate().getTime();
             if (valB && typeof valB.toDate === 'function') valB = valB.toDate().getTime();
-            if (currentSortField === 'orderDate' || currentSortField === 'deliveryDate') {
-                valA = valA ? new Date(valA).getTime() : (currentSortDirection === 'asc' ? Infinity : -Infinity);
-                valB = valB ? new Date(valB).getTime() : (currentSortDirection === 'asc' ? Infinity : -Infinity);
-            }
+
+             // दिनांक स्ट्रिंग्स ('YYYY-MM-DD') हैंडल करें
+             if (currentSortField === 'orderDate' || currentSortField === 'deliveryDate') {
+                 // null/empty मानों को सॉर्टिंग में अंत में रखें
+                 const dateA = valA ? new Date(valA).getTime() : null;
+                 const dateB = valB ? new Date(valB).getTime() : null;
+
+                 if (dateA === null && dateB === null) return 0;
+                 if (dateA === null) return currentSortDirection === 'asc' ? 1 : -1; // nulls last
+                 if (dateB === null) return currentSortDirection === 'asc' ? -1 : 1; // nulls last
+                 valA = dateA;
+                 valB = dateB;
+             }
+
             let sortComparison = 0;
             if (valA > valB) sortComparison = 1;
             else if (valA < valB) sortComparison = -1;
@@ -283,14 +312,14 @@ function updateOrderCountsAndReport(displayedOrders) {
         if (total === 0) { statusCountsReportContainer.innerHTML = '<p>रिपोर्ट के लिए कोई ऑर्डर नहीं।</p>'; }
         else {
             let reportHtml = '<ul>';
-            Object.keys(statusCounts).sort().forEach(status => { reportHtml += `<li>${status}: <strong>${statusCounts[status]}</strong></li>`; });
+            Object.keys(statusCounts).sort().forEach(status => { reportHtml += `<li>${escapeHtml(status)}: <strong>${statusCounts[status]}</strong></li>`; });
             reportHtml += '</ul>';
             statusCountsReportContainer.innerHTML = reportHtml;
         }
     }
 }
 
-// --- सिंगल ऑर्डर रो डिस्प्ले करें (अपडेटेड) ---
+// --- सिंगल ऑर्डर रो डिस्प्ले करें (अंतिम सही संस्करण) ---
 function displayOrderRow(firestoreId, data, searchTerm = '') {
     if (!orderTableBody) return;
     const tableRow = document.createElement('tr');
@@ -299,8 +328,10 @@ function displayOrderRow(firestoreId, data, searchTerm = '') {
 
     const customerName = data.customerDetails?.fullName || 'N/A';
     const customerMobile = data.customerDetails?.whatsappNo || '-';
-    const orderDateStr = data.orderDate ? new Date(data.orderDate).toLocaleDateString('en-GB') : '-'; // ** सही फ़ॉर्मेटिंग सुनिश्चित करें **
-    const deliveryDateStr = data.deliveryDate ? new Date(data.deliveryDate).toLocaleDateString('en-GB') : '-'; // ** सही फ़ॉर्मेटिंग सुनिश्चित करें **
+    let orderDateStr = '-';
+    try { if (data.orderDate) orderDateStr = new Date(data.orderDate).toLocaleDateString('en-GB'); } catch(e) { /*無視*/ }
+    let deliveryDateStr = '-';
+    try { if (data.deliveryDate) deliveryDateStr = new Date(data.deliveryDate).toLocaleDateString('en-GB'); } catch(e) { /*無視*/ }
     const displayId = data.orderId || `(Sys: ${firestoreId.substring(0, 6)}...)`;
     const status = data.status || 'Unknown';
     const priority = data.urgent === 'Yes' ? 'Yes' : 'No';
@@ -322,12 +353,12 @@ function displayOrderRow(firestoreId, data, searchTerm = '') {
         try {
             const escapedTerm = term.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
             const regex = new RegExp(`(${escapedTerm})`, 'gi');
-            return text.replace(regex, '<mark>$1</mark>');
+            return text ? text.replace(regex, '<mark>$1</mark>') : '';
         } catch (e) { console.warn("Highlighting regex error:", e); return text; }
     }
 
     function escapeHtml(unsafe) {
-        if (!unsafe) return "";
+         if (typeof unsafe !== 'string') { unsafe = String(unsafe || ''); }
         return unsafe.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
     }
 
@@ -340,8 +371,8 @@ function displayOrderRow(firestoreId, data, searchTerm = '') {
             <span class="customer-mobile-inline">${highlightMatch(escapeHtml(customerMobile), searchTerm)}</span>
         </td>
         <td>${productsHtml}</td>
-        <td>${orderDateStr}</td> {/* <<<--- यहाँ कोई अतिरिक्त कमेंट नहीं */}
-        <td>${deliveryDateStr}</td>
+        <td>${orderDateStr}</td>   {/* <<<--- कोई कमेंट नहीं */}
+        <td>${deliveryDateStr}</td> {/* <<<--- कोई कमेंट नहीं */}
         <td class="${priorityClass}">${priority}</td>
         <td><span class="status-badge ${statusClass}">${highlightMatch(escapeHtml(status), searchTerm)}</span></td>
         <td><button type="button" class="button details-edit-button"><i class="fas fa-info-circle"></i> Details/Edit</button></td>
@@ -350,315 +381,192 @@ function displayOrderRow(firestoreId, data, searchTerm = '') {
     orderTableBody.appendChild(tableRow);
 }
 
-
 // --- मोडल 1 हैंडलिंग (विवरण/संपादन पॉपअप) ---
-function openDetailsModal(firestoreId, orderData) {
-    if (!orderData || !detailsModal) { console.error("ऑर्डर डेटा या मोडल एलिमेंट मौजूद नहीं:", firestoreId); return; }
-    if (!modalOrderIdInput || !modalDisplayOrderIdSpan || !modalCustomerNameSpan || !modalCustomerWhatsAppSpan || !modalOrderStatusSelect || !modalProductListContainer || !modalStatusHistoryListContainer) { console.error("एक या अधिक मोडल एलिमेंट नहीं मिले!"); return; }
-    console.log("[DEBUG] विवरण मोडल खोला जा रहा है:", firestoreId);
+function openDetailsModal(firestoreId, orderData) { /* ... पहले जैसा ही ... */
+    if (!orderData || !detailsModal) { console.error("Order data or modal element missing:", firestoreId); return; }
+    if (!modalOrderIdInput || !modalDisplayOrderIdSpan || !modalCustomerNameSpan || !modalCustomerWhatsAppSpan || !modalOrderStatusSelect || !modalProductListContainer || !modalStatusHistoryListContainer) { console.error("One or more modal elements not found!"); return; }
+    console.log("[DEBUG] Opening details modal for:", firestoreId);
     modalOrderIdInput.value = firestoreId;
     modalDisplayOrderIdSpan.textContent = orderData.orderId || `(Sys: ${firestoreId.substring(0, 6)}...)`;
     modalCustomerNameSpan.textContent = orderData.customerDetails?.fullName || 'N/A';
     modalCustomerWhatsAppSpan.textContent = orderData.customerDetails?.whatsappNo || 'N/A';
     modalOrderStatusSelect.value = orderData.status || '';
-
     // उत्पाद सूची पॉप्युलेट करें
     modalProductListContainer.innerHTML = '';
     const products = orderData.products;
     if (Array.isArray(products) && products.length > 0) {
-        const ul = document.createElement('ul');
+        const ul = document.createElement('ul'); ul.style.listStyle = 'none'; ul.style.padding = '0'; ul.style.margin = '0';
         products.forEach(product => {
-            const li = document.createElement('li');
-            const nameSpan = document.createElement('span'); nameSpan.className = 'product-name'; nameSpan.textContent = product.name || 'Unnamed';
-            const qtySpan = document.createElement('span'); qtySpan.className = 'product-qty-details'; qtySpan.textContent = ` - Qty: ${product.quantity || '?'}`;
+            const li = document.createElement('li'); li.style.marginBottom = '5px'; li.style.paddingBottom = '5px'; li.style.borderBottom = '1px dotted #eee';
+            const nameSpan = document.createElement('span'); nameSpan.textContent = product.name || 'Unnamed Product'; nameSpan.style.fontWeight = '600';
+            const qtySpan = document.createElement('span'); qtySpan.textContent = ` - Qty: ${product.quantity || '?'}`; qtySpan.style.fontSize = '0.9em'; qtySpan.style.color = '#555';
             li.append(nameSpan, qtySpan); ul.appendChild(li);
         });
+        if(ul.lastChild) ul.lastChild.style.borderBottom = 'none';
         modalProductListContainer.appendChild(ul);
-    } else { modalProductListContainer.innerHTML = '<p class="no-products">कोई उत्पाद सूचीबद्ध नहीं है।</p>'; }
-
+    } else { modalProductListContainer.innerHTML = '<p class="no-products">No products listed.</p>'; }
     // स्थिति इतिहास पॉप्युलेट करें
     modalStatusHistoryListContainer.innerHTML = '';
     const history = orderData.statusHistory;
     if (Array.isArray(history) && history.length > 0) {
          const sortedHistory = [...history].sort((a, b) => (b.timestamp?.toDate ? b.timestamp.toDate().getTime() : 0) - (a.timestamp?.toDate ? a.timestamp.toDate().getTime() : 0));
-         const ul = document.createElement('ul');
+         const ul = document.createElement('ul'); ul.style.listStyle = 'none'; ul.style.padding = '0'; ul.style.margin = '0'; ul.style.maxHeight = '150px'; ul.style.overflowY = 'auto';
          sortedHistory.forEach(entry => {
-            const li = document.createElement('li');
-            const statusSpan = document.createElement('span'); statusSpan.className = 'history-status'; statusSpan.textContent = entry.status || '?';
-            const timeSpan = document.createElement('span'); timeSpan.className = 'history-time';
+            const li = document.createElement('li'); li.style.display = 'flex'; li.style.justifyContent = 'space-between'; li.style.fontSize = '0.9em'; li.style.padding = '3px 0'; li.style.borderBottom = '1px dotted #eee';
+            const statusSpan = document.createElement('span'); statusSpan.className = 'history-status'; statusSpan.textContent = entry.status || '?'; statusSpan.style.fontWeight = '500';
+            const timeSpan = document.createElement('span'); timeSpan.className = 'history-time'; timeSpan.style.color = '#777';
             if (entry.timestamp && entry.timestamp.toDate) { const d=entry.timestamp.toDate(); timeSpan.textContent = d.toLocaleDateString('en-GB',{day:'numeric',month:'short'}) + ' ' + d.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit',hour12:true}); } else { timeSpan.textContent = '?'; }
             li.append(statusSpan, timeSpan); ul.appendChild(li);
         });
+         if(ul.lastChild) ul.lastChild.style.borderBottom = 'none';
         modalStatusHistoryListContainer.appendChild(ul);
-    } else { modalStatusHistoryListContainer.innerHTML = '<p class="no-history">कोई स्थिति इतिहास नहीं।</p>'; }
-
+    } else { modalStatusHistoryListContainer.innerHTML = '<p class="no-history">No status history.</p>'; }
     detailsModal.style.display = 'flex';
 }
 function closeDetailsModal() { if (detailsModal) detailsModal.style.display = 'none'; }
 
 // --- मोडल 1 एक्शन हैंडलर्स (सिंगल अपडेट/डिलीट) ---
 async function handleUpdateStatus() { /* ... पहले जैसा ही ... */
-    const firestoreId = modalOrderIdInput.value;
-    const newStatus = modalOrderStatusSelect.value;
-    if (!firestoreId || !newStatus || !db || !doc || !updateDoc || !arrayUnion || !Timestamp) { console.error("Update Status prerequisites failed."); return; }
-    const orderData = allOrdersCache.find(o => o.id === firestoreId); if (!orderData) { console.error("Order data not found in cache for update."); return; }
-    if (orderData.status === newStatus) { alert("Status is already set to '" + newStatus + "'."); return; }
+    const firestoreId = modalOrderIdInput.value; const newStatus = modalOrderStatusSelect.value;
+    if (!firestoreId || !newStatus) return; const orderData = allOrdersCache.find(o => o.id === firestoreId); if (!orderData) return; if (orderData.status === newStatus) { alert("Status already set."); return; }
     if (modalUpdateStatusBtn) { modalUpdateStatusBtn.disabled = true; modalUpdateStatusBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Updating...'; }
     const historyEntry = { status: newStatus, timestamp: Timestamp.now() };
-    try {
-        const orderRef = doc(db, "orders", firestoreId);
-        await updateDoc(orderRef, { status: newStatus, updatedAt: historyEntry.timestamp, statusHistory: arrayUnion(historyEntry) });
-        console.log("[DEBUG] Status updated successfully for:", firestoreId);
-        closeDetailsModal();
-        if (orderData.customerDetails && orderData.customerDetails.whatsappNo) {
-            showStatusUpdateWhatsAppReminder(orderData.customerDetails, orderData.orderId || `(Sys: ${firestoreId.substring(0, 6)}...)`, newStatus);
-        } else { alert("Status updated successfully!"); }
-    } catch (error) { console.error("Error updating status:", error); alert("Error updating status: " + error.message); }
+    try { await updateDoc(doc(db, "orders", firestoreId), { status: newStatus, updatedAt: historyEntry.timestamp, statusHistory: arrayUnion(historyEntry) }); console.log("Status updated:", firestoreId); closeDetailsModal();
+        if (orderData.customerDetails?.whatsappNo) showStatusUpdateWhatsAppReminder(orderData.customerDetails, orderData.orderId || `Sys:${firestoreId.substring(0,6)}`, newStatus); else alert("Status updated!");
+    } catch (e) { console.error("Error updating status:", e); alert("Error: " + e.message); }
     finally { if (modalUpdateStatusBtn) { modalUpdateStatusBtn.disabled = false; modalUpdateStatusBtn.innerHTML = '<i class="fas fa-sync-alt"></i> Update Status'; } }
 }
-
 function handleDeleteFromModal() { /* ... पहले जैसा ही ... */
-    const firestoreId = modalOrderIdInput.value;
-    const displayId = modalDisplayOrderIdSpan.textContent;
-    if (!firestoreId) return;
-    closeDetailsModal();
-    if (confirm(`Are you sure you want to delete Order ID: ${displayId}? This cannot be undone.`)) {
-        deleteSingleOrder(firestoreId);
-    } else { console.log("[DEBUG] Deletion cancelled by user."); }
+    const firestoreId = modalOrderIdInput.value; const displayId = modalDisplayOrderIdSpan.textContent; if (!firestoreId) return; closeDetailsModal();
+    if (confirm(`Delete Order ID: ${displayId}?`)) deleteSingleOrder(firestoreId); else console.log("Deletion cancelled.");
 }
-
 async function deleteSingleOrder(firestoreId) { /* ... पहले जैसा ही ... */
-     if (!db || !doc || !deleteDoc) { alert("Delete function unavailable."); return; }
-     try {
-         console.log("[DEBUG] Deleting single order:", firestoreId);
-         await deleteDoc(doc(db, "orders", firestoreId));
-         console.log("[DEBUG] Single order deleted.");
-         alert("Order deleted successfully.");
-     } catch (error) { console.error("Error deleting single order:", error); alert("Error deleting order: " + error.message); }
+    if (!db || !doc || !deleteDoc) { alert("Delete unavailable."); return; }
+    try { await deleteDoc(doc(db, "orders", firestoreId)); console.log("Order deleted:", firestoreId); alert("Order deleted."); }
+    catch (e) { console.error("Error deleting order:", e); alert("Error: " + e.message); }
 }
-
-function handleEditFullFromModal() { const firestoreId = modalOrderIdInput.value; if (!firestoreId) return; window.location.href = `new_order.html?editOrderId=${firestoreId}`; }
+function handleEditFullFromModal() { const firestoreId = modalOrderIdInput.value; if (firestoreId) window.location.href = `new_order.html?editOrderId=${firestoreId}`; }
 
 // --- WhatsApp फ़ंक्शंस ---
 function showStatusUpdateWhatsAppReminder(customer, orderId, updatedStatus) { /* ... पहले जैसा ही ... */
-    if (!whatsappReminderPopup || !whatsappMsgPreview || !whatsappSendLink) { console.error("WhatsApp Popup elements missing."); return; }
-    const customerName = customer.fullName || 'Customer';
-    const customerNumber = customer.whatsappNo?.replace(/[^0-9]/g, '');
-    if (!customerNumber) { console.warn("WhatsApp number missing for reminder."); return; }
-    let message = getWhatsAppMessageTemplate(updatedStatus, customerName, orderId, null);
-    whatsappMsgPreview.innerText = message;
-    const encodedMessage = encodeURIComponent(message);
-    const whatsappUrl = `https://wa.me/${customerNumber}?text=${encodedMessage}`;
-    whatsappSendLink.href = whatsappUrl;
-    const whatsappPopupTitle = document.getElementById('whatsapp-popup-title');
-    if(whatsappPopupTitle) whatsappPopupTitle.textContent = "Status Updated!";
+    if (!whatsappReminderPopup || !whatsappMsgPreview || !whatsappSendLink) { console.error("WhatsApp Popup missing."); return; }
+    const name = customer.fullName || 'Customer'; const num = customer.whatsappNo?.replace(/[^0-9]/g, ''); if (!num) { console.warn("WhatsApp number missing."); return; }
+    let msg = getWhatsAppMessageTemplate(updatedStatus, name, orderId, null); whatsappMsgPreview.innerText = msg;
+    const url = `https://wa.me/${num}?text=${encodeURIComponent(msg)}`; whatsappSendLink.href = url;
+    const title = document.getElementById('whatsapp-popup-title'); if(title) title.textContent = "Status Updated!";
     whatsappReminderPopup.classList.add('active');
 }
 function closeWhatsAppPopup() { if (whatsappReminderPopup) whatsappReminderPopup.classList.remove('active'); }
 function sendWhatsAppMessage(firestoreId, orderData) { /* ... पहले जैसा ही ... */
-     if (!orderData || !orderData.customerDetails || !orderData.customerDetails.whatsappNo) { alert("Customer WhatsApp number not found for this order."); return; }
-    const customer = orderData.customerDetails;
-    const orderId = orderData.orderId || `(Sys: ${firestoreId.substring(0,6)}...)`;
-    const status = orderData.status;
-    const deliveryDate = orderData.deliveryDate;
-    const customerName = customer.fullName || 'Customer';
-    const customerNumber = customer.whatsappNo.replace(/[^0-9]/g, '');
-    let message = getWhatsAppMessageTemplate(status, customerName, orderId, deliveryDate);
-    const encodedMessage = encodeURIComponent(message);
-    const whatsappUrl = `https://wa.me/${customerNumber}?text=${encodedMessage}`;
-    window.open(whatsappUrl, '_blank');
+    if (!orderData?.customerDetails?.whatsappNo) { alert("WhatsApp number not found."); return; }
+    const cust = orderData.customerDetails; const orderId = orderData.orderId || `Sys:${firestoreId.substring(0,6)}`; const status = orderData.status;
+    const deliveryDate = orderData.deliveryDate; const name = cust.fullName || 'Customer'; const num = cust.whatsappNo.replace(/[^0-9]/g, '');
+    let msg = getWhatsAppMessageTemplate(status, name, orderId, deliveryDate); const url = `https://wa.me/${num}?text=${encodeURIComponent(msg)}`; window.open(url, '_blank');
 }
 function getWhatsAppMessageTemplate(status, customerName, orderId, deliveryDate) { /* ... पहले जैसा ही ... */
-     const namePlaceholder = "[Customer Name]"; const orderNoPlaceholder = "[ORDER_NO]"; const deliveryDatePlaceholder = "[DELIVERY_DATE]";
-     const companyName = "Madhav Offset"; const companyAddress = "Head Office: Moodh Market, Batadu"; const companyMobile = "9549116541";
-     const signature = `धन्यवाद,\n${companyName}\n${companyAddress}\nMobile: ${companyMobile}`;
-     let template = "";
-     let deliveryDateText = deliveryDate ? new Date(deliveryDate).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}) : "जल्द से जल्द";
-     switch (status) { /* ... सभी केस पहले जैसे ही ... */
-        case "Order Received": template = `प्रिय ${namePlaceholder},\nनमस्कार,\nआपका ऑर्डर (Order No: ${orderNoPlaceholder}) हमें सफलतापूर्वक प्राप्त हो गया है।\nहम इस ऑर्डर को ${deliveryDatePlaceholder} तक पूर्ण करने का प्रयास करेंगे।\n\nDear ${namePlaceholder},\nWe have successfully received your order (Order No: ${orderNoPlaceholder}).\nWe aim to complete it by ${deliveryDatePlaceholder}.`; break;
-        case "Designing": template = `प्रिय ${namePlaceholder},\nआपके ऑर्डर (Order No: ${orderNoPlaceholder}) का डिज़ाइन तैयार किया जा रहा है।\nजैसे ही डिज़ाइन तैयार होगा, हम आपसे पुष्टि के लिए संपर्क करेंगे।\n\nDear ${namePlaceholder},\nThe design for your order (Order No: ${orderNoPlaceholder}) is in progress.\nWe’ll contact you for confirmation once it’s ready.`; break;
-        case "Verification": template = `प्रिय ${namePlaceholder},\nआपके ऑर्डर (Order No: ${orderNoPlaceholder}) की डिज़ाइन आपके साथ साझा कर दी गई है।\nकृपया डिज़ाइन को ध्यानपूर्वक जाँचे और हमें अपनी अनुमति प्रदान करें।\nएक बार ‘OK’ कर देने के बाद किसी भी प्रकार का संशोधन संभव नहीं होगा।\n\nDear ${namePlaceholder},\nWe have shared the design for your order (Order No: ${orderNoPlaceholder}) with you.\nPlease review it carefully and provide your approval.\nOnce you confirm with ‘OK’, no further changes will be possible.`; break;
-        case "Design Approved": template = `प्रिय ${namePlaceholder},\nआपके ऑर्डर (Order No: ${orderNoPlaceholder}) की डिज़ाइन स्वीकृत कर दी गई है।\nअब यह प्रिंटिंग प्रक्रिया के लिए आगे बढ़ाया जा रहा है।\n\nDear ${namePlaceholder},\nYour design for Order No: ${orderNoPlaceholder} has been approved.\nIt is now moving forward to the printing stage.`; break;
-        case "Ready for Working": template = `प्रिय ${namePlaceholder},\nनमस्कार,\nआपके ऑर्डर (Order No: ${orderNoPlaceholder}) की प्रिंटिंग पूरी हो गई है।\nआप ऑफिस/कार्यालय आकर अपना प्रोडक्ट ले जा सकते हैं।\n\nDear ${namePlaceholder},\nThe printing for your order (Order No: ${orderNoPlaceholder}) is complete.\nYou can now collect your product from our office.`; break;
-        case "Printing": template = `प्रिय ${namePlaceholder},\nआपका ऑर्डर (Order No: ${orderNoPlaceholder}) प्रिंट हो रहा है।\nपूरा होते ही आपको सूचित किया जाएगा।\n\nDear ${namePlaceholder},\nYour order (Order No: ${orderNoPlaceholder}) is currently being printed.\nWe will notify you once it’s done.`; break;
-        case "Delivered": template = `प्रिय ${namePlaceholder},\nआपका ऑर्डर (Order No: ${orderNoPlaceholder}) सफलतापूर्वक डिलीवर कर दिया गया है।\nकृपया पुष्टि करें कि आपने ऑर्डर प्राप्त कर लिया है।\nआपके सहयोग के लिए धन्यवाद।\nहमें आशा है कि आप हमें शीघ्र ही फिर से सेवा का अवसर देंगे।\n\nDear ${namePlaceholder},\nYour order (Order No: ${orderNoPlaceholder}) has been successfully delivered.\nPlease confirm the receipt.\nThank you for your support.\nWe hope to have the opportunity to serve you again soon.`; break;
-        case "Completed": template = `प्रिय ${namePlaceholder},\nआपका ऑर्डर (Order No: ${orderNoPlaceholder}) सफलतापूर्वक पूर्ण हो चुका है।\nआपके सहयोग के लिए धन्यवाद।\n\nDear ${namePlaceholder},\nYour order (Order No: ${orderNoPlaceholder}) has been successfully completed.\nThank you for your support.`; break;
-        default: template = `प्रिय ${namePlaceholder},\nआपके ऑर्डर (Order No: ${orderNoPlaceholder}) का वर्तमान स्टेटस है: ${status}.\n\nDear ${namePlaceholder},\nThe current status for your order (Order No: ${orderNoPlaceholder}) is: ${status}.`;
-     }
-     let message = template.replace(new RegExp(namePlaceholder.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&'), 'g'), customerName);
-     message = message.replace(new RegExp(orderNoPlaceholder.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&'), 'g'), orderId);
-     message = message.replace(new RegExp(deliveryDatePlaceholder.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&'), 'g'), deliveryDateText);
-     message += `\n\n${signature}`; return message;
+    const namePh = "[Customer Name]"; const orderPh = "[ORDER_NO]"; const deliveryPh = "[DELIVERY_DATE]";
+    const company = "Madhav Offset"; const address = "Head Office: Moodh Market, Batadu"; const mobile = "9549116541";
+    const signature = `धन्यवाद,\n${company}\n${address}\nMobile: ${mobile}`; let template = "";
+    let deliveryTxt = deliveryDate ? new Date(deliveryDate).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}) : "जल्द से जल्द";
+    switch (status) { case "Order Received": template = `प्रिय ${namePh},\nनमस्कार,\nआपका ऑर्डर (Order No: ${orderPh}) हमें सफलतापूर्वक प्राप्त हो गया है।\nहम इस ऑर्डर को ${deliveryPh} तक पूर्ण करने का प्रयास करेंगे।\n\nDear ${namePh},\nWe have successfully received your order (Order No: ${orderPh}).\nWe aim to complete it by ${deliveryPh}.`; break; case "Designing": template = `प्रिय ${namePh},\nआपके ऑर्डर (Order No: ${orderPh}) का डिज़ाइन तैयार किया जा रहा है।\nजैसे ही डिज़ाइन तैयार होगा, हम आपसे पुष्टि के लिए संपर्क करेंगे।\n\nDear ${namePh},\nThe design for your order (Order No: ${orderPh}) is in progress.\nWe’ll contact you for confirmation once it’s ready.`; break; case "Verification": template = `प्रिय ${namePh},\nआपके ऑर्डर (Order No: ${orderPh}) की डिज़ाइन आपके साथ साझा कर दी गई है।\nकृपया डिज़ाइन को ध्यानपूर्वक जाँचे और हमें अपनी अनुमति प्रदान करें।\nएक बार ‘OK’ कर देने के बाद किसी भी प्रकार का संशोधन संभव नहीं होगा।\n\nDear ${namePh},\nWe have shared the design for your order (Order No: ${orderPh}) with you.\nPlease review it carefully and provide your approval.\nOnce you confirm with ‘OK’, no further changes will be possible.`; break; case "Design Approved": template = `प्रिय ${namePh},\nआपके ऑर्डर (Order No: ${orderPh}) की डिज़ाइन स्वीकृत कर दी गई है।\nअब यह प्रिंटिंग प्रक्रिया के लिए आगे बढ़ाया जा रहा है।\n\nDear ${namePh},\nYour design for Order No: ${orderPh} has been approved.\nIt is now moving forward to the printing stage.`; break; case "Ready for Working": template = `प्रिय ${namePh},\nनमस्कार,\nआपके ऑर्डर (Order No: ${orderPh}) की प्रिंटिंग पूरी हो गई है।\nआप ऑफिस/कार्यालय आकर अपना प्रोडक्ट ले जा सकते हैं।\n\nDear ${namePh},\nThe printing for your order (Order No: ${orderPh}) is complete.\nYou can now collect your product from our office.`; break; case "Printing": template = `प्रिय ${namePh},\nआपका ऑर्डर (Order No: ${orderPh}) प्रिंट हो रहा है।\nपूरा होते ही आपको सूचित किया जाएगा।\n\nDear ${namePh},\nYour order (Order No: ${orderPh}) is currently being printed.\nWe will notify you once it’s done.`; break; case "Delivered": template = `प्रिय ${namePh},\nआपका ऑर्डर (Order No: ${orderPh}) सफलतापूर्वक डिलीवर कर दिया गया है।\nकृपया पुष्टि करें कि आपने ऑर्डर प्राप्त कर लिया है।\nआपके सहयोग के लिए धन्यवाद।\nहमें आशा है कि आप हमें शीघ्र ही फिर से सेवा का अवसर देंगे।\n\nDear ${namePh},\nYour order (Order No: ${orderPh}) has been successfully delivered.\nPlease confirm the receipt.\nThank you for your support.\nWe hope to have the opportunity to serve you again soon.`; break; case "Completed": template = `प्रिय ${namePh},\nआपका ऑर्डर (Order No: ${orderPh}) सफलतापूर्वक पूर्ण हो चुका है।\nआपके सहयोग के लिए धन्यवाद।\n\nDear ${namePh},\nYour order (Order No: ${orderPh}) has been successfully completed.\nThank you for your support.`; break; default: template = `प्रिय ${namePh},\nआपके ऑर्डर (Order No: ${orderPh}) का वर्तमान स्टेटस है: ${status}.\n\nDear ${namePh},\nThe current status for your order (Order No: ${orderPh}) is: ${status}.`; }
+    let msg = template.replace(new RegExp(namePh.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&'), 'g'), customerName);
+    msg = msg.replace(new RegExp(orderPh.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&'), 'g'), orderId);
+    msg = msg.replace(new RegExp(deliveryPh.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&'), 'g'), deliveryTxt);
+    msg += `\n\n${signature}`; return msg;
 }
 
 // --- बल्क एक्शन फ़ंक्शंस ---
-function handleSelectAllChange(event) {
-    const isChecked = event.target.checked;
-    const rowCheckboxes = orderTableBody.querySelectorAll('.row-selector');
-    selectedOrderIds.clear();
-    rowCheckboxes.forEach(checkbox => {
-        const firestoreId = checkbox.dataset.id;
-        checkbox.checked = isChecked;
-        const row = checkbox.closest('tr');
-        if (isChecked) { selectedOrderIds.add(firestoreId); if (row) row.classList.add('selected-row'); }
-        else { if (row) row.classList.remove('selected-row'); }
-    });
-    updateBulkActionsBar();
+function handleSelectAllChange(event) { /* ... पहले जैसा ही ... */
+    const isChecked = event.target.checked; const rows = orderTableBody.querySelectorAll('.row-selector'); selectedOrderIds.clear();
+    rows.forEach(cb => { const id = cb.dataset.id; cb.checked = isChecked; const row = cb.closest('tr'); if(isChecked){ selectedOrderIds.add(id); if(row) row.classList.add('selected-row'); } else { if(row) row.classList.remove('selected-row'); } }); updateBulkActionsBar();
 }
-function handleRowCheckboxChange(checkbox, firestoreId) {
-    const row = checkbox.closest('tr');
-    if (checkbox.checked) { selectedOrderIds.add(firestoreId); if (row) row.classList.add('selected-row'); }
-    else { selectedOrderIds.delete(firestoreId); if (row) row.classList.remove('selected-row'); }
-    updateBulkActionsBar();
-    if (selectAllCheckbox) {
-        const allVisibleCheckboxes = orderTableBody.querySelectorAll('.row-selector');
-        const allVisibleChecked = allVisibleCheckboxes.length > 0 && Array.from(allVisibleCheckboxes).every(cb => cb.checked);
-        const someVisibleChecked = Array.from(allVisibleCheckboxes).some(cb => cb.checked);
-        selectAllCheckbox.checked = allVisibleSelected;
-        selectAllCheckbox.indeterminate = !allVisibleSelected && someVisibleChecked;
-    }
+function handleRowCheckboxChange(checkbox, firestoreId) { /* ... पहले जैसा ही ... */
+    const row = checkbox.closest('tr'); if (checkbox.checked) { selectedOrderIds.add(firestoreId); if(row) row.classList.add('selected-row'); } else { selectedOrderIds.delete(firestoreId); if(row) row.classList.remove('selected-row'); } updateBulkActionsBar();
+    if (selectAllCheckbox) { const allCb = orderTableBody.querySelectorAll('.row-selector'); const allChecked = allCb.length > 0 && Array.from(allCb).every(cb => cb.checked); const someChecked = Array.from(allCb).some(cb => cb.checked); selectAllCheckbox.checked = allChecked; selectAllCheckbox.indeterminate = !allChecked && someChecked; }
 }
-function updateBulkActionsBar() {
+function updateBulkActionsBar() { /* ... पहले जैसा ही ... */
     const count = selectedOrderIds.size;
     if (bulkActionsBar && selectedCountSpan && bulkUpdateStatusBtn && bulkDeleteBtn) {
-        if (count > 0) {
-            selectedCountSpan.textContent = `${count} item${count > 1 ? 's' : ''} selected`;
-            bulkActionsBar.style.display = 'flex';
-            bulkUpdateStatusBtn.disabled = !(bulkStatusSelect && bulkStatusSelect.value);
-            bulkDeleteBtn.disabled = false;
-        } else {
-            bulkActionsBar.style.display = 'none';
-            if (bulkStatusSelect) bulkStatusSelect.value = '';
-            bulkUpdateStatusBtn.disabled = true;
-            bulkDeleteBtn.disabled = true;
-        }
+        if (count > 0) { selectedCountSpan.textContent = `${count} item${count > 1 ? 's' : ''} selected`; bulkActionsBar.style.display = 'flex'; bulkUpdateStatusBtn.disabled = !(bulkStatusSelect && bulkStatusSelect.value); bulkDeleteBtn.disabled = false; }
+        else { bulkActionsBar.style.display = 'none'; if (bulkStatusSelect) bulkStatusSelect.value = ''; bulkUpdateStatusBtn.disabled = true; bulkDeleteBtn.disabled = true; }
     }
 }
 
-// --- बल्क डिलीट (अब मोडल खोलता है) ---
+// --- बल्क डिलीट (लिमिट और मोडल के साथ) ---
 async function handleBulkDelete() {
     const idsToDelete = Array.from(selectedOrderIds);
+    const MAX_DELETE_LIMIT = 5; // सीमा यहाँ परिभाषित करें
+    if (idsToDelete.length > MAX_DELETE_LIMIT) {
+        alert(`आप एक बार में अधिकतम ${MAX_DELETE_LIMIT} ऑर्डर डिलीट कर सकते हैं।`);
+        return;
+    }
     if (idsToDelete.length === 0) { alert("डिलीट करने के लिए कृपया ऑर्डर चुनें।"); return; }
-    if (!bulkDeleteConfirmModal || !bulkDeleteOrderList || !confirmDeleteCheckbox || !confirmBulkDeleteBtn || !bulkDeleteCountSpan) {
-        console.error("बल्क डिलीट कन्फर्मेशन मोडल एलिमेंट नहीं मिले!");
-        if (confirm(`MODAL MISSING! Fallback: क्या आप वाकई ${idsToDelete.length} चयनित ऑर्डर डिलीट करना चाहते हैं?`)) {
-            await executeBulkDelete(idsToDelete);
-        } return;
-    }
-
-    // मोडल लिस्ट पॉप्युलेट करें
-    bulkDeleteOrderList.innerHTML = '';
-    const maxItemsToShow = 100;
-    idsToDelete.forEach((id, index) => {
-        if (index < maxItemsToShow) {
-            const order = allOrdersCache.find(o => o.id === id);
-            const displayId = order?.orderId || `(Sys: ${id.substring(0, 6)}...)`;
-            const customerName = order?.customerDetails?.fullName || 'N/A';
-            const li = document.createElement('li');
-            li.innerHTML = `<strong>${displayId}</strong> - ${customerName}`;
-            bulkDeleteOrderList.appendChild(li);
-        }
-    });
-    if (idsToDelete.length > maxItemsToShow) {
-        const li = document.createElement('li'); li.textContent = `... और ${idsToDelete.length - maxItemsToShow} अन्य ऑर्डर।`; bulkDeleteOrderList.appendChild(li);
-    }
-    bulkDeleteCountSpan.textContent = idsToDelete.length;
-    confirmDeleteCheckbox.checked = false; confirmBulkDeleteBtn.disabled = true;
-    bulkDeleteConfirmModal.style.display = 'flex'; // मोडल दिखाएं
+    if (!bulkDeleteConfirmModal || !bulkDeleteOrderList || !confirmDeleteCheckbox || !confirmBulkDeleteBtn || !bulkDeleteCountSpan) { console.error("Bulk delete modal elements missing!"); return; } // यदि मोडल नहीं है तो रोकें
+    bulkDeleteOrderList.innerHTML = ''; const maxItemsToShow = 100;
+    idsToDelete.forEach((id, index) => { if (index < maxItemsToShow) { const order = allOrdersCache.find(o => o.id === id); const displayId = order?.orderId || `Sys:${id.substring(0,6)}`; const customerName = order?.customerDetails?.fullName || 'N/A'; const li = document.createElement('li'); li.innerHTML = `<strong>${displayId}</strong> - ${escapeHtml(customerName)}`; bulkDeleteOrderList.appendChild(li); } });
+    if (idsToDelete.length > maxItemsToShow) { const li = document.createElement('li'); li.textContent = `... और ${idsToDelete.length - maxItemsToShow} अन्य ऑर्डर।`; bulkDeleteOrderList.appendChild(li); }
+    bulkDeleteCountSpan.textContent = idsToDelete.length; confirmDeleteCheckbox.checked = false; confirmBulkDeleteBtn.disabled = true;
+    bulkDeleteConfirmModal.style.display = 'flex';
 }
 
 // --- वास्तविक बल्क डिलीट लॉजिक ---
-async function executeBulkDelete(idsToDelete) {
-     if (idsToDelete.length === 0) return;
-     console.log("[DEBUG] बल्क डिलीट निष्पादित किया जा रहा है:", idsToDelete);
-     if(bulkDeleteBtn) bulkDeleteBtn.disabled = true;
-     if(confirmBulkDeleteBtn) confirmBulkDeleteBtn.disabled = true;
-     if(confirmBulkDeleteBtn) confirmBulkDeleteBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Deleting...';
-     const batch = writeBatch(db);
-     idsToDelete.forEach(id => { const docRef = doc(db, "orders", id); batch.delete(docRef); });
-     try {
-         await batch.commit();
-         console.log(`[DEBUG] ${idsToDelete.length} ऑर्डर्स का बल्क डिलीट सफल।`);
-         alert(`${idsToDelete.length} ऑर्डर सफलतापूर्वक डिलीट किए गए।`);
-         selectedOrderIds.clear(); updateBulkActionsBar(); closeBulkDeleteModal();
-     } catch (error) {
-         console.error("बल्क डिलीट निष्पादन के दौरान त्रुटि:", error);
-         alert(`ऑर्डर डिलीट करने में त्रुटि: ${error.message}\nकुछ ऑर्डर डिलीट नहीं हुए होंगे।`);
-     } finally {
-         if(bulkDeleteBtn) bulkDeleteBtn.disabled = false;
-         if(confirmBulkDeleteBtn) confirmBulkDeleteBtn.disabled = false;
-         if(confirmBulkDeleteBtn) confirmBulkDeleteBtn.innerHTML = '<i class="fas fa-trash-alt"></i> Delete Orders';
-         updateBulkActionsBar();
-     }
+async function executeBulkDelete(idsToDelete) { /* ... पहले जैसा ही ... */
+     if (idsToDelete.length === 0) return; console.log("Executing bulk delete:", idsToDelete);
+     if(bulkDeleteBtn) bulkDeleteBtn.disabled = true; if(confirmBulkDeleteBtn) confirmBulkDeleteBtn.disabled = true; if(confirmBulkDeleteBtn) confirmBulkDeleteBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Deleting...';
+     const batch = writeBatch(db); idsToDelete.forEach(id => { const docRef = doc(db, "orders", id); batch.delete(docRef); });
+     try { await batch.commit(); console.log("Bulk delete successful."); alert(`${idsToDelete.length} order(s) deleted.`); selectedOrderIds.clear(); updateBulkActionsBar(); closeBulkDeleteModal(); }
+     catch (e) { console.error("Bulk delete error:", e); alert(`Error deleting: ${e.message}`); }
+     finally { if(bulkDeleteBtn) bulkDeleteBtn.disabled = false; if(confirmBulkDeleteBtn) confirmBulkDeleteBtn.disabled = false; if(confirmBulkDeleteBtn) confirmBulkDeleteBtn.innerHTML = '<i class="fas fa-trash-alt"></i> Delete Orders'; updateBulkActionsBar(); }
 }
 
-// --- बल्क स्टेटस अपडेट ---
-async function handleBulkUpdateStatus() { /* ... पहले जैसा ही ... */
+// --- बल्क स्टेटस अपडेट (लिमिट के साथ) ---
+async function handleBulkUpdateStatus() {
     const idsToUpdate = Array.from(selectedOrderIds);
     const newStatus = bulkStatusSelect.value;
+    const MAX_STATUS_UPDATE_LIMIT = 10; // सीमा यहाँ परिभाषित करें
+    if (idsToUpdate.length > MAX_STATUS_UPDATE_LIMIT) {
+        alert(`आप एक बार में अधिकतम ${MAX_STATUS_UPDATE_LIMIT} ऑर्डर का स्टेटस अपडेट कर सकते हैं।`);
+        return;
+    }
     if (idsToUpdate.length === 0) { alert("अपडेट करने के लिए कृपया ऑर्डर चुनें।"); return; }
     if (!newStatus) { alert("अपडेट करने के लिए कृपया स्टेटस चुनें।"); return; }
     if (!confirm(`क्या आप वाकई ${idsToUpdate.length} चयनित ऑर्डर का स्टेटस "${newStatus}" में बदलना चाहते हैं?`)) { return; }
-
-    console.log(`[DEBUG] IDs के लिए "${newStatus}" पर बल्क स्टेटस अपडेट शुरू हो रहा है:`, idsToUpdate);
+    console.log(`Bulk status update to "${newStatus}" for:`, idsToUpdate);
     if (bulkUpdateStatusBtn) { bulkUpdateStatusBtn.disabled = true; bulkUpdateStatusBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Updating...'; }
-
-    const batch = writeBatch(db);
-    const now = Timestamp.now(); const historyEntry = { status: newStatus, timestamp: now };
-    idsToUpdate.forEach(id => {
-        const docRef = doc(db, "orders", id);
-        batch.update(docRef, { status: newStatus, updatedAt: now, statusHistory: arrayUnion(historyEntry) });
-    });
-    try {
-        await batch.commit();
-        console.log(`[DEBUG] ${idsToUpdate.length} ऑर्डर्स का बल्क स्टेटस अपडेट सफल।`);
-        alert(`${idsToUpdate.length} ऑर्डर का स्टेटस "${newStatus}" पर अपडेट किया गया।`);
-        selectedOrderIds.clear(); updateBulkActionsBar();
-    } catch (error) {
-        console.error("बल्क स्टेटस अपडेट के दौरान त्रुटि:", error);
-        alert(`स्टेटस अपडेट करने में त्रुटि: ${error.message}\nकुछ स्टेटस अपडेट नहीं हुए होंगे।`);
-    } finally {
-        if (bulkUpdateStatusBtn) { bulkUpdateStatusBtn.disabled = false; bulkUpdateStatusBtn.innerHTML = '<i class="fas fa-sync-alt"></i> Update Selected'; }
-        if (bulkStatusSelect) bulkStatusSelect.value = '';
-        updateBulkActionsBar();
-    }
+    const batch = writeBatch(db); const now = Timestamp.now(); const historyEntry = { status: newStatus, timestamp: now };
+    idsToUpdate.forEach(id => { const docRef = doc(db, "orders", id); batch.update(docRef, { status: newStatus, updatedAt: now, statusHistory: arrayUnion(historyEntry) }); });
+    try { await batch.commit(); console.log("Bulk status update successful."); alert(`${idsToUpdate.length} order(s) status updated.`); selectedOrderIds.clear(); updateBulkActionsBar(); }
+    catch (e) { console.error("Bulk status update error:", e); alert(`Error updating: ${e.message}`); }
+    finally { if (bulkUpdateStatusBtn) { bulkUpdateStatusBtn.disabled = false; bulkUpdateStatusBtn.innerHTML = '<i class="fas fa-sync-alt"></i> Update Selected'; } if (bulkStatusSelect) bulkStatusSelect.value = ''; updateBulkActionsBar(); }
 }
 
 // --- CSV एक्सपोर्ट फ़ंक्शन ---
 function exportToCsv() { /* ... पहले जैसा ही ... */
-    console.log("[DEBUG] CSV एक्सपोर्ट का अनुरोध किया गया।");
-    if (currentlyDisplayedOrders.length === 0) { alert("एक्सपोर्ट के लिए कोई डेटा उपलब्ध नहीं है।"); return; }
+    console.log("Export CSV requested."); if (currentlyDisplayedOrders.length === 0) { alert("No data to export."); return; }
     const headers = [ "Firestore ID", "Order ID", "Customer Name", "WhatsApp No", "Contact No", "Address", "Order Date", "Delivery Date", "Status", "Urgent", "Remarks", "Products (Name | Qty)" ];
-    const rows = currentlyDisplayedOrders.map(order => {
-        const productsString = (order.products || []).map(p => `${String(p.name || '').replace(/\|/g, '')}|${String(p.quantity || '')}`).join('; ');
-        return [ order.id, order.orderId || '', order.customerDetails?.fullName || '', order.customerDetails?.whatsappNo || '', order.customerDetails?.contactNo || '', order.customerDetails?.address || '', order.orderDate || '', order.deliveryDate || '', order.status || '', order.urgent || 'No', order.remarks || '', productsString ];
-    });
+    const rows = currentlyDisplayedOrders.map(order => { const productsString = (order.products || []).map(p => `${String(p.name || '').replace(/\|/g, '')}|${String(p.quantity || '')}`).join('; '); return [ order.id, order.orderId || '', order.customerDetails?.fullName || '', order.customerDetails?.whatsappNo || '', order.customerDetails?.contactNo || '', order.customerDetails?.address || '', order.orderDate || '', order.deliveryDate || '', order.status || '', order.urgent || 'No', order.remarks || '', productsString ]; });
     let csvContent = "data:text/csv;charset=utf-8," + headers.map(h => `"${h.replace(/"/g, '""')}"`).join(",") + "\n" + rows.map(row => row.map(field => `"${String(field || '').replace(/"/g, '""')}"`).join(",")).join("\n");
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement("a"); link.setAttribute("href", encodedUri);
-    const timestamp = new Date().toISOString().slice(0, 10); link.setAttribute("download", `orders_export_${timestamp}.csv`);
-    document.body.appendChild(link); console.log("[DEBUG] CSV डाउनलोड ट्रिगर किया जा रहा है।"); link.click(); document.body.removeChild(link);
+    const encodedUri = encodeURI(csvContent); const link = document.createElement("a"); link.setAttribute("href", encodedUri); const timestamp = new Date().toISOString().slice(0, 10); link.setAttribute("download", `orders_export_${timestamp}.csv`); document.body.appendChild(link); console.log("Triggering CSV download."); link.click(); document.body.removeChild(link);
 }
 
 // --- URL से मोडल खोलने का प्रयास ---
 function attemptOpenModalFromUrl() { /* ... पहले जैसा ही ... */
     if (orderIdToOpenFromUrl && allOrdersCache.length > 0 && !modalOpenedFromUrl) {
-        console.log(`[DEBUG] ID के लिए मोडल खोजने और खोलने का प्रयास: ${orderIdToOpenFromUrl}`);
-        const orderToOpenData = allOrdersCache.find(o => o.id === orderIdToOpenFromUrl);
-        if (orderToOpenData) {
-            console.log("[DEBUG] ऑर्डर कैश में मिला, मोडल खोला जा रहा है।");
-            openDetailsModal(orderIdToOpenFromUrl, orderToOpenData); modalOpenedFromUrl = true;
-            try { const currentUrl = new URL(window.location); currentUrl.searchParams.delete('openModalForId'); window.history.replaceState({}, '', currentUrl.toString()); }
-            catch(e) { window.history.replaceState(null, '', window.location.pathname); }
-             orderIdToOpenFromUrl = null;
-        } else { console.warn(`[DEBUG] ID ${orderIdToOpenFromUrl} वाला ऑर्डर वर्तमान कैश में नहीं मिला।`); }
+        console.log(`Attempting modal open for ID: ${orderIdToOpenFromUrl}`); const orderData = allOrdersCache.find(o => o.id === orderIdToOpenFromUrl);
+        if (orderData) { console.log("Order found, opening modal."); openDetailsModal(orderIdToOpenFromUrl, orderData); modalOpenedFromUrl = true; try { const url = new URL(window.location); url.searchParams.delete('openModalForId'); window.history.replaceState({}, '', url.toString()); } catch(e) { window.history.replaceState(null, '', window.location.pathname); } orderIdToOpenFromUrl = null; }
+        else { console.warn(`Order ID ${orderIdToOpenFromUrl} not in cache.`); }
     }
 }
 
 // --- बल्क डिलीट मोडल बंद करने का फ़ंक्शन ---
-function closeBulkDeleteModal() {
-    if (bulkDeleteConfirmModal) bulkDeleteConfirmModal.style.display = 'none';
+function closeBulkDeleteModal() { if (bulkDeleteConfirmModal) bulkDeleteConfirmModal.style.display = 'none'; }
+
+// --- HTML एस्केप हेल्पर ---
+function escapeHtml(unsafe) {
+    if (typeof unsafe !== 'string') { unsafe = String(unsafe || ''); }
+   return unsafe.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
 }
 
+
 // --- अंतिम लॉग ---
-console.log("order_history.js स्क्रिप्ट (अंतिम संस्करण) पूरी तरह से लोड और इनिशियलाइज़ हो गया है।");
+console.log("order_history.js script (Final Corrected Version) loaded.");
