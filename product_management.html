@@ -62,8 +62,6 @@
                          initializeProductManagement();
                     } else {
                          console.warn("initializeProductManagement function not found yet.");
-                         // वैकल्पिक: कुछ देर प्रतीक्षा करके पुनः प्रयास करें
-                         // setTimeout(() => { if(typeof initializeProductManagement === 'function') initializeProductManagement() }, 500);
                     }
                 }
             });
@@ -143,7 +141,6 @@
                 <input type="hidden" id="editProductId">
 
                 <div class="form-columns-3">
-                    {/* Column 1: Product Details */}
                     <div class="form-column">
                          <h3>Product Details</h3>
                          <div class="form-group">
@@ -164,7 +161,6 @@
                         </div>
                     </div>
 
-                    {/* Column 2: Price Details */}
                     <div class="form-column">
                         <h3>Price Details</h3>
                          <div class="form-group price-group">
@@ -185,7 +181,6 @@
                         </div>
                     </div>
 
-                    {/* Column 3: Stock, Unit & GST */}
                     <div class="form-column">
                          <h3>Stock, Unit & GST</h3>
                         <div class="form-group">
@@ -195,8 +190,7 @@
                                 <option value="NOS">NOS</option>
                                 <option value="QTY">QTY</option>
                                 <option value="Sq.Ft.">Sq.Ft.</option>
-                                {/* Add other units */}
-                            </select>
+                                </select>
                         </div>
                          <div class="form-group">
                             <label for="productOpeningStock">Opening Stock:</label>
@@ -217,7 +211,6 @@
                     </div>
                 </div> {/* End form-columns-3 */}
 
-                {/* Full Width Sections */}
                 <div class="form-group full-width">
                     <label for="productDescription">Product Description:</label>
                     <textarea id="productDescription" rows="2" placeholder="Enter any additional details"></textarea>
@@ -234,15 +227,13 @@
                      </div>
                 </div>
 
-                {/* Legacy Category Field (Hidden) */}
                 <div class="form-group" style="display: none;">
                     <label for="productCategory">Category (Legacy):</label>
                     <input type="text" id="productCategory" placeholder="e.g., Visiting Card, Banner">
                 </div>
 
-                {/* Modal Actions: Delete Button Added */}
                 <div class="modal-actions">
-                    <button type="button" id="deleteProductBtn" class="button delete-button-modal" style="display: none;"> {/* Initially hidden */}
+                    <button type="button" id="deleteProductBtn" class="button delete-button-modal" style="display: none;">
                         <i class="fas fa-trash-alt"></i> Delete Product
                     </button>
                     <div class="modal-actions-right">
