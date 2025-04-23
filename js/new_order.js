@@ -1,722 +1,1271 @@
-// js/new_order.js - v2.3.2 (Added Balance Calculation)
+// js/order_history.js
+// Updated Version: Includes PO Creation, Enhanced Details, Read-Only Popup, etc.
 
-// --- Firebase Functions ---
 const {
-    db, collection, addDoc, doc, getDoc, getDocs, updateDoc,
-    query, where, orderBy, limit, Timestamp
+    db, collection, onSnapshot, query, orderBy, where,
+    doc, getDoc, deleteDoc, updateDoc, Timestamp, serverTimestamp,
+    arrayUnion, writeBatch, limit
 } = window;
 
-// --- Global Variables ---
-let isEditMode = false;
-let orderIdToEdit = null;
-let currentOrderData = null;
-let selectedCustomerId = null; // <<<--- यह वेरिएबल सही ढंग से सेट होना चाहिए
-let selectedCustomerData = null;
-let productCache = [];
-let customerCache = [];
-let productFetchPromise = null;
-let customerFetchPromise = null;
-let activeProductInput = null;
-let productSearchDebounceTimer;
-let customerSearchDebounceTimer;
-let isDiscountInputProgrammaticChange = false;
-let productSuggestionsDiv = null;
+// DOM Elements
+const orderTableBody = document.getElementById('orderTableBody');
+const loadingRow = document.getElementById('loadingMessage');
+const sortSelect = document.getElementById('sort-orders');
+const filterDateInput = document.getElementById('filterDate');
+const filterSearchInput = document.getElementById('filterSearch');
+const filterStatusSelect = document.getElementById('filterStatus');
+const clearFiltersBtn = document.getElementById('clearFiltersBtn');
+const totalOrdersSpan = document.getElementById('total-orders');
+const completedOrdersSpan = document.getElementById('completed-delivered-orders');
+const pendingOrdersSpan = document.getElementById('pending-orders');
+const exportCsvBtn = document.getElementById('exportCsvBtn');
+const selectAllCheckbox = document.getElementById('selectAllCheckbox');
+const bulkActionsBar = document.getElementById('bulkActionsBar');
+const selectedCountSpan = document.getElementById('selectedCount');
+const bulkStatusSelect = document.getElementById('bulkStatusSelect');
+const bulkUpdateStatusBtn = document.getElementById('bulkUpdateStatusBtn');
+const bulkDeleteBtn = document.getElementById('bulkDeleteBtn');
+const reportingSection = document.getElementById('reportingSection');
+const statusCountsReportContainer = document.getElementById('statusCountsReport');
 
-// --- DOM Element References ---
-const orderForm = document.getElementById('newOrderForm');
-const saveButton = document.getElementById('saveOrderBtn');
-const saveButtonText = saveButton ? saveButton.querySelector('span') : null;
-const headerText = document.getElementById('headerText');
-const breadcrumbAction = document.getElementById('breadcrumbAction');
-const hiddenEditOrderIdInput = document.getElementById('editOrderId');
-const selectedCustomerIdInput = document.getElementById('selectedCustomerId'); // Hidden input to store ID
-const displayOrderIdInput = document.getElementById('display_order_id');
-const manualOrderIdInput = document.getElementById('manual_order_id');
-const customerNameInput = document.getElementById('full_name');
-const customerWhatsAppInput = document.getElementById('whatsapp_no');
-const customerAddressInput = document.getElementById('address');
-const customerContactInput = document.getElementById('contact_no');
-const customerSuggestionsNameBox = document.getElementById('customer-suggestions-name');
-const customerSuggestionsWhatsAppBox = document.getElementById('customer-suggestions-whatsapp');
-const customerAccountLinkArea = document.getElementById('customerAccountLinkArea');
-const viewCustomerAccountLink = document.getElementById('viewCustomerAccountLink');
-const customerBalanceArea = document.getElementById('customerBalanceArea');
-const customerCurrentBalanceSpan = document.getElementById('customerCurrentBalance');
-const orderDateInput = document.getElementById('order_date');
-const deliveryDateInput = document.getElementById('delivery_date');
-const remarksInput = document.getElementById('remarks');
-const orderItemsTableBody = document.getElementById('orderItemsTableBody');
-const itemRowTemplate = document.getElementById('item-row-template');
-const addItemBtn = document.getElementById('addItemBtn');
-const calculationPreviewArea = document.getElementById('calculationPreviewArea');
-const calculationPreviewContent = document.getElementById('calculationPreviewContent');
-const summarySubtotalSpan = document.getElementById('summarySubtotal');
-const summaryDiscountPercentInput = document.getElementById('summaryDiscountPercent');
-const summaryDiscountAmountInput = document.getElementById('summaryDiscountAmount');
-const summaryFinalAmountSpan = document.getElementById('summaryFinalAmount');
-const summaryAdvancePaymentInput = document.getElementById('summaryAdvancePayment');
-const summaryTotalBalanceSpan = document.getElementById('summaryTotalBalance');
-const creditLimitWarningDiv = document.getElementById('creditLimitWarning');
-const orderStatusSelect = document.getElementById('orderStatusSelect');
-const formErrorMsg = document.getElementById('formErrorMsg');
+// Action Bar Buttons
+const newCustomerBtn = document.getElementById('newCustomerBtn');
+const paymentReceivedBtn = document.getElementById('paymentReceivedBtn');
+const customerPanelBtn = document.getElementById('customerPanelBtn');
+
+// Enhanced Details Modal Elements
+const detailsModal = document.getElementById('detailsModal');
+const closeModalBtn = document.getElementById('closeDetailsModal');
+const modalOrderIdInput = document.getElementById('modalOrderId');
+const modalDisplayOrderIdSpan = document.getElementById('modalDisplayOrderId');
+const modalCustomerNameSpan = document.getElementById('modalCustomerName');
+const modalCustomerWhatsAppSpan = document.getElementById('modalCustomerWhatsApp');
+const modalCustomerContactSpan = document.getElementById('modalCustomerContact');
+const modalCustomerAddressSpan = document.getElementById('modalCustomerAddress');
+const modalOrderDateSpan = document.getElementById('modalOrderDate');
+const modalDeliveryDateSpan = document.getElementById('modalDeliveryDate');
+const modalPrioritySpan = document.getElementById('modalPriority');
+const modalRemarksSpan = document.getElementById('modalRemarks');
+const modalOrderStatusSelect = document.getElementById('modalOrderStatus');
+const modalUpdateStatusBtn = document.getElementById('modalUpdateStatusBtn');
+const modalStatusHistoryListContainer = document.getElementById('modalStatusHistoryList');
+const modalProductListContainer = document.getElementById('modalProductList');
+const modalTotalAmountSpan = document.getElementById('modalTotalAmount');
+const modalAmountPaidSpan = document.getElementById('modalAmountPaid');
+const modalBalanceDueSpan = document.getElementById('modalBalanceDue');
+const modalPaymentStatusSpan = document.getElementById('modalPaymentStatus');
+const addPaymentBtn = document.getElementById('addPaymentBtn');
+const modalPOListContainer = document.getElementById('modalPOList');
+const modalCreatePOBtn = document.getElementById('modalCreatePOBtn');
+const modalDeleteBtn = document.getElementById('modalDeleteBtn');
+const modalEditFullBtn = document.getElementById('modalEditFullBtn');
+
+// WhatsApp Popup
 const whatsappReminderPopup = document.getElementById('whatsapp-reminder-popup');
+const whatsappPopupCloseBtn = document.getElementById('popup-close-btn');
 const whatsappMsgPreview = document.getElementById('whatsapp-message-preview');
 const whatsappSendLink = document.getElementById('whatsapp-send-link');
-const popupCloseBtn = document.getElementById('popup-close-btn');
 
-// --- Status Definitions (for color mapping) ---
-const statusList = [
-    "Order Received", "Designing", "Verification", "Design Approved",
-    "Printing", "Ready for Working", "Delivered", "Completed"
-];
+// Bulk Delete Modal Elements
+const bulkDeleteConfirmModal = document.getElementById('bulkDeleteConfirmModal');
+const closeBulkDeleteModalBtn = document.getElementById('closeBulkDeleteModal');
+const cancelBulkDeleteBtn = document.getElementById('cancelBulkDeleteBtn');
+const confirmBulkDeleteBtn = document.getElementById('confirmBulkDeleteBtn');
+const confirmDeleteCheckbox = document.getElementById('confirmDeleteCheckbox');
+const bulkDeleteOrderList = document.getElementById('bulkDeleteOrderList');
+const bulkDeleteCountSpan = document.getElementById('bulkDeleteCount');
+
+// PO Item Selection Modal Elements
+const poItemSelectionModal = document.getElementById('poItemSelectionModal');
+const closePoItemSelectionModalBtn = document.getElementById('closePoItemSelectionModal');
+const poItemSelectionOrderIdInput = document.getElementById('poItemSelectionOrderId');
+const poItemSelectionDisplayOrderIdSpan = document.getElementById('poItemSelectionDisplayOrderId');
+const poItemSelectionListContainer = document.getElementById('poItemSelectionList');
+const poSupplierSearchInput = document.getElementById('poSupplierSearchInput');
+const poSelectedSupplierIdInput = document.getElementById('poSelectedSupplierId');
+const poSelectedSupplierNameInput = document.getElementById('poSelectedSupplierName');
+const poSupplierSuggestionsDiv = document.getElementById('poSupplierSuggestions');
+const cancelPoItemSelectionBtn = document.getElementById('cancelPoItemSelectionBtn');
+const proceedToCreatePOBtn = document.getElementById('proceedToCreatePOBtn');
+const poItemSelectionError = document.getElementById('poItemSelectionError');
+
+// PO Details Popup Elements
+const poDetailsPopup = document.getElementById('poDetailsPopup');
+const poDetailsPopupContent = document.getElementById('poDetailsPopupContent');
+const closePoDetailsPopupBtn = document.getElementById('closePoDetailsPopupBtn');
+const closePoDetailsPopupBottomBtn = document.getElementById('closePoDetailsPopupBottomBtn');
+const printPoDetailsPopupBtn = document.getElementById('printPoDetailsPopupBtn');
+
+// Read-Only Order Modal Elements
+const readOnlyOrderModal = document.getElementById('readOnlyOrderModal');
+const closeReadOnlyOrderModalBtn = document.getElementById('closeReadOnlyOrderModal');
+const readOnlyOrderModalTitle = document.getElementById('readOnlyOrderModalTitle');
+const readOnlyOrderModalContent = document.getElementById('readOnlyOrderModalContent');
+const closeReadOnlyOrderModalBottomBtn = document.getElementById('closeReadOnlyOrderModalBottomBtn');
 
 
-// --- Initialization ---
+// Global State
+let currentSortField = 'createdAt';
+let currentSortDirection = 'desc';
+let unsubscribeOrders = null;
+let allOrdersCache = [];
+let currentlyDisplayedOrders = [];
+let searchDebounceTimer;
+let supplierSearchDebounceTimerPO;
+let currentStatusFilter = '';
+let orderIdToOpenFromUrl = null;
+let modalOpenedFromUrl = false;
+let selectedOrderIds = new Set();
+let activeOrderDataForModal = null;
+let cachedSuppliers = {};
+let cachedPOsForOrder = {};
+
+
+// Initialization
 document.addEventListener('DOMContentLoaded', () => {
-    console.log("New Order DOM Loaded (v2.3.2 - Customer ID Check & Balance Calc). Initializing..."); // Updated version
-    if (!orderForm || !addItemBtn || !orderItemsTableBody || !itemRowTemplate || !calculationPreviewArea || !calculationPreviewContent || !orderStatusSelect) {
-        console.error("Critical DOM elements missing! Check HTML IDs.", { orderForm: !!orderForm, addItemBtn: !!addItemBtn, orderItemsTableBody: !!orderItemsTableBody, itemRowTemplate: !!itemRowTemplate, calculationPreviewArea: !!calculationPreviewArea, calculationPreviewContent: !!calculationPreviewContent, orderStatusSelect: !!orderStatusSelect });
-        alert("Page structure error. Cannot initialize order form.");
-        return;
-    }
-    waitForDbConnection(initializeForm);
+    console.log("Order History DOM Loaded. Initializing...");
 
-    // Event Listeners
-    orderForm.addEventListener('submit', handleFormSubmit);
-    addItemBtn.addEventListener('click', handleAddItem);
-    orderItemsTableBody.addEventListener('click', handleItemTableClick);
-    orderItemsTableBody.addEventListener('input', handleItemTableInput);
-    orderItemsTableBody.addEventListener('change', handleItemTableChange);
-    orderItemsTableBody.addEventListener('focusin', (event) => { if (event.target.matches('.product-name')) activeProductInput = event.target; });
-    if (customerNameInput) { customerNameInput.addEventListener('input', (e) => handleCustomerInput(e, 'name')); customerNameInput.addEventListener('blur', () => setTimeout(() => { if(customerSuggestionsNameBox && !customerSuggestionsNameBox.matches(':hover')) hideSuggestionBox(customerSuggestionsNameBox); }, 150)); } else { console.warn("Customer name input not found."); }
-    if (customerWhatsAppInput) { customerWhatsAppInput.addEventListener('input', (e) => handleCustomerInput(e, 'whatsapp')); customerWhatsAppInput.addEventListener('blur', () => setTimeout(() => { if(customerSuggestionsWhatsAppBox && !customerSuggestionsWhatsAppBox.matches(':hover')) hideSuggestionBox(customerSuggestionsWhatsAppBox); }, 150)); } else { console.warn("Customer whatsapp input not found."); }
-    if (summaryDiscountPercentInput) summaryDiscountPercentInput.addEventListener('input', handleDiscountInput); else { console.warn("Discount % input not found."); }
-    if (summaryDiscountAmountInput) summaryDiscountAmountInput.addEventListener('input', handleDiscountInput); else { console.warn("Discount Amount input not found."); }
-    if (summaryAdvancePaymentInput) summaryAdvancePaymentInput.addEventListener('input', updateOrderSummary); else { console.warn("Advance Payment input not found."); }
-    if (popupCloseBtn) popupCloseBtn.addEventListener('click', closeWhatsAppPopup);
-    if (whatsappReminderPopup) whatsappReminderPopup.addEventListener('click', (event) => { if (event.target === whatsappReminderPopup) closeWhatsAppPopup(); });
-    document.addEventListener('click', handleGlobalClick);
+    const urlParams = new URLSearchParams(window.location.search);
+    orderIdToOpenFromUrl = urlParams.get('openModalForId');
+    currentStatusFilter = urlParams.get('status');
+    if (orderIdToOpenFromUrl) console.log(`Request to open modal for ID: ${orderIdToOpenFromUrl}`);
+    if (currentStatusFilter && filterStatusSelect) filterStatusSelect.value = currentStatusFilter;
 
-    orderStatusSelect.addEventListener('change', (event) => {
-        updateStatusDropdownColor(event.target.value);
+    waitForDbConnection(() => {
+        listenForOrders();
+
+        // Event Listeners
+        if (sortSelect) sortSelect.addEventListener('change', handleSortChange);
+        if (filterDateInput) filterDateInput.addEventListener('change', handleFilterChange);
+        if (filterSearchInput) filterSearchInput.addEventListener('input', handleSearchInput);
+        if (filterStatusSelect) filterStatusSelect.addEventListener('change', handleFilterChange);
+        if (clearFiltersBtn) clearFiltersBtn.addEventListener('click', clearFilters);
+        if (exportCsvBtn) exportCsvBtn.addEventListener('click', exportToCsv);
+
+        // Action Bar Buttons
+        if (newCustomerBtn) newCustomerBtn.addEventListener('click', () => alert('New Customer button clicked - Add functionality'));
+        if (paymentReceivedBtn) paymentReceivedBtn.addEventListener('click', () => alert('Payment Received button clicked - Add functionality'));
+        if (customerPanelBtn) customerPanelBtn.addEventListener('click', () => window.location.href = 'customer_panel.html');
+
+        // Bulk Actions
+        if (selectAllCheckbox) selectAllCheckbox.addEventListener('change', handleSelectAllChange);
+        if (bulkUpdateStatusBtn) bulkUpdateStatusBtn.addEventListener('click', handleBulkUpdateStatus);
+        if (bulkDeleteBtn) bulkDeleteBtn.addEventListener('click', handleBulkDelete);
+        if (bulkStatusSelect) bulkStatusSelect.addEventListener('change', updateBulkActionsBar);
+        if (confirmDeleteCheckbox) confirmDeleteCheckbox.addEventListener('change', () => confirmBulkDeleteBtn.disabled = !confirmDeleteCheckbox.checked);
+        if (confirmBulkDeleteBtn) confirmBulkDeleteBtn.addEventListener('click', () => { if (confirmDeleteCheckbox.checked) executeBulkDelete(Array.from(selectedOrderIds)); });
+        if (cancelBulkDeleteBtn) cancelBulkDeleteBtn.addEventListener('click', closeBulkDeleteModal);
+        if (closeBulkDeleteModalBtn) closeBulkDeleteModalBtn.addEventListener('click', closeBulkDeleteModal);
+        if (bulkDeleteConfirmModal) bulkDeleteConfirmModal.addEventListener('click', (event) => { if (event.target === bulkDeleteConfirmModal) closeBulkDeleteModal(); });
+
+        // Enhanced Details Modal
+        if (closeModalBtn) closeModalBtn.addEventListener('click', closeDetailsModal);
+        if (detailsModal) detailsModal.addEventListener('click', (event) => { if (event.target === detailsModal) closeDetailsModal(); });
+        if (modalUpdateStatusBtn) modalUpdateStatusBtn.addEventListener('click', handleUpdateStatus);
+        if (modalDeleteBtn) modalDeleteBtn.addEventListener('click', handleDeleteFromModal);
+        if (modalEditFullBtn) modalEditFullBtn.addEventListener('click', handleEditFullFromModal);
+        if (addPaymentBtn) addPaymentBtn.addEventListener('click', () => alert('Add Payment clicked - Needs implementation'));
+        if (modalCreatePOBtn) modalCreatePOBtn.addEventListener('click', handleCreatePOFromModal);
+
+        // WhatsApp Popup
+        if (whatsappPopupCloseBtn) whatsappPopupCloseBtn.addEventListener('click', closeWhatsAppPopup);
+        if (whatsappReminderPopup) whatsappReminderPopup.addEventListener('click', (event) => { if (event.target === whatsappReminderPopup) closeWhatsAppPopup(); });
+
+        // PO Item Selection Modal
+        if (closePoItemSelectionModalBtn) closePoItemSelectionModalBtn.addEventListener('click', closePoItemSelectionModal);
+        if (cancelPoItemSelectionBtn) cancelPoItemSelectionBtn.addEventListener('click', closePoItemSelectionModal);
+        if (poItemSelectionModal) poItemSelectionModal.addEventListener('click', (event) => { if (event.target === poItemSelectionModal) closePoItemSelectionModal(); });
+        if (proceedToCreatePOBtn) proceedToCreatePOBtn.addEventListener('click', handleProceedToCreatePO);
+        if (poSupplierSearchInput) poSupplierSearchInput.addEventListener('input', handlePOSupplierSearchInput);
+        if (poItemSelectionListContainer) poItemSelectionListContainer.addEventListener('change', handlePOItemCheckboxChange);
+        document.addEventListener('click', (e) => {
+            if (poSupplierSuggestionsDiv && poSupplierSuggestionsDiv.style.display === 'block' && !poSupplierSearchInput.contains(e.target) && !poSupplierSuggestionsDiv.contains(e.target)) {
+                poSupplierSuggestionsDiv.style.display = 'none';
+            }
+        });
+
+         // PO Details Popup Listeners
+         if (closePoDetailsPopupBtn) closePoDetailsPopupBtn.addEventListener('click', closePODetailsPopup);
+         if (closePoDetailsPopupBottomBtn) closePoDetailsPopupBottomBtn.addEventListener('click', closePODetailsPopup);
+         if (printPoDetailsPopupBtn) printPoDetailsPopupBtn.addEventListener('click', handlePrintPODetailsPopup);
+         if (poDetailsPopup) poDetailsPopup.addEventListener('click', (event) => { if (event.target === poDetailsPopup) closePODetailsPopup(); });
+
+         // Read-Only Order Modal Listeners
+         if (closeReadOnlyOrderModalBtn) closeReadOnlyOrderModalBtn.addEventListener('click', closeReadOnlyOrderModal);
+         if (closeReadOnlyOrderModalBottomBtn) closeReadOnlyOrderModalBottomBtn.addEventListener('click', closeReadOnlyOrderModal);
+         if (readOnlyOrderModal) readOnlyOrderModal.addEventListener('click', (event) => { if (event.target === readOnlyOrderModal) closeReadOnlyOrderModal(); });
+
+
+        // Table Event Delegation
+        if (orderTableBody) {
+            orderTableBody.addEventListener('click', function(event) {
+                const target = event.target;
+                const row = target.closest('tr');
+                if (!row || !row.dataset.id) return;
+
+                const firestoreId = row.dataset.id;
+                const orderData = findOrderInCache(firestoreId);
+
+                if (!orderData) {
+                    console.warn(`Order data not found in cache for ID: ${firestoreId}`);
+                    return;
+                }
+
+                if (target.matches('.row-selector')) {
+                    handleRowCheckboxChange(target, firestoreId);
+                } else if (target.closest('.order-id-link')) {
+                    event.preventDefault();
+                    openDetailsModal(firestoreId, orderData);
+                } else if (target.closest('.customer-name-link')) {
+                    event.preventDefault();
+                    const customerId = orderData.customerDetails?.customerId;
+                    if (customerId) {
+                        window.location.href = `customer_panel.html?customerId=${customerId}`;
+                    } else {
+                        alert('Customer details/ID not found for linking.');
+                    }
+                } else if (target.closest('.create-po-button')) {
+                    openPOItemSelectionModal(firestoreId, orderData);
+                } else if (target.closest('.view-po-details-link')) {
+                    event.preventDefault();
+                    const poId = target.dataset.poid;
+                    if (poId) {
+                        openPODetailsPopup(poId);
+                    } else {
+                        console.error("PO ID missing on view link");
+                    }
+                } else if (target.closest('.see-more-link')) {
+                    event.preventDefault();
+                    openReadOnlyOrderPopup(firestoreId, orderData);
+                } else if (target.closest('.details-edit-button')) {
+                    openDetailsModal(firestoreId, orderData);
+                } else if (target.closest('.whatsapp-button')) {
+                    sendWhatsAppMessage(firestoreId, orderData);
+                }
+            });
+        } else {
+            console.error("Element with ID 'orderTableBody' not found!");
+        }
     });
 });
 
-// --- DB Connection Wait ---
-function waitForDbConnection(callback) { if(window.db&&typeof window.query==='function'&&typeof window.collection==='function'){console.log("DB confirmed."); callback();}else{let a=0;const m=20,i=setInterval(()=>{a++; if(window.db&&typeof window.query==='function'&&typeof window.collection==='function'){clearInterval(i);console.log("DB confirmed later."); callback();}else if(a>=m){clearInterval(i);console.error("DB timeout.");alert("DB connection failed.");if(saveButton)saveButton.disabled=true;}},250);}}
-
-// --- Global Click Handler ---
-function handleGlobalClick(event) {
-    if (productSuggestionsDiv && activeProductInput && !productSuggestionsDiv.contains(event.target) && event.target !== activeProductInput) {
-        hideProductSuggestions();
-    }
-    if (customerSuggestionsNameBox && customerNameInput && !customerSuggestionsNameBox.contains(event.target) && event.target !== customerNameInput) {
-         hideSuggestionBox(customerSuggestionsNameBox);
-    }
-     if (customerSuggestionsWhatsAppBox && customerWhatsAppInput && !customerSuggestionsWhatsAppBox.contains(event.target) && event.target !== customerWhatsAppInput) {
-         hideSuggestionBox(customerSuggestionsWhatsAppBox);
-    }
+function findOrderInCache(firestoreId) {
+    const order = allOrdersCache.find(o => o.id === firestoreId);
+    return order ? order.data : null;
 }
 
-// --- Utility Functions ---
-function hideSuggestionBox(box) { if(box){box.classList.remove('active');box.style.display='none';}}
-function formatCurrency(amount) { const n=Number(amount||0); return `₹${n.toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2})}`; }
-function showFormError(message) { if(formErrorMsg){formErrorMsg.textContent=message;formErrorMsg.style.display=message?'block':'none';if(message)formErrorMsg.scrollIntoView({behavior:'smooth',block:'center'});}else if(message){alert(message);}}
-
-// --- Form Initialization ---
-function initializeForm() {
-    console.log("Running initializeForm...");
-    const uP=new URLSearchParams(window.location.search);
-    orderIdToEdit=uP.get('editOrderId');
-    if(orderIdToEdit){
-        isEditMode=true;
-        console.log("Edit Mode:", orderIdToEdit);
-        if(headerText)headerText.textContent="Edit Order";
-        if(breadcrumbAction)breadcrumbAction.textContent="Edit Order";
-        if(saveButtonText)saveButtonText.textContent="Update Order";
-        if(hiddenEditOrderIdInput)hiddenEditOrderIdInput.value=orderIdToEdit;
-        if(manualOrderIdInput)manualOrderIdInput.readOnly=true;
-        loadOrderForEdit(orderIdToEdit);
-    } else {
-        isEditMode=false;
-        console.log("Add Mode.");
-        if(headerText)headerText.textContent="New Order";
-        if(breadcrumbAction)breadcrumbAction.textContent="New Order";
-        if(saveButtonText)saveButtonText.textContent="Save Order";
-        if(manualOrderIdInput)manualOrderIdInput.readOnly=false;
-        if(orderDateInput&&!orderDateInput.value)orderDateInput.value=new Date().toISOString().split('T')[0];
-        const defaultStatus = "Order Received";
-        orderStatusSelect.value = defaultStatus;
-        updateStatusDropdownColor(defaultStatus);
-        resetCustomerSelectionUI();
-        if(orderItemsTableBody&&orderItemsTableBody.children.length===0){handleAddItem();}else if(!orderItemsTableBody){console.error("Table body missing!");}
-        updateOrderSummary();
-    }
-    preFetchCaches();
+function waitForDbConnection(callback) {
+    if (window.db) { callback(); } else { let a = 0, m = 20, i = setInterval(() => { a++; if (window.db) { clearInterval(i); callback(); } else if (a >= m) { clearInterval(i); console.error("DB connection timeout (order_history.js)"); alert("Database connection failed."); } }, 250); }
 }
 
-// --- Pre-fetch Caches ---
-function preFetchCaches() { console.log("Pre-fetching caches..."); getOrFetchCustomerCache().catch(e=>console.error("Cust cache fetch err:", e)); getOrFetchProductCache().catch(e=>console.error("Prod cache fetch err:", e));}
-
-// --- Load Order For Edit ---
-async function loadOrderForEdit(docId) {
-    console.log(`Loading order for edit: ${docId}`);
-    showFormError('');
-    if(!db||!doc||!getDoc){showFormError("DB function error.");return;}
-    try{
-        const r=doc(db,"orders",docId);
-        const s=await getDoc(r);
-        if(s.exists()){
-            currentOrderData=s.data();
-            console.log("Order data loaded for edit:",currentOrderData);
-            selectedCustomerId=currentOrderData.customerId||null;
-            if(selectedCustomerIdInput)selectedCustomerIdInput.value=selectedCustomerId || '';
-            if(currentOrderData.customerDetails){
-                customerNameInput.value=currentOrderData.customerDetails.fullName||'';
-                customerWhatsAppInput.value=currentOrderData.customerDetails.whatsappNo||'';
-                customerAddressInput.value=currentOrderData.customerDetails.address||currentOrderData.customerDetails.billingAddress||''; // Prefer billingAddress if present
-                customerContactInput.value=currentOrderData.customerDetails.contactNo||'';
-                if(selectedCustomerId){
-                    await fetchAndDisplayCustomerDetails(selectedCustomerId); // Await to ensure balance is loaded before summary update potentially
-                }else{
-                    console.warn("Order loaded but customerId is missing/null in data.");
-                    resetCustomerSelectionUI();
-                }
-            } else {
-                 resetCustomerSelectionUI();
-            }
-            displayOrderIdInput.value=currentOrderData.orderId||docId;
-            manualOrderIdInput.value=currentOrderData.orderId||'';
-            orderDateInput.value=currentOrderData.orderDate||'';
-            deliveryDateInput.value=currentOrderData.deliveryDate||'';
-            remarksInput.value=currentOrderData.remarks||'';
-            const uV=currentOrderData.urgent||'No';
-            const uR=orderForm.querySelector(`input[name="urgent"][value="${uV}"]`);
-            if(uR)uR.checked=true;
-            const loadedStatus = currentOrderData.status || "Order Received";
-            orderStatusSelect.value = loadedStatus;
-            updateStatusDropdownColor(loadedStatus);
-            if(!orderItemsTableBody){console.error("Item table body missing!");return;}
-            orderItemsTableBody.innerHTML=''; // Clear existing rows before populating
-            if(currentOrderData.items&&Array.isArray(currentOrderData.items)){
-                currentOrderData.items.forEach(i=>{const nR=addItemRow(false); if(nR)populateItemRow(nR,i);else console.error("Failed to add row for item:",i);});
-            }
-            if(orderItemsTableBody.children.length===0){handleAddItem();} // Add a blank row if no items loaded
-            if(summaryDiscountPercentInput)summaryDiscountPercentInput.value=currentOrderData.discountPercentage||'';
-            if(summaryDiscountAmountInput)summaryDiscountAmountInput.value=currentOrderData.discountAmount||'';
-            if(summaryAdvancePaymentInput)summaryAdvancePaymentInput.value=currentOrderData.advancePayment||'';
-            updateOrderSummary(); // Calculate summary based on loaded items and payments
-        } else {
-            console.error("Order document not found for editing!");
-            showFormError("Error: The order you are trying to edit could not be found.");
-            if(saveButton)saveButton.disabled=true;
-        }
-    } catch(e) {
-        console.error("Error loading order for edit:",e);
-        showFormError("Error loading order data: "+e.message);
-        if(saveButton)saveButton.disabled=true;
+function handleSortChange() {
+    if (!sortSelect) return;
+    const [field, direction] = sortSelect.value.split('_');
+    if (field && direction) {
+        currentSortField = field;
+        currentSortDirection = direction;
+        applyFiltersAndRender();
     }
 }
-
-// --- Item Handling ---
-function handleAddItem() { console.log("Adding new item row..."); if(!itemRowTemplate || !orderItemsTableBody){console.error("Template or body missing!");showFormError("Error: Page setup incomplete.");return;} const nR=addItemRow(true); if(nR){console.log("Row added successfully.");updateOrderSummary();}else{console.error("Failed adding item row.");}}
-function addItemRow(focus = true) { if (!itemRowTemplate || !orderItemsTableBody) { console.error("addItemRow: Prerequisites missing!"); return null; } try { const tC = itemRowTemplate.content.cloneNode(true), nRE = tC.querySelector('.item-row'); if (!nRE) { console.error("Template is missing the .item-row element"); return null; } orderItemsTableBody.appendChild(nRE); const aR = orderItemsTableBody.lastElementChild; if (!aR || !aR.matches('.item-row')) { console.error("Failed to append or find the new row."); return null; } const uS = aR.querySelector('.unit-type-select'); if (uS) handleUnitTypeChange({ target: uS }); if (focus) { const firstInput = aR.querySelector('.product-name'); if (firstInput) firstInput.focus(); } return aR; } catch (e) { console.error("Error in addItemRow:", e); showFormError(`Error creating item row: ${e.message}`); return null; } }
-function populateItemRow(row, itemData) { if(!row||!itemData){console.warn("populateItemRow called with invalid row or data.");return;}console.log("Populating row with item:",itemData);try{row.querySelector('.product-name').value=itemData.productName||'';row.querySelector('.unit-type-select').value=itemData.unitType||'Qty';row.querySelector('.quantity-input').value=itemData.quantity||1;const rI=row.querySelector('.rate-input');rI.value=itemData.rate!==undefined?String(itemData.rate):''; // Ensure rate is string
-const mR=itemData.minSalePrice; if(rI) rI.dataset.minRate=mR!==undefined&&mR!==null?String(mR):'-1';if(itemData.unitType==='Sq Feet'){row.querySelector('.dimension-unit-select').value=itemData.dimensionUnit||'feet';row.querySelector('.width-input').value=itemData.width||'';row.querySelector('.height-input').value=itemData.height||'';}handleUnitTypeChange({target:row.querySelector('.unit-type-select')});updateItemAmount(row);}catch(e){console.error("Error populating item row:",e);}}
-function handleItemTableClick(event) {
-     if (event.target.closest('.delete-item-btn')) {
-         const r=event.target.closest('.item-row');
-         if(r){
-              console.log("Deleting item row...");
-              r.remove();
-              hideProductSuggestions(); // Hide suggestions if deleting row with active input
-              updateOrderSummary();
-              updateCalculationPreview();
-          }
-     }
-}
-function handleSuggestionClick(event) {
-     const pLI = event.target.closest('.product-suggestions-list li[data-product]');
-     const cLI = event.target.closest('.suggestions-box li[data-customer-id]');
-     if (pLI) {
-         event.preventDefault();
-         try { const pD = JSON.parse(pLI.dataset.product || '{}'); if (activeProductInput) selectProductSuggestion(pD, activeProductInput); } catch (e) { console.error("Error parsing/selecting product suggestion:", e); }
-     } else if (cLI) {
-         event.preventDefault();
-         try { fillCustomerData(cLI.dataset); const b = cLI.closest('.suggestions-box'); if (b) hideSuggestionBox(b); } catch(e) { console.error("Error selecting customer suggestion:", e); }
-     }
-}
-function handleItemTableInput(event) { const t=event.target,r=t.closest('.item-row'); if(!r)return; if(t.matches('.product-name')){activeProductInput=t;handleProductSearchInput(event);}else if(t.matches('.quantity-input, .rate-input, .width-input, .height-input')){updateItemAmount(r);}}
-function handleItemTableChange(event){ const t=event.target,r=t.closest('.item-row'); if(!r)return; if(t.matches('.unit-type-select'))handleUnitTypeChange(event); else if(t.matches('.dimension-unit-select'))updateItemAmount(r);}
-
-// --- Sq Ft Calculation Logic ---
-function calculateFlexDimensions(unit, width, height) { const m=[3,4,5,6,8,10]; let w=(unit==='inches')?parseFloat(width||0)/12:parseFloat(width||0), h=(unit==='inches')?parseFloat(height||0)/12:parseFloat(height||0); if(isNaN(w)||isNaN(h)||w<=0||h<=0) return{realSqFt:0, printSqFt:0, realWidthFt:0, realHeightFt:0, printWidthFt:0, printHeightFt:0}; const r=w*h; let b={pW:0,pH:0,pS:Infinity}; const fW=m.find(x=>x>=w); let pW1=fW||w, pH1=h, pS1=pW1*pH1; const fH=m.find(x=>x>=h); let pW2=w, pH2=fH||h, pS2=pW2*pH2; if(pS1<=pS2){b.pW=pW1; b.pH=pH1; b.pS=pS1;} else{b.pW=pW2; b.pH=pH2; b.pS=pS2;} return{realSqFt:r, printWidthFt:b.pW, printHeightFt:b.pH, printSqFt:b.pS, realWidthFt: w, realHeightFt: h };}
-function handleUnitTypeChange(event) { const r=event.target.closest('.item-row'); if(!r)return; const uT=event.target.value; const isSqFt = (uT === 'Sq Feet'); r.querySelectorAll('.sq-feet-input').forEach(e=>e.style.display = isSqFt ? '' : 'none'); r.closest('table')?.querySelectorAll('thead th.sq-feet-header').forEach(h=>h.classList.toggle('hidden-col',!isSqFt)); r.querySelector('.rate-input').placeholder = isSqFt ? 'Rate/SqFt' : 'Rate/Unit'; if(!isSqFt){r.querySelector('.width-input').value=''; r.querySelector('.height-input').value='';} updateItemAmount(r);}
-function updateItemAmount(row) { if (!row) return; const uTS=row.querySelector('.unit-type-select'),aS=row.querySelector('.item-amount'),rI=row.querySelector('.rate-input'),qI=row.querySelector('.quantity-input'),mR=parseFloat(rI?.dataset.minRate||-1); let cA=0,rV=parseFloat(rI?.value||0),q=parseInt(qI?.value||1); if(isNaN(q)||q<1)q=1; try{rI.classList.remove('input-error');rI.title='';if(mR>=0&&rV<mR && Math.abs(rV - mR) > 0.001 ){rI.classList.add('input-error');rI.title=`Rate ${formatCurrency(rV)} is below Minimum ${formatCurrency(mR)}`;} if(uTS?.value==='Sq Feet'){const dUS=row.querySelector('.dimension-unit-select'),wI=row.querySelector('.width-input'),hI=row.querySelector('.height-input'); const u=dUS?.value||'feet',w=parseFloat(wI?.value||0),h=parseFloat(hI?.value||0); if(w>0&&h>0&&!isNaN(rV)&&rV>=0){const cR=calculateFlexDimensions(u,w,h);cA=parseFloat(cR.printSqFt||0)*q*rV;}}else{if(!isNaN(rV)&&rV>=0)cA=q*rV;}}catch(e){console.error("Error calculating item amount:",e);cA=0;} if(aS)aS.textContent=cA.toFixed(2); updateOrderSummary(); updateCalculationPreview(); }
-
-// --- Calculation Preview Logic ---
-function updateCalculationPreview() { if (!calculationPreviewArea || !calculationPreviewContent || !orderItemsTableBody) { console.warn("Calculation preview elements missing."); return; } let entriesHTML = ''; const itemRows = orderItemsTableBody.querySelectorAll('.item-row'); let foundSqFt = false; itemRows.forEach((row, index) => { const unitTypeSelect = row.querySelector('.unit-type-select'); if (unitTypeSelect?.value === 'Sq Feet') { foundSqFt = true; const productNameInput = row.querySelector('.product-name'); const productName = productNameInput?.value.trim() || `Item ${index + 1}`; const dimensionUnitSelect = row.querySelector('.dimension-unit-select'); const widthInput = row.querySelector('.width-input'); const heightInput = row.querySelector('.height-input'); const quantityInput = row.querySelector('.quantity-input'); const unit = dimensionUnitSelect?.value || 'feet'; const width = parseFloat(widthInput?.value || 0); const height = parseFloat(heightInput?.value || 0); let quantity = parseInt(quantityInput?.value || 1); if (isNaN(quantity) || quantity < 1) quantity = 1; let entryContent = `<div class="item-preview-entry"><strong>${productName}:</strong><br>`; if (width > 0 && height > 0) { const calcResult = calculateFlexDimensions(unit, width, height); if (calcResult && parseFloat(calcResult.printSqFt) >= 0) { const realSqFtNum = parseFloat(calcResult.realSqFt); const printSqFtNum = parseFloat(calcResult.printSqFt); const wastageSqFt = (printSqFtNum - realSqFtNum); const tolerance = 0.01; let wastageDesc = (wastageSqFt > tolerance) ? `<span style="color: orange;">Wastage: ${wastageSqFt.toFixed(2)} sq ft/item</span>` : `<span style="color: green;">Wastage: ${wastageSqFt.toFixed(2)} sq ft/item</span>`; entryContent += `&nbsp; Qty: ${quantity}<br>`; entryContent += `&nbsp; Real: ${calcResult.realWidthFt?.toFixed(2) ?? '?'}ft x ${calcResult.realHeightFt?.toFixed(2) ?? '?'}ft = ${realSqFtNum.toFixed(2)} sq ft/item<br>`; entryContent += `&nbsp; Print: ${calcResult.printWidthFt.toFixed(2)}ft x ${calcResult.printHeightFt.toFixed(2)}ft = ${printSqFtNum.toFixed(2)} sq ft/item<br>`; entryContent += `&nbsp; Total Print Area: ${(printSqFtNum * quantity).toFixed(2)} sq ft<br>`; entryContent += `&nbsp; ${wastageDesc}`; } else { entryContent += `&nbsp; <span style="color:orange;">Invalid dimensions or calculation error.</span>`; } } else { entryContent += `&nbsp; <span style="color:grey;">Enter valid width & height for calculation.</span>`; } entryContent += `</div>`; entriesHTML += entryContent; } }); if (foundSqFt) { calculationPreviewContent.innerHTML = entriesHTML || '<p style="color:grey;">Enter dimensions for Sq Ft items.</p>'; calculationPreviewArea.style.display = 'block'; } else { calculationPreviewArea.style.display = 'none'; } }
-
-// --- Order Summary Calculation ---
-function updateOrderSummary() { let s=0; if(orderItemsTableBody) orderItemsTableBody.querySelectorAll('.item-row .item-amount').forEach(sp=>s+=parseFloat(sp.textContent||0)); let dP=parseFloat(summaryDiscountPercentInput?.value||0),dA=parseFloat(summaryDiscountAmountInput?.value||0),cDA=0; const activeEl = document.activeElement; if(!isDiscountInputProgrammaticChange){if(activeEl===summaryDiscountPercentInput&&!isNaN(dP)){cDA=s*(dP/100); isDiscountInputProgrammaticChange=true; if(summaryDiscountAmountInput) summaryDiscountAmountInput.value=cDA.toFixed(2); isDiscountInputProgrammaticChange=false;}else if(activeEl===summaryDiscountAmountInput&&!isNaN(dA)){cDA=dA; if(s>0){const cP=(cDA/s)*100; isDiscountInputProgrammaticChange=true; if(summaryDiscountPercentInput) summaryDiscountPercentInput.value=cP.toFixed(2); isDiscountInputProgrammaticChange=false;}else{isDiscountInputProgrammaticChange=true; if(summaryDiscountPercentInput) summaryDiscountPercentInput.value=''; isDiscountInputProgrammaticChange=false;}}else{if(!isNaN(dP)&&dP>0)cDA=s*(dP/100); else if(!isNaN(dA)&&dA>0)cDA=dA; else cDA=0;}} cDA=Math.max(0,Math.min(cDA,s)); const fA=s-cDA,aP=parseFloat(summaryAdvancePaymentInput?.value||0),tB=fA-aP; if(summarySubtotalSpan)summarySubtotalSpan.textContent=s.toFixed(2); if(summaryFinalAmountSpan)summaryFinalAmountSpan.textContent=fA.toFixed(2); if(summaryTotalBalanceSpan)summaryTotalBalanceSpan.textContent=tB.toFixed(2); checkCreditLimit();}// Trigger credit check after summary update
-
-function handleDiscountInput(event) { if(isDiscountInputProgrammaticChange)return; const cI=event.target; isDiscountInputProgrammaticChange=true; if(cI===summaryDiscountPercentInput){if(summaryDiscountAmountInput)summaryDiscountAmountInput.value='';}else if(cI===summaryDiscountAmountInput){if(summaryDiscountPercentInput)summaryDiscountPercentInput.value='';} isDiscountInputProgrammaticChange=false; updateOrderSummary();}
-
-// --- Customer Autocomplete & Details ---
-async function getOrFetchCustomerCache() { if(customerCache.length>0)return Promise.resolve(); if(customerFetchPromise)return customerFetchPromise; console.log("Fetching customers..."); try{if(!db||!collection||!query||!getDocs||!orderBy)throw new Error("DB function missing"); const q=query(collection(db,"customers"),orderBy("fullName")); customerFetchPromise=getDocs(q).then(s=>{customerCache=s.docs.map(d=>({id:d.id,...d.data()})); console.log(`Cached ${customerCache.length} customers.`); customerFetchPromise=null;}).catch(e=>{console.error(e);customerFetchPromise=null;throw e;}); return customerFetchPromise;}catch(e){console.error(e);customerFetchPromise=null;return Promise.reject(e);}}
-function handleCustomerInput(event, type) { const i=event.target,t=i.value.trim(),b=type==='name'?customerSuggestionsNameBox:customerSuggestionsWhatsAppBox; if(!b)return; if(t.length<1){clearTimeout(customerSearchDebounceTimer); hideSuggestionBox(b); selectedCustomerId = null; if(selectedCustomerIdInput) selectedCustomerIdInput.value = ''; resetCustomerSelectionUI(false); return;} clearTimeout(customerSearchDebounceTimer); customerSearchDebounceTimer=setTimeout(()=>{getOrFetchCustomerCache().then(()=>filterAndRenderCustomerSuggestions(t,type,b,i)).catch(e=>console.error(e));},300);}
-function filterAndRenderCustomerSuggestions(term, type, box, inputElement) { const l=term.toLowerCase(), f=type==='name'?'fullName':'whatsappNo', d=customerCache.filter(c=>String(c[f]||'').toLowerCase().includes(l)).slice(0,10); renderCustomerSuggestions(d,term,box,inputElement);}
-function renderCustomerSuggestions(suggestions, term, box, inputElement) { if(!box)return; const ul=box.querySelector('ul')||document.createElement('ul'); ul.innerHTML=''; if(suggestions.length===0){ul.innerHTML='<li class="no-suggestions">No matching customers found.</li>';}else{suggestions.forEach(c=>{const li=document.createElement('li'); const dN=`${c.fullName} (${c.whatsappNo})`; try{li.innerHTML=dN.replace(new RegExp(`(${term.replace(/[-\/\^$*+?.()|[\]{}]/g,'\$&')})`,'gi'),'<strong>$1</strong>');}catch{li.textContent=dN;} li.dataset.customerId=c.id; li.dataset.customerName=c.fullName; li.dataset.customerWhatsapp=c.whatsappNo; li.dataset.customerAddress=c.billingAddress||c.address||''; li.dataset.customerContact=c.contactNo||''; ul.appendChild(li);});} if(!box.contains(ul))box.appendChild(ul); box.classList.add('active'); box.style.display='block'; const iR=inputElement.getBoundingClientRect(); box.style.position='absolute'; box.style.left='0'; box.style.top=`${iR.height}px`; box.style.width=`${iR.width}px`; box.style.zIndex='1000'; box.removeEventListener('click', handleSuggestionClick); box.addEventListener('click', handleSuggestionClick); }
-function fillCustomerData(customerData) {
-    if (!customerData || !customerData.customerId) {
-        console.warn("fillCustomerData called with invalid data or missing customerId.");
-        resetCustomerSelectionUI();
-        return;
+function handleFilterChange() { applyFiltersAndRender(); }
+function handleSearchInput() { clearTimeout(searchDebounceTimer); searchDebounceTimer = setTimeout(applyFiltersAndRender, 300); }
+function clearFilters() {
+    if (filterDateInput) filterDateInput.value = '';
+    if (filterSearchInput) filterSearchInput.value = '';
+    if (filterStatusSelect) filterStatusSelect.value = '';
+    if (sortSelect) sortSelect.value = 'createdAt_desc';
+    currentSortField = 'createdAt';
+    currentSortDirection = 'desc';
+    currentStatusFilter = '';
+    selectedOrderIds.clear();
+    updateBulkActionsBar();
+    if (selectAllCheckbox) selectAllCheckbox.checked = false;
+    if (history.replaceState) {
+        const cleanUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
+        window.history.replaceState({ path: cleanUrl }, '', cleanUrl);
     }
-    console.log("Filling customer data for ID:", customerData.customerId);
-    customerNameInput.value = customerData.customerName || '';
-    customerWhatsAppInput.value = customerData.customerWhatsapp || '';
-    customerAddressInput.value = customerData.customerAddress || '';
-    customerContactInput.value = customerData.customerContact || '';
-    selectedCustomerId = customerData.customerId;
-    if (selectedCustomerIdInput) {
-        selectedCustomerIdInput.value = selectedCustomerId;
-        console.log("Hidden input selectedCustomerId set to:", selectedCustomerIdInput.value);
-    } else {
-        console.error("Hidden input #selectedCustomerId not found!");
-    }
-    // Await the fetch and display function to ensure balance is fetched
-    fetchAndDisplayCustomerDetails(selectedCustomerId).catch(e => {
-        console.error("Error during fetchAndDisplayCustomerDetails after fill:", e);
-        showFormError("Could not load customer balance details.");
-    });
+    applyFiltersAndRender();
 }
-async function fetchAndDisplayCustomerDetails(customerId) {
-    console.log("Fetching details for:", customerId);
-    if (!customerId) {
-        console.warn("fetchAndDisplayCustomerDetails called without customerId.");
-        resetCustomerSelectionUI(); // Reset if ID is missing
-        return;
-    }
+
+function listenForOrders() {
+    if (unsubscribeOrders) { unsubscribeOrders(); unsubscribeOrders = null; }
+    if (!db) { console.error("Firestore instance (db) not available."); return; }
+    if (orderTableBody) orderTableBody.innerHTML = `<tr><td colspan="11" id="loadingMessage">Loading orders...</td></tr>`;
+
     try {
-        // Fetch customer data (from cache or DB)
-        let c = customerCache.find(cust => cust.id === customerId);
-        if (!c) {
-            console.log("Customer not in cache, fetching from DB:", customerId);
-            const customerDoc = await getDoc(doc(db, "customers", customerId));
-            if (customerDoc.exists()) {
-                c = { id: customerDoc.id, ...customerDoc.data() };
-                console.log("Fetched customer from DB:", c);
-            } else {
-                console.warn("Customer not found in DB:", customerId);
-                resetCustomerSelectionUI();
-                return;
+        const q = query(collection(db, "orders"));
+        unsubscribeOrders = onSnapshot(q, (snapshot) => {
+            allOrdersCache = snapshot.docs.map(doc => ({
+                 id: doc.id,
+                 data: {
+                     id: doc.id,
+                     orderId: doc.data().orderId || '',
+                     customerDetails: doc.data().customerDetails || {},
+                     products: doc.data().products || [],
+                     orderDate: doc.data().orderDate || null,
+                     deliveryDate: doc.data().deliveryDate || null,
+                     urgent: doc.data().urgent || 'No',
+                     status: doc.data().status || 'Unknown',
+                     statusHistory: doc.data().statusHistory || [],
+                     createdAt: doc.data().createdAt || null,
+                     updatedAt: doc.data().updatedAt || null,
+                     remarks: doc.data().remarks || '',
+                     totalAmount: doc.data().totalAmount || 0,
+                     amountPaid: doc.data().amountPaid || 0,
+                     paymentStatus: doc.data().paymentStatus || 'Pending',
+                     linkedPOs: doc.data().linkedPOs || []
+                 }
+             }));
+
+            selectedOrderIds.clear();
+            updateBulkActionsBar();
+            if (selectAllCheckbox) selectAllCheckbox.checked = false;
+            applyFiltersAndRender();
+            attemptOpenModalFromUrl();
+
+        }, (error) => {
+            console.error("Error fetching orders snapshot:", error);
+            if (orderTableBody) orderTableBody.innerHTML = `<tr><td colspan="11" style="color: red;">Error loading orders. Please try again.</td></tr>`;
+        });
+    } catch (error) {
+        console.error("Error setting up Firestore listener:", error);
+        if (orderTableBody) orderTableBody.innerHTML = `<tr><td colspan="11" style="color: red;">Error setting up listener.</td></tr>`;
+    }
+}
+
+function applyFiltersAndRender() {
+    if (!allOrdersCache) return;
+
+    const filterDateValue = filterDateInput ? filterDateInput.value : '';
+    const filterSearchValue = filterSearchInput ? filterSearchInput.value.trim().toLowerCase() : '';
+    const filterStatusValue = filterStatusSelect ? filterStatusSelect.value : '';
+    currentStatusFilter = filterStatusValue;
+
+    let filteredOrders = allOrdersCache.filter(orderWrapper => {
+        const order = orderWrapper.data;
+        if (!order) return false;
+
+        if (filterStatusValue && order.status !== filterStatusValue) return false;
+
+        if (filterDateValue) {
+            let orderDateStr = '';
+            if (order.orderDate && typeof order.orderDate.toDate === 'function') {
+                 try { orderDateStr = order.orderDate.toDate().toISOString().split('T')[0]; } catch(e){}
+            } else if (typeof order.orderDate === 'string') {
+                orderDateStr = order.orderDate;
             }
+            if(orderDateStr !== filterDateValue) return false;
+        }
+
+        if (filterSearchValue) {
+            const orderIdString = String(order.orderId || '').toLowerCase();
+            const customerNameString = String(order.customerDetails?.fullName || '').toLowerCase();
+            const firestoreIdString = String(order.id || '').toLowerCase();
+            const productsString = (order.products || []).map(p => String(p.name || '')).join(' ').toLowerCase();
+            const mobileString = String(order.customerDetails?.whatsappNo || '');
+            const contactNoString = String(order.customerDetails?.contactNo || '');
+
+            if (!(orderIdString.includes(filterSearchValue) ||
+                  customerNameString.includes(filterSearchValue) ||
+                  firestoreIdString.includes(filterSearchValue) ||
+                  productsString.includes(filterSearchValue) ||
+                  mobileString.includes(filterSearchValue) ||
+                  contactNoString.includes(filterSearchValue)
+                 )) {
+                return false;
+            }
+        }
+        return true;
+    });
+
+    try {
+        filteredOrders.sort((aWrapper, bWrapper) => {
+            const a = aWrapper.data;
+            const b = bWrapper.data;
+            let valA = a[currentSortField];
+            let valB = b[currentSortField];
+
+            if (valA && typeof valA.toDate === 'function') valA = valA.toDate().getTime();
+            if (valB && typeof valB.toDate === 'function') valB = valB.toDate().getTime();
+
+            if (currentSortField === 'orderDate' || currentSortField === 'deliveryDate') {
+                 const dateA = valA ? new Date(valA).getTime() : null;
+                 const dateB = valB ? new Date(valB).getTime() : null;
+                 if (isNaN(dateA) && isNaN(dateB)) return 0;
+                 if (isNaN(dateA)) return currentSortDirection === 'asc' ? 1 : -1;
+                 if (isNaN(dateB)) return currentSortDirection === 'asc' ? -1 : 1;
+                 valA = dateA;
+                 valB = dateB;
+            }
+
+            let sortComparison = 0;
+            if (valA > valB) sortComparison = 1;
+            else if (valA < valB) sortComparison = -1;
+
+            return currentSortDirection === 'desc' ? sortComparison * -1 : sortComparison;
+        });
+    } catch (sortError) {
+        console.error("Error during sorting:", sortError);
+    }
+
+    currentlyDisplayedOrders = filteredOrders.map(ow => ow.data);
+    updateOrderCountsAndReport(currentlyDisplayedOrders);
+
+    if (!orderTableBody) return;
+    orderTableBody.innerHTML = '';
+
+    if (currentlyDisplayedOrders.length === 0) {
+        orderTableBody.innerHTML = `<tr><td colspan="11" id="noOrdersMessage">No orders found matching your criteria.</td></tr>`;
+    } else {
+        const searchTerm = filterSearchInput ? filterSearchInput.value.trim().toLowerCase() : '';
+        currentlyDisplayedOrders.forEach(order => {
+            displayOrderRow(order.id, order, searchTerm);
+        });
+    }
+
+    if (selectAllCheckbox) {
+        const allRowCheckboxes = orderTableBody.querySelectorAll('.row-selector');
+        const allVisibleSelected = allRowCheckboxes.length > 0 && Array.from(allRowCheckboxes).every(cb => cb.checked);
+        const someVisibleSelected = Array.from(allRowCheckboxes).some(cb => cb.checked);
+        selectAllCheckbox.checked = allVisibleSelected;
+        selectAllCheckbox.indeterminate = !allVisibleSelected && someVisibleSelected;
+    }
+}
+
+function updateOrderCountsAndReport(displayedOrders) {
+    const total = displayedOrders.length;
+    let completedDelivered = 0;
+    const statusCounts = {};
+    displayedOrders.forEach(order => {
+        const status = order.status || 'Unknown';
+        if (status === 'Completed' || status === 'Delivered') completedDelivered++;
+        statusCounts[status] = (statusCounts[status] || 0) + 1;
+    });
+    const pending = total - completedDelivered;
+    if (totalOrdersSpan) totalOrdersSpan.textContent = total;
+    if (completedOrdersSpan) completedOrdersSpan.textContent = completedDelivered;
+    if (pendingOrdersSpan) pendingOrdersSpan.textContent = pending;
+    if (statusCountsReportContainer) {
+        if (total === 0) {
+            statusCountsReportContainer.innerHTML = '<p>No orders to report.</p>';
         } else {
-            console.log("Customer found in cache:", c);
+            let reportHtml = '<ul>';
+            Object.keys(statusCounts).sort().forEach(status => {
+                reportHtml += `<li>${escapeHtml(status)}: <strong>${statusCounts[status]}</strong></li>`;
+            });
+            reportHtml += '</ul>';
+            statusCountsReportContainer.innerHTML = reportHtml;
         }
-        selectedCustomerData = c; // Store fetched customer data globally
+    }
+}
 
-        // ----- >>> BALANCE CALCULATION START <<< -----
-        let balanceText = 'Calculating...'; // Show intermediate state
-        let balanceNum = NaN;
-        if (customerBalanceArea) {
-             customerCurrentBalanceSpan.textContent = balanceText;
-             customerBalanceArea.style.display = 'block'; // Show area while calculating
+function escapeHtml(unsafe) {
+    if (typeof unsafe !== 'string') { unsafe = String(unsafe || ''); }
+    return unsafe.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+}
+
+function highlightMatch(text, term) {
+    if (!term || !text) return text;
+    const stringText = typeof text === 'string' ? text : String(text);
+    try {
+        const escapedTerm = term.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+        const regex = new RegExp(`(${escapedTerm})`, 'gi');
+        return stringText.replace(regex, '<mark>$1</mark>');
+    } catch (e) {
+        console.warn("Highlighting regex error:", e);
+        return stringText;
+    }
+}
+
+function displayOrderRow(firestoreId, data, searchTerm = '') {
+    if (!orderTableBody || !data) return;
+
+    const tableRow = document.createElement('tr');
+    tableRow.setAttribute('data-id', firestoreId);
+    if (selectedOrderIds.has(firestoreId)) tableRow.classList.add('selected-row');
+
+    const customerDetails = data.customerDetails || {};
+    const customerName = customerDetails.fullName || 'N/A';
+    const customerMobile = customerDetails.whatsappNo || '-';
+    const orderDate = data.orderDate ? (typeof data.orderDate.toDate === 'function' ? data.orderDate.toDate() : new Date(data.orderDate)) : null;
+    const deliveryDate = data.deliveryDate ? (typeof data.deliveryDate.toDate === 'function' ? data.deliveryDate.toDate() : new Date(data.deliveryDate)) : null;
+    const orderDateStr = orderDate ? orderDate.toLocaleDateString('en-GB') : '-';
+    const deliveryDateStr = deliveryDate ? deliveryDate.toLocaleDateString('en-GB') : '-';
+
+    const displayId = data.orderId || `(Sys: ${firestoreId.substring(0, 6)}...)`;
+    const orderIdHtml = `<a href="#" class="order-id-link" data-id="${firestoreId}">${highlightMatch(escapeHtml(displayId), searchTerm)}</a>`;
+    const customerNameHtml = `<a href="#" class="customer-name-link" data-id="${firestoreId}">${highlightMatch(escapeHtml(customerName), searchTerm)}</a>`;
+
+    const status = data.status || 'Unknown';
+    const priority = data.urgent === 'Yes' ? 'Yes' : 'No';
+
+    // Products display logic (Feature 5)
+    let productsHtml = '-';
+    const products = data.products || [];
+    const MAX_PRODUCTS_DISPLAY = 2; // Show max 2 products initially
+    if (Array.isArray(products) && products.length > 0) {
+        productsHtml = products.slice(0, MAX_PRODUCTS_DISPLAY).map(p => {
+             const product = p || {};
+             const name = escapeHtml(String(product.name || 'Unnamed'));
+             const quantity = escapeHtml(String(product.quantity || '?'));
+             return `${highlightMatch(name, searchTerm)} (${highlightMatch(quantity, searchTerm)})`;
+         }).join('<br>');
+        if (products.length > MAX_PRODUCTS_DISPLAY) {
+             productsHtml += `<br><a href="#" class="see-more-link" data-id="${firestoreId}">... (${products.length - MAX_PRODUCTS_DISPLAY} more)</a>`;
+         }
+    }
+
+    const statusClass = `status-${status.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`;
+    const priorityClass = priority === 'Yes' ? 'priority-yes' : 'priority-no';
+
+     let poInfoHtml = '';
+     const linkedPOs = data.linkedPOs || [];
+     if (linkedPOs.length > 0) {
+         poInfoHtml = linkedPOs.map(po => {
+             const poDate = po.createdAt && typeof po.createdAt.toDate === 'function'
+                            ? po.createdAt.toDate().toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })
+                            : 'N/A';
+             return `<a href="#" class="view-po-details-link" data-poid="${po.poId}" title="View PO #${po.poNumber} Details">PO #${po.poNumber || 'N/A'}</a> (${poDate})`;
+         }).join('<br>');
+     } else {
+         poInfoHtml = `<button type="button" class="button create-po-button" data-id="${firestoreId}" title="Create Purchase Order"><i class="fas fa-file-alt"></i> Create PO</button>`;
+     }
+
+    try {
+        tableRow.innerHTML = `
+            <td class="col-checkbox"><input type="checkbox" class="row-selector" data-id="${firestoreId}" ${selectedOrderIds.has(firestoreId) ? 'checked' : ''}></td>
+            <td>${orderIdHtml}</td>
+            <td>
+                <span class="customer-name-display">${customerNameHtml}</span>
+                <span class="customer-mobile-inline">${highlightMatch(escapeHtml(customerMobile), searchTerm)}</span>
+            </td>
+            <td>${productsHtml}</td>
+            <td>${orderDateStr}</td>
+            <td>${deliveryDateStr}</td>
+            <td class="${priorityClass}">${priority}</td>
+            <td><span class="status-badge ${statusClass}">${highlightMatch(escapeHtml(status), searchTerm)}</span></td>
+            <td class="po-info-cell">${poInfoHtml}</td>
+            <td><button type="button" class="button details-edit-button"><i class="fas fa-info-circle"></i> Details</button></td>
+            <td><button type="button" class="button whatsapp-button" title="Send Status on WhatsApp"><i class="fab fa-whatsapp"></i></button></td>
+        `;
+        orderTableBody.appendChild(tableRow);
+    } catch (error) {
+        console.error(`Error creating table row HTML for order ${firestoreId}:`, error, data);
+        const errorRow = document.createElement('tr');
+        errorRow.innerHTML = `<td colspan="11" style="color: red; text-align: left;">Error displaying order: ${firestoreId}. Check console.</td>`;
+        orderTableBody.appendChild(errorRow);
+    }
+}
+
+async function openDetailsModal(firestoreId, orderData) {
+    if (!orderData || !detailsModal) { console.error("Order data or modal element missing:", firestoreId); return; }
+    activeOrderDataForModal = orderData;
+
+    if(modalOrderIdInput) modalOrderIdInput.value = firestoreId;
+    if(modalDisplayOrderIdSpan) modalDisplayOrderIdSpan.textContent = orderData.orderId || `(Sys: ${firestoreId.substring(0, 6)}...)`;
+    if(modalCustomerNameSpan) modalCustomerNameSpan.textContent = orderData.customerDetails?.fullName || 'N/A';
+    if(modalCustomerWhatsAppSpan) modalCustomerWhatsAppSpan.textContent = orderData.customerDetails?.whatsappNo || 'N/A';
+    if(modalCustomerContactSpan) modalCustomerContactSpan.textContent = orderData.customerDetails?.contactNo || 'N/A';
+    if(modalCustomerAddressSpan) modalCustomerAddressSpan.textContent = orderData.customerDetails?.address || 'N/A';
+
+    const orderDate = orderData.orderDate ? (typeof orderData.orderDate.toDate === 'function' ? orderData.orderDate.toDate() : new Date(orderData.orderDate)) : null;
+    const deliveryDate = orderData.deliveryDate ? (typeof orderData.deliveryDate.toDate === 'function' ? orderData.deliveryDate.toDate() : new Date(orderData.deliveryDate)) : null;
+    if(modalOrderDateSpan) modalOrderDateSpan.textContent = orderDate ? orderDate.toLocaleDateString('en-GB') : 'N/A';
+    if(modalDeliveryDateSpan) modalDeliveryDateSpan.textContent = deliveryDate ? deliveryDate.toLocaleDateString('en-GB') : 'N/A';
+    if(modalPrioritySpan) modalPrioritySpan.textContent = orderData.urgent || 'No';
+    if(modalRemarksSpan) modalRemarksSpan.textContent = orderData.remarks || 'None';
+
+    if (modalProductListContainer) {
+        modalProductListContainer.innerHTML = '';
+        const products = orderData.products;
+        if (Array.isArray(products) && products.length > 0) {
+            const ul = document.createElement('ul');
+            ul.className = 'modal-product-list-ul';
+            products.forEach(product => {
+                const li = document.createElement('li');
+                const nameSpan = document.createElement('span');
+                nameSpan.className = 'product-name';
+                nameSpan.textContent = product.name || 'Unnamed Product';
+                const detailsSpan = document.createElement('span');
+                detailsSpan.className = 'product-qty-details';
+                detailsSpan.textContent = ` - Qty: ${product.quantity || '?'}`;
+                li.append(nameSpan, detailsSpan);
+                ul.appendChild(li);
+            });
+            modalProductListContainer.appendChild(ul);
+        } else {
+            modalProductListContainer.innerHTML = '<p class="no-products">No products listed.</p>';
         }
+    }
 
-        try {
-            console.log("Calculating balance for customer:", customerId);
-            const totalPaid = await loadPaymentTotals_NewOrder(customerId);
-            const totalOrderValue = await loadOrderTotals_NewOrder(customerId);
-            console.log(`_BalanceCalc: Paid=${totalPaid}, OrderValue=${totalOrderValue}`);
+    if(modalOrderStatusSelect) modalOrderStatusSelect.value = orderData.status || '';
+    if (modalStatusHistoryListContainer) {
+        modalStatusHistoryListContainer.innerHTML = '';
+        const history = orderData.statusHistory;
+        if (Array.isArray(history) && history.length > 0) {
+            const sortedHistory = [...history].sort((a, b) => (b.timestamp?.toDate ? b.timestamp.toDate().getTime() : 0) - (a.timestamp?.toDate ? a.timestamp.toDate().getTime() : 0));
+            const ul = document.createElement('ul');
+            ul.className = 'modal-status-history-ul';
+            sortedHistory.forEach(entry => {
+                const li = document.createElement('li');
+                const statusSpan = document.createElement('span');
+                statusSpan.className = 'history-status';
+                statusSpan.textContent = entry.status || '?';
+                const timeSpan = document.createElement('span');
+                timeSpan.className = 'history-time';
+                 if (entry.timestamp && entry.timestamp.toDate) {
+                     const d = entry.timestamp.toDate();
+                     timeSpan.textContent = d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) + ' ' + d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+                 } else {
+                     timeSpan.textContent = '?';
+                 }
+                li.append(statusSpan, timeSpan);
+                ul.appendChild(li);
+            });
+            modalStatusHistoryListContainer.appendChild(ul);
+        } else {
+            modalStatusHistoryListContainer.innerHTML = '<p class="no-history">No status history.</p>';
+        }
+    }
 
-            if (totalOrderValue !== 'N/A') {
-                balanceNum = Number(totalOrderValue) - Number(totalPaid);
-                balanceText = formatCurrency(balanceNum);
-                console.log(`_BalanceCalc: Calculated BalanceNum=${balanceNum}, BalanceText=${balanceText}`);
-            } else if (totalPaid > 0) {
-                balanceText = `(Paid: ${formatCurrency(totalPaid)})`;
-                balanceNum = -totalPaid; // Treat as credit balance numerically
-                console.log(`_BalanceCalc: Partial Balance: Paid=${totalPaid}`);
+    const totalAmount = orderData.totalAmount || 0;
+    const amountPaid = orderData.amountPaid || 0;
+    const balanceDue = totalAmount - amountPaid;
+    const paymentStatus = orderData.paymentStatus || (balanceDue <= 0 ? 'Paid' : 'Pending');
+    if(modalTotalAmountSpan) modalTotalAmountSpan.textContent = `₹ ${totalAmount.toFixed(2)}`;
+    if(modalAmountPaidSpan) modalAmountPaidSpan.textContent = `₹ ${amountPaid.toFixed(2)}`;
+    if(modalBalanceDueSpan) modalBalanceDueSpan.textContent = `₹ ${balanceDue.toFixed(2)}`;
+    if(modalPaymentStatusSpan) modalPaymentStatusSpan.textContent = paymentStatus;
+
+    await displayPOsInModal(firestoreId, orderData.linkedPOs || []);
+
+    detailsModal.style.display = 'flex';
+}
+
+async function displayPOsInModal(orderFirestoreId, linkedPOs) {
+    if (!modalPOListContainer) return;
+    modalPOListContainer.innerHTML = '<p><i class="fas fa-spinner fa-spin"></i> Loading POs...</p>';
+
+    if (!linkedPOs || linkedPOs.length === 0) {
+        modalPOListContainer.innerHTML = '<p class="no-pos">No Purchase Orders linked to this order.</p>';
+        return;
+    }
+
+    try {
+        const poDetailsPromises = linkedPOs.map(poLink => getDoc(doc(db, "purchaseOrders", poLink.poId)).catch(err => { console.warn(`Failed to fetch PO ${poLink.poId}`, err); return null; })); // Catch individual fetch errors
+        const poSnapshots = await Promise.all(poDetailsPromises);
+
+        const ul = document.createElement('ul');
+        ul.className = 'modal-po-list-ul';
+
+        poSnapshots.forEach((poDoc, index) => {
+            const poLink = linkedPOs[index];
+            const li = document.createElement('li');
+            if (poDoc && poDoc.exists()) {
+                const poData = poDoc.data();
+                const poDate = poData.orderDate?.toDate ? poData.orderDate.toDate().toLocaleDateString('en-GB') : 'N/A';
+                const supplierName = poData.supplierName || 'Unknown Supplier';
+                li.innerHTML = `
+                    <a href="#" class="view-po-details-link" data-poid="${poDoc.id}">PO #${poData.poNumber || 'N/A'}</a>
+                    <span> - ${escapeHtml(supplierName)} (${poDate})</span>
+                    <span> - Status: ${escapeHtml(poData.status || 'N/A')}</span>
+                    <span> - Amount: ₹ ${(poData.totalAmount || 0).toFixed(2)}</span>
+                `;
             } else {
-                 console.log("_BalanceCalc: No orders or payments found, balance N/A.");
-                 balanceText = '₹0.00';
-                 balanceNum = 0;
+                li.innerHTML = `<span>PO (ID: ${poLink.poId}) not found or error fetching</span>`;
+                li.style.color = 'grey';
+                 li.style.fontStyle = 'italic';
             }
-        } catch (calcError) {
-            console.error("Error calculating balance:", calcError);
-            balanceText = 'Error';
-            balanceNum = NaN; // Ensure it's NaN on error
-        }
-        // ----- >>> BALANCE CALCULATION END <<< -----
+            ul.appendChild(li);
+        });
+        modalPOListContainer.innerHTML = '';
+        modalPOListContainer.appendChild(ul);
 
-        // Update Balance Display (Final)
-        if (customerBalanceArea) {
-            customerCurrentBalanceSpan.textContent = balanceText;
-            customerCurrentBalanceSpan.classList.remove('positive-balance', 'negative-balance');
-
-            if (!isNaN(balanceNum)) {
-                if (balanceNum > 0.01) {
-                     customerCurrentBalanceSpan.classList.add('negative-balance');
-                     customerCurrentBalanceSpan.title = `Amount Due: ${formatCurrency(balanceNum)}`;
-                } else if (balanceNum < -0.01) {
-                    customerCurrentBalanceSpan.classList.add('positive-balance');
-                    customerCurrentBalanceSpan.title = `Credit Balance: ${formatCurrency(Math.abs(balanceNum))}`;
-                } else {
-                    customerCurrentBalanceSpan.title = `Balance: ₹0.00`;
+        // Add event listeners to the newly created PO links within the modal
+        ul.querySelectorAll('.view-po-details-link').forEach(link => {
+            link.addEventListener('click', (event) => {
+                event.preventDefault();
+                const poId = event.target.closest('a').dataset.poid;
+                if (poId) {
+                    openPODetailsPopup(poId); // Open the PO details popup
                 }
-            } else {
-                 customerCurrentBalanceSpan.title = `Balance: ${balanceText}`; // e.g., Error or N/A
-            }
-            customerBalanceArea.style.display = 'block'; // Ensure it's visible
-        }
+            });
+        });
 
-        // Update Account Link
-        if (viewCustomerAccountLink && customerAccountLinkArea) {
-            viewCustomerAccountLink.href = `customer_account_detail.html?id=${encodeURIComponent(customerId)}`;
-            customerAccountLinkArea.style.display = 'block';
-        }
 
-        // Update Credit Limit Check
-        checkCreditLimit(balanceNum); // Pass numeric balance
+    } catch (error) {
+        console.error("Error fetching PO details for modal:", error);
+        modalPOListContainer.innerHTML = '<p class="error-message">Error loading POs.</p>';
+    }
+}
+
+function closeDetailsModal() {
+    if (detailsModal) detailsModal.style.display = 'none';
+    activeOrderDataForModal = null;
+}
+
+async function handleUpdateStatus() {
+    const firestoreId = modalOrderIdInput.value;
+    const newStatus = modalOrderStatusSelect.value;
+    if (!firestoreId || !newStatus || !activeOrderDataForModal) return;
+
+    if (activeOrderDataForModal.status === newStatus) {
+        alert("Status is already set to '" + newStatus + "'.");
+        return;
+    }
+
+    if (modalUpdateStatusBtn) {
+        modalUpdateStatusBtn.disabled = true;
+        modalUpdateStatusBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Updating...';
+    }
+
+    const historyEntry = {
+        status: newStatus,
+        timestamp: serverTimestamp()
+    };
+
+    try {
+        await updateDoc(doc(db, "orders", firestoreId), {
+            status: newStatus,
+            updatedAt: serverTimestamp(),
+            statusHistory: arrayUnion(historyEntry)
+        });
+        closeDetailsModal();
+
+        if (activeOrderDataForModal.customerDetails?.whatsappNo) {
+            showStatusUpdateWhatsAppReminder(
+                activeOrderDataForModal.customerDetails,
+                activeOrderDataForModal.orderId || `Sys:${firestoreId.substring(0,6)}`,
+                newStatus
+            );
+        } else {
+            alert("Status updated successfully!");
+        }
 
     } catch (e) {
-        console.error("Error in fetchAndDisplayCustomerDetails:", e);
-        resetCustomerSelectionUI(); // Reset UI on error
-    }
-}
-function resetCustomerSelectionUI(clearInputs = true) { console.log("Resetting customer UI. Clear inputs:", clearInputs); // selectedCustomerId = null; // Keep selectedCustomerId unless explicitly cleared
- selectedCustomerData = null; // Clear detailed data if (selectedCustomerIdInput && clearInputs) selectedCustomerIdInput.value = ''; // Clear hidden only if clearing inputs
- if (customerAccountLinkArea) customerAccountLinkArea.style.display = 'none'; if (customerBalanceArea) customerBalanceArea.style.display = 'none'; if (customerCurrentBalanceSpan) customerCurrentBalanceSpan.textContent = ''; if (creditLimitWarningDiv) creditLimitWarningDiv.style.display = 'none'; if (clearInputs) { if(customerNameInput) customerNameInput.value = ''; if(customerWhatsAppInput) customerWhatsAppInput.value = ''; if(customerAddressInput) customerAddressInput.value = ''; if(customerContactInput) customerContactInput.value = ''; selectedCustomerId = null; // Explicitly clear ID only when clearing inputs
- } }
-
-// --- Credit Limit Check ---
-function checkCreditLimit(currentBalanceNum = NaN) {
-    if (!selectedCustomerData) {
-         if(creditLimitWarningDiv) creditLimitWarningDiv.style.display = 'none';
-        return;
-    }
-    if (!selectedCustomerData.creditAllowed) {
-        if (creditLimitWarningDiv) creditLimitWarningDiv.style.display = 'none';
-        return;
-    }
-
-    const creditLimit = parseFloat(selectedCustomerData.creditLimit || 0);
-    const finalAmountText = summaryFinalAmountSpan?.textContent || '0';
-    const newOrderValue = parseFloat(finalAmountText.replace(/[^0-9.-]+/g, "")) || 0;
-
-    if (isNaN(currentBalanceNum) || isNaN(newOrderValue) || creditLimit <= 0) {
-        if (creditLimitWarningDiv) creditLimitWarningDiv.style.display = 'none';
-        return;
-    }
-
-    const potentialBalance = currentBalanceNum + newOrderValue;
-    console.log(`Credit Check: Limit=${creditLimit}, CurrentBal=${currentBalanceNum}, NewOrderVal=${newOrderValue}, PotentialBal=${potentialBalance}`);
-
-    if (potentialBalance > creditLimit) {
-        if (creditLimitWarningDiv) {
-            creditLimitWarningDiv.textContent = `Warning: Potential balance (${formatCurrency(potentialBalance)}) exceeds credit limit of ${formatCurrency(creditLimit)}.`;
-            creditLimitWarningDiv.style.display = 'block';
-            creditLimitWarningDiv.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        console.error("Error updating status:", e);
+        alert("Error updating status: " + e.message);
+    } finally {
+        if (modalUpdateStatusBtn) {
+            modalUpdateStatusBtn.disabled = false;
+            modalUpdateStatusBtn.innerHTML = '<i class="fas fa-sync-alt"></i> Update Status';
         }
+    }
+}
+
+function handleDeleteFromModal() {
+    const firestoreId = modalOrderIdInput.value;
+    const displayId = modalDisplayOrderIdSpan.textContent;
+    if (!firestoreId) return;
+    closeDetailsModal();
+    if (confirm(`Are you sure you want to permanently delete Order ID: ${displayId}? This cannot be undone.`)) {
+        deleteSingleOrder(firestoreId);
     } else {
-        if (creditLimitWarningDiv) creditLimitWarningDiv.style.display = 'none';
+        console.log("Deletion cancelled by user.");
     }
 }
 
-
-// --- Product Autocomplete ---
-function getOrCreateProductSuggestionsDiv() {
-    if (!productSuggestionsDiv) {
-        productSuggestionsDiv = document.createElement('div');
-        productSuggestionsDiv.className = 'product-suggestions-list';
-        productSuggestionsDiv.style.display = 'none';
-        document.body.appendChild(productSuggestionsDiv);
-        productSuggestionsDiv.addEventListener('click', handleSuggestionClick);
-    }
-    return productSuggestionsDiv;
-}
-function positionProductSuggestions(inputElement) { const s=getOrCreateProductSuggestionsDiv(), r=inputElement.getBoundingClientRect(); s.style.position='absolute'; s.style.left=`${r.left+window.scrollX}px`; s.style.top=`${r.bottom+window.scrollY}px`; s.style.width=`${r.width<250?250:r.width}px`; s.style.display='block'; s.style.zIndex='1050';}
-function hideProductSuggestions() { if(productSuggestionsDiv)productSuggestionsDiv.style.display='none'; activeProductInput=null;}
-function handleProductSearchInput(event) { const i=event.target; if(!i.matches('.product-name'))return; activeProductInput=i; clearTimeout(productSearchDebounceTimer); const t=i.value.trim(); if(t.length<1){hideProductSuggestions();return;} positionProductSuggestions(i); productSearchDebounceTimer=setTimeout(()=>{if(document.activeElement===i&&activeProductInput===i){getOrFetchProductCache().then(()=>filterAndRenderProductSuggestions(t,i)).catch(e=>console.error("Prod filter err:",e));}},350);}
-async function getOrFetchProductCache() { if(productCache.length>0)return Promise.resolve(); if(productFetchPromise)return productFetchPromise; console.log("Fetching products..."); try{if(!db||!collection||!query||!getDocs||!orderBy)throw new Error("DB func missing"); const q=query(collection(db,"products"),orderBy("printName")); productFetchPromise=getDocs(q).then(s=>{productCache=s.docs.map(d=>{const dt=d.data(); return{id:d.id,name:dt.printName,unit:dt.unit,salePrice:dt.salePrice,minSalePrice:dt.minSalePrice};}); console.log(`Cached ${productCache.length} products.`); productFetchPromise=null;}).catch(e=>{console.error("Prod fetch err:",e);productFetchPromise=null;throw e;}); return productFetchPromise;}catch(e){console.error("Prod fetch setup err:",e);productFetchPromise=null;return Promise.reject(e);}}
-function filterAndRenderProductSuggestions(term, inputElement) { const s=getOrCreateProductSuggestionsDiv(); s.innerHTML='<ul><li class="no-suggestions">Loading...</li></ul>'; if(activeProductInput!==inputElement){hideProductSuggestions();return;} positionProductSuggestions(inputElement); const l=term.toLowerCase(), f=productCache.filter(p=>p.name?.toLowerCase().includes(l)).slice(0,10); renderProductSuggestions(f,term,s);}
-function renderProductSuggestions(suggestions, term, suggestionsContainer) { if(!suggestionsContainer)return; const ul=document.createElement('ul'); if(suggestions.length===0){ul.innerHTML='<li class="no-suggestions">No matching products found.</li>';}else{suggestions.forEach(p=>{const li=document.createElement('li'); try{li.innerHTML=p.name.replace(new RegExp(`(${term.replace(/[-\/\^$*+?.()|[\]{}]/g,'\$&')})`,'gi'),'<strong>$1</strong>');}catch{li.textContent=p.name;} li.dataset.product=JSON.stringify(p); ul.appendChild(li);});} suggestionsContainer.innerHTML=''; suggestionsContainer.appendChild(ul); suggestionsContainer.style.display='block';}
-
-function selectProductSuggestion(productData, inputElement) {
-    console.log("Selecting product suggestion:", productData);
+async function deleteSingleOrder(firestoreId) {
+    if (!db) { alert("Delete function is unavailable."); return; }
     try {
-        const r = inputElement.closest('.item-row');
-        if (!r || !productData) { hideProductSuggestions(); return; }
-        const pNI = r.querySelector('.product-name'), uTS = r.querySelector('.unit-type-select'), rI = r.querySelector('.rate-input'), qI = r.querySelector('.quantity-input');
-        if (!pNI || !uTS || !rI || !qI ) { console.error("Error in selectProductSuggestion: Row elements missing!"); hideProductSuggestions(); return; }
-
-        pNI.value = productData.name || '';
-        rI.value = productData.salePrice !== undefined ? String(productData.salePrice) : '';
-        const mR = productData.minSalePrice;
-        rI.dataset.minRate = mR !== undefined && mR !== null ? String(mR) : '-1';
-
-        let dUT = 'Qty';
-        if (productData.unit) { const uL = String(productData.unit).toLowerCase(); if (uL.includes('sq') || uL.includes('ft')) dUT = 'Sq Feet'; }
-        uTS.value = dUT;
-        hideProductSuggestions();
-        const cE = new Event('change', { bubbles: true });
-        uTS.dispatchEvent(cE);
-        updateItemAmount(r);
-        let nI = null;
-        if (dUT === 'Sq Feet') nI = r.querySelector('.width-input');
-        if (!nI) nI = qI;
-        if (nI) { nI.focus(); if (typeof nI.select === 'function') nI.select(); } else { rI.focus(); }
-    } catch (error) { console.error("Error inside selectProductSuggestion:", error); hideProductSuggestions(); }
+        await deleteDoc(doc(db, "orders", firestoreId));
+        alert("Order deleted successfully.");
+    } catch (e) {
+        console.error("Error deleting order:", e);
+        alert("Error deleting order: " + e.message);
+    }
 }
 
-// --- Status Dropdown Handling ---
-function updateStatusDropdownColor(statusValue) {
-    if (!orderStatusSelect) return;
-    statusList.forEach(status => {
-        const className = `status-select-${status.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`;
-        orderStatusSelect.classList.remove(className);
+function handleEditFullFromModal() {
+    const firestoreId = modalOrderIdInput.value;
+    if (firestoreId) {
+        window.location.href = `new_order.html?editOrderId=${firestoreId}`;
+    }
+}
+
+function handleCreatePOFromModal() {
+     const orderFirestoreId = modalOrderIdInput.value;
+     if (orderFirestoreId && activeOrderDataForModal) {
+         closeDetailsModal();
+         openPOItemSelectionModal(orderFirestoreId, activeOrderDataForModal);
+     } else {
+         alert("Cannot create PO. Order details not loaded correctly.");
+     }
+}
+
+
+function showStatusUpdateWhatsAppReminder(customer, orderId, updatedStatus) {
+    if (!whatsappReminderPopup || !whatsappMsgPreview || !whatsappSendLink) return;
+    const name = customer.fullName || 'Customer';
+    const num = customer.whatsappNo?.replace(/[^0-9]/g, '');
+    if (!num) return;
+    let msg = getWhatsAppMessageTemplate(updatedStatus, name, orderId, null);
+    whatsappMsgPreview.innerText = msg;
+    const url = `https://wa.me/91${num}?text=${encodeURIComponent(msg)}`; // Assuming Indian numbers
+    whatsappSendLink.href = url;
+    const title = document.getElementById('whatsapp-popup-title');
+    if(title) title.textContent = "Status Updated!";
+    whatsappReminderPopup.classList.add('active');
+}
+function closeWhatsAppPopup() { if (whatsappReminderPopup) whatsappReminderPopup.classList.remove('active'); }
+function sendWhatsAppMessage(firestoreId, orderData) {
+    if (!orderData?.customerDetails?.whatsappNo) { alert("WhatsApp number not found."); return; }
+    const cust = orderData.customerDetails;
+    const orderId = orderData.orderId || `Sys:${firestoreId.substring(0,6)}`;
+    const status = orderData.status;
+    const deliveryDate = orderData.deliveryDate;
+    const name = cust.fullName || 'Customer';
+    const num = cust.whatsappNo.replace(/[^0-9]/g, '');
+    let msg = getWhatsAppMessageTemplate(status, name, orderId, deliveryDate);
+    const url = `https://wa.me/91${num}?text=${encodeURIComponent(msg)}`; // Assuming Indian numbers
+    window.open(url, '_blank');
+}
+
+function getWhatsAppMessageTemplate(status, customerName, orderId, deliveryDate) {
+    const namePlaceholder = "[Customer Name]";
+    const orderNoPlaceholder = "[ORDER_NO]";
+    const deliveryDatePlaceholder = "[DELIVERY_DATE]";
+    const companyName = "Madhav Offset";
+    const companyAddress = "Head Office: Moodh Market, Batadu";
+    const companyMobile = "9549116541";
+    const signature = `धन्यवाद,\n${companyName}\n${companyAddress}\nMobile: ${companyMobile}`;
+    let template = "";
+    let deliveryDateText = "जल्द से जल्द";
+     try { if(deliveryDate) { const dDate = (typeof deliveryDate.toDate === 'function') ? deliveryDate.toDate() : new Date(deliveryDate); deliveryDateText = dDate.toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}); } } catch(e) {}
+    function replaceAll(str, find, replace) { return str.split(find).join(replace); }
+    switch (status) {
+        case "Order Received": template = `प्रिय ${namePlaceholder},\nनमस्कार,\nआपका ऑर्डर (Order No: ${orderNoPlaceholder}) हमें सफलतापूर्वक प्राप्त हो गया है।\nहम इस ऑर्डर को ${deliveryDatePlaceholder} तक पूर्ण करने का प्रयास करेंगे।\n\nDear ${namePlaceholder},\nWe have successfully received your order (Order No: ${orderNoPlaceholder}).\nWe aim to complete it by ${deliveryDatePlaceholder}.`; break;
+        case "Designing": template = `प्रिय ${namePlaceholder},\nआपके ऑर्डर (Order No: ${orderNoPlaceholder}) का डिज़ाइन तैयार किया जा रहा है।\nजैसे ही डिज़ाइन तैयार होगा, हम आपसे पुष्टि के लिए संपर्क करेंगे।\n\nDear ${namePlaceholder},\nThe design for your order (Order No: ${orderNoPlaceholder}) is in progress.\nWe’ll contact you for confirmation once it’s ready.`; break;
+        case "Verification": template = `प्रिय ${namePlaceholder},\nआपके ऑर्डर (Order No: ${orderNoPlaceholder}) की डिज़ाइन आपके साथ साझा कर दी गई है।\nकृपया डिज़ाइन को ध्यानपूर्वक जाँचे और हमें अपनी अनुमति प्रदान करें।\nएक बार ‘OK’ कर देने के बाद किसी भी प्रकार का संशोधन संभव नहीं होगा।\n\nDear ${namePlaceholder},\nWe have shared the design for your order (Order No: ${orderNoPlaceholder}) with you.\nPlease review it carefully and provide your approval.\nOnce you confirm with ‘OK’, no further changes will be possible.`; break;
+        case "Design Approved": template = `प्रिय ${namePlaceholder},\nआपके ऑर्डर (Order No: ${orderNoPlaceholder}) की डिज़ाइन स्वीकृत कर दी गई है।\nअब यह प्रिंटिंग प्रक्रिया के लिए आगे बढ़ाया जा रहा है।\n\nDear ${namePlaceholder},\nYour design for Order No: ${orderNoPlaceholder} has been approved.\nIt is now moving forward to the printing stage.`; break;
+        case "Ready for Working": template = `प्रिय ${namePlaceholder},\nनमस्कार,\nआपके ऑर्डर (Order No: ${orderNoPlaceholder}) की प्रिंटिंग पूरी हो गई है।\nआप ऑफिस/कार्यालय आकर अपना प्रोडक्ट ले जा सकते हैं।\n\nDear ${namePlaceholder},\nThe printing for your order (Order No: ${orderNoPlaceholder}) is complete.\nYou can now collect your product from our office.`; break;
+        case "Printing": template = `प्रिय ${namePlaceholder},\nआपका ऑर्डर (Order No: ${orderNoPlaceholder}) प्रिंट हो रहा है।\nपूरा होते ही आपको सूचित किया जाएगा।\n\nDear ${namePlaceholder},\nYour order (Order No: ${orderNoPlaceholder}) is currently being printed.\nWe will notify you once it’s done.`; break;
+        case "Delivered": template = `प्रिय ${namePlaceholder},\nआपका ऑर्डर (Order No: ${orderNoPlaceholder}) सफलतापूर्वक डिलीवर कर दिया गया है।\nकृपया पुष्टि करें कि आपने ऑर्डर प्राप्त कर लिया है।\nआपके सहयोग के लिए धन्यवाद।\nहमें आशा है कि आप हमें शीघ्र ही फिर से सेवा का अवसर देंगे।\n\nDear ${namePlaceholder},\nYour order (Order No: ${orderNoPlaceholder}) has been successfully delivered.\nPlease confirm the receipt.\nThank you for your support.\nWe hope to have the opportunity to serve you again soon.`; break;
+        case "Completed": template = `प्रिय ${namePlaceholder},\nआपका ऑर्डर (Order No: ${orderNoPlaceholder}) सफलतापूर्वक पूर्ण हो चुका है।\nआपके सहयोग के लिए धन्यवाद।\n\nDear ${namePlaceholder},\nYour order (Order No: ${orderNoPlaceholder}) has been successfully completed.\nThank you for your support.`; break;
+        default: template = `प्रिय ${namePlaceholder},\nआपके ऑर्डर (Order No: ${orderNoPlaceholder}) का वर्तमान स्टेटस है: ${status}.\n\nDear ${namePlaceholder},\nThe current status for your order (Order No: ${orderNoPlaceholder}) is: ${status}.`;
+    }
+    let message = replaceAll(template, namePlaceholder, customerName);
+    message = replaceAll(message, orderNoPlaceholder, orderId);
+    message = replaceAll(message, deliveryDatePlaceholder, deliveryDateText);
+    message += `\n\n${signature}`;
+    return message;
+}
+
+// Bulk Actions
+function handleSelectAllChange(event) {
+    const isChecked = event.target.checked;
+    const rows = orderTableBody.querySelectorAll('.row-selector');
+    selectedOrderIds.clear();
+    rows.forEach(cb => {
+        const id = cb.dataset.id;
+        cb.checked = isChecked;
+        const row = cb.closest('tr');
+        if(isChecked){ selectedOrderIds.add(id); if(row) row.classList.add('selected-row'); }
+        else { if(row) row.classList.remove('selected-row'); }
     });
-    orderStatusSelect.classList.remove('status-select-default');
-
-    if (statusValue) {
-        const currentClassName = `status-select-${statusValue.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`;
-        orderStatusSelect.classList.add(currentClassName);
-        console.log(`Applied status class: ${currentClassName}`);
-    } else {
-         orderStatusSelect.classList.add('status-select-default');
-         console.log("Applied default status class");
+    updateBulkActionsBar();
+}
+function handleRowCheckboxChange(checkbox, firestoreId) {
+    const row = checkbox.closest('tr');
+    if (checkbox.checked) { selectedOrderIds.add(firestoreId); if(row) row.classList.add('selected-row'); }
+    else { selectedOrderIds.delete(firestoreId); if(row) row.classList.remove('selected-row'); }
+    updateBulkActionsBar();
+    if (selectAllCheckbox) {
+        const allCb = orderTableBody.querySelectorAll('.row-selector');
+        const allChecked = allCb.length > 0 && Array.from(allCb).every(cb => cb.checked);
+        const someChecked = Array.from(allCb).some(cb => cb.checked);
+        selectAllCheckbox.checked = allChecked;
+        selectAllCheckbox.indeterminate = !allChecked && someChecked;
     }
 }
-
-// --- Form Submit Handler ---
-async function handleFormSubmit(event) {
-    event.preventDefault();
-    console.log("Submit initiated...");
-    showFormError('');
-    if(!db||!addDoc||!doc||!updateDoc||!Timestamp||!getDoc||!getDocs||!collection||!query||!limit){showFormError("Database functions are not available. Please check connection.");return;}
-    if(!saveButton){console.error("Save button element is missing!");return;}
-
-    saveButton.disabled=true;
-    const originalButtonText = saveButtonText ? saveButtonText.textContent : 'Save Order';
-    const originalButtonHTML = saveButton.innerHTML;
-    if(saveButtonText)saveButtonText.textContent=isEditMode?'Updating...':'Saving...';else saveButton.innerHTML='<i class="fas fa-spinner fa-spin"></i> Saving...';
-
-    try{
-        const cFN=customerNameInput.value.trim();
-        const cW=customerWhatsAppInput.value.trim();
-        let cId=selectedCustomerId;
-
-        if(!cFN) throw new Error("Customer Name is required.");
-        if(!cW) throw new Error("WhatsApp No is required.");
-
-        if (!cId) {
-            console.error("customerId is null or undefined before saving!");
-            showFormError("Customer is not selected or linked properly. Please search and select the customer again from the suggestions.");
-            saveButton.disabled = false;
-            if(saveButtonText) saveButtonText.textContent = originalButtonText; else saveButton.innerHTML = originalButtonHTML;
-            return;
-        }
-        console.log('Proceeding to save order with customerId:', cId);
-
-        const cD={fullName:cFN,whatsappNo:cW,address:customerAddressInput.value.trim()||'',contactNo:customerContactInput.value.trim()||''};
-        const oDV=orderDateInput.value;
-        const dDV=deliveryDateInput.value||'';
-        const uV=orderForm.querySelector('input[name="urgent"]:checked')?.value||'No';
-        const rV=remarksInput.value.trim()||'';
-        const sS = orderStatusSelect.value;
-
-        if(!oDV) throw new Error("Order Date is required.");
-
-        let oId;const mId=manualOrderIdInput.value.trim();const eId=displayOrderIdInput.value;
-        if(isEditMode){oId=currentOrderData?.orderId||eId||orderIdToEdit;}else if(mId){oId=mId;}else{oId=Date.now().toString();console.log(`Generated Order ID: ${oId}`);}
-
-        const items=[];const rows=orderItemsTableBody.querySelectorAll('.item-row');
-        if(rows.length===0)throw new Error("Please add at least one item to the order.");
-
-        let validItems=true;
-        rows.forEach((row,idx)=>{
-            if(!validItems)return;
-            const pNI=row.querySelector('.product-name'),uTS=row.querySelector('.unit-type-select'),qI=row.querySelector('.quantity-input'),rI=row.querySelector('.rate-input'),dUS=row.querySelector('.dimension-unit-select'),wI=row.querySelector('.width-input'),hI=row.querySelector('.height-input');
-            const pN=pNI?.value.trim(),uT=uTS?.value,q=parseInt(qI?.value||0),r=parseFloat(rI?.value||''),mR=parseFloat(rI?.dataset.minRate||-1);
-
-            if(!pN){validItems=false;showFormError(`Item ${idx+1}: Product Name is required.`);pNI?.focus();return;}
-            if(isNaN(q)||q<=0){validItems=false;showFormError(`Item ${idx+1}: A valid Quantity (positive number) is required.`);qI?.focus();return;}
-            if(isNaN(r)||r<0){validItems=false;showFormError(`Item ${idx+1}: A valid Rate (non-negative number) is required.`);rI?.focus();return;}
-            if(mR>=0&&r<mR && Math.abs(r - mR) > 0.001 ){
-               validItems=false;showFormError(`Item ${idx+1}: Rate (${formatCurrency(r)}) is less than Minimum Sale Price (${formatCurrency(mR)}).`);rI?.focus();return;
-            }
-
-            const iD={productName:pN,unitType:uT,quantity:q,rate:r,minSalePrice:mR>=0?mR:null};
-            if(uT==='Sq Feet'){
-                const dU=dUS?.value||'feet',w=parseFloat(wI?.value||0),h=parseFloat(hI?.value||0);
-                if(isNaN(w)||w<=0){validItems=false;showFormError(`Item ${idx+1}: Valid Width (positive number) is required for Sq Feet.`);wI?.focus();return;}
-                if(isNaN(h)||h<=0){validItems=false;showFormError(`Item ${idx+1}: Valid Height (positive number) is required for Sq Feet.`);hI?.focus();return;}
-                const cR=calculateFlexDimensions(dU,w,h);
-                iD.dimensionUnit=dU;iD.width=w;iD.height=h;iD.realSqFt=cR.realSqFt;iD.printSqFt=cR.printSqFt;
-                iD.itemAmount=parseFloat((cR.printSqFt*q*r).toFixed(2));
-            }else{iD.itemAmount=parseFloat((q*r).toFixed(2));}
-            items.push(iD);
-        });
-
-        if(!validItems){
-            saveButton.disabled=false;
-            if(saveButtonText) saveButtonText.textContent = originalButtonText; else saveButton.innerHTML = originalButtonHTML;
-            return;
-        }
-
-        let subT=0;items.forEach(i=>{subT+=i.itemAmount;});
-        let dP=parseFloat(summaryDiscountPercentInput?.value||0),dA=parseFloat(summaryDiscountAmountInput?.value||0);
-        let cDA=0;if(!isNaN(dP)&&dP>0)cDA=parseFloat((subT*(dP/100)).toFixed(2));else if(!isNaN(dA)&&dA>0)cDA=dA;
-        cDA=Math.max(0,Math.min(cDA,subT));
-        let fA=parseFloat((subT-cDA).toFixed(2)),aP=parseFloat(summaryAdvancePaymentInput?.value||0),tB=parseFloat((fA-aP).toFixed(2));
-
-        const payload={
-            orderId:oId,
-            customerId:cId,
-            customerDetails:cD,
-            orderDate:oDV,
-            deliveryDate:dDV,
-            urgent:uV,
-            remarks:rV,
-            status:sS,
-            items:items,
-            subTotal:subT,
-            discountPercentage:dP||0,
-            discountAmount:cDA||0,
-            finalAmount:fA,
-            advancePayment:aP||0,
-            totalBalance:tB,
-            updatedAt:Timestamp.now()
-        };
-        if(!isEditMode){
-            payload.createdAt=Timestamp.now();
-        }
-
-        let savedId,msg;
-        if(isEditMode){
-            if(!orderIdToEdit)throw new Error("Internal Error: Missing Order ID for update.");
-            await updateDoc(doc(db,"orders",orderIdToEdit),payload);savedId=orderIdToEdit;msg=`Order ${oId} updated successfully!`;
+function updateBulkActionsBar() {
+    const count = selectedOrderIds.size;
+    if (bulkActionsBar && selectedCountSpan && bulkUpdateStatusBtn && bulkDeleteBtn) {
+        if (count > 0) {
+            selectedCountSpan.textContent = `${count} item${count > 1 ? 's' : ''} selected`;
+            bulkActionsBar.style.display = 'flex';
+            bulkUpdateStatusBtn.disabled = !(bulkStatusSelect && bulkStatusSelect.value);
+            bulkDeleteBtn.disabled = false;
         } else {
-            const ref=await addDoc(collection(db,"orders"),payload);savedId=ref.id;msg=`Order ${oId} created successfully!`;displayOrderIdInput.value=oId;
+            bulkActionsBar.style.display = 'none';
+            if (bulkStatusSelect) bulkStatusSelect.value = '';
+            bulkUpdateStatusBtn.disabled = true;
+            bulkDeleteBtn.disabled = true;
         }
-        console.log(msg,"Firestore Doc ID:",savedId);
-
-        if(aP>0){
-            console.log("Adding advance payment record...");
-            try{const pD={customerId:cId,orderRefId:savedId,orderId:oId,amountPaid:aP,paymentDate:Timestamp.fromDate(new Date(oDV+'T00:00:00')),paymentMethod:"Order Advance",notes:`Advance for Order #${oId}`,createdAt:Timestamp.now()};
-                await addDoc(collection(db,"payments"),pD);console.log("Advance payment record added.");}catch(pE){console.error("Advance payment saving error:",pE);alert(`Order saved, but failed to record advance payment: ${pE.message}`);}
+    }
+}
+async function handleBulkDelete() {
+    const idsToDelete = Array.from(selectedOrderIds);
+    const MAX_DELETE_LIMIT = 5;
+    if (idsToDelete.length > MAX_DELETE_LIMIT) { alert(`You can delete a maximum of ${MAX_DELETE_LIMIT} orders at once.`); return; }
+    if (idsToDelete.length === 0) { alert("Please select orders to delete."); return; }
+    if (!bulkDeleteConfirmModal || !bulkDeleteOrderList || !confirmDeleteCheckbox || !confirmBulkDeleteBtn || !bulkDeleteCountSpan) { return; }
+    bulkDeleteOrderList.innerHTML = '';
+    const maxItemsToShow = 100;
+    idsToDelete.forEach((id, index) => {
+        if (index < maxItemsToShow) {
+            const order = findOrderInCache(id);
+            const displayId = order?.orderId || `Sys:${id.substring(0,6)}`;
+            const customerName = order?.customerDetails?.fullName || 'N/A';
+            const li = document.createElement('li');
+            li.innerHTML = `<strong>${displayId}</strong> - ${escapeHtml(customerName)}`;
+            bulkDeleteOrderList.appendChild(li);
         }
-
-        alert(msg);
-
-        if(cD.whatsappNo){showWhatsAppReminder(cD,oId,dDV);}else{if(!isEditMode)resetNewOrderForm();}
-
-    } catch(error) {
-        console.error("Form submission error:",error);
-        showFormError("Error saving order: "+error.message);
-        saveButton.disabled=false;
-        if(saveButtonText) saveButtonText.textContent = originalButtonText; else saveButton.innerHTML = originalButtonHTML;
+    });
+    if (idsToDelete.length > maxItemsToShow) {
+        const li = document.createElement('li');
+        li.textContent = `... and ${idsToDelete.length - maxItemsToShow} more orders.`;
+        bulkDeleteOrderList.appendChild(li);
     }
+    bulkDeleteCountSpan.textContent = idsToDelete.length;
+    confirmDeleteCheckbox.checked = false;
+    confirmBulkDeleteBtn.disabled = true;
+    bulkDeleteConfirmModal.style.display = 'flex';
 }
-
-
-// --- Reset Form ---
-function resetNewOrderForm() {
-    console.log("Resetting form for new order.");
-    orderForm.reset();
-    if(orderItemsTableBody) orderItemsTableBody.innerHTML='';
-    selectedCustomerId=null; selectedCustomerData=null; currentOrderData=null;
-    isEditMode=false; orderIdToEdit=null;
-    if(hiddenEditOrderIdInput)hiddenEditOrderIdInput.value='';
-    if(selectedCustomerIdInput)selectedCustomerIdInput.value='';
-    if(displayOrderIdInput) displayOrderIdInput.value = '';
-    if(headerText)headerText.textContent="New Order";
-    if(breadcrumbAction)breadcrumbAction.textContent="New Order";
-    if(saveButtonText)saveButtonText.textContent="Save Order"; else if(saveButton)saveButton.innerHTML=`<i class="fas fa-save"></i> Save Order`;
-    if(manualOrderIdInput)manualOrderIdInput.readOnly=false;
-    if(orderDateInput)orderDateInput.value=new Date().toISOString().split('T')[0];
-    const defaultStatus = "Order Received";
-    orderStatusSelect.value = defaultStatus;
-    updateStatusDropdownColor(defaultStatus);
-    resetCustomerSelectionUI(true);
-    updateOrderSummary();
-    handleAddItem();
-    showFormError('');
-    hideProductSuggestions();
-    if(customerSuggestionsNameBox) hideSuggestionBox(customerSuggestionsNameBox);
-    if(customerSuggestionsWhatsAppBox) hideSuggestionBox(customerSuggestionsWhatsAppBox);
-    window.scrollTo(0, 0);
+async function executeBulkDelete(idsToDelete) {
+     if (idsToDelete.length === 0 || !db) return;
+     if(bulkDeleteBtn) bulkDeleteBtn.disabled = true;
+     if(confirmBulkDeleteBtn) confirmBulkDeleteBtn.disabled = true;
+     if(confirmBulkDeleteBtn) confirmBulkDeleteBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Deleting...';
+     const batch = writeBatch(db);
+     idsToDelete.forEach(id => { const docRef = doc(db, "orders", id); batch.delete(docRef); });
+     try {
+         await batch.commit();
+         alert(`${idsToDelete.length} order(s) deleted.`);
+         selectedOrderIds.clear();
+         updateBulkActionsBar();
+         closeBulkDeleteModal();
+     } catch (e) {
+         console.error("Bulk delete error:", e);
+         alert(`Error deleting: ${e.message}`);
+     } finally {
+         if(bulkDeleteBtn) bulkDeleteBtn.disabled = false;
+         if(confirmBulkDeleteBtn) confirmBulkDeleteBtn.disabled = false;
+         if(confirmBulkDeleteBtn) confirmBulkDeleteBtn.innerHTML = '<i class="fas fa-trash-alt"></i> Delete Orders';
+         updateBulkActionsBar();
+     }
 }
-
-// --- WhatsApp Reminder Functions ---
-function showWhatsAppReminder(customer, orderId, deliveryDate) { if(!whatsappReminderPopup||!whatsappMsgPreview||!whatsappSendLink){console.warn("WhatsApp popup elements not found.");if(!isEditMode)resetNewOrderForm();return;} const cN=customer.fullName||'Customer',cNum=customer.whatsappNo?.replace(/[^0-9]/g,''); if(!cNum){console.warn("Cannot send WhatsApp, number missing/invalid.");if(!isEditMode)resetNewOrderForm();return;} const fDD=deliveryDate?new Date(deliveryDate).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}):' जल्द से जल्द'; let msg=`प्रिय ${cN},\nआपका ऑर्डर (Order ID: ${orderId}) सफलतापूर्वक सहेज लिया गया है। डिलीवरी की अनुमानित तिथि: ${fDD}.\nधन्यवाद,\nMadhav Offset`; whatsappMsgPreview.innerText=msg; const eM=encodeURIComponent(msg); const wUrl=`https://wa.me/91${cNum}?text=${eM}`; whatsappSendLink.href=wUrl; whatsappReminderPopup.classList.add('active'); whatsappSendLink.onclick=()=>{if(!isEditMode)resetNewOrderForm(); closeWhatsAppPopup();}; popupCloseBtn.onclick=()=>{if(!isEditMode)resetNewOrderForm(); closeWhatsAppPopup();}; whatsappReminderPopup.onclick=(e)=>{if(e.target===whatsappReminderPopup){if(!isEditMode)resetNewOrderForm(); closeWhatsAppPopup();}}; }
-function closeWhatsAppPopup() { if(whatsappReminderPopup){whatsappReminderPopup.classList.remove('active'); whatsappSendLink.onclick=null; popupCloseBtn.onclick=null; whatsappReminderPopup.onclick=null;} }
-
-
-// ----- >>> ये दो नए सहायक फ़ंक्शन फ़ाइल के अंत में जोड़ें <<< -----
-
-/**
- * Calculates the total amount paid by a customer.
- * @param {string} customerId The Firestore ID of the customer.
- * @returns {Promise<number>} A promise that resolves to the total amount paid. Returns 0 on error.
- */
-async function loadPaymentTotals_NewOrder(customerId) {
-    console.log(`_newOrder: Loading payment total for customer: ${customerId}`);
-    let totalPaid = 0;
-    if (!db || !collection || !query || !where || !getDocs) {
-        console.error("_newOrder: DB functions missing for payments.");
-        return 0; // Return 0 on error
-    }
+function closeBulkDeleteModal() { if (bulkDeleteConfirmModal) bulkDeleteConfirmModal.style.display = 'none'; }
+async function handleBulkUpdateStatus() {
+    const idsToUpdate = Array.from(selectedOrderIds);
+    const newStatus = bulkStatusSelect.value;
+    const MAX_STATUS_UPDATE_LIMIT = 10;
+    if (idsToUpdate.length > MAX_STATUS_UPDATE_LIMIT) { alert(`You can update the status of a maximum of ${MAX_STATUS_UPDATE_LIMIT} orders at once.`); return; }
+    if (idsToUpdate.length === 0) { alert("Please select orders to update."); return; }
+    if (!newStatus) { alert("Please select a status to update to."); return; }
+    if (!confirm(`Are you sure you want to change the status of ${idsToUpdate.length} selected order(s) to "${newStatus}"?`)) { return; }
+    if (bulkUpdateStatusBtn) { bulkUpdateStatusBtn.disabled = true; bulkUpdateStatusBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Updating...'; }
+    const batch = writeBatch(db);
+    const now = serverTimestamp();
+    const historyEntry = { status: newStatus, timestamp: now };
+    idsToUpdate.forEach(id => {
+        const docRef = doc(db, "orders", id);
+        batch.update(docRef, { status: newStatus, updatedAt: now, statusHistory: arrayUnion(historyEntry) });
+    });
     try {
-        const paymentsRef = collection(db, "payments");
-        const q = query(paymentsRef, where("customerId", "==", customerId));
-        const querySnapshot = await getDocs(q);
-        querySnapshot.forEach(doc => {
-            totalPaid += Number(doc.data().amountPaid || 0);
-        });
-        console.log(`_newOrder: Total Paid calculated: ${totalPaid}`);
-        return totalPaid;
-    } catch (error) {
-        console.error("_newOrder: Error loading payment total:", error);
-        return 0; // Return 0 on error
+        await batch.commit();
+        alert(`${idsToUpdate.length} order(s) status updated.`);
+        selectedOrderIds.clear();
+        updateBulkActionsBar();
+    } catch (e) {
+        console.error("Bulk status update error:", e);
+        alert(`Error updating status: ${e.message}`);
+    } finally {
+        if (bulkUpdateStatusBtn) { bulkUpdateStatusBtn.disabled = false; bulkUpdateStatusBtn.innerHTML = '<i class="fas fa-sync-alt"></i> Update Selected (Max 10)'; }
+        if (bulkStatusSelect) bulkStatusSelect.value = '';
+        updateBulkActionsBar();
     }
 }
 
-/**
- * Calculates the total value of orders for a customer.
- *Sums the 'finalAmount' field of all orders for the customer.
- * You might adjust this later to only include orders with specific statuses.
- * @param {string} customerId The Firestore ID of the customer.
- * @returns {Promise<number|string>} A promise that resolves to the total order value, or 'N/A' if no orders found or on error.
- */
-async function loadOrderTotals_NewOrder(customerId) {
-    console.log(`_newOrder: Loading order total value for customer: ${customerId}`);
-    let totalOrderValue = 0;
-    let foundOrders = false; // Flag to check if any orders were processed
-     if (!db || !collection || !query || !where || !getDocs) {
-        console.error("_newOrder: DB functions missing for orders.");
-        return 'N/A'; // Return 'N/A' on error
+// CSV Export
+function exportToCsv() {
+    if (currentlyDisplayedOrders.length === 0) { alert("No data to export."); return; }
+    const headers = ["Firestore ID", "Order ID", "Customer Name", "WhatsApp No", "Contact No", "Address", "Order Date", "Delivery Date", "Status", "Urgent", "Remarks", "Total Amount", "Amount Paid", "Payment Status", "Products (Name | Qty)"];
+    const rows = currentlyDisplayedOrders.map(order => {
+        const productsString = (order.products || []).map(p => `${String(p.name || '').replace(/\|/g, '')}|${String(p.quantity || '')}`).join('; ');
+        return [
+            order.id,
+            order.orderId || '',
+            order.customerDetails?.fullName || '',
+            order.customerDetails?.whatsappNo || '',
+            order.customerDetails?.contactNo || '',
+            order.customerDetails?.address || '',
+            order.orderDate || '',
+            order.deliveryDate || '',
+            order.status || '',
+            order.urgent || 'No',
+            order.remarks || '',
+            order.totalAmount || 0,
+            order.amountPaid || 0,
+            order.paymentStatus || 'Pending',
+            productsString
+        ];
+    });
+    let csvContent = "data:text/csv;charset=utf-8," + headers.map(h => `"${h.replace(/"/g, '""')}"`).join(",") + "\n" + rows.map(row => row.map(field => `"${String(field || '').replace(/"/g, '""')}"`).join(",")).join("\n");
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    const timestamp = new Date().toISOString().slice(0, 10);
+    link.setAttribute("download", `orders_export_${timestamp}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+}
+
+function attemptOpenModalFromUrl() {
+    if (orderIdToOpenFromUrl && allOrdersCache.length > 0 && !modalOpenedFromUrl) {
+        const orderWrapper = allOrdersCache.find(o => o.id === orderIdToOpenFromUrl);
+        if (orderWrapper) {
+            openDetailsModal(orderIdToOpenFromUrl, orderWrapper.data);
+            modalOpenedFromUrl = true;
+            try {
+                const url = new URL(window.location);
+                url.searchParams.delete('openModalForId');
+                window.history.replaceState({}, '', url.toString());
+            } catch(e) {
+                window.history.replaceState(null, '', window.location.pathname);
+            }
+            orderIdToOpenFromUrl = null;
+        }
     }
+}
+
+// PO Creation Functions
+function openPOItemSelectionModal(orderFirestoreId, orderData) {
+    if (!poItemSelectionModal || !orderData || !orderData.products || orderData.products.length === 0) { alert("No products found in this order to create a PO."); return; }
+    if (!poItemSelectionOrderIdInput || !poItemSelectionDisplayOrderIdSpan || !poItemSelectionListContainer || !proceedToCreatePOBtn || !poSupplierSearchInput) return;
+
+    poItemSelectionOrderIdInput.value = orderFirestoreId;
+    poItemSelectionDisplayOrderIdSpan.textContent = orderData.orderId || `Sys:${orderFirestoreId.substring(0,6)}`;
+    poItemSelectionListContainer.innerHTML = '';
+    poSupplierSearchInput.value = '';
+    poSelectedSupplierIdInput.value = '';
+    poSelectedSupplierNameInput.value = '';
+    if(poSupplierSuggestionsDiv) poSupplierSuggestionsDiv.style.display = 'none';
+    showPOItemError('');
+
+    // TODO: Enhance this logic to check against `orderData.linkedPOs` or product-level status
+    // to see if an item is already included in a PO.
+    orderData.products.forEach((product, index) => {
+        const isAlreadyInPO = false; // Placeholder
+
+        const div = document.createElement('div');
+        div.className = 'item-selection-entry';
+        div.innerHTML = `
+            <input type="checkbox" id="poItem_${index}" name="poItems" value="${index}" data-product-index="${index}" ${isAlreadyInPO ? 'disabled' : ''}>
+            <label for="poItem_${index}">
+                <strong>${escapeHtml(product.name || 'Unnamed Product')}</strong> (Qty: ${product.quantity || '?'})
+                ${isAlreadyInPO ? '<span class="in-po-label">(In PO)</span>' : ''}
+            </label>
+        `;
+        poItemSelectionListContainer.appendChild(div);
+    });
+
+    if (poItemSelectionListContainer.children.length === 0) {
+         poItemSelectionListContainer.innerHTML = '<p>No items available for PO creation.</p>';
+    }
+
+    proceedToCreatePOBtn.disabled = true;
+    poItemSelectionModal.classList.add('active');
+}
+
+function closePoItemSelectionModal() { if (poItemSelectionModal) poItemSelectionModal.classList.remove('active'); showPOItemError(''); }
+function showPOItemError(message) { if (poItemSelectionError) { poItemSelectionError.textContent = message; poItemSelectionError.style.display = message ? 'block' : 'none'; } }
+function handlePOItemCheckboxChange() {
+    if (!poItemSelectionListContainer || !proceedToCreatePOBtn || !poSelectedSupplierIdInput) return;
+    const selectedCheckboxes = poItemSelectionListContainer.querySelectorAll('input[name="poItems"]:checked');
+    const supplierSelected = !!poSelectedSupplierIdInput.value;
+    proceedToCreatePOBtn.disabled = !(selectedCheckboxes.length > 0 && supplierSelected);
+}
+function handlePOSupplierSearchInput() {
+     if (!poSupplierSearchInput || !poSupplierSuggestionsDiv || !poSelectedSupplierIdInput || !poSelectedSupplierNameInput) return;
+     clearTimeout(supplierSearchDebounceTimerPO);
+     const searchTerm = poSupplierSearchInput.value.trim();
+     poSelectedSupplierIdInput.value = '';
+     poSelectedSupplierNameInput.value = '';
+     handlePOItemCheckboxChange();
+
+     if (searchTerm.length < 1) { if(poSupplierSuggestionsDiv){ poSupplierSuggestionsDiv.innerHTML = ''; poSupplierSuggestionsDiv.style.display = 'none';} return; }
+     supplierSearchDebounceTimerPO = setTimeout(() => { fetchPOSupplierSuggestions(searchTerm); }, 350);
+}
+async function fetchPOSupplierSuggestions(searchTerm) {
+    if (!poSupplierSuggestionsDiv || !db) return;
+    poSupplierSuggestionsDiv.innerHTML = '<div>Loading...</div>';
+    poSupplierSuggestionsDiv.style.display = 'block';
+    const searchTermLower = searchTerm.toLowerCase();
     try {
-        const ordersRef = collection(db, "orders");
-        // Consider which orders contribute to balance. Summing all for now.
-        const q = query(ordersRef, where("customerId", "==", customerId));
-
+        const q = query( collection(db, "suppliers"), orderBy("name_lowercase"), where("name_lowercase", ">=", searchTermLower), where("name_lowercase", "<=", searchTermLower + '\uf8ff'), limit(10) );
         const querySnapshot = await getDocs(q);
-        querySnapshot.forEach(doc => {
-            foundOrders = true;
-            totalOrderValue += Number(doc.data().finalAmount || 0);
-        });
+        poSupplierSuggestionsDiv.innerHTML = '';
 
-        console.log(`_newOrder: Total Order Value calculated: ${totalOrderValue}`);
-        return foundOrders ? totalOrderValue : 'N/A'; // Return 'N/A' ONLY if no orders exist
+        if (querySnapshot.empty) {
+            poSupplierSuggestionsDiv.innerHTML = '<div class="no-suggestions">No matching suppliers found.</div>';
+        } else {
+            querySnapshot.forEach((docSnapshot) => {
+                 const supplier = docSnapshot.data(); const supplierId = docSnapshot.id; const div = document.createElement('div');
+                 div.textContent = `${supplier.name}${supplier.companyName ? ' (' + supplier.companyName + ')' : ''}`;
+                 div.dataset.id = supplierId; div.dataset.name = supplier.name; div.style.cursor = 'pointer';
+                 div.addEventListener('mousedown', (e) => {
+                      e.preventDefault();
+                      if(poSupplierSearchInput) poSupplierSearchInput.value = supplier.name;
+                      if(poSelectedSupplierIdInput) poSelectedSupplierIdInput.value = supplierId;
+                      if(poSelectedSupplierNameInput) poSelectedSupplierNameInput.value = supplier.name;
+                      if(poSupplierSuggestionsDiv) poSupplierSuggestionsDiv.style.display = 'none';
+                      handlePOItemCheckboxChange();
+                 });
+                 poSupplierSuggestionsDiv.appendChild(div);
+            });
+        }
     } catch (error) {
-        console.error("_newOrder: Error loading order total value:", error);
-        return 'N/A'; // Return 'N/A' on error
+        console.error("Error fetching PO supplier suggestions:", error);
+        poSupplierSuggestionsDiv.innerHTML = '<div class="no-suggestions" style="color:red;">Error fetching suppliers.</div>';
     }
 }
+function handleProceedToCreatePO() {
+    const orderFirestoreId = poItemSelectionOrderIdInput.value;
+    const selectedSupplierId = poSelectedSupplierIdInput.value;
+    const selectedSupplierName = poSelectedSupplierNameInput.value;
+    if (!orderFirestoreId || !selectedSupplierId || !selectedSupplierName) { showPOItemError("Missing Order ID or Supplier Selection."); return; }
+    const selectedItemsIndices = Array.from(poItemSelectionListContainer.querySelectorAll('input[name="poItems"]:checked')).map(cb => parseInt(cb.value));
+    if (selectedItemsIndices.length === 0) { showPOItemError("Please select at least one item for the PO."); return; }
 
-// --- Log that the script finished loading ---
-console.log("new_order.js script loaded (v2.3.2 - Added Balance Calculation).");
+    const params = new URLSearchParams();
+    params.append('sourceOrderId', orderFirestoreId);
+    params.append('supplierId', selectedSupplierId);
+    params.append('supplierName', selectedSupplierName);
+    params.append('itemIndices', selectedItemsIndices.join(','));
+
+    window.location.href = `new_po.html?${params.toString()}`;
+    closePoItemSelectionModal();
+}
+
+// PO Details Popup Functions
+async function openPODetailsPopup(poId) {
+    if (!poDetailsPopup || !poDetailsPopupContent || !db) return;
+    poDetailsPopupContent.innerHTML = '<p><i class="fas fa-spinner fa-spin"></i> Loading PO details...</p>';
+    poDetailsPopup.classList.add('active');
+
+    try {
+        const poRef = doc(db, "purchaseOrders", poId);
+        const poDocSnap = await getDoc(poRef);
+        if (!poDocSnap.exists()) throw new Error(`Purchase Order with ID ${poId} not found.`);
+
+        const poData = poDocSnap.data();
+        const supplierName = poData.supplierName || 'Unknown Supplier';
+        const poNumberDisplay = poData.poNumber ? `#${poData.poNumber}` : 'N/A';
+        let orderDateStr = poData.orderDate?.toDate ? poData.orderDate.toDate().toLocaleDateString('en-GB') : 'N/A';
+
+        let popupHTML = `
+            <div class="po-details-popup-header">
+                <h3>Purchase Order ${poNumberDisplay}</h3>
+                <p><strong>Supplier:</strong> ${escapeHtml(supplierName)}</p>
+                <p><strong>Order Date:</strong> ${orderDateStr}</p>
+                <p><strong>Status:</strong> ${escapeHtml(poData.status || 'N/A')}</p>
+                <p><strong>Total Amount:</strong> ₹ ${(poData.totalAmount || 0).toFixed(2)}</p>
+            </div>
+            <hr>
+            <h4>Items</h4>`;
+
+        if (poData.items && poData.items.length > 0) {
+            popupHTML += `<table class="details-table-popup"><thead><tr><th>#</th><th>Product</th><th>Details</th><th>Rate</th><th>Amount</th></tr></thead><tbody>`;
+            poData.items.forEach((item, index) => {
+                let detailStr = ''; const qty = item.quantity || '?';
+                 if (item.type === 'Sq Feet') { const w = item.realWidth || item.width || '?'; const h = item.realHeight || item.height || '?'; const u = item.unit || item.inputUnit || 'units'; detailStr = `Qty: ${qty} (${w}x${h} ${u})`; }
+                 else { detailStr = `Qty: ${qty}`; }
+                 popupHTML += `<tr><td>${index + 1}</td><td>${escapeHtml(item.productName || 'N/A')}</td><td>${escapeHtml(detailStr)}</td><td>${item.rate?.toFixed(2) ?? 'N/A'}</td><td align="right">${item.itemAmount?.toFixed(2) ?? 'N/A'}</td></tr>`;
+            });
+            popupHTML += `</tbody></table>`;
+        } else { popupHTML += `<p>No items found for this PO.</p>`; }
+        if (poData.notes) { popupHTML += `<div class="po-notes-popup"><strong>Notes:</strong><p>${escapeHtml(poData.notes).replace(/\n/g, '<br>')}</p></div>`; }
+
+        poDetailsPopupContent.innerHTML = popupHTML;
+        if(printPoDetailsPopupBtn) printPoDetailsPopupBtn.dataset.poid = poId;
+
+    } catch (error) {
+        console.error("Error loading PO details into popup:", error);
+        poDetailsPopupContent.innerHTML = `<p class="error-message">Error loading PO details: ${error.message}</p>`;
+    }
+}
+function closePODetailsPopup() { if (poDetailsPopup) poDetailsPopup.classList.remove('active'); }
+function handlePrintPODetailsPopup(event) {
+    // Basic print logic for the popup content
+     const contentElement = document.getElementById('poDetailsPopupContent');
+     if (!contentElement) return;
+     const printWindow = window.open('', '_blank');
+     printWindow.document.write(`<html><head><title>Print PO Details</title><style>body{font-family:sans-serif;margin:20px;} h3,h4{margin-bottom:10px;} table{width:100%; border-collapse:collapse; margin-bottom:15px;} th, td{border:1px solid #ccc; padding:5px; text-align:left;} th{background-color:#f2f2f2;} .po-notes-popup{margin-top:15px; border:1px solid #eee; padding:10px;} </style></head><body>${contentElement.innerHTML}</body></html>`);
+     printWindow.document.close();
+     printWindow.focus();
+     // Timeout might be needed for content to render before print dialog
+     setTimeout(() => { printWindow.print(); printWindow.close(); }, 500);
+}
+
+
+// Read-Only Order Details Popup Functions (Feature 5)
+function openReadOnlyOrderPopup(firestoreId, orderData) {
+    if (!readOnlyOrderModal || !readOnlyOrderModalContent || !readOnlyOrderModalTitle || !orderData) {
+        console.error("Read-only modal elements or order data missing.");
+        return;
+    }
+
+    readOnlyOrderModalTitle.textContent = `Order Details: #${orderData.orderId || firestoreId.substring(0,6)}`;
+    readOnlyOrderModalContent.innerHTML = '<p><i class="fas fa-spinner fa-spin"></i> Loading...</p>';
+    readOnlyOrderModal.classList.add('active');
+
+    // Re-use parts of openDetailsModal logic but structure for read-only display
+    let contentHTML = '<div class="read-only-grid">'; // Use a grid for layout
+
+    // Customer Details Section
+    contentHTML += '<div class="read-only-section"><h4>Customer</h4>';
+    contentHTML += `<p><strong>Name:</strong> ${escapeHtml(orderData.customerDetails?.fullName || 'N/A')}</p>`;
+    contentHTML += `<p><strong>WhatsApp:</strong> ${escapeHtml(orderData.customerDetails?.whatsappNo || 'N/A')}</p>`;
+    contentHTML += `<p><strong>Contact:</strong> ${escapeHtml(orderData.customerDetails?.contactNo || 'N/A')}</p>`;
+    contentHTML += `<p><strong>Address:</strong> ${escapeHtml(orderData.customerDetails?.address || 'N/A')}</p></div>`;
+
+    // Order Details Section
+    const orderDateRO = orderData.orderDate ? (typeof orderData.orderDate.toDate === 'function' ? orderData.orderDate.toDate().toLocaleDateString('en-GB') : new Date(orderData.orderDate).toLocaleDateString('en-GB')) : 'N/A';
+    const deliveryDateRO = orderData.deliveryDate ? (typeof orderData.deliveryDate.toDate === 'function' ? orderData.deliveryDate.toDate().toLocaleDateString('en-GB') : new Date(orderData.deliveryDate).toLocaleDateString('en-GB')) : 'N/A';
+    contentHTML += '<div class="read-only-section"><h4>Order Info</h4>';
+    contentHTML += `<p><strong>Order Date:</strong> ${orderDateRO}</p>`;
+    contentHTML += `<p><strong>Delivery Date:</strong> ${deliveryDateRO}</p>`;
+    contentHTML += `<p><strong>Priority:</strong> ${escapeHtml(orderData.urgent || 'No')}</p>`;
+    contentHTML += `<p><strong>Status:</strong> ${escapeHtml(orderData.status || 'N/A')}</p>`;
+    contentHTML += `<p><strong>Remarks:</strong> ${escapeHtml(orderData.remarks || 'None')}</p></div>`;
+
+    // Products Section
+    contentHTML += '<div class="read-only-section read-only-products"><h4>Products</h4>';
+    if (orderData.products && orderData.products.length > 0) {
+        contentHTML += '<ul class="read-only-product-list">';
+        orderData.products.forEach(p => {
+            contentHTML += `<li><strong>${escapeHtml(p.name || 'Unnamed')}</strong> - Qty: ${escapeHtml(p.quantity || '?')}</li>`;
+        });
+        contentHTML += '</ul>';
+    } else {
+        contentHTML += '<p>No products listed.</p>';
+    }
+    contentHTML += '</div>';
+
+    // Status History Section
+    contentHTML += '<div class="read-only-section"><h4>Status History</h4>';
+    if (orderData.statusHistory && orderData.statusHistory.length > 0) {
+        const sortedHistoryRO = [...orderData.statusHistory].sort((a, b) => (b.timestamp?.toDate ? b.timestamp.toDate().getTime() : 0) - (a.timestamp?.toDate ? a.timestamp.toDate().getTime() : 0));
+        contentHTML += '<ul class="read-only-history-list">';
+        sortedHistoryRO.forEach(entry => {
+            const timeStr = entry.timestamp?.toDate ? entry.timestamp.toDate().toLocaleString('en-GB') : '?';
+            contentHTML += `<li><strong>${escapeHtml(entry.status || '?')}</strong> at ${timeStr}</li>`;
+        });
+        contentHTML += '</ul>';
+    } else {
+        contentHTML += '<p>No status history available.</p>';
+    }
+    contentHTML += '</div>';
+
+    contentHTML += '</div>'; // Close read-only-grid
+
+    readOnlyOrderModalContent.innerHTML = contentHTML;
+}
+
+function closeReadOnlyOrderModal() {
+    if (readOnlyOrderModal) readOnlyOrderModal.classList.remove('active');
+}
+
+console.log("order_history.js script (with new features) loaded.");

@@ -1,264 +1,349 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>New/Edit Order</title>
+    <title>Order History & Management</title>
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="css/new_order.css">
+    <link rel="stylesheet" href="css/order_history.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" integrity="sha512-9usAa10IRO0HhonpyAIVpjrylPvoDwiPUiKdWk5t3PyolY1cOd4DSE0Ga+ri4AuTroPR5aQvXU9xC6qOPnzFeg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
 
     <script type="module">
-        // --- Firebase Setup (Same as before) ---
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-        import { getFirestore, collection, addDoc, doc, updateDoc, getDocs, query, where, getDoc, orderBy, limit, Timestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+        import { getFirestore, collection, doc, getDoc, deleteDoc, updateDoc, onSnapshot, query, orderBy, Timestamp, arrayUnion, writeBatch, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-        // **** Your Firebase Configuration ****
-        const firebaseConfig = {
-          apiKey: "AIzaSyBQj5rQmE77kKKGYixP8y3Hcimz8tiAqzQ", // Replace with your actual config
-          authDomain: "madhav-multyprint.firebaseapp.com",   // Replace with your actual config
-          projectId: "madhav-multyprint",                // Replace with your actual config
-          storageBucket: "madhav-multyprint.appspot.com",   // Replace with your actual config
-          messagingSenderId: "104988349637",             // Replace with your actual config
-          appId: "1:104988349637:web:faf045b77c6786a4e70cac" // Replace with your actual config
-        };
-        // !!!!! MAKE SURE THESE VALUES ARE CORRECT !!!!!
+         const firebaseConfig = {
+           apiKey: "AIzaSyBQj5rQmE77kKKGYixP8y3Hcimz8tiAqzQ",
+           authDomain: "madhav-multyprint.firebaseapp.com",
+           projectId: "madhav-multyprint",
+           storageBucket: "madhav-multyprint.appspot.com",
+           messagingSenderId: "104988349637",
+           appId: "1:104988349637:web:faf045b77c6786a4e70cac"
+         };
 
-        let app; let auth; let db;
+        let app;
+        let auth;
+        let db;
+
         try {
-            if (!window.firebaseAppInitialized) { app = initializeApp(firebaseConfig); window.firebaseAppInitialized = true; window.firebaseApp = app; console.log("Firebase initialized on new_order.html"); } else { app = window.firebaseApp; console.log("Firebase already initialized (new_order.html)"); }
-            auth = getAuth(app); db = getFirestore(app);
-            window.db = db; window.auth = auth; window.collection = collection; window.addDoc = addDoc; window.doc = doc; window.updateDoc = updateDoc; window.getDocs = getDocs; window.query = query; window.where = where; window.getDoc = getDoc; window.orderBy = orderBy; window.limit = limit; window.Timestamp = Timestamp;
-            console.log("Firestore functions made global.");
+             if (!window.firebaseAppInitialized) {
+                 app = initializeApp(firebaseConfig);
+                 window.firebaseAppInitialized = true;
+                 window.firebaseApp = app;
+                 console.log("Firebase initialized on this page (order_history).");
+             } else {
+                 app = window.firebaseApp;
+                 console.log("Firebase already initialized on this page (order_history).");
+             }
+             auth = getAuth(app);
+             db = getFirestore(app);
+             window.db = db;
+             window.auth = auth;
+             window.collection = collection;
+             window.doc = doc;
+             window.getDoc = getDoc;
+             window.deleteDoc = deleteDoc;
+             window.updateDoc = updateDoc;
+             window.onSnapshot = onSnapshot;
+             window.query = query;
+             window.orderBy = orderBy;
+             window.Timestamp = Timestamp;
+             window.arrayUnion = arrayUnion;
+             window.writeBatch = writeBatch;
+             window.serverTimestamp = serverTimestamp;
 
-            onAuthStateChanged(auth, (user) => {
-                const currentPage = window.location.pathname.split('/').pop().toLowerCase() || 'index.html';
-                if (!user && currentPage !== 'login.html') { console.log("User not logged in. Redirecting..."); window.location.replace('login.html'); }
-                else if (user) { console.log(`User logged in on ${currentPage}`); }
-            });
-            window.getCurrentUser = () => auth.currentUser;
-        } catch(e) { console.error("Firebase setup / Auth check error:", e); alert("Error loading application configuration."); }
+             onAuthStateChanged(auth, (user) => {
+                 const currentPage = window.location.pathname.split('/').pop() || 'index.html';
+                 if (!user && currentPage.toLowerCase() !== 'login.html') {
+                     console.log(`User not logged in on ${currentPage}. Redirecting...`);
+                     window.location.replace('login.html');
+                 } else if (user) {
+                     console.log(`User logged in on ${currentPage}:`, user.uid);
+                 }
+             });
+
+             window.getCurrentUser = () => auth.currentUser;
+
+        } catch(e) {
+            console.error("Firebase setup / Auth check error:", e);
+            alert("Error loading application. Please try again later.");
+        }
     </script>
-</head>
+    </head>
 <body>
     <div class="container">
-        <div class="header" id="formHeader">
-            <i class="fas fa-file-alt header-icon"></i>
-            <span id="headerText">New Order</span>
+        <div class="header">
+            <i class="fas fa-history header-icon"></i>
+            <h1>Order History & Management</h1>
         </div>
 
         <div class="breadcrumb">
-            <a href="order_history.html">Order History</a> / <span id="breadcrumbAction">New Order</span>
+            <a href="index.html">Home</a> / <span>Order History</span>
         </div>
 
-        <form id="newOrderForm">
-            <input type="hidden" id="editOrderId" name="editOrderId">
-            <input type="hidden" id="selectedCustomerId" name="selectedCustomerId">
+        <div class="actions-bar">
+             <a href="new_order.html" class="button add-new-button"><i class="fas fa-plus"></i> New Order</a>
+             <button id="newCustomerBtn" class="button info-button"><i class="fas fa-user-plus"></i> New Customer</button>
+             <a href="new_po.html" class="button primary-button"><i class="fas fa-file-alt"></i> New PO</a>
+             <button id="paymentReceivedBtn" class="button success-button"><i class="fas fa-dollar-sign"></i> Payment Received</button>
+             <button id="customerPanelBtn" class="button secondary-button"><i class="fas fa-users"></i> Customers</button>
+             <button id="exportCsvBtn" class="button export-button"><i class="fas fa-file-csv"></i> Export to CSV</button>
+        </div>
 
-            <div class="form-layout-columns">
-                 <div class="form-column">
-                     <div class="form-section-card">
-                         <div class="section-title">1. Customer Details</div>
-                         <div class="form-row">
-                             <div class="form-group form-group-half">
-                                 <label for="full_name">Full Name *</label>
-                                 <input type="text" id="full_name" name="full_name" required autocomplete="off" placeholder="Search or enter customer name...">
-                                 <div id="customer-suggestions-name" class="suggestions-box"><ul></ul></div>
-                             </div>
-                             <div class="form-group form-group-half">
-                                 <label for="whatsapp_no">WhatsApp No *</label>
-                                 <input type="text" id="whatsapp_no" name="whatsapp_no" required autocomplete="off" placeholder="Search or enter WhatsApp no...">
-                                 <div id="customer-suggestions-whatsapp" class="suggestions-box"><ul></ul></div>
-                             </div>
-                         </div>
-                          <div class="form-row">
-                             <div class="form-group form-group-half">
-                                 <label for="address">Address</label>
-                                 <input type="text" id="address" name="address" placeholder="Autofills or enter address">
-                             </div>
-                             <div class="form-group form-group-half">
-                                 <label for="contact_no">Contact No</label>
-                                 <input type="text" id="contact_no" name="contact_no" placeholder="Autofills or enter contact">
-                             </div>
-                          </div>
-                          <div class="form-row">
-                              <div class="form-group form-group-full" id="customerAccountLinkArea" style="margin-top: -10px; margin-bottom: 5px; display: none;">
-                                  <a href="#" id="viewCustomerAccountLink" target="_blank" class="link-button">View Full Account Details</a>
-                              </div>
-                              <div class="form-group form-group-full" id="customerBalanceArea" style="display: none; font-size: 0.9em; margin-bottom: 5px;">
-                                  Current Balance: <strong id="customerCurrentBalance"></strong>
-                              </div>
-                          </div>
-                         <p class="info-text">*Search existing customer or enter details for a new one.</p>
-                    </div>
-                 </div>
-                 <div class="form-column">
-                     <div class="form-section-card">
-                         <div class="section-title">2. Order Details</div>
-                         <div class="form-row">
-                             <div class="form-group form-group-half">
-                                <label for="manual_order_id">Order ID (Manual)</label>
-                                <input type="text" id="manual_order_id" name="manual_order_id" placeholder="Optional - Auto-generated if empty">
-                            </div>
-                             <div class="form-group form-group-half">
-                                <label for="display_order_id">Order ID (System)</label>
-                                <input type="text" id="display_order_id" name="display_order_id" readonly placeholder="Auto-generated or Existing">
-                            </div>
-                        </div>
-                         <div class="form-row">
-                             <div class="form-group form-group-half">
-                                <label for="order_date">Order Date *</label>
-                                <input type="date" id="order_date" name="order_date" required>
-                            </div>
-                            <div class="form-group form-group-half">
-                                <label for="delivery_date">Delivery Date</label>
-                                <input type="date" id="delivery_date" name="delivery_date">
-                            </div>
-                        </div>
-                        <div class="form-row">
-                             <!-- Status Dropdown Moved Here -->
-                             <div class="form-group form-group-half">
-                                 <label for="orderStatusSelect">Status</label>
-                                 <select id="orderStatusSelect" name="order_status" class="form-input status-select">
-                                     <option value="Order Received">Order Received</option>
-                                     <option value="Designing">Designing</option>
-                                     <option value="Verification">Verification</option>
-                                     <option value="Design Approved">Design Approved</option>
-                                     <option value="Printing">Printing</option>
-                                     <option value="Ready for Working">Ready for Working</option>
-                                     <option value="Delivered">Delivered</option>
-                                     <option value="Completed">Completed</option>
-                                 </select>
-                             </div>
-                            <div class="form-group priority-group" style="flex-basis: 150px;">
-                                 <label>Urgent?</label>
-                                 <div class="radio-group">
-                                       <label><input type="radio" name="urgent" value="Yes"> Yes</label>
-                                      <label><input type="radio" name="urgent" value="No" checked> No</label>
-                                  </div>
-                             </div>
-                        </div>
-                         <div class="form-row">
-                             <div class="form-group remarks-group form-group-full">
-                                 <label for="remarks">Remarks</label>
-                                <textarea id="remarks" name="remarks" placeholder="Any specific notes..."></textarea>
-                            </div>
-                         </div>
-                     </div>
-                 </div>
+         <div class="filter-bar">
+            <div class="filter-group">
+                <label for="filterDate"><i class="fas fa-calendar-alt"></i> Order Date:</label>
+                <input type="date" id="filterDate">
             </div>
+            <div class="filter-group">
+                <label for="filterSearch"><i class="fas fa-search"></i> Search:</label>
+                <input type="text" id="filterSearch" placeholder="Order ID, Cust. Name, Product...">
+            </div>
+            <div class="filter-group">
+                <label for="filterStatus"><i class="fas fa-flag"></i> Status:</label>
+                <select id="filterStatus">
+                    <option value="">All Statuses</option>
+                     <option value="Order Received">Order Received</option>
+                    <option value="Designing">Designing</option>
+                    <option value="Verification">Verification</option>
+                    <option value="Design Approved">Design Approved</option>
+                     <option value="Printing">Printing</option>
+                    <option value="Ready for Working">Ready for Working</option>
+                    <option value="Delivered">Delivered</option>
+                    <option value="Completed">Completed</option>
+                </select>
+                 </div>
+              <div class="filter-group filter-sort">
+                <label for="sort-orders"><i class="fas fa-sort"></i> Sort by:</label>
+                <select id="sort-orders">
+                    <option value="createdAt_desc">Newest First (Created)</option>
+                    <option value="createdAt_asc">Oldest First (Created)</option>
+                     <option value="updatedAt_desc">Newest First (Updated)</option>
+                    <option value="updatedAt_asc">Oldest First (Updated)</option>
+                    <option value="orderDate_desc">Order Date (Newest)</option>
+                    <option value="orderDate_asc">Order Date (Oldest)</option>
+                 </select>
+            </div>
+            <div class="filter-group">
+                 <button id="clearFiltersBtn" class="button clear-filters-button" title="Clear all filters"><i class="fas fa-times"></i> Clear Filters</button>
+            </div>
+        </div>
 
-            <!-- Removed the old inline status section -->
+        <div class="bulk-actions-bar" id="bulkActionsBar" style="display: none;">
+             <span id="selectedCount">0 items selected</span>
+             <div class="bulk-actions-controls">
+                 <label for="bulkStatusSelect" class="bulk-label">Change status to:</label>
+                 <select id="bulkStatusSelect" class="bulk-select">
+                     <option value="" disabled selected>Select Status</option>
+                     <option value="Order Received">Order Received</option>
+                     <option value="Designing">Designing</option>
+                     <option value="Verification">Verification</option>
+                     <option value="Design Approved">Design Approved</option>
+                     <option value="Printing">Printing</option>
+                     <option value="Ready for Working">Ready for Working</option>
+                     <option value="Delivered">Delivered</option>
+                     <option value="Completed">Completed</option>
+                 </select>
+                 <button id="bulkUpdateStatusBtn" class="button bulk-button bulk-update" disabled><i class="fas fa-sync-alt"></i> Update Selected (Max 10)</button>
+                 <button id="bulkDeleteBtn" class="button bulk-button bulk-delete" disabled><i class="fas fa-trash-alt"></i> Delete Selected (Max 5)</button>
+             </div>
+        </div>
 
-            <div class="form-section-card">
+        <div class="table-container">
+             <table id="orderTable">
+                 <thead>
+                    <tr>
+                        <th class="col-checkbox"><input type="checkbox" id="selectAllCheckbox" title="Select All Visible"></th>
+                        <th>Order ID</th>
+                        <th>Customer Name</th>
+                         <th>Products</th>
+                        <th>Order Date</th>
+                        <th>Delivery Date</th>
+                        <th>Priority</th>
+                         <th>Status</th>
+                         <th>PO Info</th>
+                        <th>Action</th>
+                        <th>Send Wtsp</th>
+                    </tr>
+                </thead>
+                 <tbody id="orderTableBody">
+                    <tr>
+                        <td colspan="11" id="loadingMessage">Loading orders...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
 
-                <div class="section-title">3. Product & Job Details</div>
-                <div class="table-container order-items-table">
-                    <table id="orderItemsTable">
-                        <thead>
-                            <tr>
-                                <th style="width: 28%;">Product Name *</th>
-                                <th style="width: 10%;">Unit Type *</th>
-                                <th style="width: 15%;" class="sq-feet-header hidden-col">Dimensions (W x H) *</th>
-                                <th style="width: 8%;" class="sq-feet-header hidden-col">Unit *</th>
-                                <th style="width: 9%;">Quantity *</th>
-                                <th style="width: 13%;">Rate *</th>
-                                <th style="width: 12%;">Amount</th>
-                                <th style="width: 5%;">Action</th>
-                            </tr>
-                        </thead>
-                        <tbody id="orderItemsTableBody">
+        <div class="summary-reporting-container">
+            <div class="order-summary-counts">
+                 <span>Total Displayed: <strong id="total-orders">0</strong></span> |
+                <span>Completed/Delivered: <strong id="completed-delivered-orders">0</strong></span> |
+                 <span>Pending: <strong id="pending-orders">0</strong></span>
+            </div>
+            <div id="reportingSection" class="reporting-section">
+                <h4>Displayed Orders Report</h4>
+                <div id="statusCountsReport"><p>Loading report...</p></div>
+            </div>
+        </div>
+    </div>
 
-                        </tbody>
-                    </table>
+    <div id="detailsModal" class="modal modal-lg">
+        <div class="modal-content">
+            <span class="close-btn" id="closeDetailsModal" title="Close">&times;</span>
+            <h2>Order Details & Actions</h2>
+            <input type="hidden" id="modalOrderId">
+             <div class="modal-grid">
+                <div class="modal-section modal-customer-info">
+                    <h4>Customer Details</h4>
+                    <p><strong>Order ID:</strong> <span id="modalDisplayOrderId"></span></p>
+                    <p><strong>Customer:</strong> <span id="modalCustomerName"></span></p>
+                    <p><strong>WhatsApp:</strong> <span id="modalCustomerWhatsApp"></span></p>
+                    <p><strong>Contact:</strong> <span id="modalCustomerContact"></span></p>
+                    <p><strong>Address:</strong> <span id="modalCustomerAddress"></span></p>
                 </div>
-                <button type="button" id="addItemBtn" class="button add-item-button"><i class="fas fa-plus"></i> Add Item</button>
-            </div>
 
-             <div class="form-section-card" id="calculationAndSummarySection">
-                 <div class="order-summary-wrapper">
-                    <div class="summary-left">
-                        <div id="calculationPreviewArea" class="calculation-preview" style="display: none;">
-                           <h4>Calculation Details:</h4>
-                           <div id="calculationPreviewContent">
-                               <p style="color:grey;">Add Sq Feet items to see calculations.</p>
-                           </div>
-                       </div>
-                    </div>
+                <div class="modal-section modal-order-info">
+                     <h4>Order Info</h4>
+                     <p><strong>Order Date:</strong> <span id="modalOrderDate"></span></p>
+                     <p><strong>Delivery Date:</strong> <span id="modalDeliveryDate"></span></p>
+                     <p><strong>Priority:</strong> <span id="modalPriority"></span></p>
+                     <p><strong>Remarks:</strong> <span id="modalRemarks"></span></p>
+                </div>
 
-                     <div class="summary-right">
-                         <div class="section-title summary-title">4. Order Summary & Payment</div>
-                         <div class="summary-grid">
-
-                            <div class="summary-label">Subtotal:</div>
-                            <div class="summary-value summary-subtotal">
-                                ₹ <span id="summarySubtotal">0.00</span>
-                            </div>
-
-
-                            <label for="summaryDiscountPercent" class="summary-label">Discount (%):</label>
-                            <input type="number" id="summaryDiscountPercent" class="summary-input" step="0.01" min="0" max="100" placeholder="%">
-
-                            <label for="summaryDiscountAmount" class="summary-label">Discount Amount:</label>
-                            <input type="number" id="summaryDiscountAmount" class="summary-input" step="0.01" min="0" placeholder="Amount">
-
-
-                            <div class="summary-label summary-highlight-label">Final Amount:</div>
-                            <div class="summary-value summary-final-amount">
-                                ₹ <span id="summaryFinalAmount">0.00</span>
-                            </div>
-
-
-                            <label for="summaryAdvancePayment" class="summary-label">Advance Payment:</label>
-                            <input type="number" id="summaryAdvancePayment" class="summary-input" step="0.01" min="0" placeholder="Amount Received">
-
-
-                            <div class="summary-label summary-highlight-label">Total Balance Due:</div>
-                            <div class="summary-value summary-balance-due">
-                                ₹ <span id="summaryTotalBalance">0.00</span>
-                            </div>
-                        </div>
-                         <div id="creditLimitWarning" class="error-message" style="display: none; margin-top: 15px; text-align:left;"></div>
-                     </div>
+                <div class="modal-section modal-product-info">
+                     <h4>Products</h4>
+                    <div id="modalProductList"><p>Loading...</p></div>
                  </div>
+
+                 <div class="modal-section modal-status-info">
+                     <h4>Status & Tracking</h4>
+                     <label for="modalOrderStatus">Current Status:</label>
+                     <div class="status-update-container">
+                         <select id="modalOrderStatus">
+                             <option value="Order Received">Order Received</option>
+                             <option value="Designing">Designing</option>
+                             <option value="Verification">Verification</option>
+                             <option value="Design Approved">Design Approved</option>
+                             <option value="Printing">Printing</option>
+                             <option value="Ready for Working">Ready for Working</option>
+                             <option value="Delivered">Delivered</option>
+                             <option value="Completed">Completed</option>
+                         </select>
+                         <button id="modalUpdateStatusBtn" class="button update-status-button"><i class="fas fa-sync-alt"></i> Update Status</button>
+                     </div>
+                     <label style="margin-top: 15px;">Status History:</label>
+                     <div id="modalStatusHistoryList"><p>Loading history...</p></div>
+                 </div>
+
+                 <div class="modal-section modal-account-info">
+                    <h4>Account Data</h4>
+                    <p><strong>Total Amount:</strong> <span id="modalTotalAmount">Loading...</span></p>
+                    <p><strong>Amount Paid:</strong> <span id="modalAmountPaid">Loading...</span></p>
+                    <p><strong>Balance Due:</strong> <span id="modalBalanceDue">Loading...</span></p>
+                    <p><strong>Payment Status:</strong> <span id="modalPaymentStatus">Loading...</span></p>
+                     <button id="addPaymentBtn" class="button add-payment-button" style="margin-top: 10px;"><i class="fas fa-plus"></i> Add Payment</button>
+                 </div>
+
+                <div class="modal-section modal-po-info">
+                    <h4>Purchase Orders</h4>
+                    <div id="modalPOList"><p>Loading POs...</p></div>
+                    <button id="modalCreatePOBtn" class="button create-po-button" style="margin-top: 10px;"><i class="fas fa-file-alt"></i> Create New PO</button>
+                </div>
             </div>
 
+            <div class="modal-actions main-actions">
+                  <button id="modalEditFullBtn" class="button edit-full-button"><i class="fas fa-edit"></i> Edit Full Order</button>
+                  <button id="modalDeleteBtn" class="button delete-button"><i class="fas fa-trash-alt"></i> Delete Order</button>
+             </div>
+        </div>
+    </div>
 
-            <div class="button-container">
-                <button type="button" onclick="window.location.href='order_history.html'" class="cancel-button">
-                    Cancel
-                </button>
-                <button type="submit" class="save-button" id="saveOrderBtn">
-                    <i class="fas fa-save"></i> <span>Save Order</span>
-                </button>
+     <div id="whatsapp-reminder-popup" class="popup-overlay">
+         <div class="popup-content">
+            <button id="popup-close-btn" class="popup-close" title="Close">&times;</button>
+            <h4 id="whatsapp-popup-title">Status Updated!</h4>
+            <p>Send update to customer?</p>
+             <div id="whatsapp-message-preview" class="message-preview"></div>
+            <a href="#" id="whatsapp-send-link" class="button whatsapp-send-btn" target="_blank"><i class="fab fa-whatsapp"></i> Send on WhatsApp</a>
+        </div>
+    </div>
+
+    <div id="bulkDeleteConfirmModal" class="modal">
+        <div class="modal-content small-modal">
+            <span class="close-btn" id="closeBulkDeleteModal" title="Close">&times;</span>
+            <h2><i class="fas fa-exclamation-triangle warning-icon"></i> Confirm Deletion</h2>
+            <p>You are about to permanently delete the following <strong id="bulkDeleteCount">0</strong> order(s):</p>
+            <ul id="bulkDeleteOrderList" class="order-list-preview"></ul>
+            <p class="warning-message">This action cannot be undone.</p>
+            <div class="confirmation-check">
+                <input type="checkbox" id="confirmDeleteCheckbox">
+                <label for="confirmDeleteCheckbox">I understand and want to permanently delete these orders.</label>
             </div>
-             <div id="formErrorMsg" class="error-message" style="display: none; margin-top: 15px;"></div>
-        </form>
+            <div class="modal-actions">
+                <button id="cancelBulkDeleteBtn" class="button cancel-button">Cancel</button>
+                <button id="confirmBulkDeleteBtn" class="button delete-button" disabled><i class="fas fa-trash-alt"></i> Delete Orders</button>
+            </div>
+        </div>
     </div>
 
-    <template id="item-row-template">
-        <tr class="item-row">
-            <td> <input type="text" class="form-input product-name" placeholder="Search product..." required autocomplete="off"> </td>
-            <td> <select class="form-input unit-type-select"> <option value="Qty" selected>Qty</option> <option value="Sq Feet">Sq Feet</option> </select> </td>
-            <td class="sq-feet-input" style="display: none;"> <div class="dimension-input-container"> <input type="number" step="0.01" class="form-input dimension-input width-input" placeholder="W"> <span style="padding: 0 2px;">x</span> <input type="number" step="0.01" class="form-input dimension-input height-input" placeholder="H"> </div> </td>
-            <td class="sq-feet-input" style="display: none;"> <select class="form-input dimension-unit-select"> <option value="feet" selected>Feet</option> <option value="inches">Inches</option> </select> </td>
-            <td> <input type="number" step="1" class="form-input quantity-input" placeholder="Qty" min="1" value="1"> </td>
-            <td> <div class="rate-input-wrapper"> <input type="number" step="0.01" class="form-input rate-input" placeholder="Rate" required> </div> </td>
-            <td style="text-align: right; font-weight: 600; vertical-align: middle;"> ₹<span class="item-amount">0.00</span> </td>
-            <td style="text-align: center; vertical-align: middle;"> <button type="button" class="button delete-item-btn" title="Remove Item"><i class="fas fa-trash-alt"></i></button> </td>
-        </tr>
-    </template>
-
-    <div id="whatsapp-reminder-popup" class="popup-overlay">
-         <div class="popup-content"> <button id="popup-close-btn" class="popup-close" title="Close">&times;</button> <h4>Order Saved Successfully!</h4> <p>Send update to customer?</p> <div id="whatsapp-message-preview" class="message-preview"></div> <a href="#" id="whatsapp-send-link" class="button whatsapp-send-btn" target="_blank"> <i class="fab fa-whatsapp"></i> Send on WhatsApp </a> </div>
+    <div id="poItemSelectionModal" class="modal modal-lg">
+        <div class="modal-content">
+            <span class="close-btn" id="closePoItemSelectionModal" title="Close">&times;</span>
+            <h2>Select Items for Purchase Order</h2>
+            <input type="hidden" id="poItemSelectionOrderId">
+            <p>Select the items from Order #<strong id="poItemSelectionDisplayOrderId"></strong> to include in the new Purchase Order.</p>
+            <div class="form-group">
+                <label for="poSupplierSearchInput">Select Supplier *</label>
+                <input type="text" id="poSupplierSearchInput" placeholder="Type to search supplier..." required autocomplete="off">
+                <input type="hidden" id="poSelectedSupplierId">
+                <input type="hidden" id="poSelectedSupplierName">
+                <div id="poSupplierSuggestions" class="suggestions-list"></div>
+            </div>
+             <div id="poItemSelectionList" class="item-selection-list">
+                <p>Loading items...</p>
+            </div>
+            <div class="modal-actions">
+                <button id="cancelPoItemSelectionBtn" type="button" class="button cancel-button">Cancel</button>
+                <button id="proceedToCreatePOBtn" type="button" class="button save-button" disabled><i class="fas fa-arrow-right"></i> Proceed to Create PO</button>
+            </div>
+             <div id="poItemSelectionError" class="error-message" style="display: none;"></div>
+        </div>
     </div>
 
-    <script src="js/new_order.js" type="module" defer></script>
+     <div id="poDetailsPopup" class="modal modal-lg">
+         <div class="modal-content">
+             <span class="close-btn" id="closePoDetailsPopupBtn" title="Close">&times;</span>
+             <div id="poDetailsPopupContent">
+                 <p>Loading PO details...</p>
+             </div>
+             <div class="modal-actions">
+                 <button type="button" id="printPoDetailsPopupBtn" class="button print-button"><i class="fas fa-print"></i> Print</button>
+                 <button type="button" id="closePoDetailsPopupBottomBtn" class="button cancel-button">Close</button>
+             </div>
+         </div>
+     </div>
+
+     <div id="readOnlyOrderModal" class="modal modal-xl">
+         <div class="modal-content">
+             <span class="close-btn" id="closeReadOnlyOrderModal" title="Close">&times;</span>
+             <h2 id="readOnlyOrderModalTitle">Order Details</h2>
+             <div id="readOnlyOrderModalContent" class="read-only-content-area">
+                <p>Loading details...</p>
+             </div>
+             <div class="modal-actions">
+                 <button type="button" id="closeReadOnlyOrderModalBottomBtn" class="button cancel-button">Close</button>
+             </div>
+         </div>
+     </div>
+
+
+    <script src="js/order_history.js" type="module" defer></script>
+     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
 
 </body>
 </html>
