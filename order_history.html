@@ -13,21 +13,20 @@
 
     <script type="module">
         // Ensure Firebase is initialized only once per page load
-        // This structure assumes Firebase config is securely handled elsewhere or replaced
-        // with your actual configuration method.
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
         import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
         import { getFirestore, collection, doc, getDoc, deleteDoc, updateDoc, onSnapshot, query, orderBy, where, Timestamp, arrayUnion, writeBatch, serverTimestamp, limit, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
+         // --- >>> !!! महत्वपूर्ण: इन मानों को अपने वास्तविक Firebase प्रोजेक्ट मानों से बदलें !!! <<< ---
          const firebaseConfig = {
-           // Replace with your actual Firebase config details
-           apiKey: "YOUR_API_KEY",
-           authDomain: "YOUR_AUTH_DOMAIN",
-           projectId: "YOUR_PROJECT_ID",
-           storageBucket: "YOUR_STORAGE_BUCKET",
-           messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-           appId: "YOUR_APP_ID"
+           apiKey: "YOUR_API_KEY", // आपकी वास्तविक API Key यहाँ डालें
+           authDomain: "YOUR_AUTH_DOMAIN", // आपका वास्तविक Auth Domain यहाँ डालें
+           projectId: "YOUR_PROJECT_ID", // आपका वास्तविक Project ID यहाँ डालें
+           storageBucket: "YOUR_STORAGE_BUCKET", // आपका वास्तविक Storage Bucket यहाँ डालें
+           messagingSenderId: "YOUR_MESSAGING_SENDER_ID", // आपका वास्तविक Sender ID यहाँ डालें
+           appId: "YOUR_APP_ID" // आपका वास्तविक App ID यहाँ डालें
          };
+         // --- >>> !!! सुनिश्चित करें कि ऊपर दिए गए मान सही हैं !!! <<< ---
 
         let app;
         let auth;
@@ -49,8 +48,6 @@
              db = getFirestore(app);
 
              // Make Firebase services globally accessible for order_history.js
-             // Consider passing db, auth etc. directly to functions in order_history.js
-             // instead of attaching to window for better modularity and security.
              window.db = db;
              window.auth = auth;
              window.collection = collection;
@@ -76,15 +73,22 @@
                  // Redirect to login if not logged in and not already on login page
                  if (!user && currentPage.toLowerCase() !== 'login.html') {
                      console.log(`User not logged in on ${currentPage}. Redirecting to login.html...`);
-                     window.location.replace('login.html');
+                     window.location.replace('login.html'); // Redirect to login
                  } else if (user) {
                      console.log(`User logged in on ${currentPage}:`, user.uid);
                      // Trigger initialization of the main script after auth confirmation
+                     // Ensure order_history.js has this function or adapt initialization
                      if (typeof window.initializeOrderHistoryPage === 'function') {
                          window.initializeOrderHistoryPage(user);
                      } else {
-                         console.warn("initializeOrderHistoryPage function not found on window.");
+                         // If order_history.js doesn't export an init function,
+                         // you might need to directly call its setup logic here
+                         // or ensure it runs after this auth check.
+                         console.warn("initializeOrderHistoryPage function not found on window. Ensure order_history.js is loaded and sets up its functions.");
                      }
+                 } else if (!user && currentPage.toLowerCase() === 'login.html') {
+                     // User is on the login page and not logged in, which is fine.
+                     console.log("User is on the login page and not logged in.");
                  }
              });
 
@@ -93,8 +97,11 @@
 
         } catch(e) {
             console.error("Firebase setup / Auth check error:", e);
-            // Display a user-friendly error message on the page?
             alert("Error loading application components. Please check the console and try again later.");
+            // Consider disabling functionality if Firebase fails critically
+            if (document.body) {
+                 document.body.innerHTML = '<p style="color:red; text-align:center; margin-top: 50px;">Application failed to load due to configuration error. Please contact support.</p>';
+            }
         }
     </script>
     </head>
@@ -212,7 +219,8 @@
                 <div id="statusCountsReport"><p>Loading report...</p></div>
             </div>
         </div>
-    </div> <div id="detailsModal" class="modal modal-lg"> <div class="modal-content">
+    </div> <div id="detailsModal" class="modal modal-lg">
+        <div class="modal-content">
             <span class="close-btn" id="closeDetailsModal" title="Close">&times;</span>
             <h2>Order Details & Actions</h2>
             <input type="hidden" id="modalOrderId">
@@ -286,8 +294,14 @@
                   <button id="modalDeleteBtn" class="button delete-button"><i class="fas fa-trash-alt"></i> Delete Order</button>
                   <button id="modalEditFullBtn" class="button edit-full-button"><i class="fas fa-edit"></i> Edit Full Order</button>
              </div>
-        </div> </div> <div id="whatsapp-reminder-popup" class="popup-overlay"> <div class="modal-content small-modal"> <button id="popup-close-btn" class="close-btn" title="Close">&times;</button> <h2 id="whatsapp-popup-title">Status Updated!</h2> <p style="text-align: center; margin-bottom: 15px;">Send update to customer?</p> <div id="whatsapp-message-preview" class="message-preview"></div>
-            <div class="modal-actions" style="justify-content: center;"> <a href="#" id="whatsapp-send-link" class="button whatsapp-send-btn" target="_blank"><i class="fab fa-whatsapp"></i> Send on WhatsApp</a>
+        </div> </div> <div id="whatsapp-reminder-popup" class="popup-overlay">
+        <div class="modal-content small-modal">
+            <button id="popup-close-btn" class="close-btn" title="Close">&times;</button>
+            <h2 id="whatsapp-popup-title">Status Updated!</h2>
+            <p style="text-align: center; margin-bottom: 15px;">Send update to customer?</p>
+            <div id="whatsapp-message-preview" class="message-preview"></div>
+            <div class="modal-actions" style="justify-content: center;">
+                <a href="#" id="whatsapp-send-link" class="button whatsapp-send-btn" target="_blank"><i class="fab fa-whatsapp"></i> Send on WhatsApp</a>
             </div>
         </div>
     </div>
