@@ -1,6 +1,5 @@
 // js/order_history.js
-// Updated Version: v1.1 - New Customer button redirects to customer management
-// Includes PO Creation, Enhanced Details, Read-Only Popup, items field fix, WhatsApp fix, Single Item Display in Table, Items Only Popup, etc.
+// Updated Version: Includes PO Creation, Enhanced Details, Read-Only Popup, items field fix, WhatsApp fix, Single Item Display in Table, Items Only Popup, etc.
 // Added Debug Logging for PO Item Selection Modal Elements
 
 const {
@@ -12,14 +11,14 @@ const {
 // --- START DEBUG LOGGING HELPER ---
 function logElementFind(id) {
     const element = document.getElementById(id);
-    // console.log(`Finding element with ID '${id}':`, element ? 'FOUND' : '!!! NOT FOUND !!!'); // Optional: Keep for debugging
+    console.log(`Finding element with ID '${id}':`, element ? 'FOUND' : '!!! NOT FOUND !!!');
     return element;
 }
 // --- END DEBUG LOGGING HELPER ---
 
 
 // DOM Element References (ensure all IDs match your HTML)
-// console.log("--- Defining DOM Element References ---"); // Optional: Keep for debugging
+console.log("--- Defining DOM Element References ---");
 const orderTableBody = logElementFind('orderTableBody');
 const loadingRow = logElementFind('loadingMessage');
 const sortSelect = logElementFind('sort-orders');
@@ -44,7 +43,7 @@ const newCustomerBtn = logElementFind('newCustomerBtn');
 const paymentReceivedBtn = logElementFind('paymentReceivedBtn');
 
 // Details Modal Elements
-// console.log("--- Defining Details Modal Elements ---"); // Optional: Keep for debugging
+console.log("--- Defining Details Modal Elements ---");
 const detailsModal = logElementFind('detailsModal');
 const closeModalBtn = logElementFind('closeDetailsModal');
 const modalOrderIdInput = logElementFind('modalOrderId');
@@ -72,14 +71,14 @@ const modalDeleteBtn = logElementFind('modalDeleteBtn');
 const modalEditFullBtn = logElementFind('modalEditFullBtn');
 
 // WhatsApp Reminder Popup Elements
-// console.log("--- Defining WhatsApp Popup Elements ---"); // Optional: Keep for debugging
+console.log("--- Defining WhatsApp Popup Elements ---");
 const whatsappReminderPopup = logElementFind('whatsapp-reminder-popup');
 const whatsappPopupCloseBtn = logElementFind('popup-close-btn');
 const whatsappMsgPreview = logElementFind('whatsapp-message-preview');
 const whatsappSendLink = logElementFind('whatsapp-send-link');
 
 // Bulk Delete Modal Elements
-// console.log("--- Defining Bulk Delete Modal Elements ---"); // Optional: Keep for debugging
+console.log("--- Defining Bulk Delete Modal Elements ---");
 const bulkDeleteConfirmModal = logElementFind('bulkDeleteConfirmModal');
 const closeBulkDeleteModalBtn = logElementFind('closeBulkDeleteModal');
 const cancelBulkDeleteBtn = logElementFind('cancelBulkDeleteBtn');
@@ -89,7 +88,7 @@ const bulkDeleteOrderList = logElementFind('bulkDeleteOrderList');
 const bulkDeleteCountSpan = logElementFind('bulkDeleteCount');
 
 // *** PO Item Selection Modal Elements (DEBUG LOGGING ADDED) ***
-// console.log("--- Defining PO Item Selection Modal Elements (DEBUG) ---"); // Optional: Keep for debugging
+console.log("--- Defining PO Item Selection Modal Elements (DEBUG) ---");
 const poItemSelectionModal = logElementFind('poItemSelectionModal');
 const closePoItemSelectionModalBtn = logElementFind('closePoItemSelectionModalBtn');
 const poItemSelectionOrderIdInput = logElementFind('poItemSelectionOrderIdInput');
@@ -105,7 +104,7 @@ const poItemSelectionError = logElementFind('poItemSelectionError');
 const poItemSelectionList = logElementFind('poItemSelectionList'); // Added check for the list itself
 
 // PO Details Popup Elements
-// console.log("--- Defining PO Details Popup Elements ---"); // Optional: Keep for debugging
+console.log("--- Defining PO Details Popup Elements ---");
 const poDetailsPopup = logElementFind('poDetailsPopup');
 const poDetailsPopupContent = logElementFind('poDetailsPopupContent');
 const closePoDetailsPopupBtn = logElementFind('closePoDetailsPopupBtn');
@@ -113,7 +112,7 @@ const closePoDetailsPopupBottomBtn = logElementFind('closePoDetailsPopupBottomBt
 const printPoDetailsPopupBtn = logElementFind('printPoDetailsPopupBtn');
 
 // Read-Only Order Modal Elements
-// console.log("--- Defining Read-Only Modal Elements ---"); // Optional: Keep for debugging
+console.log("--- Defining Read-Only Modal Elements ---");
 const readOnlyOrderModal = logElementFind('readOnlyOrderModal');
 const closeReadOnlyOrderModalBtn = logElementFind('closeReadOnlyOrderModal');
 const readOnlyOrderModalTitle = logElementFind('readOnlyOrderModalTitle');
@@ -121,13 +120,13 @@ const readOnlyOrderModalContent = logElementFind('readOnlyOrderModalContent');
 const closeReadOnlyOrderModalBottomBtn = logElementFind('closeReadOnlyOrderModalBottomBtn');
 
 // Items Only Modal Elements
-// console.log("--- Defining Items Only Modal Elements ---"); // Optional: Keep for debugging
+console.log("--- Defining Items Only Modal Elements ---");
 const itemsOnlyModal = logElementFind('itemsOnlyModal');
 const closeItemsOnlyModalBtn = logElementFind('closeItemsOnlyModal');
 const itemsOnlyModalTitle = logElementFind('itemsOnlyModalTitle');
 const itemsOnlyModalContent = logElementFind('itemsOnlyModalContent');
 const closeItemsOnlyModalBottomBtn = logElementFind('closeItemsOnlyModalBottomBtn');
-// console.log("--- Finished Defining DOM Elements ---"); // Optional: Keep for debugging
+console.log("--- Finished Defining DOM Elements ---");
 
 // Global State Variables
 let currentSortField = 'createdAt';
@@ -163,7 +162,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // Function to setup all event listeners
 function setupEventListeners() {
-    // Filter/Sort Listeners
+    // ... (rest of the setupEventListeners function remains the same) ...
+     // Filter/Sort Listeners
     if (sortSelect) sortSelect.addEventListener('change', handleSortChange);
     if (filterDateInput) filterDateInput.addEventListener('change', handleFilterChange);
     if (filterSearchInput) filterSearchInput.addEventListener('input', handleSearchInput);
@@ -171,16 +171,13 @@ function setupEventListeners() {
     if (clearFiltersBtn) clearFiltersBtn.addEventListener('click', clearFilters);
     if (exportCsvBtn) exportCsvBtn.addEventListener('click', exportToCsv);
 
-    // --- >>> Action Bar Buttons (UPDATED newCustomerBtn) <<< ---
+    // Action Bar Buttons
     if (newCustomerBtn) newCustomerBtn.addEventListener('click', () => {
-        // Redirect to customer management, indicating 'add' action and return target
-        window.location.href = 'customer_management.html?action=add&returnTo=order_history';
+        alert('New Customer button clicked - Needs modal and save functionality.');
     });
     if (paymentReceivedBtn) paymentReceivedBtn.addEventListener('click', () => {
-         // Keep placeholder for now - requires significant development
          alert('Payment Received button clicked - Needs modal, search, balance, save functionality.');
     });
-    // --- >>> End Action Bar Button Update <<< ---
 
     // Bulk Actions Listeners
     if (selectAllCheckbox) selectAllCheckbox.addEventListener('change', handleSelectAllChange);
@@ -199,7 +196,7 @@ function setupEventListeners() {
     if (modalUpdateStatusBtn) modalUpdateStatusBtn.addEventListener('click', handleUpdateStatus);
     if (modalDeleteBtn) modalDeleteBtn.addEventListener('click', handleDeleteFromModal);
     if (modalEditFullBtn) modalEditFullBtn.addEventListener('click', handleEditFullFromModal);
-    if (addPaymentBtn) addPaymentBtn.addEventListener('click', () => alert('Add Payment clicked - Needs implementation')); // Placeholder in details modal
+    if (addPaymentBtn) addPaymentBtn.addEventListener('click', () => alert('Add Payment clicked - Needs implementation'));
     if (modalCreatePOBtn) modalCreatePOBtn.addEventListener('click', handleCreatePOFromModal);
 
     // WhatsApp Popup Listeners
@@ -212,6 +209,7 @@ function setupEventListeners() {
     if (poItemSelectionModal) poItemSelectionModal.addEventListener('click', (event) => { if (event.target === poItemSelectionModal) closePoItemSelectionModal(); });
     if (proceedToCreatePOBtn) proceedToCreatePOBtn.addEventListener('click', handleProceedToCreatePO);
     if (poSupplierSearchInput) poSupplierSearchInput.addEventListener('input', handlePOSupplierSearchInput);
+    // Check if poItemSelectionList exists before adding listener
     if (poItemSelectionList) {
         poItemSelectionList.addEventListener('change', handlePOItemCheckboxChange);
     } else {
@@ -234,10 +232,12 @@ function setupEventListeners() {
      if (closeReadOnlyOrderModalBottomBtn) closeReadOnlyOrderModalBottomBtn.addEventListener('click', closeReadOnlyOrderModal);
      if (readOnlyOrderModal) readOnlyOrderModal.addEventListener('click', (event) => { if (event.target === readOnlyOrderModal) closeReadOnlyOrderModal(); });
 
-     // Items Only Modal Listeners
+     // --- नया: Items Only Modal Listeners ---
      if (closeItemsOnlyModalBtn) closeItemsOnlyModalBtn.addEventListener('click', closeItemsOnlyPopup);
      if (closeItemsOnlyModalBottomBtn) closeItemsOnlyModalBottomBtn.addEventListener('click', closeItemsOnlyPopup);
      if (itemsOnlyModal) itemsOnlyModal.addEventListener('click', (event) => { if (event.target === itemsOnlyModal) closeItemsOnlyPopup(); });
+     // --- Items Only Modal Listeners समाप्त ---
+
 
     // Table Event Delegation
     if (orderTableBody) {
@@ -247,13 +247,13 @@ function setupEventListeners() {
     }
 }
 
-// --- Utility: Find order data in cache ---
+// Utility: Find order data in the cache
 function findOrderInCache(firestoreId) {
     const orderWrapper = allOrdersCache.find(o => o.id === firestoreId);
     return orderWrapper ? orderWrapper.data : null;
 }
 
-// --- Utility: Wait for Firestore connection ---
+// Utility: Wait for Firestore connection
 function waitForDbConnection(callback) {
     if (window.db) { callback(); }
     else { let attempt = 0; const maxAttempts = 20; const interval = setInterval(() => { attempt++; if (window.db) { clearInterval(interval); callback(); } else if (attempt >= maxAttempts) { clearInterval(interval); console.error("DB connection timeout (order_history.js)"); alert("Database connection failed. Please refresh the page."); } }, 250); }
@@ -273,13 +273,12 @@ function clearFilters() {
 
 // --- Firestore Listener ---
 function listenForOrders() {
-    // ... (Rest of listenForOrders function remains the same) ...
     if (unsubscribeOrders) { unsubscribeOrders(); unsubscribeOrders = null; }
     if (!db) { console.error("Firestore instance (db) not available for listener."); return; }
     if (orderTableBody) orderTableBody.innerHTML = `<tr><td colspan="11" id="loadingMessage">Loading orders...</td></tr>`;
 
     try {
-        const q = query(collection(db, "orders"));
+        const q = query(collection(db, "orders")); // Consider adding orderBy('createdAt', 'desc') here if always needed initially
         unsubscribeOrders = onSnapshot(q, (snapshot) => {
             console.log(`Firestore snapshot received: ${snapshot.docs.length} docs`);
             allOrdersCache = snapshot.docs.map(doc => ({
@@ -304,6 +303,7 @@ function listenForOrders() {
                  }
              }));
 
+            // Clear selections and apply filters after getting new data
             selectedOrderIds.clear(); updateBulkActionsBar(); if (selectAllCheckbox) selectAllCheckbox.checked = false;
             applyFiltersAndRender(); // Apply current sort/filter settings
             attemptOpenModalFromUrl(); // Try to open modal if needed
@@ -320,7 +320,6 @@ function listenForOrders() {
 
 // --- Apply Filters & Render Table ---
 function applyFiltersAndRender() {
-    // ... (Rest of applyFiltersAndRender function remains the same) ...
     if (!allOrdersCache) { console.warn("Order cache not ready for filtering."); return; }
     const filterDateValue = filterDateInput ? filterDateInput.value : '';
     const filterSearchValue = filterSearchInput ? filterSearchInput.value.trim().toLowerCase() : '';
@@ -330,91 +329,104 @@ function applyFiltersAndRender() {
     let filteredOrders = allOrdersCache.filter(orderWrapper => {
         const order = orderWrapper.data;
         if (!order) return false; // Skip if data is missing
+        // Status Filter
         if (filterStatusValue && order.status !== filterStatusValue) return false;
+        // Date Filter
         if (filterDateValue) {
             let orderDateStr = '';
-            if (order.orderDate?.toDate) {
+            // Handle both Firebase Timestamp and potential string dates
+            if (order.orderDate?.toDate) { // Check if it's a Firestore Timestamp
                  try {
                     const d = order.orderDate.toDate();
                     const month = String(d.getMonth() + 1).padStart(2, '0');
                     const day = String(d.getDate()).padStart(2, '0');
                     orderDateStr = `${d.getFullYear()}-${month}-${day}`;
-                 } catch(e){}
+                 } catch(e){} // Ignore potential errors during conversion
             } else if (typeof order.orderDate === 'string' && order.orderDate.match(/^\d{4}-\d{2}-\d{2}$/)) {
+                 // Handle if date is already stored as 'YYYY-MM-DD' string
                  orderDateStr = order.orderDate;
             }
             if(orderDateStr !== filterDateValue) return false;
         }
+        // Search Filter (searches Order ID, Customer Name, Firestore ID, WhatsApp, Contact, Items)
         if (filterSearchValue) {
             const itemsString = (order.items || []).map(p => String(p.productName || '').toLowerCase()).join(' ');
             const fieldsToSearch = [
                 String(order.orderId || '').toLowerCase(),
                 String(order.customerDetails?.fullName || '').toLowerCase(),
-                String(order.id || '').toLowerCase(),
+                String(order.id || '').toLowerCase(), // Include Firestore ID in search
                 String(order.customerDetails?.whatsappNo || ''),
                 String(order.customerDetails?.contactNo || ''),
-                itemsString
+                itemsString // Search within item names
             ];
             if (!fieldsToSearch.some(field => field.includes(filterSearchValue))) return false;
         }
         return true; // Passed all filters
     });
 
+    // Sort the filtered orders
     try {
         filteredOrders.sort((aWrapper, bWrapper) => {
             const a = aWrapper.data;
             const b = bWrapper.data;
             let valA = a[currentSortField];
             let valB = b[currentSortField];
+            // Convert timestamps to numbers for proper sorting
             if (valA?.toDate) valA = valA.toDate().getTime();
             if (valB?.toDate) valB = valB.toDate().getTime();
+            // Handle potential non-numeric timestamp fields gracefully
             if (['orderDate', 'deliveryDate', 'createdAt', 'updatedAt'].includes(currentSortField)) {
                 valA = Number(valA) || 0;
                 valB = Number(valB) || 0;
             }
+            // Case-insensitive string sort
             if (typeof valA === 'string') valA = valA.toLowerCase();
             if (typeof valB === 'string') valB = valB.toLowerCase();
+
             let sortComparison = 0;
             if (valA > valB) sortComparison = 1;
             else if (valA < valB) sortComparison = -1;
+
             return currentSortDirection === 'desc' ? sortComparison * -1 : sortComparison;
         });
     } catch (sortError) {
         console.error("Error during sorting:", sortError);
+        // Optionally handle sort error, maybe fall back to default sort
     }
 
-    currentlyDisplayedOrders = filteredOrders.map(ow => ow.data);
-    updateOrderCountsAndReport(currentlyDisplayedOrders);
-    if (!orderTableBody) return;
-    orderTableBody.innerHTML = '';
+    // Update global list and render table
+    currentlyDisplayedOrders = filteredOrders.map(ow => ow.data); // Store just the data part
+    updateOrderCountsAndReport(currentlyDisplayedOrders); // Update counts and report
+
+    if (!orderTableBody) return; // Ensure table body exists
+    orderTableBody.innerHTML = ''; // Clear previous rows
+
     if (currentlyDisplayedOrders.length === 0) {
         orderTableBody.innerHTML = `<tr><td colspan="11" id="noOrdersMessage">No orders found matching your criteria.</td></tr>`;
     } else {
         const searchTermForHighlight = filterSearchInput ? filterSearchInput.value.trim().toLowerCase() : '';
         currentlyDisplayedOrders.forEach(order => {
-            displayOrderRow(order.id, order, searchTermForHighlight);
+            displayOrderRow(order.id, order, searchTermForHighlight); // Pass Firestore ID and data
         });
     }
-    updateSelectAllCheckboxState();
+    updateSelectAllCheckboxState(); // Update the main checkbox state
 }
 
-// --- Update Select All Checkbox State ---
+// Updates the state of the master "Select All" checkbox
 function updateSelectAllCheckboxState() {
-     // ... (Rest of updateSelectAllCheckboxState function remains the same) ...
      if (selectAllCheckbox) {
         const allVisibleCheckboxes = orderTableBody.querySelectorAll('.row-selector');
         const totalVisible = allVisibleCheckboxes.length;
         if (totalVisible === 0) { selectAllCheckbox.checked = false; selectAllCheckbox.indeterminate = false; return; }
         const numSelectedVisible = Array.from(allVisibleCheckboxes).filter(cb => selectedOrderIds.has(cb.dataset.id)).length;
-        if (numSelectedVisible === totalVisible) { selectAllCheckbox.checked = true; selectAllCheckbox.indeterminate = false; }
-        else if (numSelectedVisible > 0) { selectAllCheckbox.checked = false; selectAllCheckbox.indeterminate = true; }
-        else { selectAllCheckbox.checked = false; selectAllCheckbox.indeterminate = false; }
+        if (numSelectedVisible === totalVisible) { selectAllCheckbox.checked = true; selectAllCheckbox.indeterminate = false; } // All selected
+        else if (numSelectedVisible > 0) { selectAllCheckbox.checked = false; selectAllCheckbox.indeterminate = true; } // Some selected
+        else { selectAllCheckbox.checked = false; selectAllCheckbox.indeterminate = false; } // None selected
     }
 }
 
-// --- Update Summary Counts and Report ---
+// Updates summary counts and reporting section
 function updateOrderCountsAndReport(displayedOrders) {
-    // ... (Rest of updateOrderCountsAndReport function remains the same) ...
     const total = displayedOrders.length;
     let completedDelivered = 0;
     const statusCounts = {};
@@ -424,26 +436,31 @@ function updateOrderCountsAndReport(displayedOrders) {
         statusCounts[status] = (statusCounts[status] || 0) + 1;
     });
     const pending = total - completedDelivered;
+    // Update DOM elements
     if (totalOrdersSpan) totalOrdersSpan.textContent = total;
     if (completedOrdersSpan) completedOrdersSpan.textContent = completedDelivered;
     if (pendingOrdersSpan) pendingOrdersSpan.textContent = pending;
+    // Update reporting section
     if (statusCountsReportContainer) {
         if (total === 0) { statusCountsReportContainer.innerHTML = '<p>No orders to report.</p>'; }
         else { let reportHtml = '<ul>'; Object.keys(statusCounts).sort().forEach(status => { reportHtml += `<li>${escapeHtml(status)}: <strong>${statusCounts[status]}</strong></li>`; }); reportHtml += '</ul>'; statusCountsReportContainer.innerHTML = reportHtml; }
     }
 }
 
-// --- Utility Functions (escapeHtml, highlightMatch) ---
+// Utility: Escape HTML
 function escapeHtml(unsafe) { if (typeof unsafe !== 'string') { try { unsafe = String(unsafe ?? ''); } catch(e) { unsafe = '';} } return unsafe.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;"); }
+// Utility: Highlight search term
 function highlightMatch(text, term) { const escapedText = escapeHtml(text); if (!term || !text) return escapedText; try { const escapedTerm = term.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&'); const regex = new RegExp(`(${escapedTerm})`, 'gi'); return escapedText.replace(regex, '<mark>$1</mark>'); } catch (e) { console.warn("Highlighting regex error:", e); return escapedText; } }
+
 
 // --- Display Single Order Row ---
 function displayOrderRow(firestoreId, data, searchTerm = '') {
-    // ... (Rest of displayOrderRow function remains the same) ...
     if (!orderTableBody || !data) return;
+
     const tableRow = document.createElement('tr');
-    tableRow.setAttribute('data-id', firestoreId);
-    if (selectedOrderIds.has(firestoreId)) tableRow.classList.add('selected-row');
+    tableRow.setAttribute('data-id', firestoreId); // Use Firestore ID
+    if (selectedOrderIds.has(firestoreId)) tableRow.classList.add('selected-row'); // Highlight if selected
+
     const customerDetails = data.customerDetails || {};
     const customerName = customerDetails.fullName || 'N/A';
     const customerMobile = customerDetails.whatsappNo || '-';
@@ -455,22 +472,30 @@ function displayOrderRow(firestoreId, data, searchTerm = '') {
     const customerNameHtml = `<a href="#" class="customer-name-link" data-id="${firestoreId}">${highlightMatch(customerName, searchTerm)}</a>`;
     const status = data.status || 'Unknown';
     const priority = data.urgent === 'Yes' ? 'Yes' : 'No';
+
+    // --- Display Items (Show 1, rest under "See More") ---
     let itemsHtml = '-';
     const items = data.items || [];
-    const MAX_ITEMS_DISPLAY = 1;
+    const MAX_ITEMS_DISPLAY = 1; // Configurable: show only 1 item directly
     if (Array.isArray(items) && items.length > 0) {
         itemsHtml = items.slice(0, MAX_ITEMS_DISPLAY).map(item => {
              if (!item) return '';
              const name = highlightMatch(item.productName || 'Unnamed Item', searchTerm);
              const quantity = highlightMatch(item.quantity || '?', searchTerm);
-             return `${name} (${quantity})`;
-         }).filter(html => html).join('<br>');
+             return `${name} (${quantity})`; // Basic format: Name (Qty)
+         }).filter(html => html).join('<br>'); // Separate items with <br> if showing more than 1
+
         if (items.length > MAX_ITEMS_DISPLAY) {
+             // Add "See More" link if there are more items than MAX_ITEMS_DISPLAY
              itemsHtml += `<br><a href="#" class="see-more-link" data-id="${firestoreId}">... (${items.length - MAX_ITEMS_DISPLAY} more)</a>`;
          }
     }
+    // --- End Item Display ---
+
     const statusClass = `status-${status.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`;
     const priorityClass = priority === 'Yes' ? 'priority-yes' : 'priority-no';
+
+    // PO Info display logic
     let poInfoHtml = '';
     const linkedPOs = data.linkedPOs || [];
     if (linkedPOs.length > 0) {
@@ -478,11 +503,14 @@ function displayOrderRow(firestoreId, data, searchTerm = '') {
             if (!po?.poId) return '';
             const poDate = po.createdAt?.toDate ? po.createdAt.toDate().toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) : 'N/A';
             const poNum = escapeHtml(po.poNumber||'N/A');
+            // Link to open the PO details popup
             return `<a href="#" class="view-po-details-link" data-poid="${escapeHtml(po.poId)}" title="View PO #${poNum} Details">PO #${poNum}</a> (${poDate})`;
         }).filter(h=>h).join('<br>');
     } else {
+        // Button to initiate PO creation process
         poInfoHtml = `<button type="button" class="button create-po-button icon-only" data-id="${firestoreId}" title="Create Purchase Order"><i class="fas fa-file-alt"></i></button>`;
     }
+
     try {
         tableRow.innerHTML = `
             <td class="col-checkbox"><input type="checkbox" class="row-selector" data-id="${firestoreId}" ${selectedOrderIds.has(firestoreId)?'checked':''}></td>
@@ -509,64 +537,1051 @@ function displayOrderRow(firestoreId, data, searchTerm = '') {
     }
 }
 
-// --- Handle Table Click ---
+// Handles clicks within the order table body
 function handleTableClick(event) {
-    // ... (Rest of handleTableClick function remains the same) ...
     const target = event.target;
     const row = target.closest('tr');
     if (!row || !row.dataset.id) return;
+
     const firestoreId = row.dataset.id;
-    const orderData = findOrderInCache(firestoreId);
-    if (!orderData) { console.warn(`Order data not found in cache for ID: ${firestoreId}. Cannot perform action.`); return; }
-    if (target.matches('.row-selector')) { handleRowCheckboxChange(target, firestoreId);
-    } else if (target.closest('.order-id-link')) { event.preventDefault(); openReadOnlyOrderPopup(firestoreId, orderData);
-    } else if (target.closest('.customer-name-link')) { event.preventDefault(); const customerId = orderData.customerDetails?.customerId; if (customerId) { window.location.href = `customer_account_detail.html?id=${customerId}`; } else { alert('Customer details/ID not found for linking.'); }
-    } else if (target.closest('.create-po-button')) { event.preventDefault(); openPOItemSelectionModal(firestoreId, orderData);
-    } else if (target.closest('.view-po-details-link')) { event.preventDefault(); const poId = target.closest('.view-po-details-link').dataset.poid; if (poId) { openPODetailsPopup(poId); } else { console.error("PO ID missing on view link"); }
-    } else if (target.closest('.see-more-link')) { event.preventDefault(); openItemsOnlyPopup(firestoreId);
-    } else if (target.closest('.details-edit-button')) { openDetailsModal(firestoreId, orderData);
-    } else if (target.closest('.whatsapp-button')) { sendWhatsAppMessage(firestoreId, orderData); }
+    const orderData = findOrderInCache(firestoreId); // Use cached data
+
+    if (!orderData) {
+        console.warn(`Order data not found in cache for ID: ${firestoreId}. Cannot perform action.`);
+        return;
+    }
+
+    // Determine action based on clicked element
+    if (target.matches('.row-selector')) {
+        handleRowCheckboxChange(target, firestoreId);
+    } else if (target.closest('.order-id-link')) {
+        event.preventDefault();
+        openReadOnlyOrderPopup(firestoreId, orderData);
+    } else if (target.closest('.customer-name-link')) {
+        event.preventDefault();
+        const customerId = orderData.customerDetails?.customerId;
+        if (customerId) {
+            window.location.href = `customer_account_detail.html?id=${customerId}`;
+        } else {
+            alert('Customer details/ID not found for linking. Please ensure customerId is saved within customerDetails in the order document.'); // More informative alert
+        }
+    } else if (target.closest('.create-po-button')) { // <--- This is the green button
+         event.preventDefault();
+        openPOItemSelectionModal(firestoreId, orderData); // <--- This function is called
+    } else if (target.closest('.view-po-details-link')) {
+        event.preventDefault();
+        const poId = target.closest('.view-po-details-link').dataset.poid;
+        if (poId) { openPODetailsPopup(poId); }
+        else { console.error("PO ID missing on view link"); }
+    } else if (target.closest('.see-more-link')) {
+        event.preventDefault();
+        openItemsOnlyPopup(firestoreId);
+    } else if (target.closest('.details-edit-button')) {
+        openDetailsModal(firestoreId, orderData);
+    } else if (target.closest('.whatsapp-button')) {
+        sendWhatsAppMessage(firestoreId, orderData);
+    }
 }
 
-// --- Open/Close/Populate Modals (Details, ReadOnly, ItemsOnly, WhatsApp, BulkDelete, POSelect, PODetails) ---
-// --- Note: Only relevant functions included below for brevity, assume others exist ---
+// --- Open Details Modal ---
+async function openDetailsModal(firestoreId, orderData) {
+    // ... (openDetailsModal function remains the same) ...
+    if (!orderData || !detailsModal) return;
+    activeOrderDataForModal = orderData; // Store data for modal actions
 
-async function openDetailsModal(firestoreId, orderData) { /* ... */ }
-function closeDetailsModal() { /* ... */ }
-async function displayPOsInModal(orderFirestoreId, linkedPOs) { /* ... */ }
-async function handleUpdateStatus() { /* ... */ }
-function handleDeleteFromModal() { /* ... */ }
-async function deleteSingleOrder(firestoreId) { /* ... */ }
-function handleEditFullFromModal() { /* ... */ }
-function handleCreatePOFromModal() { /* ... */ }
-function showStatusUpdateWhatsAppReminder(customer, orderId, updatedStatus) { /* ... */ }
-function closeWhatsAppPopup() { /* ... */ }
-function sendWhatsAppMessage(firestoreId, orderData) { /* ... */ }
-function getWhatsAppMessageTemplate(status, customerName, orderId, deliveryDate) { /* ... */ }
-function handleSelectAllChange(event) { /* ... */ }
-function handleRowCheckboxChange(checkbox, firestoreId) { /* ... */ }
-function updateBulkActionsBar() { /* ... */ }
-async function handleBulkDelete() { /* ... */ }
-async function executeBulkDelete(idsToDelete) { /* ... */ }
-function closeBulkDeleteModal() { /* ... */ }
-async function handleBulkUpdateStatus() { /* ... */ }
-function exportToCsv() { /* ... */ }
-function attemptOpenModalFromUrl() { /* ... */ }
-function openPOItemSelectionModal(orderFirestoreId, orderData) { /* ... */ }
-function closePoItemSelectionModal() { /* ... */ }
-function showPOItemError(message) { /* ... */ }
-function handlePOItemCheckboxChange() { /* ... */ }
-function handlePOSupplierSearchInput() { /* ... */ }
-async function fetchPOSupplierSuggestions(searchTerm) { /* ... */ }
-function handleProceedToCreatePO() { /* ... */ }
-async function openPODetailsPopup(poId) { /* ... */ }
-function closePODetailsPopup() { /* ... */ }
-function handlePrintPODetailsPopup(event) { /* ... */ }
-function openReadOnlyOrderPopup(firestoreId, orderData) { /* ... */ }
-function closeReadOnlyOrderModal() { /* ... */ }
-function openItemsOnlyPopup(firestoreId) { /* ... */ }
-function closeItemsOnlyPopup() { /* ... */ }
+    // Populate basic fields
+    if(modalOrderIdInput) modalOrderIdInput.value = firestoreId;
+    if(modalDisplayOrderIdSpan) modalDisplayOrderIdSpan.textContent = orderData.orderId || `(Sys: ${firestoreId.substring(0, 6)}...)`;
+    if(modalCustomerNameSpan) modalCustomerNameSpan.textContent = orderData.customerDetails?.fullName || 'N/A';
+    if(modalCustomerWhatsAppSpan) modalCustomerWhatsAppSpan.textContent = orderData.customerDetails?.whatsappNo || 'N/A';
+    if(modalCustomerContactSpan) modalCustomerContactSpan.textContent = orderData.customerDetails?.contactNo || 'N/A';
+    if(modalCustomerAddressSpan) modalCustomerAddressSpan.textContent = orderData.customerDetails?.address || 'N/A';
 
-// --- (Make sure all the functions above are fully defined as in the previous code) ---
+    const formatDate = (dIn) => { if (!dIn) return 'N/A'; try { const d = (dIn.toDate)?d.toDate():new Date(dIn); return isNaN(d.getTime())?'N/A':d.toLocaleDateString('en-GB'); } catch { return 'N/A'; } };
+    if(modalOrderDateSpan) modalOrderDateSpan.textContent = formatDate(orderData.orderDate);
+    if(modalDeliveryDateSpan) modalDeliveryDateSpan.textContent = formatDate(orderData.deliveryDate);
+    if(modalPrioritySpan) modalPrioritySpan.textContent = orderData.urgent || 'No';
+    if(modalRemarksSpan) modalRemarksSpan.textContent = escapeHtml(orderData.remarks || 'None');
 
-console.log("order_history.js script loaded successfully (v1.1 - Customer Redirect).");
+    // Populate Product List
+    if (modalProductListContainer) {
+        modalProductListContainer.innerHTML = ''; // Clear previous
+        const items = orderData.items || [];
+        if (items.length > 0) {
+            const ul = document.createElement('ul');
+            ul.className = 'modal-product-list-ul'; // Use for styling
+            items.forEach(item => {
+                if (!item) return;
+                const li = document.createElement('li');
+                const nameSpan = document.createElement('span');
+                nameSpan.className = 'product-name';
+                nameSpan.textContent = escapeHtml(item.productName || 'Unnamed Item');
+                const detailsSpan = document.createElement('span');
+                detailsSpan.className = 'product-qty-details';
+                detailsSpan.textContent = ` - Qty: ${escapeHtml(item.quantity || '?')}`;
+                li.append(nameSpan, detailsSpan);
+                ul.appendChild(li);
+            });
+            modalProductListContainer.appendChild(ul);
+        } else {
+            modalProductListContainer.innerHTML = '<p class="no-products">No items listed.</p>';
+        }
+    }
+
+    // Populate Status and History
+    if(modalOrderStatusSelect) modalOrderStatusSelect.value = orderData.status || '';
+    if (modalStatusHistoryListContainer) {
+        modalStatusHistoryListContainer.innerHTML = ''; // Clear previous
+        const history = orderData.statusHistory || [];
+        if (history.length > 0) {
+            const sortedHistory = [...history].sort((a, b) => (b.timestamp?.toDate?.()?.getTime() ?? 0) - (a.timestamp?.toDate?.()?.getTime() ?? 0)); // Sort descending
+            const ul = document.createElement('ul');
+            ul.className = 'modal-status-history-ul'; // Use for styling
+            sortedHistory.forEach(entry => {
+                const li = document.createElement('li');
+                const statusSpan = document.createElement('span');
+                statusSpan.className = 'history-status';
+                statusSpan.textContent = escapeHtml(entry.status || '?');
+                const timeSpan = document.createElement('span');
+                timeSpan.className = 'history-time';
+                try {
+                    timeSpan.textContent = entry.timestamp?.toDate ? entry.timestamp.toDate().toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit', hour12: true }) : '?';
+                } catch { timeSpan.textContent = '?'; }
+                li.append(statusSpan, timeSpan);
+                ul.appendChild(li);
+            });
+            modalStatusHistoryListContainer.appendChild(ul);
+        } else {
+            modalStatusHistoryListContainer.innerHTML = '<p class="no-history">No status history.</p>';
+        }
+    }
+
+    // Populate Account Data
+    const totalAmount = orderData.totalAmount ?? null;
+    const amountPaid = orderData.amountPaid ?? null;
+    let balanceDueText = 'N/A';
+    let paymentStatus = orderData.paymentStatus ?? null;
+
+    if (totalAmount !== null && amountPaid !== null) {
+        const balanceDue = totalAmount - amountPaid;
+        balanceDueText = `₹ ${balanceDue.toFixed(2)}`;
+        if (paymentStatus === null) paymentStatus = balanceDue <= 0 ? 'Paid' : 'Pending';
+    } else if (paymentStatus === null) {
+        paymentStatus = 'N/A';
+    }
+    if(modalTotalAmountSpan) modalTotalAmountSpan.textContent = totalAmount !== null ? `₹ ${totalAmount.toFixed(2)}` : 'N/A';
+    if(modalAmountPaidSpan) modalAmountPaidSpan.textContent = amountPaid !== null ? `₹ ${amountPaid.toFixed(2)}` : 'N/A';
+    if(modalBalanceDueSpan) modalBalanceDueSpan.textContent = balanceDueText;
+    if(modalPaymentStatusSpan) modalPaymentStatusSpan.textContent = escapeHtml(paymentStatus);
+
+    // Load and display linked POs
+    await displayPOsInModal(firestoreId, orderData.linkedPOs || []);
+
+    if(detailsModal) detailsModal.style.display = 'flex'; // Show modal
+}
+
+// --- Display POs in Modal ---
+async function displayPOsInModal(orderFirestoreId, linkedPOs) {
+    // ... (displayPOsInModal function remains the same) ...
+     if (!modalPOListContainer) return;
+    modalPOListContainer.innerHTML = '<p><i class="fas fa-spinner fa-spin"></i> Loading POs...</p>'; // Loading indicator
+
+    if (!Array.isArray(linkedPOs) || linkedPOs.length === 0) {
+        modalPOListContainer.innerHTML = '<p class="no-pos">No Purchase Orders linked to this order.</p>';
+        return;
+    }
+
+    const validLinks = linkedPOs.filter(poLink => poLink?.poId); // Ensure link has a PO ID
+    if (validLinks.length === 0) {
+        modalPOListContainer.innerHTML = '<p class="no-pos">No valid Purchase Orders linked.</p>';
+        return;
+    }
+
+    try {
+        // Fetch details for each linked PO
+        const poDetailsPromises = validLinks.map(poLink =>
+            getDoc(doc(db, "purchaseOrders", poLink.poId)).catch(err => {
+                console.warn(`Failed to fetch PO ${poLink.poId}:`, err);
+                return null; // Return null if fetching fails
+            })
+        );
+        const poSnapshots = await Promise.all(poDetailsPromises);
+
+        const ul = document.createElement('ul');
+        ul.className = 'modal-po-list-ul'; // For styling
+        let validPOsFound = false;
+
+        poSnapshots.forEach((poDoc, index) => {
+            const poLink = validLinks[index];
+            if (!poDoc && !poLink) return; // Skip if no doc and no link info
+
+            const li = document.createElement('li');
+            if (poDoc?.exists()) {
+                validPOsFound = true;
+                const poData = poDoc.data();
+                const poDate = poData.orderDate?.toDate ? poData.orderDate.toDate().toLocaleDateString('en-GB') : 'N/A';
+                const supplierName = escapeHtml(poData.supplierName || 'Unknown');
+                const poNumber = escapeHtml(poData.poNumber || 'N/A');
+                const status = escapeHtml(poData.status || 'N/A');
+                const total = (poData.totalAmount || 0).toFixed(2);
+
+                // Display PO info with a link to view full details
+                li.innerHTML = `
+                    <a href="#" class="view-po-details-link" data-poid="${poDoc.id}">PO #${poNumber}</a>
+                    <span> - ${supplierName} (${poDate})</span>
+                    <span> - Status: ${status}</span>
+                    <span> - Amount: ₹ ${total}</span>`;
+
+                // Add event listener directly here for the newly created link
+                const link = li.querySelector('.view-po-details-link');
+                if (link) {
+                    link.addEventListener('click', (event) => {
+                        event.preventDefault();
+                        const poId = event.target.closest('a').dataset.poid;
+                        if (poId) openPODetailsPopup(poId); // Open the PO details popup
+                    });
+                }
+            } else if (poLink?.poId) {
+                // If PO link exists but doc wasn't found
+                li.innerHTML = `<span>PO (ID: ${escapeHtml(poLink.poId)}) not found or error fetching</span>`;
+                li.style.color = 'grey';
+                li.style.fontStyle = 'italic';
+            }
+            ul.appendChild(li);
+        });
+
+        modalPOListContainer.innerHTML = ''; // Clear loading/previous content
+        if (validPOsFound) {
+            modalPOListContainer.appendChild(ul);
+        } else {
+            modalPOListContainer.innerHTML = '<p class="no-pos">No valid Purchase Orders could be loaded.</p>';
+        }
+
+    } catch (error) {
+        console.error("Error fetching PO details for modal:", error);
+        modalPOListContainer.innerHTML = '<p class="error-message">Error loading POs.</p>';
+    }
+}
+
+
+// --- Close Details Modal ---
+function closeDetailsModal() { if (detailsModal) detailsModal.style.display = 'none'; activeOrderDataForModal = null; }
+
+// --- Handle Status Update ---
+async function handleUpdateStatus() {
+    // ... (handleUpdateStatus function remains the same) ...
+    const firestoreId = modalOrderIdInput.value;
+    const newStatus = modalOrderStatusSelect.value;
+    const orderDataForWhatsApp = activeOrderDataForModal ? { ...activeOrderDataForModal } : null; // Get data before closing modal
+
+    if (!firestoreId || !newStatus || !orderDataForWhatsApp) {
+        alert("Cannot update status. Order data not loaded correctly or missing ID/Status.");
+        return;
+    }
+
+    if (orderDataForWhatsApp.status === newStatus) {
+        alert("Status is already set to '" + escapeHtml(newStatus) + "'.");
+        return;
+    }
+
+    if (modalUpdateStatusBtn) {
+        modalUpdateStatusBtn.disabled = true;
+        modalUpdateStatusBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Updating...';
+    }
+
+    const historyEntry = {
+        status: newStatus,
+        timestamp: Timestamp.now()
+    };
+
+    try {
+        await updateDoc(doc(db, "orders", firestoreId), {
+            status: newStatus,
+            updatedAt: serverTimestamp(),
+            statusHistory: arrayUnion(historyEntry) // Add new entry to history array
+        });
+        console.log(`Order ${firestoreId} status updated to ${newStatus}`);
+
+        // Close modal *before* potentially showing WhatsApp reminder
+        closeDetailsModal();
+
+        // Check if WhatsApp number exists and show reminder popup
+        if (orderDataForWhatsApp.customerDetails?.whatsappNo) {
+            console.log(`WhatsApp number found (${orderDataForWhatsApp.customerDetails.whatsappNo}), showing reminder.`);
+            showStatusUpdateWhatsAppReminder(
+                orderDataForWhatsApp.customerDetails,
+                orderDataForWhatsApp.orderId || `Sys:${firestoreId.substring(0,6)}`,
+                newStatus
+            );
+        } else {
+            console.log("No WhatsApp number found or customer details missing.");
+            alert("Status updated successfully!"); // Show simple alert if no number
+        }
+
+    } catch (e) {
+        console.error("Error updating status:", firestoreId, e);
+        alert("Error updating status: " + e.message);
+        // Re-enable button if error occurred before closing modal (unlikely now)
+        if (modalUpdateStatusBtn) { modalUpdateStatusBtn.disabled = false; modalUpdateStatusBtn.innerHTML = '<i class="fas fa-sync-alt"></i> Update Status'; }
+    } finally {
+        // Ensure button is re-enabled if it's still visible (might not be if modal closed)
+        if (modalUpdateStatusBtn && detailsModal.style.display !== 'none') {
+             modalUpdateStatusBtn.disabled = false;
+             modalUpdateStatusBtn.innerHTML = '<i class="fas fa-sync-alt"></i> Update Status';
+        }
+    }
+}
+
+
+// --- Handle Delete from Modal ---
+function handleDeleteFromModal() {
+    // ... (handleDeleteFromModal function remains the same) ...
+    const firestoreId = modalOrderIdInput.value;
+    const displayId = modalDisplayOrderIdSpan.textContent;
+    if (!firestoreId) { alert("Cannot delete. Order ID not found."); return; }
+    if (confirm(`Are you sure you want to permanently delete Order ID: ${displayId}? This cannot be undone.`)) {
+        closeDetailsModal(); // Close modal first
+        deleteSingleOrder(firestoreId); // Then perform deletion
+    } else {
+        console.log("Deletion cancelled by user.");
+    }
+}
+// --- Delete Single Order ---
+async function deleteSingleOrder(firestoreId) {
+    // ... (deleteSingleOrder function remains the same) ...
+    if (!db || !firestoreId) { alert("Delete function unavailable or Order ID missing."); return; }
+    console.log(`Attempting to delete order: ${firestoreId}`);
+    try {
+        await deleteDoc(doc(db, "orders", firestoreId));
+        console.log(`Order ${firestoreId} deleted successfully.`);
+        alert("Order deleted successfully."); // Provide feedback
+        // The listener will automatically remove the row from the table
+    } catch (e) {
+        console.error("Error deleting order:", firestoreId, e);
+        alert("Error deleting order: " + e.message);
+    }
+}
+// --- Handle Edit Full Order from Modal ---
+function handleEditFullFromModal() {
+    // ... (handleEditFullFromModal function remains the same) ...
+    const firestoreId = modalOrderIdInput.value;
+    if (firestoreId) {
+        window.location.href = `new_order.html?editOrderId=${firestoreId}`; // Redirect to edit page
+    } else {
+        alert("Cannot edit. Order ID not found.");
+    }
+}
+// --- Handle Create PO from Modal ---
+function handleCreatePOFromModal() {
+    // ... (handleCreatePOFromModal function remains the same) ...
+    const orderFirestoreId = modalOrderIdInput.value;
+    if (orderFirestoreId && activeOrderDataForModal) {
+        const orderData = activeOrderDataForModal;
+        closeDetailsModal(); // Close current modal
+        openPOItemSelectionModal(orderFirestoreId, orderData); // Open PO item selection modal
+    } else {
+        alert("Cannot create PO. Order details not loaded correctly.");
+    }
+}
+
+
+// --- WhatsApp Functions ---
+function showStatusUpdateWhatsAppReminder(customer, orderId, updatedStatus) {
+    // ... (showStatusUpdateWhatsAppReminder function remains the same) ...
+    if (!whatsappReminderPopup || !whatsappMsgPreview || !whatsappSendLink || !customer) {
+        console.warn("WhatsApp reminder elements or customer data missing.");
+        return;
+    }
+    const name = customer.fullName || 'Customer';
+    const rawNum = customer.whatsappNo || '';
+    const num = rawNum.replace(/[^0-9]/g, ''); // Clean number
+    if (!num) { console.warn("WhatsApp number missing or invalid."); return; }
+
+    let msg = getWhatsAppMessageTemplate(updatedStatus, name, orderId, null); // Generate message
+    whatsappMsgPreview.innerText = msg; // Show preview
+
+    // Construct WhatsApp URL (assuming Indian numbers need 91 prefix)
+    const url = `https://wa.me/91${num}?text=${encodeURIComponent(msg)}`;
+    whatsappSendLink.href = url;
+
+    const title = document.getElementById('whatsapp-popup-title');
+    if(title) title.textContent = "Status Updated!"; // Update title if needed
+    whatsappReminderPopup.classList.add('active'); // Show the popup
+}
+
+function closeWhatsAppPopup() { if (whatsappReminderPopup) whatsappReminderPopup.classList.remove('active'); }
+function sendWhatsAppMessage(firestoreId, orderData) {
+    // ... (sendWhatsAppMessage function remains the same) ...
+    if (!orderData?.customerDetails?.whatsappNo) { alert("WhatsApp number not found for this order."); return; }
+    const cust = orderData.customerDetails;
+    const orderIdForMsg = orderData.orderId || `Sys:${firestoreId.substring(0,6)}`;
+    const status = orderData.status;
+    const deliveryDate = orderData.deliveryDate; // Pass delivery date
+    const name = cust.fullName || 'Customer';
+    const rawNum = cust.whatsappNo;
+    const num = rawNum.replace(/[^0-9]/g, '');
+    if (!num) { alert("Invalid WhatsApp number format."); return; }
+
+    let msg = getWhatsAppMessageTemplate(status, name, orderIdForMsg, deliveryDate); // Use delivery date
+    const url = `https://wa.me/91${num}?text=${encodeURIComponent(msg)}`;
+    window.open(url, '_blank'); // Open WhatsApp in new tab
+}
+function getWhatsAppMessageTemplate(status, customerName, orderId, deliveryDate) {
+    // ... (getWhatsAppMessageTemplate function remains the same) ...
+    // Placeholders
+    const namePlaceholder = "[Customer Name]";
+    const orderNoPlaceholder = "[ORDER_NO]";
+    const deliveryDatePlaceholder = "[DELIVERY_DATE]";
+    // Company Details
+    const companyName = "Madhav Offset"; // Replace with your actual company name
+    const companyAddress = "Head Office: Moodh Market, Batadu"; // Replace if needed
+    const companyMobile = "9549116541"; // Replace if needed
+    const signature = `धन्यवाद,\n${companyName}\n${companyAddress}\nMobile: ${companyMobile}`;
+
+    let template = "";
+    let deliveryDateText = "जल्द से जल्द"; // Default delivery text
+
+    // Format delivery date if available
+    try {
+        if(deliveryDate) {
+            const dDate = (deliveryDate.toDate)?deliveryDate.toDate():new Date(deliveryDate);
+            if (!isNaN(dDate.getTime())) {
+                deliveryDateText = dDate.toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'});
+            }
+        }
+    } catch(e) { console.warn("Could not format delivery date for WhatsApp", e); }
+
+    // Simple replace function
+    function replaceAll(str, find, replace) { try { return str.split(find).join(replace); } catch { return str; } }
+
+    // Templates based on status
+    switch (status) {
+        case "Order Received": template = `प्रिय ${namePlaceholder},\nनमस्कार,\nआपका ऑर्डर (Order No: ${orderNoPlaceholder}) हमें सफलतापूर्वक प्राप्त हो गया है।\nहम इस ऑर्डर को ${deliveryDatePlaceholder} तक पूर्ण करने का प्रयास करेंगे।\n\nDear ${namePlaceholder},\nWe have successfully received your order (Order No: ${orderNoPlaceholder}).\nWe aim to complete it by ${deliveryDatePlaceholder}.`; break;
+        case "Designing": template = `प्रिय ${namePlaceholder},\nआपके ऑर्डर (Order No: ${orderNoPlaceholder}) का डिज़ाइन तैयार किया जा रहा है।\nजैसे ही डिज़ाइन तैयार होगा, हम आपसे पुष्टि के लिए संपर्क करेंगे।\n\nDear ${namePlaceholder},\nThe design for your order (Order No: ${orderNoPlaceholder}) is in progress.\nWe’ll contact you for confirmation once it’s ready.`; break;
+        case "Verification": template = `प्रिय ${namePlaceholder},\nआपके ऑर्डर (Order No: ${orderNoPlaceholder}) की डिज़ाइन आपके साथ साझा कर दी गई है।\nकृपया डिज़ाइन को ध्यानपूर्वक जाँचे और हमें अपनी अनुमति प्रदान करें।\nएक बार ‘OK’ कर देने के बाद किसी भी प्रकार का संशोधन संभव नहीं होगा।\n\nDear ${namePlaceholder},\nWe have shared the design for your order (Order No: ${orderNoPlaceholder}) with you.\nPlease review it carefully and provide your approval.\nOnce you confirm with ‘OK’, no further changes will be possible.`; break;
+        case "Design Approved": template = `प्रिय ${namePlaceholder},\nआपके ऑर्डर (Order No: ${orderNoPlaceholder}) की डिज़ाइन स्वीकृत कर दी गई है।\nअब यह प्रिंटिंग प्रक्रिया के लिए आगे बढ़ाया जा रहा है।\n\nDear ${namePlaceholder},\nYour design for Order No: ${orderNoPlaceholder} has been approved.\nIt is now moving forward to the printing stage.`; break;
+        case "Ready for Working": template = `प्रिय ${namePlaceholder},\nनमस्कार,\nआपके ऑर्डर (Order No: ${orderNoPlaceholder}) की प्रिंटिंग पूरी हो गई है।\nआप ऑफिस/कार्यालय आकर अपना प्रोडक्ट ले जा सकते हैं।\n\nDear ${namePlaceholder},\nThe printing for your order (Order No: ${orderNoPlaceholder}) is complete.\nYou can now collect your product from our office.`; break;
+        case "Printing": template = `प्रिय ${namePlaceholder},\nआपका ऑर्डर (Order No: ${orderNoPlaceholder}) प्रिंट हो रहा है।\nपूरा होते ही आपको सूचित किया जाएगा।\n\nDear ${namePlaceholder},\nYour order (Order No: ${orderNoPlaceholder}) is currently being printed.\nWe will notify you once it’s done.`; break;
+        case "Delivered": template = `प्रिय ${namePlaceholder},\nआपका ऑर्डर (Order No: ${orderNoPlaceholder}) सफलतापूर्वक डिलीवर कर दिया गया है।\nकृपया पुष्टि करें कि आपने ऑर्डर प्राप्त कर लिया है।\nआपके सहयोग के लिए धन्यवाद।\nहमें आशा है कि आप हमें शीघ्र ही फिर से सेवा का अवसर देंगे।\n\nDear ${namePlaceholder},\nYour order (Order No: ${orderNoPlaceholder}) has been successfully delivered.\nPlease confirm the receipt.\nThank you for your support.\nWe hope to have the opportunity to serve you again soon.`; break;
+        case "Completed": template = `प्रिय ${namePlaceholder},\nआपका ऑर्डर (Order No: ${orderNoPlaceholder}) सफलतापूर्वक पूर्ण हो चुका है।\nआपके सहयोग के लिए धन्यवाद।\n\nDear ${namePlaceholder},\nYour order (Order No: ${orderNoPlaceholder}) has been successfully completed.\nThank you for your support.`; break;
+        default: template = `प्रिय ${namePlaceholder},\nआपके ऑर्डर (Order No: ${orderNoPlaceholder}) का वर्तमान स्टेटस है: ${status}.\n\nDear ${namePlaceholder},\nThe current status for your order (Order No: ${orderNoPlaceholder}) is: ${status}.`;
+    }
+
+    // Replace placeholders
+    let message = replaceAll(template, namePlaceholder, customerName);
+    message = replaceAll(message, orderNoPlaceholder, orderId);
+    message = replaceAll(message, deliveryDatePlaceholder, deliveryDateText);
+    message += `\n\n${signature}`; // Add signature
+    return message;
+}
+
+
+// --- Bulk Actions ---
+function handleSelectAllChange(event) {
+    // ... (handleSelectAllChange function remains the same) ...
+    const isChecked = event.target.checked;
+    const rowsCheckboxes = orderTableBody.querySelectorAll('.row-selector');
+    rowsCheckboxes.forEach(cb => {
+        const id = cb.dataset.id;
+        if (id) {
+            cb.checked = isChecked;
+            const row = cb.closest('tr');
+            if (isChecked) {
+                selectedOrderIds.add(id);
+                if (row) row.classList.add('selected-row');
+            } else {
+                selectedOrderIds.delete(id);
+                if (row) row.classList.remove('selected-row');
+            }
+        }
+    });
+    updateBulkActionsBar();
+}
+function handleRowCheckboxChange(checkbox, firestoreId) {
+    // ... (handleRowCheckboxChange function remains the same) ...
+    const row = checkbox.closest('tr');
+    if (checkbox.checked) {
+        selectedOrderIds.add(firestoreId);
+        if(row) row.classList.add('selected-row');
+    } else {
+        selectedOrderIds.delete(firestoreId);
+        if(row) row.classList.remove('selected-row');
+    }
+    updateBulkActionsBar();
+    updateSelectAllCheckboxState(); // Update master checkbox state
+}
+function updateBulkActionsBar() {
+    // ... (updateBulkActionsBar function remains the same) ...
+    const count = selectedOrderIds.size;
+    if (!bulkActionsBar || !selectedCountSpan || !bulkUpdateStatusBtn || !bulkDeleteBtn) return;
+    if (count > 0) {
+        selectedCountSpan.textContent = `${count} item${count > 1 ? 's' : ''} selected`;
+        bulkActionsBar.style.display = 'flex';
+        // Enable update button only if a status is selected
+        bulkUpdateStatusBtn.disabled = !(bulkStatusSelect && bulkStatusSelect.value);
+        // Enable delete button
+        bulkDeleteBtn.disabled = false;
+    } else {
+        bulkActionsBar.style.display = 'none';
+        if (bulkStatusSelect) bulkStatusSelect.value = ''; // Reset status dropdown
+        bulkUpdateStatusBtn.disabled = true;
+        bulkDeleteBtn.disabled = true;
+    }
+}
+async function handleBulkDelete() {
+    // ... (handleBulkDelete function remains the same) ...
+    const idsToDelete = Array.from(selectedOrderIds);
+    const MAX_DELETE_LIMIT = 5; // Set limit
+    if (idsToDelete.length === 0) { alert("Please select orders to delete."); return; }
+    if (idsToDelete.length > MAX_DELETE_LIMIT) { alert(`You can delete a maximum of ${MAX_DELETE_LIMIT} orders at once.`); return; }
+
+    // Show confirmation modal
+    if (!bulkDeleteConfirmModal || !bulkDeleteOrderList || !confirmDeleteCheckbox || !confirmBulkDeleteBtn || !bulkDeleteCountSpan) return;
+    bulkDeleteOrderList.innerHTML = ''; // Clear previous list
+    const maxItemsToShow = 100; // Limit list preview
+    idsToDelete.forEach((id, index) => {
+        if (index < maxItemsToShow) {
+            const order = findOrderInCache(id);
+            const displayId = order?.orderId || `Sys:${id.substring(0,6)}`;
+            const customerName = order?.customerDetails?.fullName || 'N/A';
+            const li = document.createElement('li');
+            li.innerHTML = `<strong>${escapeHtml(displayId)}</strong> - ${escapeHtml(customerName)}`;
+            bulkDeleteOrderList.appendChild(li);
+        }
+    });
+    if (idsToDelete.length > maxItemsToShow) {
+        const li = document.createElement('li');
+        li.textContent = `... and ${idsToDelete.length - maxItemsToShow} more orders.`;
+        bulkDeleteOrderList.appendChild(li);
+    }
+
+    bulkDeleteCountSpan.textContent = idsToDelete.length;
+    confirmDeleteCheckbox.checked = false; // Reset checkbox
+    confirmBulkDeleteBtn.disabled = true; // Disable confirm button initially
+    bulkDeleteConfirmModal.style.display = 'flex'; // Show modal
+}
+async function executeBulkDelete(idsToDelete) {
+    // ... (executeBulkDelete function remains the same) ...
+    if (!db || idsToDelete.length === 0) return;
+    if(bulkDeleteBtn) bulkDeleteBtn.disabled = true; // Disable main delete button
+    if(confirmBulkDeleteBtn) { // Update modal confirm button state
+        confirmBulkDeleteBtn.disabled = true;
+        confirmBulkDeleteBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Deleting...';
+    }
+    const batch = writeBatch(db);
+    idsToDelete.forEach(id => { batch.delete(doc(db, "orders", id)); });
+    try {
+        await batch.commit();
+        alert(`${idsToDelete.length} order(s) deleted successfully.`);
+        selectedOrderIds.clear(); // Clear selection
+        updateBulkActionsBar(); // Hide/update bulk bar
+        closeBulkDeleteModal(); // Close confirmation modal
+    } catch (e) {
+        console.error("Bulk delete error:", e);
+        alert(`Error deleting orders: ${e.message}`);
+        if(bulkDeleteBtn) bulkDeleteBtn.disabled = false; // Re-enable main button on error
+    } finally {
+        if(confirmBulkDeleteBtn) { // Reset modal confirm button
+            confirmBulkDeleteBtn.disabled = true;
+            confirmBulkDeleteBtn.innerHTML = '<i class="fas fa-trash-alt"></i> Delete Orders';
+        }
+        updateBulkActionsBar(); // Ensure bar is updated
+    }
+}
+function closeBulkDeleteModal() { if (bulkDeleteConfirmModal) bulkDeleteConfirmModal.style.display = 'none'; }
+async function handleBulkUpdateStatus() {
+    // ... (handleBulkUpdateStatus function remains the same) ...
+    const idsToUpdate = Array.from(selectedOrderIds);
+    const newStatus = bulkStatusSelect.value;
+    const MAX_STATUS_UPDATE_LIMIT = 10; // Set limit
+    if (idsToUpdate.length === 0) { alert("Please select orders to update."); return; }
+    if (idsToUpdate.length > MAX_STATUS_UPDATE_LIMIT) { alert(`You can update the status of a maximum of ${MAX_STATUS_UPDATE_LIMIT} orders at once.`); return; }
+    if (!newStatus) { alert("Please select a status to update to."); return; }
+    if (!confirm(`Are you sure you want to change the status of ${idsToUpdate.length} selected order(s) to "${escapeHtml(newStatus)}"?`)) return;
+
+    if (bulkUpdateStatusBtn) {
+        bulkUpdateStatusBtn.disabled = true;
+        bulkUpdateStatusBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Updating...';
+    }
+    const batch = writeBatch(db);
+    const historyEntry = { status: newStatus, timestamp: Timestamp.now() };
+    idsToUpdate.forEach(id => {
+        const docRef = doc(db, "orders", id);
+        batch.update(docRef, {
+            status: newStatus,
+            updatedAt: serverTimestamp(),
+            statusHistory: arrayUnion(historyEntry) // Add history entry
+        });
+    });
+    try {
+        await batch.commit();
+        alert(`${idsToUpdate.length} order(s) status updated to "${escapeHtml(newStatus)}".`);
+        selectedOrderIds.clear(); // Clear selection
+        if (bulkStatusSelect) bulkStatusSelect.value = ''; // Reset dropdown
+        updateBulkActionsBar(); // Update/hide bar
+    } catch (e) {
+        console.error("Bulk status update error:", e);
+        alert(`Error updating status: ${e.message}`);
+    } finally {
+        if (bulkUpdateStatusBtn) {
+            // Reset button state (it should be disabled now as dropdown is reset)
+            bulkUpdateStatusBtn.disabled = true;
+            bulkUpdateStatusBtn.innerHTML = '<i class="fas fa-sync-alt"></i> Update Selected (Max 10)';
+        }
+        updateBulkActionsBar(); // Ensure bar is updated
+    }
+}
+
+
+// --- CSV Export ---
+function exportToCsv() {
+    // ... (exportToCsv function remains the same) ...
+    if (currentlyDisplayedOrders.length === 0) { alert("No data currently displayed to export."); return; }
+    // Define headers
+    const headers = [
+        "Firestore ID", "Order ID", "Customer Name", "WhatsApp No", "Contact No", "Address",
+        "Order Date", "Delivery Date", "Status", "Urgent", "Remarks",
+        "Total Amount", "Amount Paid", "Payment Status", "Items (Name | Qty)"
+    ];
+    // Map data to rows
+    const rows = currentlyDisplayedOrders.map(order => {
+        const formatCsvDate = (dIn) => { if (!dIn) return ''; try { const d = (dIn.toDate)?d.toDate():new Date(dIn); if (isNaN(d.getTime())) return ''; const month = String(d.getMonth() + 1).padStart(2, '0'); const day = String(d.getDate()).padStart(2, '0'); return `${d.getFullYear()}-${month}-${day}`; } catch { return ''; } };
+        const itemsString = (order.items || []).map(p => `${String(p.productName || '').replace(/\|/g, '')}|${String(p.quantity || '')}`).join('; '); // Combine items
+        return [
+            order.id, order.orderId || '', order.customerDetails?.fullName || '', order.customerDetails?.whatsappNo || '',
+            order.customerDetails?.contactNo || '', order.customerDetails?.address || '', formatCsvDate(order.orderDate),
+            formatCsvDate(order.deliveryDate), order.status || '', order.urgent || 'No', order.remarks || '',
+            order.totalAmount ?? '', order.amountPaid ?? '', order.paymentStatus || 'Pending', itemsString
+        ];
+    });
+    // Escape CSV fields
+    const escapeCsvField = (field) => { const stringField = String(field ?? ''); return (stringField.includes(',') || stringField.includes('\n') || stringField.includes('"')) ? `"${stringField.replace(/"/g, '""')}"` : stringField; };
+    // Construct CSV content
+    const csvHeader = headers.map(escapeCsvField).join(",") + "\n";
+    const csvRows = rows.map(row => row.map(escapeCsvField).join(",")).join("\n");
+    const csvContent = csvHeader + csvRows;
+    // Create Blob and trigger download
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement("a");
+    const url = URL.createObjectURL(blob);
+    link.setAttribute("href", url);
+    const timestamp = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
+    link.setAttribute("download", `orders_export_${timestamp}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+}
+
+
+// --- Attempt Open Modal from URL ---
+function attemptOpenModalFromUrl() {
+    // ... (attemptOpenModalFromUrl function remains the same) ...
+    // This function attempts to open the read-only modal if `orderIdToOpenFromUrl` is set
+    if (orderIdToOpenFromUrl && allOrdersCache.length > 0 && !modalOpenedFromUrl) {
+        const orderWrapper = allOrdersCache.find(o => o.id === orderIdToOpenFromUrl);
+        if (orderWrapper) {
+            console.log(`Opening read-only modal for order ID from URL: ${orderIdToOpenFromUrl}`);
+            openReadOnlyOrderPopup(orderIdToOpenFromUrl, orderWrapper.data); // Open the read-only modal
+            modalOpenedFromUrl = true; // Mark as opened to prevent re-opening on updates
+            // Clean the URL parameter
+            try {
+                const url = new URL(window.location);
+                url.searchParams.delete('openModalForId');
+                window.history.replaceState({}, '', url.toString());
+            } catch(e) {
+                // Fallback for older browsers or errors
+                window.history.replaceState(null, '', window.location.pathname + window.location.hash);
+            }
+            orderIdToOpenFromUrl = null; // Clear the ID
+        } else {
+            console.warn(`Order ID ${orderIdToOpenFromUrl} from URL not found in cache.`);
+            // Mark as 'attempted' even if not found to prevent repeated checks
+            modalOpenedFromUrl = true;
+            orderIdToOpenFromUrl = null; // Clear the ID
+        }
+    }
+}
+
+
+// --- PO Creation Functions ---
+// *** UPDATED CHECK INSIDE THIS FUNCTION ***
+function openPOItemSelectionModal(orderFirestoreId, orderData) {
+    // Re-check elements specifically needed by *this* function
+    const elementsToCheck = {
+        poItemSelectionModal,
+        poItemSelectionOrderIdInput,
+        poItemSelectionDisplayOrderIdSpan,
+        poItemSelectionListContainer, // Checking the container ID now
+        poItemSelectionList, // Check the actual list UL/DIV too
+        proceedToCreatePOBtn,
+        poSupplierSearchInput,
+        poSelectedSupplierIdInput, // Added check
+        poSelectedSupplierNameInput // Added check
+    };
+
+    let missingElement = null;
+    for (const key in elementsToCheck) {
+        if (!elementsToCheck[key]) {
+            missingElement = key;
+            break;
+        }
+    }
+
+    if (missingElement) {
+        console.error(`PO Item Selection Modal elements missing. Specifically: '${missingElement}' seems undefined or null.`);
+        alert(`Cannot open PO item selection popup. (Error finding: ${missingElement})`);
+        return;
+    }
+
+    // --- Original function logic continues below if all elements found ---
+    if (!orderData || !orderData.items || orderData.items.length === 0) {
+        alert("No items found in this order to create a PO for.");
+        return;
+    }
+
+    // Set order ID in modal
+    poItemSelectionOrderIdInput.value = orderFirestoreId;
+    poItemSelectionDisplayOrderIdSpan.textContent = orderData.orderId || `Sys:${orderFirestoreId.substring(0,6)}`;
+
+    // Reset supplier search and selection
+    poItemSelectionList.innerHTML = ''; // Clear previous items (using the list element directly)
+    poSupplierSearchInput.value = '';
+    poSelectedSupplierIdInput.value = '';
+    poSelectedSupplierNameInput.value = '';
+    if(poSupplierSuggestionsDiv) poSupplierSuggestionsDiv.style.display = 'none';
+    showPOItemError(''); // Clear previous errors
+
+    let availableItems = 0;
+    orderData.items.forEach((item, index) => {
+        if (!item) return; // Skip if item is invalid
+        const isAlreadyInPO = false; // Placeholder
+
+        const div = document.createElement('div');
+        div.className = 'item-selection-entry';
+        div.innerHTML = `
+            <input type="checkbox" id="poItem_${index}" name="poItems" value="${index}" data-product-index="${index}" ${isAlreadyInPO ? 'disabled' : ''}>
+            <label for="poItem_${index}">
+                <strong>${escapeHtml(item.productName || 'Unnamed Item')}</strong>
+                (Qty: ${escapeHtml(item.quantity || '?')})
+                ${isAlreadyInPO ? '<span class="in-po-label">(In PO)</span>' : ''}
+            </label>`;
+        poItemSelectionList.appendChild(div); // Append to the list element
+        if (!isAlreadyInPO) availableItems++;
+    });
+
+    // Handle cases where no items can be added to a PO
+    if (availableItems === 0) {
+        poItemSelectionList.innerHTML = '<p>All items are already included in existing Purchase Orders or no items available.</p>';
+        proceedToCreatePOBtn.disabled = true;
+    } else {
+        proceedToCreatePOBtn.disabled = true;
+    }
+    poItemSelectionModal.classList.add('active'); // Show the modal
+}
+
+function closePoItemSelectionModal() { if (poItemSelectionModal) poItemSelectionModal.classList.remove('active'); showPOItemError(''); }
+function showPOItemError(message) { if (poItemSelectionError) { poItemSelectionError.textContent = message; poItemSelectionError.style.display = message ? 'block' : 'none'; } }
+function handlePOItemCheckboxChange() {
+    if (!poItemSelectionList || !proceedToCreatePOBtn || !poSelectedSupplierIdInput) return;
+    const selectedCheckboxes = poItemSelectionList.querySelectorAll('input[name="poItems"]:checked:not(:disabled)');
+    const supplierSelected = !!poSelectedSupplierIdInput.value;
+    proceedToCreatePOBtn.disabled = !(selectedCheckboxes.length > 0 && supplierSelected);
+}
+function handlePOSupplierSearchInput() {
+    if (!poSupplierSearchInput || !poSupplierSuggestionsDiv || !poSelectedSupplierIdInput || !poSelectedSupplierNameInput) return;
+    clearTimeout(supplierSearchDebounceTimerPO);
+    const searchTerm = poSupplierSearchInput.value.trim();
+    poSelectedSupplierIdInput.value = '';
+    poSelectedSupplierNameInput.value = '';
+    handlePOItemCheckboxChange(); // Update proceed button state
+
+    if (searchTerm.length < 1) {
+        if(poSupplierSuggestionsDiv){ poSupplierSuggestionsDiv.innerHTML = ''; poSupplierSuggestionsDiv.style.display = 'none';}
+        return;
+    }
+    supplierSearchDebounceTimerPO = setTimeout(() => {
+        fetchPOSupplierSuggestions(searchTerm);
+    }, 350);
+}
+async function fetchPOSupplierSuggestions(searchTerm) {
+    // ... (fetchPOSupplierSuggestions function remains the same) ...
+    if (!poSupplierSuggestionsDiv || !db) return;
+    poSupplierSuggestionsDiv.innerHTML = '<div>Loading...</div>';
+    poSupplierSuggestionsDiv.style.display = 'block';
+    const searchTermLower = searchTerm.toLowerCase(); // Case-insensitive search
+    try {
+        // Query suppliers (assuming 'name_lowercase' field exists for searching)
+        const q = query(
+            collection(db, "suppliers"),
+            orderBy("name_lowercase"), // Order by lowercase name
+            where("name_lowercase", ">=", searchTermLower),
+            where("name_lowercase", "<=", searchTermLower + '\uf8ff'),
+            limit(10)
+        );
+        const querySnapshot = await getDocs(q);
+        poSupplierSuggestionsDiv.innerHTML = ''; // Clear loading
+
+        if (querySnapshot.empty) {
+            poSupplierSuggestionsDiv.innerHTML = '<div class="no-suggestions">No matching suppliers found.</div>';
+        } else {
+            querySnapshot.forEach((docSnapshot) => {
+                const supplier = docSnapshot.data();
+                const supplierId = docSnapshot.id;
+                const div = document.createElement('div');
+                // Display original name and company name
+                div.textContent = `${supplier.name}${supplier.companyName ? ' (' + supplier.companyName + ')' : ''}`;
+                div.dataset.id = supplierId;
+                div.dataset.name = supplier.name; // Store original name
+                div.style.cursor = 'pointer';
+                // Use mousedown to select before input loses focus
+                div.addEventListener('mousedown', (e) => {
+                    e.preventDefault(); // Prevent input blur before selection
+                    if(poSupplierSearchInput) poSupplierSearchInput.value = supplier.name; // Set display name
+                    if(poSelectedSupplierIdInput) poSelectedSupplierIdInput.value = supplierId; // Set hidden ID
+                    if(poSelectedSupplierNameInput) poSelectedSupplierNameInput.value = supplier.name; // Set hidden name
+                    if(poSupplierSuggestionsDiv) poSupplierSuggestionsDiv.style.display = 'none'; // Hide suggestions
+                    handlePOItemCheckboxChange(); // Update proceed button state (may enable it)
+                });
+                poSupplierSuggestionsDiv.appendChild(div);
+            });
+        }
+    } catch (error) {
+        console.error("Error fetching PO supplier suggestions:", error);
+        // Check for common errors like missing index
+         if (error.message.includes("indexes are required")) {
+             poSupplierSuggestionsDiv.innerHTML = '<div class="no-suggestions" style="color:red;">Search Error (Index Missing).</div>';
+         } else {
+            poSupplierSuggestionsDiv.innerHTML = '<div class="no-suggestions" style="color:red;">Error fetching suppliers.</div>';
+         }
+    }
+}
+function handleProceedToCreatePO() {
+    const orderFirestoreId = poItemSelectionOrderIdInput.value;
+    const selectedSupplierId = poSelectedSupplierIdInput.value;
+    const selectedSupplierName = poSelectedSupplierNameInput.value;
+
+    if (!orderFirestoreId || !selectedSupplierId || !selectedSupplierName) {
+        showPOItemError("Missing Order ID or Supplier Selection.");
+        return;
+    }
+    if (!poItemSelectionList) { // Added check
+         showPOItemError("Item list container not found.");
+         return;
+    }
+    // Get selected item indices
+    const selectedItemsIndices = Array.from(poItemSelectionList.querySelectorAll('input[name="poItems"]:checked:not(:disabled)')).map(cb => parseInt(cb.value));
+    if (selectedItemsIndices.length === 0) {
+        showPOItemError("Please select at least one item for the PO.");
+        return;
+    }
+
+    // Construct URL parameters for new_po.html
+    const params = new URLSearchParams();
+    params.append('sourceOrderId', orderFirestoreId);
+    params.append('supplierId', selectedSupplierId);
+    params.append('supplierName', selectedSupplierName);
+    params.append('itemIndices', selectedItemsIndices.join(',')); // Pass indices as comma-separated string
+
+    // Redirect to the new PO page with parameters
+    window.location.href = `new_po.html?${params.toString()}`;
+    closePoItemSelectionModal(); // Close the selection modal
+}
+
+
+// --- PO Details Popup Functions ---
+async function openPODetailsPopup(poId) {
+    // ... (openPODetailsPopup function remains the same) ...
+    if (!poDetailsPopup || !poDetailsPopupContent || !db || !poId) return;
+    poDetailsPopupContent.innerHTML = '<p><i class="fas fa-spinner fa-spin"></i> Loading PO details...</p>';
+    poDetailsPopup.classList.add('active'); // Show popup
+
+    try {
+        const poRef = doc(db, "purchaseOrders", poId);
+        const poDocSnap = await getDoc(poRef);
+
+        if (!poDocSnap.exists()) throw new Error(`Purchase Order with ID ${poId} not found.`);
+
+        const poData = poDocSnap.data();
+        const supplierName = poData.supplierName || 'Unknown Supplier';
+        const poNumberDisplay = poData.poNumber ? `#${poData.poNumber}` : 'N/A';
+        let orderDateStr = poData.orderDate?.toDate ? poData.orderDate.toDate().toLocaleDateString('en-GB') : 'N/A';
+
+        // Build HTML for popup content
+        let popupHTML = `<div class="po-details-popup-header"><h3>Purchase Order ${escapeHtml(poNumberDisplay)}</h3><p><strong>Supplier:</strong> ${escapeHtml(supplierName)}</p><p><strong>Order Date:</strong> ${orderDateStr}</p><p><strong>Status:</strong> ${escapeHtml(poData.status || 'N/A')}</p><p><strong>Total Amount:</strong> ₹ ${(poData.totalAmount || 0).toFixed(2)}</p></div><hr><h4>Items</h4>`;
+
+        if (poData.items && poData.items.length > 0) {
+            popupHTML += `<table class="details-table-popup"><thead><tr><th>#</th><th>Product</th><th>Details</th><th>Rate</th><th>Amount</th></tr></thead><tbody>`;
+            poData.items.forEach((item, index) => {
+                if (!item) return;
+                let detailStr = '';
+                const qty = item.quantity || '?';
+                if (item.type === 'Sq Feet') { // Handle Sq Feet details
+                    const w = item.realWidth || item.width || '?';
+                    const h = item.realHeight || item.height || '?';
+                    const u = item.unit || item.inputUnit || 'units';
+                    detailStr = `Qty: ${escapeHtml(qty)} (${escapeHtml(w)}x${escapeHtml(h)} ${escapeHtml(u)})`;
+                } else { // Handle simple Qty
+                    detailStr = `Qty: ${escapeHtml(qty)}`;
+                }
+                popupHTML += `<tr><td>${index + 1}</td><td>${escapeHtml(item.productName || 'N/A')}</td><td>${detailStr}</td><td>${item.rate?.toFixed(2) ?? 'N/A'}</td><td align="right">${item.itemAmount?.toFixed(2) ?? 'N/A'}</td></tr>`;
+            });
+            popupHTML += `</tbody></table>`;
+        } else {
+            popupHTML += `<p>No items found for this PO.</p>`;
+        }
+
+        if (poData.notes) {
+            popupHTML += `<div class="po-notes-popup"><strong>Notes:</strong><p>${escapeHtml(poData.notes).replace(/\n/g, '<br>')}</p></div>`;
+        }
+
+        poDetailsPopupContent.innerHTML = popupHTML; // Set the generated HTML
+        if(printPoDetailsPopupBtn) printPoDetailsPopupBtn.dataset.poid = poId; // Store PO ID for printing if needed
+
+    } catch (error) {
+        console.error("Error loading PO details into popup:", error);
+        poDetailsPopupContent.innerHTML = `<p class="error-message">Error loading PO details: ${escapeHtml(error.message)}</p>`;
+    }
+}
+function closePODetailsPopup() { if (poDetailsPopup) poDetailsPopup.classList.remove('active'); }
+function handlePrintPODetailsPopup(event) {
+    // ... (handlePrintPODetailsPopup function remains the same) ...
+    // Basic print function - consider using a dedicated print library or CSS for better formatting
+    const contentElement = document.getElementById('poDetailsPopupContent');
+    if (!contentElement) return;
+    const printWindow = window.open('', '_blank');
+    // Basic print styles
+    printWindow.document.write(`<html><head><title>Print PO Details</title><style>body{font-family:sans-serif;margin:20px;} h3,h4{margin-bottom:10px;} table{width:100%; border-collapse:collapse; margin-bottom:15px;} th, td{border:1px solid #ccc; padding:5px; text-align:left; font-size:0.9em;} th{background-color:#f2f2f2;} .po-notes-popup{margin-top:15px; border:1px solid #eee; padding:10px; font-size:0.9em; white-space: pre-wrap;} p{margin:5px 0;} strong{font-weight:bold;} </style></head><body>${contentElement.innerHTML}</body></html>`);
+    printWindow.document.close();
+    printWindow.focus();
+    setTimeout(() => { // Timeout needed for content rendering in some browsers
+        try { printWindow.print(); }
+        catch (e) { console.error("Print error:", e); alert("Could not print."); }
+        finally { setTimeout(() => { printWindow.close(); }, 200); } // Close print window after printing
+    }, 500);
+}
+
+
+// --- Read-Only Order Details Popup Functions ---
+function openReadOnlyOrderPopup(firestoreId, orderData) {
+    // ... (openReadOnlyOrderPopup function remains the same) ...
+    if (!readOnlyOrderModal || !readOnlyOrderModalContent || !readOnlyOrderModalTitle || !orderData) return;
+
+    readOnlyOrderModalTitle.textContent = `Order Details: #${escapeHtml(orderData.orderId || firestoreId.substring(0,6))}`;
+    readOnlyOrderModalContent.innerHTML = '<p><i class="fas fa-spinner fa-spin"></i> Loading...</p>'; // Loading indicator
+    readOnlyOrderModal.classList.add('active'); // Show modal
+
+    let contentHTML = '<div class="read-only-grid">'; // Start grid layout
+
+    // Customer Section
+    contentHTML += '<div class="read-only-section"><h4>Customer</h4>';
+    contentHTML += `<p><strong>Name:</strong> ${escapeHtml(orderData.customerDetails?.fullName || 'N/A')}</p>`;
+    contentHTML += `<p><strong>WhatsApp:</strong> ${escapeHtml(orderData.customerDetails?.whatsappNo || 'N/A')}</p>`;
+    contentHTML += `<p><strong>Contact:</strong> ${escapeHtml(orderData.customerDetails?.contactNo || 'N/A')}</p>`;
+    contentHTML += `<p><strong>Address:</strong> ${escapeHtml(orderData.customerDetails?.address || 'N/A')}</p></div>`;
+
+    // Order Info Section
+    const formatDateRO = (dIn) => { if (!dIn) return 'N/A'; try { const d = (dIn.toDate)?d.toDate():new Date(dIn); return isNaN(d.getTime())?'N/A':d.toLocaleDateString('en-GB'); } catch { return 'N/A'; } };
+    contentHTML += '<div class="read-only-section"><h4>Order Info</h4>';
+    contentHTML += `<p><strong>Order Date:</strong> ${formatDateRO(orderData.orderDate)}</p>`;
+    contentHTML += `<p><strong>Delivery Date:</strong> ${formatDateRO(orderData.deliveryDate)}</p>`;
+    contentHTML += `<p><strong>Priority:</strong> ${escapeHtml(orderData.urgent || 'No')}</p>`;
+    contentHTML += `<p><strong>Status:</strong> ${escapeHtml(orderData.status || 'N/A')}</p>`;
+    contentHTML += `<p><strong>Remarks:</strong> ${escapeHtml(orderData.remarks || 'None')}</p></div>`;
+
+    // Items Section
+    contentHTML += '<div class="read-only-section read-only-products"><h4>Items</h4>';
+    const itemsRO = orderData.items || [];
+    if (itemsRO.length > 0) {
+        contentHTML += '<ul class="read-only-product-list">';
+        itemsRO.forEach(item => {
+            if (!item) return;
+            contentHTML += `<li><strong>${escapeHtml(item.productName || 'Unnamed Item')}</strong> - Qty: ${escapeHtml(item.quantity || '?')}</li>`;
+        });
+        contentHTML += '</ul>';
+    } else { contentHTML += '<p>No items listed.</p>'; }
+    contentHTML += '</div>';
+
+    // Account Data Section
+    contentHTML += '<div class="read-only-section"><h4>Account Data</h4>';
+    const totalAmountRO = orderData.totalAmount ?? null;
+    const amountPaidRO = orderData.amountPaid ?? null;
+    let balanceDueROText = 'N/A';
+    let paymentStatusRO = orderData.paymentStatus ?? null;
+    if (totalAmountRO !== null && amountPaidRO !== null) { const balanceDueRO = totalAmountRO - amountPaidRO; balanceDueROText = `₹ ${balanceDueRO.toFixed(2)}`; if (paymentStatusRO === null) paymentStatusRO = balanceDueRO <= 0 ? 'Paid' : 'Pending'; }
+    else if (paymentStatusRO === null) { paymentStatusRO = 'N/A'; }
+    contentHTML += `<p><strong>Total Amount:</strong> ${totalAmountRO !== null ? `₹ ${totalAmountRO.toFixed(2)}` : 'N/A'}</p>`;
+    contentHTML += `<p><strong>Amount Paid:</strong> ${amountPaidRO !== null ? `₹ ${amountPaidRO.toFixed(2)}` : 'N/A'}</p>`;
+    contentHTML += `<p><strong>Balance Due:</strong> ${balanceDueROText}</p>`;
+    contentHTML += `<p><strong>Payment Status:</strong> ${escapeHtml(paymentStatusRO)}</p></div>`;
+
+    // Status History Section
+    contentHTML += '<div class="read-only-section"><h4>Status History</h4>';
+    const historyRO = orderData.statusHistory || [];
+    if (historyRO.length > 0) {
+        const sortedHistoryRO = [...historyRO].sort((a, b) => (b.timestamp?.toDate?.()?.getTime() ?? 0) - (a.timestamp?.toDate?.()?.getTime() ?? 0)); // Descending
+        contentHTML += '<ul class="read-only-history-list">';
+        sortedHistoryRO.forEach(entry => {
+            let timeStr = '?';
+            try { timeStr = entry.timestamp?.toDate ? entry.timestamp.toDate().toLocaleString('en-GB') : '?'; } catch {}
+            contentHTML += `<li><strong>${escapeHtml(entry.status || '?')}</strong> at ${timeStr}</li>`;
+        });
+        contentHTML += '</ul>';
+    } else { contentHTML += '<p>No status history available.</p>'; }
+    contentHTML += '</div>';
+
+    contentHTML += '</div>'; // End grid layout
+    readOnlyOrderModalContent.innerHTML = contentHTML; // Set final HTML
+}
+function closeReadOnlyOrderModal() { if (readOnlyOrderModal) readOnlyOrderModal.classList.remove('active'); }
+
+
+// --- Items Only Popup Functions ---
+function openItemsOnlyPopup(firestoreId) {
+    // ... (openItemsOnlyPopup function remains the same) ...
+    if (!itemsOnlyModal || !itemsOnlyModalContent || !itemsOnlyModalTitle) {
+         console.error("Items Only Modal elements missing.");
+         return;
+    }
+
+    const orderData = findOrderInCache(firestoreId); // Use existing cache function
+    if (!orderData) {
+        itemsOnlyModalTitle.textContent = "Error";
+        itemsOnlyModalContent.innerHTML = '<p class="error-message">Could not find order data.</p>';
+        itemsOnlyModal.classList.add('active');
+        return;
+    }
+
+    itemsOnlyModalTitle.textContent = `Items for Order #${escapeHtml(orderData.orderId || firestoreId.substring(0, 6))}`;
+    itemsOnlyModalContent.innerHTML = ''; // Clear previous content
+
+    const items = orderData.items || [];
+    if (items.length > 0) {
+        const ul = document.createElement('ul');
+        ul.className = 'items-only-list'; // Add class for styling (define in CSS)
+        items.forEach((item, index) => {
+            if (!item) return;
+            const li = document.createElement('li');
+            const name = escapeHtml(item.productName || 'Unnamed Item');
+            const quantity = escapeHtml(item.quantity || '?');
+            // You can add more item details here if needed (size, rate, etc.)
+            li.innerHTML = `<strong>${index + 1}. ${name}</strong> - Qty: ${quantity}`;
+            ul.appendChild(li);
+        });
+        itemsOnlyModalContent.appendChild(ul);
+    } else {
+        itemsOnlyModalContent.innerHTML = '<p class="no-items">No items listed for this order.</p>'; // Use class for styling
+    }
+
+    itemsOnlyModal.classList.add('active'); // Show the modal
+}
+
+function closeItemsOnlyPopup() {
+    // ... (closeItemsOnlyPopup function remains the same) ...
+    if (itemsOnlyModal) {
+        itemsOnlyModal.classList.remove('active'); // Hide the modal
+    }
+}
+
+console.log("order_history.js script loaded successfully (with Items Only Popup and Debug Logging)."); // Log version
