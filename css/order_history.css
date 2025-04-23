@@ -1,6 +1,6 @@
 
 /* === order_history.css === */
-/* Updated Version: Professional, Cleaner, Colorful, Compact Modals - v3 (Spacing/Font Fixes) */
+/* Updated Version: Professional, Cleaner, Colorful, Compact Modals - v4 (Button Fix) */
 
 /* --- Global Styles & Variables --- */
 :root {
@@ -21,20 +21,20 @@
     --text-color: #343a40; /* Dark Grey Text */
     --text-muted: #6c757d; /* Medium Grey Text */
     --font-family: 'Poppins', "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
-    --border-radius: 5px; /* Slightly reduced border radius */
+    --border-radius: 5px;
     --box-shadow: 0 2px 4px rgba(0, 0, 0, 0.06);
     --box-shadow-lg: 0 4px 8px rgba(0, 0, 0, 0.08);
-    --highlight-color: #fff3cd; /* Light Yellow Highlight */
-    --selected-row-bg: #e0ecf8; /* Light Blue Row Selection */
-    --po-item-header-bg: #f0f8ff; /* Alice Blue for PO Item Header */
-    --po-item-list-bg: #fdfdff; /* Ghost White for PO Item List Area */
-    --po-item-entry-bg: #ffffff; /* White for individual items */
+    --highlight-color: #fff3cd;
+    --selected-row-bg: #e0ecf8;
+    --po-item-header-bg: #f0f8ff;
+    --po-item-list-bg: #fdfdff;
+    --po-item-entry-bg: #ffffff;
 }
 body {
     font-family: var(--font-family);
     margin: 0;
     padding: 20px;
-    background-color: #f4f6f9; /* Slightly cooler background */
+    background-color: #f4f6f9;
     color: var(--text-color);
     line-height: 1.5;
     font-size: 15px;
@@ -46,7 +46,7 @@ body {
     border-radius: var(--border-radius);
     box-shadow: var(--box-shadow-lg);
     width: 100%;
-    max-width: 1350px; /* Slightly wider container */
+    max-width: 1350px;
     margin: 20px auto;
     box-sizing: border-box;
 }
@@ -54,7 +54,7 @@ body {
 /* --- Header & Breadcrumb --- */
 .header { background-color: var(--primary-color); color: white; padding: 15px 20px; border-radius: var(--border-radius) var(--border-radius) 0 0; margin: -25px -30px 20px -30px; font-size: 1.2em; font-weight: 600; text-align: center; display: flex; align-items: center; justify-content: center; gap: 10px; }
 .header-icon { font-size: 1.1em; }
-h1 { margin: 0; font-size: 1em; } /* Keep h1 relative to header */
+h1 { margin: 0; font-size: 1em; }
 .breadcrumb { font-size: 0.9em; color: var(--text-muted); margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid var(--border-color); }
 .breadcrumb a { color: var(--primary-color); text-decoration: none; font-weight: 500; }
 .breadcrumb a:hover { text-decoration: underline; }
@@ -63,31 +63,27 @@ h1 { margin: 0; font-size: 1em; } /* Keep h1 relative to header */
 
 /* --- Buttons (Base and Specific) --- */
 .button {
-    padding: 7px 16px; /* Slightly reduced padding */
-    font-size: 0.9em; border: none; border-radius: var(--border-radius); cursor: pointer; font-weight: 500; display: inline-flex; align-items: center; justify-content: center; gap: 6px; text-decoration: none; transition: background-color 0.2s ease, box-shadow 0.2s ease, transform 0.1s ease, opacity 0.2s ease; white-space: nowrap; height: 36px; /* Slightly reduced height */
-    box-shadow: var(--box-shadow); color: white; box-sizing: border-box;
-    font-family: var(--font-family); /* <<< Ensure all buttons use Poppins by default */
+    padding: 7px 16px; font-size: 0.9em; border: none; border-radius: var(--border-radius); cursor: pointer; font-weight: 500; display: inline-flex; align-items: center; justify-content: center; gap: 6px; text-decoration: none; transition: background-color 0.2s ease, box-shadow 0.2s ease, transform 0.1s ease, opacity 0.2s ease; white-space: nowrap; height: 36px; box-shadow: var(--box-shadow); color: white; box-sizing: border-box; font-family: var(--font-family);
 }
 .button:hover { box-shadow: var(--box-shadow-lg); transform: translateY(-1px); }
 .button:active { transform: translateY(0px); box-shadow: var(--box-shadow); }
 .button:disabled { opacity: 0.6; cursor: not-allowed; box-shadow: none; transform: none; background-color: #adb5bd !important; color: #fff !important; }
 .button:disabled:hover { background-color: #adb5bd; box-shadow: none; transform: none; }
 .button i { margin-right: 5px; font-size: 0.95em; }
-
-/* Specific Button Colors (Using variables) */
+/* Specific Button Colors */
 .add-new-button, .success-button, .save-button { background-color: var(--success-color); }
 .add-new-button:hover, .success-button:hover, .save-button:hover { background-color: #218838; }
-.export-button { background-color: #5bc0de; } /* Keep specific color if desired */
+.export-button { background-color: #5bc0de; }
 .export-button:hover { background-color: #31b0d5; }
 .clear-filters-button, .secondary-button, .cancel-button { background-color: var(--secondary-color); }
 .clear-filters-button:hover, .secondary-button:hover, .cancel-button:hover { background-color: #5a6268; }
 .info-button, .print-button { background-color: var(--info-color); }
 .info-button:hover, .print-button:hover { background-color: #117a8b; }
-.primary-button, .details-edit-button { background-color: var(--primary-color); } /* Details button primary */
+.primary-button, .details-edit-button { background-color: var(--primary-color); }
 .primary-button:hover, .details-edit-button:hover { background-color: #004085; }
-.update-status-button { background-color: var(--warning-color); color: #333; font-weight: 500; font-family: var(--font-family); /* <<< Explicitly set Poppins for this button */ }
+.update-status-button { background-color: var(--warning-color); color: #333; font-weight: 500; font-family: var(--font-family); }
 .update-status-button:hover { background-color: #e0a800; }
-.edit-full-button { background-color: #5bc0de; color: white; } /* Keep specific color */
+.edit-full-button { background-color: #5bc0de; color: white; }
 .edit-full-button:hover { background-color: #31b0d5; }
 .delete-button { background-color: var(--danger-color); color: white; }
 .delete-button:hover { background-color: #c82333; }
@@ -97,7 +93,7 @@ h1 { margin: 0; font-size: 1em; } /* Keep h1 relative to header */
 .create-po-button:hover { background-color: #004085; }
 
 /* --- Action Bar & Filter Bar --- */
-.actions-bar { display: flex; justify-content: flex-end; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 8px; } /* Reduced gap */
+.actions-bar { display: flex; justify-content: flex-end; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 8px; }
 .filter-bar { display: flex; flex-wrap: wrap; gap: 15px; padding: 15px; background-color: var(--white-bg); border: 1px solid var(--border-color); border-radius: var(--border-radius); margin-bottom: 15px; align-items: flex-end; box-shadow: var(--box-shadow); }
 .filter-group { display: flex; flex-direction: column; gap: 4px; flex-grow: 1; min-width: 150px; }
 .filter-group:has(#filterDate) { min-width: 160px; flex-grow: 0.5;}
@@ -106,16 +102,16 @@ h1 { margin: 0; font-size: 1em; } /* Keep h1 relative to header */
 .filter-group:has(#filterSearch) { flex-grow: 1.5; }
 .filter-group label { font-size: 0.85em; font-weight: 500; color: var(--text-color); white-space: nowrap; margin-bottom: 2px; }
 .filter-group label i { margin-right: 5px; color: var(--primary-color); width: 1.1em; text-align: center; }
-.filter-group input[type="date"], .filter-group input[type="text"], .filter-group select { padding: 8px 10px; border: 1px solid #ced4da; border-radius: var(--border-radius); font-size: 0.9em; height: 36px; background-color: var(--white-bg); box-sizing: border-box; width: 100%; color: var(--text-color); font-family: var(--font-family); /* Ensure inputs/selects use Poppins */ }
+.filter-group input[type="date"], .filter-group input[type="text"], .filter-group select { padding: 8px 10px; border: 1px solid #ced4da; border-radius: var(--border-radius); font-size: 0.9em; height: 36px; background-color: var(--white-bg); box-sizing: border-box; width: 100%; color: var(--text-color); font-family: var(--font-family); }
 .filter-group input::placeholder { color: #aaa; opacity: 1; }
-.filter-group input:focus, .filter-group select:focus { border-color: var(--primary-color); outline: 0; box-shadow: 0 0 0 0.2rem rgba(0, 86, 179, 0.2); } /* Reduced shadow */
+.filter-group input:focus, .filter-group select:focus { border-color: var(--primary-color); outline: 0; box-shadow: 0 0 0 0.2rem rgba(0, 86, 179, 0.2); }
 
 /* --- Bulk Actions Bar --- */
-.bulk-actions-bar { display: flex; align-items: center; justify-content: space-between; padding: 10px 15px; background-color: var(--primary-color-light); border: 1px solid var(--primary-color); border-radius: var(--border-radius); margin-bottom: 15px; flex-wrap: wrap; gap: 10px; box-shadow: none; } /* Changed background, border, removed shadow */
+.bulk-actions-bar { display: flex; align-items: center; justify-content: space-between; padding: 10px 15px; background-color: var(--primary-color-light); border: 1px solid var(--primary-color); border-radius: var(--border-radius); margin-bottom: 15px; flex-wrap: wrap; gap: 10px; box-shadow: none; }
 .bulk-actions-bar #selectedCount { font-weight: 600; color: var(--primary-color); font-size: 0.9em; }
 .bulk-actions-controls { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .bulk-label { font-size: 0.85em; font-weight: 500; margin-right: 4px; }
-.bulk-select { padding: 6px 10px; border: 1px solid #ced4da; border-radius: var(--border-radius); font-size: 0.85em; height: 34px; min-width: 150px; font-family: var(--font-family); } /* Poppins font */
+.bulk-select { padding: 6px 10px; border: 1px solid #ced4da; border-radius: var(--border-radius); font-size: 0.85em; height: 34px; min-width: 150px; font-family: var(--font-family); }
 .bulk-button { padding: 5px 12px; font-size: 0.85em; height: 34px; }
 .bulk-update { background-color: var(--warning-color); color: #333; }
 .bulk-update:hover { background-color: #e0a800; }
@@ -123,8 +119,8 @@ h1 { margin: 0; font-size: 1em; } /* Keep h1 relative to header */
 .bulk-delete:hover { background-color: #c82333; }
 
 /* --- Table Styles --- */
-.table-container { width: 100%; max-height: 68vh; /* Slightly increased */ overflow-y: auto; border: 1px solid var(--border-color); border-radius: var(--border-radius); margin-bottom: 20px; background-color: var(--white-bg); box-shadow: var(--box-shadow); position: relative; overflow-x: auto; }
-#orderTable { width: 100%; border-collapse: collapse; font-size: 0.88em; /* Slightly smaller */ border: none; min-width: 1000px; }
+.table-container { width: 100%; max-height: 68vh; overflow-y: auto; border: 1px solid var(--border-color); border-radius: var(--border-radius); margin-bottom: 20px; background-color: var(--white-bg); box-shadow: var(--box-shadow); position: relative; overflow-x: auto; }
+#orderTable { width: 100%; border-collapse: collapse; font-size: 0.88em; border: none; min-width: 1000px; }
 #orderTable thead th { position: sticky; top: 0; z-index: 10; background-color: var(--light-bg); padding: 10px 12px; text-align: left; font-weight: 600; color: var(--text-color); white-space: nowrap; border-bottom: 2px solid var(--border-color); }
 #orderTable thead th.col-checkbox { z-index: 11; }
 #orderTable td { padding: 9px 12px; text-align: left; vertical-align: middle; border-bottom: 1px solid var(--border-color-light); color: var(--text-color); word-wrap: break-word; white-space: normal; }
@@ -140,8 +136,7 @@ th.col-checkbox input, td.col-checkbox input { cursor: pointer; transform: scale
 .po-info-cell { font-size: 0.85em; line-height: 1.4; }
 .po-info-cell a { color: var(--primary-color); text-decoration: none; display: inline-block; margin-bottom: 3px; padding: 2px 5px; border-radius: 3px; background-color: var(--primary-color-light); transition: background-color 0.2s ease; }
 .po-info-cell a:hover { text-decoration: none; background-color: #d4e4f7;}
-/* PO Icon Button */
-.po-info-cell .button.create-po-button.icon-only { background-color: var(--success-color); color: white; padding: 0; width: 32px; height: 32px; font-size: 1.1em; line-height: 32px; text-align: center; min-width: auto; box-shadow: none; border-radius: 50%; } /* Make it round */
+.po-info-cell .button.create-po-button.icon-only { background-color: var(--success-color); color: white; padding: 0; width: 32px; height: 32px; font-size: 1.1em; line-height: 32px; text-align: center; min-width: auto; box-shadow: none; border-radius: 50%; }
 .po-info-cell .button.create-po-button.icon-only:hover { background-color: #218838; box-shadow: var(--box-shadow); transform: scale(1.05); }
 .po-info-cell .button.create-po-button.icon-only i { margin-right: 0; }
 
@@ -152,8 +147,8 @@ a.see-more-link { font-size: 0.85em; color: var(--secondary-color); font-style: 
 a.see-more-link:hover { background-color: #e9ecef; text-decoration: none; }
 
 /* --- Search Highlighting & Status Badge --- */
-mark { background-color: var(--warning-color-light); padding: 0.1em 0.2em; border-radius: 3px; color: inherit; font-weight: 600; border: 1px solid #ffeeba; } /* Changed mark style */
-.status-badge { font-weight: 500; padding: 4px 10px; border-radius: var(--border-radius); font-size: 0.82em; color: white; background-color: var(--secondary-color); white-space: nowrap; display: inline-block; line-height: 1.3; text-align: center; border: 1px solid rgba(0,0,0,0.05); } /* Added subtle border */
+mark { background-color: var(--warning-color-light); padding: 0.1em 0.2em; border-radius: 3px; color: inherit; font-weight: 600; border: 1px solid #ffeeba; }
+.status-badge { font-weight: 500; padding: 4px 10px; border-radius: var(--border-radius); font-size: 0.82em; color: white; background-color: var(--secondary-color); white-space: nowrap; display: inline-block; line-height: 1.3; text-align: center; border: 1px solid rgba(0,0,0,0.05); }
 .status-badge.status-order-received { background-color: var(--secondary-color); }
 .status-badge.status-designing { background-color: var(--warning-color); color: #333; }
 .status-badge.status-verification { background-color: #fd7e14; }
@@ -185,49 +180,107 @@ mark { background-color: var(--warning-color-light); padding: 0.1em 0.2em; borde
 #statusCountsReport li strong { font-weight: 600; color: var(--text-color); }
 #statusCountsReport p { color: var(--text-muted); font-style: italic; }
 
-/* --- Modal Base Styles --- */
-.modal, .popup-overlay { display: none; position: fixed; z-index: 1050; left: 0; top: 0; width: 100%; height: 100%; overflow: hidden; background-color: rgba(0,0,0,0.6); align-items: center; justify-content: center; padding: 15px; box-sizing: border-box; } /* Reduced padding */
+/* ========================== */
+/* === Modal Base Styles === */
+/* ========================== */
+.modal, .popup-overlay {
+    display: none; position: fixed; z-index: 1050; left: 0; top: 0; width: 100%; height: 100%;
+    background-color: rgba(0,0,0,0.6); align-items: center; justify-content: center;
+    padding: 15px; box-sizing: border-box;
+}
 .modal.active, .popup-overlay.active { display: flex; }
-.modal-content { background-color: var(--white-bg); margin: auto; border: none; width: 95%; border-radius: var(--border-radius); position: relative; box-shadow: 0 5px 15px rgba(0,0,0,0.2); z-index: 1051; animation: popupFadeIn 0.3s ease-out; display: flex; flex-direction: column; max-height: calc(88vh); /* Reduced max-height */ padding: 0; /* Remove base padding, apply to header/content/actions */ overflow: hidden; /* Prevent direct scroll, apply to content area */ }
-.modal-content.modal-lg { max-width: 1000px; } /* Adjusted sizes */
+
+.modal-content {
+    background-color: var(--white-bg); margin: auto; border: none; width: 95%;
+    border-radius: var(--border-radius); position: relative; box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+    z-index: 1051; animation: popupFadeIn 0.3s ease-out;
+    display: flex; flex-direction: column; /* << Important for layout */
+    max-height: calc(88vh); /* Max height */
+    /* <<< FIX: Apply overflow-y auto here, add padding back */
+    overflow-y: auto;
+    padding: 0; /* Keep padding off main container initially */
+}
+
+/* Modal Sizes */
+.modal-content.modal-lg { max-width: 1000px; }
 .modal-content.modal-xl { max-width: 1150px; }
 .modal-content.modal-md { max-width: 650px; }
-.modal-content.small-modal { max-width: 500px; max-height: none; } /* For simple modals like confirm */
+.modal-content.small-modal { max-width: 500px; overflow-y: visible; max-height: none; } /* Allow small modals to not scroll */
 
-.close-btn, #whatsapp-reminder-popup .popup-close { color: #aaa; position: absolute; top: 8px; right: 12px; font-size: 26px; font-weight: bold; cursor: pointer; line-height: 1; background: none; border: none; padding: 0; transition: color 0.2s ease; z-index: 1055; }
+.close-btn, #whatsapp-reminder-popup .popup-close {
+    color: #aaa; position: absolute; top: 8px; right: 12px; font-size: 26px; font-weight: bold;
+    cursor: pointer; line-height: 1; background: none; border: none; padding: 0;
+    transition: color 0.2s ease; z-index: 1055;
+}
 .close-btn:hover, .close-btn:focus, #whatsapp-reminder-popup .popup-close:hover, #whatsapp-reminder-popup .popup-close:focus { color: var(--danger-color); }
 
-/* Modal Header */
-.modal-content > h2, .modal-content > h3 { margin: 0; padding: 12px 20px; font-size: 1.15em; background-color: var(--light-bg); border-bottom: 1px solid var(--border-color); border-radius: var(--border-radius) var(--border-radius) 0 0; color: var(--text-color); text-align: left; font-weight: 600; flex-shrink: 0; font-family: var(--font-family); /* Ensure header uses Poppins */ }
-#poDetailsPopup h3 { font-size: 1.1em; } /* Slightly smaller PO details header */
+/* Modal Header (Common) */
+.modal-content > h2, .modal-content > h3 {
+    margin: 0; padding: 12px 20px; font-size: 1.15em; background-color: var(--light-bg);
+    border-bottom: 1px solid var(--border-color);
+    border-radius: var(--border-radius) var(--border-radius) 0 0; /* Only top radius */
+    color: var(--text-color); text-align: left; font-weight: 600;
+    flex-shrink: 0; /* Prevent header from shrinking */
+    font-family: var(--font-family);
+    position: sticky; /* <<< Make Header Sticky */
+    top: 0; /* Stick to top */
+    z-index: 1052; /* Ensure header is above content */
+}
+#poDetailsPopup h3 { font-size: 1.1em; }
 #itemsOnlyModal h2 { text-align: center; }
 
-/* Modal Content Area (Common for scrollable content) */
-.modal-content-area { padding: 15px 20px; flex-grow: 1; overflow-y: auto; min-height: 0; }
-/* Add specific content area classes if needed, e.g., .details-modal-content-area */
+/* Modal Content Area (Common for scrollable content between header and footer) */
+/* We target direct divs inside modal-content, excluding header (h2/h3) and footer (.modal-actions) */
+/* Or rely on the specific grid container / content area div */
+.modal-content-area, /* Use if you have a specific wrapper div */
+#detailsModal .modal-grid-container-complex, /* Specific to details modal */
+#readOnlyOrderModal .read-only-content-area,
+#itemsOnlyModal .items-only-content-area,
+#poDetailsPopup .po-details-content-area,
+#poItemSelectionModal .po-item-selection-content-wrapper,
+#bulkDeleteConfirmModal .modal-content-area,
+#whatsapp-reminder-popup .popup-content-area {
+    padding: 15px 20px; /* <<< Apply padding here */
+    flex-grow: 1; /* Allow content to grow */
+    /* Removed overflow-y: auto here, it's on .modal-content now */
+}
 
-/* Modal Actions Footer */
-.modal-actions { display: flex; justify-content: flex-end; gap: 8px; flex-wrap: wrap; padding: 10px 20px; border-top: 1px solid var(--border-color); background-color: var(--light-bg); flex-shrink: 0; border-radius: 0 0 var(--border-radius) var(--border-radius); }
-/* Ensure buttons in footer use Poppins */
+/* Modal Actions Footer (Common) */
+.modal-actions {
+    display: flex; justify-content: flex-end; gap: 8px; flex-wrap: wrap;
+    padding: 10px 20px; border-top: 1px solid var(--border-color);
+    background-color: var(--light-bg); flex-shrink: 0; /* Prevent footer from shrinking */
+    border-radius: 0 0 var(--border-radius) var(--border-radius); /* Only bottom radius */
+    position: sticky; /* <<< Make Footer Sticky */
+    bottom: 0; /* Stick to bottom */
+    z-index: 1052; /* Ensure footer is above content */
+}
 .modal-actions .button { font-family: var(--font-family); }
 
-.error-message { color: var(--danger-color); background-color: #fdecea; border: 1px solid var(--danger-color); border-radius: var(--border-radius); padding: 8px 12px; font-weight: 500; text-align: center; margin: 10px 20px; width: auto; box-sizing: border-box; display: none; }
+.error-message {
+    color: var(--danger-color); background-color: #fdecea; border: 1px solid var(--danger-color);
+    border-radius: var(--border-radius); padding: 8px 12px; font-weight: 500; text-align: center;
+    margin: 10px 0; /* Adjust margin */
+    box-sizing: border-box; display: block; /* Make sure it displays if class is added */
+}
+
+/* ============================================= */
+/* === Specific Modal Content Styles === */
+/* ============================================= */
 
 /* --- Enhanced Details Modal Specific Styles (#detailsModal) --- */
 #detailsModal .modal-content { max-width: 1100px; }
-#detailsModal .modal-content-area { padding: 15px; } /* Slightly less padding inside */
-
 /* Grid Container */
 #detailsModal .modal-grid-container-complex {
     display: grid;
-    grid-template-columns: repeat(3, 1fr); /* Simpler 3 equal columns */
-    /* Example Grid Areas (adjust as needed) */
+    grid-template-columns: repeat(3, 1fr);
     grid-template-areas:
         "customer order status"
         "account account status"
         "items items items"
         "po po po";
-    gap: 15px; /* Increased gap slightly for breathing room */
+    gap: 15px;
+    /* Removed padding from here, applied to parent */
 }
 /* Assign areas to sections */
 .grid-item-customer { grid-area: customer; }
@@ -239,98 +292,49 @@ mark { background-color: var(--warning-color-light); padding: 0.1em 0.2em; borde
 
 /* Modal Sections */
 #detailsModal .modal-section {
-    margin: 0;
-    padding: 15px; /* <<< Increased padding inside sections */
-    border: 1px solid var(--border-color-light);
-    border-radius: var(--border-radius);
-    display: flex;
-    flex-direction: column;
-    background-color: var(--white-bg);
-    min-height: 0;
-    overflow: hidden; /* Section itself shouldn't scroll */
-    box-shadow: 0 1px 2px rgba(0,0,0,0.04); /* Subtle shadow on sections */
+    margin: 0; padding: 15px; border: 1px solid var(--border-color-light);
+    border-radius: var(--border-radius); display: flex; flex-direction: column;
+    background-color: var(--white-bg); min-height: 0;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.04);
 }
-/* Alternate background for better scanability */
 #detailsModal .grid-item-order,
 #detailsModal .grid-item-account,
-#detailsModal .grid-item-po {
-     background-color: #fdfdfd; /* Very subtle difference */
-}
+#detailsModal .grid-item-po { background-color: #fdfdfd; }
 
 /* Section Headers */
 #detailsModal .modal-section h4 {
-    margin-top: 0;
-    margin-bottom: 12px; /* More space below header */
-    font-size: 1em;
-    color: var(--primary-color);
-    border-bottom: 1px solid var(--border-color-light);
-    padding-bottom: 8px; /* More padding below header text */
-    font-weight: 600;
-    flex-shrink: 0;
-    display: flex;
-    align-items: center;
-    gap: 6px;
+    margin-top: 0; margin-bottom: 12px; font-size: 1em; color: var(--primary-color);
+    border-bottom: 1px solid var(--border-color-light); padding-bottom: 8px;
+    font-weight: 600; flex-shrink: 0; display: flex; align-items: center; gap: 6px;
 }
-/* Add icons to headers (requires adding <i> tags in JS/HTML if not present) */
-/* Example: #detailsModal .grid-item-customer h4::before { font-family: "Font Awesome 6 Free"; content: "\f007"; margin-right: 6px; font-weight: 900; } */
-
 /* Paragraphs/Labels */
 #detailsModal .modal-section p,
-#detailsModal .modal-section label {
-    margin-bottom: 7px; /* Increased spacing */
-    font-size: 0.9em; /* Slightly larger text */
-    flex-shrink: 0;
-    line-height: 1.5; /* Improved line height */
-}
-#detailsModal .modal-section p strong {
-    font-weight: 600;
-    color: var(--text-color);
-    min-width: 90px;
-    display: inline-block;
-    margin-right: 8px; /* More space after strong tag */
-}
+#detailsModal .modal-section label { margin-bottom: 7px; font-size: 0.9em; flex-shrink: 0; line-height: 1.5; }
+#detailsModal .modal-section p strong { font-weight: 600; color: var(--text-color); min-width: 90px; display: inline-block; margin-right: 8px; }
 /* Highlight key info */
-#modalDisplayOrderId,
-#modalCustomerName,
-#modalTotalAmount,
-#modalBalanceDue,
-#modalPaymentStatus {
-    font-weight: 600;
-    color: var(--primary-color);
-}
-/* Other span values */
-#detailsModal .modal-section p > span:not(#modalDisplayOrderId):not(#modalCustomerName):not(#modalTotalAmount):not(#modalBalanceDue):not(#modalPaymentStatus) {
-     font-weight: 500;
-     color: #333;
-}
+#modalDisplayOrderId, #modalCustomerName, #modalTotalAmount, #modalBalanceDue, #modalPaymentStatus { font-weight: 600; color: var(--primary-color); }
+#detailsModal .modal-section p > span:not(#modalDisplayOrderId):not(#modalCustomerName):not(#modalTotalAmount):not(#modalBalanceDue):not(#modalPaymentStatus) { font-weight: 500; color: #333; }
 
 /* Status update section */
 .modal-status-info label { display: block; margin-bottom: 5px; font-weight: 500; }
-.status-update-inline { display: flex; flex-direction: column; gap: 10px; margin-top: 5px; margin-bottom: 5px; /* <<< Reduced margin-bottom */ }
-.status-update-inline select { width: 100%; height: 38px; /* Slightly taller */ padding: 8px 12px; border: 1px solid #ced4da; border-radius: var(--border-radius); font-size: 0.9em; box-sizing: border-box; font-family: var(--font-family); /* <<< Ensure Poppins */ }
-#detailsModal .update-status-button { width: 100%; align-self: stretch; } /* Make button full width */
+.status-update-inline { display: flex; flex-direction: column; gap: 10px; margin-top: 5px; margin-bottom: 5px; }
+.status-update-inline select { width: 100%; height: 38px; padding: 8px 12px; border: 1px solid #ced4da; border-radius: var(--border-radius); font-size: 0.9em; box-sizing: border-box; font-family: var(--font-family); }
+#detailsModal .update-status-button { width: 100%; align-self: stretch; }
 
 /* Account data grid layout */
 .modal-account-info h4 { margin-bottom: 10px; }
-.account-data-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 5px 15px; /* Adjusted gaps */ }
+.account-data-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 5px 15px; }
 .account-data-pair p { margin-bottom: 5px !important; font-size: 0.9em !important; }
 .account-data-pair p strong { min-width: 95px !important; }
 
 /* Shared list container style (Products, History, POs) */
 #modalProductList, #modalStatusHistoryList, #modalPOList {
-    background-color: var(--light-bg); /* Use light bg for list areas */
-    border: 1px solid var(--border-color-light);
-    border-radius: var(--border-radius);
-    padding: 10px 12px; /* Adjusted padding */
-    max-height: 140px;
-    overflow-y: auto;
-    font-size: 0.88em; /* Adjusted list font */
-    margin-top: auto;
-    flex-grow: 1;
-    min-height: 45px; /* Adjusted min height */
+    background-color: var(--light-bg); border: 1px solid var(--border-color-light);
+    border-radius: var(--border-radius); padding: 10px 12px; max-height: 140px;
+    overflow-y: auto; font-size: 0.88em; margin-top: auto; flex-grow: 1; min-height: 45px;
 }
 #modalProductList ul, #modalStatusHistoryList ul, #modalPOList ul { list-style: none; padding: 0; margin: 0; }
-#modalProductList li, #modalStatusHistoryList li, #modalPOList li { margin-bottom: 5px; padding: 5px 8px; border-bottom: 1px dotted #ccc; line-height: 1.4; background-color: var(--white-bg); border-radius: 3px; } /* Add bg to list items */
+#modalProductList li, #modalStatusHistoryList li, #modalPOList li { margin-bottom: 5px; padding: 5px 8px; border-bottom: 1px dotted #ccc; line-height: 1.4; background-color: var(--white-bg); border-radius: 3px; }
 #modalProductList li:last-child, #modalStatusHistoryList li:last-child, #modalPOList li:last-child { margin-bottom: 0; border-bottom: none; }
 
 /* Product list grid */
@@ -344,38 +348,34 @@ mark { background-color: var(--warning-color-light); padding: 0.1em 0.2em; borde
 
 .no-products, .no-history, .no-pos, .no-items { color: var(--text-muted); font-style: italic; text-align: center; padding: 10px 0; font-size: 0.9em; }
 
-/* Action Buttons specific to Details Modal */
+/* Action Buttons specific to Details Modal - Footer */
 #detailsModal .modal-actions.main-actions {
-    justify-content: center; /* Center buttons */
-    gap: 10px;
-    background-color: transparent; /* Cleaner look */
-    border-top: none; /* Remove top border */
-    padding: 5px 0 0 0; /* Only slight top padding */
-    margin-top: 15px; /* MORE Space above buttons */
+    justify-content: center; gap: 10px; background-color: var(--light-bg); /* Match base footer */
+    border-top: 1px solid var(--border-color); /* Match base footer */
+    padding: 10px 20px; /* Match base footer */
+    margin-top: 0; /* Remove margin, handled by content spacing */
+    position: sticky; /* Should inherit sticky */
+    bottom: 0; /* Should inherit sticky */
 }
-/* <<< Ensure bottom action buttons use Poppins (redundant if .button already has it, but safe) */
-#detailsModal .modal-actions.main-actions .button {
-    font-family: var(--font-family);
-}
+#detailsModal .modal-actions.main-actions .button { font-family: var(--font-family); }
 
 
 /* --- WhatsApp Reminder Popup --- */
-#whatsapp-reminder-popup .modal-content { max-width: 480px; max-height: none; padding: 0; } /* Remove padding, apply below */
-#whatsapp-reminder-popup h4 { margin: 0; padding: 12px 20px; font-size: 1.15em; background-color: var(--light-bg); border-bottom: 1px solid var(--border-color); border-radius: var(--border-radius) var(--border-radius) 0 0; color: var(--text-color); text-align: left; font-weight: 600; flex-shrink: 0; }
-#whatsapp-reminder-popup .popup-content-area { padding: 15px 20px; } /* Add padding here */
+#whatsapp-reminder-popup .modal-content { max-width: 480px; overflow-y: visible; max-height: none; padding: 0; }
+#whatsapp-reminder-popup h4 { margin: 0; padding: 12px 20px; font-size: 1.15em; background-color: var(--light-bg); border-bottom: 1px solid var(--border-color); border-radius: var(--border-radius) var(--border-radius) 0 0; color: var(--text-color); text-align: left; font-weight: 600; flex-shrink: 0; position: static; /* No sticky header */ }
+#whatsapp-reminder-popup .popup-content-area { padding: 15px 20px; }
 #whatsapp-reminder-popup p { margin-bottom: 15px; color: var(--text-muted); font-size: 1em; text-align: center; }
 .message-preview { margin-top: 10px; margin-bottom: 20px; font-size: 0.9em; background-color: var(--primary-color-light); padding: 10px 15px; border-radius: var(--border-radius); text-align: left; border: 1px solid var(--border-color); white-space: pre-wrap; word-wrap: break-word; max-height: 150px; overflow-y: auto; line-height: 1.4; }
-#whatsapp-reminder-popup .modal-actions { padding: 10px 20px; border-top: 1px solid var(--border-color); background-color: var(--light-bg); justify-content: center; } /* Center button */
+#whatsapp-reminder-popup .modal-actions { padding: 10px 20px; border-top: 1px solid var(--border-color); background-color: var(--light-bg); justify-content: center; position: static; /* No sticky footer */ border-radius: 0 0 var(--border-radius) var(--border-radius);}
 .whatsapp-send-btn { background-color: #25d366; color: #fff; text-decoration: none; padding: 8px 20px; border-radius: var(--border-radius); display: inline-flex; align-items: center; gap: 8px; font-weight: 600; transition: background-color 0.2s ease, box-shadow 0.2s ease, transform 0.1s ease; margin: 0; border: none; cursor: pointer; font-size: 0.95em; box-shadow: var(--box-shadow); height: auto; }
 .whatsapp-send-btn:hover { background-color: #1ebe57; box-shadow: var(--box-shadow-lg); transform: translateY(-1px); }
 .whatsapp-send-btn:active { transform: translateY(0px); box-shadow: var(--box-shadow); }
 .whatsapp-send-btn i { font-size: 1.1em; }
-@keyframes popupFadeIn { from { opacity: 0; transform: scale(0.98); } to { opacity: 1; transform: scale(1); } } /* Subtle animation */
+@keyframes popupFadeIn { from { opacity: 0; transform: scale(0.98); } to { opacity: 1; transform: scale(1); } }
 
 /* --- Bulk Delete Modal --- */
 #bulkDeleteConfirmModal .modal-content { padding: 0; max-width: 500px; }
-#bulkDeleteConfirmModal h2 { color: var(--danger-color); font-size: 1.2em; display: flex; align-items: center; gap: 8px; margin: 0; padding: 12px 20px; background-color: #f8d7da; border-bottom: 1px solid #f5c6cb; border-radius: var(--border-radius) var(--border-radius) 0 0; font-weight: 600; }
-#bulkDeleteConfirmModal h2 .warning-icon { font-size: 1.1em; }
+#bulkDeleteConfirmModal h2 { color: var(--danger-color); font-size: 1.2em; display: flex; align-items: center; gap: 8px; margin: 0; padding: 12px 20px; background-color: #f8d7da; border-bottom: 1px solid #f5c6cb; border-radius: var(--border-radius) var(--border-radius) 0 0; font-weight: 600; position: static; }
 #bulkDeleteConfirmModal .modal-content-area { padding: 15px 20px; }
 #bulkDeleteConfirmModal p { font-size: 0.9em; margin-bottom: 8px; color: var(--text-color); }
 .order-list-preview { list-style: none; padding: 8px 12px; margin: 0 0 12px 0; background-color: var(--light-bg); border: 1px solid var(--border-color); border-radius: var(--border-radius); max-height: 120px; overflow-y: auto; font-size: 0.85em; }
@@ -386,11 +386,12 @@ mark { background-color: var(--warning-color-light); padding: 0.1em 0.2em; borde
 .confirmation-check { margin-bottom: 15px; display: flex; align-items: center; justify-content: flex-start; gap: 8px; background-color: var(--warning-color-light); padding: 8px 12px; border-radius: var(--border-radius); border: 1px solid var(--warning-color); }
 .confirmation-check input[type="checkbox"] { transform: scale(1.1); cursor: pointer; margin: 0; }
 .confirmation-check label { font-size: 0.85em; color: var(--text-color); cursor: pointer; margin: 0; font-weight: 500; }
-#bulkDeleteConfirmModal .modal-actions { justify-content: flex-end; }
+#bulkDeleteConfirmModal .modal-actions { justify-content: flex-end; position: static; border-radius: 0 0 var(--border-radius) var(--border-radius); }
 #bulkDeleteConfirmModal .delete-button:disabled { background-color: #f5c6cb; border-color: #f5c6cb; color: #721c24; opacity: 0.6; cursor: not-allowed; }
 
 /* --- PO Details Popup Styles (#poDetailsPopup) --- */
 #poDetailsPopup .modal-content { max-width: 1000px; padding: 0; }
+#poDetailsPopup h3 { position: sticky; top: 0; z-index: 1052;} /* Sticky Header */
 #poDetailsPopup .modal-content-area { padding: 15px 20px; }
 #poDetailsPopup .po-details-popup-header { margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px dashed var(--border-color); }
 #poDetailsPopup p { font-size: 0.9em; margin-bottom: 4px; line-height: 1.5; }
@@ -403,41 +404,45 @@ mark { background-color: var(--warning-color-light); padding: 0.1em 0.2em; borde
 #poDetailsPopup .details-table-popup tr:last-child td { border-bottom: none; }
 .po-notes-popup { margin-top: 10px; padding: 10px; border: 1px solid var(--border-color-light); border-radius: var(--border-radius); font-size: 0.85em; background-color: var(--light-bg); flex-shrink: 0; }
 .po-notes-popup strong { display: block; margin-bottom: 5px; font-weight: 600; }
+#poDetailsPopup .modal-actions { position: sticky; bottom: 0; z-index: 1052;} /* Sticky Footer */
 
 /* --- Read-Only Order Modal Styles (#readOnlyOrderModal) --- */
 #readOnlyOrderModal .modal-content { max-width: 1000px; padding: 0; }
+#readOnlyOrderModal h2 { position: sticky; top: 0; z-index: 1052;} /* Sticky Header */
 #readOnlyOrderModal .read-only-content-area { padding: 15px 20px; }
-.read-only-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 12px; } /* Adjusted minmax */
-.read-only-section { margin-bottom: 0; padding: 12px 15px; /* Increased padding */ border: 1px solid var(--border-color-light); border-radius: var(--border-radius); background-color: var(--white-bg); box-shadow: 0 1px 2px rgba(0,0,0,0.04); }
+.read-only-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 12px; }
+.read-only-section { margin-bottom: 0; padding: 12px 15px; border: 1px solid var(--border-color-light); border-radius: var(--border-radius); background-color: var(--white-bg); box-shadow: 0 1px 2px rgba(0,0,0,0.04); }
 .read-only-section h4 { margin-top: 0; margin-bottom: 10px; font-size: 1em; color: var(--primary-color); border-bottom: 1px solid var(--border-color-light); padding-bottom: 6px; font-weight: 600; }
 .read-only-section p { margin-bottom: 7px; font-size: 0.9em; line-height: 1.5; }
 .read-only-section p strong { font-weight: 600; color: var(--text-color); min-width: 90px; display: inline-block; margin-right: 6px; }
-.read-only-product-list, .read-only-history-list { list-style: none; padding: 8px; margin: 0; max-height: 130px; /* Reduced */ overflow-y: auto; background-color: var(--light-bg); border-radius: var(--border-radius); border: 1px solid var(--border-color-light); }
+.read-only-product-list, .read-only-history-list { list-style: none; padding: 8px; margin: 0; max-height: 130px; overflow-y: auto; background-color: var(--light-bg); border-radius: var(--border-radius); border: 1px solid var(--border-color-light); }
 .read-only-product-list li, .read-only-history-list li { background-color: var(--white-bg); padding: 4px 6px; border-radius: 3px; margin-bottom: 4px; font-size: 0.9em; border: none; }
 .read-only-history-list li { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 5px;}
 .read-only-history-list li strong { margin-right: 8px; }
-#readOnlyOrderModal .modal-actions { justify-content: flex-end; }
+#readOnlyOrderModal .modal-actions { justify-content: flex-end; position: sticky; bottom: 0; z-index: 1052; } /* Sticky Footer */
 
 /* --- Items Only Modal Styles (#itemsOnlyModal) --- */
 #itemsOnlyModal .modal-content { max-width: 500px; padding: 0; }
+#itemsOnlyModal h2 { position: sticky; top: 0; z-index: 1052;} /* Sticky Header */
 #itemsOnlyModal .items-only-content-area { padding: 15px; background-color: var(--white-bg); border: none; flex-grow: 1; overflow-y: auto; min-height: 100px; }
-.items-only-list { list-style-type: decimal; /* Use numbers */ padding: 0 0 0 25px; margin: 0; }
+.items-only-list { list-style-type: decimal; padding: 0 0 0 25px; margin: 0; }
 .items-only-list li { padding: 5px 0; border-bottom: 1px dotted var(--border-color-light); font-size: 0.9em; line-height: 1.4; margin-bottom: 5px; }
 .items-only-list li:last-child { border-bottom: none; margin-bottom: 0; }
 .items-only-list li strong { font-weight: 600; color: var(--text-color); }
 #itemsOnlyModal .no-items { font-size: 0.9em; padding: 15px 0; color: var(--text-muted); font-style: italic; text-align: center; }
-#itemsOnlyModal .modal-actions { justify-content: center; }
+#itemsOnlyModal .modal-actions { justify-content: center; position: sticky; bottom: 0; z-index: 1052; } /* Sticky Footer */
 
 /* === PO Item Selection Modal Styles (#poItemSelectionModal) === */
 #poItemSelectionModal .modal-content { max-width: 900px; padding: 0; }
-#poItemSelectionModal .po-item-selection-content-wrapper { padding: 15px 20px; flex-grow: 1; overflow: hidden; min-height: 0; display: grid; grid-template-columns: minmax(260px, 35%) 1fr; gap: 15px; align-items: stretch; } /* Align stretch */
+#poItemSelectionModal h2 { position: sticky; top: 0; z-index: 1052;} /* Sticky Header */
+#poItemSelectionModal .po-item-selection-content-wrapper { padding: 15px 20px; flex-grow: 1; overflow: hidden; min-height: 0; display: grid; grid-template-columns: minmax(260px, 35%) 1fr; gap: 15px; align-items: stretch; }
 #poItemSelectionModal > .modal-content > .po-item-selection-content-wrapper > p:first-of-type { margin-bottom: 0; padding: 0 0 10px 0; font-size: 0.9em; color: var(--text-muted); flex-shrink: 0; grid-column: 1 / -1; }
 #poItemSelectionModal .supplier-search-section { margin-bottom: 0; padding: 12px 15px; border: 1px solid var(--primary-color-light); border-radius: var(--border-radius); background-color: var(--primary-color-light); display: flex; flex-direction: column; overflow: visible; position: relative; }
 #poItemSelectionModal .supplier-search-section label { font-weight: 600; font-size: 0.95em; color: var(--primary-color); margin-bottom: 8px; display: block; flex-shrink: 0; }
 #poItemSelectionModal .supplier-search-section label i { margin-right: 6px; }
 #poItemSelectionModal .supplier-search-section input#poSupplierSearchInput { padding: 8px 12px; font-size: 0.9em; border-radius: var(--border-radius); border: 1px solid #ced4da; transition: border-color 0.2s ease, box-shadow 0.2s ease; height: auto; margin-bottom: 8px; flex-shrink: 0; position: relative; z-index: 2; }
 #poItemSelectionModal .supplier-search-section input#poSupplierSearchInput:focus { border-color: var(--primary-color); box-shadow: 0 0 0 0.2rem rgba(0, 86, 179, 0.2); outline: none; }
-#poItemSelectionModal .suggestions-list { position: static; max-height: 150px; z-index: auto; border: 1px solid var(--border-color); box-shadow: none; border-radius: var(--border-radius); overflow-y: auto; background-color: var(--white-bg); margin-top: -5px; margin-bottom: 5px; width: 100%; box-sizing: border-box; display: none; order: 1; flex-grow: 1; } /* Allow suggestions to grow */
+#poItemSelectionModal .suggestions-list { position: static; max-height: 150px; z-index: auto; border: 1px solid var(--border-color); box-shadow: none; border-radius: var(--border-radius); overflow-y: auto; background-color: var(--white-bg); margin-top: -5px; margin-bottom: 5px; width: 100%; box-sizing: border-box; display: none; order: 1; flex-grow: 1; }
 #poItemSelectionModal .suggestions-list div { padding: 6px 10px; font-size: 0.85em; cursor: pointer; border-bottom: 1px solid var(--border-color-light); }
 #poItemSelectionModal .suggestions-list div:last-child { border-bottom: none; }
 #poItemSelectionModal .suggestions-list div:hover { background-color: var(--primary-color-light); color: var(--primary-color); font-weight: 500; }
@@ -452,8 +457,9 @@ mark { background-color: var(--warning-color-light); padding: 0.1em 0.2em; borde
 .item-selection-entry label { font-size: 0.9em; line-height: 1.3; flex-grow: 1; cursor: pointer; color: var(--text-color); }
 .item-selection-entry label strong { color: var(--text-color); }
 .item-selection-entry label .in-po-label { color: var(--danger-color); font-weight: 500; margin-left: 5px; font-size: 0.9em;}
-#poItemSelectionModal .modal-actions { grid-column: 1 / -1; order: 1; flex-shrink: 0; }
+#poItemSelectionModal .modal-actions { grid-column: 1 / -1; order: 1; flex-shrink: 0; position: sticky; bottom: 0; z-index: 1052;} /* Sticky Footer */
 #poItemSelectionError { grid-column: 1 / -1; order: 0; width: auto; text-align: center; padding: 5px 15px; margin-bottom: -5px; }
+
 
 /* --- Responsive --- */
 @media (max-width: 992px) {
@@ -462,7 +468,7 @@ mark { background-color: var(--warning-color-light); padding: 0.1em 0.2em; borde
     .bulk-actions-bar { flex-direction: column; align-items: stretch; }
     .bulk-actions-controls { justify-content: space-between; }
     #statusCountsReport ul { column-count: 1; }
-    #detailsModal .modal-grid-container-complex { grid-template-columns: 1fr 1fr; /* 2 columns */ grid-template-areas: "customer order" "account status" "items items" "po po"; }
+    #detailsModal .modal-grid-container-complex { grid-template-columns: 1fr 1fr; grid-template-areas: "customer order" "account status" "items items" "po po"; }
     .account-data-grid { grid-template-columns: 1fr; }
     .read-only-grid { grid-template-columns: 1fr; }
     #poItemSelectionModal .po-item-selection-content-wrapper { display: flex; flex-direction: column; gap: 10px; }
@@ -480,26 +486,26 @@ mark { background-color: var(--warning-color-light); padding: 0.1em 0.2em; borde
     .actions-bar .button { padding: 6px 10px; font-size: 0.85em; height: 34px; flex-shrink: 0; }
     #orderTable { font-size: 0.85em; min-width: 700px; }
     #orderTable th, #orderTable td { padding: 8px 10px; white-space: normal; }
-    .modal-content { width: 95%; padding: 0; max-width: 100%; max-height: calc(90vh); } /* Adjusted */
+    .modal-content { width: 95%; padding: 0; max-width: 100%; max-height: calc(90vh); }
     .modal-content.modal-md { max-width: 95%; }
     .modal-content.modal-lg, .modal-content.modal-xl { max-width: 95%; }
     .modal-content > h2, .modal-content > h3 { padding: 10px 15px; font-size: 1.1em; }
-    .modal-content-area { padding: 12px 15px; }
+    .modal-content-area, /* Adjust padding for content area */
+    #detailsModal .modal-grid-container-complex { padding: 12px 15px; }
     .modal-actions { padding: 8px 15px; gap: 6px; }
     .modal-actions .button { font-size: 0.85em; padding: 7px 12px; height: 34px;}
     .order-summary-counts{ justify-content: space-between; font-size: 0.9em; padding: 12px 15px;}
     .status-update-inline { flex-direction: column; align-items: stretch; }
     .status-update-inline select { max-width: none; }
-    #detailsModal .update-status-button { width: auto; align-self: flex-end;} /* Revert button width */
+    #detailsModal .update-status-button { width: auto; align-self: flex-end;}
     .bulk-actions-controls { flex-direction: column; align-items: stretch; gap: 8px;}
     .bulk-select, .bulk-button { width: 100%; }
     .summary-reporting-container { gap: 12px; }
     .order-summary-counts, .reporting-section { padding: 12px 15px; }
     #modalProductList ul.modal-product-list-ul { grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); }
-    #detailsModal .modal-grid-container-complex { grid-template-columns: 1fr; /* Single column */ grid-template-areas: "customer" "order" "status" "account" "items" "po"; gap: 12px; } /* Reduced gap */
+    #detailsModal .modal-grid-container-complex { grid-template-columns: 1fr; grid-template-areas: "customer" "order" "status" "account" "items" "po"; gap: 12px; }
     .read-only-grid { grid-template-columns: 1fr; }
-    #detailsModal .modal-section { padding: 12px; } /* Adjust padding for single column */
-
+    #detailsModal .modal-section { padding: 12px; }
 }
 @media (max-width: 480px) {
     body { padding: 5px; }
@@ -515,13 +521,14 @@ mark { background-color: var(--warning-color-light); padding: 0.1em 0.2em; borde
     .whatsapp-button { width: 26px; height: 26px; font-size: 0.9em; }
     .modal-content { max-height: calc(95vh); }
     .modal-content > h2, .modal-content > h3 { font-size: 1.05em; padding: 8px 12px; }
-    .modal-content-area { padding: 10px 12px; }
+    .modal-content-area, /* Adjust padding for content area */
+    #detailsModal .modal-grid-container-complex { padding: 10px 12px; }
     .modal-actions { flex-direction: column; padding: 8px 12px; }
     .modal-actions .button { width: 100%; justify-content: center;}
     .actions-bar { flex-wrap: wrap; justify-content: flex-start;}
     .actions-bar .button { flex-grow: 1; min-width: 100px; text-align: center;}
     .account-data-grid { grid-template-columns: 1fr; }
-    #modalProductList ul.modal-product-list-ul { grid-template-columns: 1fr; gap: 4px;} /* Single column list */
+    #modalProductList ul.modal-product-list-ul { grid-template-columns: 1fr; gap: 4px;}
     .po-details-section { padding: 8px 10px; }
     #poDetailsPopup .details-table-popup { font-size: 0.8em; }
     #poDetailsPopup .details-table-popup th,
@@ -533,9 +540,8 @@ mark { background-color: var(--warning-color-light); padding: 0.1em 0.2em; borde
     .item-selection-list-container { padding: 10px; }
     #poItemSelectionModal .supplier-search-section input#poSupplierSearchInput { padding: 7px 10px; font-size: 0.9em; }
     #poItemSelectionModal .suggestions-list { width: 100%; }
-    #detailsModal .modal-actions.main-actions .button { min-width: 100px; } /* Adjust min-width for small screens */
-    #detailsModal .modal-section { padding: 10px; } /* Further reduce padding */
+    #detailsModal .modal-actions.main-actions .button { min-width: 100px; }
+    #detailsModal .modal-section { padding: 10px; }
     #detailsModal .modal-section p { font-size: 0.88em; margin-bottom: 6px; }
-
 }
 
