@@ -1,9 +1,9 @@
-// js/new_order.js - v2.4 (Saves productId with items)
+// js/new_order.js - v2.5 (Fix: Saves customerId within customerDetails)
 
 // --- Firebase Functions ---
 const {
     db, collection, addDoc, doc, getDoc, getDocs, updateDoc,
-    query, where, orderBy, limit, Timestamp
+    query, where, orderBy, limit, Timestamp, arrayUnion // Added arrayUnion for status history
 } = window;
 
 // --- Global Variables ---
@@ -73,7 +73,7 @@ const statusList = [
 
 // --- Initialization ---
 document.addEventListener('DOMContentLoaded', () => {
-    console.log("New Order DOM Loaded (v2.4 - Save ProductID). Initializing..."); // Updated version
+    console.log("New Order DOM Loaded (v2.5 - Fix CustomerID Link). Initializing..."); // Updated version
     if (!orderForm || !addItemBtn || !orderItemsTableBody || !itemRowTemplate || !calculationPreviewArea || !calculationPreviewContent || !orderStatusSelect) {
         console.error("Critical DOM elements missing! Check HTML IDs.", { orderForm: !!orderForm, addItemBtn: !!addItemBtn, orderItemsTableBody: !!orderItemsTableBody, itemRowTemplate: !!itemRowTemplate, calculationPreviewArea: !!calculationPreviewArea, calculationPreviewContent: !!calculationPreviewContent, orderStatusSelect: !!orderStatusSelect });
         alert("Page structure error. Cannot initialize order form.");
@@ -169,7 +169,8 @@ async function loadOrderForEdit(docId) {
         if(s.exists()){
             currentOrderData=s.data();
             console.log("Order data loaded for edit:",currentOrderData);
-            selectedCustomerId=currentOrderData.customerId||null;
+            // --- >>> Use customerId from customerDetails first, fallback to root customerId <<< ---
+            selectedCustomerId=currentOrderData.customerDetails?.customerId || currentOrderData.customerId || null;
             if(selectedCustomerIdInput)selectedCustomerIdInput.value=selectedCustomerId || '';
             if(currentOrderData.customerDetails){
                 customerNameInput.value=currentOrderData.customerDetails.fullName||'';
@@ -183,6 +184,7 @@ async function loadOrderForEdit(docId) {
                     resetCustomerSelectionUI();
                 }
             } else {
+                 console.warn("Order loaded but customerDetails object is missing.");
                  resetCustomerSelectionUI();
             }
             displayOrderIdInput.value=currentOrderData.orderId||docId;
@@ -203,7 +205,6 @@ async function loadOrderForEdit(docId) {
                     const nR=addItemRow(false);
                     if(nR){
                          populateItemRow(nR,i);
-                         // <<<--- यहाँ सुनिश्चित करें कि प्रोडक्ट ID लोड हो रहा है ---<<<
                          if (i.productId) {
                              nR.dataset.productId = i.productId;
                              console.log(`Loaded productId ${i.productId} into row dataset.`);
@@ -458,21 +459,18 @@ async function getOrFetchProductCache() { if(productCache.length>0)return Promis
 function filterAndRenderProductSuggestions(term, inputElement) { const s=getOrCreateProductSuggestionsDiv(); s.innerHTML='<ul><li class="no-suggestions">Loading...</li></ul>'; if(activeProductInput!==inputElement){hideProductSuggestions();return;} positionProductSuggestions(inputElement); const l=term.toLowerCase(), f=productCache.filter(p=>p.name?.toLowerCase().includes(l)).slice(0,10); renderProductSuggestions(f,term,s);}
 function renderProductSuggestions(suggestions, term, suggestionsContainer) { if(!suggestionsContainer)return; const ul=document.createElement('ul'); if(suggestions.length===0){ul.innerHTML='<li class="no-suggestions">No matching products found.</li>';}else{suggestions.forEach(p=>{const li=document.createElement('li'); try{li.innerHTML=p.name.replace(new RegExp(`(${term.replace(/[-\/\^$*+?.()|[\]{}]/g,'\$&')})`,'gi'),'<strong>$1</strong>');}catch{li.textContent=p.name;} li.dataset.product=JSON.stringify(p); ul.appendChild(li);});} suggestionsContainer.innerHTML=''; suggestionsContainer.appendChild(ul); suggestionsContainer.style.display='block';}
 
-// <<<--- UPDATED selectProductSuggestion function ---<<<
 function selectProductSuggestion(productData, inputElement) {
     console.log("Selecting product suggestion:", productData);
     try {
         const r = inputElement.closest('.item-row');
-        if (!r || !productData || !productData.id) { // <<<--- Check for productData.id
+        if (!r || !productData || !productData.id) {
             console.error("Row or productData or productData.id missing in selectProductSuggestion");
             hideProductSuggestions();
             return;
         }
 
-        // --- Store Product ID in row dataset ---
-        r.dataset.productId = productData.id; // <<<--- Store the ID
+        r.dataset.productId = productData.id;
         console.log(`Stored productId ${productData.id} in row dataset.`);
-        // --- End Storing Product ID ---
 
         const pNI = r.querySelector('.product-name'),
               uTS = r.querySelector('.unit-type-select'),
@@ -493,31 +491,29 @@ function selectProductSuggestion(productData, inputElement) {
         let dUT = 'Qty';
         if (productData.unit) {
             const uL = String(productData.unit).toLowerCase();
-            if (uL.includes('sq') || uL.includes('ft') || uL.includes('feet')) dUT = 'Sq Feet'; // <<<--- Added 'feet' check
+            if (uL.includes('sq') || uL.includes('ft') || uL.includes('feet')) dUT = 'Sq Feet';
         }
         uTS.value = dUT;
 
         hideProductSuggestions();
         const cE = new Event('change', { bubbles: true });
-        uTS.dispatchEvent(cE); // Trigger UI update for unit type change
-        updateItemAmount(r); // Update amount based on new rate/unit
+        uTS.dispatchEvent(cE);
+        updateItemAmount(r);
 
-        // Focus next logical input
         let nI = null;
         if (dUT === 'Sq Feet') nI = r.querySelector('.width-input');
-        if (!nI) nI = qI; // Focus quantity if not Sq Feet
+        if (!nI) nI = qI;
         if (nI) {
              nI.focus();
              if (typeof nI.select === 'function') nI.select();
         } else {
-            rI.focus(); // Fallback to rate
+            rI.focus();
         }
     } catch (error) {
         console.error("Error inside selectProductSuggestion:", error);
         hideProductSuggestions();
     }
 }
-// --- End UPDATED selectProductSuggestion ---
 
 
 // --- Status Dropdown Handling ---
@@ -540,7 +536,6 @@ function updateStatusDropdownColor(statusValue) {
 }
 
 // --- Form Submit Handler ---
-// <<<--- UPDATED handleFormSubmit function ---<<<
 async function handleFormSubmit(event) {
     event.preventDefault();
     console.log("Submit initiated...");
@@ -556,21 +551,30 @@ async function handleFormSubmit(event) {
     try{
         const cFN=customerNameInput.value.trim();
         const cW=customerWhatsAppInput.value.trim();
-        let cId=selectedCustomerId;
+        let cId=selectedCustomerId; // Use the globally stored customer ID
 
         if(!cFN) throw new Error("Customer Name is required.");
         if(!cW) throw new Error("WhatsApp No is required.");
 
+        // --- >>> VALIDATION: Ensure Customer ID is present <<< ---
         if (!cId) {
             console.error("customerId is null or undefined before saving!");
-            showFormError("Customer is not selected or linked properly. Please search and select the customer again from the suggestions.");
-            saveButton.disabled = false;
-            if(saveButtonText) saveButtonText.textContent = originalButtonText; else saveButton.innerHTML = originalButtonHTML;
-            return;
+            throw new Error("Customer is not selected or linked properly. Please search and select the customer again from the suggestions.");
         }
         console.log('Proceeding to save order with customerId:', cId);
+        // --- >>> END VALIDATION <<< ---
 
-        const cD={fullName:cFN,whatsappNo:cW,address:customerAddressInput.value.trim()||'',contactNo:customerContactInput.value.trim()||''};
+        // --- >>> Create customerDetails object (cD) <<< ---
+        const cD={
+            fullName:cFN,
+            whatsappNo:cW,
+            address:customerAddressInput.value.trim()||'',
+            contactNo:customerContactInput.value.trim()||''
+        };
+        // --- >>> ADD customerId to cD object <<< ---
+        cD.customerId = cId;
+        // --- >>> END ADDING customerId <<< ---
+
         const oDV=orderDateInput.value;
         const dDV=deliveryDateInput.value||'';
         const uV=orderForm.querySelector('input[name="urgent"]:checked')?.value||'No';
@@ -586,7 +590,7 @@ async function handleFormSubmit(event) {
         if(rows.length===0)throw new Error("Please add at least one item to the order.");
 
         let validItems=true;
-        rows.forEach((row,idx)=>{ // <<<--- Use 'row' variable
+        rows.forEach((row,idx)=>{
             if(!validItems)return;
             const pNI=row.querySelector('.product-name'),
                   uTS=row.querySelector('.unit-type-select'),
@@ -596,9 +600,7 @@ async function handleFormSubmit(event) {
                   wI=row.querySelector('.width-input'),
                   hI=row.querySelector('.height-input');
 
-            // --- Get productId from row dataset ---
-            const productId = row.dataset.productId || null; // <<<--- Get stored productId
-            // --- End Get productId ---
+            const productId = row.dataset.productId || null; // Get stored productId
 
             const pN=pNI?.value.trim(),
                   uT=uTS?.value,
@@ -607,11 +609,8 @@ async function handleFormSubmit(event) {
                   mR=parseFloat(rI?.dataset.minRate||-1);
 
             if(!pN){validItems=false;showFormError(`Item ${idx+1}: Product Name is required.`);pNI?.focus();return;}
-            // Optional: Validate if productId exists
-            if (!productId && !isEditMode) { // Only warn if creating new, editing might have old items without ID
+            if (!productId && !isEditMode) { // Only warn if creating new
                  console.warn(`Item ${idx+1} (${pN}): Product ID not found in row dataset. Saving without ID.`);
-                 // Optionally add stricter validation:
-                 // validItems = false; showFormError(`Item ${idx+1}: Product ID missing. Please re-select from suggestions.`); pNI?.focus(); return;
             }
             if(isNaN(q)||q<=0){validItems=false;showFormError(`Item ${idx+1}: A valid Quantity (positive number) is required.`);qI?.focus();return;}
             if(isNaN(r)||r<0){validItems=false;showFormError(`Item ${idx+1}: A valid Rate (non-negative number) is required.`);rI?.focus();return;}
@@ -619,8 +618,8 @@ async function handleFormSubmit(event) {
                validItems=false;showFormError(`Item ${idx+1}: Rate (${formatCurrency(r)}) is less than Minimum Sale Price (${formatCurrency(mR)}).`);rI?.focus();return;
             }
 
-            const iD={ // <<<--- Use 'iD' variable name
-                productId: productId, // <<<--- Save the productId
+            const iD={
+                productId: productId, // Save the productId
                 productName:pN,
                 unitType:uT,
                 quantity:q,
@@ -636,7 +635,7 @@ async function handleFormSubmit(event) {
                 iD.dimensionUnit=dU;iD.width=w;iD.height=h;iD.realSqFt=cR.realSqFt;iD.printSqFt=cR.printSqFt;
                 iD.itemAmount=parseFloat((cR.printSqFt*q*r).toFixed(2));
             }else{iD.itemAmount=parseFloat((q*r).toFixed(2));}
-            items.push(iD); // <<<--- Push 'iD'
+            items.push(iD);
         });
 
         if(!validItems){
@@ -651,31 +650,47 @@ async function handleFormSubmit(event) {
         cDA=Math.max(0,Math.min(cDA,subT));
         let fA=parseFloat((subT-cDA).toFixed(2)),aP=parseFloat(summaryAdvancePaymentInput?.value||0),tB=parseFloat((fA-aP).toFixed(2));
 
+        // --- >>> Final Payload <<< ---
         const payload={
             orderId:oId,
-            customerId:cId,
-            customerDetails:cD,
-            orderDate:Timestamp.fromDate(new Date(oDV + 'T00:00:00')), // Save as Timestamp
-            deliveryDate:dDV ? Timestamp.fromDate(new Date(dDV + 'T00:00:00')) : null, // Save as Timestamp or null
+            // customerId:cId, // Root level customerId can be removed if always present in customerDetails
+            customerDetails:cD, // cD now contains customerId
+            orderDate:Timestamp.fromDate(new Date(oDV + 'T00:00:00')),
+            deliveryDate:dDV ? Timestamp.fromDate(new Date(dDV + 'T00:00:00')) : null,
             urgent:uV,
             remarks:rV,
             status:sS,
-            items:items, // items array now includes productId
+            items:items,
             subTotal:subT,
             discountPercentage:dP||0,
             discountAmount:cDA||0,
             finalAmount:fA,
             advancePayment:aP||0,
             totalBalance:tB,
-            updatedAt:Timestamp.now() // Use Timestamp here as well
+            updatedAt:Timestamp.now()
         };
+        // --- >>> End Payload <<< ---
+
         if(!isEditMode){
-            payload.createdAt=Timestamp.now(); // Use Timestamp
-            // Set initial status history only when creating
-             payload.statusHistory = [{ status: sS, timestamp: Timestamp.now() }];
+            payload.createdAt=Timestamp.now();
+            payload.statusHistory = [{ status: sS, timestamp: Timestamp.now() }];
         } else if (currentOrderData && sS !== currentOrderData.status) {
-             // Add to status history if status changed during edit
-              payload.statusHistory = window.arrayUnion ? window.arrayUnion({ status: sS, timestamp: Timestamp.now() }) : (currentOrderData.statusHistory || []).concat([{ status: sS, timestamp: Timestamp.now() }]);
+              // Ensure arrayUnion is available before using it
+             const historyUpdate = { status: sS, timestamp: Timestamp.now() };
+             payload.statusHistory = typeof arrayUnion === 'function'
+                 ? arrayUnion(historyUpdate)
+                 : (currentOrderData.statusHistory || []).concat([historyUpdate]);
+
+             // If arrayUnion is not available (e.g., older SDK setup), handle potential duplicates manually if needed
+             if (typeof arrayUnion !== 'function' && currentOrderData.statusHistory) {
+                 // Basic check: don't add if the exact same status/timestamp exists (unlikely but possible)
+                 const exists = currentOrderData.statusHistory.some(entry =>
+                     entry.status === historyUpdate.status && entry.timestamp.isEqual(historyUpdate.timestamp)
+                 );
+                 if (exists) {
+                    payload.statusHistory = currentOrderData.statusHistory; // Keep original
+                 }
+             }
          }
 
 
@@ -696,16 +711,17 @@ async function handleFormSubmit(event) {
 
         alert(msg);
 
-        if(cD.whatsappNo){showWhatsAppReminder(cD,oId,deliveryDateInput.value);}else{if(!isEditMode)resetNewOrderForm(); else window.location.href = 'order_history.html';} // Redirect after edit
+        if(cD.whatsappNo){showWhatsAppReminder(cD,oId,deliveryDateInput.value);}else{if(!isEditMode)resetNewOrderForm(); else window.location.href = `order_history.html?openModalForId=${orderIdToEdit || ''}`; } // Redirect after edit, try opening modal
 
     } catch(error) {
         console.error("Form submission error:",error);
         showFormError("Error saving order: "+error.message);
+    } finally {
+        // Ensure button is re-enabled regardless of success/error
         saveButton.disabled=false;
         if(saveButtonText) saveButtonText.textContent = originalButtonText; else saveButton.innerHTML = originalButtonHTML;
     }
 }
-// --- End UPDATED handleFormSubmit ---
 
 
 // --- Reset Form ---
@@ -752,6 +768,7 @@ async function loadPaymentTotals_NewOrder(customerId) {
     }
     try {
         const paymentsRef = collection(db, "payments");
+        // --- >>> Potential Index Issue: Check if 'customerId' index exists for 'payments' collection <<< ---
         const q = query(paymentsRef, where("customerId", "==", customerId));
         const querySnapshot = await getDocs(q);
         querySnapshot.forEach(doc => {
@@ -761,7 +778,11 @@ async function loadPaymentTotals_NewOrder(customerId) {
         return totalPaid;
     } catch (error) {
         console.error("_newOrder: Error loading payment total:", error);
-        return 0;
+         if (error.message.includes("indexes are required")) {
+            console.error("_newOrder: Firestore index missing for payments collection on 'customerId'.");
+            // Optionally show a non-blocking warning to the user or log persistently
+        }
+        return 0; // Return 0 on error to avoid breaking calculations
     }
 }
 
@@ -775,8 +796,10 @@ async function loadOrderTotals_NewOrder(customerId) {
     }
     try {
         const ordersRef = collection(db, "orders");
-        const q = query(ordersRef, where("customerId", "==", customerId));
-
+         // --- >>> Potential Index Issue: Check if 'customerId' index exists for 'orders' collection <<< ---
+        // Using customerDetails.customerId for query might be more reliable if root customerId isn't always set
+        // const q = query(ordersRef, where("customerDetails.customerId", "==", customerId));
+        const q = query(ordersRef, where("customerId", "==", customerId)); // Using root level for now
         const querySnapshot = await getDocs(q);
         querySnapshot.forEach(doc => {
             foundOrders = true;
@@ -784,12 +807,16 @@ async function loadOrderTotals_NewOrder(customerId) {
         });
 
         console.log(`_newOrder: Total Order Value calculated: ${totalOrderValue}`);
-        return foundOrders ? totalOrderValue : 'N/A';
+        return foundOrders ? totalOrderValue : 'N/A'; // Return 'N/A' if no orders found, 0 otherwise
     } catch (error) {
         console.error("_newOrder: Error loading order total value:", error);
-        return 'N/A';
+        if (error.message.includes("indexes are required")) {
+             console.error("_newOrder: Firestore index missing for orders collection on 'customerId'.");
+             // Optionally show a non-blocking warning
+        }
+        return 'N/A'; // Return 'N/A' on error
     }
 }
 
 // --- Log that the script finished loading ---
-console.log("new_order.js script loaded (v2.4 - Saves ProductID).");
+console.log("new_order.js script loaded (v2.5 - Fix CustomerID Link).");
