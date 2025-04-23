@@ -1,5 +1,6 @@
 /* === order_history.css === */
 /* Updated Version - Styles for new features, fourth layout revision (CSS Grid), ItemsOnlyModal */
+/* PO Details Popup styling updated to match Order ID Popup */
 
 /* --- Global Styles & Variables --- */
 :root {
@@ -364,37 +365,218 @@ mark { background-color: var(--highlight-color); padding: 0.1em 0.2em; border-ra
 #poItemSelectionModal .modal-actions { border-top: 1px solid var(--border-color); padding-top: 15px; margin-top: 15px; }
 
 /* --- PO Details Popup Styles (#poDetailsPopup) --- */
-#poDetailsPopup .modal-content { padding: 20px 25px; max-height: calc(100vh - 40px); }
-#poDetailsPopup h3 { margin-top: 0; font-size: 1.2em; color: var(--primary-color); margin-bottom: 15px; flex-shrink: 0; }
-#poDetailsPopup p { font-size: 0.95em; margin-bottom: 8px; flex-shrink: 0;}
-#poDetailsPopup hr { border: none; border-top: 1px solid var(--border-color); margin: 15px 0; flex-shrink: 0;}
-#poDetailsPopup h4 { font-size: 1.1em; margin-bottom: 10px; color: var(--secondary-color); flex-shrink: 0;}
-#poDetailsPopup .po-details-popup-header{ flex-shrink: 0;}
-#poDetailsPopup .details-table-popup { width: 100%; border-collapse: collapse; font-size: 0.9em; margin-bottom: 15px; }
-#poDetailsPopup .details-table-popup th, #poDetailsPopup .details-table-popup td { border: 1px solid var(--border-color); padding: 8px 10px; text-align: left; vertical-align: top; }
-#poDetailsPopup .details-table-popup thead th { background-color: var(--light-bg); font-weight: 600; }
-.po-notes-popup { margin-top: 15px; padding: 12px; border: 1px solid #e0e0e0; border-radius: var(--border-radius); font-size: 0.9em; background-color: #fdfdfd; flex-shrink: 0;}
-.po-notes-popup strong { display: block; margin-bottom: 5px; font-weight: 600; }
-#poDetailsPopup .modal-actions { border-top: 1px solid var(--border-color); padding-top: 15px; margin-top: auto; }
+/* Styles updated to match #readOnlyOrderModal where applicable */
+#poDetailsPopup .modal-content {
+    /* padding: 20px 25px; /* Reverted to base modal padding if needed */
+    max-height: calc(90vh - 50px); /* Match readOnlyOrderModal height */
+    max-width: 1100px; /* Match readOnlyOrderModal width */
+    display: flex; /* Ensure flex column */
+    flex-direction: column;
+}
+
+/* Using a wrapper div inside #poDetailsPopup with this class is recommended */
+#poDetailsPopup .po-details-content-area {
+    flex-grow: 1;
+    overflow-y: auto;
+    padding: 10px 5px; /* Match readOnlyOrderModal padding */
+    min-height: 0;
+    /* Consider grid layout if HTML structure is changed */
+    /* display: grid; */
+    /* gap: 15px; */
+}
+
+
+/* Style sections within the popup like readOnlyOrderModal sections */
+.po-details-section { /* Apply this class to PO Header Info, Table Wrapper, Notes Wrapper */
+    margin-bottom: 10px;
+    padding: 10px 12px;
+    border: 1px solid #eee;
+    border-radius: var(--border-radius);
+    background-color: #fff;
+}
+
+/* Specific adjustments for elements within #poDetailsPopup */
+#poDetailsPopup h3 { /* Title styling is handled by general modal h2/h3 rules now */
+    /* margin-top: 0; */
+    /* font-size: 1.2em; */
+    /* color: var(--primary-color); */
+    /* margin-bottom: 15px; */
+    flex-shrink: 0;
+}
+#poDetailsPopup p { /* Generic paragraph styling */
+    font-size: 0.92em; /* Match readOnlyOrderModal font size */
+    margin-bottom: 4px; /* Reduce spacing */
+    line-height: 1.5; /* Match readOnlyOrderModal line height */
+}
+#poDetailsPopup p strong { /* Match readOnlyOrderModal strong style */
+     font-weight: 600;
+     color: var(--text-color);
+     min-width: 100px; /* Adjust as needed */
+     display: inline-block;
+}
+
+#poDetailsPopup hr {
+    border: none;
+    border-top: 1px solid var(--border-color);
+    margin: 10px 0; /* Reduce margin */
+    flex-shrink: 0;
+}
+#poDetailsPopup h4 { /* Items title */
+    margin-top: 0; /* Remove extra top margin if inside a section */
+    margin-bottom: 8px; /* Reduce space */
+    font-size: 1em; /* Match readOnlyOrderModal h4 */
+    color: var(--primary-color); /* Match readOnlyOrderModal h4 */
+    border-bottom: 1px solid #eee; /* Match readOnlyOrderModal h4 */
+    padding-bottom: 5px; /* Match readOnlyOrderModal h4 */
+    font-weight: 600; /* Match readOnlyOrderModal h4 */
+    flex-shrink: 0;
+}
+
+#poDetailsPopup .details-table-popup {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.88em; /* Match readOnly list item font */
+    margin-bottom: 10px; /* Reduce space below table */
+    /* Style table container like readOnly list background */
+    background-color: var(--light-bg);
+    border: 1px solid #eee;
+    border-radius: 4px;
+    overflow: hidden; /* Ensures border radius applies to table */
+}
+#poDetailsPopup .details-table-popup thead th {
+    background-color: transparent; /* Remove default header bg */
+    font-weight: 600;
+    border-bottom: 1px solid #ccc; /* Add subtle separator */
+    padding: 6px 8px; /* Match cell padding */
+    text-align: left;
+}
+#poDetailsPopup .details-table-popup td {
+    border: none; /* Remove default table borders */
+    padding: 5px 8px; /* Match readOnly list item padding */
+    text-align: left;
+    vertical-align: top;
+    background-color: #fff; /* Match readOnly list item bg */
+    border-bottom: 1px dotted #ddd; /* Add similar separator */
+}
+#poDetailsPopup .details-table-popup tr:last-child td {
+    border-bottom: none; /* Remove border for last row */
+}
+
+.po-notes-popup {
+    /* Style using the .po-details-section class applied to its wrapper */
+    margin-top: 0; /* Remove extra top margin if inside a section */
+    padding: 0; /* Padding handled by section */
+    border: none; /* Border handled by section */
+    border-radius: 0; /* Radius handled by section */
+    font-size: 0.88em; /* Smaller font for notes */
+    background-color: transparent; /* BG handled by section */
+    flex-shrink: 0;
+}
+.po-notes-popup strong {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 600;
+}
+
+#poDetailsPopup .modal-actions {
+    border-top: 1px solid var(--border-color);
+    padding-top: 12px; /* Match general modal action padding */
+    margin-top: auto; /* Pushes actions to bottom */
+}
+
 
 /* --- Read-Only Order Modal Styles (#readOnlyOrderModal) --- */
-#readOnlyOrderModal h2 { font-size: 1.3em; text-align: left; border-bottom: 1px solid var(--border-color); padding-bottom: 10px; margin-bottom: 20px; flex-shrink: 0; }
-.read-only-content-area { flex-grow: 1; overflow-y: auto; padding: 5px 10px 5px 0; min-height: 0; }
-.read-only-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 25px; }
-.read-only-section { margin-bottom: 20px; }
-.read-only-section h4 { margin-top: 0; margin-bottom: 12px; font-size: 1.05em; color: var(--primary-color); border-bottom: 1px solid #eee; padding-bottom: 6px; font-weight: 600; }
-.read-only-section p { margin-bottom: 8px; font-size: 0.95em; line-height: 1.5; }
-.read-only-section p strong { font-weight: 600; color: var(--text-color); min-width: 100px; display: inline-block; }
-.read-only-product-list, .read-only-history-list { list-style: none; padding-left: 0; margin: 0; max-height: 200px; overflow-y: auto; }
-.read-only-product-list li, .read-only-history-list li { background-color: var(--light-bg); padding: 8px 12px; border-radius: 4px; margin-bottom: 6px; font-size: 0.9em; border: 1px solid #eee; }
-.read-only-history-list li { display: flex; justify-content: space-between; flex-wrap: wrap; }
-.read-only-history-list li strong { margin-right: 10px; }
-#readOnlyOrderModal .modal-actions { border-top: 1px solid var(--border-color); padding-top: 15px; margin-top: auto; justify-content: flex-end; flex-shrink: 0; }
+#readOnlyOrderModal h2 {
+    font-size: 1.3em;
+    text-align: left;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 10px;
+    margin-bottom: 20px; /* Keep original spacing or adjust if needed */
+    flex-shrink: 0;
+}
+#readOnlyOrderModal .modal-content { /* Ensure max-width is set if needed */
+     max-width: 1100px;
+     max-height: calc(90vh - 50px);
+     display: flex; /* Ensure flex column */
+     flex-direction: column;
+}
+.read-only-content-area {
+    flex-grow: 1;
+    overflow-y: auto;
+    padding: 10px 5px;
+    min-height: 0;
+}
+.read-only-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 15px; /* Reduce gap */
+}
+.read-only-section {
+    margin-bottom: 10px; /* Reduce space */
+    padding: 10px 12px; /* Add padding */
+    border: 1px solid #eee; /* Add subtle border */
+    border-radius: var(--border-radius);
+    background-color: #fff; /* White background for sections */
+}
+.read-only-section h4 {
+    margin-top: 0;
+    margin-bottom: 8px; /* Reduce space */
+    font-size: 1em;
+    color: var(--primary-color);
+    border-bottom: 1px solid #eee;
+    padding-bottom: 5px;
+    font-weight: 600;
+}
+.read-only-section p {
+    margin-bottom: 8px;
+    font-size: 0.95em;
+    line-height: 1.5;
+}
+.read-only-section p strong {
+    font-weight: 600;
+    color: var(--text-color);
+    min-width: 100px;
+    display: inline-block;
+}
+.read-only-product-list, .read-only-history-list {
+    list-style: none;
+    padding: 5px; /* Add padding */
+    margin: 0;
+    max-height: 150px; /* Limit list height */
+    overflow-y: auto;
+    background-color: var(--light-bg); /* Subtle background for lists */
+    border-radius: 4px;
+    border: 1px solid #eee;
+}
+.read-only-product-list li, .read-only-history-list li {
+    background-color: #fff; /* White list items */
+    padding: 5px 8px; /* Reduce padding */
+    border-radius: 3px;
+    margin-bottom: 4px; /* Reduce space */
+    font-size: 0.88em; /* Smaller font */
+    border: none; /* Remove previous border */
+}
+.read-only-history-list li {
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+}
+.read-only-history-list li strong {
+    margin-right: 10px;
+}
+#readOnlyOrderModal .modal-actions {
+    border-top: 1px solid var(--border-color);
+    padding-top: 12px; /* Match general modal action padding */
+    margin-top: auto; /* Push to bottom */
+    justify-content: flex-end;
+    flex-shrink: 0;
+}
 
 /* --- नया: Items Only Modal Styles (#itemsOnlyModal) --- */
 #itemsOnlyModal .modal-content {
     /* max-width: 700px; /* Defined by modal-md class */
-    max-height: calc(100vh - 60px); /* Adjust height if needed */
+    max-width: 550px; /* Make it less wide */
+    max-height: calc(85vh - 50px); /* Adjust height if needed */
 }
 #itemsOnlyModal h2 {
     font-size: 1.2em;
@@ -404,8 +586,8 @@ mark { background-color: var(--highlight-color); padding: 0.1em 0.2em; border-ra
     margin-bottom: 15px;
 }
 #itemsOnlyModal .items-only-content-area {
-    padding: 10px 5px;
-    background-color: var(--light-bg);
+    padding: 10px; /* Adjust padding */
+    background-color: #fff; /* White background */
     border: 1px solid var(--border-color);
     border-radius: var(--border-radius);
     flex-grow: 1;
@@ -418,9 +600,9 @@ mark { background-color: var(--highlight-color); padding: 0.1em 0.2em; border-ra
     margin: 0;
 }
 .items-only-list li {
-    padding: 8px 5px;
-    border-bottom: 1px dotted #ccc;
-    font-size: 0.95em;
+    padding: 6px 5px; /* Reduce padding */
+    border-bottom: 1px dotted #ddd; /* Lighter dotted line */
+    font-size: 0.92em; /* Adjust font size */
     line-height: 1.4;
 }
 .items-only-list li:last-child {
@@ -430,7 +612,10 @@ mark { background-color: var(--highlight-color); padding: 0.1em 0.2em; border-ra
     font-weight: 600;
     color: var(--text-color);
 }
-/* #itemsOnlyModal .no-items styling already covered by general .no-items rule */
+#itemsOnlyModal .no-items {
+    font-size: 0.9em;
+    padding: 15px 0;
+}
 #itemsOnlyModal .modal-actions {
     justify-content: center; /* Center the close button */
 }
@@ -482,6 +667,8 @@ mark { background-color: var(--highlight-color); padding: 0.1em 0.2em; border-ra
      .account-data-grid { grid-template-columns: 1fr; }
      #modalProductList ul.modal-product-list-ul { grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); }
     .read-only-grid { grid-template-columns: 1fr; }
+    /* Adjust PO details grid if implemented */
+    /* #poDetailsPopup .po-details-grid { grid-template-columns: 1fr; } */
 }
 @media (max-width: 768px) {
     body { padding: 15px; font-size: 14px; }
@@ -496,6 +683,9 @@ mark { background-color: var(--highlight-color); padding: 0.1em 0.2em; border-ra
     .modal-content.modal-md { /* Adjust medium modal for smaller screens */
         max-width: 95%;
     }
+    .modal-content.modal-lg { /* Adjust large modals like PO/Order Details */
+        max-width: 95%;
+    }
     .order-summary-counts{ justify-content: space-between; font-size: 0.9em; padding: 15px 20px;}
     .status-update-inline { flex-direction: column; align-items: stretch; }
     .status-update-inline select { max-width: none; }
@@ -507,6 +697,7 @@ mark { background-color: var(--highlight-color); padding: 0.1em 0.2em; border-ra
     .summary-reporting-container { gap: 15px; }
     .order-summary-counts, .reporting-section { padding: 15px 20px; }
     #modalProductList ul.modal-product-list-ul { grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); }
+    .read-only-grid { grid-template-columns: 1fr; } /* Ensure single column */
 }
 @media (max-width: 480px) {
     body { padding: 10px; }
@@ -521,7 +712,17 @@ mark { background-color: var(--highlight-color); padding: 0.1em 0.2em; border-ra
     .details-edit-button { padding: 4px 8px; font-size: 0.8em; }
     .whatsapp-button { width: 26px; height: 26px; font-size: 0.9em; }
     .modal-content { padding: 10px; max-height: calc(100vh - 20px); }
-    #detailsModal h2 { font-size: 1.1em; margin-bottom: 10px; padding-bottom: 8px;}
+    #detailsModal h2, #poDetailsPopup h3, #readOnlyOrderModal h2 { /* Adjust modal titles */
+        font-size: 1.1em;
+        margin-bottom: 10px;
+        padding-bottom: 8px;
+        margin-left: -10px; /* Adjust header extension */
+        margin-right: -10px; /* Adjust header extension */
+        margin-top: -10px; /* Adjust top margin */
+        padding-left: 10px;
+        padding-right: 10px;
+        padding-top: 8px;
+    }
     #itemsOnlyModal h2 { font-size: 1.1em; } /* Adjust ItemsOnly modal title */
     .modal-actions { flex-direction: column; }
     .modal-actions .button { width: 100%; justify-content: center;}
@@ -529,151 +730,69 @@ mark { background-color: var(--highlight-color); padding: 0.1em 0.2em; border-ra
     .actions-bar .button { flex-grow: 1; min-width: 120px; text-align: center;}
     .account-data-grid { grid-template-columns: 1fr; }
     #modalProductList ul.modal-product-list-ul { grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 5px;}
+    /* Adjust PO details sections for small screens */
+    .po-details-section { padding: 8px 10px; }
+    #poDetailsPopup .details-table-popup { font-size: 0.85em; }
+    #poDetailsPopup .details-table-popup th,
+    #poDetailsPopup .details-table-popup td { padding: 4px 6px; }
+    .po-notes-popup { font-size: 0.85em; }
 }
 
 
-/* === Popup/Modal Design Improvements === */
+/* === Popup/Modal Design Improvements (Consolidated & Updated) === */
 
 /* --- General Modal Adjustments --- */
 .modal-content {
-    /* Slightly reduce padding for compactness */
-    padding: 15px 20px;
-    /* Add a subtle background for depth */
-    background-color: #fdfdfd; /* Slightly off-white */
-     /* Ensure vertical scrolling if content overflows */
-    overflow-y: auto;
+    padding: 15px 20px; /* Base padding */
+    background-color: #fdfdfd;
+    overflow-y: auto; /* Ensure scrolling */
 }
 
-.modal h2, #poDetailsPopup h3, #readOnlyOrderModalTitle, #itemsOnlyModalTitle {
-    /* Reduce bottom margin for tighter spacing */
+/* Unified Modal Header Styling */
+.modal h2,
+#poDetailsPopup h3,
+#readOnlyOrderModal h2, /* Explicitly target readOnlyOrderModal h2 */
+#itemsOnlyModal h2 { /* Explicitly target itemsOnlyModal h2 */
     margin-bottom: 10px;
     padding-bottom: 8px;
-    font-size: 1.2em; /* Adjust title size if needed */
-    background-color: var(--light-bg); /* Add a subtle header background */
-    margin-left: -20px; /* Extend background to edges */
-    margin-right: -20px; /* Extend background to edges */
-    margin-top: -15px; /* Adjust top margin */
-    padding-left: 20px;
-    padding-right: 20px;
+    font-size: 1.2em; /* Consistent title size */
+    background-color: var(--light-bg); /* Subtle header background */
+    margin-left: -20px; /* Extend background to edges (adjust based on padding) */
+    margin-right: -20px; /* Extend background to edges (adjust based on padding) */
+    margin-top: -15px; /* Adjust top margin (based on padding) */
+    padding-left: 20px; /* Match padding */
+    padding-right: 20px; /* Match padding */
     padding-top: 10px;
     border-bottom: 1px solid var(--border-color);
     border-radius: var(--border-radius) var(--border-radius) 0 0; /* Match container radius */
+    color: var(--text-color); /* Ensure consistent text color */
+    text-align: left; /* Default to left alignment */
+    font-weight: 600; /* Consistent weight */
 }
+/* Center align specific modal titles if needed */
+#itemsOnlyModal h2 {
+     text-align: center;
+}
+
 
 .modal-actions {
-    /* Reduce top padding */
     padding-top: 12px;
-    margin-top: 15px; /* Ensure some space before actions */
-    gap: 8px; /* Slightly reduce gap between buttons */
+    margin-top: 15px;
+    gap: 8px;
+    border-top: 1px solid var(--border-color); /* Ensure border is consistent */
+    flex-shrink: 0; /* Prevent shrinking */
 }
 
-/* Reduce space between generic modal elements if needed */
+/* Reduce space between generic modal elements */
 .modal-content p, .modal-content label {
     margin-bottom: 5px; /* Reduce default paragraph/label spacing */
 }
 
-/* --- 1. Order ID Popup (#readOnlyOrderModal) --- */
-#readOnlyOrderModal .modal-content {
-    max-width: 1100px; /* Keep width reasonable */
-    /* Constrain height - Adjust as needed */
-    max-height: calc(90vh - 50px);
-}
 
-#readOnlyOrderModal .read-only-content-area {
-     padding: 10px 5px; /* Reduce padding */
-}
+/* --- 1. Order ID Popup (#readOnlyOrderModal) - Styles moved to main definition --- */
 
-#readOnlyOrderModal .read-only-grid {
-    gap: 15px; /* Reduce gap between grid sections */
-}
 
-#readOnlyOrderModal .read-only-section {
-    margin-bottom: 10px; /* Reduce space below sections */
-    padding: 10px 12px; /* Add padding inside sections */
-    border: 1px solid #eee; /* Add subtle border */
-    border-radius: var(--border-radius);
-    background-color: #fff; /* White background for sections */
-}
-#readOnlyOrderModal .read-only-section h4 {
-    margin-bottom: 8px; /* Reduce space below section titles */
-    font-size: 1em;
-    padding-bottom: 5px;
-}
-#readOnlyOrderModal .read-only-product-list,
-#readOnlyOrderModal .read-only-history-list {
-    max-height: 150px; /* Limit list height */
-    padding: 5px;
-    background-color: var(--light-bg); /* Subtle background for lists */
-    border-radius: 4px;
-    border: 1px solid #eee;
-}
-#readOnlyOrderModal .read-only-product-list li,
-#readOnlyOrderModal .read-only-history-list li {
-     padding: 5px 8px; /* Reduce list item padding */
-     margin-bottom: 4px; /* Reduce space between list items */
-     font-size: 0.88em; /* Slightly smaller font */
-     border: none; /* Remove default border */
-     background-color: #fff; /* White list items */
-     border-radius: 3px;
-}
+/* --- 2. Items 'See More' Popup (#itemsOnlyModal) - Styles moved to main definition --- */
 
-/* --- 2. Items 'See More' Popup (#itemsOnlyModal) --- */
-#itemsOnlyModal .modal-content {
-    max-width: 550px; /* Make it less wide */
-    /* Constrain height - Adjust as needed */
-    max-height: calc(85vh - 50px);
-}
-#itemsOnlyModal .items-only-content-area {
-    padding: 10px; /* Adjust padding */
-    background-color: #fff; /* White background */
-}
-#itemsOnlyModal .items-only-list li {
-    padding: 6px 5px; /* Reduce list item padding */
-    font-size: 0.92em; /* Adjust font size */
-    border-bottom: 1px dotted #ddd; /* Lighter dotted line */
-}
-#itemsOnlyModal .items-only-list li:last-child {
-    border-bottom: none;
-}
-#itemsOnlyModal .no-items {
-    font-size: 0.9em;
-    padding: 15px 0;
-}
 
-/* --- 3. PO Info Popup (#poDetailsPopup) --- */
-#poDetailsPopup .modal-content {
-    max-width: 900px; /* Adjust width */
-     /* Constrain height - Adjust as needed */
-     max-height: calc(90vh - 50px);
-}
-#poDetailsPopup #poDetailsPopupContent {
-    padding: 10px 5px; /* Reduce padding around content */
-}
-
-#poDetailsPopup .po-details-popup-header p {
-    margin-bottom: 4px; /* Reduce spacing in header */
-    font-size: 0.92em;
-}
-#poDetailsPopup hr {
-    margin: 10px 0; /* Reduce margin around hr */
-}
-#poDetailsPopup h4 {
-    margin-bottom: 8px; /* Reduce space below "Items" title */
-    font-size: 1.05em;
-}
-
-#poDetailsPopup .details-table-popup {
-    margin-bottom: 10px; /* Reduce space below table */
-    font-size: 0.88em; /* Slightly smaller table font */
-}
-
-#poDetailsPopup .details-table-popup th,
-#poDetailsPopup .details-table-popup td {
-    padding: 6px 8px; /* Reduce cell padding */
-}
-#poDetailsPopup .po-notes-popup {
-    padding: 10px; /* Reduce padding */
-    margin-top: 10px; /* Reduce space above notes */
-    font-size: 0.88em; /* Smaller font for notes */
-    background-color: var(--light-bg); /* Subtle background */
-}
+/* --- 3. PO Info Popup (#poDetailsPopup) - Styles updated in main definition above --- */

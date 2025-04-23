@@ -1,13 +1,16 @@
-# new_order.js - v2.6 (WhatsApp Send Delay)
-# फ़ाइल का नाम: new_order.js
+# Updated new_order.js code
+# Only '#' comments are replaced with '//'
 
-# --- Firebase Functions ---
+// new_order.js - v2.6 (WhatsApp Send Delay)
+// फ़ाइल का नाम: new_order.js
+
+// --- Firebase Functions ---
 const {
     db, collection, addDoc, doc, getDoc, getDocs, updateDoc,
-    query, where, orderBy, limit, Timestamp, arrayUnion # Added arrayUnion for status history
+    query, where, orderBy, limit, Timestamp, arrayUnion // Added arrayUnion for status history
 } = window;
 
-# --- Global Variables ---
+// --- Global Variables ---
 let isEditMode = false;
 let orderIdToEdit = null;
 let currentOrderData = null;
@@ -23,14 +26,14 @@ let customerSearchDebounceTimer;
 let isDiscountInputProgrammaticChange = false;
 let productSuggestionsDiv = null;
 
-# --- DOM Element References ---
+// --- DOM Element References ---
 const orderForm = document.getElementById('newOrderForm');
 const saveButton = document.getElementById('saveOrderBtn');
 const saveButtonText = saveButton ? saveButton.querySelector('span') : null;
 const headerText = document.getElementById('headerText');
 const breadcrumbAction = document.getElementById('breadcrumbAction');
 const hiddenEditOrderIdInput = document.getElementById('editOrderId');
-const selectedCustomerIdInput = document.getElementById('selectedCustomerId'); # Hidden input to store ID
+const selectedCustomerIdInput = document.getElementById('selectedCustomerId'); // Hidden input to store ID
 const displayOrderIdInput = document.getElementById('display_order_id');
 const manualOrderIdInput = document.getElementById('manual_order_id');
 const customerNameInput = document.getElementById('full_name');
@@ -65,16 +68,16 @@ const whatsappMsgPreview = document.getElementById('whatsapp-message-preview');
 const whatsappSendLink = document.getElementById('whatsapp-send-link');
 const popupCloseBtn = document.getElementById('popup-close-btn');
 
-# --- Status Definitions (for color mapping) ---
+// --- Status Definitions (for color mapping) ---
 const statusList = [
     "Order Received", "Designing", "Verification", "Design Approved",
     "Printing", "Ready for Working", "Delivered", "Completed"
 ];
 
 
-# --- Initialization ---
+// --- Initialization ---
 document.addEventListener('DOMContentLoaded', () => {
-    console.log("New Order DOM Loaded (v2.6 - WhatsApp Send Delay). Initializing..."); # Updated version log
+    console.log("New Order DOM Loaded (v2.6 - WhatsApp Send Delay). Initializing..."); // Updated version log
     if (!orderForm || !addItemBtn || !orderItemsTableBody || !itemRowTemplate || !calculationPreviewArea || !calculationPreviewContent || !orderStatusSelect) {
         console.error("Critical DOM elements missing! Check HTML IDs.", { orderForm: !!orderForm, addItemBtn: !!addItemBtn, orderItemsTableBody: !!orderItemsTableBody, itemRowTemplate: !!itemRowTemplate, calculationPreviewArea: !!calculationPreviewArea, calculationPreviewContent: !!calculationPreviewContent, orderStatusSelect: !!orderStatusSelect });
         alert("Page structure error. Cannot initialize order form.");
@@ -82,7 +85,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     waitForDbConnection(initializeForm);
 
-    # Event Listeners
+    // Event Listeners
     orderForm.addEventListener('submit', handleFormSubmit);
     addItemBtn.addEventListener('click', handleAddItem);
     orderItemsTableBody.addEventListener('click', handleItemTableClick);
@@ -103,10 +106,10 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 });
 
-# --- DB Connection Wait ---
+// --- DB Connection Wait ---
 function waitForDbConnection(callback) { if(window.db&&typeof window.query==='function'&&typeof window.collection==='function'){console.log("DB confirmed."); callback();}else{let a=0;const m=20,i=setInterval(()=>{a++; if(window.db&&typeof window.query==='function'&&typeof window.collection==='function'){clearInterval(i);console.log("DB confirmed later."); callback();}else if(a>=m){clearInterval(i);console.error("DB timeout.");alert("DB connection failed.");if(saveButton)saveButton.disabled=true;}},250);}}
 
-# --- Global Click Handler ---
+// --- Global Click Handler ---
 function handleGlobalClick(event) {
     if (productSuggestionsDiv && activeProductInput && !productSuggestionsDiv.contains(event.target) && event.target !== activeProductInput) {
         hideProductSuggestions();
@@ -119,12 +122,12 @@ function handleGlobalClick(event) {
     }
 }
 
-# --- Utility Functions ---
+// --- Utility Functions ---
 function hideSuggestionBox(box) { if(box){box.classList.remove('active');box.style.display='none';}}
 function formatCurrency(amount) { const n=Number(amount||0); return `₹${n.toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2})}`; }
 function showFormError(message) { if(formErrorMsg){formErrorMsg.textContent=message;formErrorMsg.style.display=message?'block':'none';if(message)formErrorMsg.scrollIntoView({behavior:'smooth',block:'center'});}else if(message){alert(message);}}
 
-# --- Form Initialization ---
+// --- Form Initialization ---
 function initializeForm() {
     console.log("Running initializeForm...");
     const uP=new URLSearchParams(window.location.search);
@@ -156,10 +159,10 @@ function initializeForm() {
     preFetchCaches();
 }
 
-# --- Pre-fetch Caches ---
+// --- Pre-fetch Caches ---
 function preFetchCaches() { console.log("Pre-fetching caches..."); getOrFetchCustomerCache().catch(e=>console.error("Cust cache fetch err:", e)); getOrFetchProductCache().catch(e=>console.error("Prod cache fetch err:", e));}
 
-# --- Load Order For Edit ---
+// --- Load Order For Edit ---
 async function loadOrderForEdit(docId) {
     console.log(`Loading order for edit: ${docId}`);
     showFormError('');
@@ -170,16 +173,16 @@ async function loadOrderForEdit(docId) {
         if(s.exists()){
             currentOrderData=s.data();
             console.log("Order data loaded for edit:",currentOrderData);
-            # --- >>> Use customerId from customerDetails first, fallback to root customerId <<< ---
+            // --- >>> Use customerId from customerDetails first, fallback to root customerId <<< ---
             selectedCustomerId=currentOrderData.customerDetails?.customerId || currentOrderData.customerId || null;
             if(selectedCustomerIdInput)selectedCustomerIdInput.value=selectedCustomerId || '';
             if(currentOrderData.customerDetails){
                 customerNameInput.value=currentOrderData.customerDetails.fullName||'';
                 customerWhatsAppInput.value=currentOrderData.customerDetails.whatsappNo||'';
-                customerAddressInput.value=currentOrderData.customerDetails.address||currentOrderData.customerDetails.billingAddress||''; # Prefer billingAddress if present
+                customerAddressInput.value=currentOrderData.customerDetails.address||currentOrderData.customerDetails.billingAddress||''; // Prefer billingAddress if present
                 customerContactInput.value=currentOrderData.customerDetails.contactNo||'';
                 if(selectedCustomerId){
-                    await fetchAndDisplayCustomerDetails(selectedCustomerId); # Await to ensure balance is loaded before summary update potentially
+                    await fetchAndDisplayCustomerDetails(selectedCustomerId); // Await to ensure balance is loaded before summary update potentially
                 }else{
                     console.warn("Order loaded but customerId is missing/null in data.");
                     resetCustomerSelectionUI();
@@ -190,8 +193,8 @@ async function loadOrderForEdit(docId) {
             }
             displayOrderIdInput.value=currentOrderData.orderId||docId;
             manualOrderIdInput.value=currentOrderData.orderId||'';
-            orderDateInput.value=currentOrderData.orderDate?.toDate ? currentOrderData.orderDate.toDate().toISOString().split('T')[0] : (currentOrderData.orderDate || ''); # Handle string date
-            deliveryDateInput.value=currentOrderData.deliveryDate?.toDate ? currentOrderData.deliveryDate.toDate().toISOString().split('T')[0] : (currentOrderData.deliveryDate || '');# Handle string date
+            orderDateInput.value=currentOrderData.orderDate?.toDate ? currentOrderData.orderDate.toDate().toISOString().split('T')[0] : (currentOrderData.orderDate || ''); // Handle string date
+            deliveryDateInput.value=currentOrderData.deliveryDate?.toDate ? currentOrderData.deliveryDate.toDate().toISOString().split('T')[0] : (currentOrderData.deliveryDate || '');// Handle string date
             remarksInput.value=currentOrderData.remarks||'';
             const uV=currentOrderData.urgent||'No';
             const uR=orderForm.querySelector(`input[name="urgent"][value="${uV}"]`);
@@ -200,7 +203,7 @@ async function loadOrderForEdit(docId) {
             orderStatusSelect.value = loadedStatus;
             updateStatusDropdownColor(loadedStatus);
             if(!orderItemsTableBody){console.error("Item table body missing!");return;}
-            orderItemsTableBody.innerHTML=''; # Clear existing rows before populating
+            orderItemsTableBody.innerHTML=''; // Clear existing rows before populating
             if(currentOrderData.items&&Array.isArray(currentOrderData.items)){
                 currentOrderData.items.forEach(i=>{
                     const nR=addItemRow(false);
@@ -217,11 +220,11 @@ async function loadOrderForEdit(docId) {
                     }
                 });
             }
-            if(orderItemsTableBody.children.length===0){handleAddItem();} # Add a blank row if no items loaded
+            if(orderItemsTableBody.children.length===0){handleAddItem();} // Add a blank row if no items loaded
             if(summaryDiscountPercentInput)summaryDiscountPercentInput.value=currentOrderData.discountPercentage||'';
             if(summaryDiscountAmountInput)summaryDiscountAmountInput.value=currentOrderData.discountAmount||'';
             if(summaryAdvancePaymentInput)summaryAdvancePaymentInput.value=currentOrderData.advancePayment||'';
-            updateOrderSummary(); # Calculate summary based on loaded items and payments
+            updateOrderSummary(); // Calculate summary based on loaded items and payments
         } else {
             console.error("Order document not found for editing!");
             showFormError("Error: The order you are trying to edit could not be found.");
@@ -234,10 +237,10 @@ async function loadOrderForEdit(docId) {
     }
 }
 
-# --- Item Handling ---
+// --- Item Handling ---
 function handleAddItem() { console.log("Adding new item row..."); if(!itemRowTemplate || !orderItemsTableBody){console.error("Template or body missing!");showFormError("Error: Page setup incomplete.");return;} const nR=addItemRow(true); if(nR){console.log("Row added successfully.");updateOrderSummary();}else{console.error("Failed adding item row.");}}
 function addItemRow(focus = true) { if (!itemRowTemplate || !orderItemsTableBody) { console.error("addItemRow: Prerequisites missing!"); return null; } try { const tC = itemRowTemplate.content.cloneNode(true), nRE = tC.querySelector('.item-row'); if (!nRE) { console.error("Template is missing the .item-row element"); return null; } orderItemsTableBody.appendChild(nRE); const aR = orderItemsTableBody.lastElementChild; if (!aR || !aR.matches('.item-row')) { console.error("Failed to append or find the new row."); return null; } const uS = aR.querySelector('.unit-type-select'); if (uS) handleUnitTypeChange({ target: uS }); if (focus) { const firstInput = aR.querySelector('.product-name'); if (firstInput) firstInput.focus(); } return aR; } catch (e) { console.error("Error in addItemRow:", e); showFormError(`Error creating item row: ${e.message}`); return null; } }
-function populateItemRow(row, itemData) { if(!row||!itemData){console.warn("populateItemRow called with invalid row or data.");return;}console.log("Populating row with item:",itemData);try{row.querySelector('.product-name').value=itemData.productName||'';row.querySelector('.unit-type-select').value=itemData.unitType||'Qty';row.querySelector('.quantity-input').value=itemData.quantity||1;const rI=row.querySelector('.rate-input');rI.value=itemData.rate!==undefined?String(itemData.rate):''; # Ensure rate is string
+function populateItemRow(row, itemData) { if(!row||!itemData){console.warn("populateItemRow called with invalid row or data.");return;}console.log("Populating row with item:",itemData);try{row.querySelector('.product-name').value=itemData.productName||'';row.querySelector('.unit-type-select').value=itemData.unitType||'Qty';row.querySelector('.quantity-input').value=itemData.quantity||1;const rI=row.querySelector('.rate-input');rI.value=itemData.rate!==undefined?String(itemData.rate):''; // Ensure rate is string
 const mR=itemData.minSalePrice; if(rI) rI.dataset.minRate=mR!==undefined&&mR!==null?String(mR):'-1';if(itemData.unitType==='Sq Feet'){row.querySelector('.dimension-unit-select').value=itemData.dimensionUnit||'feet';row.querySelector('.width-input').value=itemData.width||'';row.querySelector('.height-input').value=itemData.height||'';}handleUnitTypeChange({target:row.querySelector('.unit-type-select')});updateItemAmount(row);}catch(e){console.error("Error populating item row:",e);}}
 function handleItemTableClick(event) {
      if (event.target.closest('.delete-item-btn')) {
@@ -245,7 +248,7 @@ function handleItemTableClick(event) {
          if(r){
               console.log("Deleting item row...");
               r.remove();
-              hideProductSuggestions(); # Hide suggestions if deleting row with active input
+              hideProductSuggestions(); // Hide suggestions if deleting row with active input
               updateOrderSummary();
               updateCalculationPreview();
           }
@@ -265,20 +268,20 @@ function handleSuggestionClick(event) {
 function handleItemTableInput(event) { const t=event.target,r=t.closest('.item-row'); if(!r)return; if(t.matches('.product-name')){activeProductInput=t;handleProductSearchInput(event);}else if(t.matches('.quantity-input, .rate-input, .width-input, .height-input')){updateItemAmount(r);}}
 function handleItemTableChange(event){ const t=event.target,r=t.closest('.item-row'); if(!r)return; if(t.matches('.unit-type-select'))handleUnitTypeChange(event); else if(t.matches('.dimension-unit-select'))updateItemAmount(r);}
 
-# --- Sq Ft Calculation Logic ---
+// --- Sq Ft Calculation Logic ---
 function calculateFlexDimensions(unit, width, height) { const m=[3,4,5,6,8,10]; let w=(unit==='inches')?parseFloat(width||0)/12:parseFloat(width||0), h=(unit==='inches')?parseFloat(height||0)/12:parseFloat(height||0); if(isNaN(w)||isNaN(h)||w<=0||h<=0) return{realSqFt:0, printSqFt:0, realWidthFt:0, realHeightFt:0, printWidthFt:0, printHeightFt:0}; const r=w*h; let b={pW:0,pH:0,pS:Infinity}; const fW=m.find(x=>x>=w); let pW1=fW||w, pH1=h, pS1=pW1*pH1; const fH=m.find(x=>x>=h); let pW2=w, pH2=fH||h, pS2=pW2*pH2; if(pS1<=pS2){b.pW=pW1; b.pH=pH1; b.pS=pS1;} else{b.pW=pW2; b.pH=pH2; b.pS=pS2;} return{realSqFt:r, printWidthFt:b.pW, printHeightFt:b.pH, printSqFt:b.pS, realWidthFt: w, realHeightFt: h };}
 function handleUnitTypeChange(event) { const r=event.target.closest('.item-row'); if(!r)return; const uT=event.target.value; const isSqFt = (uT === 'Sq Feet'); r.querySelectorAll('.sq-feet-input').forEach(e=>e.style.display = isSqFt ? '' : 'none'); r.closest('table')?.querySelectorAll('thead th.sq-feet-header').forEach(h=>h.classList.toggle('hidden-col',!isSqFt)); r.querySelector('.rate-input').placeholder = isSqFt ? 'Rate/SqFt' : 'Rate/Unit'; if(!isSqFt){r.querySelector('.width-input').value=''; r.querySelector('.height-input').value='';} updateItemAmount(r);}
 function updateItemAmount(row) { if (!row) return; const uTS=row.querySelector('.unit-type-select'),aS=row.querySelector('.item-amount'),rI=row.querySelector('.rate-input'),qI=row.querySelector('.quantity-input'),mR=parseFloat(rI?.dataset.minRate||-1); let cA=0,rV=parseFloat(rI?.value||0),q=parseInt(qI?.value||1); if(isNaN(q)||q<1)q=1; try{rI.classList.remove('input-error');rI.title='';if(mR>=0&&rV<mR && Math.abs(rV - mR) > 0.001 ){rI.classList.add('input-error');rI.title=`Rate ${formatCurrency(rV)} is below Minimum ${formatCurrency(mR)}`;} if(uTS?.value==='Sq Feet'){const dUS=row.querySelector('.dimension-unit-select'),wI=row.querySelector('.width-input'),hI=row.querySelector('.height-input'); const u=dUS?.value||'feet',w=parseFloat(wI?.value||0),h=parseFloat(hI?.value||0); if(w>0&&h>0&&!isNaN(rV)&&rV>=0){const cR=calculateFlexDimensions(u,w,h);cA=parseFloat(cR.printSqFt||0)*q*rV;}}else{if(!isNaN(rV)&&rV>=0)cA=q*rV;}}catch(e){console.error("Error calculating item amount:",e);cA=0;} if(aS)aS.textContent=cA.toFixed(2); updateOrderSummary(); updateCalculationPreview(); }
 
-# --- Calculation Preview Logic ---
+// --- Calculation Preview Logic ---
 function updateCalculationPreview() { if (!calculationPreviewArea || !calculationPreviewContent || !orderItemsTableBody) { console.warn("Calculation preview elements missing."); return; } let entriesHTML = ''; const itemRows = orderItemsTableBody.querySelectorAll('.item-row'); let foundSqFt = false; itemRows.forEach((row, index) => { const unitTypeSelect = row.querySelector('.unit-type-select'); if (unitTypeSelect?.value === 'Sq Feet') { foundSqFt = true; const productNameInput = row.querySelector('.product-name'); const productName = productNameInput?.value.trim() || `Item ${index + 1}`; const dimensionUnitSelect = row.querySelector('.dimension-unit-select'); const widthInput = row.querySelector('.width-input'); const heightInput = row.querySelector('.height-input'); const quantityInput = row.querySelector('.quantity-input'); const unit = dimensionUnitSelect?.value || 'feet'; const width = parseFloat(widthInput?.value || 0); const height = parseFloat(heightInput?.value || 0); let quantity = parseInt(quantityInput?.value || 1); if (isNaN(quantity) || quantity < 1) quantity = 1; let entryContent = `<div class="item-preview-entry"><strong>${productName}:</strong><br>`; if (width > 0 && height > 0) { const calcResult = calculateFlexDimensions(unit, width, height); if (calcResult && parseFloat(calcResult.printSqFt) >= 0) { const realSqFtNum = parseFloat(calcResult.realSqFt); const printSqFtNum = parseFloat(calcResult.printSqFt); const wastageSqFt = (printSqFtNum - realSqFtNum); const tolerance = 0.01; let wastageDesc = (wastageSqFt > tolerance) ? `<span style="color: orange;">Wastage: ${wastageSqFt.toFixed(2)} sq ft/item</span>` : `<span style="color: green;">Wastage: ${wastageSqFt.toFixed(2)} sq ft/item</span>`; entryContent += `&nbsp; Qty: ${quantity}<br>`; entryContent += `&nbsp; Real: ${calcResult.realWidthFt?.toFixed(2) ?? '?'}ft x ${calcResult.realHeightFt?.toFixed(2) ?? '?'}ft = ${realSqFtNum.toFixed(2)} sq ft/item<br>`; entryContent += `&nbsp; Print: ${calcResult.printWidthFt.toFixed(2)}ft x ${calcResult.printHeightFt.toFixed(2)}ft = ${printSqFtNum.toFixed(2)} sq ft/item<br>`; entryContent += `&nbsp; Total Print Area: ${(printSqFtNum * quantity).toFixed(2)} sq ft<br>`; entryContent += `&nbsp; ${wastageDesc}`; } else { entryContent += `&nbsp; <span style="color:orange;">Invalid dimensions or calculation error.</span>`; } } else { entryContent += `&nbsp; <span style="color:grey;">Enter valid width & height for calculation.</span>`; } entryContent += `</div>`; entriesHTML += entryContent; } }); if (foundSqFt) { calculationPreviewContent.innerHTML = entriesHTML || '<p style="color:grey;">Enter dimensions for Sq Ft items.</p>'; calculationPreviewArea.style.display = 'block'; } else { calculationPreviewArea.style.display = 'none'; } }
 
-# --- Order Summary Calculation ---
-function updateOrderSummary() { let s=0; if(orderItemsTableBody) orderItemsTableBody.querySelectorAll('.item-row .item-amount').forEach(sp=>s+=parseFloat(sp.textContent||0)); let dP=parseFloat(summaryDiscountPercentInput?.value||0),dA=parseFloat(summaryDiscountAmountInput?.value||0),cDA=0; const activeEl = document.activeElement; if(!isDiscountInputProgrammaticChange){if(activeEl===summaryDiscountPercentInput&&!isNaN(dP)){cDA=s*(dP/100); isDiscountInputProgrammaticChange=true; if(summaryDiscountAmountInput) summaryDiscountAmountInput.value=cDA.toFixed(2); isDiscountInputProgrammaticChange=false;}else if(activeEl===summaryDiscountAmountInput&&!isNaN(dA)){cDA=dA; if(s>0){const cP=(cDA/s)*100; isDiscountInputProgrammaticChange=true; if(summaryDiscountPercentInput) summaryDiscountPercentInput.value=cP.toFixed(2); isDiscountInputProgrammaticChange=false;}else{isDiscountInputProgrammaticChange=true; if(summaryDiscountPercentInput) summaryDiscountPercentInput.value=''; isDiscountInputProgrammaticChange=false;}}else{if(!isNaN(dP)&&dP>0)cDA=s*(dP/100); else if(!isNaN(dA)&&dA>0)cDA=dA; else cDA=0;}} cDA=Math.max(0,Math.min(cDA,s)); const fA=s-cDA,aP=parseFloat(summaryAdvancePaymentInput?.value||0),tB=fA-aP; if(summarySubtotalSpan)summarySubtotalSpan.textContent=s.toFixed(2); if(summaryFinalAmountSpan)summaryFinalAmountSpan.textContent=fA.toFixed(2); if(summaryTotalBalanceSpan)summaryTotalBalanceSpan.textContent=tB.toFixed(2); checkCreditLimit();}// Trigger credit check after summary update
+// --- Order Summary Calculation ---
+function updateOrderSummary() { let s=0; if(orderItemsTableBody) orderItemsTableBody.querySelectorAll('.item-row .item-amount').forEach(sp=>s+=parseFloat(sp.textContent||0)); let dP=parseFloat(summaryDiscountPercentInput?.value||0),dA=parseFloat(summaryDiscountAmountInput?.value||0),cDA=0; const activeEl = document.activeElement; if(!isDiscountInputProgrammaticChange){if(activeEl===summaryDiscountPercentInput&&!isNaN(dP)){cDA=s*(dP/100); isDiscountInputProgrammaticChange=true; if(summaryDiscountAmountInput) summaryDiscountAmountInput.value=cDA.toFixed(2); isDiscountInputProgrammaticChange=false;}else if(activeEl===summaryDiscountAmountInput&&!isNaN(dA)){cDA=dA; if(s>0){const cP=(cDA/s)*100; isDiscountInputProgrammaticChange=true; if(summaryDiscountPercentInput) summaryDiscountPercentInput.value=cP.toFixed(2); isDiscountInputProgrammaticChange=false;}else{isDiscountInputProgrammaticChange=true; if(summaryDiscountPercentInput) summaryDiscountPercentInput.value=''; isDiscountInputProgrammaticChange=false;}}else{if(!isNaN(dP)&&dP>0)cDA=s*(dP/100); else if(!isNaN(dA)&&dA>0)cDA=dA; else cDA=0;}} cDA=Math.max(0,Math.min(cDA,s)); const fA=s-cDA,aP=parseFloat(summaryAdvancePaymentInput?.value||0),tB=fA-aP; if(summarySubtotalSpan)summarySubtotalSpan.textContent=s.toFixed(2); if(summaryFinalAmountSpan)summaryFinalAmountSpan.textContent=fA.toFixed(2); if(summaryTotalBalanceSpan)summaryTotalBalanceSpan.textContent=tB.toFixed(2); checkCreditLimit();} // Trigger credit check after summary update
 
 function handleDiscountInput(event) { if(isDiscountInputProgrammaticChange)return; const cI=event.target; isDiscountInputProgrammaticChange=true; if(cI===summaryDiscountPercentInput){if(summaryDiscountAmountInput)summaryDiscountAmountInput.value='';}else if(cI===summaryDiscountAmountInput){if(summaryDiscountPercentInput)summaryDiscountPercentInput.value='';} isDiscountInputProgrammaticChange=false; updateOrderSummary();}
 
-# --- Customer Autocomplete & Details ---
+// --- Customer Autocomplete & Details ---
 async function getOrFetchCustomerCache() { if(customerCache.length>0)return Promise.resolve(); if(customerFetchPromise)return customerFetchPromise; console.log("Fetching customers..."); try{if(!db||!collection||!query||!getDocs||!orderBy)throw new Error("DB function missing"); const q=query(collection(db,"customers"),orderBy("fullName")); customerFetchPromise=getDocs(q).then(s=>{customerCache=s.docs.map(d=>({id:d.id,...d.data()})); console.log(`Cached ${customerCache.length} customers.`); customerFetchPromise=null;}).catch(e=>{console.error(e);customerFetchPromise=null;throw e;}); return customerFetchPromise;}catch(e){console.error(e);customerFetchPromise=null;return Promise.reject(e);}}
 function handleCustomerInput(event, type) { const i=event.target,t=i.value.trim(),b=type==='name'?customerSuggestionsNameBox:customerSuggestionsWhatsAppBox; if(!b)return; if(t.length<1){clearTimeout(customerSearchDebounceTimer); hideSuggestionBox(b); selectedCustomerId = null; if(selectedCustomerIdInput) selectedCustomerIdInput.value = ''; resetCustomerSelectionUI(false); return;} clearTimeout(customerSearchDebounceTimer); customerSearchDebounceTimer=setTimeout(()=>{getOrFetchCustomerCache().then(()=>filterAndRenderCustomerSuggestions(t,type,b,i)).catch(e=>console.error(e));},300);}
 function filterAndRenderCustomerSuggestions(term, type, box, inputElement) { const l=term.toLowerCase(), f=type==='name'?'fullName':'whatsappNo', d=customerCache.filter(c=>String(c[f]||'').toLowerCase().includes(l)).slice(0,10); renderCustomerSuggestions(d,term,box,inputElement);}
@@ -299,9 +302,9 @@ function fillCustomerData(customerData) {
         selectedCustomerIdInput.value = selectedCustomerId;
         console.log("Hidden input selectedCustomerId set to:", selectedCustomerIdInput.value);
     } else {
-        console.error("Hidden input #selectedCustomerId not found!");
+        console.error("Hidden input //selectedCustomerId not found!");
     }
-    # Await the fetch and display function to ensure balance is fetched
+    // Await the fetch and display function to ensure balance is fetched
     fetchAndDisplayCustomerDetails(selectedCustomerId).catch(e => {
         console.error("Error during fetchAndDisplayCustomerDetails after fill:", e);
         showFormError("Could not load customer balance details.");
@@ -311,11 +314,11 @@ async function fetchAndDisplayCustomerDetails(customerId) {
     console.log("Fetching details for:", customerId);
     if (!customerId) {
         console.warn("fetchAndDisplayCustomerDetails called without customerId.");
-        resetCustomerSelectionUI(); # Reset if ID is missing
+        resetCustomerSelectionUI(); // Reset if ID is missing
         return;
     }
     try {
-        # Fetch customer data (from cache or DB)
+        // Fetch customer data (from cache or DB)
         let c = customerCache.find(cust => cust.id === customerId);
         if (!c) {
             console.log("Customer not in cache, fetching from DB:", customerId);
@@ -331,14 +334,14 @@ async function fetchAndDisplayCustomerDetails(customerId) {
         } else {
             console.log("Customer found in cache:", c);
         }
-        selectedCustomerData = c; # Store fetched customer data globally
+        selectedCustomerData = c; // Store fetched customer data globally
 
-        # ----- >>> BALANCE CALCULATION START <<< -----
-        let balanceText = 'Calculating...'; # Show intermediate state
+        // ----- >>> BALANCE CALCULATION START <<< -----
+        let balanceText = 'Calculating...'; // Show intermediate state
         let balanceNum = NaN;
         if (customerBalanceArea) {
              customerCurrentBalanceSpan.textContent = balanceText;
-             customerBalanceArea.style.display = 'block'; # Show area while calculating
+             customerBalanceArea.style.display = 'block'; // Show area while calculating
         }
 
         try {
@@ -353,7 +356,7 @@ async function fetchAndDisplayCustomerDetails(customerId) {
                 console.log(`_BalanceCalc: Calculated BalanceNum=${balanceNum}, BalanceText=${balanceText}`);
             } else if (totalPaid > 0) {
                 balanceText = `(Paid: ${formatCurrency(totalPaid)})`;
-                balanceNum = -totalPaid; # Treat as credit balance numerically
+                balanceNum = -totalPaid; // Treat as credit balance numerically
                 console.log(`_BalanceCalc: Partial Balance: Paid=${totalPaid}`);
             } else {
                  console.log("_BalanceCalc: No orders or payments found, balance N/A.");
@@ -363,11 +366,11 @@ async function fetchAndDisplayCustomerDetails(customerId) {
         } catch (calcError) {
             console.error("Error calculating balance:", calcError);
             balanceText = 'Error';
-            balanceNum = NaN; # Ensure it's NaN on error
+            balanceNum = NaN; // Ensure it's NaN on error
         }
-        # ----- >>> BALANCE CALCULATION END <<< -----
+        // ----- >>> BALANCE CALCULATION END <<< -----
 
-        # Update Balance Display (Final)
+        // Update Balance Display (Final)
         if (customerBalanceArea) {
             customerCurrentBalanceSpan.textContent = balanceText;
             customerCurrentBalanceSpan.classList.remove('positive-balance', 'negative-balance');
@@ -383,31 +386,32 @@ async function fetchAndDisplayCustomerDetails(customerId) {
                     customerCurrentBalanceSpan.title = `Balance: ₹0.00`;
                 }
             } else {
-                 customerCurrentBalanceSpan.title = `Balance: ${balanceText}`; # e.g., Error or N/A
+                 customerCurrentBalanceSpan.title = `Balance: ${balanceText}`; // e.g., Error or N/A
             }
-            customerBalanceArea.style.display = 'block'; # Ensure it's visible
+            customerBalanceArea.style.display = 'block'; // Ensure it's visible
         }
 
-        # Update Account Link
+        // Update Account Link
         if (viewCustomerAccountLink && customerAccountLinkArea) {
             viewCustomerAccountLink.href = `customer_account_detail.html?id=${encodeURIComponent(customerId)}`;
             customerAccountLinkArea.style.display = 'block';
         }
 
-        # Update Credit Limit Check
-        checkCreditLimit(balanceNum); # Pass numeric balance
+        // Update Credit Limit Check
+        checkCreditLimit(balanceNum); // Pass numeric balance
 
     } catch (e) {
         console.error("Error in fetchAndDisplayCustomerDetails:", e);
-        resetCustomerSelectionUI(); # Reset UI on error
+        resetCustomerSelectionUI(); // Reset UI on error
     }
 }
-function resetCustomerSelectionUI(clearInputs = true) { console.log("Resetting customer UI. Clear inputs:", clearInputs); # selectedCustomerId = null; # Keep selectedCustomerId unless explicitly cleared
- selectedCustomerData = null; # Clear detailed data if (selectedCustomerIdInput && clearInputs) selectedCustomerIdInput.value = ''; # Clear hidden only if clearing inputs
- if (customerAccountLinkArea) customerAccountLinkArea.style.display = 'none'; if (customerBalanceArea) customerBalanceArea.style.display = 'none'; if (customerCurrentBalanceSpan) customerCurrentBalanceSpan.textContent = ''; if (creditLimitWarningDiv) creditLimitWarningDiv.style.display = 'none'; if (clearInputs) { if(customerNameInput) customerNameInput.value = ''; if(customerWhatsAppInput) customerWhatsAppInput.value = ''; if(customerAddressInput) customerAddressInput.value = ''; if(customerContactInput) customerContactInput.value = ''; selectedCustomerId = null; # Explicitly clear ID only when clearing inputs
+function resetCustomerSelectionUI(clearInputs = true) { console.log("Resetting customer UI. Clear inputs:", clearInputs); // selectedCustomerId = null; // Keep selectedCustomerId unless explicitly cleared
+ selectedCustomerData = null; // Clear detailed data
+ if (selectedCustomerIdInput && clearInputs) selectedCustomerIdInput.value = ''; // Clear hidden only if clearing inputs
+ if (customerAccountLinkArea) customerAccountLinkArea.style.display = 'none'; if (customerBalanceArea) customerBalanceArea.style.display = 'none'; if (customerCurrentBalanceSpan) customerCurrentBalanceSpan.textContent = ''; if (creditLimitWarningDiv) creditLimitWarningDiv.style.display = 'none'; if (clearInputs) { if(customerNameInput) customerNameInput.value = ''; if(customerWhatsAppInput) customerWhatsAppInput.value = ''; if(customerAddressInput) customerAddressInput.value = ''; if(customerContactInput) customerContactInput.value = ''; selectedCustomerId = null; // Explicitly clear ID only when clearing inputs
  } }
 
-# --- Credit Limit Check ---
+// --- Credit Limit Check ---
 function checkCreditLimit(currentBalanceNum = NaN) {
     if (!selectedCustomerData) {
          if(creditLimitWarningDiv) creditLimitWarningDiv.style.display = 'none';
@@ -442,7 +446,7 @@ function checkCreditLimit(currentBalanceNum = NaN) {
 }
 
 
-# --- Product Autocomplete ---
+// --- Product Autocomplete ---
 function getOrCreateProductSuggestionsDiv() {
     if (!productSuggestionsDiv) {
         productSuggestionsDiv = document.createElement('div');
@@ -517,7 +521,7 @@ function selectProductSuggestion(productData, inputElement) {
 }
 
 
-# --- Status Dropdown Handling ---
+// --- Status Dropdown Handling ---
 function updateStatusDropdownColor(statusValue) {
     if (!orderStatusSelect) return;
     statusList.forEach(status => {
@@ -536,7 +540,7 @@ function updateStatusDropdownColor(statusValue) {
     }
 }
 
-# --- Form Submit Handler ---
+// --- Form Submit Handler ---
 async function handleFormSubmit(event) {
     event.preventDefault();
     console.log("Submit initiated...");
@@ -552,29 +556,29 @@ async function handleFormSubmit(event) {
     try{
         const cFN=customerNameInput.value.trim();
         const cW=customerWhatsAppInput.value.trim();
-        let cId=selectedCustomerId; # Use the globally stored customer ID
+        let cId=selectedCustomerId; // Use the globally stored customer ID
 
         if(!cFN) throw new Error("Customer Name is required.");
         if(!cW) throw new Error("WhatsApp No is required.");
 
-        # --- >>> VALIDATION: Ensure Customer ID is present <<< ---
+        // --- >>> VALIDATION: Ensure Customer ID is present <<< ---
         if (!cId) {
             console.error("customerId is null or undefined before saving!");
             throw new Error("Customer is not selected or linked properly. Please search and select the customer again from the suggestions.");
         }
         console.log('Proceeding to save order with customerId:', cId);
-        # --- >>> END VALIDATION <<< ---
+        // --- >>> END VALIDATION <<< ---
 
-        # --- >>> Create customerDetails object (cD) <<< ---
+        // --- >>> Create customerDetails object (cD) <<< ---
         const cD={
             fullName:cFN,
             whatsappNo:cW,
             address:customerAddressInput.value.trim()||'',
             contactNo:customerContactInput.value.trim()||''
         };
-        # --- >>> ADD customerId to cD object <<< ---
+        // --- >>> ADD customerId to cD object <<< ---
         cD.customerId = cId;
-        # --- >>> END ADDING customerId <<< ---
+        // --- >>> END ADDING customerId <<< ---
 
         const oDV=orderDateInput.value;
         const dDV=deliveryDateInput.value||'';
@@ -601,7 +605,7 @@ async function handleFormSubmit(event) {
                   wI=row.querySelector('.width-input'),
                   hI=row.querySelector('.height-input');
 
-            const productId = row.dataset.productId || null; # Get stored productId
+            const productId = row.dataset.productId || null; // Get stored productId
 
             const pN=pNI?.value.trim(),
                   uT=uTS?.value,
@@ -610,7 +614,7 @@ async function handleFormSubmit(event) {
                   mR=parseFloat(rI?.dataset.minRate||-1);
 
             if(!pN){validItems=false;showFormError(`Item ${idx+1}: Product Name is required.`);pNI?.focus();return;}
-            if (!productId && !isEditMode) { # Only warn if creating new
+            if (!productId && !isEditMode) { // Only warn if creating new
                  console.warn(`Item ${idx+1} (${pN}): Product ID not found in row dataset. Saving without ID.`);
             }
             if(isNaN(q)||q<=0){validItems=false;showFormError(`Item ${idx+1}: A valid Quantity (positive number) is required.`);qI?.focus();return;}
@@ -620,7 +624,7 @@ async function handleFormSubmit(event) {
             }
 
             const iD={
-                productId: productId, # Save the productId
+                productId: productId, // Save the productId
                 productName:pN,
                 unitType:uT,
                 quantity:q,
@@ -651,11 +655,11 @@ async function handleFormSubmit(event) {
         cDA=Math.max(0,Math.min(cDA,subT));
         let fA=parseFloat((subT-cDA).toFixed(2)),aP=parseFloat(summaryAdvancePaymentInput?.value||0),tB=parseFloat((fA-aP).toFixed(2));
 
-        # --- >>> Final Payload <<< ---
+        // --- >>> Final Payload <<< ---
         const payload={
             orderId:oId,
-            # customerId:cId, # Root level customerId can be removed if always present in customerDetails
-            customerDetails:cD, # cD now contains customerId
+            // customerId:cId, // Root level customerId can be removed if always present in customerDetails
+            customerDetails:cD, // cD now contains customerId
             orderDate:Timestamp.fromDate(new Date(oDV + 'T00:00:00')),
             deliveryDate:dDV ? Timestamp.fromDate(new Date(dDV + 'T00:00:00')) : null,
             urgent:uV,
@@ -670,26 +674,26 @@ async function handleFormSubmit(event) {
             totalBalance:tB,
             updatedAt:Timestamp.now()
         };
-        # --- >>> End Payload <<< ---
+        // --- >>> End Payload <<< ---
 
         if(!isEditMode){
             payload.createdAt=Timestamp.now();
             payload.statusHistory = [{ status: sS, timestamp: Timestamp.now() }];
         } else if (currentOrderData && sS !== currentOrderData.status) {
-              # Ensure arrayUnion is available before using it
+              // Ensure arrayUnion is available before using it
              const historyUpdate = { status: sS, timestamp: Timestamp.now() };
              payload.statusHistory = typeof arrayUnion === 'function'
                  ? arrayUnion(historyUpdate)
                  : (currentOrderData.statusHistory || []).concat([historyUpdate]);
 
-             # If arrayUnion is not available (e.g., older SDK setup), handle potential duplicates manually if needed
+             // If arrayUnion is not available (e.g., older SDK setup), handle potential duplicates manually if needed
              if (typeof arrayUnion !== 'function' && currentOrderData.statusHistory) {
-                 # Basic check: don't add if the exact same status/timestamp exists (unlikely but possible)
+                 // Basic check: don't add if the exact same status/timestamp exists (unlikely but possible)
                  const exists = currentOrderData.statusHistory.some(entry =>
                      entry.status === historyUpdate.status && entry.timestamp.isEqual(historyUpdate.timestamp)
                  );
                  if (exists) {
-                    payload.statusHistory = currentOrderData.statusHistory; # Keep original
+                    payload.statusHistory = currentOrderData.statusHistory; // Keep original
                  }
              }
          }
@@ -712,20 +716,20 @@ async function handleFormSubmit(event) {
 
         alert(msg);
 
-        if(cD.whatsappNo){showWhatsAppReminder(cD,oId,deliveryDateInput.value);}else{if(!isEditMode)resetNewOrderForm(); else window.location.href = `order_history.html?openModalForId=${orderIdToEdit || ''}`; } # Redirect after edit, try opening modal
+        if(cD.whatsappNo){showWhatsAppReminder(cD,oId,deliveryDateInput.value);}else{if(!isEditMode)resetNewOrderForm(); else window.location.href = `order_history.html?openModalForId=${orderIdToEdit || ''}`; } // Redirect after edit, try opening modal
 
     } catch(error) {
         console.error("Form submission error:",error);
         showFormError("Error saving order: "+error.message);
     } finally {
-        # Ensure button is re-enabled regardless of success/error
+        // Ensure button is re-enabled regardless of success/error
         saveButton.disabled=false;
         if(saveButtonText) saveButtonText.textContent = originalButtonText; else saveButton.innerHTML = originalButtonHTML;
     }
 }
 
 
-# --- Reset Form ---
+// --- Reset Form ---
 function resetNewOrderForm() {
     console.log("Resetting form for new order.");
     orderForm.reset();
@@ -745,7 +749,7 @@ function resetNewOrderForm() {
     updateStatusDropdownColor(defaultStatus);
     resetCustomerSelectionUI(true);
     updateOrderSummary();
-    handleAddItem(); # Add one blank row after reset
+    handleAddItem(); // Add one blank row after reset
     showFormError('');
     hideProductSuggestions();
     if(customerSuggestionsNameBox) hideSuggestionBox(customerSuggestionsNameBox);
@@ -753,7 +757,7 @@ function resetNewOrderForm() {
     window.scrollTo(0, 0);
 }
 
-# --- WhatsApp Reminder Functions ---
+// --- WhatsApp Reminder Functions ---
 function showWhatsAppReminder(customer, orderId, deliveryDateStr) {
     if (!whatsappReminderPopup || !whatsappMsgPreview || !whatsappSendLink) {
         console.warn("WhatsApp popup elements not found.");
@@ -779,16 +783,16 @@ function showWhatsAppReminder(customer, orderId, deliveryDateStr) {
     const wUrl = `https://wa.me/91${cNum}?text=${eM}`;
     whatsappSendLink.href = wUrl;
 
-    # Ensure the link is clickable initially
+    // Ensure the link is clickable initially
     whatsappSendLink.style.pointerEvents = 'auto';
     whatsappSendLink.style.opacity = '1';
 
     const redirectUrl = isEditMode ? `order_history.html?openModalForId=${orderIdToEdit || ''}` : 'new_order.html';
     const delayMilliseconds = 1000; // 1 सेकंड का विलंब (1000ms)
 
-    # --- >>> START OF CHANGES <<< ---
+    // --- >>> START OF CHANGES <<< ---
 
-    # Send link click behavior: Delay redirection
+    // Send link click behavior: Delay redirection
     whatsappSendLink.onclick = (event) => {
         console.log("WhatsApp send link clicked. Initiating delay...");
         // Prevent default link behavior if needed, though target='_blank' handles new tab opening
@@ -808,14 +812,14 @@ function showWhatsAppReminder(customer, orderId, deliveryDateStr) {
         // The 'href' and 'target="_blank"' on the <a> tag will still open WhatsApp immediately
     };
 
-    # Close button behavior: Redirect immediately
+    // Close button behavior: Redirect immediately
     popupCloseBtn.onclick = () => {
         console.log("Popup close button clicked. Redirecting immediately.");
         window.location.href = redirectUrl;
         closeWhatsAppPopup(); // Close the popup explicitly
     };
 
-    # Overlay click behavior: Redirect immediately
+    // Overlay click behavior: Redirect immediately
     whatsappReminderPopup.onclick = (event) => {
         if (event.target === whatsappReminderPopup) {
             console.log("Popup overlay clicked. Redirecting immediately.");
@@ -824,7 +828,7 @@ function showWhatsAppReminder(customer, orderId, deliveryDateStr) {
         }
     };
 
-    # --- >>> END OF CHANGES <<< ---
+    // --- >>> END OF CHANGES <<< ---
 
     whatsappReminderPopup.classList.add('active');
 }
@@ -845,7 +849,7 @@ function closeWhatsAppPopup() {
 }
 
 
-# ----- Balance Calculation Helper Functions -----
+// ----- Balance Calculation Helper Functions -----
 
 async function loadPaymentTotals_NewOrder(customerId) {
     console.log(`_newOrder: Loading payment total for customer: ${customerId}`);
@@ -856,7 +860,7 @@ async function loadPaymentTotals_NewOrder(customerId) {
     }
     try {
         const paymentsRef = collection(db, "payments");
-        # --- >>> Potential Index Issue: Check if 'customerId' index exists for 'payments' collection <<< ---
+        // --- >>> Potential Index Issue: Check if 'customerId' index exists for 'payments' collection <<< ---
         const q = query(paymentsRef, where("customerId", "==", customerId));
         const querySnapshot = await getDocs(q);
         querySnapshot.forEach(doc => {
@@ -868,9 +872,9 @@ async function loadPaymentTotals_NewOrder(customerId) {
         console.error("_newOrder: Error loading payment total:", error);
          if (error.message.includes("indexes are required")) {
             console.error("_newOrder: Firestore index missing for payments collection on 'customerId'.");
-            # Optionally show a non-blocking warning to the user or log persistently
+            // Optionally show a non-blocking warning to the user or log persistently
         }
-        return 0; # Return 0 on error to avoid breaking calculations
+        return 0; // Return 0 on error to avoid breaking calculations
     }
 }
 
@@ -884,10 +888,10 @@ async function loadOrderTotals_NewOrder(customerId) {
     }
     try {
         const ordersRef = collection(db, "orders");
-         # --- >>> Potential Index Issue: Check if 'customerId' index exists for 'orders' collection <<< ---
-        # Using customerDetails.customerId for query might be more reliable if root customerId isn't always set
-        # const q = query(ordersRef, where("customerDetails.customerId", "==", customerId));
-        const q = query(ordersRef, where("customerId", "==", customerId)); # Using root level for now
+         // --- >>> Potential Index Issue: Check if 'customerId' index exists for 'orders' collection <<< ---
+        // Using customerDetails.customerId for query might be more reliable if root customerId isn't always set
+        // const q = query(ordersRef, where("customerDetails.customerId", "==", customerId));
+        const q = query(ordersRef, where("customerId", "==", customerId)); // Using root level for now
         const querySnapshot = await getDocs(q);
         querySnapshot.forEach(doc => {
             foundOrders = true;
@@ -895,16 +899,16 @@ async function loadOrderTotals_NewOrder(customerId) {
         });
 
         console.log(`_newOrder: Total Order Value calculated: ${totalOrderValue}`);
-        return foundOrders ? totalOrderValue : 'N/A'; # Return 'N/A' if no orders found, 0 otherwise
+        return foundOrders ? totalOrderValue : 'N/A'; // Return 'N/A' if no orders found, 0 otherwise
     } catch (error) {
         console.error("_newOrder: Error loading order total value:", error);
         if (error.message.includes("indexes are required")) {
              console.error("_newOrder: Firestore index missing for orders collection on 'customerId'.");
-             # Optionally show a non-blocking warning
+             // Optionally show a non-blocking warning
         }
-        return 'N/A'; # Return 'N/A' on error
+        return 'N/A'; // Return 'N/A' on error
     }
 }
 
-# --- Log that the script finished loading ---
-console.log("new_order.js script loaded (v2.6 - WhatsApp Send Delay)."); # Updated version log
+// --- Log that the script finished loading ---
+console.log("new_order.js script loaded (v2.6 - WhatsApp Send Delay)."); // Updated version log
