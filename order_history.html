@@ -12,14 +12,12 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" integrity="sha512-9usAa10IRO0HhonpyAIVpjrylPvoDwiPUiKdWk5t3PyolY1cOd4DSE0Ga+ri4AuTroPR5aQvXU9xC6qOPnzFeg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
 
     <script type="module">
-        // Import Firebase services
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-        import { getFirestore, collection, doc, deleteDoc, updateDoc, onSnapshot, query, orderBy, Timestamp, arrayUnion, writeBatch } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+        import { getFirestore, collection, doc, getDoc, deleteDoc, updateDoc, onSnapshot, query, orderBy, Timestamp, arrayUnion, writeBatch, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-        // **** Firebase कॉन्फ़िगरेशन ****
          const firebaseConfig = {
-           apiKey: "AIzaSyBQj5rQmE77kKKGYixP8y3Hcimz8tiAqzQ", // ** सुरक्षा के लिए इसे सीधे कोड में न रखें **
+           apiKey: "AIzaSyBQj5rQmE77kKKGYixP8y3Hcimz8tiAqzQ",
            authDomain: "madhav-multyprint.firebaseapp.com",
            projectId: "madhav-multyprint",
            storageBucket: "madhav-multyprint.appspot.com",
@@ -47,6 +45,7 @@
              window.auth = auth;
              window.collection = collection;
              window.doc = doc;
+             window.getDoc = getDoc;
              window.deleteDoc = deleteDoc;
              window.updateDoc = updateDoc;
              window.onSnapshot = onSnapshot;
@@ -55,8 +54,8 @@
              window.Timestamp = Timestamp;
              window.arrayUnion = arrayUnion;
              window.writeBatch = writeBatch;
+             window.serverTimestamp = serverTimestamp;
 
-             // ** प्रमाणीकरण जांच **
              onAuthStateChanged(auth, (user) => {
                  const currentPage = window.location.pathname.split('/').pop() || 'index.html';
                  if (!user && currentPage.toLowerCase() !== 'login.html') {
@@ -87,8 +86,12 @@
         </div>
 
         <div class="actions-bar">
+             <a href="new_order.html" class="button add-new-button"><i class="fas fa-plus"></i> New Order</a>
+             <button id="newCustomerBtn" class="button info-button"><i class="fas fa-user-plus"></i> New Customer</button>
+             <a href="new_po.html" class="button primary-button"><i class="fas fa-file-alt"></i> New PO</a>
+             <button id="paymentReceivedBtn" class="button success-button"><i class="fas fa-dollar-sign"></i> Payment Received</button>
+             <button id="customerPanelBtn" class="button secondary-button"><i class="fas fa-users"></i> Customers</button>
              <button id="exportCsvBtn" class="button export-button"><i class="fas fa-file-csv"></i> Export to CSV</button>
-             <a href="new_order.html" class="button add-new-button"><i class="fas fa-plus"></i> Add New Order</a>
         </div>
 
          <div class="filter-bar">
@@ -162,11 +165,15 @@
                         <th>Delivery Date</th>
                         <th>Priority</th>
                          <th>Status</th>
-                        <th>Action</th> <th>Send Wtsp</th> </tr>
+                         <th>PO Info</th>
+                        <th>Action</th>
+                        <th>Send Wtsp</th>
+                    </tr>
                 </thead>
                  <tbody id="orderTableBody">
                     <tr>
-                        <td colspan="10" id="loadingMessage">Loading orders...</td> </tr>
+                        <td colspan="11" id="loadingMessage">Loading orders...</td>
+                    </tr>
                 </tbody>
             </table>
         </div>
@@ -182,40 +189,73 @@
                 <div id="statusCountsReport"><p>Loading report...</p></div>
             </div>
         </div>
+    </div>
 
-    </div> <div id="detailsModal" class="modal">
+    <div id="detailsModal" class="modal modal-lg">
         <div class="modal-content">
             <span class="close-btn" id="closeDetailsModal" title="Close">&times;</span>
             <h2>Order Details & Actions</h2>
             <input type="hidden" id="modalOrderId">
-            <div class="modal-info">
-                  <p><strong>Order ID:</strong> <span id="modalDisplayOrderId"></span></p>
-                 <p><strong>Customer:</strong> <span id="modalCustomerName"></span></p>
-                 <p><strong>WhatsApp:</strong> <span id="modalCustomerWhatsApp"></span></p>
-             </div>
-            <div class="modal-section" id="modalProductSection">
-                <label>Products:</label>
-                <div id="modalProductList"><p>Loading...</p></div>
-             </div>
-             <div class="modal-section" id="modalStatusHistorySection">
-                <label>Status History:</label>
-                <div id="modalStatusHistoryList"><p>Loading history...</p></div>
-             </div>
-            <div class="modal-section">
-                 <label for="modalOrderStatus">Update Status:</label>
-                 <select id="modalOrderStatus">
-                     <option value="Order Received">Order Received</option>
-                     <option value="Designing">Designing</option>
-                     <option value="Verification">Verification</option>
-                     <option value="Design Approved">Design Approved</option>
-                     <option value="Printing">Printing</option>
-                       <option value="Ready for Working">Ready for Working</option>
-                       <option value="Delivered">Delivered</option>
-                     <option value="Completed">Completed</option>
-                 </select>
-                  <button id="modalUpdateStatusBtn" class="button update-status-button"><i class="fas fa-sync-alt"></i> Update Status</button>
+             <div class="modal-grid">
+                <div class="modal-section modal-customer-info">
+                    <h4>Customer Details</h4>
+                    <p><strong>Order ID:</strong> <span id="modalDisplayOrderId"></span></p>
+                    <p><strong>Customer:</strong> <span id="modalCustomerName"></span></p>
+                    <p><strong>WhatsApp:</strong> <span id="modalCustomerWhatsApp"></span></p>
+                    <p><strong>Contact:</strong> <span id="modalCustomerContact"></span></p>
+                    <p><strong>Address:</strong> <span id="modalCustomerAddress"></span></p>
+                </div>
+
+                <div class="modal-section modal-order-info">
+                     <h4>Order Info</h4>
+                     <p><strong>Order Date:</strong> <span id="modalOrderDate"></span></p>
+                     <p><strong>Delivery Date:</strong> <span id="modalDeliveryDate"></span></p>
+                     <p><strong>Priority:</strong> <span id="modalPriority"></span></p>
+                     <p><strong>Remarks:</strong> <span id="modalRemarks"></span></p>
+                </div>
+
+                <div class="modal-section modal-product-info">
+                     <h4>Products</h4>
+                    <div id="modalProductList"><p>Loading...</p></div>
+                 </div>
+
+                 <div class="modal-section modal-status-info">
+                     <h4>Status & Tracking</h4>
+                     <label for="modalOrderStatus">Current Status:</label>
+                     <div class="status-update-container">
+                         <select id="modalOrderStatus">
+                             <option value="Order Received">Order Received</option>
+                             <option value="Designing">Designing</option>
+                             <option value="Verification">Verification</option>
+                             <option value="Design Approved">Design Approved</option>
+                             <option value="Printing">Printing</option>
+                             <option value="Ready for Working">Ready for Working</option>
+                             <option value="Delivered">Delivered</option>
+                             <option value="Completed">Completed</option>
+                         </select>
+                         <button id="modalUpdateStatusBtn" class="button update-status-button"><i class="fas fa-sync-alt"></i> Update Status</button>
+                     </div>
+                     <label style="margin-top: 15px;">Status History:</label>
+                     <div id="modalStatusHistoryList"><p>Loading history...</p></div>
+                 </div>
+
+                 <div class="modal-section modal-account-info">
+                    <h4>Account Data</h4>
+                    <p><strong>Total Amount:</strong> <span id="modalTotalAmount">Loading...</span></p>
+                    <p><strong>Amount Paid:</strong> <span id="modalAmountPaid">Loading...</span></p>
+                    <p><strong>Balance Due:</strong> <span id="modalBalanceDue">Loading...</span></p>
+                    <p><strong>Payment Status:</strong> <span id="modalPaymentStatus">Loading...</span></p>
+                     <button id="addPaymentBtn" class="button add-payment-button" style="margin-top: 10px;"><i class="fas fa-plus"></i> Add Payment</button>
+                 </div>
+
+                <div class="modal-section modal-po-info">
+                    <h4>Purchase Orders</h4>
+                    <div id="modalPOList"><p>Loading POs...</p></div>
+                    <button id="modalCreatePOBtn" class="button create-po-button" style="margin-top: 10px;"><i class="fas fa-file-alt"></i> Create New PO</button>
+                </div>
             </div>
-            <div class="modal-section modal-actions">
+
+            <div class="modal-actions main-actions">
                   <button id="modalEditFullBtn" class="button edit-full-button"><i class="fas fa-edit"></i> Edit Full Order</button>
                   <button id="modalDeleteBtn" class="button delete-button"><i class="fas fa-trash-alt"></i> Delete Order</button>
              </div>
@@ -237,8 +277,7 @@
             <span class="close-btn" id="closeBulkDeleteModal" title="Close">&times;</span>
             <h2><i class="fas fa-exclamation-triangle warning-icon"></i> Confirm Deletion</h2>
             <p>You are about to permanently delete the following <strong id="bulkDeleteCount">0</strong> order(s):</p>
-            <ul id="bulkDeleteOrderList" class="order-list-preview">
-                 {/* चयनित ऑर्डर यहाँ JS द्वारा डाले जाएंगे */} </ul>
+            <ul id="bulkDeleteOrderList" class="order-list-preview"></ul>
             <p class="warning-message">This action cannot be undone.</p>
             <div class="confirmation-check">
                 <input type="checkbox" id="confirmDeleteCheckbox">
@@ -251,7 +290,60 @@
         </div>
     </div>
 
+    <div id="poItemSelectionModal" class="modal modal-lg">
+        <div class="modal-content">
+            <span class="close-btn" id="closePoItemSelectionModal" title="Close">&times;</span>
+            <h2>Select Items for Purchase Order</h2>
+            <input type="hidden" id="poItemSelectionOrderId">
+            <p>Select the items from Order #<strong id="poItemSelectionDisplayOrderId"></strong> to include in the new Purchase Order.</p>
+            <div class="form-group">
+                <label for="poSupplierSearchInput">Select Supplier *</label>
+                <input type="text" id="poSupplierSearchInput" placeholder="Type to search supplier..." required autocomplete="off">
+                <input type="hidden" id="poSelectedSupplierId">
+                <input type="hidden" id="poSelectedSupplierName">
+                <div id="poSupplierSuggestions" class="suggestions-list"></div>
+            </div>
+             <div id="poItemSelectionList" class="item-selection-list">
+                <p>Loading items...</p>
+            </div>
+            <div class="modal-actions">
+                <button id="cancelPoItemSelectionBtn" type="button" class="button cancel-button">Cancel</button>
+                <button id="proceedToCreatePOBtn" type="button" class="button save-button" disabled><i class="fas fa-arrow-right"></i> Proceed to Create PO</button>
+            </div>
+             <div id="poItemSelectionError" class="error-message" style="display: none;"></div>
+        </div>
+    </div>
+
+     <div id="poDetailsPopup" class="modal modal-lg">
+         <div class="modal-content">
+             <span class="close-btn" id="closePoDetailsPopupBtn" title="Close">&times;</span>
+             <div id="poDetailsPopupContent">
+                 <p>Loading PO details...</p>
+             </div>
+             <div class="modal-actions">
+                 <button type="button" id="printPoDetailsPopupBtn" class="button print-button"><i class="fas fa-print"></i> Print</button>
+                 <button type="button" id="closePoDetailsPopupBottomBtn" class="button cancel-button">Close</button>
+             </div>
+         </div>
+     </div>
+
+     <div id="readOnlyOrderModal" class="modal modal-xl">
+         <div class="modal-content">
+             <span class="close-btn" id="closeReadOnlyOrderModal" title="Close">&times;</span>
+             <h2 id="readOnlyOrderModalTitle">Order Details</h2>
+             <div id="readOnlyOrderModalContent" class="read-only-content-area">
+                <p>Loading details...</p>
+             </div>
+             <div class="modal-actions">
+                 <button type="button" id="closeReadOnlyOrderModalBottomBtn" class="button cancel-button">Close</button>
+             </div>
+         </div>
+     </div>
+
+
     <script src="js/order_history.js" type="module" defer></script>
+     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
 
 </body>
 </html>
