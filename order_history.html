@@ -8,16 +8,16 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="css/order_history.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" integrity="sha512-9usAa10IRO0HhonpyAIVpjrylPvoDwiPUiKdWk5t3PyolY1cOd4DSE0Ga+ri4AuTroPR5aQvXU9xC6qOPnzFeg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link rel="stylesheet" href="css/order_history.css"> <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" integrity="sha512-9usAa10IRO0HhonpyAIVpjrylPvoDwiPUiKdWk5t3PyolY1cOd4DSE0Ga+ri4AuTroPR5aQvXU9xC6qOPnzFeg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-        import { getFirestore, collection, doc, getDoc, deleteDoc, updateDoc, onSnapshot, query, orderBy, where, Timestamp, arrayUnion, writeBatch, serverTimestamp, limit, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js"; // Added getDocs
+        import { getFirestore, collection, doc, getDoc, deleteDoc, updateDoc, onSnapshot, query, orderBy, where, Timestamp, arrayUnion, writeBatch, serverTimestamp, limit, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
          const firebaseConfig = {
-           apiKey: "AIzaSyBQj5rQmE77kKKGYixP8y3Hcimz8tiAqzQ",
+           // Your Firebase config details remain here
+           apiKey: "AIzaSyBQj5rQmE77kKKGYixP8y3Hcimz8tiAqzQ", // Example, use your actual key
            authDomain: "madhav-multyprint.firebaseapp.com",
            projectId: "madhav-multyprint",
            storageBucket: "madhav-multyprint.appspot.com",
@@ -41,6 +41,7 @@
              }
              auth = getAuth(app);
              db = getFirestore(app);
+             // Make Firebase services globally accessible for order_history.js
              window.db = db;
              window.auth = auth;
              window.collection = collection;
@@ -51,15 +52,16 @@
              window.onSnapshot = onSnapshot;
              window.query = query;
              window.orderBy = orderBy;
-             window.where = where; // Make where global
+             window.where = where;
              window.Timestamp = Timestamp;
              window.arrayUnion = arrayUnion;
              window.writeBatch = writeBatch;
              window.serverTimestamp = serverTimestamp;
-             window.limit = limit; // Make limit global
-             window.addDoc = addDoc; // Make addDoc global
-             window.getDocs = getDocs; // Make getDocs global
+             window.limit = limit;
+             window.addDoc = addDoc;
+             window.getDocs = getDocs;
 
+             // Authentication check
              onAuthStateChanged(auth, (user) => {
                  const currentPage = window.location.pathname.split('/').pop() || 'index.html';
                  if (!user && currentPage.toLowerCase() !== 'login.html') {
@@ -95,16 +97,16 @@
              <a href="new_po.html" class="button primary-button"><i class="fas fa-file-alt"></i> New PO</a>
              <button id="paymentReceivedBtn" class="button success-button"><i class="fas fa-dollar-sign"></i> Payment Received</button>
              <button id="exportCsvBtn" class="button export-button"><i class="fas fa-file-csv"></i> Export to CSV</button>
-             </div>
+        </div>
 
-         <div class="filter-bar">
+        <div class="filter-bar">
             <div class="filter-group">
                 <label for="filterDate"><i class="fas fa-calendar-alt"></i> Order Date:</label>
                 <input type="date" id="filterDate">
             </div>
             <div class="filter-group">
                 <label for="filterSearch"><i class="fas fa-search"></i> Search:</label>
-                <input type="text" id="filterSearch" placeholder="Order ID, Cust. Name, Product...">
+                <input type="text" id="filterSearch" placeholder="Order ID, Cust. Name, Item...">
             </div>
             <div class="filter-group">
                 <label for="filterStatus"><i class="fas fa-flag"></i> Status:</label>
@@ -119,8 +121,8 @@
                     <option value="Delivered">Delivered</option>
                     <option value="Completed">Completed</option>
                 </select>
-                 </div>
-              <div class="filter-group filter-sort">
+            </div>
+            <div class="filter-group filter-sort">
                 <label for="sort-orders"><i class="fas fa-sort"></i> Sort by:</label>
                 <select id="sort-orders">
                     <option value="createdAt_desc">Newest First (Created)</option>
@@ -222,7 +224,7 @@
                     <div class="modal-section modal-status-info">
                         <h4>Status & Tracking</h4>
                         <label for="modalOrderStatus">Current Status:</label>
-                        <div class="status-update-container">
+                        <div class="status-update-inline">
                             <select id="modalOrderStatus">
                                 <option value="Order Received">Order Received</option>
                                 <option value="Designing">Designing</option>
@@ -239,25 +241,19 @@
                         <div id="modalStatusHistoryList"><p>Loading history...</p></div>
                     </div>
                 </div> <div class="modal-row modal-row-2">
-                     <div class="modal-section modal-account-info">
+                     <div class="modal-section modal-account-info full-width-section">
                        <h4>Account Data</h4>
-                       <div class="account-data-grid">
-                          <div class="account-data-pair">
-                              <p><strong>Total Amount:</strong> <span id="modalTotalAmount">Loading...</span></p>
-                              <p><strong>Amount Paid:</strong> <span id="modalAmountPaid">Loading...</span></p>
-                          </div>
-                          <div class="account-data-pair">
-                              <p><strong>Balance Due:</strong> <span id="modalBalanceDue">Loading...</span></p>
-                              <p><strong>Payment Status:</strong> <span id="modalPaymentStatus">Loading...</span></p>
-                          </div>
-                       </div>
+                       <p><strong>Total Amount:</strong> <span id="modalTotalAmount">Loading...</span></p>
+                       <p><strong>Amount Paid:</strong> <span id="modalAmountPaid">Loading...</span></p>
+                       <p><strong>Balance Due:</strong> <span id="modalBalanceDue">Loading...</span></p>
+                       <p><strong>Payment Status:</strong> <span id="modalPaymentStatus">Loading...</span></p>
                     </div>
                 </div> <div class="modal-row modal-row-3">
-                    <div class="modal-section modal-product-info">
+                    <div class="modal-section modal-product-info full-width-section">
                         <h4>Items</h4> <div id="modalProductList"><p>Loading...</p></div>
                     </div>
                 </div> <div class="modal-row modal-row-4">
-                    <div class="modal-section modal-po-info">
+                    <div class="modal-section modal-po-info full-width-section">
                         <h4>Purchase Orders</h4>
                         <div id="modalPOList"><p>Loading POs...</p></div>
                     </div>
@@ -347,8 +343,7 @@
          </div>
      </div>
 
-    <script src="js/order_history.js" type="module" defer></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="js/order_history.js" type="module" defer></script> <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
 
 </body>
