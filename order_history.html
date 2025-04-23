@@ -198,73 +198,71 @@
             <span class="close-btn" id="closeDetailsModal" title="Close">&times;</span>
             <h2>Order Details & Actions</h2>
             <input type="hidden" id="modalOrderId">
-             <div class="modal-grid">
-                <div class="modal-section modal-customer-info">
-                    <h4>Customer Details</h4>
-                    <p><strong>Order ID:</strong> <span id="modalDisplayOrderId"></span></p>
-                    <p><strong>Customer:</strong> <span id="modalCustomerName"></span></p>
-                    <p><strong>WhatsApp:</strong> <span id="modalCustomerWhatsApp"></span></p>
-                    <p><strong>Contact:</strong> <span id="modalCustomerContact"></span></p>
-                    <p><strong>Address:</strong> <span id="modalCustomerAddress"></span></p>
-                </div>
 
-                <div class="modal-section modal-order-info">
-                     <h4>Order Info</h4>
-                     <p><strong>Order Date:</strong> <span id="modalOrderDate"></span></p>
-                     <p><strong>Delivery Date:</strong> <span id="modalDeliveryDate"></span></p>
-                     <p><strong>Priority:</strong> <span id="modalPriority"></span></p>
-                     <p><strong>Remarks:</strong> <span id="modalRemarks"></span></p>
-                </div>
+            <div class="modal-grid-container"> <div class="modal-row modal-row-1">
+                    <div class="modal-section modal-customer-info">
+                        <h4>Customer Details</h4>
+                        <p><strong>Order ID:</strong> <span id="modalDisplayOrderId"></span></p>
+                        <p><strong>Customer:</strong> <span id="modalCustomerName"></span></p>
+                        <p><strong>WhatsApp:</strong> <span id="modalCustomerWhatsApp"></span></p>
+                        <p><strong>Contact:</strong> <span id="modalCustomerContact"></span></p>
+                        <p><strong>Address:</strong> <span id="modalCustomerAddress"></span></p>
+                    </div>
 
-                <div class="modal-section modal-product-info">
-                     <h4>Products</h4>
-                    <div id="modalProductList"><p>Loading...</p></div>
-                 </div>
+                    <div class="modal-section modal-order-info">
+                        <h4>Order Info</h4>
+                        <p><strong>Order Date:</strong> <span id="modalOrderDate"></span></p>
+                        <p><strong>Delivery Date:</strong> <span id="modalDeliveryDate"></span></p>
+                        <p><strong>Priority:</strong> <span id="modalPriority"></span></p>
+                        <p><strong>Remarks:</strong> <span id="modalRemarks"></span></p>
+                    </div>
 
-                 <div class="modal-section modal-status-info">
-                     <h4>Status & Tracking</h4>
-                     <label for="modalOrderStatus">Current Status:</label>
-                     <div class="status-update-container">
-                         <select id="modalOrderStatus">
-                             <option value="Order Received">Order Received</option>
-                             <option value="Designing">Designing</option>
-                             <option value="Verification">Verification</option>
-                             <option value="Design Approved">Design Approved</option>
-                             <option value="Printing">Printing</option>
-                             <option value="Ready for Working">Ready for Working</option>
-                             <option value="Delivered">Delivered</option>
-                             <option value="Completed">Completed</option>
-                         </select>
-                         <button id="modalUpdateStatusBtn" class="button update-status-button"><i class="fas fa-sync-alt"></i> Update Status</button>
-                     </div>
-                     <label style="margin-top: 15px;">Status History:</label>
-                     <div id="modalStatusHistoryList"><p>Loading history...</p></div>
-                 </div>
+                    <div class="modal-section modal-status-info">
+                        <h4>Status & Tracking</h4>
+                        <label for="modalOrderStatus">Current Status:</label>
+                        <div class="status-update-container">
+                            <select id="modalOrderStatus">
+                                <option value="Order Received">Order Received</option>
+                                <option value="Designing">Designing</option>
+                                <option value="Verification">Verification</option>
+                                <option value="Design Approved">Design Approved</option>
+                                <option value="Printing">Printing</option>
+                                <option value="Ready for Working">Ready for Working</option>
+                                <option value="Delivered">Delivered</option>
+                                <option value="Completed">Completed</option>
+                            </select>
+                            <button id="modalUpdateStatusBtn" class="button update-status-button"><i class="fas fa-sync-alt"></i> Update Status</button>
+                        </div>
+                        <label style="margin-top: 15px;">Status History:</label>
+                        <div id="modalStatusHistoryList"><p>Loading history...</p></div>
+                    </div>
+                </div> <div class="modal-row modal-row-2">
+                    <div class="modal-section modal-product-info">
+                        <h4>Products</h4>
+                       <div id="modalProductList"><p>Loading...</p></div>
+                    </div>
 
-                 <div class="modal-section modal-account-info">
-                    <h4>Account Data</h4>
-                    <p><strong>Total Amount:</strong> <span id="modalTotalAmount">Loading...</span></p>
-                    <p><strong>Amount Paid:</strong> <span id="modalAmountPaid">Loading...</span></p>
-                    <p><strong>Balance Due:</strong> <span id="modalBalanceDue">Loading...</span></p>
-                    <p><strong>Payment Status:</strong> <span id="modalPaymentStatus">Loading...</span></p>
-                     <button id="addPaymentBtn" class="button add-payment-button" style="margin-top: 10px;"><i class="fas fa-plus"></i> Add Payment</button>
-                 </div>
-
-                <div class="modal-section modal-po-info">
-                    <h4>Purchase Orders</h4>
-                    <div id="modalPOList"><p>Loading POs...</p></div>
-                    <button id="modalCreatePOBtn" class="button create-po-button" style="margin-top: 10px;"><i class="fas fa-file-alt"></i> Create New PO</button>
-                </div>
-            </div>
-
-            <div class="modal-actions main-actions">
-                  <button id="modalEditFullBtn" class="button edit-full-button"><i class="fas fa-edit"></i> Edit Full Order</button>
+                    <div class="modal-section modal-account-info">
+                       <h4>Account Data</h4>
+                       <p><strong>Total Amount:</strong> <span id="modalTotalAmount">Loading...</span></p>
+                       <p><strong>Amount Paid:</strong> <span id="modalAmountPaid">Loading...</span></p>
+                       <p><strong>Balance Due:</strong> <span id="modalBalanceDue">Loading...</span></p>
+                       <p><strong>Payment Status:</strong> <span id="modalPaymentStatus">Loading...</span></p>
+                        </div>
+                </div> <div class="modal-row modal-row-3">
+                    <div class="modal-section modal-po-info">
+                        <h4>Purchase Orders</h4>
+                        <div id="modalPOList"><p>Loading POs...</p></div>
+                         </div>
+                </div> </div> <div class="modal-actions main-actions">
+                  <button id="addPaymentBtn" class="button add-payment-button"><i class="fas fa-plus"></i> Add Payment</button>
+                  <button id="modalCreatePOBtn" class="button create-po-button"><i class="fas fa-file-alt"></i> Create New PO</button>
                   <button id="modalDeleteBtn" class="button delete-button"><i class="fas fa-trash-alt"></i> Delete Order</button>
+                  <button id="modalEditFullBtn" class="button edit-full-button"><i class="fas fa-edit"></i> Edit Full Order</button>
              </div>
         </div>
     </div>
-
-     <div id="whatsapp-reminder-popup" class="popup-overlay">
+    <div id="whatsapp-reminder-popup" class="popup-overlay">
          <div class="popup-content">
             <button id="popup-close-btn" class="popup-close" title="Close">&times;</button>
             <h4 id="whatsapp-popup-title">Status Updated!</h4>

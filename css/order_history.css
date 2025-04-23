@@ -90,7 +90,7 @@ h1 { margin: 0; font-size: 1em; }
 .success-button:hover { background-color: #218838; }
 .secondary-button { background-color: var(--secondary-color); }
 .secondary-button:hover { background-color: #5a6268; }
-.update-status-button { background-color: var(--warning-color); color: #333; vertical-align: middle; padding: 8px 15px; height: 38px; border-radius: var(--border-radius); font-weight: 500; }
+.update-status-button { background-color: var(--warning-color); color: #333; vertical-align: middle; /* height and padding inherited from .button */ font-weight: 500; }
 .update-status-button:hover { background-color: #e0a800; }
 .edit-full-button { background-color: #5bc0de; color: white; }
 .edit-full-button:hover { background-color: #31b0d5; }
@@ -100,9 +100,20 @@ h1 { margin: 0; font-size: 1em; }
 .cancel-button:hover { background-color: #5a6268; }
 .print-button { background-color: var(--info-color); color: white; }
 .print-button:hover { background-color: #117a8b; }
-.add-payment-button { background-color: var(--success-color); font-size: 0.85em !important; height: 34px !important; padding: 6px 12px !important;}
+.add-payment-button {
+    background-color: var(--success-color);
+    /* Removed height: 34px !important; */
+    /* font-size and padding can be adjusted if needed, but height comes from .button */
+    font-size: 0.85em;
+    padding: 6px 12px; /* Adjusted padding might be needed if height changes appearance */
+}
 .add-payment-button:hover { background-color: #218838; }
-.create-po-button { background-color: var(--primary-color); font-size: 0.85em !important; height: 34px !important; padding: 6px 12px !important;}
+.create-po-button {
+    background-color: var(--primary-color);
+    /* Removed height: 34px !important; */
+    font-size: 0.85em;
+    padding: 6px 12px;
+}
 .create-po-button:hover { background-color: #004085; }
 .save-button { background-color: var(--success-color); color: white;}
 .save-button:hover { background-color: #218838; }
@@ -163,6 +174,8 @@ th.col-checkbox input, td.col-checkbox input { cursor: pointer; transform: scale
     text-align: center;
     min-width: auto; /* Override general button min-width */
     box-shadow: none;
+    /* Inherit height from itself, not .button, to avoid conflict */
+    height: 30px !important;
 }
 .po-info-cell .button.create-po-button.icon-only:hover {
     background-color: #218838; /* Darker green */
@@ -172,6 +185,7 @@ th.col-checkbox input, td.col-checkbox input { cursor: pointer; transform: scale
 .po-info-cell .button.create-po-button.icon-only i {
     margin-right: 0; /* Remove margin for icon */
 }
+
 
 /* --- Table Clickable Links --- */
 a.order-id-link, a.customer-name-link, a.view-po-details-link, a.see-more-link { color: var(--primary-color); text-decoration: none; cursor: pointer; font-weight: 500; }
@@ -195,7 +209,7 @@ mark { background-color: var(--highlight-color); padding: 0.1em 0.2em; border-ra
 .priority-no { color: var(--text-muted); }
 
 /* --- Table Action Buttons --- */
-.details-edit-button { background-color: var(--primary-color); color: white; padding: 5px 10px; font-size: 0.85em; border-radius: var(--border-radius); white-space: nowrap; box-shadow: none; height: auto; }
+.details-edit-button { background-color: var(--primary-color); color: white; padding: 5px 10px; font-size: 0.85em; border-radius: var(--border-radius); white-space: nowrap; box-shadow: none; height: auto; /* Let content define height or inherit from .button if needed */ }
 .details-edit-button:hover { background-color: #00418a; transform: none; box-shadow: none;}
 .whatsapp-button { background-color: #25d366; color: white; border: none; border-radius: 50%; width: 30px; height: 30px; font-size: 1em; text-align: center; cursor: pointer; padding: 0; display: inline-flex; align-items: center; justify-content: center; transition: background-color 0.2s ease; vertical-align: middle; box-shadow: none; }
 .whatsapp-button:hover { background-color: #1ebe57; transform: none; box-shadow: none;}
@@ -216,8 +230,8 @@ mark { background-color: var(--highlight-color); padding: 0.1em 0.2em; border-ra
 /* --- Modal Base Styles --- */
 .modal, .popup-overlay { display: none; position: fixed; z-index: 1050; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.65); align-items: center; justify-content: center; padding: 20px; box-sizing: border-box; }
 .modal.active, .popup-overlay.active { display: flex; }
-.modal-content { background-color: #fefefe; margin: auto; padding: 25px 30px; border: none; width: 95%; max-width: 650px; border-radius: var(--border-radius); position: relative; box-shadow: var(--box-shadow-lg); z-index: 1051; animation: popupFadeIn 0.3s ease-out; }
-.modal-content.modal-lg { max-width: 850px; }
+.modal-content { background-color: #fefefe; margin: auto; padding: 25px 30px; border: none; width: 95%; max-width: 850px; /* Adjusted default max-width for new layout */ border-radius: var(--border-radius); position: relative; box-shadow: var(--box-shadow-lg); z-index: 1051; animation: popupFadeIn 0.3s ease-out; display: flex; flex-direction: column; /* Make content flex column */ }
+.modal-content.modal-lg { max-width: 850px; } /* Keep or adjust as needed */
 .modal-content.modal-xl { max-width: 1100px; }
 .modal-content.small-modal { max-width: 550px; }
 .close-btn, #whatsapp-reminder-popup .popup-close { color: #aaa; position: absolute; top: 12px; right: 15px; font-size: 30px; font-weight: bold; cursor: pointer; line-height: 1; background: none; border: none; padding: 0; transition: color 0.2s ease; z-index: 1052; }
@@ -227,36 +241,147 @@ mark { background-color: var(--highlight-color); padding: 0.1em 0.2em; border-ra
 .error-message { color: var(--danger-color); background-color: #fdecea; border: 1px solid var(--danger-color); border-radius: var(--border-radius); padding: 10px 15px; font-weight: 500; text-align: center; margin-top: 15px; width: 100%; box-sizing: border-box; display: none; }
 
 /* --- Enhanced Details Modal Specific Styles (#detailsModal) --- */
-#detailsModal .modal-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px 30px; }
-#detailsModal .modal-section { margin-bottom: 0; padding-bottom: 0; border-bottom: none; }
-#detailsModal .modal-section h4 { margin-top: 0; margin-bottom: 15px; font-size: 1.1em; color: var(--primary-color); border-bottom: 1px solid #eee; padding-bottom: 8px; font-weight: 600; }
-#detailsModal .modal-section p, #detailsModal .modal-section label { margin-bottom: 10px; font-size: 0.95em; }
-#detailsModal .modal-section p strong { font-weight: 600; color: var(--text-color); min-width: 110px; display: inline-block; margin-right: 5px; }
-#detailsModal .status-update-container { display: flex; gap: 10px; align-items: center; }
-#detailsModal .status-update-container select { width: auto; flex-grow: 1; max-width: 300px; height: 38px; padding: 8px 12px; border: 1px solid #ced4da; border-radius: var(--border-radius); font-size: 0.9em; color: var(--text-color); }
-#modalProductList, #modalStatusHistoryList, #modalPOList { background-color: var(--light-bg); border: 1px solid #e9ecef; border-radius: var(--border-radius); padding: 12px 18px; max-height: 150px; overflow-y: auto; font-size: 0.9em; margin-top: 5px; }
-/* Added Scroll for Product List in Editable Modal */
-#modalProductList { max-height: 200px; overflow-y: auto; }
-#modalProductList ul, #modalStatusHistoryList ul, #modalPOList ul { list-style: none; padding: 0; margin: 0; }
-#modalProductList li, #modalStatusHistoryList li, #modalPOList li { margin-bottom: 8px; padding-bottom: 8px; border-bottom: 1px dotted #ccc; font-size: 0.95em; line-height: 1.4; }
-#modalProductList li:last-child, #modalStatusHistoryList li:last-child, #modalPOList li:last-child { margin-bottom: 0; padding-bottom: 0; border-bottom: none; }
-#modalStatusHistoryList li { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 5px; }
+/* Remove old grid style */
+/* #detailsModal .modal-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px 30px; } */
+
+/* New Styles for Rows and Sections */
+#detailsModal .modal-grid-container { /* Optional container */
+    display: flex;
+    flex-direction: column;
+    gap: 20px; /* Vertical gap between rows */
+    flex-grow: 1; /* Allow container to grow */
+    overflow-y: auto; /* Add scroll to container if content overflows */
+    padding-right: 5px; /* Space for scrollbar */
+    margin-bottom: 20px; /* Space before actions */
+}
+
+#detailsModal .modal-row {
+    display: flex;
+    gap: 25px; /* Horizontal gap between sections within a row */
+    width: 100%;
+}
+
+#detailsModal .modal-row-1 .modal-section {
+    flex: 1; /* Make all sections in row 1 equal width */
+    min-width: 0; /* Prevent flex items from overflowing */
+}
+
+#detailsModal .modal-row-2 .modal-section {
+    flex: 1; /* Make both sections in row 2 equal width */
+    min-width: 0;
+}
+
+#detailsModal .modal-row-3 .modal-section {
+    flex: 1; /* Make PO section take full width */
+}
+
+#detailsModal .modal-section {
+    margin-bottom: 0;
+    padding-bottom: 0;
+    border-bottom: none;
+    background-color: #fff; /* Ensure sections have background */
+    padding: 15px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    display: flex; /* Use flex for internal alignment */
+    flex-direction: column;
+}
+#detailsModal .modal-section h4 {
+    margin-top: 0;
+    margin-bottom: 15px;
+    font-size: 1.1em;
+    color: var(--primary-color);
+    border-bottom: 1px solid #eee;
+    padding-bottom: 8px;
+    font-weight: 600;
+    flex-shrink: 0; /* Prevent header shrinking */
+}
+#detailsModal .modal-section p,
+#detailsModal .modal-section label {
+    margin-bottom: 10px;
+    font-size: 0.95em;
+    flex-shrink: 0;
+}
+#detailsModal .modal-section p strong {
+    font-weight: 600;
+    color: var(--text-color);
+    min-width: 90px; /* Adjusted min-width */
+    display: inline-block;
+    margin-right: 5px;
+}
+
+#detailsModal .status-update-container {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    margin-top: auto; /* Push status update controls to bottom if section stretches */
+    padding-top: 10px; /* Add some space above */
+}
+
+#detailsModal .status-update-container select {
+    width: auto;
+    flex-grow: 1;
+    max-width: 300px;
+    height: 38px;
+    padding: 8px 12px;
+    border: 1px solid #ced4da;
+    border-radius: var(--border-radius);
+    font-size: 0.9em;
+    color: var(--text-color);
+}
+
+#modalProductList, #modalStatusHistoryList, #modalPOList {
+    background-color: var(--light-bg);
+    border: 1px solid #e9ecef;
+    border-radius: var(--border-radius);
+    padding: 12px 18px;
+    max-height: 180px; /* Consistent max-height */
+    overflow-y: auto;
+    font-size: 0.9em;
+    margin-top: 5px;
+    flex-grow: 1; /* Allow lists to grow within section */
+}
+
+#modalProductList ul, #modalStatusHistoryList ul, #modalPOList ul {
+    list-style: none; padding: 0; margin: 0;
+}
+#modalProductList li, #modalStatusHistoryList li, #modalPOList li {
+    margin-bottom: 8px;
+    padding-bottom: 8px;
+    border-bottom: 1px dotted #ccc;
+    font-size: 0.95em;
+    line-height: 1.4;
+}
+#modalProductList li:last-child, #modalStatusHistoryList li:last-child, #modalPOList li:last-child {
+    margin-bottom: 0; padding-bottom: 0; border-bottom: none;
+}
+#modalStatusHistoryList li {
+    display: flex; justify-content: space-between; flex-wrap: wrap; gap: 5px;
+}
 #modalStatusHistoryList .history-status { font-weight: 600; }
 #modalStatusHistoryList .history-time { color: var(--text-muted); font-size: 0.9em; white-space: nowrap; }
 .no-products, .no-history, .no-pos { color: var(--text-muted); font-style: italic; text-align: center; padding: 10px 0; }
-#detailsModal .modal-actions.main-actions { border-top: 1px solid var(--border-color); margin-top: 25px; padding-top: 15px; }
+
+#detailsModal .modal-actions.main-actions {
+    border-top: 1px solid var(--border-color);
+    margin-top: 0; /* Removed top margin as grid container has bottom margin */
+    padding-top: 15px;
+    flex-shrink: 0; /* Prevent actions shrinking */
+    justify-content: flex-end; /* Align buttons to the right */
+}
+
 
 /* --- PO Item Selection Modal Styles (#poItemSelectionModal) --- */
 #poItemSelectionModal h2 { font-size: 1.2em; text-align: left; border-bottom: none; margin-bottom: 10px; }
 #poItemSelectionModal p { margin-bottom: 15px; font-size: 0.95em; }
-#poItemSelectionModal .form-group { margin-bottom: 20px; }
+#poItemSelectionModal .form-group { margin-bottom: 20px; position: relative; /* Needed for suggestions list positioning */ }
 #poItemSelectionModal label { font-weight: 600; }
-#poItemSelectionModal input[type="text"] { height: 40px; }
-.suggestions-list { display: none; position: absolute; background-color: var(--white-color); border: 1px solid var(--primary-color); border-top: none; max-height: 180px; overflow-y: auto; width: 100%; box-sizing: border-box; z-index: 1001; border-radius: 0 0 var(--border-radius) var(--border-radius); box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1); margin-top: -1px; }
-.suggestions-list div { padding: 10px 15px; font-size: 0.95em; cursor: pointer; border-bottom: 1px solid var(--medium-grey); transition: background-color 0.15s ease; }
+#poItemSelectionModal input[type="text"] { height: 40px; width: 100%; box-sizing: border-box; }
+.suggestions-list { display: none; position: absolute; background-color: #fff; border: 1px solid var(--primary-color); border-top: none; max-height: 180px; overflow-y: auto; width: 100%; box-sizing: border-box; z-index: 1001; border-radius: 0 0 var(--border-radius) var(--border-radius); box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1); margin-top: -1px; }
+.suggestions-list div { padding: 10px 15px; font-size: 0.95em; cursor: pointer; border-bottom: 1px solid #dee2e6; transition: background-color 0.15s ease; }
 .suggestions-list div:last-child { border-bottom: none; }
 .suggestions-list div:hover { background-color: #e9f5ff; }
-.suggestions-list .no-suggestions { padding: 12px 15px; color: var(--darker-grey); cursor: default; }
+.suggestions-list .no-suggestions { padding: 12px 15px; color: #6c757d; cursor: default; }
 .item-selection-list { border: 1px solid var(--border-color); border-radius: var(--border-radius); padding: 15px; max-height: 250px; overflow-y: auto; margin-bottom: 20px; background-color: var(--light-bg); }
 .item-selection-entry { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px dotted #ccc; }
 .item-selection-entry:last-child { margin-bottom: 0; padding-bottom: 0; border-bottom: none; }
@@ -295,6 +420,9 @@ mark { background-color: var(--highlight-color); padding: 0.1em 0.2em; border-ra
 #readOnlyOrderModal .modal-actions { border-top: 1px solid var(--border-color); padding-top: 15px; margin-top: 20px; justify-content: flex-end; }
 
 /* --- WhatsApp Reminder Popup --- */
+#whatsapp-reminder-popup .popup-content { /* Re-use modal-content styling */
+    max-width: 500px; /* Smaller size for reminder */
+}
 #whatsapp-reminder-popup p { margin-bottom: 20px; color: var(--text-muted); font-size: 1.05em; text-align: center; }
 .message-preview { margin-top: 15px; margin-bottom: 25px; font-size: 0.95em; background-color: #e9f5ff; padding: 15px; border-radius: var(--border-radius); text-align: left; border: 1px solid #bde0ff; white-space: pre-wrap; word-wrap: break-word; max-height: 180px; overflow-y: auto; line-height: 1.4; }
 .whatsapp-send-btn { background-color: #25d366; color: #fff; text-decoration: none; padding: 10px 25px; border-radius: var(--border-radius); display: inline-flex; align-items: center; gap: 10px; font-weight: 600; transition: background-color 0.2s ease, box-shadow 0.2s ease, transform 0.1s ease; margin: 0 auto; border: none; cursor: pointer; font-size: 1em; box-shadow: var(--box-shadow); height: auto; }
@@ -326,7 +454,8 @@ mark { background-color: var(--highlight-color); padding: 0.1em 0.2em; border-ra
     .bulk-actions-bar { flex-direction: column; align-items: stretch; }
     .bulk-actions-controls { justify-content: space-between; }
     #statusCountsReport ul { column-count: 1; }
-    #detailsModal .modal-grid { grid-template-columns: 1fr; }
+    /* Adjust modal layout for medium screens if needed */
+     #detailsModal .modal-row { flex-direction: column; gap: 15px; } /* Stack sections vertically */
     .read-only-grid { grid-template-columns: 1fr; }
 }
 @media (max-width: 768px) {
@@ -338,9 +467,9 @@ mark { background-color: var(--highlight-color); padding: 0.1em 0.2em; border-ra
     .actions-bar .button { padding: 7px 10px; font-size: 0.85em; height: 36px; flex-shrink: 0; } /* Prevent excessive shrinking */
     #orderTable { font-size: 0.88em; }
     #orderTable th, #orderTable td { padding: 8px 10px; white-space: normal; }
-    .modal-content { width: 95%; padding: 20px; }
+    .modal-content { width: 95%; padding: 20px; max-width: 100%; } /* Adjust max-width */
     .order-summary-counts{ justify-content: space-between; font-size: 0.9em; padding: 15px 20px;}
-    #detailsModal .status-update-container select { width: calc(100% - 140px); }
+    #detailsModal .status-update-container select { width: calc(100% - 140px); } /* May need adjustment */
     .modal-actions { gap: 10px; }
     .modal-actions .button { font-size: 0.9em; padding: 8px 15px; height: 38px;}
     .bulk-actions-controls { flex-direction: column; align-items: stretch; gap: 10px;}
