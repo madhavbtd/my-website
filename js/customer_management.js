@@ -1,5 +1,5 @@
 // js/customer_management.js
-// Version 1.0 (Customer Detail Page Linking Added)
+// Version 1.2 (Added Debugging for Return Redirect)
 
 // --- Ensure Firestore functions are available globally ---
 const { db, collection, onSnapshot, query, orderBy, doc, addDoc, updateDoc, deleteDoc, serverTimestamp, runTransaction, getDoc } = window;
@@ -19,7 +19,7 @@ const customerForm = document.getElementById('customerForm');
 const closeCustomerModalBtn = document.getElementById('closeCustomerModal');
 const cancelCustomerBtn = document.getElementById('cancelCustomerBtn');
 const saveCustomerBtn = document.getElementById('saveCustomerBtn');
-const saveCustomerBtnText = saveCustomerBtn.querySelector('span'); // Get span inside button
+const saveCustomerBtnText = saveCustomerBtn ? saveCustomerBtn.querySelector('span') : null; // Added check
 const editCustomerIdInput = document.getElementById('editCustomerId'); // Hidden input for Firestore ID
 
 // Modal Form Fields
@@ -40,7 +40,7 @@ let searchDebounceTimer;
 
 // --- Initialization ---
 document.addEventListener('DOMContentLoaded', () => {
-    console.log("Customer Management DOM Loaded (V1.0 - Detail Linking).");
+    console.log("Customer Management DOM Loaded (V1.2 - Debug Return).");
     waitForDbConnection(() => {
         console.log("DB connection confirmed. Initializing listener.");
         listenForCustomers();
@@ -57,12 +57,49 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         if (customerForm) customerForm.addEventListener('submit', handleSaveCustomer);
 
+        // Check URL params on load
+        try {
+            const urlParams = new URLSearchParams(window.location.search);
+            const action = urlParams.get('action');
+            // Store returnTo globally or pass it differently if needed after cleaning URL
+            const returnTo = urlParams.get('returnTo');
+
+            if (action === 'add') {
+                console.log("Action 'add' detected in URL, opening add modal.");
+                openAddModal(); // Automatically open the add modal
+
+                // Clean URL (remove action) - Keep returnTo for now
+                let currentSearch = window.location.search;
+                currentSearch = currentSearch.replace(/[\?&]action=add/, '');
+                let cleanUrl = window.location.pathname;
+                 // Reconstruct search string, keeping returnTo if present
+                 const paramsOnly = new URLSearchParams(currentSearch);
+                 const returnParam = paramsOnly.get('returnTo'); // Check if returnTo still exists
+                 const otherParams = Array.from(paramsOnly.entries()).filter(([key]) => key !== 'returnTo');
+
+                 let finalSearchParams = '';
+                 if(returnParam) {
+                    finalSearchParams += (finalSearchParams ? '&' : '?') + `returnTo=${returnParam}`;
+                 }
+                 otherParams.forEach(([key, value]) => {
+                    finalSearchParams += (finalSearchParams ? '&' : '?') + `${key}=${value}`;
+                 });
+
+
+                window.history.replaceState({}, '', window.location.pathname + finalSearchParams);
+                console.log("Cleaned URL parameters, kept returnTo if present:", window.location.search);
+            }
+        } catch (e) {
+            console.error("Error processing URL parameters:", e);
+        }
+
         console.log("Customer Management event listeners set up.");
     });
 });
 
 // --- DB Connection Wait ---
 function waitForDbConnection(callback) {
+    // ... (same as before) ...
     if (window.db) { callback(); } else {
         let attempts = 0; const maxAttempts = 20;
         const intervalId = setInterval(() => {
@@ -76,6 +113,7 @@ function waitForDbConnection(callback) {
 
 // --- Sorting Change Handler ---
 function handleSortChange() {
+    // ... (same as before) ...
     if (!sortSelect) return;
     const selectedValue = sortSelect.value;
     const [field, direction] = selectedValue.split('_');
@@ -83,24 +121,22 @@ function handleSortChange() {
         if (field === currentSortField && direction === currentSortDirection) return;
         currentSortField = field;
         currentSortDirection = direction;
-        console.log(`Customer sort changed: ${currentSortField} ${currentSortDirection}`);
         applyFiltersAndRender();
     }
 }
 
 // --- Filter Change Handlers ---
 function handleSearchInput() {
+    // ... (same as before) ...
     clearTimeout(searchDebounceTimer);
     searchDebounceTimer = setTimeout(() => {
-        console.log("Customer search processed.");
         applyFiltersAndRender();
     }, 300);
 }
 
 function clearFilters() {
-    console.log("Clearing customer filters.");
+    // ... (same as before) ...
     if(filterSearchInput) filterSearchInput.value = '';
-    // Reset sort to default when clearing filters?
     if(sortSelect) sortSelect.value = 'createdAt_desc';
     currentSortField = 'createdAt';
     currentSortDirection = 'desc';
@@ -110,109 +146,68 @@ function clearFilters() {
 
 // --- Firestore Listener Setup ---
 function listenForCustomers() {
+    // ... (same as before) ...
     if (unsubscribeCustomers) { unsubscribeCustomers(); unsubscribeCustomers = null; }
     if (!db || !collection || !query || !orderBy || !onSnapshot) { console.error("Firestore functions not available!"); return; }
-
-    customerTableBody.innerHTML = `<tr><td colspan="6" id="loadingMessage" style="text-align: center; color: #666;">Loading customers...</td></tr>`; // Updated colspan
-
+    if(customerTableBody) customerTableBody.innerHTML = `<tr><td colspan="6" id="loadingMessage" style="text-align: center; color: #666;">Loading customers...</td></tr>`;
     try {
-        console.log("Setting up Firestore listener for 'customers'...");
         const customersRef = collection(db, "customers");
-        // Use a default query for the listener; sorting/filtering is client-side
-        const q = query(customersRef); // Fetch all
-
+        const q = query(customersRef);
         unsubscribeCustomers = onSnapshot(q, (snapshot) => {
-            console.log(`Received ${snapshot.docs.length} total customers from Firestore.`);
             allCustomersCache = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-            applyFiltersAndRender(); // Apply filters/sort to the new full list
-
-        }, (error) => { console.error("Error fetching customers snapshot:", error); /* Error handling */ });
-    } catch (error) { console.error("Error setting up customer listener:", error); /* Error handling */ }
+            applyFiltersAndRender();
+        }, (error) => { console.error("Error fetching customers snapshot:", error); });
+    } catch (error) { console.error("Error setting up customer listener:", error); }
 }
 
 
 // --- Filter, Sort, and Render Function ---
 function applyFiltersAndRender() {
-    if (!allCustomersCache) return;
-    console.log("Applying customer filters and rendering...");
-
-    // 1. Get filter values
+    // ... (same as before) ...
+     if (!allCustomersCache) return;
     const filterSearchValue = filterSearchInput ? filterSearchInput.value.trim().toLowerCase() : '';
-
-    // 2. Filter cached data
     let filteredCustomers = allCustomersCache.filter(customer => {
         if (filterSearchValue) {
             const customId = (customer.customCustomerId || '').toString().toLowerCase();
             const name = (customer.fullName || '').toLowerCase();
             const whatsapp = (customer.whatsappNo || '').toLowerCase();
             const contact = (customer.contactNo || '').toLowerCase();
-            const id = (customer.id || '').toLowerCase(); // Firestore ID
-
-            if (!(customId.includes(filterSearchValue) ||
-                  name.includes(filterSearchValue) ||
-                  whatsapp.includes(filterSearchValue) ||
-                  contact.includes(filterSearchValue) ||
-                  id.includes(filterSearchValue) )) {
-                 return false;
-            }
+            const id = (customer.id || '').toLowerCase();
+            if (!(customId.includes(filterSearchValue) || name.includes(filterSearchValue) || whatsapp.includes(filterSearchValue) || contact.includes(filterSearchValue) || id.includes(filterSearchValue) )) { return false; }
         }
         return true;
     });
-    console.log(`Filtered down to ${filteredCustomers.length} customers.`);
-
-    // 3. Sort filtered data
     filteredCustomers.sort((a, b) => {
-        let valA = a[currentSortField];
-        let valB = b[currentSortField];
-
-        // Handle different data types for sorting
-        if (valA && typeof valA.toDate === 'function') valA = valA.toDate(); // Firestore Timestamps
+        let valA = a[currentSortField]; let valB = b[currentSortField];
+        if (valA && typeof valA.toDate === 'function') valA = valA.toDate();
         if (valB && typeof valB.toDate === 'function') valB = valB.toDate();
-        if (currentSortField === 'customCustomerId') { // Numeric sort for ID
-            valA = Number(valA) || 0;
-            valB = Number(valB) || 0;
-        }
-        if (currentSortField === 'fullName') { // Case-insensitive string sort for name
-            valA = (valA || '').toLowerCase();
-            valB = (valB || '').toLowerCase();
-        }
-
-        // Perform comparison
+        if (currentSortField === 'customCustomerId') { valA = Number(valA) || 0; valB = Number(valB) || 0; }
+        if (currentSortField === 'fullName') { valA = (valA || '').toLowerCase(); valB = (valB || '').toLowerCase(); }
         let comparison = 0;
-        if (valA > valB) {
-            comparison = 1;
-        } else if (valA < valB) {
-            comparison = -1;
-        }
+        if (valA > valB) { comparison = 1; } else if (valA < valB) { comparison = -1; }
         return currentSortDirection === 'desc' ? (comparison * -1) : comparison;
     });
-    console.log(`Sorted ${filteredCustomers.length} customers.`);
-
-    // 4. Render table
-    customerTableBody.innerHTML = ''; // Clear previous rows
+    if (!customerTableBody) return;
+    customerTableBody.innerHTML = '';
     if (filteredCustomers.length === 0) {
-        customerTableBody.innerHTML = `<tr><td colspan="6" id="noCustomersMessage" style="text-align: center; color: #666;">No customers found matching filters.</td></tr>`; // Updated colspan
+        customerTableBody.innerHTML = `<tr><td colspan="6" id="noCustomersMessage" style="text-align: center; color: #666;">No customers found matching filters.</td></tr>`;
     } else {
-        filteredCustomers.forEach(customer => {
-            // Pass the Firestore ID (customer.id) along with the data
-            displayCustomerRow(customer.id, customer);
-        });
+        filteredCustomers.forEach(customer => { displayCustomerRow(customer.id, customer); });
     }
-     console.log("Customer rendering complete.");
 }
 
 
 // --- Display Single Customer Row ---
 function displayCustomerRow(firestoreId, data) {
+    // ... (same as before) ...
+    if (!customerTableBody) return;
     const tableRow = document.createElement('tr');
-    tableRow.setAttribute('data-id', firestoreId); // Store Firestore ID on the row
-
+    tableRow.setAttribute('data-id', firestoreId);
     const customId = data.customCustomerId || '-';
     const name = data.fullName || 'N/A';
     const whatsapp = data.whatsappNo || '-';
     const contact = data.contactNo || '-';
-    const address = data.billingAddress || data.address || '-'; // Prefer billingAddress
-
+    const address = data.billingAddress || data.address || '-';
     tableRow.innerHTML = `
         <td>${customId}</td>
         <td>${name}</td>
@@ -220,72 +215,46 @@ function displayCustomerRow(firestoreId, data) {
         <td>${contact}</td>
         <td>${address}</td>
         <td>
-            <button type="button" class="action-button edit-button" title="Edit Customer">
-                <i class="fas fa-edit"></i>
-            </button>
-            <button type="button" class="action-button delete-button" title="Delete Customer">
-                <i class="fas fa-trash-alt"></i>
-            </button>
+            <button type="button" class="action-button edit-button" title="Edit Customer"><i class="fas fa-edit"></i></button>
+            <button type="button" class="action-button delete-button" title="Delete Customer"><i class="fas fa-trash-alt"></i></button>
         </td>
     `;
-
-    // --- >>> यहाँ बदलाव किया गया है (लिंकिंग के लिए) <<< ---
-    tableRow.style.cursor = 'pointer'; // माउस ले जाने पर हाथ का निशान दिखाता है
-    tableRow.addEventListener('click', () => {
-        // customer_account_detail.html पर रीडायरेक्ट करें और Firestore ID पास करें
-        window.location.href = `customer_account_detail.html?id=${firestoreId}`;
-    });
-    // --- >>> बदलाव समाप्त <<< ---
-
-
-    // Attach event listeners AFTER setting innerHTML and AFTER adding the main row listener
+    tableRow.style.cursor = 'pointer';
+    tableRow.addEventListener('click', () => { window.location.href = `customer_account_detail.html?id=${firestoreId}`; });
     const editButton = tableRow.querySelector('.edit-button');
-    if (editButton) {
-        editButton.addEventListener('click', (e) => {
-            e.stopPropagation(); // Prevent row click when clicking button
-            openEditModal(firestoreId, data);
-        });
-    }
+    if (editButton) { editButton.addEventListener('click', (e) => { e.stopPropagation(); openEditModal(firestoreId, data); }); }
     const deleteButton = tableRow.querySelector('.delete-button');
-    if (deleteButton) {
-        deleteButton.addEventListener('click', (e) => {
-            e.stopPropagation(); // Prevent row click when clicking button
-            handleDeleteCustomer(firestoreId, name);
-        });
-    }
-
-    customerTableBody.appendChild(tableRow); // Add the row to the table body
+    if (deleteButton) { deleteButton.addEventListener('click', (e) => { e.stopPropagation(); handleDeleteCustomer(firestoreId, name); }); }
+    customerTableBody.appendChild(tableRow);
 }
 
 
 // --- Modal Handling (Add/Edit) ---
 function openAddModal() {
+    // ... (same as before) ...
     console.log("Opening modal to add new customer.");
     if (!customerModal || !customerForm) return;
     modalTitle.textContent = "Add New Customer";
-    editCustomerIdInput.value = ''; // Clear Firestore ID for Add mode
-    customerForm.reset(); // Clear form fields
-    if(customIdDisplayArea) customIdDisplayArea.style.display = 'none'; // Hide custom ID field
-    if(saveCustomerBtnText) saveCustomerBtnText.textContent = 'Save Customer'; // Reset button text
-    saveCustomerBtn.disabled = false; // Ensure button is enabled
+    editCustomerIdInput.value = '';
+    customerForm.reset();
+    if(customIdDisplayArea) customIdDisplayArea.style.display = 'none';
+    if(saveCustomerBtnText) saveCustomerBtnText.textContent = 'Save Customer';
+    if(saveCustomerBtn) saveCustomerBtn.disabled = false;
     customerModal.classList.add('active');
 }
 
 function openEditModal(firestoreId, data) {
+     // ... (same as before) ...
      console.log("Opening modal to edit customer:", firestoreId);
      if (!customerModal || !customerForm) return;
      modalTitle.textContent = "Edit Customer";
-     editCustomerIdInput.value = firestoreId; // Set Firestore ID for Edit mode
-     if(saveCustomerBtnText) saveCustomerBtnText.textContent = 'Update Customer'; // Change button text
-     saveCustomerBtn.disabled = false; // Ensure button is enabled
-
-     // Fill form with existing data
-     customerFullNameInput.value = data.fullName || '';
-     customerWhatsAppInput.value = data.whatsappNo || '';
-     customerContactInput.value = data.contactNo || '';
-     customerAddressInput.value = data.billingAddress || data.address || ''; // Prefer billingAddress
-
-     // Display existing custom ID (read-only)
+     editCustomerIdInput.value = firestoreId;
+     if(saveCustomerBtnText) saveCustomerBtnText.textContent = 'Update Customer';
+     if(saveCustomerBtn) saveCustomerBtn.disabled = false;
+     if(customerFullNameInput) customerFullNameInput.value = data.fullName || '';
+     if(customerWhatsAppInput) customerWhatsAppInput.value = data.whatsappNo || '';
+     if(customerContactInput) customerContactInput.value = data.contactNo || '';
+     if(customerAddressInput) customerAddressInput.value = data.billingAddress || data.address || '';
      if (data.customCustomerId && generatedCustomIdInput && customIdDisplayArea) {
          generatedCustomIdInput.value = data.customCustomerId;
          customIdDisplayArea.style.display = 'block';
@@ -296,116 +265,113 @@ function openEditModal(firestoreId, data) {
 }
 
 function closeCustomerModal() {
+     // ... (same as before) ...
      if (customerModal) { customerModal.classList.remove('active'); }
 }
 
-// --- Save/Update Customer Handler (WITH TRANSACTION for Add) ---
+// --- Save/Update Customer Handler (WITH TRANSACTION for Add & REDIRECT DEBUGGING) ---
 async function handleSaveCustomer(event) {
     event.preventDefault();
-    // Ensure necessary Firestore functions are available
     if (!db || !collection || !addDoc || !doc || !updateDoc || !serverTimestamp || !runTransaction || !getDoc) {
-         console.error("Database functions unavailable.");
-         alert("Database functions unavailable. Cannot save.");
-         return;
+         console.error("Database functions unavailable."); alert("Database functions unavailable. Cannot save."); return;
     }
-
-    const customerId = editCustomerIdInput.value; // Firestore document ID (empty if adding)
+    const customerId = editCustomerIdInput.value;
     const isEditing = !!customerId;
-
-    // Get form values
     const fullName = customerFullNameInput.value.trim();
     const whatsappNo = customerWhatsAppInput.value.trim();
-    const contactNo = customerContactInput.value.trim() || null; // Store as null if empty
-    const address = customerAddressInput.value.trim() || null; // Store as null if empty
+    const contactNo = customerContactInput.value.trim() || null;
+    const address = customerAddressInput.value.trim() || null;
+    if (!fullName || !whatsappNo) { alert("Full Name and WhatsApp Number are required."); return; }
 
-    // Basic validation
-    if (!fullName || !whatsappNo) {
-        alert("Full Name and WhatsApp Number are required.");
-        return;
-    }
+    if(saveCustomerBtn) saveCustomerBtn.disabled = true;
+    const originalButtonHTML = saveCustomerBtn ? saveCustomerBtn.innerHTML : '';
+    if(saveCustomerBtn) saveCustomerBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
 
-    // Disable button and show loading state
-    saveCustomerBtn.disabled = true;
-    const originalButtonHTML = saveCustomerBtn.innerHTML; // Store original HTML
-    saveCustomerBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+    const customerDataPayload = { fullName, whatsappNo, contactNo, billingAddress: address, updatedAt: serverTimestamp() };
 
-    // Prepare data payload
-    const customerDataPayload = {
-        fullName: fullName,
-        whatsappNo: whatsappNo,
-        contactNo: contactNo,
-        billingAddress: address, // Using billingAddress field now
-        // 'address' field can potentially be removed if only billingAddress is needed
-        updatedAt: serverTimestamp()
-    };
+    // --- >>> Get return URL parameter <<< ---
+    let returnUrl = null;
+    let returnToValue = null; // For logging
+    try {
+        // Read the CURRENT URL search parameters at the time of saving
+        const currentUrlParams = new URLSearchParams(window.location.search);
+        returnToValue = currentUrlParams.get('returnTo');
+        console.log("DEBUG: Checking for returnTo parameter. Value found:", returnToValue); // <<< DEBUG LOG
+
+        if (returnToValue === 'order_history') {
+            returnUrl = 'order_history.html';
+            console.log("DEBUG: returnUrl set to:", returnUrl); // <<< DEBUG LOG
+        } else {
+            console.log("DEBUG: returnTo parameter is not 'order_history' or is missing."); // <<< DEBUG LOG
+        }
+    } catch (e) { console.error("DEBUG: Error reading URL params for return:", e);}
+    // --- >>> End return URL check <<< ---
 
     try {
         if (isEditing) {
-            // --- UPDATE existing customer ---
              console.log(`Updating customer ${customerId}...`);
              const customerRef = doc(db, "customers", customerId);
-             // Don't update createdAt or customCustomerId on edit
              await updateDoc(customerRef, customerDataPayload);
              console.log("Customer updated successfully.");
              alert("Customer updated successfully!");
-             closeCustomerModal();
+
+             // --- >>> Redirect if needed, otherwise close <<< ---
+             console.log(`DEBUG: Post-Update - Should redirect? ${!!returnUrl}`); // <<< DEBUG LOG
+             if (returnUrl) {
+                 console.log("DEBUG: Redirecting to:", returnUrl); // <<< DEBUG LOG
+                 window.location.href = returnUrl;
+             } else {
+                 console.log("DEBUG: Closing modal instead of redirecting."); // <<< DEBUG LOG
+                 closeCustomerModal();
+             }
+             // --- >>> End Redirect Check <<< ---
+
         } else {
-            // --- ADD new customer using Transaction to generate custom ID ---
+            // --- Add new customer via Transaction ---
             console.log("Adding new customer via transaction...");
-            const counterRef = doc(db, "counters", "customerCounter"); // Reference to the counter document
-            const newCustomerColRef = collection(db, "customers"); // Reference to the customers collection
-
-            await runTransaction(db, async (transaction) => {
+            const counterRef = doc(db, "counters", "customerCounter");
+            const newCustomerColRef = collection(db, "customers");
+            await runTransaction(db, async (transaction) => { /* ... transaction logic ... */
                 const counterDoc = await transaction.get(counterRef);
-                let nextId = 101; // Default starting ID if counter doesn't exist
-                if (counterDoc.exists() && counterDoc.data().lastId) {
-                    nextId = counterDoc.data().lastId + 1; // Increment the last ID
-                } else {
-                     console.log("Counter document 'customerCounter' or field 'lastId' not found, starting ID at 101.");
-                     // The transaction will create/set it later.
-                }
-
-                // Add custom ID and createdAt timestamp to the payload for the new customer
-                customerDataPayload.customCustomerId = nextId; // Assign the calculated ID
-                customerDataPayload.createdAt = serverTimestamp(); // Add creation timestamp
-                customerDataPayload.status = 'active'; // Default status for new customer
-
-                // Create a reference *for the new document* within the collection
+                let nextId = 101;
+                if (counterDoc.exists() && counterDoc.data().lastId) { nextId = counterDoc.data().lastId + 1; }
+                else { console.log("Counter doc/field missing, starting ID at 101."); }
+                customerDataPayload.customCustomerId = nextId;
+                customerDataPayload.createdAt = serverTimestamp();
+                customerDataPayload.status = 'active';
                 const newDocRef = doc(newCustomerColRef);
-                // Set the data for the new customer document using the transaction
                 transaction.set(newDocRef, customerDataPayload);
-
-                // Update (or create if it doesn't exist) the counter document
-                transaction.set(counterRef, { lastId: nextId }, { merge: true }); // Use merge:true to avoid overwriting other fields if they exist
-
-                console.log(`Transaction prepared: Set customer ${newDocRef.id} with customId ${nextId}, update counter to ${nextId}.`);
-            }); // Transaction automatically commits here if no errors occurred
-
+                transaction.set(counterRef, { lastId: nextId }, { merge: true });
+            });
             console.log("Transaction successful. New customer added.");
             alert("New customer added successfully!");
-            closeCustomerModal();
+
+            // --- >>> Redirect if needed, otherwise close <<< ---
+             console.log(`DEBUG: Post-Add - Should redirect? ${!!returnUrl}`); // <<< DEBUG LOG
+             if (returnUrl) {
+                 console.log("DEBUG: Redirecting to:", returnUrl); // <<< DEBUG LOG
+                 window.location.href = returnUrl;
+             } else {
+                 console.log("DEBUG: Closing modal instead of redirecting."); // <<< DEBUG LOG
+                 closeCustomerModal();
+             }
+             // --- >>> End Redirect Check <<< ---
         }
     } catch (error) {
         console.error("Error saving customer:", error);
         alert(`Error saving customer: ${error.message}`);
-    } finally {
-        // Re-enable button and restore original text/icon
-        saveCustomerBtn.disabled = false;
-        saveCustomerBtn.innerHTML = originalButtonHTML;
+        if(saveCustomerBtn) saveCustomerBtn.disabled = false;
+        if(saveCustomerBtn) saveCustomerBtn.innerHTML = originalButtonHTML;
     }
+    // No finally block needed as redirect/close happens within try
 }
 
 
 // --- Delete Customer Handler ---
 async function handleDeleteCustomer(firestoreId, customerName) {
+    // ... (same as before) ...
     console.log(`handleDeleteCustomer called for ID: ${firestoreId}, Name: ${customerName}`);
-    if (!db || !doc || !deleteDoc) {
-        console.error("Delete function not available.");
-        alert("Error: Delete function not available.");
-        return;
-    }
-
-    // Confirmation dialog
+    if (!db || !doc || !deleteDoc) { console.error("Delete function not available."); alert("Error: Delete function not available."); return; }
     if (confirm(`Are you sure you want to delete customer "${customerName}"? This action cannot be undone.`)) {
         console.log(`User confirmed deletion for ${firestoreId}. Proceeding...`);
         try {
@@ -413,7 +379,6 @@ async function handleDeleteCustomer(firestoreId, customerName) {
             await deleteDoc(customerRef);
             console.log(`Customer deleted successfully from Firestore: ${firestoreId}`);
             alert(`Customer "${customerName}" deleted.`);
-            // The UI should update automatically because of the onSnapshot listener.
         } catch (error) {
             console.error(`Error deleting customer ${firestoreId}:`, error);
             alert(`Failed to delete customer: ${error.message}`);
@@ -424,4 +389,4 @@ async function handleDeleteCustomer(firestoreId, customerName) {
 }
 
 // --- Final Log ---
-console.log("customer_management.js (V1.0 - Detail Linking) script fully loaded.");
+console.log("customer_management.js (V1.2 - Debug Return) script fully loaded.");
