@@ -1,155 +1,685 @@
-/* --- Popup Size and Design Improvements --- */
+/* === order_history.css === */
+/* Updated Version - Styles for new features, fourth layout revision (CSS Grid), ItemsOnlyModal, Popup Styling Fixes */
+
+/* --- Global Styles & Variables --- */
+:root {
+    --primary-color: #0056b3;
+    --secondary-color: #6c757d;
+    --success-color: #28a745;
+    --warning-color: #ffc107;
+    --info-color: #17a2b8;
+    --danger-color: #dc3545;
+    --light-bg: #f8f9fa;
+    --border-color: #dee2e6;
+    --text-color: #343a40;
+    --text-muted: #6c757d;
+    /* Using Poppins as primary, fallback to system fonts */
+    --font-family: 'Poppins', "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
+    --border-radius: 6px;
+    --box-shadow: 0 2px 5px rgba(0, 0, 0, 0.08);
+    --box-shadow-lg: 0 4px 12px rgba(0, 0, 0, 0.1);
+    --highlight-color: #fff3cd;
+    --selected-row-bg: #e0ecf8;
+}
+body {
+    font-family: var(--font-family);
+    margin: 0;
+    padding: 20px;
+    background-color: #f0f2f5;
+    color: var(--text-color);
+    line-height: 1.5;
+    font-size: 15px;
+    overflow-x: hidden; /* Prevent horizontal scroll on body */
+}
+.container {
+    background-color: #fff;
+    padding: 25px 30px;
+    border-radius: var(--border-radius);
+    box-shadow: var(--box-shadow-lg);
+    width: 100%;
+    max-width: 1300px; /* Adjusted max-width for better table fit */
+    margin: 20px auto;
+    box-sizing: border-box;
+}
+
+/* --- Header & Breadcrumb --- */
+/* Ensure header styles do not conflict with modal headers */
+.header {
+    background-color: var(--primary-color);
+    color: white;
+    padding: 15px 20px;
+    border-radius: var(--border-radius) var(--border-radius) 0 0;
+    margin: -25px -30px 25px -30px;
+    font-size: 1.25em; /* Keep original size */
+    font-weight: 600;
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+}
+.header h1 { /* Target h1 specifically inside .header */
+     margin: 0;
+     font-size: 1em; /* Ensure it inherits correctly */
+     font-family: inherit; /* Use body font */
+}
+.header-icon { font-size: 1.15em; }
+.breadcrumb { font-size: 0.9em; color: var(--text-muted); margin-bottom: 25px; padding-bottom: 15px; border-bottom: 1px solid var(--border-color); }
+.breadcrumb a { color: var(--primary-color); text-decoration: none; font-weight: 500; }
+.breadcrumb a:hover { text-decoration: underline; }
+.breadcrumb span { margin-left: 5px; color: var(--text-color); }
+.breadcrumb span::before { content: "/"; margin-right: 5px; color: var(--text-muted); }
+
+/* --- Buttons (Base and Specific) --- */
+.button {
+    padding: 8px 18px;
+    font-size: 0.9em;
+    border: none;
+    border-radius: var(--border-radius);
+    cursor: pointer;
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    text-decoration: none;
+    transition: background-color 0.2s ease, box-shadow 0.2s ease, transform 0.1s ease, opacity 0.2s ease;
+    white-space: nowrap;
+    height: 38px; /* Uniform height */
+    box-shadow: var(--box-shadow);
+    color: white;
+    box-sizing: border-box;
+}
+.button:hover { box-shadow: var(--box-shadow-lg); transform: translateY(-1px); }
+.button:active { transform: translateY(0px); box-shadow: var(--box-shadow); }
+.button:disabled { opacity: 0.5; cursor: not-allowed; box-shadow: none; transform: none; background-color: #adb5bd !important; color: #fff !important; }
+.button:disabled:hover { background-color: #adb5bd; box-shadow: none; transform: none; }
+.button i { margin-right: 4px; font-size: 0.95em; }
+
+.add-new-button { background-color: var(--success-color); }
+.add-new-button:hover { background-color: #218838; }
+.export-button { background-color: #5bc0de; }
+.export-button:hover { background-color: #31b0d5; }
+.clear-filters-button { background-color: var(--secondary-color); }
+.clear-filters-button:hover { background-color: #5a6268; }
+.info-button { background-color: var(--info-color); }
+.info-button:hover { background-color: #117a8b; }
+.primary-button { background-color: var(--primary-color); }
+.primary-button:hover { background-color: #004085; }
+.success-button { background-color: var(--success-color); }
+.success-button:hover { background-color: #218838; }
+.secondary-button { background-color: var(--secondary-color); }
+.secondary-button:hover { background-color: #5a6268; }
+
+/* --- Update Status Button Width Fix --- */
+.update-status-button {
+    background-color: var(--warning-color);
+    color: #333;
+    vertical-align: middle;
+    font-weight: 500;
+    width: auto; /* Fit content */
+    padding-left: 20px;
+    padding-right: 20px;
+    align-self: center;
+}
+.update-status-button:hover { background-color: #e0a800; }
+/* --- End Update Status Button Width Fix --- */
+
+.edit-full-button { background-color: #5bc0de; color: white; }
+.edit-full-button:hover { background-color: #31b0d5; }
+.delete-button { background-color: var(--danger-color); color: white; }
+.delete-button:hover { background-color: #c82333; }
+.cancel-button { background-color: var(--secondary-color); color: white; }
+.cancel-button:hover { background-color: #5a6268; }
+.print-button { background-color: var(--info-color); color: white; }
+.print-button:hover { background-color: #117a8b; }
+/* Button Height Fix */
+.add-payment-button { background-color: var(--success-color); font-size: 0.85em; padding: 6px 12px; }
+.add-payment-button:hover { background-color: #218838; }
+.create-po-button { background-color: var(--primary-color); font-size: 0.85em; padding: 6px 12px; }
+.create-po-button:hover { background-color: #004085; }
+.save-button { background-color: var(--success-color); color: white;}
+.save-button:hover { background-color: #218838; }
+
+/* --- Action Bar & Filter Bar --- */
+.actions-bar { display: flex; justify-content: flex-end; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px; }
+.filter-bar { display: flex; flex-wrap: wrap; gap: 15px 20px; padding: 15px 20px; background-color: #ffffff; border: 1px solid var(--border-color); border-radius: var(--border-radius); margin-bottom: 15px; align-items: flex-end; box-shadow: var(--box-shadow); }
+.filter-group { display: flex; flex-direction: column; gap: 5px; flex-grow: 1; min-width: 150px; }
+.filter-group:has(#filterDate) { min-width: 160px; flex-grow: 0.5;}
+.filter-group:has(#filterStatus) { min-width: 170px; flex-grow: 0.8; }
+.filter-group.filter-sort { min-width: 200px; flex-grow: 1; }
+.filter-group:has(#filterSearch) { flex-grow: 1.5; }
+.filter-group label { font-size: 0.88em; font-weight: 500; color: var(--text-color); white-space: nowrap; margin-bottom: 3px; }
+.filter-group label i { margin-right: 5px; color: var(--primary-color); width: 1.1em; text-align: center; }
+.filter-group input[type="date"], .filter-group input[type="text"], .filter-group select { padding: 8px 12px; border: 1px solid #ced4da; border-radius: var(--border-radius); font-size: 0.9em; height: 38px; background-color: #fff; box-sizing: border-box; width: 100%; color: var(--text-color); }
+.filter-group input::placeholder { color: #aaa; opacity: 1; }
+.filter-group input:focus, .filter-group select:focus { border-color: var(--primary-color); outline: 0; box-shadow: 0 0 0 0.2rem rgba(0, 86, 179, 0.25); }
+
+/* --- Bulk Actions Bar --- */
+.bulk-actions-bar { display: flex; align-items: center; justify-content: space-between; padding: 12px 20px; background-color: var(--light-bg); border: 1px solid var(--border-color); border-radius: var(--border-radius); margin-bottom: 20px; flex-wrap: wrap; gap: 15px; box-shadow: var(--box-shadow); }
+.bulk-actions-bar #selectedCount { font-weight: 600; color: var(--primary-color); font-size: 0.95em; }
+.bulk-actions-controls { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.bulk-label { font-size: 0.9em; font-weight: 500; margin-right: 5px; }
+.bulk-select { padding: 6px 10px; border: 1px solid #ced4da; border-radius: var(--border-radius); font-size: 0.85em; height: 36px; min-width: 150px; }
+.bulk-button { padding: 6px 15px; font-size: 0.85em; height: 36px; }
+.bulk-update { background-color: var(--warning-color); color: #333; }
+.bulk-update:hover { background-color: #e0a800; }
+.bulk-delete { background-color: var(--danger-color); color: white; }
+.bulk-delete:hover { background-color: #c82333; }
+
+/* --- Table Styles --- */
+.table-container { width: 100%; max-height: 65vh; overflow-y: auto; border: 1px solid var(--border-color); border-radius: var(--border-radius); margin-bottom: 20px; background-color: #fff; box-shadow: var(--box-shadow); position: relative; overflow-x: auto; }
+#orderTable {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9em;
+    border: none;
+    min-width: 1200px; /* Adjusted min-width for better spacing */
+    table-layout: auto; /* Let browser determine widths based on content/headers */
+}
+#orderTable thead th {
+    position: sticky; top: 0; z-index: 10;
+    background-color: var(--light-bg);
+    padding: 12px 15px;
+    text-align: left;
+    font-weight: 600;
+    color: var(--text-color);
+    white-space: nowrap;
+    border-bottom: 2px solid var(--border-color);
+    /* --- Define Min Widths for Columns --- */
+    min-width: 100px; /* Default minimum width */
+}
+#orderTable thead th.col-checkbox { z-index: 11; min-width: 40px; width: 40px; } /* Checkbox */
+#orderTable thead th:nth-child(2) { min-width: 130px; } /* Order ID */
+#orderTable thead th:nth-child(3) { min-width: 180px; width: 18%;} /* Customer Name */
+#orderTable thead th:nth-child(4) { min-width: 200px; width: 20%;} /* Items */
+#orderTable thead th:nth-child(5) { min-width: 100px; } /* Order Date */
+#orderTable thead th:nth-child(6) { min-width: 100px; } /* Delivery Date */
+#orderTable thead th:nth-child(7) { min-width: 60px; } /* Priority */
+#orderTable thead th:nth-child(8) { min-width: 120px; } /* Status */
+#orderTable thead th:nth-child(9) { min-width: 110px; } /* PO Info */
+#orderTable thead th:nth-child(10) { min-width: 80px; text-align: center;} /* Action */
+#orderTable thead th:nth-child(11) { min-width: 80px; text-align: center;} /* Send Wtsp */
+
+#orderTable td {
+    padding: 10px 15px;
+    text-align: left;
+    vertical-align: middle; /* Changed from top to middle */
+    border-bottom: 1px solid #e9ecef;
+    color: var(--text-color);
+    word-wrap: break-word; /* Allow wrapping */
+    white-space: normal; /* Allow wrapping */
+}
+#orderTable tbody tr { transition: background-color 0.15s ease; }
+#orderTable tbody tr:last-child td { border-bottom: none; }
+#orderTable tbody tr:hover { background-color: #f1f1f1; }
+#orderTable tbody tr.selected-row { background-color: var(--selected-row-bg) !important; font-weight: 500; }
+th.col-checkbox, td.col-checkbox { width: 40px; text-align: center; padding-left: 10px; padding-right: 10px; }
+th.col-checkbox input, td.col-checkbox input { cursor: pointer; transform: scale(1.1); }
+
+/* Customer Name & Mobile Styling */
+#orderTable td:nth-child(3) { line-height: 1.4; } /* Adjust line height for customer cell */
+.customer-name-display { display: block; font-weight: 600; margin-bottom: 3px; color: var(--text-color); }
+.customer-mobile-inline { display: block; font-size: 0.9em; color: var(--text-muted); }
+
+#loadingMessage, #noOrdersMessage { text-align: center; color: var(--text-muted); font-style: italic; padding: 30px !important; font-size: 1em; }
+
+/* PO Info Cell Styling */
+.po-info-cell { font-size: 0.85em; line-height: 1.4; }
+.po-info-cell a { color: var(--primary-color); text-decoration: none; display: block; margin-bottom: 3px; }
+.po-info-cell a:hover { text-decoration: underline; }
+.po-info-cell .button.create-po-button.icon-only {
+    background-color: var(--success-color);
+    color: white;
+    padding: 0;
+    width: 30px; /* Slightly smaller */
+    height: 30px; /* Slightly smaller */
+    font-size: 1em; /* Adjusted icon size */
+    line-height: 30px; /* Match height */
+    text-align: center;
+    min-width: auto;
+    box-shadow: none;
+}
+.po-info-cell .button.create-po-button.icon-only:hover { background-color: #218838; box-shadow: var(--box-shadow); transform: none; }
+.po-info-cell .button.create-po-button.icon-only i { margin-right: 0; }
+
+/* Center Action/WhatsApp columns */
+#orderTable td:nth-child(10), #orderTable td:nth-child(11) {
+    text-align: center;
+}
+
+/* --- Table Clickable Links --- */
+a.order-id-link, a.customer-name-link, a.view-po-details-link, a.see-more-link { color: var(--primary-color); text-decoration: none; cursor: pointer; font-weight: 500; }
+a.order-id-link:hover, a.customer-name-link:hover, a.view-po-details-link:hover, a.see-more-link:hover { text-decoration: underline; color: #003d80; }
+a.see-more-link { font-size: 0.85em; color: var(--secondary-color); font-style: italic; margin-left: 5px; display: inline-block; margin-top: 4px; }
+
+/* --- Search Highlighting & Status Badge --- */
+mark { background-color: var(--highlight-color); padding: 0.1em 0.2em; border-radius: 3px; color: inherit; font-weight: 600; box-shadow: 0 0 0 1px var(--highlight-color); }
+.status-badge { font-weight: 500; padding: 5px 12px; border-radius: 15px; font-size: 0.85em; color: white; background-color: var(--secondary-color); white-space: nowrap; display: inline-block; line-height: 1.2; text-align: center; }
+.status-badge.status-order-received { background-color: var(--secondary-color); }
+.status-badge.status-designing { background-color: var(--warning-color); color: #333; }
+.status-badge.status-verification { background-color: #fd7e14; }
+.status-badge.status-design-approved { background-color: #20c997; }
+.status-badge.status-ready-for-working { background-color: #0dcaf0; color: #333; }
+.status-badge.status-printing { background-color: var(--info-color); }
+.status-badge.status-delivered { background-color: var(--success-color); }
+.status-badge.status-completed { background-color: var(--success-color); }
+.status-badge.status-cancelled { background-color: var(--danger-color); }
+.status-badge.status-unknown { background-color: #adb5bd; }
+.priority-yes { color: var(--danger-color); font-weight: 600; }
+.priority-no { color: var(--text-muted); }
+
+/* --- Table Action Buttons --- */
+.details-edit-button { background-color: var(--primary-color); color: white; padding: 5px 10px; font-size: 0.85em; border-radius: var(--border-radius); white-space: nowrap; box-shadow: none; height: auto; }
+.details-edit-button:hover { background-color: #00418a; transform: none; box-shadow: none;}
+.whatsapp-button { background-color: #25d366; color: white; border: none; border-radius: 50%; width: 30px; height: 30px; font-size: 1em; text-align: center; cursor: pointer; padding: 0; display: inline-flex; align-items: center; justify-content: center; transition: background-color 0.2s ease; vertical-align: middle; box-shadow: none; }
+.whatsapp-button:hover { background-color: #1ebe57; transform: none; box-shadow: none;}
+.whatsapp-button:active { transform: scale(0.95); }
+
+/* --- Summary & Reporting --- */
+.summary-reporting-container { display: flex; flex-direction: column; gap: 20px; margin-top: 25px; }
+.order-summary-counts, .reporting-section { padding: 18px 25px; background-color: #ffffff; border: 1px solid var(--border-color); border-radius: var(--border-radius); box-shadow: var(--box-shadow); }
+.order-summary-counts { font-size: 0.95em; color: var(--text-color); display: flex; justify-content: space-around; align-items: center; flex-wrap: wrap; gap: 20px 30px; }
+.order-summary-counts span { font-weight: 500; }
+.order-summary-counts strong { color: var(--primary-color); font-weight: 700; margin-left: 6px; font-size: 1.1em; }
+.reporting-section h4 { margin-top: 0; margin-bottom: 15px; font-size: 1.1em; color: var(--primary-color); font-weight: 600; border-bottom: 1px solid #eee; padding-bottom: 8px; }
+#statusCountsReport ul { list-style: none; padding: 0; margin: 0; font-size: 0.9em; column-count: 2; column-gap: 20px; }
+#statusCountsReport li { margin-bottom: 8px; color: var(--text-color); }
+#statusCountsReport li strong { font-weight: 600; color: var(--text-color); }
+#statusCountsReport p { color: var(--text-muted); font-style: italic; }
+
+
+/* ---------- >>> MODAL / POPUP STYLES START <<< ---------- */
+
+/* --- Modal Base Styles --- */
+.modal, .popup-overlay {
+    display: none; /* Hidden by default */
+    position: fixed;
+    z-index: 1050;
+    left: 0; top: 0;
+    width: 100%; height: 100%;
+    overflow: hidden; /* Hide main scroll */
+    background-color: rgba(0,0,0,0.65);
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    box-sizing: border-box;
+}
+.modal.active, .popup-overlay.active {
+    display: flex; /* Show when active */
+}
 
 /* Base Modal Content Styling */
 .modal .modal-content {
-    background-color: #ffffff; /* सफेद पृष्ठभूमि */
-    border-radius: 8px; /* थोड़े गोल कोने */
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2); /* गहरा शैडो */
+    background-color: #ffffff;
+    border-radius: 8px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
     display: flex;
     flex-direction: column;
-    overflow: hidden; /* Prevent content overflow issues */
-    /* --- आकार नियंत्रण यहाँ से हटा दिया गया है, नीचे विशिष्ट पॉपअप पर लागू किया गया है --- */
-    /* max-width: पहले यहाँ था */
-    /* width: पहले यहाँ था */
-    /* max-height: पहले यहाँ था */
+    overflow: hidden;
+    position: relative;
+    font-family: var(--font-family); /* Ensure font is consistent inside modal */
 }
 
-/* Popup हेडर के लिए स्टाइल */
-.modal h2 {
+/* Modal Content Sizes (Using existing classes where possible) */
+.modal-content.modal-lg { max-width: 1100px; width: 90%;}
+.modal-content.modal-xl { max-width: 1200px; width: 95%; }
+.modal-content.modal-md { max-width: 700px; width: 90%; }
+.modal-content.small-modal { max-width: 550px; width: 90%; }
+
+/* Popup हेडर के लिए स्टाइल (Scoped to modal) */
+.modal .modal-content h2 {
     margin: 0;
-    padding: 18px 25px; /* Increased padding */
-    background-color: var(--primary-color); /* हेडर में प्राइमरी कलर */
-    color: white; /* सफेद टेक्स्ट */
-    font-size: 1.2em; /* थोड़ा बड़ा फॉन्ट */
+    padding: 18px 25px;
+    background-color: var(--primary-color);
+    color: white;
+    font-size: 1.2em;
     font-weight: 600;
-    border-bottom: none; /* मौजूदा बॉर्डर हटाएं */
-    border-radius: 8px 8px 0 0; /* हेडर के कोनों को गोल करें */
-    text-align: left; /* बाएं संरेखित करें */
+    border-bottom: none;
+    border-radius: 8px 8px 0 0;
+    text-align: left;
     flex-shrink: 0;
+    font-family: inherit; /* Use modal font */
 }
 
 /* Popup कंटेंट एरिया के लिए स्टाइल (स्क्रॉलिंग वाला हिस्सा) */
-.read-only-content-area, /* readOnlyOrderModal */
-.items-only-content-area, /* itemsOnlyModal */
-#poDetailsPopupContent { /* poDetailsPopup */
-    padding: 20px 25px; /* कंटेंट के चारों ओर पैडिंग */
-    overflow-y: auto; /* वर्टिकल स्क्रॉल सक्षम करें */
-    flex-grow: 1; /* इसे उपलब्ध स्थान लेने दें */
-    background-color: #f9f9f9; /* हल्का ग्रे बैकग्राउंड */
-    min-height: 100px; /* न्यूनतम ऊंचाई */
+/* Target specific content areas within modals */
+.modal .read-only-content-area,
+.modal .items-only-content-area,
+.modal #poDetailsPopupContent,
+.modal #poItemSelectionModal .item-selection-list,
+.modal #modalStatusHistoryList,
+.modal #modalProductList,
+.modal #modalPOList,
+.modal #detailsModal .modal-grid-container-complex { /* Apply to grid container */
+    padding: 20px 25px;
+    overflow-y: auto;
+    flex-grow: 1;
+    background-color: #f9f9f9;
+    min-height: 100px;
 }
 
 /* Popup फुटर (एक्शन बटन) के लिए स्टाइल */
 .modal .modal-actions {
     padding: 15px 25px;
-    background-color: #f1f1f1; /* थोड़ा अलग बैकग्राउंड */
+    background-color: #f1f1f1;
     border-top: 1px solid var(--border-color);
-    border-radius: 0 0 8px 8px; /* नीचे के कोनों को गोल करें */
+    border-radius: 0 0 8px 8px;
     flex-shrink: 0;
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-top: auto; /* Push to bottom */
 }
 
 /* --- विशिष्ट पॉपअप आकार नियंत्रण --- */
 
-/* Order ID Popup (#readOnlyOrderModal) */
-/* modal-xl पहले से ही चौड़ाई सेट कर सकता है, लेकिन ऊंचाई को नियंत्रित करते हैं */
+/* Order ID Popup (#readOnlyOrderModal - modal-xl) */
 #readOnlyOrderModal .modal-content {
-    max-height: 80vh; /* ऊंचाई को व्यूपोर्ट ऊंचाई के 80% तक सीमित करें */
-    /* चौड़ाई modal-xl क्लास द्वारा नियंत्रित होती है (लगभग 1200px) */
+    max-height: 80vh;
 }
 
-/* Items See More Popup (#itemsOnlyModal) */
-/* modal-md क्लास चौड़ाई सेट करती है (लगभग 700px) */
+/* Items See More Popup (#itemsOnlyModal - modal-md) */
 #itemsOnlyModal .modal-content {
-    max-width: 650px; /* यदि आवश्यक हो तो चौड़ाई थोड़ी कम करें */
-    width: 90%;
-    max-height: 65vh; /* ऊंचाई कम करें */
-    /* यह लगभग 2:1.9 अनुपात देता है */
+    max-height: 65vh;
 }
 
-/* PO Info Popup (#poDetailsPopup) */
-/* modal-lg क्लास चौड़ाई सेट करती है (लगभग 1100px) */
+/* PO Info Popup (#poDetailsPopup - modal-lg) */
 #poDetailsPopup .modal-content {
-    max-height: 75vh; /* ऊंचाई नियंत्रित करें */
-    /* चौड़ाई modal-lg क्लास द्वारा नियंत्रित होती है (लगभग 1100px) */
+    max-height: 75vh;
 }
 
-
-/* Popup के अंदर सूचियों (जैसे आइटम, इतिहास) के लिए बेहतर स्टाइल */
-.items-only-list,
-.read-only-product-list,
-.read-only-history-list,
-.modal-po-list-ul { /* PO सूची के लिए भी लागू करें */
-    list-style: none;
-    padding: 0;
-    margin: 0;
+/* PO Item Selection Modal (#poItemSelectionModal - modal-lg) */
+#poItemSelectionModal .modal-content {
+     max-height: 85vh;
 }
 
-.items-only-list li,
-.read-only-product-list li,
-.read-only-history-list li,
-.modal-po-list-ul li { /* PO सूची आइटम के लिए भी लागू करें */
-    padding: 10px 12px; /* पैडिंग बढ़ाएं */
-    border-bottom: 1px solid #e9ecef; /* हल्का बॉर्डर */
-    font-size: 0.95em;
-    background-color: #ffffff; /* सफेद पृष्ठभूमि */
-    margin-bottom: 5px; /* आइटम के बीच थोड़ा गैप */
-    border-radius: 4px; /* हल्के गोल कोने */
+/* WhatsApp Reminder Popup */
+#whatsapp-reminder-popup .modal-content {
+    max-width: 500px;
+    max-height: none;
 }
+.message-preview { margin-top: 15px; margin-bottom: 25px; font-size: 0.95em; background-color: #e9f5ff; padding: 15px; border-radius: var(--border-radius); text-align: left; border: 1px solid #bde0ff; white-space: pre-wrap; word-wrap: break-word; max-height: 180px; overflow-y: auto; line-height: 1.4; }
+.whatsapp-send-btn { background-color: #25d366; color: #fff; text-decoration: none; padding: 10px 25px; border-radius: var(--border-radius); display: inline-flex; align-items: center; gap: 10px; font-weight: 600; transition: background-color 0.2s ease, box-shadow 0.2s ease, transform 0.1s ease; margin: 0 auto; border: none; cursor: pointer; font-size: 1em; box-shadow: var(--box-shadow); height: auto; }
+.whatsapp-send-btn:hover { background-color: #1ebe57; box-shadow: var(--box-shadow-lg); transform: translateY(-1px); }
+.whatsapp-send-btn:active { transform: translateY(0px); box-shadow: var(--box-shadow); }
+.whatsapp-send-btn i { font-size: 1.2em; }
 
-.items-only-list li:last-child,
-.read-only-product-list li:last-child,
-.read-only-history-list li:last-child,
-.modal-po-list-ul li:last-child {
-    border-bottom: none; /* अंतिम आइटम से बॉर्डर हटाएं */
+/* --- Enhanced Details Modal Specific Grid Styles (#detailsModal) --- */
+#detailsModal .modal-grid-container-complex {
+    display: grid;
+    grid-template-columns: 1.2fr 1.2fr 1fr;
+    gap: 15px;
+    overflow-y: hidden;
+    overflow-x: hidden;
+    padding: 20px 25px; /* Apply padding here */
+    background-color: #f9f9f9; /* Match content bg */
+    min-height: 0;
 }
+.grid-item-customer { grid-area: 1 / 1 / 2 / 2; }
+.grid-item-order    { grid-area: 1 / 2 / 2 / 3; }
+.grid-item-status   { grid-area: 1 / 3 / 3 / 4; display: flex; flex-direction: column;}
+.grid-item-account  { grid-area: 2 / 1 / 3 / 3; }
+.grid-item-items    { grid-area: 3 / 1 / 4 / 4; display: flex; flex-direction: column;}
+.grid-item-po       { grid-area: 4 / 1 / 5 / 4; display: flex; flex-direction: column;}
 
-/* तालिका आधारित पॉपअप (जैसे PO Details) के लिए बेहतर स्टाइल */
-#poDetailsPopup .details-table-popup {
-    border: 1px solid #e0e0e0; /* तालिका के चारों ओर बॉर्डर */
-    margin-top: 10px;
-    width: 100%; /* सुनिश्चित करें कि तालिका पूरी चौड़ाई ले */
-    border-collapse: collapse; /* बॉर्डर मर्ज करें */
+#detailsModal .modal-grid-container-complex .modal-section {
+    padding: 12px 15px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    display: flex;
+    flex-direction: column;
+    background-color: #fff;
+    min-height: 0;
+    overflow: hidden;
 }
+#detailsModal .modal-section h4 { margin-top: 0; margin-bottom: 12px; font-size: 1.05em; color: var(--primary-color); border-bottom: 1px solid #eee; padding-bottom: 6px; font-weight: 600; flex-shrink: 0; }
+#detailsModal .modal-status-info #modalStatusHistoryList,
+#detailsModal .modal-product-info #modalProductList,
+#detailsModal .modal-po-info #modalPOList { flex-grow: 1; overflow-y: auto; margin-top: 10px; padding: 10px; background-color: var(--light-bg); border: 1px solid #e0e0e0; border-radius: 4px; }
 
-#poDetailsPopup .details-table-popup th,
-#poDetailsPopup .details-table-popup td {
-    padding: 10px 12px; /* सेल पैडिंग बढ़ाएं */
-    border: none; /* सेल बॉर्डर हटाएं (यदि आप केवल रो बॉर्डर चाहते हैं) */
-    border-bottom: 1px solid #e9ecef; /* पंक्ति विभाजक */
-    text-align: left; /* टेक्स्ट संरेखित करें */
-    vertical-align: top; /* ऊपर संरेखित करें */
-}
-#poDetailsPopup .details-table-popup thead th { /* हेडर स्टाइल */
-    background-color: #f1f1f1; /* हल्का हेडर बैकग्राउंड */
-    font-weight: 600;
-    font-size: 0.9em;
-    text-transform: uppercase; /* हेडर टेक्स्ट को अपरकेस करें */
-    color: #555;
-    position: sticky; /* हेडर को स्क्रॉल करते समय चिपकाएं (यदि आवश्यक हो) */
-    top: 0;
-    z-index: 1;
-}
-#poDetailsPopup .details-table-popup tbody tr:last-child td {
-    border-bottom: none; /* अंतिम पंक्ति से बॉर्डर हटाएं */
-}
-#poDetailsPopup .details-table-popup tbody tr:hover td {
-    background-color: #f9f9f9; /* होवर प्रभाव */
-}
+/* Other details modal adjustments */
+#detailsModal .modal-section p,
+#detailsModal .modal-section label { margin-bottom: 6px; font-size: 0.9em; flex-shrink: 0; line-height: 1.4; }
+#detailsModal .modal-section p strong { font-weight: 600; color: var(--text-color); min-width: 95px; display: inline-block; margin-right: 5px; }
+.modal-status-info label { display: block; margin-bottom: 4px; font-weight: 500; }
+.status-update-inline { display: flex; flex-direction: column; gap: 8px; margin-top: 5px; margin-bottom: 10px; }
+.status-update-inline select { width: 100%; height: 38px; padding: 8px 12px; border: 1px solid #ced4da; border-radius: var(--border-radius); font-size: 0.9em; box-sizing: border-box; }
+#detailsModal #modalOrderStatus, #detailsModal #modalUpdateStatusBtn { font-family: var(--font-family); }
+.account-data-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 0px 15px; }
+.account-data-pair p { margin-bottom: 5px !important; font-size: 0.9em !important; }
+.account-data-pair p strong { min-width: 100px !important; }
+#modalProductList ul.modal-product-list-ul { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 8px; padding: 0; list-style: none; margin: 0; }
+#modalProductList ul.modal-product-list-ul li { border: 1px solid #eee; padding: 6px 8px; border-radius: 4px; background-color: #fff; font-size: 0.88em; border-bottom: 1px solid #eee; margin-bottom: 0; padding-bottom: 6px; line-height: 1.3; }
+#modalStatusHistoryList li { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 5px; }
+#modalStatusHistoryList .history-status { font-weight: 600; }
+#modalStatusHistoryList .history-time { color: var(--text-muted); font-size: 0.9em; white-space: nowrap; }
+.no-products, .no-history, .no-pos, .no-items { color: var(--text-muted); font-style: italic; text-align: center; padding: 10px 0; }
 
-/* क्लोज बटन को थोड़ा बेहतर बनाएं */
+/* --- PO Item Selection Modal Styles (#poItemSelectionModal) --- */
+#poItemSelectionModal h2 { font-size: 1.2em; text-align: left; border-bottom: none; margin-bottom: 10px; }
+#poItemSelectionModal p { margin-bottom: 15px; font-size: 0.95em; }
+#poItemSelectionModal .form-group { margin-bottom: 20px; position: relative; }
+#poItemSelectionModal label { font-weight: 600; }
+#poItemSelectionModal input[type="text"] { height: 40px; width: 100%; box-sizing: border-box; }
+.suggestions-list { display: none; position: absolute; background-color: #fff; border: 1px solid var(--primary-color); border-top: none; max-height: 180px; overflow-y: auto; width: 100%; box-sizing: border-box; z-index: 1001; border-radius: 0 0 var(--border-radius) var(--border-radius); box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1); margin-top: -1px; }
+.suggestions-list div { padding: 10px 15px; font-size: 0.95em; cursor: pointer; border-bottom: 1px solid #dee2e6; transition: background-color 0.15s ease; }
+.suggestions-list div:last-child { border-bottom: none; }
+.suggestions-list div:hover { background-color: #e9f5ff; }
+.suggestions-list .no-suggestions { padding: 12px 15px; color: #6c757d; cursor: default; }
+.item-selection-list { border: 1px solid var(--border-color); border-radius: var(--border-radius); padding: 15px; overflow-y: auto; margin-bottom: 20px; background-color: var(--light-bg); }
+.item-selection-entry { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px dotted #ccc; }
+.item-selection-entry:last-child { margin-bottom: 0; padding-bottom: 0; border-bottom: none; }
+.item-selection-entry input[type="checkbox"] { transform: scale(1.2); cursor: pointer; margin: 0; flex-shrink: 0;}
+.item-selection-entry input[type="checkbox"]:disabled { cursor: not-allowed; opacity: 0.5; }
+.item-selection-entry label { font-size: 0.95em; cursor: pointer; flex-grow: 1; }
+.item-selection-entry label strong { font-weight: 600; color: var(--text-color); }
+.item-selection-entry label .in-po-label { font-size: 0.8em; color: var(--secondary-color); font-style: italic; margin-left: 5px; }
+#poItemSelectionModal .modal-actions { border-top: 1px solid var(--border-color); padding-top: 15px; margin-top: 15px; }
+#poItemSelectionError { color: var(--danger-color); background-color: #fdecea; border: 1px solid var(--danger-color); border-radius: var(--border-radius); padding: 10px 15px; font-weight: 500; text-align: center; margin-top: 15px; width: 100%; box-sizing: border-box; display: none; }
+
+/* --- PO Details Popup Styles (#poDetailsPopup) --- */
+#poDetailsPopup .po-details-popup-header{ flex-shrink: 0; border-bottom: 1px solid var(--border-color); padding-bottom: 15px; margin-bottom: 15px;}
+#poDetailsPopup .modal-content h2 { /* Target h2 specifically */
+    font-size: 1.2em; margin-bottom: 15px; border-bottom: none; padding: 0; background: none; color: var(--primary-color);
+}
+#poDetailsPopup p { font-size: 0.95em; margin-bottom: 8px; flex-shrink: 0;}
+#poDetailsPopup h4 { font-size: 1.1em; margin-bottom: 10px; color: var(--secondary-color); flex-shrink: 0;}
+#poDetailsPopup .details-table-popup { border: 1px solid #e0e0e0; margin-top: 10px; width: 100%; border-collapse: collapse; font-size: 0.9em; margin-bottom: 15px; }
+#poDetailsPopup .details-table-popup th, #poDetailsPopup .details-table-popup td { border: none; border-bottom: 1px solid #e9ecef; padding: 10px 12px; text-align: left; vertical-align: top; }
+#poDetailsPopup .details-table-popup thead th { background-color: #f1f1f1; font-weight: 600; font-size: 0.9em; text-transform: uppercase; color: #555; position: sticky; top: 0; z-index: 1; }
+#poDetailsPopup .details-table-popup tbody tr:last-child td { border-bottom: none; }
+#poDetailsPopup .details-table-popup tbody tr:hover td { background-color: #f9f9f9; }
+.po-notes-popup { margin-top: 15px; padding: 12px; border: 1px solid #e0e0e0; border-radius: var(--border-radius); font-size: 0.9em; background-color: #fdfdfd; flex-shrink: 0;}
+.po-notes-popup strong { display: block; margin-bottom: 5px; font-weight: 600; }
+
+/* --- Read-Only Order Modal Styles (#readOnlyOrderModal) --- */
+#readOnlyOrderModal .modal-content h2 { text-align: left; margin-bottom: 0; border-radius: 8px 8px 0 0; }
+.read-only-content-area { flex-grow: 1; overflow-y: auto; padding: 20px 25px; min-height: 0; background-color: #f9f9f9; }
+.read-only-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 25px; }
+.read-only-section { margin-bottom: 20px; background-color: #fff; padding: 15px; border-radius: var(--border-radius); border: 1px solid var(--border-color); }
+.read-only-section:last-child { margin-bottom: 0; }
+.read-only-section h4 { margin-top: 0; margin-bottom: 12px; font-size: 1.05em; color: var(--primary-color); border-bottom: 1px solid #eee; padding-bottom: 6px; font-weight: 600; }
+.read-only-section p { margin-bottom: 8px; font-size: 0.95em; line-height: 1.5; }
+.read-only-section p strong { font-weight: 600; color: var(--text-color); min-width: 100px; display: inline-block; }
+.read-only-product-list, .read-only-history-list { list-style: none; padding-left: 0; margin: 0; max-height: 200px; overflow-y: auto; background-color: #f8f9fa; border-radius: 4px; padding: 8px; border: 1px solid #eee; }
+.read-only-product-list li, .read-only-history-list li { background-color: #fff; padding: 8px 12px; border-radius: 4px; margin-bottom: 6px; font-size: 0.9em; border: 1px solid #eee; }
+.read-only-history-list li { display: flex; justify-content: space-between; flex-wrap: wrap; }
+.read-only-history-list li strong { margin-right: 10px; }
+#readOnlyOrderModal .modal-actions { border-top: 1px solid var(--border-color); padding-top: 15px; margin-top: auto; justify-content: flex-end; flex-shrink: 0; }
+
+/* --- Items Only Modal Styles (#itemsOnlyModal) --- */
+#itemsOnlyModal .modal-content h2 { text-align: center; }
+#itemsOnlyModal .items-only-content-area { padding: 10px 5px; background-color: var(--light-bg); border: 1px solid var(--border-color); border-radius: var(--border-radius); flex-grow: 1; overflow-y: auto; min-height: 100px; }
+.items-only-list { list-style: none; padding: 0 10px; margin: 0; }
+.items-only-list li { padding: 8px 5px; border-bottom: 1px dotted #ccc; font-size: 0.95em; line-height: 1.4; }
+.items-only-list li:last-child { border-bottom: none; }
+.items-only-list li strong { font-weight: 600; color: var(--text-color); }
+#itemsOnlyModal .modal-actions { justify-content: center; }
+
+/* --- Bulk Delete Modal --- */
+#bulkDeleteConfirmModal .modal-content h2 { color: var(--danger-color); font-size: 1.3em; text-align: left; border-bottom: none; margin-bottom: 15px; display: flex; align-items: center; background: none; padding: 0; }
+#bulkDeleteConfirmModal h2 .warning-icon { margin-right: 10px; font-size: 1.2em; }
+#bulkDeleteConfirmModal p { font-size: 0.95em; margin-bottom: 10px; color: var(--text-color); }
+.order-list-preview { list-style: none; padding: 10px 15px; margin: 0 0 15px 0; background-color: var(--light-bg); border: 1px solid var(--border-color); border-radius: var(--border-radius); max-height: 150px; overflow-y: auto; font-size: 0.9em; }
+.order-list-preview li { padding: 4px 0; border-bottom: 1px dotted #ccc; color: var(--text-muted); }
+.order-list-preview li:last-child { border-bottom: none; }
+.order-list-preview li strong { color: var(--text-color); font-weight: 600; }
+.warning-message { font-weight: 600; color: var(--danger-color); margin-bottom: 15px !important; text-align: center; font-size: 1em !important; }
+.confirmation-check { margin-bottom: 20px; display: flex; align-items: center; justify-content: center; gap: 8px; background-color: #fff9e6; padding: 10px; border-radius: var(--border-radius); border: 1px solid var(--warning-color); }
+.confirmation-check input[type="checkbox"] { transform: scale(1.2); cursor: pointer; margin: 0; }
+.confirmation-check label { font-size: 0.9em; color: var(--text-color); cursor: pointer; margin: 0; font-weight: 500; }
+#bulkDeleteConfirmModal .modal-actions { justify-content: flex-end; margin-top: auto; }
+#bulkDeleteConfirmModal .cancel-button { background-color: var(--secondary-color); }
+#bulkDeleteConfirmModal .delete-button:disabled { background-color: #f5c6cb; border-color: #f5c6cb; color: #721c24; opacity: 0.6; cursor: not-allowed; }
+
+/* क्लोज बटन (`&times;`) Styling */
 .modal .close-btn {
-    color: white; /* सफेद रंग (क्योंकि हेडर नीला है) */
+    color: white; /* Default for colored headers */
     opacity: 0.8;
     font-size: 32px;
+    font-weight: bold;
     line-height: 1;
-    position: absolute; /* सुनिश्चित करें कि यह ठीक से स्थित है */
-    top: 15px; /* स्थिति समायोजित करें */
+    position: absolute;
+    top: 15px;
     right: 20px;
-    z-index: 1052; /* हेडर के ऊपर */
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
     transition: opacity 0.2s ease, transform 0.2s ease;
-    text-shadow: 0 1px 2px rgba(0,0,0,0.3); /* थोड़ी शैडो */
+    z-index: 1052;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+}
+/* Style close button specifically for modals without colored headers */
+#bulkDeleteConfirmModal .close-btn,
+#whatsapp-reminder-popup .popup-close { /* popup-close is old id */
+    color: #aaa;
+    top: 10px;
+    right: 12px;
+    font-size: 28px;
+    text-shadow: none;
+    opacity: 1;
+}
+#bulkDeleteConfirmModal .close-btn:hover,
+#whatsapp-reminder-popup .popup-close:hover {
+    color: #333;
+    opacity: 1;
+    transform: scale(1.1);
 }
 .modal .close-btn:hover {
     opacity: 1;
-    transform: scale(1.1); /* थोड़ा बड़ा करें */
+    transform: scale(1.1);
+}
+
+@keyframes popupFadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+.modal.active { animation: popupFadeIn 0.3s ease-out forwards; }
+
+/* ---------- >>> MODAL / POPUP STYLES END <<< ---------- */
+
+
+/* --- Responsive --- */
+@media (max-width: 1250px) { /* Adjust breakpoint for min-width */
+    #orderTable { min-width: 1100px; } /* Reduce min-width slightly */
+}
+
+@media (max-width: 992px) {
+    .filter-bar { flex-direction: column; align-items: stretch; gap: 15px; }
+    .filter-group { min-width: 100%; }
+    .bulk-actions-bar { flex-direction: column; align-items: stretch; }
+    .bulk-actions-controls { justify-content: space-between; }
+    #statusCountsReport ul { column-count: 1; }
+    #orderTable { min-width: 900px; } /* Further reduce min-width */
+
+    #detailsModal .modal-grid-container-complex {
+        display: flex; /* Fallback to flex column */
+        flex-direction: column;
+        gap: 15px;
+        overflow-y: auto; /* Allow grid container to scroll */
+        padding: 15px;
+    }
+     #detailsModal .modal-section {
+       width: 100%;
+       box-sizing: border-box;
+       background-color: #fff; /* Ensure background */
+       padding: 12px 15px; /* Add padding back */
+       border: 1px solid var(--border-color); /* Add border back */
+     }
+     .account-data-grid { grid-template-columns: 1fr; }
+     #modalProductList ul.modal-product-list-ul { grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); }
+    .read-only-grid { grid-template-columns: 1fr; }
+}
+@media (max-width: 768px) {
+    body { padding: 15px; font-size: 14px; }
+    .container { max-width: 100%; padding: 20px; margin: 10px 0;}
+    .header { margin: -20px -20px 20px -20px; font-size: 1.15em;}
+    .breadcrumb { margin-bottom: 20px; padding-bottom: 12px;}
+    .actions-bar { justify-content: flex-end; gap: 8px; }
+    .actions-bar .button { padding: 7px 10px; font-size: 0.85em; height: 36px; flex-shrink: 0; }
+    #orderTable { font-size: 0.88em; min-width: 800px; }
+    #orderTable th, #orderTable td { padding: 8px 10px; white-space: normal; }
+    .modal-content { width: 95%; padding: 0; max-width: 100%; max-height: calc(100vh - 30px); }
+    .modal .modal-content h2 { font-size: 1.1em; padding: 15px 20px;}
+    .modal .close-btn { top: 12px; right: 15px; font-size: 28px;}
+    #bulkDeleteConfirmModal .close-btn, #whatsapp-reminder-popup .popup-close { top: 8px; right: 10px; font-size: 24px;}
+    /* Apply padding to specific content areas within modal */
+    .modal .read-only-content-area,
+    .modal .items-only-content-area,
+    .modal #poDetailsPopupContent,
+    .modal #poItemSelectionModal .item-selection-list,
+    .modal #modalStatusHistoryList,
+    .modal #modalProductList,
+    .modal #modalPOList,
+    .modal #detailsModal .modal-grid-container-complex {
+         padding: 15px 20px;
+    }
+    .modal .modal-actions { padding: 12px 20px;}
+    .modal-content.modal-md { max-width: 95%; }
+    .order-summary-counts{ justify-content: space-between; font-size: 0.9em; padding: 15px 20px;}
+    .status-update-inline { flex-direction: column; align-items: stretch; }
+    .status-update-inline select { max-width: none; }
+    .status-update-inline button { width: 100%; align-self: stretch; }
+    .modal-actions { gap: 10px; }
+    .modal-actions .button { font-size: 0.9em; padding: 8px 15px; height: 38px;}
+    .bulk-actions-controls { flex-direction: column; align-items: stretch; gap: 10px;}
+    .bulk-select, .bulk-button { width: 100%; }
+    .summary-reporting-container { gap: 15px; }
+    .order-summary-counts, .reporting-section { padding: 15px 20px; }
+    #modalProductList ul.modal-product-list-ul { grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); }
+}
+@media (max-width: 480px) {
+    body { padding: 10px; }
+    .container { padding: 15px; }
+    .header { padding: 12px 15px; font-size: 1.1em; margin: -15px -15px 15px -15px;}
+    .filter-bar { padding: 15px; }
+    #orderTable { font-size: 0.85em; min-width: 600px; }
+    #orderTable th, #orderTable td { padding: 6px 8px; }
+    th.col-checkbox, td.col-checkbox { width: 30px; padding: 6px 5px;}
+    th.col-checkbox input, td.col-checkbox input { transform: scale(1); }
+    .status-badge { padding: 4px 8px; font-size: 0.8em; }
+    .details-edit-button { padding: 4px 8px; font-size: 0.8em; }
+    .whatsapp-button { width: 26px; height: 26px; font-size: 0.9em; }
+    .modal-content { max-height: calc(100vh - 20px); }
+    .modal .modal-content h2 { font-size: 1em; padding: 12px 15px;}
+    .modal .close-btn { top: 10px; right: 12px; font-size: 24px;}
+    /* Apply padding to specific content areas within modal */
+    .modal .read-only-content-area,
+    .modal .items-only-content-area,
+    .modal #poDetailsPopupContent,
+    .modal #poItemSelectionModal .item-selection-list,
+    .modal #modalStatusHistoryList,
+    .modal #modalProductList,
+    .modal #modalPOList,
+    .modal #detailsModal .modal-grid-container-complex {
+         padding: 10px 15px;
+    }
+    .modal .modal-actions { padding: 10px 15px;}
+    #itemsOnlyModal h2 { font-size: 1.1em; }
+    .modal-actions { flex-direction: column; }
+    .modal-actions .button { width: 100%; justify-content: center;}
+    .actions-bar { flex-wrap: wrap; justify-content: flex-start;}
+    .actions-bar .button { flex-grow: 1; min-width: 120px; text-align: center;}
+    .account-data-grid { grid-template-columns: 1fr; }
+    #modalProductList ul.modal-product-list-ul { grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 5px;}
 }
