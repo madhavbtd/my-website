@@ -1,5 +1,6 @@
 // js/order_history.js
 // Updated Version: Includes PO Creation, Enhanced Details, Read-Only Popup, items field fix, WhatsApp fix, Single Item Display in Table, Items Only Popup, etc.
+// Added Debug Logging for PO Item Selection Modal Elements
 
 const {
     db, collection, onSnapshot, query, orderBy, where,
@@ -7,107 +8,125 @@ const {
     arrayUnion, writeBatch, limit, addDoc, getDocs // Added getDocs
 } = window;
 
-// DOM Element References (ensure all IDs match your HTML)
-const orderTableBody = document.getElementById('orderTableBody');
-const loadingRow = document.getElementById('loadingMessage');
-const sortSelect = document.getElementById('sort-orders');
-const filterDateInput = document.getElementById('filterDate');
-const filterSearchInput = document.getElementById('filterSearch');
-const filterStatusSelect = document.getElementById('filterStatus');
-const clearFiltersBtn = document.getElementById('clearFiltersBtn');
-const totalOrdersSpan = document.getElementById('total-orders');
-const completedOrdersSpan = document.getElementById('completed-delivered-orders');
-const pendingOrdersSpan = document.getElementById('pending-orders');
-const exportCsvBtn = document.getElementById('exportCsvBtn');
-const selectAllCheckbox = document.getElementById('selectAllCheckbox');
-const bulkActionsBar = document.getElementById('bulkActionsBar');
-const selectedCountSpan = document.getElementById('selectedCount');
-const bulkStatusSelect = document.getElementById('bulkStatusSelect');
-const bulkUpdateStatusBtn = document.getElementById('bulkUpdateStatusBtn');
-const bulkDeleteBtn = document.getElementById('bulkDeleteBtn');
-const reportingSection = document.getElementById('reportingSection');
-const statusCountsReportContainer = document.getElementById('statusCountsReport');
+// --- START DEBUG LOGGING HELPER ---
+function logElementFind(id) {
+    const element = document.getElementById(id);
+    console.log(`Finding element with ID '${id}':`, element ? 'FOUND' : '!!! NOT FOUND !!!');
+    return element;
+}
+// --- END DEBUG LOGGING HELPER ---
 
-const newCustomerBtn = document.getElementById('newCustomerBtn');
-const paymentReceivedBtn = document.getElementById('paymentReceivedBtn');
+
+// DOM Element References (ensure all IDs match your HTML)
+console.log("--- Defining DOM Element References ---");
+const orderTableBody = logElementFind('orderTableBody');
+const loadingRow = logElementFind('loadingMessage');
+const sortSelect = logElementFind('sort-orders');
+const filterDateInput = logElementFind('filterDate');
+const filterSearchInput = logElementFind('filterSearch');
+const filterStatusSelect = logElementFind('filterStatus');
+const clearFiltersBtn = logElementFind('clearFiltersBtn');
+const totalOrdersSpan = logElementFind('total-orders');
+const completedOrdersSpan = logElementFind('completed-delivered-orders');
+const pendingOrdersSpan = logElementFind('pending-orders');
+const exportCsvBtn = logElementFind('exportCsvBtn');
+const selectAllCheckbox = logElementFind('selectAllCheckbox');
+const bulkActionsBar = logElementFind('bulkActionsBar');
+const selectedCountSpan = logElementFind('selectedCount');
+const bulkStatusSelect = logElementFind('bulkStatusSelect');
+const bulkUpdateStatusBtn = logElementFind('bulkUpdateStatusBtn');
+const bulkDeleteBtn = logElementFind('bulkDeleteBtn');
+const reportingSection = logElementFind('reportingSection');
+const statusCountsReportContainer = logElementFind('statusCountsReport');
+
+const newCustomerBtn = logElementFind('newCustomerBtn');
+const paymentReceivedBtn = logElementFind('paymentReceivedBtn');
 
 // Details Modal Elements
-const detailsModal = document.getElementById('detailsModal');
-const closeModalBtn = document.getElementById('closeDetailsModal');
-const modalOrderIdInput = document.getElementById('modalOrderId');
-const modalDisplayOrderIdSpan = document.getElementById('modalDisplayOrderId');
-const modalCustomerNameSpan = document.getElementById('modalCustomerName');
-const modalCustomerWhatsAppSpan = document.getElementById('modalCustomerWhatsApp');
-const modalCustomerContactSpan = document.getElementById('modalCustomerContact');
-const modalCustomerAddressSpan = document.getElementById('modalCustomerAddress');
-const modalOrderDateSpan = document.getElementById('modalOrderDate');
-const modalDeliveryDateSpan = document.getElementById('modalDeliveryDate');
-const modalPrioritySpan = document.getElementById('modalPriority');
-const modalRemarksSpan = document.getElementById('modalRemarks');
-const modalOrderStatusSelect = document.getElementById('modalOrderStatus');
-const modalUpdateStatusBtn = document.getElementById('modalUpdateStatusBtn');
-const modalStatusHistoryListContainer = document.getElementById('modalStatusHistoryList');
-const modalProductListContainer = document.getElementById('modalProductList');
-const modalTotalAmountSpan = document.getElementById('modalTotalAmount');
-const modalAmountPaidSpan = document.getElementById('modalAmountPaid');
-const modalBalanceDueSpan = document.getElementById('modalBalanceDue');
-const modalPaymentStatusSpan = document.getElementById('modalPaymentStatus');
-const addPaymentBtn = document.getElementById('addPaymentBtn');
-const modalPOListContainer = document.getElementById('modalPOList');
-const modalCreatePOBtn = document.getElementById('modalCreatePOBtn');
-const modalDeleteBtn = document.getElementById('modalDeleteBtn');
-const modalEditFullBtn = document.getElementById('modalEditFullBtn');
+console.log("--- Defining Details Modal Elements ---");
+const detailsModal = logElementFind('detailsModal');
+const closeModalBtn = logElementFind('closeDetailsModal');
+const modalOrderIdInput = logElementFind('modalOrderId');
+const modalDisplayOrderIdSpan = logElementFind('modalDisplayOrderId');
+const modalCustomerNameSpan = logElementFind('modalCustomerName');
+const modalCustomerWhatsAppSpan = logElementFind('modalCustomerWhatsApp');
+const modalCustomerContactSpan = logElementFind('modalCustomerContact');
+const modalCustomerAddressSpan = logElementFind('modalCustomerAddress');
+const modalOrderDateSpan = logElementFind('modalOrderDate');
+const modalDeliveryDateSpan = logElementFind('modalDeliveryDate');
+const modalPrioritySpan = logElementFind('modalPriority');
+const modalRemarksSpan = logElementFind('modalRemarks');
+const modalOrderStatusSelect = logElementFind('modalOrderStatus');
+const modalUpdateStatusBtn = logElementFind('modalUpdateStatusBtn');
+const modalStatusHistoryListContainer = logElementFind('modalStatusHistoryList');
+const modalProductListContainer = logElementFind('modalProductList');
+const modalTotalAmountSpan = logElementFind('modalTotalAmount');
+const modalAmountPaidSpan = logElementFind('modalAmountPaid');
+const modalBalanceDueSpan = logElementFind('modalBalanceDue');
+const modalPaymentStatusSpan = logElementFind('modalPaymentStatus');
+const addPaymentBtn = logElementFind('addPaymentBtn');
+const modalPOListContainer = logElementFind('modalPOList');
+const modalCreatePOBtn = logElementFind('modalCreatePOBtn');
+const modalDeleteBtn = logElementFind('modalDeleteBtn');
+const modalEditFullBtn = logElementFind('modalEditFullBtn');
 
 // WhatsApp Reminder Popup Elements
-const whatsappReminderPopup = document.getElementById('whatsapp-reminder-popup');
-const whatsappPopupCloseBtn = document.getElementById('popup-close-btn');
-const whatsappMsgPreview = document.getElementById('whatsapp-message-preview');
-const whatsappSendLink = document.getElementById('whatsapp-send-link');
+console.log("--- Defining WhatsApp Popup Elements ---");
+const whatsappReminderPopup = logElementFind('whatsapp-reminder-popup');
+const whatsappPopupCloseBtn = logElementFind('popup-close-btn');
+const whatsappMsgPreview = logElementFind('whatsapp-message-preview');
+const whatsappSendLink = logElementFind('whatsapp-send-link');
 
 // Bulk Delete Modal Elements
-const bulkDeleteConfirmModal = document.getElementById('bulkDeleteConfirmModal');
-const closeBulkDeleteModalBtn = document.getElementById('closeBulkDeleteModal');
-const cancelBulkDeleteBtn = document.getElementById('cancelBulkDeleteBtn');
-const confirmBulkDeleteBtn = document.getElementById('confirmBulkDeleteBtn');
-const confirmDeleteCheckbox = document.getElementById('confirmDeleteCheckbox');
-const bulkDeleteOrderList = document.getElementById('bulkDeleteOrderList');
-const bulkDeleteCountSpan = document.getElementById('bulkDeleteCount');
+console.log("--- Defining Bulk Delete Modal Elements ---");
+const bulkDeleteConfirmModal = logElementFind('bulkDeleteConfirmModal');
+const closeBulkDeleteModalBtn = logElementFind('closeBulkDeleteModal');
+const cancelBulkDeleteBtn = logElementFind('cancelBulkDeleteBtn');
+const confirmBulkDeleteBtn = logElementFind('confirmBulkDeleteBtn');
+const confirmDeleteCheckbox = logElementFind('confirmDeleteCheckbox');
+const bulkDeleteOrderList = logElementFind('bulkDeleteOrderList');
+const bulkDeleteCountSpan = logElementFind('bulkDeleteCount');
 
-// PO Item Selection Modal Elements
-const poItemSelectionModal = document.getElementById('poItemSelectionModal');
-const closePoItemSelectionModalBtn = document.getElementById('closePoItemSelectionModal');
-const poItemSelectionOrderIdInput = document.getElementById('poItemSelectionOrderId');
-const poItemSelectionDisplayOrderIdSpan = document.getElementById('poItemSelectionDisplayOrderId');
-const poItemSelectionListContainer = document.getElementById('poItemSelectionList');
-const poSupplierSearchInput = document.getElementById('poSupplierSearchInput');
-const poSelectedSupplierIdInput = document.getElementById('poSelectedSupplierId');
-const poSelectedSupplierNameInput = document.getElementById('poSelectedSupplierName');
-const poSupplierSuggestionsDiv = document.getElementById('poSupplierSuggestions');
-const cancelPoItemSelectionBtn = document.getElementById('cancelPoItemSelectionBtn');
-const proceedToCreatePOBtn = document.getElementById('proceedToCreatePOBtn');
-const poItemSelectionError = document.getElementById('poItemSelectionError');
+// *** PO Item Selection Modal Elements (DEBUG LOGGING ADDED) ***
+console.log("--- Defining PO Item Selection Modal Elements (DEBUG) ---");
+const poItemSelectionModal = logElementFind('poItemSelectionModal');
+const closePoItemSelectionModalBtn = logElementFind('closePoItemSelectionModalBtn');
+const poItemSelectionOrderIdInput = logElementFind('poItemSelectionOrderIdInput');
+const poItemSelectionDisplayOrderIdSpan = logElementFind('poItemSelectionDisplayOrderIdSpan');
+const poItemSelectionListContainer = logElementFind('poItemSelectionListContainer'); // ID added in HTML
+const poSupplierSearchInput = logElementFind('poSupplierSearchInput');
+const poSelectedSupplierIdInput = logElementFind('poSelectedSupplierId'); // Corrected ID
+const poSelectedSupplierNameInput = logElementFind('poSelectedSupplierName'); // Corrected ID
+const poSupplierSuggestionsDiv = logElementFind('poSupplierSuggestions');
+const cancelPoItemSelectionBtn = logElementFind('cancelPoItemSelectionBtn');
+const proceedToCreatePOBtn = logElementFind('proceedToCreatePOBtn');
+const poItemSelectionError = logElementFind('poItemSelectionError');
+const poItemSelectionList = logElementFind('poItemSelectionList'); // Added check for the list itself
 
 // PO Details Popup Elements
-const poDetailsPopup = document.getElementById('poDetailsPopup');
-const poDetailsPopupContent = document.getElementById('poDetailsPopupContent');
-const closePoDetailsPopupBtn = document.getElementById('closePoDetailsPopupBtn');
-const closePoDetailsPopupBottomBtn = document.getElementById('closePoDetailsPopupBottomBtn');
-const printPoDetailsPopupBtn = document.getElementById('printPoDetailsPopupBtn');
+console.log("--- Defining PO Details Popup Elements ---");
+const poDetailsPopup = logElementFind('poDetailsPopup');
+const poDetailsPopupContent = logElementFind('poDetailsPopupContent');
+const closePoDetailsPopupBtn = logElementFind('closePoDetailsPopupBtn');
+const closePoDetailsPopupBottomBtn = logElementFind('closePoDetailsPopupBottomBtn');
+const printPoDetailsPopupBtn = logElementFind('printPoDetailsPopupBtn');
 
 // Read-Only Order Modal Elements
-const readOnlyOrderModal = document.getElementById('readOnlyOrderModal');
-const closeReadOnlyOrderModalBtn = document.getElementById('closeReadOnlyOrderModal');
-const readOnlyOrderModalTitle = document.getElementById('readOnlyOrderModalTitle');
-const readOnlyOrderModalContent = document.getElementById('readOnlyOrderModalContent');
-const closeReadOnlyOrderModalBottomBtn = document.getElementById('closeReadOnlyOrderModalBottomBtn');
+console.log("--- Defining Read-Only Modal Elements ---");
+const readOnlyOrderModal = logElementFind('readOnlyOrderModal');
+const closeReadOnlyOrderModalBtn = logElementFind('closeReadOnlyOrderModal');
+const readOnlyOrderModalTitle = logElementFind('readOnlyOrderModalTitle');
+const readOnlyOrderModalContent = logElementFind('readOnlyOrderModalContent');
+const closeReadOnlyOrderModalBottomBtn = logElementFind('closeReadOnlyOrderModalBottomBtn');
 
-// --- नया: Items Only Modal Elements ---
-const itemsOnlyModal = document.getElementById('itemsOnlyModal');
-const closeItemsOnlyModalBtn = document.getElementById('closeItemsOnlyModal');
-const itemsOnlyModalTitle = document.getElementById('itemsOnlyModalTitle');
-const itemsOnlyModalContent = document.getElementById('itemsOnlyModalContent');
-const closeItemsOnlyModalBottomBtn = document.getElementById('closeItemsOnlyModalBottomBtn');
-// --- Items Only Modal Elements समाप्त ---
+// Items Only Modal Elements
+console.log("--- Defining Items Only Modal Elements ---");
+const itemsOnlyModal = logElementFind('itemsOnlyModal');
+const closeItemsOnlyModalBtn = logElementFind('closeItemsOnlyModal');
+const itemsOnlyModalTitle = logElementFind('itemsOnlyModalTitle');
+const itemsOnlyModalContent = logElementFind('itemsOnlyModalContent');
+const closeItemsOnlyModalBottomBtn = logElementFind('closeItemsOnlyModalBottomBtn');
+console.log("--- Finished Defining DOM Elements ---");
 
 // Global State Variables
 let currentSortField = 'createdAt';
@@ -119,7 +138,7 @@ let searchDebounceTimer;
 let supplierSearchDebounceTimerPO;
 let currentStatusFilter = '';
 let orderIdToOpenFromUrl = null;
-let modalOpenedFromUrl = false; // Tracks if *any* modal was opened from URL
+let modalOpenedFromUrl = false;
 let selectedOrderIds = new Set();
 let activeOrderDataForModal = null;
 let cachedSuppliers = {};
@@ -130,8 +149,8 @@ document.addEventListener('DOMContentLoaded', () => {
     console.log("Order History DOM Loaded. Initializing...");
 
     const urlParams = new URLSearchParams(window.location.search);
-    orderIdToOpenFromUrl = urlParams.get('openModalForId'); // Check if an order detail modal needs opening
-    currentStatusFilter = urlParams.get('status'); // Check for status filter from URL
+    orderIdToOpenFromUrl = urlParams.get('openModalForId');
+    currentStatusFilter = urlParams.get('status');
     if (orderIdToOpenFromUrl) console.log(`Request to open modal for ID: ${orderIdToOpenFromUrl}`);
     if (currentStatusFilter && filterStatusSelect) filterStatusSelect.value = currentStatusFilter;
 
@@ -143,7 +162,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // Function to setup all event listeners
 function setupEventListeners() {
-    // Filter/Sort Listeners
+    // ... (rest of the setupEventListeners function remains the same) ...
+     // Filter/Sort Listeners
     if (sortSelect) sortSelect.addEventListener('change', handleSortChange);
     if (filterDateInput) filterDateInput.addEventListener('change', handleFilterChange);
     if (filterSearchInput) filterSearchInput.addEventListener('input', handleSearchInput);
@@ -189,7 +209,12 @@ function setupEventListeners() {
     if (poItemSelectionModal) poItemSelectionModal.addEventListener('click', (event) => { if (event.target === poItemSelectionModal) closePoItemSelectionModal(); });
     if (proceedToCreatePOBtn) proceedToCreatePOBtn.addEventListener('click', handleProceedToCreatePO);
     if (poSupplierSearchInput) poSupplierSearchInput.addEventListener('input', handlePOSupplierSearchInput);
-    if (poItemSelectionListContainer) poItemSelectionListContainer.addEventListener('change', handlePOItemCheckboxChange);
+    // Check if poItemSelectionList exists before adding listener
+    if (poItemSelectionList) {
+        poItemSelectionList.addEventListener('change', handlePOItemCheckboxChange);
+    } else {
+        console.warn("Element 'poItemSelectionList' not found, cannot add change listener for PO items.");
+    }
     document.addEventListener('click', (e) => {
         if (poSupplierSuggestionsDiv && poSupplierSuggestionsDiv.style.display === 'block' && !poSupplierSearchInput.contains(e.target) && !poSupplierSuggestionsDiv.contains(e.target)) {
             poSupplierSuggestionsDiv.style.display = 'none';
@@ -221,54 +246,6 @@ function setupEventListeners() {
         console.error("Element with ID 'orderTableBody' not found!");
     }
 }
-
-// Handles clicks within the order table body
-function handleTableClick(event) {
-    const target = event.target;
-    const row = target.closest('tr');
-    if (!row || !row.dataset.id) return;
-
-    const firestoreId = row.dataset.id;
-    const orderData = findOrderInCache(firestoreId); // Use cached data
-
-    if (!orderData) {
-        console.warn(`Order data not found in cache for ID: ${firestoreId}. Cannot perform action.`);
-        return;
-    }
-
-    // Determine action based on clicked element
-    if (target.matches('.row-selector')) {
-        handleRowCheckboxChange(target, firestoreId);
-    } else if (target.closest('.order-id-link')) {
-        event.preventDefault();
-        openReadOnlyOrderPopup(firestoreId, orderData);
-    } else if (target.closest('.customer-name-link')) {
-        event.preventDefault();
-        const customerId = orderData.customerDetails?.customerId;
-        if (customerId) {
-            window.location.href = `customer_account_detail.html?id=${customerId}`;
-        } else {
-            alert('Customer details/ID not found for linking. Please ensure customerId is saved within customerDetails in the order document.'); // More informative alert
-        }
-    } else if (target.closest('.create-po-button')) {
-         event.preventDefault();
-        openPOItemSelectionModal(firestoreId, orderData);
-    } else if (target.closest('.view-po-details-link')) {
-        event.preventDefault();
-        const poId = target.closest('.view-po-details-link').dataset.poid;
-        if (poId) { openPODetailsPopup(poId); }
-        else { console.error("PO ID missing on view link"); }
-    } else if (target.closest('.see-more-link')) { // <<<--- यह हिस्सा बदला गया
-        event.preventDefault();
-        // openReadOnlyOrderPopup(firestoreId, orderData); // पुराना कोड: रीड-ओनली पॉपअप खोलता था
-        openItemsOnlyPopup(firestoreId); // <<<--- नया कोड: केवल आइटम पॉपअप खोलता है
-    } else if (target.closest('.details-edit-button')) {
-        openDetailsModal(firestoreId, orderData);
-    } else if (target.closest('.whatsapp-button')) {
-        sendWhatsAppMessage(firestoreId, orderData);
-    }
-}
-
 
 // Utility: Find order data in the cache
 function findOrderInCache(firestoreId) {
@@ -560,9 +537,55 @@ function displayOrderRow(firestoreId, data, searchTerm = '') {
     }
 }
 
+// Handles clicks within the order table body
+function handleTableClick(event) {
+    const target = event.target;
+    const row = target.closest('tr');
+    if (!row || !row.dataset.id) return;
+
+    const firestoreId = row.dataset.id;
+    const orderData = findOrderInCache(firestoreId); // Use cached data
+
+    if (!orderData) {
+        console.warn(`Order data not found in cache for ID: ${firestoreId}. Cannot perform action.`);
+        return;
+    }
+
+    // Determine action based on clicked element
+    if (target.matches('.row-selector')) {
+        handleRowCheckboxChange(target, firestoreId);
+    } else if (target.closest('.order-id-link')) {
+        event.preventDefault();
+        openReadOnlyOrderPopup(firestoreId, orderData);
+    } else if (target.closest('.customer-name-link')) {
+        event.preventDefault();
+        const customerId = orderData.customerDetails?.customerId;
+        if (customerId) {
+            window.location.href = `customer_account_detail.html?id=${customerId}`;
+        } else {
+            alert('Customer details/ID not found for linking. Please ensure customerId is saved within customerDetails in the order document.'); // More informative alert
+        }
+    } else if (target.closest('.create-po-button')) { // <--- This is the green button
+         event.preventDefault();
+        openPOItemSelectionModal(firestoreId, orderData); // <--- This function is called
+    } else if (target.closest('.view-po-details-link')) {
+        event.preventDefault();
+        const poId = target.closest('.view-po-details-link').dataset.poid;
+        if (poId) { openPODetailsPopup(poId); }
+        else { console.error("PO ID missing on view link"); }
+    } else if (target.closest('.see-more-link')) {
+        event.preventDefault();
+        openItemsOnlyPopup(firestoreId);
+    } else if (target.closest('.details-edit-button')) {
+        openDetailsModal(firestoreId, orderData);
+    } else if (target.closest('.whatsapp-button')) {
+        sendWhatsAppMessage(firestoreId, orderData);
+    }
+}
 
 // --- Open Details Modal ---
 async function openDetailsModal(firestoreId, orderData) {
+    // ... (openDetailsModal function remains the same) ...
     if (!orderData || !detailsModal) return;
     activeOrderDataForModal = orderData; // Store data for modal actions
 
@@ -657,9 +680,9 @@ async function openDetailsModal(firestoreId, orderData) {
     if(detailsModal) detailsModal.style.display = 'flex'; // Show modal
 }
 
-
 // --- Display POs in Modal ---
 async function displayPOsInModal(orderFirestoreId, linkedPOs) {
+    // ... (displayPOsInModal function remains the same) ...
      if (!modalPOListContainer) return;
     modalPOListContainer.innerHTML = '<p><i class="fas fa-spinner fa-spin"></i> Loading POs...</p>'; // Loading indicator
 
@@ -740,11 +763,13 @@ async function displayPOsInModal(orderFirestoreId, linkedPOs) {
     }
 }
 
+
 // --- Close Details Modal ---
 function closeDetailsModal() { if (detailsModal) detailsModal.style.display = 'none'; activeOrderDataForModal = null; }
 
 // --- Handle Status Update ---
 async function handleUpdateStatus() {
+    // ... (handleUpdateStatus function remains the same) ...
     const firestoreId = modalOrderIdInput.value;
     const newStatus = modalOrderStatusSelect.value;
     const orderDataForWhatsApp = activeOrderDataForModal ? { ...activeOrderDataForModal } : null; // Get data before closing modal
@@ -807,8 +832,10 @@ async function handleUpdateStatus() {
     }
 }
 
+
 // --- Handle Delete from Modal ---
 function handleDeleteFromModal() {
+    // ... (handleDeleteFromModal function remains the same) ...
     const firestoreId = modalOrderIdInput.value;
     const displayId = modalDisplayOrderIdSpan.textContent;
     if (!firestoreId) { alert("Cannot delete. Order ID not found."); return; }
@@ -821,6 +848,7 @@ function handleDeleteFromModal() {
 }
 // --- Delete Single Order ---
 async function deleteSingleOrder(firestoreId) {
+    // ... (deleteSingleOrder function remains the same) ...
     if (!db || !firestoreId) { alert("Delete function unavailable or Order ID missing."); return; }
     console.log(`Attempting to delete order: ${firestoreId}`);
     try {
@@ -835,6 +863,7 @@ async function deleteSingleOrder(firestoreId) {
 }
 // --- Handle Edit Full Order from Modal ---
 function handleEditFullFromModal() {
+    // ... (handleEditFullFromModal function remains the same) ...
     const firestoreId = modalOrderIdInput.value;
     if (firestoreId) {
         window.location.href = `new_order.html?editOrderId=${firestoreId}`; // Redirect to edit page
@@ -844,6 +873,7 @@ function handleEditFullFromModal() {
 }
 // --- Handle Create PO from Modal ---
 function handleCreatePOFromModal() {
+    // ... (handleCreatePOFromModal function remains the same) ...
     const orderFirestoreId = modalOrderIdInput.value;
     if (orderFirestoreId && activeOrderDataForModal) {
         const orderData = activeOrderDataForModal;
@@ -857,6 +887,7 @@ function handleCreatePOFromModal() {
 
 // --- WhatsApp Functions ---
 function showStatusUpdateWhatsAppReminder(customer, orderId, updatedStatus) {
+    // ... (showStatusUpdateWhatsAppReminder function remains the same) ...
     if (!whatsappReminderPopup || !whatsappMsgPreview || !whatsappSendLink || !customer) {
         console.warn("WhatsApp reminder elements or customer data missing.");
         return;
@@ -877,8 +908,10 @@ function showStatusUpdateWhatsAppReminder(customer, orderId, updatedStatus) {
     if(title) title.textContent = "Status Updated!"; // Update title if needed
     whatsappReminderPopup.classList.add('active'); // Show the popup
 }
+
 function closeWhatsAppPopup() { if (whatsappReminderPopup) whatsappReminderPopup.classList.remove('active'); }
 function sendWhatsAppMessage(firestoreId, orderData) {
+    // ... (sendWhatsAppMessage function remains the same) ...
     if (!orderData?.customerDetails?.whatsappNo) { alert("WhatsApp number not found for this order."); return; }
     const cust = orderData.customerDetails;
     const orderIdForMsg = orderData.orderId || `Sys:${firestoreId.substring(0,6)}`;
@@ -894,6 +927,7 @@ function sendWhatsAppMessage(firestoreId, orderData) {
     window.open(url, '_blank'); // Open WhatsApp in new tab
 }
 function getWhatsAppMessageTemplate(status, customerName, orderId, deliveryDate) {
+    // ... (getWhatsAppMessageTemplate function remains the same) ...
     // Placeholders
     const namePlaceholder = "[Customer Name]";
     const orderNoPlaceholder = "[ORDER_NO]";
@@ -944,6 +978,7 @@ function getWhatsAppMessageTemplate(status, customerName, orderId, deliveryDate)
 
 // --- Bulk Actions ---
 function handleSelectAllChange(event) {
+    // ... (handleSelectAllChange function remains the same) ...
     const isChecked = event.target.checked;
     const rowsCheckboxes = orderTableBody.querySelectorAll('.row-selector');
     rowsCheckboxes.forEach(cb => {
@@ -963,6 +998,7 @@ function handleSelectAllChange(event) {
     updateBulkActionsBar();
 }
 function handleRowCheckboxChange(checkbox, firestoreId) {
+    // ... (handleRowCheckboxChange function remains the same) ...
     const row = checkbox.closest('tr');
     if (checkbox.checked) {
         selectedOrderIds.add(firestoreId);
@@ -975,6 +1011,7 @@ function handleRowCheckboxChange(checkbox, firestoreId) {
     updateSelectAllCheckboxState(); // Update master checkbox state
 }
 function updateBulkActionsBar() {
+    // ... (updateBulkActionsBar function remains the same) ...
     const count = selectedOrderIds.size;
     if (!bulkActionsBar || !selectedCountSpan || !bulkUpdateStatusBtn || !bulkDeleteBtn) return;
     if (count > 0) {
@@ -992,6 +1029,7 @@ function updateBulkActionsBar() {
     }
 }
 async function handleBulkDelete() {
+    // ... (handleBulkDelete function remains the same) ...
     const idsToDelete = Array.from(selectedOrderIds);
     const MAX_DELETE_LIMIT = 5; // Set limit
     if (idsToDelete.length === 0) { alert("Please select orders to delete."); return; }
@@ -1023,6 +1061,7 @@ async function handleBulkDelete() {
     bulkDeleteConfirmModal.style.display = 'flex'; // Show modal
 }
 async function executeBulkDelete(idsToDelete) {
+    // ... (executeBulkDelete function remains the same) ...
     if (!db || idsToDelete.length === 0) return;
     if(bulkDeleteBtn) bulkDeleteBtn.disabled = true; // Disable main delete button
     if(confirmBulkDeleteBtn) { // Update modal confirm button state
@@ -1051,6 +1090,7 @@ async function executeBulkDelete(idsToDelete) {
 }
 function closeBulkDeleteModal() { if (bulkDeleteConfirmModal) bulkDeleteConfirmModal.style.display = 'none'; }
 async function handleBulkUpdateStatus() {
+    // ... (handleBulkUpdateStatus function remains the same) ...
     const idsToUpdate = Array.from(selectedOrderIds);
     const newStatus = bulkStatusSelect.value;
     const MAX_STATUS_UPDATE_LIMIT = 10; // Set limit
@@ -1095,6 +1135,7 @@ async function handleBulkUpdateStatus() {
 
 // --- CSV Export ---
 function exportToCsv() {
+    // ... (exportToCsv function remains the same) ...
     if (currentlyDisplayedOrders.length === 0) { alert("No data currently displayed to export."); return; }
     // Define headers
     const headers = [
@@ -1136,6 +1177,7 @@ function exportToCsv() {
 
 // --- Attempt Open Modal from URL ---
 function attemptOpenModalFromUrl() {
+    // ... (attemptOpenModalFromUrl function remains the same) ...
     // This function attempts to open the read-only modal if `orderIdToOpenFromUrl` is set
     if (orderIdToOpenFromUrl && allOrdersCache.length > 0 && !modalOpenedFromUrl) {
         const orderWrapper = allOrdersCache.find(o => o.id === orderIdToOpenFromUrl);
@@ -1164,16 +1206,47 @@ function attemptOpenModalFromUrl() {
 
 
 // --- PO Creation Functions ---
+// *** UPDATED CHECK INSIDE THIS FUNCTION ***
 function openPOItemSelectionModal(orderFirestoreId, orderData) {
-    if (!poItemSelectionModal || !poItemSelectionOrderIdInput || !poItemSelectionDisplayOrderIdSpan || !poItemSelectionListContainer || !proceedToCreatePOBtn || !poSupplierSearchInput) { console.error("PO Item Selection Modal elements missing."); alert("Cannot open PO item selection popup."); return; }
-    if (!orderData || !orderData.items || orderData.items.length === 0) { alert("No items found in this order to create a PO for."); return; }
+    // Re-check elements specifically needed by *this* function
+    const elementsToCheck = {
+        poItemSelectionModal,
+        poItemSelectionOrderIdInput,
+        poItemSelectionDisplayOrderIdSpan,
+        poItemSelectionListContainer, // Checking the container ID now
+        poItemSelectionList, // Check the actual list UL/DIV too
+        proceedToCreatePOBtn,
+        poSupplierSearchInput,
+        poSelectedSupplierIdInput, // Added check
+        poSelectedSupplierNameInput // Added check
+    };
+
+    let missingElement = null;
+    for (const key in elementsToCheck) {
+        if (!elementsToCheck[key]) {
+            missingElement = key;
+            break;
+        }
+    }
+
+    if (missingElement) {
+        console.error(`PO Item Selection Modal elements missing. Specifically: '${missingElement}' seems undefined or null.`);
+        alert(`Cannot open PO item selection popup. (Error finding: ${missingElement})`);
+        return;
+    }
+
+    // --- Original function logic continues below if all elements found ---
+    if (!orderData || !orderData.items || orderData.items.length === 0) {
+        alert("No items found in this order to create a PO for.");
+        return;
+    }
 
     // Set order ID in modal
     poItemSelectionOrderIdInput.value = orderFirestoreId;
     poItemSelectionDisplayOrderIdSpan.textContent = orderData.orderId || `Sys:${orderFirestoreId.substring(0,6)}`;
 
     // Reset supplier search and selection
-    poItemSelectionListContainer.innerHTML = ''; // Clear previous items
+    poItemSelectionList.innerHTML = ''; // Clear previous items (using the list element directly)
     poSupplierSearchInput.value = '';
     poSelectedSupplierIdInput.value = '';
     poSelectedSupplierNameInput.value = '';
@@ -1183,11 +1256,10 @@ function openPOItemSelectionModal(orderFirestoreId, orderData) {
     let availableItems = 0;
     orderData.items.forEach((item, index) => {
         if (!item) return; // Skip if item is invalid
-        // Future enhancement: Check if item is already in an existing PO linked to this order
-        const isAlreadyInPO = false; // Placeholder - Add logic if needed
+        const isAlreadyInPO = false; // Placeholder
 
         const div = document.createElement('div');
-        div.className = 'item-selection-entry'; // Use class for styling
+        div.className = 'item-selection-entry';
         div.innerHTML = `
             <input type="checkbox" id="poItem_${index}" name="poItems" value="${index}" data-product-index="${index}" ${isAlreadyInPO ? 'disabled' : ''}>
             <label for="poItem_${index}">
@@ -1195,48 +1267,46 @@ function openPOItemSelectionModal(orderFirestoreId, orderData) {
                 (Qty: ${escapeHtml(item.quantity || '?')})
                 ${isAlreadyInPO ? '<span class="in-po-label">(In PO)</span>' : ''}
             </label>`;
-        poItemSelectionListContainer.appendChild(div);
+        poItemSelectionList.appendChild(div); // Append to the list element
         if (!isAlreadyInPO) availableItems++;
     });
 
     // Handle cases where no items can be added to a PO
     if (availableItems === 0) {
-        poItemSelectionListContainer.innerHTML = '<p>All items are already included in existing Purchase Orders or no items available.</p>';
+        poItemSelectionList.innerHTML = '<p>All items are already included in existing Purchase Orders or no items available.</p>';
         proceedToCreatePOBtn.disabled = true;
     } else {
-        // Disable proceed button initially (requires items AND supplier)
         proceedToCreatePOBtn.disabled = true;
     }
     poItemSelectionModal.classList.add('active'); // Show the modal
 }
+
 function closePoItemSelectionModal() { if (poItemSelectionModal) poItemSelectionModal.classList.remove('active'); showPOItemError(''); }
 function showPOItemError(message) { if (poItemSelectionError) { poItemSelectionError.textContent = message; poItemSelectionError.style.display = message ? 'block' : 'none'; } }
 function handlePOItemCheckboxChange() {
-    if (!poItemSelectionListContainer || !proceedToCreatePOBtn || !poSelectedSupplierIdInput) return;
-    const selectedCheckboxes = poItemSelectionListContainer.querySelectorAll('input[name="poItems"]:checked:not(:disabled)');
+    if (!poItemSelectionList || !proceedToCreatePOBtn || !poSelectedSupplierIdInput) return;
+    const selectedCheckboxes = poItemSelectionList.querySelectorAll('input[name="poItems"]:checked:not(:disabled)');
     const supplierSelected = !!poSelectedSupplierIdInput.value;
-    // Enable proceed button only if at least one item is checked AND a supplier is selected
     proceedToCreatePOBtn.disabled = !(selectedCheckboxes.length > 0 && supplierSelected);
 }
 function handlePOSupplierSearchInput() {
     if (!poSupplierSearchInput || !poSupplierSuggestionsDiv || !poSelectedSupplierIdInput || !poSelectedSupplierNameInput) return;
     clearTimeout(supplierSearchDebounceTimerPO);
     const searchTerm = poSupplierSearchInput.value.trim();
-    // Clear selection when user types
     poSelectedSupplierIdInput.value = '';
     poSelectedSupplierNameInput.value = '';
-    handlePOItemCheckboxChange(); // Update proceed button state (will disable it)
+    handlePOItemCheckboxChange(); // Update proceed button state
 
     if (searchTerm.length < 1) {
         if(poSupplierSuggestionsDiv){ poSupplierSuggestionsDiv.innerHTML = ''; poSupplierSuggestionsDiv.style.display = 'none';}
         return;
     }
-    // Debounce the search
     supplierSearchDebounceTimerPO = setTimeout(() => {
         fetchPOSupplierSuggestions(searchTerm);
     }, 350);
 }
 async function fetchPOSupplierSuggestions(searchTerm) {
+    // ... (fetchPOSupplierSuggestions function remains the same) ...
     if (!poSupplierSuggestionsDiv || !db) return;
     poSupplierSuggestionsDiv.innerHTML = '<div>Loading...</div>';
     poSupplierSuggestionsDiv.style.display = 'block';
@@ -1296,8 +1366,12 @@ function handleProceedToCreatePO() {
         showPOItemError("Missing Order ID or Supplier Selection.");
         return;
     }
+    if (!poItemSelectionList) { // Added check
+         showPOItemError("Item list container not found.");
+         return;
+    }
     // Get selected item indices
-    const selectedItemsIndices = Array.from(poItemSelectionListContainer.querySelectorAll('input[name="poItems"]:checked:not(:disabled)')).map(cb => parseInt(cb.value));
+    const selectedItemsIndices = Array.from(poItemSelectionList.querySelectorAll('input[name="poItems"]:checked:not(:disabled)')).map(cb => parseInt(cb.value));
     if (selectedItemsIndices.length === 0) {
         showPOItemError("Please select at least one item for the PO.");
         return;
@@ -1318,6 +1392,7 @@ function handleProceedToCreatePO() {
 
 // --- PO Details Popup Functions ---
 async function openPODetailsPopup(poId) {
+    // ... (openPODetailsPopup function remains the same) ...
     if (!poDetailsPopup || !poDetailsPopupContent || !db || !poId) return;
     poDetailsPopupContent.innerHTML = '<p><i class="fas fa-spinner fa-spin"></i> Loading PO details...</p>';
     poDetailsPopup.classList.add('active'); // Show popup
@@ -1371,6 +1446,7 @@ async function openPODetailsPopup(poId) {
 }
 function closePODetailsPopup() { if (poDetailsPopup) poDetailsPopup.classList.remove('active'); }
 function handlePrintPODetailsPopup(event) {
+    // ... (handlePrintPODetailsPopup function remains the same) ...
     // Basic print function - consider using a dedicated print library or CSS for better formatting
     const contentElement = document.getElementById('poDetailsPopupContent');
     if (!contentElement) return;
@@ -1389,6 +1465,7 @@ function handlePrintPODetailsPopup(event) {
 
 // --- Read-Only Order Details Popup Functions ---
 function openReadOnlyOrderPopup(firestoreId, orderData) {
+    // ... (openReadOnlyOrderPopup function remains the same) ...
     if (!readOnlyOrderModal || !readOnlyOrderModalContent || !readOnlyOrderModalTitle || !orderData) return;
 
     readOnlyOrderModalTitle.textContent = `Order Details: #${escapeHtml(orderData.orderId || firestoreId.substring(0,6))}`;
@@ -1460,8 +1537,9 @@ function openReadOnlyOrderPopup(firestoreId, orderData) {
 function closeReadOnlyOrderModal() { if (readOnlyOrderModal) readOnlyOrderModal.classList.remove('active'); }
 
 
-// --- नया: Items Only Popup Functions ---
+// --- Items Only Popup Functions ---
 function openItemsOnlyPopup(firestoreId) {
+    // ... (openItemsOnlyPopup function remains the same) ...
     if (!itemsOnlyModal || !itemsOnlyModalContent || !itemsOnlyModalTitle) {
          console.error("Items Only Modal elements missing.");
          return;
@@ -1500,11 +1578,10 @@ function openItemsOnlyPopup(firestoreId) {
 }
 
 function closeItemsOnlyPopup() {
+    // ... (closeItemsOnlyPopup function remains the same) ...
     if (itemsOnlyModal) {
         itemsOnlyModal.classList.remove('active'); // Hide the modal
     }
 }
-// --- Items Only Popup Functions समाप्त ---
 
-
-console.log("order_history.js script loaded successfully (with Items Only Popup)."); // Log version
+console.log("order_history.js script loaded successfully (with Items Only Popup and Debug Logging)."); // Log version
