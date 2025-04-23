@@ -1,5 +1,5 @@
 /* === order_history.css === */
-/* Final Version: Fixes #detailsModal buttons, fixes suggestion list position, keeps PO modal layout */
+/* Final Version: Fixes #detailsModal buttons, refines #poItemSelectionModal layout and styles */
 
 /* --- Global Styles & Variables --- */
 :root {
@@ -102,16 +102,7 @@ h1 { margin: 0; font-size: 1em; }
 .secondary-button:hover { background-color: #5a6268; }
 
 /* Update Status Button */
-.update-status-button {
-    background-color: var(--warning-color);
-    color: #333;
-    vertical-align: middle;
-    font-weight: 500;
-    width: auto;
-    padding-left: 20px;
-    padding-right: 20px;
-    align-self: center;
-}
+.update-status-button { background-color: var(--warning-color); color: #333; vertical-align: middle; font-weight: 500; width: auto; padding-left: 20px; padding-right: 20px; align-self: center; }
 .update-status-button:hover { background-color: #e0a800; }
 
 .edit-full-button { background-color: #5bc0de; color: white; }
@@ -238,10 +229,37 @@ mark { background-color: var(--highlight-color); padding: 0.1em 0.2em; border-ra
 
 /* --- Enhanced Details Modal Specific Styles (#detailsModal) --- */
 /* Fix action button position by making content scrollable */
-#detailsModal .modal-content { overflow-y: hidden; }
-.details-modal-content-wrapper { flex-grow: 1; overflow-y: auto; padding-right: 5px; margin-bottom: 15px; min-height: 0; }
-#detailsModal .modal-grid-container-complex { display: grid; grid-template-columns: 1.2fr 1.2fr 1fr; gap: 15px; }
-#detailsModal .modal-actions.main-actions { margin-top: 0; padding-top: 15px; border-top: 1px solid var(--border-color); flex-shrink: 0; background-color: var(--light-bg); margin-left: -20px; margin-right: -20px; margin-bottom: -15px; padding: 15px 20px; border-radius: 0 0 var(--border-radius) var(--border-radius); }
+#detailsModal .modal-content {
+    overflow-y: auto; /* <<< CHANGE: Make entire modal content scrollable again */
+    display: flex;
+    flex-direction: column;
+}
+/* Remove the content wrapper styles */
+/* .details-modal-content-wrapper { ... REMOVED ... } */
+
+#detailsModal .modal-grid-container-complex {
+    display: grid;
+    grid-template-columns: 1.2fr 1.2fr 1fr;
+    gap: 15px;
+    /* Allow grid to take natural height */
+    flex-grow: 1; /* Allow grid to grow */
+    min-height: 0;
+    margin-bottom: 15px; /* Add space above actions */
+}
+/* Restore original modal action positioning */
+#detailsModal .modal-actions.main-actions {
+    margin-top: auto; /* <<< CHANGE: Push actions to bottom of flex container */
+    padding-top: 15px;
+    border-top: 1px solid var(--border-color);
+    flex-shrink: 0; /* Ensure actions don't shrink */
+    /* Remove background and negative margins if they were part of the faulty fix */
+    background-color: transparent;
+    margin-left: 0;
+    margin-right: 0;
+    margin-bottom: 0;
+    padding: 15px 0 0 0; /* Adjust padding if needed */
+    border-radius: 0;
+}
 /* --- End Fix for #detailsModal Buttons --- */
 .grid-item-customer { grid-area: 1 / 1 / 2 / 2; }
 .grid-item-order    { grid-area: 1 / 2 / 2 / 3; }
@@ -263,7 +281,7 @@ mark { background-color: var(--highlight-color); padding: 0.1em 0.2em; border-ra
 .account-data-pair p { margin-bottom: 5px !important; font-size: 0.9em !important; }
 .account-data-pair p strong { min-width: 100px !important; }
 #modalProductList ul.modal-product-list-ul { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 8px; padding: 0; list-style: none; margin: 0; }
-#modalProductList ul.modal-product-list-ul li { border: 1px solid var(--border-color-light); padding: 6px 8px; border-radius: 4px; background-color: var(--white-bg); font-size: 0.88em; margin-bottom: 0; padding-bottom: 6px; line-height: 1.3; }
+#modalProductList ul.modal-product-list-ul li { border: 1px solid var(--border-color-light); padding: 6px 8px; border-radius: 4px; background-color: var(--white-bg); font-size: 0.88em; margin-bottom: 0; line-height: 1.3; } /* Removed padding-bottom & border-bottom */
 #modalProductList, #modalStatusHistoryList, #modalPOList { background-color: var(--light-bg); border: 1px solid var(--border-color-light); border-radius: var(--border-radius); padding: 10px 15px; max-height: 180px; overflow-y: auto; font-size: 0.9em; margin-top: auto; flex-grow: 1; min-height: 50px; }
 #modalProductList ul, #modalStatusHistoryList ul, #modalPOList ul { list-style: none; padding: 0; margin: 0; }
 #modalProductList li, #modalStatusHistoryList li, #modalPOList li { margin-bottom: 6px; padding-bottom: 6px; border-bottom: 1px dotted #ccc; font-size: 0.92em; line-height: 1.4; }
@@ -317,7 +335,6 @@ mark { background-color: var(--highlight-color); padding: 0.1em 0.2em; border-ra
 .po-notes-popup strong { display: block; margin-bottom: 5px; font-weight: 600; }
 #poDetailsPopup .modal-actions { border-top: 1px solid var(--border-color); padding-top: 12px; margin-top: auto; }
 
-
 /* --- Read-Only Order Modal Styles (#readOnlyOrderModal) --- */
 #readOnlyOrderModal h2 { margin-bottom: 20px; flex-shrink: 0; }
 #readOnlyOrderModal .modal-content { max-width: 1200px; max-height: calc(90vh - 50px); display: flex; flex-direction: column; padding: 15px 20px; }
@@ -351,57 +368,43 @@ mark { background-color: var(--highlight-color); padding: 0.1em 0.2em; border-ra
 #itemsOnlyModal h2 { text-align: center; }
 
 /* Base Modal Actions - Applied unless overridden */
-.modal-actions { padding-top: 15px; margin-top: 15px; gap: 8px; border-top: 1px solid var(--border-color); flex-shrink: 0; justify-content: flex-end; }
+/* .modal-actions { padding-top: 15px; margin-top: 15px; gap: 8px; border-top: 1px solid var(--border-color); flex-shrink: 0; justify-content: flex-end; } */
+/* Specific modal actions handled above */
 
 /* === START: Final Styles for PO Item Selection Modal (#poItemSelectionModal) === */
 
 #poItemSelectionModal .modal-content { max-height: calc(90vh - 50px); display: flex; flex-direction: column; padding: 15px 20px; }
 
 /* Use CSS Grid for the main content wrapper */
-#poItemSelectionModal .po-item-selection-content-wrapper {
-    flex-grow: 1; overflow: hidden; padding: 10px 5px; min-height: 0;
-    display: grid; grid-template-columns: minmax(280px, 40%) 1fr;
-    gap: 15px; align-items: start;
-}
-
+#poItemSelectionModal .po-item-selection-content-wrapper { flex-grow: 1; overflow: hidden; padding: 10px 5px; min-height: 0; display: grid; grid-template-columns: minmax(280px, 40%) 1fr; gap: 15px; align-items: start; }
 #poItemSelectionModal h2 { text-align: left; }
-
 #poItemSelectionModal > .modal-content > .po-item-selection-content-wrapper > p:first-of-type { margin-bottom: 0; padding: 0 5px 10px 5px; font-size: 0.95em; color: var(--text-muted); flex-shrink: 0; grid-column: 1 / -1; }
 
 /* Style the Supplier Search section (Grid Item 1) */
-#poItemSelectionModal .supplier-search-section {
-    margin-bottom: 0; padding: 15px 18px; border: 1px solid var(--primary-color-light);
-    border-radius: var(--border-radius); background-color: var(--primary-color-light);
-    display: flex; flex-direction: column; min-height: 200px; overflow: hidden; position: relative; /* Keep relative for potential absolute suggestions if needed */
-}
+#poItemSelectionModal .supplier-search-section { margin-bottom: 0; padding: 15px 18px; border: 1px solid var(--primary-color-light); border-radius: var(--border-radius); background-color: var(--primary-color-light); display: flex; flex-direction: column; min-height: 200px; overflow: hidden; position: relative; }
 #poItemSelectionModal .supplier-search-section label { font-weight: 600; font-size: 1em; color: var(--primary-color); margin-bottom: 10px; display: block; flex-shrink: 0; }
 #poItemSelectionModal .supplier-search-section label i { margin-right: 6px; }
 
 /* Rounded and Larger Input Box */
-#poItemSelectionModal .supplier-search-section input#poSupplierSearchInput {
-    padding: 10px 15px; font-size: 1em; border-radius: 20px; border: 1px solid #ced4da;
-    transition: border-color 0.2s ease, box-shadow 0.2s ease; height: auto;
-    margin-bottom: 10px; flex-shrink: 0; position: relative; z-index: 2;
-}
+#poItemSelectionModal .supplier-search-section input#poSupplierSearchInput { padding: 10px 15px; font-size: 1em; border-radius: 20px; border: 1px solid #ced4da; transition: border-color 0.2s ease, box-shadow 0.2s ease; height: auto; margin-bottom: 10px; flex-shrink: 0; position: relative; z-index: 2; }
 #poItemSelectionModal .supplier-search-section input#poSupplierSearchInput:focus { border-color: var(--primary-color); box-shadow: 0 0 0 0.2rem rgba(0, 86, 179, 0.25); outline: none; }
 
 /* Position Suggestion List Statically (below input) */
 #poItemSelectionModal .suggestions-list {
-    position: static; /* CHANGE: Display below input in normal flow */
+    position: static; /* Display below input in normal flow */
     max-height: 150px;
-    z-index: auto;
+    z-index: auto; /* Let browser handle layering */
     border: 1px solid var(--border-color);
     box-shadow: none;
     border-radius: var(--border-radius);
     overflow-y: auto;
     background-color: var(--white-bg);
     margin-top: -5px; /* Pull slightly closer to input */
-    margin-bottom: 5px; /* Space below */
+    margin-bottom: 5px;
     width: 100%;
     box-sizing: border-box;
     display: none; /* Keep hidden initially */
     order: 1; /* Ensure it appears after the input */
-    /* flex-grow: 1; REMOVED - Let it size naturally */
 }
 #poItemSelectionModal .suggestions-list div:hover { background-color: var(--primary-color-light); color: var(--primary-color); font-weight: 500; }
 
@@ -435,21 +438,20 @@ mark { background-color: var(--highlight-color); padding: 0.1em 0.2em; border-ra
 
 /* --- Responsive --- */
 @media (max-width: 992px) {
-    /* ... other responsive rules ... */
     .filter-bar { flex-direction: column; align-items: stretch; gap: 15px; }
     .filter-group { min-width: 100%; }
     .bulk-actions-bar { flex-direction: column; align-items: stretch; }
     .bulk-actions-controls { justify-content: space-between; }
     #statusCountsReport ul { column-count: 1; }
-    #detailsModal .modal-grid-container-complex { display: flex; flex-direction: column; gap: 15px; }
+    #detailsModal .modal-grid-container-complex { display: flex; flex-direction: column; gap: 15px; } /* Keep flex for details on smaller screens */
     #detailsModal .modal-section { width: 100%; box-sizing: border-box; }
     .account-data-grid { grid-template-columns: 1fr; }
     #modalProductList ul.modal-product-list-ul { grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); }
     .read-only-grid { grid-template-columns: 1fr; }
-    #poItemSelectionModal .po-item-selection-content-wrapper { display: flex; flex-direction: column; gap: 10px; } /* Revert to flex column */
+    #poItemSelectionModal .po-item-selection-content-wrapper { display: flex; flex-direction: column; gap: 10px; } /* Revert PO modal to flex column */
     #poItemSelectionModal .supplier-search-section,
     .item-selection-list-container { flex-basis: auto; min-height: auto; }
-    #poItemSelectionModal .modal-actions, #poItemSelectionError { grid-column: auto; }
+    #poItemSelectionModal .modal-actions, #poItemSelectionError { grid-column: auto; } /* Reset grid span */
     #poItemSelectionModal .suggestions-list { position: static; width: 100%; margin-top: 5px; } /* Ensure static positioning */
 }
 @media (max-width: 768px) {
