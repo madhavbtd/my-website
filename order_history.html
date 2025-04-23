@@ -14,7 +14,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-        import { getFirestore, collection, doc, getDoc, deleteDoc, updateDoc, onSnapshot, query, orderBy, Timestamp, arrayUnion, writeBatch, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+        import { getFirestore, collection, doc, getDoc, deleteDoc, updateDoc, onSnapshot, query, orderBy, where, Timestamp, arrayUnion, writeBatch, serverTimestamp, limit, addDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js"; // Added where, limit, addDoc
 
          const firebaseConfig = {
            apiKey: "AIzaSyBQj5rQmE77kKKGYixP8y3Hcimz8tiAqzQ",
@@ -51,10 +51,13 @@
              window.onSnapshot = onSnapshot;
              window.query = query;
              window.orderBy = orderBy;
+             window.where = where; // Make where global
              window.Timestamp = Timestamp;
              window.arrayUnion = arrayUnion;
              window.writeBatch = writeBatch;
              window.serverTimestamp = serverTimestamp;
+             window.limit = limit; // Make limit global
+             window.addDoc = addDoc; // Make addDoc global
 
              onAuthStateChanged(auth, (user) => {
                  const currentPage = window.location.pathname.split('/').pop() || 'index.html';
@@ -90,9 +93,8 @@
              <button id="newCustomerBtn" class="button info-button"><i class="fas fa-user-plus"></i> New Customer</button>
              <a href="new_po.html" class="button primary-button"><i class="fas fa-file-alt"></i> New PO</a>
              <button id="paymentReceivedBtn" class="button success-button"><i class="fas fa-dollar-sign"></i> Payment Received</button>
-             <button id="customerPanelBtn" class="button secondary-button"><i class="fas fa-users"></i> Customers</button>
              <button id="exportCsvBtn" class="button export-button"><i class="fas fa-file-csv"></i> Export to CSV</button>
-        </div>
+             </div>
 
          <div class="filter-bar">
             <div class="filter-group">
@@ -340,10 +342,9 @@
          </div>
      </div>
 
-
     <script src="js/order_history.js" type="module" defer></script>
-     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
 
 </body>
 </html>
