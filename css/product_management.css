@@ -1,4 +1,4 @@
-/* product_management.css (Version 2.5 - Modal actions scroll fix) */
+/* product_management.css (Version 2.6 - Modal header scroll fix) */
 
 /* --- CSS Variables --- */
 :root {
@@ -145,27 +145,55 @@ h1 { margin: 0; font-size: 1.15em; }
 
 /* --- Modal Styles --- */
 .modal {
-    display: none; position: fixed; z-index: 1050; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: var(--modal-overlay-bg); align-items: center; justify-content: center; padding: 20px; box-sizing: border-box;
+    display: none; position: fixed; z-index: 1050; left: 0; top: 0; width: 100%; height: 100%; overflow: hidden; /* Hide body scroll */ background-color: var(--modal-overlay-bg); align-items: center; justify-content: center; padding: 20px; box-sizing: border-box;
 }
 .modal.active { display: flex; animation: fadeIn 0.3s ease; } /* Fade in animation */
 @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
+/* <<< UPDATED modal-content style >>> */
 .modal-content {
-    background-color: var(--container-bg); margin: auto; padding: 35px 40px; /* More padding */ border: none; width: 95%; max-width: 650px; /* Adjusted max-width */ border-radius: var(--border-radius-lg); position: relative; box-shadow: 0 8px 25px rgba(0,0,0,0.15); /* Stronger shadow */ z-index: 1051; animation: slideInUp 0.4s ease; /* Slide animation */
+    background-color: var(--container-bg);
+    margin: auto;
+    padding: 35px 40px; /* Restore padding */
+    border: none;
+    width: 95%;
+    max-width: 650px; /* Adjusted max-width */
+    border-radius: var(--border-radius-lg);
+    position: relative;
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15); /* Stronger shadow */
+    z-index: 1051;
+    animation: slideInUp 0.4s ease; /* Slide animation */
+    /* REMOVED display: flex and flex-direction */
+    max-height: calc(88vh); /* Max height */
+    overflow-y: auto; /* <<< Apply scroll directly here */
 }
 @keyframes slideInUp { from { transform: translateY(30px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
 
 /* Wider modal for product form */
 .modal-content.large-modal { max-width: 950px; /* Wider for 3 columns */ }
 /* Smaller modal for confirmation */
-.modal-content.small-modal { max-width: 480px; padding: 30px 35px; }
+.modal-content.small-modal { max-width: 480px; padding: 30px 35px; overflow-y: visible; } /* Allow small modal not to scroll */
 
 .close-btn {
     color: #aaa; position: absolute; top: 15px; right: 20px; /* Adjusted position */ font-size: 28px; font-weight: bold; cursor: pointer; line-height: 1; background: none; border: none; padding: 0; transition: color 0.2s ease;
 }
 .close-btn:hover, .close-btn:focus { color: #333; }
+
+/* <<< UPDATED modal h2 style >>> */
 .modal h2 {
-    font-weight: 600; font-size: 1.4em; /* Larger heading */ color: var(--text-color-dark); text-align: center; margin-top: 0; margin-bottom: 30px; padding-bottom: 18px; border-bottom: 1px solid #eee; display: flex; align-items: center; justify-content: center; gap: 12px;
+    font-weight: 600;
+    font-size: 1.4em; /* Larger heading */
+    color: var(--text-color-dark);
+    text-align: center;
+    margin-top: 0; /* <<< Adjusted margin */
+    margin-bottom: 30px;
+    padding-bottom: 18px; /* <<< Adjusted padding */
+    border-bottom: 1px solid #eee;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    position: static; /* <<< Ensure header is not sticky */
 }
 .modal h2 .info-icon { color: var(--primary-color); } /* Edit/Add Icon */
 .modal h2 .warning-icon { color: var(--danger-color); } /* Delete Warning Icon */
@@ -221,23 +249,17 @@ h1 { margin: 0; font-size: 1.15em; }
     width: 17px; height: 17px; cursor: pointer; flex-shrink: 0; accent-color: var(--primary-color);
 }
 
-/* ============================== */
-/* <<< Modal Actions (Updated) >>> */
-/* ============================== */
+/* <<< UPDATED modal-actions style >>> */
 .modal-actions {
     display: flex;
     justify-content: space-between;
     gap: 15px;
-    margin-top: 35px; /* You can keep or remove this margin */
-    /* padding-top: 25px; */ /* Removed padding-top */
-    /* border-top: 1px solid #eee; */ /* Removed border-top */
+    margin-top: 35px; /* This margin separates actions from content above */
+    padding-top: 25px; /* Optional padding above buttons */
+    border-top: 1px solid #eee; /* Optional border */
     align-items: center;
-    position: static; /* Ensure it's not sticky or fixed */
+    position: static; /* Ensure it scrolls */
 }
-/* ============================== */
-/* <<< End Updated Section >>>    */
-/* ============================== */
-
 .modal-actions-right { display: flex; gap: 15px; }
 
 .save-button { background-color: var(--success-color); color: white; padding: 10px 22px;} /* Adjusted padding */
@@ -289,7 +311,7 @@ h1 { margin: 0; font-size: 1.15em; }
     .filter-group .button { align-self: stretch; } /* Full width buttons */
     #productTable { font-size: 0.88em; }
     #productTable th, #productTable td { padding: 10px 10px; } /* Adjusted padding */
-    .modal-content { width: 95%; padding: 25px 20px; }
+    .modal-content { width: 95%; padding: 25px 20px; } /* Adjusted padding for smaller screens */
     .modal-content.large-modal { max-width: 95%; } /* Wider on small screens */
     #productForm .form-columns-3 { grid-template-columns: 1fr; gap: 0; } /* 1 column */
     #productForm .form-group { margin-bottom: 18px; }
@@ -306,7 +328,7 @@ h1 { margin: 0; font-size: 1.15em; }
     body { font-size: 14px; }
     .container { padding: 15px 10px; }
     .header { font-size: 1.1em; }
-    .modal-content { padding: 20px 15px; }
+    .modal-content { padding: 20px 15px; } /* Further adjust padding */
     .modal h2 { font-size: 1.2em; }
     #productForm label { font-size: 0.85em; }
     #productForm input, #productForm select, #productForm textarea { font-size: 0.9em; padding: 8px 10px;}
