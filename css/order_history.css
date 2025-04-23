@@ -1,7 +1,8 @@
 /* === order_history.css === */
 /* Updated Version - Styles for new features, fourth layout revision (CSS Grid), ItemsOnlyModal */
 /* PO Details Popup styling updated to match Order ID Popup */
-/* Added colorful styling for #poItemSelectionModal */
+/* Added colorful styling & grid layout for #poItemSelectionModal */
+/* Added improved styling for supplier input */
 
 /* --- Global Styles & Variables --- */
 :root {
@@ -269,7 +270,7 @@ mark { background-color: var(--highlight-color); padding: 0.1em 0.2em; border-ra
 #detailsModal .modal-section {
     margin: 0;
     padding: 12px 15px;
-    border: 1px solid var(--border-color);
+    border: 1px solid var(--border-color-light);
     border-radius: var(--border-radius);
     display: flex;
     flex-direction: column;
@@ -352,9 +353,9 @@ mark { background-color: var(--highlight-color); padding: 0.1em 0.2em; border-ra
 
 
 /* --- WhatsApp Reminder Popup --- */
-#whatsapp-reminder-popup .modal-content { max-width: 500px; max-height: none; }
+#whatsapp-reminder-popup .modal-content { max-width: 500px; max-height: none; padding: 15px 20px; } /* Adjusted Padding */
 #whatsapp-reminder-popup p { margin-bottom: 20px; color: var(--text-muted); font-size: 1.05em; text-align: center; }
-.message-preview { margin-top: 15px; margin-bottom: 25px; font-size: 0.95em; background-color: #e9f5ff; padding: 15px; border-radius: var(--border-radius); text-align: left; border: 1px solid #bde0ff; white-space: pre-wrap; word-wrap: break-word; max-height: 180px; overflow-y: auto; line-height: 1.4; }
+.message-preview { margin-top: 15px; margin-bottom: 25px; font-size: 0.95em; background-color: var(--primary-color-light); padding: 15px; border-radius: var(--border-radius); text-align: left; border: 1px solid var(--border-color); white-space: pre-wrap; word-wrap: break-word; max-height: 180px; overflow-y: auto; line-height: 1.4; }
 .whatsapp-send-btn { background-color: #25d366; color: #fff; text-decoration: none; padding: 10px 25px; border-radius: var(--border-radius); display: inline-flex; align-items: center; gap: 10px; font-weight: 600; transition: background-color 0.2s ease, box-shadow 0.2s ease, transform 0.1s ease; margin: 0 auto; border: none; cursor: pointer; font-size: 1em; box-shadow: var(--box-shadow); height: auto; }
 .whatsapp-send-btn:hover { background-color: #1ebe57; box-shadow: var(--box-shadow-lg); transform: translateY(-1px); }
 .whatsapp-send-btn:active { transform: translateY(0px); box-shadow: var(--box-shadow); }
@@ -362,6 +363,7 @@ mark { background-color: var(--highlight-color); padding: 0.1em 0.2em; border-ra
 @keyframes popupFadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
 
 /* --- Bulk Delete Modal --- */
+#bulkDeleteConfirmModal .modal-content { padding: 15px 20px; } /* Adjusted Padding */
 #bulkDeleteConfirmModal h2 { color: var(--danger-color); font-size: 1.3em; text-align: left; border-bottom: none; margin-bottom: 15px; display: flex; align-items: center; }
 #bulkDeleteConfirmModal h2 .warning-icon { margin-right: 10px; font-size: 1.2em; }
 #bulkDeleteConfirmModal p { font-size: 0.95em; margin-bottom: 10px; color: var(--text-color); }
@@ -386,7 +388,8 @@ mark { background-color: var(--highlight-color); padding: 0.1em 0.2em; border-ra
     flex-direction: column;
     padding: 15px 20px; /* Use base padding */
 }
-#poDetailsPopup .po-details-content-area { /* Wrapper div inside #poDetailsPopup */
+/* Wrapper div inside #poDetailsPopup */
+#poDetailsPopup .po-details-content-area {
     flex-grow: 1;
     overflow-y: auto;
     padding: 10px 5px;
@@ -480,11 +483,7 @@ mark { background-color: var(--highlight-color); padding: 0.1em 0.2em; border-ra
 
 /* --- Read-Only Order Modal Styles (#readOnlyOrderModal) --- */
 #readOnlyOrderModal h2 {
-    /* text-align: left; */ /* Default modal header style handles this */
-    /* border-bottom: 1px solid var(--border-color); */
-    /* padding-bottom: 10px; */
     margin-bottom: 20px; /* Keep original spacing */
-    /* font-size: 1.3em; */ /* Default modal header style handles this */
     flex-shrink: 0;
 }
 #readOnlyOrderModal .modal-content {
@@ -569,16 +568,12 @@ mark { background-color: var(--highlight-color); padding: 0.1em 0.2em; border-ra
 
 /* --- Items Only Modal Styles (#itemsOnlyModal) --- */
 #itemsOnlyModal .modal-content {
-    max-width: 550px; /* Make it less wide */
+    max-width: 550px;
     max-height: calc(85vh - 50px);
     padding: 15px 20px; /* Use base padding */
 }
 #itemsOnlyModal h2 {
-    /* font-size: 1.2em; */ /* Default modal header style handles this */
     text-align: center; /* Center this specific title */
-    /* border-bottom: 1px solid var(--border-color); */
-    /* padding-bottom: 10px; */
-    /* margin-bottom: 15px; */
 }
 #itemsOnlyModal .items-only-content-area {
     padding: 10px;
@@ -621,7 +616,7 @@ mark { background-color: var(--highlight-color); padding: 0.1em 0.2em; border-ra
 
 /* --- Unified Modal Header Styling --- */
 .modal h2,
-#poDetailsPopup h3 { /* Removed specific modal IDs if covered by .modal h2 */
+#poDetailsPopup h3 { /* Includes PO Details H3 */
     margin-bottom: 10px;
     padding-bottom: 8px;
     font-size: 1.2em; /* Consistent title size */
@@ -657,8 +652,7 @@ mark { background-color: var(--highlight-color); padding: 0.1em 0.2em; border-ra
     margin-bottom: 5px; /* Reduce default paragraph/label spacing */
 }
 
-
-/* === START: Added/Updated CSS for PO Item Selection Modal (#poItemSelectionModal) === */
+/* === START: Styles for PO Item Selection Modal (#poItemSelectionModal) === */
 
 /* Make PO Item Selection Modal content area behave like ReadOnly Modal */
 #poItemSelectionModal .modal-content {
@@ -669,71 +663,94 @@ mark { background-color: var(--highlight-color); padding: 0.1em 0.2em; border-ra
     padding: 15px 20px; /* Use base padding */
 }
 
-/* Style the overall content wrapper (add div with this class in HTML) */
+/* Use CSS Grid for the main content wrapper */
 #poItemSelectionModal .po-item-selection-content-wrapper {
     flex-grow: 1;
-    overflow-y: auto;
-    padding: 10px 5px; /* Match ReadOnly padding */
+    overflow: hidden;
+    padding: 10px 5px;
     min-height: 0;
-    display: flex; /* Use flex for internal layout */
-    flex-direction: column;
-    gap: 15px; /* Space between sections */
+    display: grid; /* Use grid */
+    grid-template-columns: minmax(280px, 40%) 1fr; /* Define two columns */
+    gap: 15px; /* Space between grid columns */
+    align-items: start; /* Align items to the start vertically */
 }
 
 /* Style the header */
 #poItemSelectionModal h2 {
     /* Styled globally */
-    text-align: left; /* Override if needed */
+    text-align: left;
 }
 
 /* Style the introductory paragraph */
-#poItemSelectionModal > .modal-content > .po-item-selection-content-wrapper > p:first-of-type { /* More specific selector */
-     margin-bottom: 0; /* Remove extra space if part of wrapper */
-     padding: 0 5px 10px 5px; /* Padding */
+#poItemSelectionModal > .modal-content > .po-item-selection-content-wrapper > p:first-of-type {
+     margin-bottom: 0;
+     padding: 0 5px 10px 5px;
      font-size: 0.95em;
      color: var(--text-muted);
      flex-shrink: 0;
+     grid-column: 1 / -1; /* Span across both columns */
 }
 
-/* Style the Supplier Search section */
-#poItemSelectionModal .supplier-search-section { /* Use class added in HTML */
-    margin-bottom: 0; /* Remove margin if using gap */
-    padding: 12px 15px;
-    border: 1px solid var(--primary-color-light); /* Use light primary border */
+/* Style the Supplier Search section (Grid Item 1) */
+#poItemSelectionModal .supplier-search-section {
+    margin-bottom: 0;
+    padding: 15px 18px; /* More padding */
+    border: 1px solid var(--primary-color-light);
     border-radius: var(--border-radius);
     background-color: var(--primary-color-light); /* Light blue background */
-    flex-shrink: 0; /* Prevent shrinking */
+    display: flex;
+    flex-direction: column;
+    min-height: 200px;
+    overflow: hidden; /* Hide overflow, rely on inner scroll if needed */
 }
 
 #poItemSelectionModal .supplier-search-section label {
     font-weight: 600;
     font-size: 1em;
     color: var(--primary-color);
-    margin-bottom: 8px;
+    margin-bottom: 10px;
     display: block;
+    flex-shrink: 0;
 }
 #poItemSelectionModal .supplier-search-section label i {
     margin-right: 6px;
 }
 
-/* Style the Item Selection List container section */
-.item-selection-list-container { /* Use class added in HTML */
-    padding: 12px 15px;
-    border: 1px solid var(--success-color-light); /* Light green border */
-    border-radius: var(--border-radius);
-    background-color: var(--white-bg); /* White background for contrast */
-    flex-grow: 1;
-    display: flex;
-    flex-direction: column;
-    min-height: 150px;
-    margin-bottom: 0; /* Remove margin if using gap */
+/* Rounded and Larger Input Box */
+#poItemSelectionModal .supplier-search-section input#poSupplierSearchInput {
+    padding: 10px 15px; /* Increased padding */
+    font-size: 1em; /* Slightly larger text */
+    border-radius: 20px; /* Rounded corners */
+    border: 1px solid #ced4da;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    height: auto;
+    margin-bottom: 10px;
+    flex-shrink: 0;
+}
+#poItemSelectionModal .supplier-search-section input#poSupplierSearchInput:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 0.2rem rgba(0, 86, 179, 0.25);
+    outline: none;
 }
 
-.item-selection-list-container h4 { /* Title for the list section */
+/* Style the Item Selection List container section (Grid Item 2) */
+.item-selection-list-container {
+    padding: 15px 18px; /* More padding */
+    border: 1px solid var(--success-color-light); /* Light green border */
+    border-radius: var(--border-radius);
+    background-color: var(--white-bg);
+    display: flex;
+    flex-direction: column;
+    min-height: 300px;
+    margin-bottom: 0;
+    overflow: hidden;
+}
+
+.item-selection-list-container h4 {
     margin-top: 0;
     margin-bottom: 10px;
     font-size: 1em;
-    color: var(--success-color); /* Green title */
+    color: var(--success-color);
     border-bottom: 1px solid var(--success-color-light);
     padding-bottom: 6px;
     font-weight: 600;
@@ -746,16 +763,14 @@ mark { background-color: var(--highlight-color); padding: 0.1em 0.2em; border-ra
     font-size: 0.9em;
 }
 
-
 /* Style the scrollable item list area */
 #poItemSelectionList {
     border: none;
     border-radius: 0;
-    padding: 10px; /* Padding inside the list */
-    max-height: none;
+    padding: 10px;
     overflow-y: auto;
-    margin-bottom: 0;
-    background-color: var(--po-item-list-bg); /* Very light background */
+    margin: 0;
+    background-color: var(--po-item-list-bg); /* Ghost white */
     border: 1px solid var(--border-color-light);
     border-radius: 4px;
     flex-grow: 1;
@@ -765,23 +780,23 @@ mark { background-color: var(--highlight-color); padding: 0.1em 0.2em; border-ra
 .item-selection-entry {
     display: flex;
     align-items: center;
-    gap: 12px; /* More space */
+    gap: 12px;
     margin-bottom: 6px;
-    padding: 8px 10px; /* More padding */
-    border: none; /* Remove bottom border */
-    background-color: var(--po-item-entry-bg); /* White item background */
-    border-radius: 4px; /* Rounded corners for items */
-    box-shadow: 0 1px 2px rgba(0,0,0,0.05); /* Subtle shadow */
+    padding: 8px 10px;
+    border: none;
+    background-color: var(--po-item-entry-bg); /* White */
+    border-radius: 4px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
     transition: background-color 0.2s ease;
 }
 .item-selection-entry:hover {
-    background-color: #f9f9f9; /* Slight hover effect */
+    background-color: #f9f9f9;
 }
 
 .item-selection-entry input[type="checkbox"] {
     transform: scale(1.2);
     cursor: pointer;
-    accent-color: var(--success-color); /* Color the checkbox */
+    accent-color: var(--success-color); /* Green checkbox */
     flex-shrink: 0;
 }
 .item-selection-entry input[type="checkbox"]:disabled {
@@ -789,60 +804,68 @@ mark { background-color: var(--highlight-color); padding: 0.1em 0.2em; border-ra
 }
 
 .item-selection-entry label {
-    font-size: 0.95em; /* Slightly larger */
+    font-size: 0.95em;
     line-height: 1.4;
     flex-grow: 1;
-    cursor: pointer; /* Make label clickable */
+    cursor: pointer;
     color: var(--text-color);
 }
 .item-selection-entry label strong {
-    color: var(--text-color); /* Ensure strong tag is dark */
+    color: var(--text-color);
 }
 .item-selection-entry label .in-po-label {
-    color: var(--danger-color); /* Make 'In PO' label red */
+    color: var(--danger-color);
     font-weight: 500;
 }
 
 
-/* Adjust Modal Actions for this specific modal */
+/* Adjust Modal Actions */
 #poItemSelectionModal .modal-actions {
     border-top: 1px solid var(--border-color);
-    padding-top: 15px; /* More padding */
-    margin-top: 15px; /* Ensure space above actions */
+    padding-top: 15px;
+    margin-top: 15px;
     justify-content: flex-end;
-    background-color: var(--light-bg); /* Add subtle background to action area */
+    background-color: var(--light-bg);
     margin-left: -20px; /* Extend to edges */
     margin-right: -20px;
     margin-bottom: -15px; /* Extend to bottom */
-    padding: 15px 20px; /* Padding for action area */
-    border-radius: 0 0 var(--border-radius) var(--border-radius); /* Match bottom corners */
+    padding: 15px 20px;
+    border-radius: 0 0 var(--border-radius) var(--border-radius);
+    grid-column: 1 / -1; /* Span grid */
+    order: 1; /* Ensure actions are last */
 }
 
 /* Error message positioning */
 #poItemSelectionError {
-    margin-top: 0; /* Reset margin */
-    margin-bottom: 10px; /* Add space below error if shown */
-    text-align: left; /* Align left */
-    padding: 10px 15px; /* Add padding */
+    grid-column: 1 / -1; /* Span grid */
+    order: 0; /* Place error before actions */
     width: auto; /* Don't force full width */
-    display: none; /* Keep hidden by default */
-    order: -1; /* Place it before buttons if using flex */
+    text-align: center;
+    padding: 5px 15px;
+    margin-bottom: -5px; /* Reduce space below if shown */
 }
 
 /* Suggestions list styling */
 .suggestions-list {
      max-height: 150px;
      z-index: 1100;
-     border: 1px solid var(--primary-color); /* Stronger border */
+     border: 1px solid var(--primary-color);
      box-shadow: var(--box-shadow-lg);
+     border-radius: 0 0 var(--border-radius) var(--border-radius);
+     overflow-y: auto;
+     position: absolute; /* Revert to absolute if needed */
+     background-color: var(--white-bg);
+     width: calc(100% - 36px); /* Match input width inside section padding */
+     top: calc(100% - 10px); /* Position below input */
+     left: 18px; /* Match section padding */
 }
 .suggestions-list div:hover {
-    background-color: var(--primary-color-light); /* Use light blue hover */
+    background-color: var(--primary-color-light);
     color: var(--primary-color);
     font-weight: 500;
 }
 
-/* === END: Added/Updated CSS for PO Item Selection Modal === */
+/* === END: Styles for PO Item Selection Modal === */
 
 
 /* --- Responsive --- */
@@ -865,7 +888,25 @@ mark { background-color: var(--highlight-color); padding: 0.1em 0.2em; border-ra
      #modalProductList ul.modal-product-list-ul { grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); }
     .read-only-grid { grid-template-columns: 1fr; }
     #poItemSelectionModal .po-item-selection-content-wrapper {
-        gap: 10px; /* Reduce gap on smaller screens */
+        display: flex; /* Revert to flex column on smaller screens */
+        flex-direction: column;
+        gap: 10px;
+    }
+     #poItemSelectionModal .supplier-search-section,
+     .item-selection-list-container {
+        flex-basis: auto; /* Reset flex basis */
+        min-height: auto; /* Reset min-height */
+    }
+     #poItemSelectionModal .modal-actions {
+        grid-column: auto; /* Reset grid span */
+    }
+     #poItemSelectionError {
+        grid-column: auto; /* Reset grid span */
+    }
+    .suggestions-list { /* Adjust suggestions on smaller screens */
+        width: calc(100% - 30px); /* Adjust based on parent padding */
+        left: 15px;
+        top: calc(100% - 5px);
     }
 }
 @media (max-width: 768px) {
@@ -898,7 +939,7 @@ mark { background-color: var(--highlight-color); padding: 0.1em 0.2em; border-ra
         margin-bottom: -15px;
         padding: 15px;
     }
-    #poItemSelectionModal h2 { /* Adjust header padding */
+    .modal h2, #poDetailsPopup h3 { /* Adjust header padding */
          margin-left: -15px;
          margin-right: -15px;
          margin-top: -15px;
@@ -952,4 +993,12 @@ mark { background-color: var(--highlight-color); padding: 0.1em 0.2em; border-ra
     }
     .item-selection-entry { gap: 8px; padding: 6px; }
     .item-selection-entry label { font-size: 0.88em; }
+    #poItemSelectionModal .supplier-search-section,
+    .item-selection-list-container {
+        padding: 10px 12px; /* Reduce padding */
+    }
+    #poItemSelectionModal .supplier-search-section input#poSupplierSearchInput {
+        padding: 8px 12px; /* Reduce padding */
+        font-size: 0.95em;
+    }
 }
