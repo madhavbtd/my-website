@@ -1,4 +1,4 @@
-// js/new_order.js - v2.3.2 (Added Balance Calculation)
+// js/new_order.js - v2.4 (Saves productId with items)
 
 // --- Firebase Functions ---
 const {
@@ -10,7 +10,7 @@ const {
 let isEditMode = false;
 let orderIdToEdit = null;
 let currentOrderData = null;
-let selectedCustomerId = null; // <<<--- यह वेरिएबल सही ढंग से सेट होना चाहिए
+let selectedCustomerId = null;
 let selectedCustomerData = null;
 let productCache = [];
 let customerCache = [];
@@ -73,7 +73,7 @@ const statusList = [
 
 // --- Initialization ---
 document.addEventListener('DOMContentLoaded', () => {
-    console.log("New Order DOM Loaded (v2.3.2 - Customer ID Check & Balance Calc). Initializing..."); // Updated version
+    console.log("New Order DOM Loaded (v2.4 - Save ProductID). Initializing..."); // Updated version
     if (!orderForm || !addItemBtn || !orderItemsTableBody || !itemRowTemplate || !calculationPreviewArea || !calculationPreviewContent || !orderStatusSelect) {
         console.error("Critical DOM elements missing! Check HTML IDs.", { orderForm: !!orderForm, addItemBtn: !!addItemBtn, orderItemsTableBody: !!orderItemsTableBody, itemRowTemplate: !!itemRowTemplate, calculationPreviewArea: !!calculationPreviewArea, calculationPreviewContent: !!calculationPreviewContent, orderStatusSelect: !!orderStatusSelect });
         alert("Page structure error. Cannot initialize order form.");
@@ -187,8 +187,8 @@ async function loadOrderForEdit(docId) {
             }
             displayOrderIdInput.value=currentOrderData.orderId||docId;
             manualOrderIdInput.value=currentOrderData.orderId||'';
-            orderDateInput.value=currentOrderData.orderDate||'';
-            deliveryDateInput.value=currentOrderData.deliveryDate||'';
+            orderDateInput.value=currentOrderData.orderDate?.toDate ? currentOrderData.orderDate.toDate().toISOString().split('T')[0] : (currentOrderData.orderDate || ''); // Handle string date
+            deliveryDateInput.value=currentOrderData.deliveryDate?.toDate ? currentOrderData.deliveryDate.toDate().toISOString().split('T')[0] : (currentOrderData.deliveryDate || '');// Handle string date
             remarksInput.value=currentOrderData.remarks||'';
             const uV=currentOrderData.urgent||'No';
             const uR=orderForm.querySelector(`input[name="urgent"][value="${uV}"]`);
@@ -199,7 +199,21 @@ async function loadOrderForEdit(docId) {
             if(!orderItemsTableBody){console.error("Item table body missing!");return;}
             orderItemsTableBody.innerHTML=''; // Clear existing rows before populating
             if(currentOrderData.items&&Array.isArray(currentOrderData.items)){
-                currentOrderData.items.forEach(i=>{const nR=addItemRow(false); if(nR)populateItemRow(nR,i);else console.error("Failed to add row for item:",i);});
+                currentOrderData.items.forEach(i=>{
+                    const nR=addItemRow(false);
+                    if(nR){
+                         populateItemRow(nR,i);
+                         // <<<--- यहाँ सुनिश्चित करें कि प्रोडक्ट ID लोड हो रहा है ---<<<
+                         if (i.productId) {
+                             nR.dataset.productId = i.productId;
+                             console.log(`Loaded productId ${i.productId} into row dataset.`);
+                         } else {
+                            console.warn("Item loaded from order is missing productId:", i.productName);
+                         }
+                    } else {
+                        console.error("Failed to add row for item:",i);
+                    }
+                });
             }
             if(orderItemsTableBody.children.length===0){handleAddItem();} // Add a blank row if no items loaded
             if(summaryDiscountPercentInput)summaryDiscountPercentInput.value=currentOrderData.discountPercentage||'';
@@ -444,13 +458,32 @@ async function getOrFetchProductCache() { if(productCache.length>0)return Promis
 function filterAndRenderProductSuggestions(term, inputElement) { const s=getOrCreateProductSuggestionsDiv(); s.innerHTML='<ul><li class="no-suggestions">Loading...</li></ul>'; if(activeProductInput!==inputElement){hideProductSuggestions();return;} positionProductSuggestions(inputElement); const l=term.toLowerCase(), f=productCache.filter(p=>p.name?.toLowerCase().includes(l)).slice(0,10); renderProductSuggestions(f,term,s);}
 function renderProductSuggestions(suggestions, term, suggestionsContainer) { if(!suggestionsContainer)return; const ul=document.createElement('ul'); if(suggestions.length===0){ul.innerHTML='<li class="no-suggestions">No matching products found.</li>';}else{suggestions.forEach(p=>{const li=document.createElement('li'); try{li.innerHTML=p.name.replace(new RegExp(`(${term.replace(/[-\/\^$*+?.()|[\]{}]/g,'\$&')})`,'gi'),'<strong>$1</strong>');}catch{li.textContent=p.name;} li.dataset.product=JSON.stringify(p); ul.appendChild(li);});} suggestionsContainer.innerHTML=''; suggestionsContainer.appendChild(ul); suggestionsContainer.style.display='block';}
 
+// <<<--- UPDATED selectProductSuggestion function ---<<<
 function selectProductSuggestion(productData, inputElement) {
     console.log("Selecting product suggestion:", productData);
     try {
         const r = inputElement.closest('.item-row');
-        if (!r || !productData) { hideProductSuggestions(); return; }
-        const pNI = r.querySelector('.product-name'), uTS = r.querySelector('.unit-type-select'), rI = r.querySelector('.rate-input'), qI = r.querySelector('.quantity-input');
-        if (!pNI || !uTS || !rI || !qI ) { console.error("Error in selectProductSuggestion: Row elements missing!"); hideProductSuggestions(); return; }
+        if (!r || !productData || !productData.id) { // <<<--- Check for productData.id
+            console.error("Row or productData or productData.id missing in selectProductSuggestion");
+            hideProductSuggestions();
+            return;
+        }
+
+        // --- Store Product ID in row dataset ---
+        r.dataset.productId = productData.id; // <<<--- Store the ID
+        console.log(`Stored productId ${productData.id} in row dataset.`);
+        // --- End Storing Product ID ---
+
+        const pNI = r.querySelector('.product-name'),
+              uTS = r.querySelector('.unit-type-select'),
+              rI = r.querySelector('.rate-input'),
+              qI = r.querySelector('.quantity-input');
+
+        if (!pNI || !uTS || !rI || !qI ) {
+            console.error("Error in selectProductSuggestion: Row elements missing!");
+            hideProductSuggestions();
+            return;
+        }
 
         pNI.value = productData.name || '';
         rI.value = productData.salePrice !== undefined ? String(productData.salePrice) : '';
@@ -458,18 +491,34 @@ function selectProductSuggestion(productData, inputElement) {
         rI.dataset.minRate = mR !== undefined && mR !== null ? String(mR) : '-1';
 
         let dUT = 'Qty';
-        if (productData.unit) { const uL = String(productData.unit).toLowerCase(); if (uL.includes('sq') || uL.includes('ft')) dUT = 'Sq Feet'; }
+        if (productData.unit) {
+            const uL = String(productData.unit).toLowerCase();
+            if (uL.includes('sq') || uL.includes('ft') || uL.includes('feet')) dUT = 'Sq Feet'; // <<<--- Added 'feet' check
+        }
         uTS.value = dUT;
+
         hideProductSuggestions();
         const cE = new Event('change', { bubbles: true });
-        uTS.dispatchEvent(cE);
-        updateItemAmount(r);
+        uTS.dispatchEvent(cE); // Trigger UI update for unit type change
+        updateItemAmount(r); // Update amount based on new rate/unit
+
+        // Focus next logical input
         let nI = null;
         if (dUT === 'Sq Feet') nI = r.querySelector('.width-input');
-        if (!nI) nI = qI;
-        if (nI) { nI.focus(); if (typeof nI.select === 'function') nI.select(); } else { rI.focus(); }
-    } catch (error) { console.error("Error inside selectProductSuggestion:", error); hideProductSuggestions(); }
+        if (!nI) nI = qI; // Focus quantity if not Sq Feet
+        if (nI) {
+             nI.focus();
+             if (typeof nI.select === 'function') nI.select();
+        } else {
+            rI.focus(); // Fallback to rate
+        }
+    } catch (error) {
+        console.error("Error inside selectProductSuggestion:", error);
+        hideProductSuggestions();
+    }
 }
+// --- End UPDATED selectProductSuggestion ---
+
 
 // --- Status Dropdown Handling ---
 function updateStatusDropdownColor(statusValue) {
@@ -491,6 +540,7 @@ function updateStatusDropdownColor(statusValue) {
 }
 
 // --- Form Submit Handler ---
+// <<<--- UPDATED handleFormSubmit function ---<<<
 async function handleFormSubmit(event) {
     event.preventDefault();
     console.log("Submit initiated...");
@@ -536,19 +586,48 @@ async function handleFormSubmit(event) {
         if(rows.length===0)throw new Error("Please add at least one item to the order.");
 
         let validItems=true;
-        rows.forEach((row,idx)=>{
+        rows.forEach((row,idx)=>{ // <<<--- Use 'row' variable
             if(!validItems)return;
-            const pNI=row.querySelector('.product-name'),uTS=row.querySelector('.unit-type-select'),qI=row.querySelector('.quantity-input'),rI=row.querySelector('.rate-input'),dUS=row.querySelector('.dimension-unit-select'),wI=row.querySelector('.width-input'),hI=row.querySelector('.height-input');
-            const pN=pNI?.value.trim(),uT=uTS?.value,q=parseInt(qI?.value||0),r=parseFloat(rI?.value||''),mR=parseFloat(rI?.dataset.minRate||-1);
+            const pNI=row.querySelector('.product-name'),
+                  uTS=row.querySelector('.unit-type-select'),
+                  qI=row.querySelector('.quantity-input'),
+                  rI=row.querySelector('.rate-input'),
+                  dUS=row.querySelector('.dimension-unit-select'),
+                  wI=row.querySelector('.width-input'),
+                  hI=row.querySelector('.height-input');
+
+            // --- Get productId from row dataset ---
+            const productId = row.dataset.productId || null; // <<<--- Get stored productId
+            // --- End Get productId ---
+
+            const pN=pNI?.value.trim(),
+                  uT=uTS?.value,
+                  q=parseInt(qI?.value||0),
+                  r=parseFloat(rI?.value||''),
+                  mR=parseFloat(rI?.dataset.minRate||-1);
 
             if(!pN){validItems=false;showFormError(`Item ${idx+1}: Product Name is required.`);pNI?.focus();return;}
+            // Optional: Validate if productId exists
+            if (!productId && !isEditMode) { // Only warn if creating new, editing might have old items without ID
+                 console.warn(`Item ${idx+1} (${pN}): Product ID not found in row dataset. Saving without ID.`);
+                 // Optionally add stricter validation:
+                 // validItems = false; showFormError(`Item ${idx+1}: Product ID missing. Please re-select from suggestions.`); pNI?.focus(); return;
+            }
             if(isNaN(q)||q<=0){validItems=false;showFormError(`Item ${idx+1}: A valid Quantity (positive number) is required.`);qI?.focus();return;}
             if(isNaN(r)||r<0){validItems=false;showFormError(`Item ${idx+1}: A valid Rate (non-negative number) is required.`);rI?.focus();return;}
             if(mR>=0&&r<mR && Math.abs(r - mR) > 0.001 ){
                validItems=false;showFormError(`Item ${idx+1}: Rate (${formatCurrency(r)}) is less than Minimum Sale Price (${formatCurrency(mR)}).`);rI?.focus();return;
             }
 
-            const iD={productName:pN,unitType:uT,quantity:q,rate:r,minSalePrice:mR>=0?mR:null};
+            const iD={ // <<<--- Use 'iD' variable name
+                productId: productId, // <<<--- Save the productId
+                productName:pN,
+                unitType:uT,
+                quantity:q,
+                rate:r,
+                minSalePrice:mR>=0?mR:null
+            };
+
             if(uT==='Sq Feet'){
                 const dU=dUS?.value||'feet',w=parseFloat(wI?.value||0),h=parseFloat(hI?.value||0);
                 if(isNaN(w)||w<=0){validItems=false;showFormError(`Item ${idx+1}: Valid Width (positive number) is required for Sq Feet.`);wI?.focus();return;}
@@ -557,7 +636,7 @@ async function handleFormSubmit(event) {
                 iD.dimensionUnit=dU;iD.width=w;iD.height=h;iD.realSqFt=cR.realSqFt;iD.printSqFt=cR.printSqFt;
                 iD.itemAmount=parseFloat((cR.printSqFt*q*r).toFixed(2));
             }else{iD.itemAmount=parseFloat((q*r).toFixed(2));}
-            items.push(iD);
+            items.push(iD); // <<<--- Push 'iD'
         });
 
         if(!validItems){
@@ -576,23 +655,29 @@ async function handleFormSubmit(event) {
             orderId:oId,
             customerId:cId,
             customerDetails:cD,
-            orderDate:oDV,
-            deliveryDate:dDV,
+            orderDate:Timestamp.fromDate(new Date(oDV + 'T00:00:00')), // Save as Timestamp
+            deliveryDate:dDV ? Timestamp.fromDate(new Date(dDV + 'T00:00:00')) : null, // Save as Timestamp or null
             urgent:uV,
             remarks:rV,
             status:sS,
-            items:items,
+            items:items, // items array now includes productId
             subTotal:subT,
             discountPercentage:dP||0,
             discountAmount:cDA||0,
             finalAmount:fA,
             advancePayment:aP||0,
             totalBalance:tB,
-            updatedAt:Timestamp.now()
+            updatedAt:Timestamp.now() // Use Timestamp here as well
         };
         if(!isEditMode){
-            payload.createdAt=Timestamp.now();
-        }
+            payload.createdAt=Timestamp.now(); // Use Timestamp
+            // Set initial status history only when creating
+             payload.statusHistory = [{ status: sS, timestamp: Timestamp.now() }];
+        } else if (currentOrderData && sS !== currentOrderData.status) {
+             // Add to status history if status changed during edit
+              payload.statusHistory = window.arrayUnion ? window.arrayUnion({ status: sS, timestamp: Timestamp.now() }) : (currentOrderData.statusHistory || []).concat([{ status: sS, timestamp: Timestamp.now() }]);
+         }
+
 
         let savedId,msg;
         if(isEditMode){
@@ -611,7 +696,7 @@ async function handleFormSubmit(event) {
 
         alert(msg);
 
-        if(cD.whatsappNo){showWhatsAppReminder(cD,oId,dDV);}else{if(!isEditMode)resetNewOrderForm();}
+        if(cD.whatsappNo){showWhatsAppReminder(cD,oId,deliveryDateInput.value);}else{if(!isEditMode)resetNewOrderForm(); else window.location.href = 'order_history.html';} // Redirect after edit
 
     } catch(error) {
         console.error("Form submission error:",error);
@@ -620,6 +705,7 @@ async function handleFormSubmit(event) {
         if(saveButtonText) saveButtonText.textContent = originalButtonText; else saveButton.innerHTML = originalButtonHTML;
     }
 }
+// --- End UPDATED handleFormSubmit ---
 
 
 // --- Reset Form ---
@@ -642,7 +728,7 @@ function resetNewOrderForm() {
     updateStatusDropdownColor(defaultStatus);
     resetCustomerSelectionUI(true);
     updateOrderSummary();
-    handleAddItem();
+    handleAddItem(); // Add one blank row after reset
     showFormError('');
     hideProductSuggestions();
     if(customerSuggestionsNameBox) hideSuggestionBox(customerSuggestionsNameBox);
@@ -651,23 +737,18 @@ function resetNewOrderForm() {
 }
 
 // --- WhatsApp Reminder Functions ---
-function showWhatsAppReminder(customer, orderId, deliveryDate) { if(!whatsappReminderPopup||!whatsappMsgPreview||!whatsappSendLink){console.warn("WhatsApp popup elements not found.");if(!isEditMode)resetNewOrderForm();return;} const cN=customer.fullName||'Customer',cNum=customer.whatsappNo?.replace(/[^0-9]/g,''); if(!cNum){console.warn("Cannot send WhatsApp, number missing/invalid.");if(!isEditMode)resetNewOrderForm();return;} const fDD=deliveryDate?new Date(deliveryDate).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}):' जल्द से जल्द'; let msg=`प्रिय ${cN},\nआपका ऑर्डर (Order ID: ${orderId}) सफलतापूर्वक सहेज लिया गया है। डिलीवरी की अनुमानित तिथि: ${fDD}.\nधन्यवाद,\nMadhav Offset`; whatsappMsgPreview.innerText=msg; const eM=encodeURIComponent(msg); const wUrl=`https://wa.me/91${cNum}?text=${eM}`; whatsappSendLink.href=wUrl; whatsappReminderPopup.classList.add('active'); whatsappSendLink.onclick=()=>{if(!isEditMode)resetNewOrderForm(); closeWhatsAppPopup();}; popupCloseBtn.onclick=()=>{if(!isEditMode)resetNewOrderForm(); closeWhatsAppPopup();}; whatsappReminderPopup.onclick=(e)=>{if(e.target===whatsappReminderPopup){if(!isEditMode)resetNewOrderForm(); closeWhatsAppPopup();}}; }
+function showWhatsAppReminder(customer, orderId, deliveryDateStr) { if(!whatsappReminderPopup||!whatsappMsgPreview||!whatsappSendLink){console.warn("WhatsApp popup elements not found.");if(!isEditMode)resetNewOrderForm();return;} const cN=customer.fullName||'Customer',cNum=customer.whatsappNo?.replace(/[^0-9]/g,''); if(!cNum){console.warn("Cannot send WhatsApp, number missing/invalid.");if(!isEditMode)resetNewOrderForm();return;} let fDD = ' जल्द से जल्द'; try { if(deliveryDateStr) fDD = new Date(deliveryDateStr).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}); } catch(e){} let msg=`प्रिय ${cN},\nआपका ऑर्डर (Order ID: ${orderId}) सफलतापूर्वक सहेज लिया गया है। डिलीवरी की अनुमानित तिथि: ${fDD}.\nधन्यवाद,\nMadhav Offset`; whatsappMsgPreview.innerText=msg; const eM=encodeURIComponent(msg); const wUrl=`https://wa.me/91${cNum}?text=${eM}`; whatsappSendLink.href=wUrl; whatsappReminderPopup.classList.add('active'); const redirectUrl = isEditMode ? `order_history.html?openModalForId=${orderIdToEdit || ''}` : 'new_order.html'; whatsappSendLink.onclick=()=>{window.location.href = redirectUrl; closeWhatsAppPopup();}; popupCloseBtn.onclick=()=>{window.location.href = redirectUrl; closeWhatsAppPopup();}; whatsappReminderPopup.onclick=(e)=>{if(e.target===whatsappReminderPopup){window.location.href = redirectUrl; closeWhatsAppPopup();}}; }
 function closeWhatsAppPopup() { if(whatsappReminderPopup){whatsappReminderPopup.classList.remove('active'); whatsappSendLink.onclick=null; popupCloseBtn.onclick=null; whatsappReminderPopup.onclick=null;} }
 
 
-// ----- >>> ये दो नए सहायक फ़ंक्शन फ़ाइल के अंत में जोड़ें <<< -----
+// ----- Balance Calculation Helper Functions -----
 
-/**
- * Calculates the total amount paid by a customer.
- * @param {string} customerId The Firestore ID of the customer.
- * @returns {Promise<number>} A promise that resolves to the total amount paid. Returns 0 on error.
- */
 async function loadPaymentTotals_NewOrder(customerId) {
     console.log(`_newOrder: Loading payment total for customer: ${customerId}`);
     let totalPaid = 0;
     if (!db || !collection || !query || !where || !getDocs) {
         console.error("_newOrder: DB functions missing for payments.");
-        return 0; // Return 0 on error
+        return 0;
     }
     try {
         const paymentsRef = collection(db, "payments");
@@ -680,28 +761,20 @@ async function loadPaymentTotals_NewOrder(customerId) {
         return totalPaid;
     } catch (error) {
         console.error("_newOrder: Error loading payment total:", error);
-        return 0; // Return 0 on error
+        return 0;
     }
 }
 
-/**
- * Calculates the total value of orders for a customer.
- *Sums the 'finalAmount' field of all orders for the customer.
- * You might adjust this later to only include orders with specific statuses.
- * @param {string} customerId The Firestore ID of the customer.
- * @returns {Promise<number|string>} A promise that resolves to the total order value, or 'N/A' if no orders found or on error.
- */
 async function loadOrderTotals_NewOrder(customerId) {
     console.log(`_newOrder: Loading order total value for customer: ${customerId}`);
     let totalOrderValue = 0;
-    let foundOrders = false; // Flag to check if any orders were processed
+    let foundOrders = false;
      if (!db || !collection || !query || !where || !getDocs) {
         console.error("_newOrder: DB functions missing for orders.");
-        return 'N/A'; // Return 'N/A' on error
+        return 'N/A';
     }
     try {
         const ordersRef = collection(db, "orders");
-        // Consider which orders contribute to balance. Summing all for now.
         const q = query(ordersRef, where("customerId", "==", customerId));
 
         const querySnapshot = await getDocs(q);
@@ -711,12 +784,12 @@ async function loadOrderTotals_NewOrder(customerId) {
         });
 
         console.log(`_newOrder: Total Order Value calculated: ${totalOrderValue}`);
-        return foundOrders ? totalOrderValue : 'N/A'; // Return 'N/A' ONLY if no orders exist
+        return foundOrders ? totalOrderValue : 'N/A';
     } catch (error) {
         console.error("_newOrder: Error loading order total value:", error);
-        return 'N/A'; // Return 'N/A' on error
+        return 'N/A';
     }
 }
 
 // --- Log that the script finished loading ---
-console.log("new_order.js script loaded (v2.3.2 - Added Balance Calculation).");
+console.log("new_order.js script loaded (v2.4 - Saves ProductID).");
