@@ -1,4 +1,4 @@
-# Only '#' comments are replaced with '//'
+// Only '#' comments are replaced with '//'
 
 // new_order.js - v2.6 (WhatsApp Send Delay)
 // फ़ाइल का नाम: new_order.js
