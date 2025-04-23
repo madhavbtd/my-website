@@ -1,5 +1,6 @@
 /* === order_history.css === */
 /* Final Version: Restores #detailsModal original button layout, keeps refined #poItemSelectionModal layout/styles */
+/* MODIFIED: Updated #detailsModal .modal-actions.main-actions as requested */
 
 /* --- Global Styles & Variables --- */
 :root {
@@ -213,9 +214,26 @@ mark { background-color: var(--highlight-color); padding: 0.1em 0.2em; border-ra
 /* .details-modal-content-wrapper { ... REMOVED ... } */
 #detailsModal .modal-content { /* Ensure modal content itself can scroll */ overflow-y: auto; }
 #detailsModal .modal-grid-container-complex { display: grid; grid-template-columns: 1.2fr 1.2fr 1fr; gap: 15px; flex-grow: 1; min-height: 0; margin-bottom: 15px; }
-/* Restore original modal action positioning for #detailsModal */
-#detailsModal .modal-actions.main-actions { margin-top: auto; /* <<< Push actions to bottom */ padding-top: 15px; border-top: 1px solid var(--border-color); flex-shrink: 0; background-color: transparent; /* <<< Remove specific background */ margin-left: 0; margin-right: 0; margin-bottom: 0; padding: 15px 0 0 0; /* <<< Restore original padding */ border-radius: 0; }
-/* --- End Fix for #detailsModal --- */
+
+/* === नया और बेहतर CSS - इसे पुराने वाले की जगह पेस्ट करें === */
+#detailsModal .modal-actions.main-actions {
+    /* Inherits base .modal-actions styles like display:flex, gap, border-top */
+    justify-content: center;  /* << बटन्स को बीच में लाएगा */
+    margin-top: auto;         /* << नीचे रखने के लिए */
+    padding: 15px 20px;     /* << ऊपर/नीचे और साइड में पैडिंग देगा */
+    flex-shrink: 0;
+    max-width: 700px;       /* << अधिकतम चौड़ाई सीमित करेगा */
+    width: fit-content;       /* << कंटेंट के हिसाब से चौड़ाई लेगा */
+    margin-left: auto;        /* << कंटेनर को बीच में लाएगा */
+    margin-right: auto;       /* << कंटेनर को बीच में लाएगा */
+    background-color: var(--light-bg); /* << थोड़ा बैकग्राउंड कलर देगा (हटा सकते हैं अगर नहीं चाहिए) */
+    border-radius: var(--border-radius); /* << कोनों को गोल करेगा */
+    margin-bottom: 10px;      /* << नीचे थोड़ी जगह देगा */
+    box-shadow: var(--box-shadow); /* << हल्की छाया देगा */
+    border-top: 1px solid var(--border-color); /* Ensure border-top is kept if needed */
+}
+/* === नया CSS ब्लॉक समाप्त === */
+
 .grid-item-customer { grid-area: 1 / 1 / 2 / 2; }
 .grid-item-order    { grid-area: 1 / 2 / 2 / 3; }
 .grid-item-status   { grid-area: 1 / 3 / 3 / 4; }
@@ -361,6 +379,8 @@ mark { background-color: var(--highlight-color); padding: 0.1em 0.2em; border-ra
     display: none; /* Keep hidden initially */
     order: 1; /* Ensure it appears after the input */
 }
+#poItemSelectionModal .suggestions-list div { padding: 8px 12px; cursor: pointer; transition: background-color 0.2s ease; border-bottom: 1px solid var(--border-color-light); font-size: 0.9em; }
+#poItemSelectionModal .suggestions-list div:last-child { border-bottom: none; }
 #poItemSelectionModal .suggestions-list div:hover { background-color: var(--primary-color-light); color: var(--primary-color); font-weight: 500; }
 
 /* Style the Item Selection List container section (Grid Item 2) */
