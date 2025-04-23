@@ -14,7 +14,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-        import { getFirestore, collection, doc, getDoc, deleteDoc, updateDoc, onSnapshot, query, orderBy, where, Timestamp, arrayUnion, writeBatch, serverTimestamp, limit, addDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js"; // Added where, limit, addDoc
+        import { getFirestore, collection, doc, getDoc, deleteDoc, updateDoc, onSnapshot, query, orderBy, where, Timestamp, arrayUnion, writeBatch, serverTimestamp, limit, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js"; // Added getDocs
 
          const firebaseConfig = {
            apiKey: "AIzaSyBQj5rQmE77kKKGYixP8y3Hcimz8tiAqzQ",
@@ -58,6 +58,7 @@
              window.serverTimestamp = serverTimestamp;
              window.limit = limit; // Make limit global
              window.addDoc = addDoc; // Make addDoc global
+             window.getDocs = getDocs; // Make getDocs global
 
              onAuthStateChanged(auth, (user) => {
                  const currentPage = window.location.pathname.split('/').pop() || 'index.html';
@@ -162,8 +163,7 @@
                         <th class="col-checkbox"><input type="checkbox" id="selectAllCheckbox" title="Select All Visible"></th>
                         <th>Order ID</th>
                         <th>Customer Name</th>
-                         <th>Products</th>
-                        <th>Order Date</th>
+                         <th>Items</th> <th>Order Date</th>
                         <th>Delivery Date</th>
                         <th>Priority</th>
                          <th>Status</th>
@@ -199,7 +199,9 @@
             <h2>Order Details & Actions</h2>
             <input type="hidden" id="modalOrderId">
 
-            <div class="modal-grid-container"> <div class="modal-row modal-row-1">
+            <div class="modal-grid-container">
+
+                <div class="modal-row modal-row-1">
                     <div class="modal-section modal-customer-info">
                         <h4>Customer Details</h4>
                         <p><strong>Order ID:</strong> <span id="modalDisplayOrderId"></span></p>
@@ -237,23 +239,28 @@
                         <div id="modalStatusHistoryList"><p>Loading history...</p></div>
                     </div>
                 </div> <div class="modal-row modal-row-2">
-                    <div class="modal-section modal-product-info">
-                        <h4>Products</h4>
-                       <div id="modalProductList"><p>Loading...</p></div>
-                    </div>
-
-                    <div class="modal-section modal-account-info">
+                     <div class="modal-section modal-account-info">
                        <h4>Account Data</h4>
-                       <p><strong>Total Amount:</strong> <span id="modalTotalAmount">Loading...</span></p>
-                       <p><strong>Amount Paid:</strong> <span id="modalAmountPaid">Loading...</span></p>
-                       <p><strong>Balance Due:</strong> <span id="modalBalanceDue">Loading...</span></p>
-                       <p><strong>Payment Status:</strong> <span id="modalPaymentStatus">Loading...</span></p>
-                        </div>
+                       <div class="account-data-grid">
+                          <div class="account-data-pair">
+                              <p><strong>Total Amount:</strong> <span id="modalTotalAmount">Loading...</span></p>
+                              <p><strong>Amount Paid:</strong> <span id="modalAmountPaid">Loading...</span></p>
+                          </div>
+                          <div class="account-data-pair">
+                              <p><strong>Balance Due:</strong> <span id="modalBalanceDue">Loading...</span></p>
+                              <p><strong>Payment Status:</strong> <span id="modalPaymentStatus">Loading...</span></p>
+                          </div>
+                       </div>
+                    </div>
                 </div> <div class="modal-row modal-row-3">
+                    <div class="modal-section modal-product-info">
+                        <h4>Items</h4> <div id="modalProductList"><p>Loading...</p></div>
+                    </div>
+                </div> <div class="modal-row modal-row-4">
                     <div class="modal-section modal-po-info">
                         <h4>Purchase Orders</h4>
                         <div id="modalPOList"><p>Loading POs...</p></div>
-                         </div>
+                    </div>
                 </div> </div> <div class="modal-actions main-actions">
                   <button id="addPaymentBtn" class="button add-payment-button"><i class="fas fa-plus"></i> Add Payment</button>
                   <button id="modalCreatePOBtn" class="button create-po-button"><i class="fas fa-file-alt"></i> Create New PO</button>
@@ -263,11 +270,11 @@
         </div>
     </div>
     <div id="whatsapp-reminder-popup" class="popup-overlay">
-         <div class="popup-content">
+        <div class="popup-content">
             <button id="popup-close-btn" class="popup-close" title="Close">&times;</button>
             <h4 id="whatsapp-popup-title">Status Updated!</h4>
             <p>Send update to customer?</p>
-             <div id="whatsapp-message-preview" class="message-preview"></div>
+            <div id="whatsapp-message-preview" class="message-preview"></div>
             <a href="#" id="whatsapp-send-link" class="button whatsapp-send-btn" target="_blank"><i class="fab fa-whatsapp"></i> Send on WhatsApp</a>
         </div>
     </div>
