@@ -1,25 +1,35 @@
 /* === order_history.css === */
 /* Updated Version - Styles for new features, fourth layout revision (CSS Grid), ItemsOnlyModal */
 /* PO Details Popup styling updated to match Order ID Popup */
+/* Added colorful styling for #poItemSelectionModal */
 
 /* --- Global Styles & Variables --- */
 :root {
-    --primary-color: #0056b3;
-    --secondary-color: #6c757d;
-    --success-color: #28a745;
-    --warning-color: #ffc107;
-    --info-color: #17a2b8;
-    --danger-color: #dc3545;
-    --light-bg: #f8f9fa;
-    --border-color: #dee2e6;
-    --text-color: #343a40;
-    --text-muted: #6c757d;
+    --primary-color: #0056b3; /* Deep Blue */
+    --primary-color-light: #e6f0ff; /* Light Blue */
+    --secondary-color: #6c757d; /* Grey */
+    --success-color: #28a745; /* Green */
+    --success-color-light: #eaf7ec; /* Light Green */
+    --warning-color: #ffc107; /* Yellow */
+    --warning-color-light: #fff8e6; /* Light Yellow */
+    --info-color: #17a2b8; /* Teal */
+    --info-color-light: #e8f7fa; /* Light Teal */
+    --danger-color: #dc3545; /* Red */
+    --light-bg: #f8f9fa; /* Very Light Grey */
+    --white-bg: #ffffff; /* White */
+    --border-color: #dee2e6; /* Light Grey Border */
+    --border-color-light: #eeeeee; /* Very Light Border */
+    --text-color: #343a40; /* Dark Grey Text */
+    --text-muted: #6c757d; /* Medium Grey Text */
     --font-family: 'Poppins', "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
     --border-radius: 6px;
     --box-shadow: 0 2px 5px rgba(0, 0, 0, 0.08);
     --box-shadow-lg: 0 4px 12px rgba(0, 0, 0, 0.1);
-    --highlight-color: #fff3cd;
-    --selected-row-bg: #e0ecf8;
+    --highlight-color: #fff3cd; /* Light Yellow Highlight */
+    --selected-row-bg: #e0ecf8; /* Light Blue Row Selection */
+    --po-item-header-bg: #f0f8ff; /* Alice Blue for PO Item Header */
+    --po-item-list-bg: #fdfdff; /* Ghost White for PO Item List Area */
+    --po-item-entry-bg: #ffffff; /* White for individual items */
 }
 body {
     font-family: var(--font-family);
@@ -32,7 +42,7 @@ body {
     overflow-x: hidden; /* Prevent horizontal scroll on body */
 }
 .container {
-    background-color: #fff;
+    background-color: var(--white-bg);
     padding: 25px 30px;
     border-radius: var(--border-radius);
     box-shadow: var(--box-shadow-lg);
@@ -99,7 +109,6 @@ h1 { margin: 0; font-size: 1em; }
     color: #333;
     vertical-align: middle;
     font-weight: 500;
-    /* width: 100%; */ /* Removed */
     width: auto; /* New: Fit content */
     padding-left: 20px; /* Adjust padding as needed */
     padding-right: 20px; /* Adjust padding as needed */
@@ -126,7 +135,7 @@ h1 { margin: 0; font-size: 1em; }
 
 /* --- Action Bar & Filter Bar --- */
 .actions-bar { display: flex; justify-content: flex-end; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px; }
-.filter-bar { display: flex; flex-wrap: wrap; gap: 15px 20px; padding: 15px 20px; background-color: #ffffff; border: 1px solid var(--border-color); border-radius: var(--border-radius); margin-bottom: 15px; align-items: flex-end; box-shadow: var(--box-shadow); }
+.filter-bar { display: flex; flex-wrap: wrap; gap: 15px 20px; padding: 15px 20px; background-color: var(--white-bg); border: 1px solid var(--border-color); border-radius: var(--border-radius); margin-bottom: 15px; align-items: flex-end; box-shadow: var(--box-shadow); }
 .filter-group { display: flex; flex-direction: column; gap: 5px; flex-grow: 1; min-width: 150px; }
 .filter-group:has(#filterDate) { min-width: 160px; flex-grow: 0.5;}
 .filter-group:has(#filterStatus) { min-width: 170px; flex-grow: 0.8; }
@@ -134,7 +143,7 @@ h1 { margin: 0; font-size: 1em; }
 .filter-group:has(#filterSearch) { flex-grow: 1.5; }
 .filter-group label { font-size: 0.88em; font-weight: 500; color: var(--text-color); white-space: nowrap; margin-bottom: 3px; }
 .filter-group label i { margin-right: 5px; color: var(--primary-color); width: 1.1em; text-align: center; }
-.filter-group input[type="date"], .filter-group input[type="text"], .filter-group select { padding: 8px 12px; border: 1px solid #ced4da; border-radius: var(--border-radius); font-size: 0.9em; height: 38px; background-color: #fff; box-sizing: border-box; width: 100%; color: var(--text-color); }
+.filter-group input[type="date"], .filter-group input[type="text"], .filter-group select { padding: 8px 12px; border: 1px solid #ced4da; border-radius: var(--border-radius); font-size: 0.9em; height: 38px; background-color: var(--white-bg); box-sizing: border-box; width: 100%; color: var(--text-color); }
 .filter-group input::placeholder { color: #aaa; opacity: 1; }
 .filter-group input:focus, .filter-group select:focus { border-color: var(--primary-color); outline: 0; box-shadow: 0 0 0 0.2rem rgba(0, 86, 179, 0.25); }
 
@@ -151,11 +160,11 @@ h1 { margin: 0; font-size: 1em; }
 .bulk-delete:hover { background-color: #c82333; }
 
 /* --- Table Styles --- */
-.table-container { width: 100%; max-height: 65vh; overflow-y: auto; border: 1px solid var(--border-color); border-radius: var(--border-radius); margin-bottom: 20px; background-color: #fff; box-shadow: var(--box-shadow); position: relative; overflow-x: auto; }
+.table-container { width: 100%; max-height: 65vh; overflow-y: auto; border: 1px solid var(--border-color); border-radius: var(--border-radius); margin-bottom: 20px; background-color: var(--white-bg); box-shadow: var(--box-shadow); position: relative; overflow-x: auto; }
 #orderTable { width: 100%; border-collapse: collapse; font-size: 0.9em; border: none; min-width: 1000px; }
 #orderTable thead th { position: sticky; top: 0; z-index: 10; background-color: var(--light-bg); padding: 12px 15px; text-align: left; font-weight: 600; color: var(--text-color); white-space: nowrap; border-bottom: 2px solid var(--border-color); }
 #orderTable thead th.col-checkbox { z-index: 11; }
-#orderTable td { padding: 10px 15px; text-align: left; vertical-align: middle; border-bottom: 1px solid #e9ecef; color: var(--text-color); word-wrap: break-word; white-space: normal; }
+#orderTable td { padding: 10px 15px; text-align: left; vertical-align: middle; border-bottom: 1px solid var(--border-color-light); color: var(--text-color); word-wrap: break-word; white-space: normal; }
 #orderTable tbody tr { transition: background-color 0.15s ease; }
 #orderTable tbody tr:last-child td { border-bottom: none; }
 #orderTable tbody tr:hover { background-color: #f1f1f1; }
@@ -180,7 +189,6 @@ th.col-checkbox input, td.col-checkbox input { cursor: pointer; transform: scale
     text-align: center;
     min-width: auto;
     box-shadow: none;
-    /* height: 30px !important; */ /* Removed fixed height */
 }
 .po-info-cell .button.create-po-button.icon-only:hover { background-color: #218838; box-shadow: var(--box-shadow); transform: none; }
 .po-info-cell .button.create-po-button.icon-only i { margin-right: 0; /* Ensure icon is centered */ }
@@ -216,11 +224,11 @@ mark { background-color: var(--highlight-color); padding: 0.1em 0.2em; border-ra
 
 /* --- Summary & Reporting --- */
 .summary-reporting-container { display: flex; flex-direction: column; gap: 20px; margin-top: 25px; }
-.order-summary-counts, .reporting-section { padding: 18px 25px; background-color: #ffffff; border: 1px solid var(--border-color); border-radius: var(--border-radius); box-shadow: var(--box-shadow); }
+.order-summary-counts, .reporting-section { padding: 18px 25px; background-color: var(--white-bg); border: 1px solid var(--border-color); border-radius: var(--border-radius); box-shadow: var(--box-shadow); }
 .order-summary-counts { font-size: 0.95em; color: var(--text-color); display: flex; justify-content: space-around; align-items: center; flex-wrap: wrap; gap: 20px 30px; }
 .order-summary-counts span { font-weight: 500; }
 .order-summary-counts strong { color: var(--primary-color); font-weight: 700; margin-left: 6px; font-size: 1.1em; }
-.reporting-section h4 { margin-top: 0; margin-bottom: 15px; font-size: 1.1em; color: var(--primary-color); font-weight: 600; border-bottom: 1px solid #eee; padding-bottom: 8px; }
+.reporting-section h4 { margin-top: 0; margin-bottom: 15px; font-size: 1.1em; color: var(--primary-color); font-weight: 600; border-bottom: 1px solid var(--border-color-light); padding-bottom: 8px; }
 #statusCountsReport ul { list-style: none; padding: 0; margin: 0; font-size: 0.9em; column-count: 2; column-gap: 20px; }
 #statusCountsReport li { margin-bottom: 8px; color: var(--text-color); }
 #statusCountsReport li strong { font-weight: 600; color: var(--text-color); }
@@ -229,10 +237,10 @@ mark { background-color: var(--highlight-color); padding: 0.1em 0.2em; border-ra
 /* --- Modal Base Styles --- */
 .modal, .popup-overlay { display: none; position: fixed; z-index: 1050; left: 0; top: 0; width: 100%; height: 100%; overflow: hidden; background-color: rgba(0,0,0,0.65); align-items: center; justify-content: center; padding: 20px; box-sizing: border-box; }
 .modal.active, .popup-overlay.active { display: flex; }
-.modal-content { background-color: #fefefe; margin: auto; padding: 20px 25px; border: none; width: 95%; border-radius: var(--border-radius); position: relative; box-shadow: var(--box-shadow-lg); z-index: 1051; animation: popupFadeIn 0.3s ease-out; display: flex; flex-direction: column; max-height: calc(100vh - 40px); }
+.modal-content { background-color: #fdfdfd; margin: auto; border: none; width: 95%; border-radius: var(--border-radius); position: relative; box-shadow: var(--box-shadow-lg); z-index: 1051; animation: popupFadeIn 0.3s ease-out; display: flex; flex-direction: column; max-height: calc(100vh - 40px); }
 .modal-content.modal-lg { max-width: 1100px; }
 .modal-content.modal-xl { max-width: 1200px; }
-.modal-content.modal-md { max-width: 700px; } /* Added for ItemsOnlyModal */
+.modal-content.modal-md { max-width: 700px; }
 .modal-content.small-modal { max-width: 550px; max-height: none; }
 .close-btn, #whatsapp-reminder-popup .popup-close { color: #aaa; position: absolute; top: 10px; right: 12px; font-size: 28px; font-weight: bold; cursor: pointer; line-height: 1; background: none; border: none; padding: 0; transition: color 0.2s ease; z-index: 1052; }
 .close-btn:hover, .close-btn:focus, #whatsapp-reminder-popup .popup-close:hover, #whatsapp-reminder-popup .popup-close:focus { color: black; text-decoration: none; }
@@ -265,13 +273,13 @@ mark { background-color: var(--highlight-color); padding: 0.1em 0.2em; border-ra
     border-radius: var(--border-radius);
     display: flex;
     flex-direction: column;
-    background-color: #fff;
+    background-color: var(--white-bg);
     min-height: 0;
     overflow: hidden;
 }
 #detailsModal .modal-section h4 {
     margin-top: 0; margin-bottom: 12px; font-size: 1.05em;
-    color: var(--primary-color); border-bottom: 1px solid #eee; padding-bottom: 6px; font-weight: 600; flex-shrink: 0;
+    color: var(--primary-color); border-bottom: 1px solid var(--border-color-light); padding-bottom: 6px; font-weight: 600; flex-shrink: 0;
 }
 #detailsModal .modal-section p,
 #detailsModal .modal-section label {
@@ -322,13 +330,13 @@ mark { background-color: var(--highlight-color); padding: 0.1em 0.2em; border-ra
     padding: 0; list-style: none; margin: 0;
 }
 #modalProductList ul.modal-product-list-ul li {
-    border: 1px solid #eee; padding: 6px 8px; border-radius: 4px; background-color: #fff;
-    font-size: 0.88em; border-bottom: 1px solid #eee; margin-bottom: 0; padding-bottom: 6px;
+    border: 1px solid var(--border-color-light); padding: 6px 8px; border-radius: 4px; background-color: var(--white-bg);
+    font-size: 0.88em; border-bottom: 1px solid var(--border-color-light); margin-bottom: 0; padding-bottom: 6px;
     line-height: 1.3;
 }
 
 #modalProductList, #modalStatusHistoryList, #modalPOList {
-    background-color: var(--light-bg); border: 1px solid #e9ecef; border-radius: var(--border-radius); padding: 10px 15px; max-height: 180px; overflow-y: auto; font-size: 0.9em; margin-top: auto; flex-grow: 1; min-height: 50px;
+    background-color: var(--light-bg); border: 1px solid var(--border-color-light); border-radius: var(--border-radius); padding: 10px 15px; max-height: 180px; overflow-y: auto; font-size: 0.9em; margin-top: auto; flex-grow: 1; min-height: 50px;
 }
 #modalProductList ul, #modalStatusHistoryList ul, #modalPOList ul { list-style: none; padding: 0; margin: 0; }
 #modalProductList li, #modalStatusHistoryList li, #modalPOList li { margin-bottom: 6px; padding-bottom: 6px; border-bottom: 1px dotted #ccc; font-size: 0.92em; line-height: 1.4; }
@@ -341,285 +349,6 @@ mark { background-color: var(--highlight-color); padding: 0.1em 0.2em; border-ra
 }
 
 #detailsModal .modal-actions.main-actions { margin-top: 0; padding-top: 15px; flex-shrink: 0; justify-content: flex-end; }
-
-
-/* --- PO Item Selection Modal Styles (#poItemSelectionModal) --- */
-#poItemSelectionModal h2 { font-size: 1.2em; text-align: left; border-bottom: none; margin-bottom: 10px; }
-#poItemSelectionModal p { margin-bottom: 15px; font-size: 0.95em; }
-#poItemSelectionModal .form-group { margin-bottom: 20px; position: relative; }
-#poItemSelectionModal label { font-weight: 600; }
-#poItemSelectionModal input[type="text"] { height: 40px; width: 100%; box-sizing: border-box; }
-.suggestions-list { display: none; position: absolute; background-color: #fff; border: 1px solid var(--primary-color); border-top: none; max-height: 180px; overflow-y: auto; width: 100%; box-sizing: border-box; z-index: 1001; border-radius: 0 0 var(--border-radius) var(--border-radius); box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1); margin-top: -1px; }
-.suggestions-list div { padding: 10px 15px; font-size: 0.95em; cursor: pointer; border-bottom: 1px solid #dee2e6; transition: background-color 0.15s ease; }
-.suggestions-list div:last-child { border-bottom: none; }
-.suggestions-list div:hover { background-color: #e9f5ff; }
-.suggestions-list .no-suggestions { padding: 12px 15px; color: #6c757d; cursor: default; }
-.item-selection-list { border: 1px solid var(--border-color); border-radius: var(--border-radius); padding: 15px; max-height: 250px; overflow-y: auto; margin-bottom: 20px; background-color: var(--light-bg); }
-.item-selection-entry { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px dotted #ccc; }
-.item-selection-entry:last-child { margin-bottom: 0; padding-bottom: 0; border-bottom: none; }
-.item-selection-entry input[type="checkbox"] { transform: scale(1.2); cursor: pointer; margin: 0; flex-shrink: 0;}
-.item-selection-entry input[type="checkbox"]:disabled { cursor: not-allowed; opacity: 0.5; }
-.item-selection-entry label { font-size: 0.95em; cursor: pointer; flex-grow: 1; }
-.item-selection-entry label strong { font-weight: 600; color: var(--text-color); }
-.item-selection-entry label .in-po-label { font-size: 0.8em; color: var(--secondary-color); font-style: italic; margin-left: 5px; }
-#poItemSelectionModal .modal-actions { border-top: 1px solid var(--border-color); padding-top: 15px; margin-top: 15px; }
-
-/* --- PO Details Popup Styles (#poDetailsPopup) --- */
-/* Styles updated to match #readOnlyOrderModal where applicable */
-#poDetailsPopup .modal-content {
-    /* padding: 20px 25px; /* Reverted to base modal padding if needed */
-    max-height: calc(90vh - 50px); /* Match readOnlyOrderModal height */
-    max-width: 1100px; /* Match readOnlyOrderModal width */
-    display: flex; /* Ensure flex column */
-    flex-direction: column;
-}
-
-/* Using a wrapper div inside #poDetailsPopup with this class is recommended */
-#poDetailsPopup .po-details-content-area {
-    flex-grow: 1;
-    overflow-y: auto;
-    padding: 10px 5px; /* Match readOnlyOrderModal padding */
-    min-height: 0;
-    /* Consider grid layout if HTML structure is changed */
-    /* display: grid; */
-    /* gap: 15px; */
-}
-
-
-/* Style sections within the popup like readOnlyOrderModal sections */
-.po-details-section { /* Apply this class to PO Header Info, Table Wrapper, Notes Wrapper */
-    margin-bottom: 10px;
-    padding: 10px 12px;
-    border: 1px solid #eee;
-    border-radius: var(--border-radius);
-    background-color: #fff;
-}
-
-/* Specific adjustments for elements within #poDetailsPopup */
-#poDetailsPopup h3 { /* Title styling is handled by general modal h2/h3 rules now */
-    /* margin-top: 0; */
-    /* font-size: 1.2em; */
-    /* color: var(--primary-color); */
-    /* margin-bottom: 15px; */
-    flex-shrink: 0;
-}
-#poDetailsPopup p { /* Generic paragraph styling */
-    font-size: 0.92em; /* Match readOnlyOrderModal font size */
-    margin-bottom: 4px; /* Reduce spacing */
-    line-height: 1.5; /* Match readOnlyOrderModal line height */
-}
-#poDetailsPopup p strong { /* Match readOnlyOrderModal strong style */
-     font-weight: 600;
-     color: var(--text-color);
-     min-width: 100px; /* Adjust as needed */
-     display: inline-block;
-}
-
-#poDetailsPopup hr {
-    border: none;
-    border-top: 1px solid var(--border-color);
-    margin: 10px 0; /* Reduce margin */
-    flex-shrink: 0;
-}
-#poDetailsPopup h4 { /* Items title */
-    margin-top: 0; /* Remove extra top margin if inside a section */
-    margin-bottom: 8px; /* Reduce space */
-    font-size: 1em; /* Match readOnlyOrderModal h4 */
-    color: var(--primary-color); /* Match readOnlyOrderModal h4 */
-    border-bottom: 1px solid #eee; /* Match readOnlyOrderModal h4 */
-    padding-bottom: 5px; /* Match readOnlyOrderModal h4 */
-    font-weight: 600; /* Match readOnlyOrderModal h4 */
-    flex-shrink: 0;
-}
-
-#poDetailsPopup .details-table-popup {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 0.88em; /* Match readOnly list item font */
-    margin-bottom: 10px; /* Reduce space below table */
-    /* Style table container like readOnly list background */
-    background-color: var(--light-bg);
-    border: 1px solid #eee;
-    border-radius: 4px;
-    overflow: hidden; /* Ensures border radius applies to table */
-}
-#poDetailsPopup .details-table-popup thead th {
-    background-color: transparent; /* Remove default header bg */
-    font-weight: 600;
-    border-bottom: 1px solid #ccc; /* Add subtle separator */
-    padding: 6px 8px; /* Match cell padding */
-    text-align: left;
-}
-#poDetailsPopup .details-table-popup td {
-    border: none; /* Remove default table borders */
-    padding: 5px 8px; /* Match readOnly list item padding */
-    text-align: left;
-    vertical-align: top;
-    background-color: #fff; /* Match readOnly list item bg */
-    border-bottom: 1px dotted #ddd; /* Add similar separator */
-}
-#poDetailsPopup .details-table-popup tr:last-child td {
-    border-bottom: none; /* Remove border for last row */
-}
-
-.po-notes-popup {
-    /* Style using the .po-details-section class applied to its wrapper */
-    margin-top: 0; /* Remove extra top margin if inside a section */
-    padding: 0; /* Padding handled by section */
-    border: none; /* Border handled by section */
-    border-radius: 0; /* Radius handled by section */
-    font-size: 0.88em; /* Smaller font for notes */
-    background-color: transparent; /* BG handled by section */
-    flex-shrink: 0;
-}
-.po-notes-popup strong {
-    display: block;
-    margin-bottom: 5px;
-    font-weight: 600;
-}
-
-#poDetailsPopup .modal-actions {
-    border-top: 1px solid var(--border-color);
-    padding-top: 12px; /* Match general modal action padding */
-    margin-top: auto; /* Pushes actions to bottom */
-}
-
-
-/* --- Read-Only Order Modal Styles (#readOnlyOrderModal) --- */
-#readOnlyOrderModal h2 {
-    font-size: 1.3em;
-    text-align: left;
-    border-bottom: 1px solid var(--border-color);
-    padding-bottom: 10px;
-    margin-bottom: 20px; /* Keep original spacing or adjust if needed */
-    flex-shrink: 0;
-}
-#readOnlyOrderModal .modal-content { /* Ensure max-width is set if needed */
-     max-width: 1100px;
-     max-height: calc(90vh - 50px);
-     display: flex; /* Ensure flex column */
-     flex-direction: column;
-}
-.read-only-content-area {
-    flex-grow: 1;
-    overflow-y: auto;
-    padding: 10px 5px;
-    min-height: 0;
-}
-.read-only-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: 15px; /* Reduce gap */
-}
-.read-only-section {
-    margin-bottom: 10px; /* Reduce space */
-    padding: 10px 12px; /* Add padding */
-    border: 1px solid #eee; /* Add subtle border */
-    border-radius: var(--border-radius);
-    background-color: #fff; /* White background for sections */
-}
-.read-only-section h4 {
-    margin-top: 0;
-    margin-bottom: 8px; /* Reduce space */
-    font-size: 1em;
-    color: var(--primary-color);
-    border-bottom: 1px solid #eee;
-    padding-bottom: 5px;
-    font-weight: 600;
-}
-.read-only-section p {
-    margin-bottom: 8px;
-    font-size: 0.95em;
-    line-height: 1.5;
-}
-.read-only-section p strong {
-    font-weight: 600;
-    color: var(--text-color);
-    min-width: 100px;
-    display: inline-block;
-}
-.read-only-product-list, .read-only-history-list {
-    list-style: none;
-    padding: 5px; /* Add padding */
-    margin: 0;
-    max-height: 150px; /* Limit list height */
-    overflow-y: auto;
-    background-color: var(--light-bg); /* Subtle background for lists */
-    border-radius: 4px;
-    border: 1px solid #eee;
-}
-.read-only-product-list li, .read-only-history-list li {
-    background-color: #fff; /* White list items */
-    padding: 5px 8px; /* Reduce padding */
-    border-radius: 3px;
-    margin-bottom: 4px; /* Reduce space */
-    font-size: 0.88em; /* Smaller font */
-    border: none; /* Remove previous border */
-}
-.read-only-history-list li {
-    display: flex;
-    justify-content: space-between;
-    flex-wrap: wrap;
-}
-.read-only-history-list li strong {
-    margin-right: 10px;
-}
-#readOnlyOrderModal .modal-actions {
-    border-top: 1px solid var(--border-color);
-    padding-top: 12px; /* Match general modal action padding */
-    margin-top: auto; /* Push to bottom */
-    justify-content: flex-end;
-    flex-shrink: 0;
-}
-
-/* --- नया: Items Only Modal Styles (#itemsOnlyModal) --- */
-#itemsOnlyModal .modal-content {
-    /* max-width: 700px; /* Defined by modal-md class */
-    max-width: 550px; /* Make it less wide */
-    max-height: calc(85vh - 50px); /* Adjust height if needed */
-}
-#itemsOnlyModal h2 {
-    font-size: 1.2em;
-    text-align: center;
-    border-bottom: 1px solid var(--border-color);
-    padding-bottom: 10px;
-    margin-bottom: 15px;
-}
-#itemsOnlyModal .items-only-content-area {
-    padding: 10px; /* Adjust padding */
-    background-color: #fff; /* White background */
-    border: 1px solid var(--border-color);
-    border-radius: var(--border-radius);
-    flex-grow: 1;
-    overflow-y: auto;
-    min-height: 100px; /* Ensure some minimum height */
-}
-.items-only-list {
-    list-style: none;
-    padding: 0 10px;
-    margin: 0;
-}
-.items-only-list li {
-    padding: 6px 5px; /* Reduce padding */
-    border-bottom: 1px dotted #ddd; /* Lighter dotted line */
-    font-size: 0.92em; /* Adjust font size */
-    line-height: 1.4;
-}
-.items-only-list li:last-child {
-    border-bottom: none;
-}
-.items-only-list li strong {
-    font-weight: 600;
-    color: var(--text-color);
-}
-#itemsOnlyModal .no-items {
-    font-size: 0.9em;
-    padding: 15px 0;
-}
-#itemsOnlyModal .modal-actions {
-    justify-content: center; /* Center the close button */
-}
-/* --- Items Only Modal Styles समाप्त --- */
 
 
 /* --- WhatsApp Reminder Popup --- */
@@ -641,125 +370,265 @@ mark { background-color: var(--highlight-color); padding: 0.1em 0.2em; border-ra
 .order-list-preview li:last-child { border-bottom: none; }
 .order-list-preview li strong { color: var(--text-color); font-weight: 600; }
 .warning-message { font-weight: 600; color: var(--danger-color); margin-bottom: 15px !important; text-align: center; font-size: 1em !important; }
-.confirmation-check { margin-bottom: 20px; display: flex; align-items: center; justify-content: center; gap: 8px; background-color: #fff9e6; padding: 10px; border-radius: var(--border-radius); border: 1px solid var(--warning-color); }
+.confirmation-check { margin-bottom: 20px; display: flex; align-items: center; justify-content: center; gap: 8px; background-color: var(--warning-color-light); padding: 10px; border-radius: var(--border-radius); border: 1px solid var(--warning-color); }
 .confirmation-check input[type="checkbox"] { transform: scale(1.2); cursor: pointer; margin: 0; }
 .confirmation-check label { font-size: 0.9em; color: var(--text-color); cursor: pointer; margin: 0; font-weight: 500; }
 #bulkDeleteConfirmModal .modal-actions { justify-content: flex-end; margin-top: auto; }
 #bulkDeleteConfirmModal .cancel-button { background-color: var(--secondary-color); }
 #bulkDeleteConfirmModal .delete-button:disabled { background-color: #f5c6cb; border-color: #f5c6cb; color: #721c24; opacity: 0.6; cursor: not-allowed; }
 
-/* --- Responsive --- */
-@media (max-width: 992px) {
-    .filter-bar { flex-direction: column; align-items: stretch; gap: 15px; }
-    .filter-group { min-width: 100%; }
-    .bulk-actions-bar { flex-direction: column; align-items: stretch; }
-    .bulk-actions-controls { justify-content: space-between; }
-    #statusCountsReport ul { column-count: 1; }
-    #detailsModal .modal-grid-container-complex {
-        display: flex;
-        flex-direction: column;
-        gap: 15px;
-    }
-     #detailsModal .modal-section {
-       width: 100%;
-       box-sizing: border-box;
-     }
-     .account-data-grid { grid-template-columns: 1fr; }
-     #modalProductList ul.modal-product-list-ul { grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); }
-    .read-only-grid { grid-template-columns: 1fr; }
-    /* Adjust PO details grid if implemented */
-    /* #poDetailsPopup .po-details-grid { grid-template-columns: 1fr; } */
+
+/* --- PO Details Popup Styles (#poDetailsPopup) --- */
+#poDetailsPopup .modal-content {
+    max-height: calc(90vh - 50px);
+    max-width: 1200px; /* Matched modal-xl */
+    display: flex;
+    flex-direction: column;
+    padding: 15px 20px; /* Use base padding */
 }
-@media (max-width: 768px) {
-    body { padding: 15px; font-size: 14px; }
-    .container { max-width: 100%; padding: 20px; margin: 10px 0;}
-    .header { margin: -20px -20px 20px -20px; font-size: 1.15em;}
-    .breadcrumb { margin-bottom: 20px; padding-bottom: 12px;}
-    .actions-bar { justify-content: flex-end; gap: 8px; }
-    .actions-bar .button { padding: 7px 10px; font-size: 0.85em; height: 36px; flex-shrink: 0; }
-    #orderTable { font-size: 0.88em; min-width: 800px; }
-    #orderTable th, #orderTable td { padding: 8px 10px; white-space: normal; }
-    .modal-content { width: 95%; padding: 15px; max-width: 100%; max-height: calc(100vh - 30px); }
-    .modal-content.modal-md { /* Adjust medium modal for smaller screens */
-        max-width: 95%;
-    }
-    .modal-content.modal-lg { /* Adjust large modals like PO/Order Details */
-        max-width: 95%;
-    }
-    .order-summary-counts{ justify-content: space-between; font-size: 0.9em; padding: 15px 20px;}
-    .status-update-inline { flex-direction: column; align-items: stretch; }
-    .status-update-inline select { max-width: none; }
-    .status-update-inline button { width: 100%; align-self: stretch; } /* Make button full width */
-    .modal-actions { gap: 10px; }
-    .modal-actions .button { font-size: 0.9em; padding: 8px 15px; height: 38px;}
-    .bulk-actions-controls { flex-direction: column; align-items: stretch; gap: 10px;}
-    .bulk-select, .bulk-button { width: 100%; }
-    .summary-reporting-container { gap: 15px; }
-    .order-summary-counts, .reporting-section { padding: 15px 20px; }
-    #modalProductList ul.modal-product-list-ul { grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); }
-    .read-only-grid { grid-template-columns: 1fr; } /* Ensure single column */
+#poDetailsPopup .po-details-content-area { /* Wrapper div inside #poDetailsPopup */
+    flex-grow: 1;
+    overflow-y: auto;
+    padding: 10px 5px;
+    min-height: 0;
 }
-@media (max-width: 480px) {
-    body { padding: 10px; }
-    .container { padding: 15px; }
-    .header { padding: 12px 15px; font-size: 1.1em; margin: -15px -15px 15px -15px;}
-    .filter-bar { padding: 15px; }
-    #orderTable { font-size: 0.85em; min-width: 600px; }
-    #orderTable th, #orderTable td { padding: 6px 8px; }
-    th.col-checkbox, td.col-checkbox { width: 30px; padding: 6px 5px;}
-    th.col-checkbox input, td.col-checkbox input { transform: scale(1); }
-    .status-badge { padding: 4px 8px; font-size: 0.8em; }
-    .details-edit-button { padding: 4px 8px; font-size: 0.8em; }
-    .whatsapp-button { width: 26px; height: 26px; font-size: 0.9em; }
-    .modal-content { padding: 10px; max-height: calc(100vh - 20px); }
-    #detailsModal h2, #poDetailsPopup h3, #readOnlyOrderModal h2 { /* Adjust modal titles */
-        font-size: 1.1em;
-        margin-bottom: 10px;
-        padding-bottom: 8px;
-        margin-left: -10px; /* Adjust header extension */
-        margin-right: -10px; /* Adjust header extension */
-        margin-top: -10px; /* Adjust top margin */
-        padding-left: 10px;
-        padding-right: 10px;
-        padding-top: 8px;
-    }
-    #itemsOnlyModal h2 { font-size: 1.1em; } /* Adjust ItemsOnly modal title */
-    .modal-actions { flex-direction: column; }
-    .modal-actions .button { width: 100%; justify-content: center;}
-    .actions-bar { flex-wrap: wrap; justify-content: flex-start;}
-    .actions-bar .button { flex-grow: 1; min-width: 120px; text-align: center;}
-    .account-data-grid { grid-template-columns: 1fr; }
-    #modalProductList ul.modal-product-list-ul { grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 5px;}
-    /* Adjust PO details sections for small screens */
-    .po-details-section { padding: 8px 10px; }
-    #poDetailsPopup .details-table-popup { font-size: 0.85em; }
-    #poDetailsPopup .details-table-popup th,
-    #poDetailsPopup .details-table-popup td { padding: 4px 6px; }
-    .po-notes-popup { font-size: 0.85em; }
+.po-details-section { /* Apply to Header, Table Wrapper, Notes Wrapper */
+    margin-bottom: 10px;
+    padding: 10px 12px;
+    border: 1px solid var(--border-color-light);
+    border-radius: var(--border-radius);
+    background-color: var(--white-bg);
+}
+#poDetailsPopup h3 { /* Title handled by global modal h2/h3 rule */
+    flex-shrink: 0;
+}
+#poDetailsPopup p {
+    font-size: 0.92em;
+    margin-bottom: 4px;
+    line-height: 1.5;
+}
+#poDetailsPopup p strong {
+     font-weight: 600;
+     color: var(--text-color);
+     min-width: 100px;
+     display: inline-block;
+}
+#poDetailsPopup hr {
+    border: none;
+    border-top: 1px solid var(--border-color);
+    margin: 10px 0;
+    flex-shrink: 0;
+}
+#poDetailsPopup h4 { /* Items title */
+    margin-top: 0;
+    margin-bottom: 8px;
+    font-size: 1em;
+    color: var(--primary-color);
+    border-bottom: 1px solid var(--border-color-light);
+    padding-bottom: 5px;
+    font-weight: 600;
+    flex-shrink: 0;
+}
+#poDetailsPopup .details-table-popup {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.88em;
+    margin-bottom: 10px;
+    background-color: var(--light-bg);
+    border: 1px solid var(--border-color-light);
+    border-radius: 4px;
+    overflow: hidden;
+}
+#poDetailsPopup .details-table-popup thead th {
+    background-color: transparent;
+    font-weight: 600;
+    border-bottom: 1px solid #ccc;
+    padding: 6px 8px;
+    text-align: left;
+}
+#poDetailsPopup .details-table-popup td {
+    border: none;
+    padding: 5px 8px;
+    text-align: left;
+    vertical-align: top;
+    background-color: var(--white-bg);
+    border-bottom: 1px dotted var(--border-color-light);
+}
+#poDetailsPopup .details-table-popup tr:last-child td {
+    border-bottom: none;
+}
+.po-notes-popup {
+    margin-top: 0;
+    padding: 0;
+    border: none;
+    border-radius: 0;
+    font-size: 0.88em;
+    background-color: transparent;
+    flex-shrink: 0;
+}
+.po-notes-popup strong {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 600;
+}
+#poDetailsPopup .modal-actions {
+    border-top: 1px solid var(--border-color);
+    padding-top: 12px;
+    margin-top: auto;
 }
 
 
-/* === Popup/Modal Design Improvements (Consolidated & Updated) === */
-
-/* --- General Modal Adjustments --- */
-.modal-content {
-    padding: 15px 20px; /* Base padding */
-    background-color: #fdfdfd;
-    overflow-y: auto; /* Ensure scrolling */
+/* --- Read-Only Order Modal Styles (#readOnlyOrderModal) --- */
+#readOnlyOrderModal h2 {
+    /* text-align: left; */ /* Default modal header style handles this */
+    /* border-bottom: 1px solid var(--border-color); */
+    /* padding-bottom: 10px; */
+    margin-bottom: 20px; /* Keep original spacing */
+    /* font-size: 1.3em; */ /* Default modal header style handles this */
+    flex-shrink: 0;
+}
+#readOnlyOrderModal .modal-content {
+     max-width: 1200px; /* modal-xl */
+     max-height: calc(90vh - 50px);
+     display: flex;
+     flex-direction: column;
+     padding: 15px 20px; /* Use base padding */
+}
+.read-only-content-area {
+    flex-grow: 1;
+    overflow-y: auto;
+    padding: 10px 5px;
+    min-height: 0;
+}
+.read-only-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 15px;
+}
+.read-only-section {
+    margin-bottom: 10px;
+    padding: 10px 12px;
+    border: 1px solid var(--border-color-light);
+    border-radius: var(--border-radius);
+    background-color: var(--white-bg);
+}
+.read-only-section h4 {
+    margin-top: 0;
+    margin-bottom: 8px;
+    font-size: 1em;
+    color: var(--primary-color);
+    border-bottom: 1px solid var(--border-color-light);
+    padding-bottom: 5px;
+    font-weight: 600;
+}
+.read-only-section p {
+    margin-bottom: 8px;
+    font-size: 0.95em;
+    line-height: 1.5;
+}
+.read-only-section p strong {
+    font-weight: 600;
+    color: var(--text-color);
+    min-width: 100px;
+    display: inline-block;
+}
+.read-only-product-list, .read-only-history-list {
+    list-style: none;
+    padding: 5px;
+    margin: 0;
+    max-height: 150px;
+    overflow-y: auto;
+    background-color: var(--light-bg);
+    border-radius: 4px;
+    border: 1px solid var(--border-color-light);
+}
+.read-only-product-list li, .read-only-history-list li {
+    background-color: var(--white-bg);
+    padding: 5px 8px;
+    border-radius: 3px;
+    margin-bottom: 4px;
+    font-size: 0.88em;
+    border: none;
+}
+.read-only-history-list li {
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+}
+.read-only-history-list li strong {
+    margin-right: 10px;
+}
+#readOnlyOrderModal .modal-actions {
+    border-top: 1px solid var(--border-color);
+    padding-top: 12px;
+    margin-top: auto;
+    justify-content: flex-end;
+    flex-shrink: 0;
 }
 
-/* Unified Modal Header Styling */
+
+/* --- Items Only Modal Styles (#itemsOnlyModal) --- */
+#itemsOnlyModal .modal-content {
+    max-width: 550px; /* Make it less wide */
+    max-height: calc(85vh - 50px);
+    padding: 15px 20px; /* Use base padding */
+}
+#itemsOnlyModal h2 {
+    /* font-size: 1.2em; */ /* Default modal header style handles this */
+    text-align: center; /* Center this specific title */
+    /* border-bottom: 1px solid var(--border-color); */
+    /* padding-bottom: 10px; */
+    /* margin-bottom: 15px; */
+}
+#itemsOnlyModal .items-only-content-area {
+    padding: 10px;
+    background-color: var(--white-bg);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    flex-grow: 1;
+    overflow-y: auto;
+    min-height: 100px;
+}
+.items-only-list {
+    list-style: none;
+    padding: 0 10px;
+    margin: 0;
+}
+.items-only-list li {
+    padding: 6px 5px;
+    border-bottom: 1px dotted var(--border-color-light);
+    font-size: 0.92em;
+    line-height: 1.4;
+}
+.items-only-list li:last-child {
+    border-bottom: none;
+}
+.items-only-list li strong {
+    font-weight: 600;
+    color: var(--text-color);
+}
+#itemsOnlyModal .no-items {
+    font-size: 0.9em;
+    padding: 15px 0;
+    color: var(--text-muted);
+    font-style: italic;
+    text-align: center;
+}
+#itemsOnlyModal .modal-actions {
+    justify-content: center;
+}
+
+
+/* --- Unified Modal Header Styling --- */
 .modal h2,
-#poDetailsPopup h3,
-#readOnlyOrderModal h2, /* Explicitly target readOnlyOrderModal h2 */
-#itemsOnlyModal h2 { /* Explicitly target itemsOnlyModal h2 */
+#poDetailsPopup h3 { /* Removed specific modal IDs if covered by .modal h2 */
     margin-bottom: 10px;
     padding-bottom: 8px;
     font-size: 1.2em; /* Consistent title size */
     background-color: var(--light-bg); /* Subtle header background */
-    margin-left: -20px; /* Extend background to edges (adjust based on padding) */
-    margin-right: -20px; /* Extend background to edges (adjust based on padding) */
-    margin-top: -15px; /* Adjust top margin (based on padding) */
+    margin-left: -20px; /* Extend background to edges (match padding) */
+    margin-right: -20px; /* Extend background to edges (match padding) */
+    margin-top: -15px; /* Adjust top margin (match padding) */
     padding-left: 20px; /* Match padding */
     padding-right: 20px; /* Match padding */
     padding-top: 10px;
@@ -789,10 +658,298 @@ mark { background-color: var(--highlight-color); padding: 0.1em 0.2em; border-ra
 }
 
 
-/* --- 1. Order ID Popup (#readOnlyOrderModal) - Styles moved to main definition --- */
+/* === START: Added/Updated CSS for PO Item Selection Modal (#poItemSelectionModal) === */
+
+/* Make PO Item Selection Modal content area behave like ReadOnly Modal */
+#poItemSelectionModal .modal-content {
+    /* Uses modal-xl for width now via HTML change */
+    max-height: calc(90vh - 50px); /* Match ReadOnly height */
+    display: flex;
+    flex-direction: column;
+    padding: 15px 20px; /* Use base padding */
+}
+
+/* Style the overall content wrapper (add div with this class in HTML) */
+#poItemSelectionModal .po-item-selection-content-wrapper {
+    flex-grow: 1;
+    overflow-y: auto;
+    padding: 10px 5px; /* Match ReadOnly padding */
+    min-height: 0;
+    display: flex; /* Use flex for internal layout */
+    flex-direction: column;
+    gap: 15px; /* Space between sections */
+}
+
+/* Style the header */
+#poItemSelectionModal h2 {
+    /* Styled globally */
+    text-align: left; /* Override if needed */
+}
+
+/* Style the introductory paragraph */
+#poItemSelectionModal > .modal-content > .po-item-selection-content-wrapper > p:first-of-type { /* More specific selector */
+     margin-bottom: 0; /* Remove extra space if part of wrapper */
+     padding: 0 5px 10px 5px; /* Padding */
+     font-size: 0.95em;
+     color: var(--text-muted);
+     flex-shrink: 0;
+}
+
+/* Style the Supplier Search section */
+#poItemSelectionModal .supplier-search-section { /* Use class added in HTML */
+    margin-bottom: 0; /* Remove margin if using gap */
+    padding: 12px 15px;
+    border: 1px solid var(--primary-color-light); /* Use light primary border */
+    border-radius: var(--border-radius);
+    background-color: var(--primary-color-light); /* Light blue background */
+    flex-shrink: 0; /* Prevent shrinking */
+}
+
+#poItemSelectionModal .supplier-search-section label {
+    font-weight: 600;
+    font-size: 1em;
+    color: var(--primary-color);
+    margin-bottom: 8px;
+    display: block;
+}
+#poItemSelectionModal .supplier-search-section label i {
+    margin-right: 6px;
+}
+
+/* Style the Item Selection List container section */
+.item-selection-list-container { /* Use class added in HTML */
+    padding: 12px 15px;
+    border: 1px solid var(--success-color-light); /* Light green border */
+    border-radius: var(--border-radius);
+    background-color: var(--white-bg); /* White background for contrast */
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 150px;
+    margin-bottom: 0; /* Remove margin if using gap */
+}
+
+.item-selection-list-container h4 { /* Title for the list section */
+    margin-top: 0;
+    margin-bottom: 10px;
+    font-size: 1em;
+    color: var(--success-color); /* Green title */
+    border-bottom: 1px solid var(--success-color-light);
+    padding-bottom: 6px;
+    font-weight: 600;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.item-selection-list-container h4 i {
+    font-size: 0.9em;
+}
 
 
-/* --- 2. Items 'See More' Popup (#itemsOnlyModal) - Styles moved to main definition --- */
+/* Style the scrollable item list area */
+#poItemSelectionList {
+    border: none;
+    border-radius: 0;
+    padding: 10px; /* Padding inside the list */
+    max-height: none;
+    overflow-y: auto;
+    margin-bottom: 0;
+    background-color: var(--po-item-list-bg); /* Very light background */
+    border: 1px solid var(--border-color-light);
+    border-radius: 4px;
+    flex-grow: 1;
+}
+
+/* Style individual items in the list */
+.item-selection-entry {
+    display: flex;
+    align-items: center;
+    gap: 12px; /* More space */
+    margin-bottom: 6px;
+    padding: 8px 10px; /* More padding */
+    border: none; /* Remove bottom border */
+    background-color: var(--po-item-entry-bg); /* White item background */
+    border-radius: 4px; /* Rounded corners for items */
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05); /* Subtle shadow */
+    transition: background-color 0.2s ease;
+}
+.item-selection-entry:hover {
+    background-color: #f9f9f9; /* Slight hover effect */
+}
+
+.item-selection-entry input[type="checkbox"] {
+    transform: scale(1.2);
+    cursor: pointer;
+    accent-color: var(--success-color); /* Color the checkbox */
+    flex-shrink: 0;
+}
+.item-selection-entry input[type="checkbox"]:disabled {
+    accent-color: var(--secondary-color);
+}
+
+.item-selection-entry label {
+    font-size: 0.95em; /* Slightly larger */
+    line-height: 1.4;
+    flex-grow: 1;
+    cursor: pointer; /* Make label clickable */
+    color: var(--text-color);
+}
+.item-selection-entry label strong {
+    color: var(--text-color); /* Ensure strong tag is dark */
+}
+.item-selection-entry label .in-po-label {
+    color: var(--danger-color); /* Make 'In PO' label red */
+    font-weight: 500;
+}
 
 
-/* --- 3. PO Info Popup (#poDetailsPopup) - Styles updated in main definition above --- */
+/* Adjust Modal Actions for this specific modal */
+#poItemSelectionModal .modal-actions {
+    border-top: 1px solid var(--border-color);
+    padding-top: 15px; /* More padding */
+    margin-top: 15px; /* Ensure space above actions */
+    justify-content: flex-end;
+    background-color: var(--light-bg); /* Add subtle background to action area */
+    margin-left: -20px; /* Extend to edges */
+    margin-right: -20px;
+    margin-bottom: -15px; /* Extend to bottom */
+    padding: 15px 20px; /* Padding for action area */
+    border-radius: 0 0 var(--border-radius) var(--border-radius); /* Match bottom corners */
+}
+
+/* Error message positioning */
+#poItemSelectionError {
+    margin-top: 0; /* Reset margin */
+    margin-bottom: 10px; /* Add space below error if shown */
+    text-align: left; /* Align left */
+    padding: 10px 15px; /* Add padding */
+    width: auto; /* Don't force full width */
+    display: none; /* Keep hidden by default */
+    order: -1; /* Place it before buttons if using flex */
+}
+
+/* Suggestions list styling */
+.suggestions-list {
+     max-height: 150px;
+     z-index: 1100;
+     border: 1px solid var(--primary-color); /* Stronger border */
+     box-shadow: var(--box-shadow-lg);
+}
+.suggestions-list div:hover {
+    background-color: var(--primary-color-light); /* Use light blue hover */
+    color: var(--primary-color);
+    font-weight: 500;
+}
+
+/* === END: Added/Updated CSS for PO Item Selection Modal === */
+
+
+/* --- Responsive --- */
+@media (max-width: 992px) {
+    .filter-bar { flex-direction: column; align-items: stretch; gap: 15px; }
+    .filter-group { min-width: 100%; }
+    .bulk-actions-bar { flex-direction: column; align-items: stretch; }
+    .bulk-actions-controls { justify-content: space-between; }
+    #statusCountsReport ul { column-count: 1; }
+    #detailsModal .modal-grid-container-complex {
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+    }
+     #detailsModal .modal-section {
+       width: 100%;
+       box-sizing: border-box;
+     }
+     .account-data-grid { grid-template-columns: 1fr; }
+     #modalProductList ul.modal-product-list-ul { grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); }
+    .read-only-grid { grid-template-columns: 1fr; }
+    #poItemSelectionModal .po-item-selection-content-wrapper {
+        gap: 10px; /* Reduce gap on smaller screens */
+    }
+}
+@media (max-width: 768px) {
+    body { padding: 15px; font-size: 14px; }
+    .container { max-width: 100%; padding: 20px; margin: 10px 0;}
+    .header { margin: -20px -20px 20px -20px; font-size: 1.15em;}
+    .breadcrumb { margin-bottom: 20px; padding-bottom: 12px;}
+    .actions-bar { justify-content: flex-end; gap: 8px; }
+    .actions-bar .button { padding: 7px 10px; font-size: 0.85em; height: 36px; flex-shrink: 0; }
+    #orderTable { font-size: 0.88em; min-width: 800px; }
+    #orderTable th, #orderTable td { padding: 8px 10px; white-space: normal; }
+    .modal-content { width: 95%; padding: 15px; max-width: 100%; max-height: calc(100vh - 30px); }
+    .modal-content.modal-md { max-width: 95%; }
+    .modal-content.modal-lg, .modal-content.modal-xl { max-width: 95%; } /* Adjust XL too */
+    .order-summary-counts{ justify-content: space-between; font-size: 0.9em; padding: 15px 20px;}
+    .status-update-inline { flex-direction: column; align-items: stretch; }
+    .status-update-inline select { max-width: none; }
+    .status-update-inline button { width: 100%; align-self: stretch; }
+    .modal-actions { gap: 10px; }
+    .modal-actions .button { font-size: 0.9em; padding: 8px 15px; height: 38px;}
+    .bulk-actions-controls { flex-direction: column; align-items: stretch; gap: 10px;}
+    .bulk-select, .bulk-button { width: 100%; }
+    .summary-reporting-container { gap: 15px; }
+    .order-summary-counts, .reporting-section { padding: 15px 20px; }
+    #modalProductList ul.modal-product-list-ul { grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); }
+    .read-only-grid { grid-template-columns: 1fr; }
+    #poItemSelectionModal .modal-actions {
+        margin-left: -15px; /* Adjust for padding */
+        margin-right: -15px;
+        margin-bottom: -15px;
+        padding: 15px;
+    }
+    #poItemSelectionModal h2 { /* Adjust header padding */
+         margin-left: -15px;
+         margin-right: -15px;
+         margin-top: -15px;
+         padding-left: 15px;
+         padding-right: 15px;
+    }
+}
+@media (max-width: 480px) {
+    body { padding: 10px; }
+    .container { padding: 15px; }
+    .header { padding: 12px 15px; font-size: 1.1em; margin: -15px -15px 15px -15px;}
+    .filter-bar { padding: 15px; }
+    #orderTable { font-size: 0.85em; min-width: 600px; }
+    #orderTable th, #orderTable td { padding: 6px 8px; }
+    th.col-checkbox, td.col-checkbox { width: 30px; padding: 6px 5px;}
+    th.col-checkbox input, td.col-checkbox input { transform: scale(1); }
+    .status-badge { padding: 4px 8px; font-size: 0.8em; }
+    .details-edit-button { padding: 4px 8px; font-size: 0.8em; }
+    .whatsapp-button { width: 26px; height: 26px; font-size: 0.9em; }
+    .modal-content { padding: 10px; max-height: calc(100vh - 20px); }
+    .modal h2, #poDetailsPopup h3 { /* Adjust all modal titles */
+        font-size: 1.1em;
+        margin-bottom: 10px;
+        padding-bottom: 8px;
+        margin-left: -10px;
+        margin-right: -10px;
+        margin-top: -10px;
+        padding-left: 10px;
+        padding-right: 10px;
+        padding-top: 8px;
+    }
+    #itemsOnlyModal h2 { font-size: 1.1em; }
+    .modal-actions { flex-direction: column; }
+    .modal-actions .button { width: 100%; justify-content: center;}
+    .actions-bar { flex-wrap: wrap; justify-content: flex-start;}
+    .actions-bar .button { flex-grow: 1; min-width: 120px; text-align: center;}
+    .account-data-grid { grid-template-columns: 1fr; }
+    #modalProductList ul.modal-product-list-ul { grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 5px;}
+    /* Adjust PO details sections */
+    .po-details-section { padding: 8px 10px; }
+    #poDetailsPopup .details-table-popup { font-size: 0.85em; }
+    #poDetailsPopup .details-table-popup th,
+    #poDetailsPopup .details-table-popup td { padding: 4px 6px; }
+    .po-notes-popup { font-size: 0.85em; }
+    /* Adjust PO Item Selection Modal Spacing */
+     #poItemSelectionModal .modal-actions {
+        margin-left: -10px;
+        margin-right: -10px;
+        margin-bottom: -10px;
+        padding: 10px;
+    }
+    .item-selection-entry { gap: 8px; padding: 6px; }
+    .item-selection-entry label { font-size: 0.88em; }
+}
