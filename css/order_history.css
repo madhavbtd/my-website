@@ -1,8 +1,5 @@
 /* === order_history.css === */
-/* Updated Version - Styles for new features, fourth layout revision (CSS Grid), ItemsOnlyModal */
-/* PO Details Popup styling updated to match Order ID Popup */
-/* Added colorful styling & grid layout for #poItemSelectionModal */
-/* Added improved styling for supplier input */
+/* Final Version: Fixes #detailsModal buttons, fixes suggestion list position, keeps PO modal layout */
 
 /* --- Global Styles & Variables --- */
 :root {
@@ -104,19 +101,18 @@ h1 { margin: 0; font-size: 1em; }
 .secondary-button { background-color: var(--secondary-color); }
 .secondary-button:hover { background-color: #5a6268; }
 
-/* --- Update Status Button Width Fix --- */
+/* Update Status Button */
 .update-status-button {
     background-color: var(--warning-color);
     color: #333;
     vertical-align: middle;
     font-weight: 500;
-    width: auto; /* New: Fit content */
-    padding-left: 20px; /* Adjust padding as needed */
-    padding-right: 20px; /* Adjust padding as needed */
-    align-self: center; /* Center if in flex column */
+    width: auto;
+    padding-left: 20px;
+    padding-right: 20px;
+    align-self: center;
 }
 .update-status-button:hover { background-color: #e0a800; }
-/* --- End Update Status Button Width Fix --- */
 
 .edit-full-button { background-color: #5bc0de; color: white; }
 .edit-full-button:hover { background-color: #31b0d5; }
@@ -126,7 +122,7 @@ h1 { margin: 0; font-size: 1em; }
 .cancel-button:hover { background-color: #5a6268; }
 .print-button { background-color: var(--info-color); color: white; }
 .print-button:hover { background-color: #117a8b; }
-/* Button Height Fix */
+/* Action Buttons in Modals */
 .add-payment-button { background-color: var(--success-color); font-size: 0.85em; padding: 6px 12px; }
 .add-payment-button:hover { background-color: #218838; }
 .create-po-button { background-color: var(--primary-color); font-size: 0.85em; padding: 6px 12px; }
@@ -178,22 +174,10 @@ th.col-checkbox input, td.col-checkbox input { cursor: pointer; transform: scale
 .po-info-cell { font-size: 0.85em; line-height: 1.4; }
 .po-info-cell a { color: var(--primary-color); text-decoration: none; display: block; margin-bottom: 3px; }
 .po-info-cell a:hover { text-decoration: underline; }
-/* --- PO Icon Size Fix --- */
-.po-info-cell .button.create-po-button.icon-only {
-    background-color: var(--success-color);
-    color: white;
-    padding: 0;
-    width: 36px; /* Increased */
-    height: 36px; /* Increased */
-    font-size: 1.2em; /* Increased icon size */
-    line-height: 36px; /* Match height */
-    text-align: center;
-    min-width: auto;
-    box-shadow: none;
-}
+/* PO Icon Button */
+.po-info-cell .button.create-po-button.icon-only { background-color: var(--success-color); color: white; padding: 0; width: 36px; height: 36px; font-size: 1.2em; line-height: 36px; text-align: center; min-width: auto; box-shadow: none; }
 .po-info-cell .button.create-po-button.icon-only:hover { background-color: #218838; box-shadow: var(--box-shadow); transform: none; }
-.po-info-cell .button.create-po-button.icon-only i { margin-right: 0; /* Ensure icon is centered */ }
-/* --- End PO Icon Size Fix --- */
+.po-info-cell .button.create-po-button.icon-only i { margin-right: 0; }
 
 /* --- Table Clickable Links --- */
 a.order-id-link, a.customer-name-link, a.view-po-details-link, a.see-more-link { color: var(--primary-color); text-decoration: none; cursor: pointer; font-weight: 500; }
@@ -238,7 +222,7 @@ mark { background-color: var(--highlight-color); padding: 0.1em 0.2em; border-ra
 /* --- Modal Base Styles --- */
 .modal, .popup-overlay { display: none; position: fixed; z-index: 1050; left: 0; top: 0; width: 100%; height: 100%; overflow: hidden; background-color: rgba(0,0,0,0.65); align-items: center; justify-content: center; padding: 20px; box-sizing: border-box; }
 .modal.active, .popup-overlay.active { display: flex; }
-.modal-content { background-color: #fdfdfd; margin: auto; border: none; width: 95%; border-radius: var(--border-radius); position: relative; box-shadow: var(--box-shadow-lg); z-index: 1051; animation: popupFadeIn 0.3s ease-out; display: flex; flex-direction: column; max-height: calc(100vh - 40px); }
+.modal-content { background-color: #fdfdfd; margin: auto; border: none; width: 95%; border-radius: var(--border-radius); position: relative; box-shadow: var(--box-shadow-lg); z-index: 1051; animation: popupFadeIn 0.3s ease-out; display: flex; flex-direction: column; max-height: calc(100vh - 40px); padding: 15px 20px; /* Base padding */ }
 .modal-content.modal-lg { max-width: 1100px; }
 .modal-content.modal-xl { max-width: 1200px; }
 .modal-content.modal-md { max-width: 700px; }
@@ -246,114 +230,51 @@ mark { background-color: var(--highlight-color); padding: 0.1em 0.2em; border-ra
 .close-btn, #whatsapp-reminder-popup .popup-close { color: #aaa; position: absolute; top: 10px; right: 12px; font-size: 28px; font-weight: bold; cursor: pointer; line-height: 1; background: none; border: none; padding: 0; transition: color 0.2s ease; z-index: 1052; }
 .close-btn:hover, .close-btn:focus, #whatsapp-reminder-popup .popup-close:hover, #whatsapp-reminder-popup .popup-close:focus { color: black; text-decoration: none; }
 .modal-actions { display: flex; justify-content: flex-end; gap: 10px; flex-wrap: wrap; margin-top: auto; padding-top: 15px; border-top: 1px solid var(--border-color); flex-shrink: 0; }
-.modal h2 { margin-top: 0; margin-bottom: 15px; font-size: 1.25em; color: var(--text-color); text-align: center; border-bottom: 1px solid var(--border-color); padding-bottom: 10px; font-weight: 600; flex-shrink: 0; }
+.modal h2 { /* Base h2 styling */ margin-bottom: 10px; padding-bottom: 8px; font-size: 1.2em; background-color: var(--light-bg); margin-left: -20px; margin-right: -20px; margin-top: -15px; padding-left: 20px; padding-right: 20px; padding-top: 10px; border-bottom: 1px solid var(--border-color); border-radius: var(--border-radius) var(--border-radius) 0 0; color: var(--text-color); text-align: left; font-weight: 600; flex-shrink: 0; }
+#poDetailsPopup h3 { /* Specific H3 styling if needed, inherit from h2 */ }
+#itemsOnlyModal h2 { text-align: center; } /* Center specific titles */
 .error-message { color: var(--danger-color); background-color: #fdecea; border: 1px solid var(--danger-color); border-radius: var(--border-radius); padding: 10px 15px; font-weight: 500; text-align: center; margin-top: 15px; width: 100%; box-sizing: border-box; display: none; }
+.modal-content p, .modal-content label { margin-bottom: 5px; }
 
 /* --- Enhanced Details Modal Specific Styles (#detailsModal) --- */
-#detailsModal .modal-grid-container-complex {
-    display: grid;
-    grid-template-columns: 1.2fr 1.2fr 1fr;
-    gap: 15px;
-    flex-grow: 1;
-    overflow-y: auto;
-    overflow-x: hidden;
-    padding: 5px;
-    min-height: 0;
-}
+/* Fix action button position by making content scrollable */
+#detailsModal .modal-content { overflow-y: hidden; }
+.details-modal-content-wrapper { flex-grow: 1; overflow-y: auto; padding-right: 5px; margin-bottom: 15px; min-height: 0; }
+#detailsModal .modal-grid-container-complex { display: grid; grid-template-columns: 1.2fr 1.2fr 1fr; gap: 15px; }
+#detailsModal .modal-actions.main-actions { margin-top: 0; padding-top: 15px; border-top: 1px solid var(--border-color); flex-shrink: 0; background-color: var(--light-bg); margin-left: -20px; margin-right: -20px; margin-bottom: -15px; padding: 15px 20px; border-radius: 0 0 var(--border-radius) var(--border-radius); }
+/* --- End Fix for #detailsModal Buttons --- */
 .grid-item-customer { grid-area: 1 / 1 / 2 / 2; }
 .grid-item-order    { grid-area: 1 / 2 / 2 / 3; }
 .grid-item-status   { grid-area: 1 / 3 / 3 / 4; }
 .grid-item-account  { grid-area: 2 / 1 / 3 / 3; }
 .grid-item-items    { grid-area: 3 / 1 / 4 / 4; }
 .grid-item-po       { grid-area: 4 / 1 / 5 / 4; }
-
-#detailsModal .modal-section {
-    margin: 0;
-    padding: 12px 15px;
-    border: 1px solid var(--border-color-light);
-    border-radius: var(--border-radius);
-    display: flex;
-    flex-direction: column;
-    background-color: var(--white-bg);
-    min-height: 0;
-    overflow: hidden;
-}
-#detailsModal .modal-section h4 {
-    margin-top: 0; margin-bottom: 12px; font-size: 1.05em;
-    color: var(--primary-color); border-bottom: 1px solid var(--border-color-light); padding-bottom: 6px; font-weight: 600; flex-shrink: 0;
-}
+#detailsModal .modal-section { margin: 0; padding: 12px 15px; border: 1px solid var(--border-color-light); border-radius: var(--border-radius); display: flex; flex-direction: column; background-color: var(--white-bg); min-height: 0; overflow: hidden; }
+#detailsModal .modal-section h4 { margin-top: 0; margin-bottom: 12px; font-size: 1.05em; color: var(--primary-color); border-bottom: 1px solid var(--border-color-light); padding-bottom: 6px; font-weight: 600; flex-shrink: 0; }
 #detailsModal .modal-section p,
-#detailsModal .modal-section label {
-    margin-bottom: 6px; font-size: 0.9em; flex-shrink: 0; line-height: 1.4;
-}
-#detailsModal .modal-section p strong {
-    font-weight: 600; color: var(--text-color); min-width: 95px; display: inline-block; margin-right: 5px;
-}
-
-/* --- Poppins Font Fix for Status --- */
-#detailsModal #modalOrderStatus,
-#detailsModal #modalUpdateStatusBtn {
-    font-family: var(--font-family); /* Ensures Poppins is used */
-}
-/* --- End Poppins Font Fix --- */
-
+#detailsModal .modal-section label { margin-bottom: 6px; font-size: 0.9em; flex-shrink: 0; line-height: 1.4; }
+#detailsModal .modal-section p strong { font-weight: 600; color: var(--text-color); min-width: 95px; display: inline-block; margin-right: 5px; }
+#detailsModal #modalOrderStatus, #detailsModal #modalUpdateStatusBtn { font-family: var(--font-family); }
 .modal-status-info label { display: block; margin-bottom: 4px; font-weight: 500; }
-.status-update-inline {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    margin-top: 5px;
-    margin-bottom: 10px;
-}
-.status-update-inline select {
-    width: 100%; height: 38px; padding: 8px 12px; border: 1px solid #ced4da;
-    border-radius: var(--border-radius); font-size: 0.9em; box-sizing: border-box;
-}
-
+.status-update-inline { display: flex; flex-direction: column; gap: 8px; margin-top: 5px; margin-bottom: 10px; }
+.status-update-inline select { width: 100%; height: 38px; padding: 8px 12px; border: 1px solid #ced4da; border-radius: var(--border-radius); font-size: 0.9em; box-sizing: border-box; }
 .modal-account-info h4 { margin-bottom: 10px; }
-.account-data-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-    gap: 0px 15px;
-}
-.account-data-pair p {
-    margin-bottom: 5px !important;
-    font-size: 0.9em !important;
-}
-.account-data-pair p strong {
-     min-width: 100px !important;
-}
-
-#modalProductList ul.modal-product-list-ul {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-    gap: 8px;
-    padding: 0; list-style: none; margin: 0;
-}
-#modalProductList ul.modal-product-list-ul li {
-    border: 1px solid var(--border-color-light); padding: 6px 8px; border-radius: 4px; background-color: var(--white-bg);
-    font-size: 0.88em; border-bottom: 1px solid var(--border-color-light); margin-bottom: 0; padding-bottom: 6px;
-    line-height: 1.3;
-}
-
-#modalProductList, #modalStatusHistoryList, #modalPOList {
-    background-color: var(--light-bg); border: 1px solid var(--border-color-light); border-radius: var(--border-radius); padding: 10px 15px; max-height: 180px; overflow-y: auto; font-size: 0.9em; margin-top: auto; flex-grow: 1; min-height: 50px;
-}
+.account-data-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 0px 15px; }
+.account-data-pair p { margin-bottom: 5px !important; font-size: 0.9em !important; }
+.account-data-pair p strong { min-width: 100px !important; }
+#modalProductList ul.modal-product-list-ul { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 8px; padding: 0; list-style: none; margin: 0; }
+#modalProductList ul.modal-product-list-ul li { border: 1px solid var(--border-color-light); padding: 6px 8px; border-radius: 4px; background-color: var(--white-bg); font-size: 0.88em; margin-bottom: 0; padding-bottom: 6px; line-height: 1.3; }
+#modalProductList, #modalStatusHistoryList, #modalPOList { background-color: var(--light-bg); border: 1px solid var(--border-color-light); border-radius: var(--border-radius); padding: 10px 15px; max-height: 180px; overflow-y: auto; font-size: 0.9em; margin-top: auto; flex-grow: 1; min-height: 50px; }
 #modalProductList ul, #modalStatusHistoryList ul, #modalPOList ul { list-style: none; padding: 0; margin: 0; }
 #modalProductList li, #modalStatusHistoryList li, #modalPOList li { margin-bottom: 6px; padding-bottom: 6px; border-bottom: 1px dotted #ccc; font-size: 0.92em; line-height: 1.4; }
 #modalProductList li:last-child, #modalStatusHistoryList li:last-child, #modalPOList li:last-child { margin-bottom: 0; padding-bottom: 0; border-bottom: none; }
 #modalStatusHistoryList li { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 5px; }
 #modalStatusHistoryList .history-status { font-weight: 600; }
 #modalStatusHistoryList .history-time { color: var(--text-muted); font-size: 0.9em; white-space: nowrap; }
-.no-products, .no-history, .no-pos, .no-items { /* Added .no-items */
-    color: var(--text-muted); font-style: italic; text-align: center; padding: 10px 0;
-}
-
-#detailsModal .modal-actions.main-actions { margin-top: 0; padding-top: 15px; flex-shrink: 0; justify-content: flex-end; }
-
+.no-products, .no-history, .no-pos, .no-items { color: var(--text-muted); font-style: italic; text-align: center; padding: 10px 0; }
 
 /* --- WhatsApp Reminder Popup --- */
-#whatsapp-reminder-popup .modal-content { max-width: 500px; max-height: none; padding: 15px 20px; } /* Adjusted Padding */
+#whatsapp-reminder-popup .modal-content { max-width: 500px; max-height: none; padding: 15px 20px; }
 #whatsapp-reminder-popup p { margin-bottom: 20px; color: var(--text-muted); font-size: 1.05em; text-align: center; }
 .message-preview { margin-top: 15px; margin-bottom: 25px; font-size: 0.95em; background-color: var(--primary-color-light); padding: 15px; border-radius: var(--border-radius); text-align: left; border: 1px solid var(--border-color); white-space: pre-wrap; word-wrap: break-word; max-height: 180px; overflow-y: auto; line-height: 1.4; }
 .whatsapp-send-btn { background-color: #25d366; color: #fff; text-decoration: none; padding: 10px 25px; border-radius: var(--border-radius); display: inline-flex; align-items: center; gap: 10px; font-weight: 600; transition: background-color 0.2s ease, box-shadow 0.2s ease, transform 0.1s ease; margin: 0 auto; border: none; cursor: pointer; font-size: 1em; box-shadow: var(--box-shadow); height: auto; }
@@ -363,7 +284,7 @@ mark { background-color: var(--highlight-color); padding: 0.1em 0.2em; border-ra
 @keyframes popupFadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
 
 /* --- Bulk Delete Modal --- */
-#bulkDeleteConfirmModal .modal-content { padding: 15px 20px; } /* Adjusted Padding */
+#bulkDeleteConfirmModal .modal-content { padding: 15px 20px; }
 #bulkDeleteConfirmModal h2 { color: var(--danger-color); font-size: 1.3em; text-align: left; border-bottom: none; margin-bottom: 15px; display: flex; align-items: center; }
 #bulkDeleteConfirmModal h2 .warning-icon { margin-right: 10px; font-size: 1.2em; }
 #bulkDeleteConfirmModal p { font-size: 0.95em; margin-bottom: 10px; color: var(--text-color); }
@@ -379,535 +300,157 @@ mark { background-color: var(--highlight-color); padding: 0.1em 0.2em; border-ra
 #bulkDeleteConfirmModal .cancel-button { background-color: var(--secondary-color); }
 #bulkDeleteConfirmModal .delete-button:disabled { background-color: #f5c6cb; border-color: #f5c6cb; color: #721c24; opacity: 0.6; cursor: not-allowed; }
 
-
 /* --- PO Details Popup Styles (#poDetailsPopup) --- */
-#poDetailsPopup .modal-content {
-    max-height: calc(90vh - 50px);
-    max-width: 1200px; /* Matched modal-xl */
-    display: flex;
-    flex-direction: column;
-    padding: 15px 20px; /* Use base padding */
-}
-/* Wrapper div inside #poDetailsPopup */
-#poDetailsPopup .po-details-content-area {
-    flex-grow: 1;
-    overflow-y: auto;
-    padding: 10px 5px;
-    min-height: 0;
-}
-.po-details-section { /* Apply to Header, Table Wrapper, Notes Wrapper */
-    margin-bottom: 10px;
-    padding: 10px 12px;
-    border: 1px solid var(--border-color-light);
-    border-radius: var(--border-radius);
-    background-color: var(--white-bg);
-}
-#poDetailsPopup h3 { /* Title handled by global modal h2/h3 rule */
-    flex-shrink: 0;
-}
-#poDetailsPopup p {
-    font-size: 0.92em;
-    margin-bottom: 4px;
-    line-height: 1.5;
-}
-#poDetailsPopup p strong {
-     font-weight: 600;
-     color: var(--text-color);
-     min-width: 100px;
-     display: inline-block;
-}
-#poDetailsPopup hr {
-    border: none;
-    border-top: 1px solid var(--border-color);
-    margin: 10px 0;
-    flex-shrink: 0;
-}
-#poDetailsPopup h4 { /* Items title */
-    margin-top: 0;
-    margin-bottom: 8px;
-    font-size: 1em;
-    color: var(--primary-color);
-    border-bottom: 1px solid var(--border-color-light);
-    padding-bottom: 5px;
-    font-weight: 600;
-    flex-shrink: 0;
-}
-#poDetailsPopup .details-table-popup {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 0.88em;
-    margin-bottom: 10px;
-    background-color: var(--light-bg);
-    border: 1px solid var(--border-color-light);
-    border-radius: 4px;
-    overflow: hidden;
-}
-#poDetailsPopup .details-table-popup thead th {
-    background-color: transparent;
-    font-weight: 600;
-    border-bottom: 1px solid #ccc;
-    padding: 6px 8px;
-    text-align: left;
-}
-#poDetailsPopup .details-table-popup td {
-    border: none;
-    padding: 5px 8px;
-    text-align: left;
-    vertical-align: top;
-    background-color: var(--white-bg);
-    border-bottom: 1px dotted var(--border-color-light);
-}
-#poDetailsPopup .details-table-popup tr:last-child td {
-    border-bottom: none;
-}
-.po-notes-popup {
-    margin-top: 0;
-    padding: 0;
-    border: none;
-    border-radius: 0;
-    font-size: 0.88em;
-    background-color: transparent;
-    flex-shrink: 0;
-}
-.po-notes-popup strong {
-    display: block;
-    margin-bottom: 5px;
-    font-weight: 600;
-}
-#poDetailsPopup .modal-actions {
-    border-top: 1px solid var(--border-color);
-    padding-top: 12px;
-    margin-top: auto;
-}
+#poDetailsPopup .modal-content { max-height: calc(90vh - 50px); max-width: 1200px; display: flex; flex-direction: column; padding: 15px 20px; }
+#poDetailsPopup .po-details-content-area { flex-grow: 1; overflow-y: auto; padding: 10px 5px; min-height: 0; }
+.po-details-section { margin-bottom: 10px; padding: 10px 12px; border: 1px solid var(--border-color-light); border-radius: var(--border-radius); background-color: var(--white-bg); }
+#poDetailsPopup h3 { flex-shrink: 0; }
+#poDetailsPopup p { font-size: 0.92em; margin-bottom: 4px; line-height: 1.5; }
+#poDetailsPopup p strong { font-weight: 600; color: var(--text-color); min-width: 100px; display: inline-block; }
+#poDetailsPopup hr { border: none; border-top: 1px solid var(--border-color); margin: 10px 0; flex-shrink: 0; }
+#poDetailsPopup h4 { margin-top: 0; margin-bottom: 8px; font-size: 1em; color: var(--primary-color); border-bottom: 1px solid var(--border-color-light); padding-bottom: 5px; font-weight: 600; flex-shrink: 0; }
+#poDetailsPopup .details-table-popup { width: 100%; border-collapse: collapse; font-size: 0.88em; margin-bottom: 10px; background-color: var(--light-bg); border: 1px solid var(--border-color-light); border-radius: 4px; overflow: hidden; }
+#poDetailsPopup .details-table-popup thead th { background-color: transparent; font-weight: 600; border-bottom: 1px solid #ccc; padding: 6px 8px; text-align: left; }
+#poDetailsPopup .details-table-popup td { border: none; padding: 5px 8px; text-align: left; vertical-align: top; background-color: var(--white-bg); border-bottom: 1px dotted var(--border-color-light); }
+#poDetailsPopup .details-table-popup tr:last-child td { border-bottom: none; }
+.po-notes-popup { margin-top: 0; padding: 0; border: none; border-radius: 0; font-size: 0.88em; background-color: transparent; flex-shrink: 0; }
+.po-notes-popup strong { display: block; margin-bottom: 5px; font-weight: 600; }
+#poDetailsPopup .modal-actions { border-top: 1px solid var(--border-color); padding-top: 12px; margin-top: auto; }
 
 
 /* --- Read-Only Order Modal Styles (#readOnlyOrderModal) --- */
-#readOnlyOrderModal h2 {
-    margin-bottom: 20px; /* Keep original spacing */
-    flex-shrink: 0;
-}
-#readOnlyOrderModal .modal-content {
-     max-width: 1200px; /* modal-xl */
-     max-height: calc(90vh - 50px);
-     display: flex;
-     flex-direction: column;
-     padding: 15px 20px; /* Use base padding */
-}
-.read-only-content-area {
-    flex-grow: 1;
-    overflow-y: auto;
-    padding: 10px 5px;
-    min-height: 0;
-}
-.read-only-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: 15px;
-}
-.read-only-section {
-    margin-bottom: 10px;
-    padding: 10px 12px;
-    border: 1px solid var(--border-color-light);
-    border-radius: var(--border-radius);
-    background-color: var(--white-bg);
-}
-.read-only-section h4 {
-    margin-top: 0;
-    margin-bottom: 8px;
-    font-size: 1em;
-    color: var(--primary-color);
-    border-bottom: 1px solid var(--border-color-light);
-    padding-bottom: 5px;
-    font-weight: 600;
-}
-.read-only-section p {
-    margin-bottom: 8px;
-    font-size: 0.95em;
-    line-height: 1.5;
-}
-.read-only-section p strong {
-    font-weight: 600;
-    color: var(--text-color);
-    min-width: 100px;
-    display: inline-block;
-}
-.read-only-product-list, .read-only-history-list {
-    list-style: none;
-    padding: 5px;
-    margin: 0;
-    max-height: 150px;
-    overflow-y: auto;
-    background-color: var(--light-bg);
-    border-radius: 4px;
-    border: 1px solid var(--border-color-light);
-}
-.read-only-product-list li, .read-only-history-list li {
-    background-color: var(--white-bg);
-    padding: 5px 8px;
-    border-radius: 3px;
-    margin-bottom: 4px;
-    font-size: 0.88em;
-    border: none;
-}
-.read-only-history-list li {
-    display: flex;
-    justify-content: space-between;
-    flex-wrap: wrap;
-}
-.read-only-history-list li strong {
-    margin-right: 10px;
-}
-#readOnlyOrderModal .modal-actions {
-    border-top: 1px solid var(--border-color);
-    padding-top: 12px;
-    margin-top: auto;
-    justify-content: flex-end;
-    flex-shrink: 0;
-}
+#readOnlyOrderModal h2 { margin-bottom: 20px; flex-shrink: 0; }
+#readOnlyOrderModal .modal-content { max-width: 1200px; max-height: calc(90vh - 50px); display: flex; flex-direction: column; padding: 15px 20px; }
+.read-only-content-area { flex-grow: 1; overflow-y: auto; padding: 10px 5px; min-height: 0; }
+.read-only-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 15px; }
+.read-only-section { margin-bottom: 10px; padding: 10px 12px; border: 1px solid var(--border-color-light); border-radius: var(--border-radius); background-color: var(--white-bg); }
+.read-only-section h4 { margin-top: 0; margin-bottom: 8px; font-size: 1em; color: var(--primary-color); border-bottom: 1px solid var(--border-color-light); padding-bottom: 5px; font-weight: 600; }
+.read-only-section p { margin-bottom: 8px; font-size: 0.95em; line-height: 1.5; }
+.read-only-section p strong { font-weight: 600; color: var(--text-color); min-width: 100px; display: inline-block; }
+.read-only-product-list, .read-only-history-list { list-style: none; padding: 5px; margin: 0; max-height: 150px; overflow-y: auto; background-color: var(--light-bg); border-radius: 4px; border: 1px solid var(--border-color-light); }
+.read-only-product-list li, .read-only-history-list li { background-color: var(--white-bg); padding: 5px 8px; border-radius: 3px; margin-bottom: 4px; font-size: 0.88em; border: none; }
+.read-only-history-list li { display: flex; justify-content: space-between; flex-wrap: wrap; }
+.read-only-history-list li strong { margin-right: 10px; }
+#readOnlyOrderModal .modal-actions { border-top: 1px solid var(--border-color); padding-top: 12px; margin-top: auto; justify-content: flex-end; flex-shrink: 0; }
 
 
 /* --- Items Only Modal Styles (#itemsOnlyModal) --- */
-#itemsOnlyModal .modal-content {
-    max-width: 550px;
-    max-height: calc(85vh - 50px);
-    padding: 15px 20px; /* Use base padding */
-}
-#itemsOnlyModal h2 {
-    text-align: center; /* Center this specific title */
-}
-#itemsOnlyModal .items-only-content-area {
-    padding: 10px;
-    background-color: var(--white-bg);
-    border: 1px solid var(--border-color);
-    border-radius: var(--border-radius);
-    flex-grow: 1;
-    overflow-y: auto;
-    min-height: 100px;
-}
-.items-only-list {
-    list-style: none;
-    padding: 0 10px;
-    margin: 0;
-}
-.items-only-list li {
-    padding: 6px 5px;
-    border-bottom: 1px dotted var(--border-color-light);
-    font-size: 0.92em;
-    line-height: 1.4;
-}
-.items-only-list li:last-child {
-    border-bottom: none;
-}
-.items-only-list li strong {
-    font-weight: 600;
-    color: var(--text-color);
-}
-#itemsOnlyModal .no-items {
-    font-size: 0.9em;
-    padding: 15px 0;
-    color: var(--text-muted);
-    font-style: italic;
-    text-align: center;
-}
-#itemsOnlyModal .modal-actions {
-    justify-content: center;
-}
+#itemsOnlyModal .modal-content { max-width: 550px; max-height: calc(85vh - 50px); padding: 15px 20px; }
+#itemsOnlyModal h2 { text-align: center; }
+#itemsOnlyModal .items-only-content-area { padding: 10px; background-color: var(--white-bg); border: 1px solid var(--border-color); border-radius: var(--border-radius); flex-grow: 1; overflow-y: auto; min-height: 100px; }
+.items-only-list { list-style: none; padding: 0 10px; margin: 0; }
+.items-only-list li { padding: 6px 5px; border-bottom: 1px dotted var(--border-color-light); font-size: 0.92em; line-height: 1.4; }
+.items-only-list li:last-child { border-bottom: none; }
+.items-only-list li strong { font-weight: 600; color: var(--text-color); }
+#itemsOnlyModal .no-items { font-size: 0.9em; padding: 15px 0; color: var(--text-muted); font-style: italic; text-align: center; }
+#itemsOnlyModal .modal-actions { justify-content: center; }
 
 
 /* --- Unified Modal Header Styling --- */
-.modal h2,
-#poDetailsPopup h3 { /* Includes PO Details H3 */
-    margin-bottom: 10px;
-    padding-bottom: 8px;
-    font-size: 1.2em; /* Consistent title size */
-    background-color: var(--light-bg); /* Subtle header background */
-    margin-left: -20px; /* Extend background to edges (match padding) */
-    margin-right: -20px; /* Extend background to edges (match padding) */
-    margin-top: -15px; /* Adjust top margin (match padding) */
-    padding-left: 20px; /* Match padding */
-    padding-right: 20px; /* Match padding */
-    padding-top: 10px;
-    border-bottom: 1px solid var(--border-color);
-    border-radius: var(--border-radius) var(--border-radius) 0 0; /* Match container radius */
-    color: var(--text-color); /* Ensure consistent text color */
-    text-align: left; /* Default to left alignment */
-    font-weight: 600; /* Consistent weight */
-}
-/* Center align specific modal titles if needed */
-#itemsOnlyModal h2 {
-     text-align: center;
-}
+.modal h2, #poDetailsPopup h3 { margin-bottom: 10px; padding-bottom: 8px; font-size: 1.2em; background-color: var(--light-bg); margin-left: -20px; margin-right: -20px; margin-top: -15px; padding-left: 20px; padding-right: 20px; padding-top: 10px; border-bottom: 1px solid var(--border-color); border-radius: var(--border-radius) var(--border-radius) 0 0; color: var(--text-color); text-align: left; font-weight: 600; }
+#itemsOnlyModal h2 { text-align: center; }
 
+/* Base Modal Actions - Applied unless overridden */
+.modal-actions { padding-top: 15px; margin-top: 15px; gap: 8px; border-top: 1px solid var(--border-color); flex-shrink: 0; justify-content: flex-end; }
 
-.modal-actions {
-    padding-top: 12px;
-    margin-top: 15px;
-    gap: 8px;
-    border-top: 1px solid var(--border-color); /* Ensure border is consistent */
-    flex-shrink: 0; /* Prevent shrinking */
-}
+/* === START: Final Styles for PO Item Selection Modal (#poItemSelectionModal) === */
 
-/* Reduce space between generic modal elements */
-.modal-content p, .modal-content label {
-    margin-bottom: 5px; /* Reduce default paragraph/label spacing */
-}
-
-/* === START: Styles for PO Item Selection Modal (#poItemSelectionModal) === */
-
-/* Make PO Item Selection Modal content area behave like ReadOnly Modal */
-#poItemSelectionModal .modal-content {
-    /* Uses modal-xl for width now via HTML change */
-    max-height: calc(90vh - 50px); /* Match ReadOnly height */
-    display: flex;
-    flex-direction: column;
-    padding: 15px 20px; /* Use base padding */
-}
+#poItemSelectionModal .modal-content { max-height: calc(90vh - 50px); display: flex; flex-direction: column; padding: 15px 20px; }
 
 /* Use CSS Grid for the main content wrapper */
 #poItemSelectionModal .po-item-selection-content-wrapper {
-    flex-grow: 1;
-    overflow: hidden;
-    padding: 10px 5px;
-    min-height: 0;
-    display: grid; /* Use grid */
-    grid-template-columns: minmax(280px, 40%) 1fr; /* Define two columns */
-    gap: 15px; /* Space between grid columns */
-    align-items: start; /* Align items to the start vertically */
+    flex-grow: 1; overflow: hidden; padding: 10px 5px; min-height: 0;
+    display: grid; grid-template-columns: minmax(280px, 40%) 1fr;
+    gap: 15px; align-items: start;
 }
 
-/* Style the header */
-#poItemSelectionModal h2 {
-    /* Styled globally */
-    text-align: left;
-}
+#poItemSelectionModal h2 { text-align: left; }
 
-/* Style the introductory paragraph */
-#poItemSelectionModal > .modal-content > .po-item-selection-content-wrapper > p:first-of-type {
-     margin-bottom: 0;
-     padding: 0 5px 10px 5px;
-     font-size: 0.95em;
-     color: var(--text-muted);
-     flex-shrink: 0;
-     grid-column: 1 / -1; /* Span across both columns */
-}
+#poItemSelectionModal > .modal-content > .po-item-selection-content-wrapper > p:first-of-type { margin-bottom: 0; padding: 0 5px 10px 5px; font-size: 0.95em; color: var(--text-muted); flex-shrink: 0; grid-column: 1 / -1; }
 
 /* Style the Supplier Search section (Grid Item 1) */
 #poItemSelectionModal .supplier-search-section {
-    margin-bottom: 0;
-    padding: 15px 18px; /* More padding */
-    border: 1px solid var(--primary-color-light);
-    border-radius: var(--border-radius);
-    background-color: var(--primary-color-light); /* Light blue background */
-    display: flex;
-    flex-direction: column;
-    min-height: 200px;
-    overflow: hidden; /* Hide overflow, rely on inner scroll if needed */
+    margin-bottom: 0; padding: 15px 18px; border: 1px solid var(--primary-color-light);
+    border-radius: var(--border-radius); background-color: var(--primary-color-light);
+    display: flex; flex-direction: column; min-height: 200px; overflow: hidden; position: relative; /* Keep relative for potential absolute suggestions if needed */
 }
-
-#poItemSelectionModal .supplier-search-section label {
-    font-weight: 600;
-    font-size: 1em;
-    color: var(--primary-color);
-    margin-bottom: 10px;
-    display: block;
-    flex-shrink: 0;
-}
-#poItemSelectionModal .supplier-search-section label i {
-    margin-right: 6px;
-}
+#poItemSelectionModal .supplier-search-section label { font-weight: 600; font-size: 1em; color: var(--primary-color); margin-bottom: 10px; display: block; flex-shrink: 0; }
+#poItemSelectionModal .supplier-search-section label i { margin-right: 6px; }
 
 /* Rounded and Larger Input Box */
 #poItemSelectionModal .supplier-search-section input#poSupplierSearchInput {
-    padding: 10px 15px; /* Increased padding */
-    font-size: 1em; /* Slightly larger text */
-    border-radius: 20px; /* Rounded corners */
-    border: 1px solid #ced4da;
-    transition: border-color 0.2s ease, box-shadow 0.2s ease;
-    height: auto;
-    margin-bottom: 10px;
-    flex-shrink: 0;
+    padding: 10px 15px; font-size: 1em; border-radius: 20px; border: 1px solid #ced4da;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease; height: auto;
+    margin-bottom: 10px; flex-shrink: 0; position: relative; z-index: 2;
 }
-#poItemSelectionModal .supplier-search-section input#poSupplierSearchInput:focus {
-    border-color: var(--primary-color);
-    box-shadow: 0 0 0 0.2rem rgba(0, 86, 179, 0.25);
-    outline: none;
+#poItemSelectionModal .supplier-search-section input#poSupplierSearchInput:focus { border-color: var(--primary-color); box-shadow: 0 0 0 0.2rem rgba(0, 86, 179, 0.25); outline: none; }
+
+/* Position Suggestion List Statically (below input) */
+#poItemSelectionModal .suggestions-list {
+    position: static; /* CHANGE: Display below input in normal flow */
+    max-height: 150px;
+    z-index: auto;
+    border: 1px solid var(--border-color);
+    box-shadow: none;
+    border-radius: var(--border-radius);
+    overflow-y: auto;
+    background-color: var(--white-bg);
+    margin-top: -5px; /* Pull slightly closer to input */
+    margin-bottom: 5px; /* Space below */
+    width: 100%;
+    box-sizing: border-box;
+    display: none; /* Keep hidden initially */
+    order: 1; /* Ensure it appears after the input */
+    /* flex-grow: 1; REMOVED - Let it size naturally */
 }
+#poItemSelectionModal .suggestions-list div:hover { background-color: var(--primary-color-light); color: var(--primary-color); font-weight: 500; }
 
 /* Style the Item Selection List container section (Grid Item 2) */
-.item-selection-list-container {
-    padding: 15px 18px; /* More padding */
-    border: 1px solid var(--success-color-light); /* Light green border */
-    border-radius: var(--border-radius);
-    background-color: var(--white-bg);
-    display: flex;
-    flex-direction: column;
-    min-height: 300px;
-    margin-bottom: 0;
-    overflow: hidden;
-}
-
-.item-selection-list-container h4 {
-    margin-top: 0;
-    margin-bottom: 10px;
-    font-size: 1em;
-    color: var(--success-color);
-    border-bottom: 1px solid var(--success-color-light);
-    padding-bottom: 6px;
-    font-weight: 600;
-    flex-shrink: 0;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-}
-.item-selection-list-container h4 i {
-    font-size: 0.9em;
-}
+.item-selection-list-container { padding: 15px 18px; border: 1px solid var(--success-color-light); border-radius: var(--border-radius); background-color: var(--white-bg); display: flex; flex-direction: column; min-height: 300px; margin-bottom: 0; overflow: hidden; }
+.item-selection-list-container h4 { margin-top: 0; margin-bottom: 10px; font-size: 1em; color: var(--success-color); border-bottom: 1px solid var(--success-color-light); padding-bottom: 6px; font-weight: 600; flex-shrink: 0; display: flex; align-items: center; gap: 6px; }
+.item-selection-list-container h4 i { font-size: 0.9em; }
 
 /* Style the scrollable item list area */
-#poItemSelectionList {
-    border: none;
-    border-radius: 0;
-    padding: 10px;
-    overflow-y: auto;
-    margin: 0;
-    background-color: var(--po-item-list-bg); /* Ghost white */
-    border: 1px solid var(--border-color-light);
-    border-radius: 4px;
-    flex-grow: 1;
-}
+#poItemSelectionList { border: none; border-radius: 0; padding: 10px; overflow-y: auto; margin: 0; background-color: var(--po-item-list-bg); border: 1px solid var(--border-color-light); border-radius: 4px; flex-grow: 1; }
 
 /* Style individual items in the list */
-.item-selection-entry {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    margin-bottom: 6px;
-    padding: 8px 10px;
-    border: none;
-    background-color: var(--po-item-entry-bg); /* White */
-    border-radius: 4px;
-    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
-    transition: background-color 0.2s ease;
-}
-.item-selection-entry:hover {
-    background-color: #f9f9f9;
-}
-
-.item-selection-entry input[type="checkbox"] {
-    transform: scale(1.2);
-    cursor: pointer;
-    accent-color: var(--success-color); /* Green checkbox */
-    flex-shrink: 0;
-}
-.item-selection-entry input[type="checkbox"]:disabled {
-    accent-color: var(--secondary-color);
-}
-
-.item-selection-entry label {
-    font-size: 0.95em;
-    line-height: 1.4;
-    flex-grow: 1;
-    cursor: pointer;
-    color: var(--text-color);
-}
-.item-selection-entry label strong {
-    color: var(--text-color);
-}
-.item-selection-entry label .in-po-label {
-    color: var(--danger-color);
-    font-weight: 500;
-}
-
+.item-selection-entry { display: flex; align-items: center; gap: 12px; margin-bottom: 6px; padding: 8px 10px; border: none; background-color: var(--po-item-entry-bg); border-radius: 4px; box-shadow: 0 1px 2px rgba(0,0,0,0.05); transition: background-color 0.2s ease; }
+.item-selection-entry:hover { background-color: #f9f9f9; }
+.item-selection-entry input[type="checkbox"] { transform: scale(1.2); cursor: pointer; accent-color: var(--success-color); flex-shrink: 0; }
+.item-selection-entry input[type="checkbox"]:disabled { accent-color: var(--secondary-color); }
+.item-selection-entry label { font-size: 0.95em; line-height: 1.4; flex-grow: 1; cursor: pointer; color: var(--text-color); }
+.item-selection-entry label strong { color: var(--text-color); }
+.item-selection-entry label .in-po-label { color: var(--danger-color); font-weight: 500; }
 
 /* Adjust Modal Actions */
 #poItemSelectionModal .modal-actions {
-    border-top: 1px solid var(--border-color);
-    padding-top: 15px;
-    margin-top: 15px;
-    justify-content: flex-end;
-    background-color: var(--light-bg);
-    margin-left: -20px; /* Extend to edges */
-    margin-right: -20px;
-    margin-bottom: -15px; /* Extend to bottom */
-    padding: 15px 20px;
-    border-radius: 0 0 var(--border-radius) var(--border-radius);
-    grid-column: 1 / -1; /* Span grid */
-    order: 1; /* Ensure actions are last */
+    border-top: 1px solid var(--border-color); padding-top: 15px; margin-top: 15px; justify-content: flex-end; background-color: var(--light-bg); margin-left: -20px; margin-right: -20px; margin-bottom: -15px; padding: 15px 20px; border-radius: 0 0 var(--border-radius) var(--border-radius); grid-column: 1 / -1; order: 1; flex-shrink: 0;
 }
 
 /* Error message positioning */
-#poItemSelectionError {
-    grid-column: 1 / -1; /* Span grid */
-    order: 0; /* Place error before actions */
-    width: auto; /* Don't force full width */
-    text-align: center;
-    padding: 5px 15px;
-    margin-bottom: -5px; /* Reduce space below if shown */
-}
+#poItemSelectionError { grid-column: 1 / -1; order: 0; width: auto; text-align: center; padding: 5px 15px; margin-bottom: -5px; }
 
-/* Suggestions list styling */
-.suggestions-list {
-     max-height: 150px;
-     z-index: 1100;
-     border: 1px solid var(--primary-color);
-     box-shadow: var(--box-shadow-lg);
-     border-radius: 0 0 var(--border-radius) var(--border-radius);
-     overflow-y: auto;
-     position: absolute; /* Revert to absolute if needed */
-     background-color: var(--white-bg);
-     width: calc(100% - 36px); /* Match input width inside section padding */
-     top: calc(100% - 10px); /* Position below input */
-     left: 18px; /* Match section padding */
-}
-.suggestions-list div:hover {
-    background-color: var(--primary-color-light);
-    color: var(--primary-color);
-    font-weight: 500;
-}
-
-/* === END: Styles for PO Item Selection Modal === */
+/* === END: Final Styles for PO Item Selection Modal === */
 
 
 /* --- Responsive --- */
 @media (max-width: 992px) {
+    /* ... other responsive rules ... */
     .filter-bar { flex-direction: column; align-items: stretch; gap: 15px; }
     .filter-group { min-width: 100%; }
     .bulk-actions-bar { flex-direction: column; align-items: stretch; }
     .bulk-actions-controls { justify-content: space-between; }
     #statusCountsReport ul { column-count: 1; }
-    #detailsModal .modal-grid-container-complex {
-        display: flex;
-        flex-direction: column;
-        gap: 15px;
-    }
-     #detailsModal .modal-section {
-       width: 100%;
-       box-sizing: border-box;
-     }
-     .account-data-grid { grid-template-columns: 1fr; }
-     #modalProductList ul.modal-product-list-ul { grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); }
+    #detailsModal .modal-grid-container-complex { display: flex; flex-direction: column; gap: 15px; }
+    #detailsModal .modal-section { width: 100%; box-sizing: border-box; }
+    .account-data-grid { grid-template-columns: 1fr; }
+    #modalProductList ul.modal-product-list-ul { grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); }
     .read-only-grid { grid-template-columns: 1fr; }
-    #poItemSelectionModal .po-item-selection-content-wrapper {
-        display: flex; /* Revert to flex column on smaller screens */
-        flex-direction: column;
-        gap: 10px;
-    }
-     #poItemSelectionModal .supplier-search-section,
-     .item-selection-list-container {
-        flex-basis: auto; /* Reset flex basis */
-        min-height: auto; /* Reset min-height */
-    }
-     #poItemSelectionModal .modal-actions {
-        grid-column: auto; /* Reset grid span */
-    }
-     #poItemSelectionError {
-        grid-column: auto; /* Reset grid span */
-    }
-    .suggestions-list { /* Adjust suggestions on smaller screens */
-        width: calc(100% - 30px); /* Adjust based on parent padding */
-        left: 15px;
-        top: calc(100% - 5px);
-    }
+    #poItemSelectionModal .po-item-selection-content-wrapper { display: flex; flex-direction: column; gap: 10px; } /* Revert to flex column */
+    #poItemSelectionModal .supplier-search-section,
+    .item-selection-list-container { flex-basis: auto; min-height: auto; }
+    #poItemSelectionModal .modal-actions, #poItemSelectionError { grid-column: auto; }
+    #poItemSelectionModal .suggestions-list { position: static; width: 100%; margin-top: 5px; } /* Ensure static positioning */
 }
 @media (max-width: 768px) {
     body { padding: 15px; font-size: 14px; }
@@ -920,7 +463,7 @@ mark { background-color: var(--highlight-color); padding: 0.1em 0.2em; border-ra
     #orderTable th, #orderTable td { padding: 8px 10px; white-space: normal; }
     .modal-content { width: 95%; padding: 15px; max-width: 100%; max-height: calc(100vh - 30px); }
     .modal-content.modal-md { max-width: 95%; }
-    .modal-content.modal-lg, .modal-content.modal-xl { max-width: 95%; } /* Adjust XL too */
+    .modal-content.modal-lg, .modal-content.modal-xl { max-width: 95%; }
     .order-summary-counts{ justify-content: space-between; font-size: 0.9em; padding: 15px 20px;}
     .status-update-inline { flex-direction: column; align-items: stretch; }
     .status-update-inline select { max-width: none; }
@@ -933,19 +476,8 @@ mark { background-color: var(--highlight-color); padding: 0.1em 0.2em; border-ra
     .order-summary-counts, .reporting-section { padding: 15px 20px; }
     #modalProductList ul.modal-product-list-ul { grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); }
     .read-only-grid { grid-template-columns: 1fr; }
-    #poItemSelectionModal .modal-actions {
-        margin-left: -15px; /* Adjust for padding */
-        margin-right: -15px;
-        margin-bottom: -15px;
-        padding: 15px;
-    }
-    .modal h2, #poDetailsPopup h3 { /* Adjust header padding */
-         margin-left: -15px;
-         margin-right: -15px;
-         margin-top: -15px;
-         padding-left: 15px;
-         padding-right: 15px;
-    }
+    #poItemSelectionModal .modal-actions, #detailsModal .modal-actions.main-actions { margin-left: -15px; margin-right: -15px; margin-bottom: -15px; padding: 15px; } /* Unified action padding */
+    .modal h2, #poDetailsPopup h3 { margin-left: -15px; margin-right: -15px; margin-top: -15px; padding-left: 15px; padding-right: 15px; }
 }
 @media (max-width: 480px) {
     body { padding: 10px; }
@@ -960,17 +492,7 @@ mark { background-color: var(--highlight-color); padding: 0.1em 0.2em; border-ra
     .details-edit-button { padding: 4px 8px; font-size: 0.8em; }
     .whatsapp-button { width: 26px; height: 26px; font-size: 0.9em; }
     .modal-content { padding: 10px; max-height: calc(100vh - 20px); }
-    .modal h2, #poDetailsPopup h3 { /* Adjust all modal titles */
-        font-size: 1.1em;
-        margin-bottom: 10px;
-        padding-bottom: 8px;
-        margin-left: -10px;
-        margin-right: -10px;
-        margin-top: -10px;
-        padding-left: 10px;
-        padding-right: 10px;
-        padding-top: 8px;
-    }
+    .modal h2, #poDetailsPopup h3 { font-size: 1.1em; margin-bottom: 10px; padding-bottom: 8px; margin-left: -10px; margin-right: -10px; margin-top: -10px; padding-left: 10px; padding-right: 10px; padding-top: 8px; }
     #itemsOnlyModal h2 { font-size: 1.1em; }
     .modal-actions { flex-direction: column; }
     .modal-actions .button { width: 100%; justify-content: center;}
@@ -978,27 +500,16 @@ mark { background-color: var(--highlight-color); padding: 0.1em 0.2em; border-ra
     .actions-bar .button { flex-grow: 1; min-width: 120px; text-align: center;}
     .account-data-grid { grid-template-columns: 1fr; }
     #modalProductList ul.modal-product-list-ul { grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 5px;}
-    /* Adjust PO details sections */
     .po-details-section { padding: 8px 10px; }
     #poDetailsPopup .details-table-popup { font-size: 0.85em; }
     #poDetailsPopup .details-table-popup th,
     #poDetailsPopup .details-table-popup td { padding: 4px 6px; }
     .po-notes-popup { font-size: 0.85em; }
-    /* Adjust PO Item Selection Modal Spacing */
-     #poItemSelectionModal .modal-actions {
-        margin-left: -10px;
-        margin-right: -10px;
-        margin-bottom: -10px;
-        padding: 10px;
-    }
+    #poItemSelectionModal .modal-actions, #detailsModal .modal-actions.main-actions { margin-left: -10px; margin-right: -10px; margin-bottom: -10px; padding: 10px; } /* Unified action padding */
     .item-selection-entry { gap: 8px; padding: 6px; }
     .item-selection-entry label { font-size: 0.88em; }
     #poItemSelectionModal .supplier-search-section,
-    .item-selection-list-container {
-        padding: 10px 12px; /* Reduce padding */
-    }
-    #poItemSelectionModal .supplier-search-section input#poSupplierSearchInput {
-        padding: 8px 12px; /* Reduce padding */
-        font-size: 0.95em;
-    }
+    .item-selection-list-container { padding: 10px 12px; }
+    #poItemSelectionModal .supplier-search-section input#poSupplierSearchInput { padding: 8px 12px; font-size: 0.95em; }
+    #poItemSelectionModal .suggestions-list { width: 100%; }
 }

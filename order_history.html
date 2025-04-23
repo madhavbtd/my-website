@@ -202,70 +202,71 @@
             <h2>Order Details & Actions</h2>
             <input type="hidden" id="modalOrderId">
 
-            <div class="modal-grid-container-complex">
-
-                <div class="modal-section modal-customer-info grid-item-customer">
-                    <h4>Customer Details</h4>
-                    <p><strong>Order ID:</strong> <span id="modalDisplayOrderId"></span></p>
-                    <p><strong>Customer:</strong> <span id="modalCustomerName"></span></p>
-                    <p><strong>WhatsApp:</strong> <span id="modalCustomerWhatsApp"></span></p>
-                    <p><strong>Contact:</strong> <span id="modalCustomerContact"></span></p>
-                    <p><strong>Address:</strong> <span id="modalCustomerAddress"></span></p>
-                </div>
-
-                <div class="modal-section modal-order-info grid-item-order">
-                    <h4>Order Info</h4>
-                    <p><strong>Order Date:</strong> <span id="modalOrderDate"></span></p>
-                    <p><strong>Delivery Date:</strong> <span id="modalDeliveryDate"></span></p>
-                    <p><strong>Priority:</strong> <span id="modalPriority"></span></p>
-                    <p><strong>Remarks:</strong> <span id="modalRemarks"></span></p>
-                </div>
-
-                <div class="modal-section modal-status-info grid-item-status">
-                    <h4>Status & Tracking</h4>
-                    <label for="modalOrderStatus">Current Status:</label>
-                    <div class="status-update-inline">
-                        <select id="modalOrderStatus">
-                            <option value="Order Received">Order Received</option>
-                            <option value="Designing">Designing</option>
-                            <option value="Verification">Verification</option>
-                            <option value="Design Approved">Design Approved</option>
-                            <option value="Printing">Printing</option>
-                            <option value="Ready for Working">Ready for Working</option>
-                            <option value="Delivered">Delivered</option>
-                            <option value="Completed">Completed</option>
-                        </select>
-                        <button id="modalUpdateStatusBtn" class="button update-status-button"><i class="fas fa-sync-alt"></i> Update Status</button>
+            <div class="details-modal-content-wrapper">
+                <div class="modal-grid-container-complex">
+                    <div class="modal-section modal-customer-info grid-item-customer">
+                        <h4>Customer Details</h4>
+                        <p><strong>Order ID:</strong> <span id="modalDisplayOrderId"></span></p>
+                        <p><strong>Customer:</strong> <span id="modalCustomerName"></span></p>
+                        <p><strong>WhatsApp:</strong> <span id="modalCustomerWhatsApp"></span></p>
+                        <p><strong>Contact:</strong> <span id="modalCustomerContact"></span></p>
+                        <p><strong>Address:</strong> <span id="modalCustomerAddress"></span></p>
                     </div>
-                    <label style="margin-top: 15px;">Status History:</label>
-                    <div id="modalStatusHistoryList"><p>Loading history...</p></div>
-                </div>
 
-                <div class="modal-section modal-account-info grid-item-account">
-                   <h4>Account Data</h4>
-                   <div class="account-data-grid">
-                      <div class="account-data-pair">
-                          <p><strong>Total Amount:</strong> <span id="modalTotalAmount">Loading...</span></p>
-                          <p><strong>Amount Paid:</strong> <span id="modalAmountPaid">Loading...</span></p>
-                      </div>
-                      <div class="account-data-pair">
-                          <p><strong>Balance Due:</strong> <span id="modalBalanceDue">Loading...</span></p>
-                          <p><strong>Payment Status:</strong> <span id="modalPaymentStatus">Loading...</span></p>
-                      </div>
-                   </div>
-                </div>
+                    <div class="modal-section modal-order-info grid-item-order">
+                        <h4>Order Info</h4>
+                        <p><strong>Order Date:</strong> <span id="modalOrderDate"></span></p>
+                        <p><strong>Delivery Date:</strong> <span id="modalDeliveryDate"></span></p>
+                        <p><strong>Priority:</strong> <span id="modalPriority"></span></p>
+                        <p><strong>Remarks:</strong> <span id="modalRemarks"></span></p>
+                    </div>
 
-                <div class="modal-section modal-product-info grid-item-items">
-                    <h4>Items</h4>
-                   <div id="modalProductList"><p>Loading...</p></div>
-                </div>
+                    <div class="modal-section modal-status-info grid-item-status">
+                        <h4>Status & Tracking</h4>
+                        <label for="modalOrderStatus">Current Status:</label>
+                        <div class="status-update-inline">
+                            <select id="modalOrderStatus">
+                                <option value="Order Received">Order Received</option>
+                                <option value="Designing">Designing</option>
+                                <option value="Verification">Verification</option>
+                                <option value="Design Approved">Design Approved</option>
+                                <option value="Printing">Printing</option>
+                                <option value="Ready for Working">Ready for Working</option>
+                                <option value="Delivered">Delivered</option>
+                                <option value="Completed">Completed</option>
+                            </select>
+                            <button id="modalUpdateStatusBtn" class="button update-status-button"><i class="fas fa-sync-alt"></i> Update Status</button>
+                        </div>
+                        <label style="margin-top: 15px;">Status History:</label>
+                        <div id="modalStatusHistoryList"><p>Loading history...</p></div>
+                    </div>
 
-                <div class="modal-section modal-po-info grid-item-po">
-                    <h4>Purchase Orders</h4>
-                    <div id="modalPOList"><p>Loading POs...</p></div>
-                </div>
+                    <div class="modal-section modal-account-info grid-item-account">
+                       <h4>Account Data</h4>
+                       <div class="account-data-grid">
+                          <div class="account-data-pair">
+                              <p><strong>Total Amount:</strong> <span id="modalTotalAmount">Loading...</span></p>
+                              <p><strong>Amount Paid:</strong> <span id="modalAmountPaid">Loading...</span></p>
+                          </div>
+                          <div class="account-data-pair">
+                              <p><strong>Balance Due:</strong> <span id="modalBalanceDue">Loading...</span></p>
+                              <p><strong>Payment Status:</strong> <span id="modalPaymentStatus">Loading...</span></p>
+                          </div>
+                       </div>
+                    </div>
 
-            </div> <div class="modal-actions main-actions">
+                    <div class="modal-section modal-product-info grid-item-items">
+                        <h4>Items</h4>
+                       <div id="modalProductList"><p>Loading...</p></div>
+                    </div>
+
+                    <div class="modal-section modal-po-info grid-item-po">
+                        <h4>Purchase Orders</h4>
+                        <div id="modalPOList"><p>Loading POs...</p></div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-actions main-actions">
                   <button id="addPaymentBtn" class="button add-payment-button"><i class="fas fa-plus"></i> Add Payment</button>
                   <button id="modalCreatePOBtn" class="button create-po-button"><i class="fas fa-file-alt"></i> Create New PO</button>
                   <button id="modalDeleteBtn" class="button delete-button"><i class="fas fa-trash-alt"></i> Delete Order</button>
@@ -302,19 +303,17 @@
         </div>
     </div>
 
-    <div id="poItemSelectionModal" class="modal modal-xl">
-        <div class="modal-content">
+    <div id="poItemSelectionModal" class="modal modal-lg"> <div class="modal-content">
             <span class="close-btn" id="closePoItemSelectionModalBtn" title="Close">&times;</span>
             <h2>Select Items for Purchase Order</h2>
-            <input type="hidden" id="poItemSelectionOrderIdInput"> <div class="po-item-selection-content-wrapper">
+            <input type="hidden" id="poItemSelectionOrderIdInput">
+            <div class="po-item-selection-content-wrapper">
                 <p>Select the items from Order #<strong id="poItemSelectionDisplayOrderIdSpan"></strong> to include in the new Purchase Order.</p>
-                <div class="form-group supplier-search-section">
-                    <label for="poSupplierSearchInput"><i class="fas fa-truck"></i> Select Supplier *</label>
+                <div class="form-group supplier-search-section"> <label for="poSupplierSearchInput"><i class="fas fa-truck"></i> Select Supplier *</label>
                     <input type="text" id="poSupplierSearchInput" placeholder="Type to search supplier..." required autocomplete="off">
                     <input type="hidden" id="poSelectedSupplierId">
                     <input type="hidden" id="poSelectedSupplierName">
-                    <div id="poSupplierSuggestions" class="suggestions-list"></div>
-                </div>
+                    <div id="poSupplierSuggestions" class="suggestions-list"></div> </div>
                  <div id="poItemSelectionListContainer" class="item-selection-list-container">
                      <h4><i class="fas fa-list-ul"></i> Available Items</h4>
                      <div id="poItemSelectionList" class="item-selection-list">
@@ -323,8 +322,7 @@
                  </div>
              </div>
              <div id="poItemSelectionError" class="error-message" style="display: none;"></div>
-            <div class="modal-actions">
-                <button id="cancelPoItemSelectionBtn" type="button" class="button cancel-button">Cancel</button>
+            <div class="modal-actions"> <button id="cancelPoItemSelectionBtn" type="button" class="button cancel-button">Cancel</button>
                 <button id="proceedToCreatePOBtn" type="button" class="button save-button" disabled><i class="fas fa-arrow-right"></i> Proceed to Create PO</button>
             </div>
         </div>
