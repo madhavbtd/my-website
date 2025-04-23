@@ -530,3 +530,150 @@ mark { background-color: var(--highlight-color); padding: 0.1em 0.2em; border-ra
     .account-data-grid { grid-template-columns: 1fr; }
     #modalProductList ul.modal-product-list-ul { grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 5px;}
 }
+
+
+/* === Popup/Modal Design Improvements === */
+
+/* --- General Modal Adjustments --- */
+.modal-content {
+    /* Slightly reduce padding for compactness */
+    padding: 15px 20px;
+    /* Add a subtle background for depth */
+    background-color: #fdfdfd; /* Slightly off-white */
+     /* Ensure vertical scrolling if content overflows */
+    overflow-y: auto;
+}
+
+.modal h2, #poDetailsPopup h3, #readOnlyOrderModalTitle, #itemsOnlyModalTitle {
+    /* Reduce bottom margin for tighter spacing */
+    margin-bottom: 10px;
+    padding-bottom: 8px;
+    font-size: 1.2em; /* Adjust title size if needed */
+    background-color: var(--light-bg); /* Add a subtle header background */
+    margin-left: -20px; /* Extend background to edges */
+    margin-right: -20px; /* Extend background to edges */
+    margin-top: -15px; /* Adjust top margin */
+    padding-left: 20px;
+    padding-right: 20px;
+    padding-top: 10px;
+    border-bottom: 1px solid var(--border-color);
+    border-radius: var(--border-radius) var(--border-radius) 0 0; /* Match container radius */
+}
+
+.modal-actions {
+    /* Reduce top padding */
+    padding-top: 12px;
+    margin-top: 15px; /* Ensure some space before actions */
+    gap: 8px; /* Slightly reduce gap between buttons */
+}
+
+/* Reduce space between generic modal elements if needed */
+.modal-content p, .modal-content label {
+    margin-bottom: 5px; /* Reduce default paragraph/label spacing */
+}
+
+/* --- 1. Order ID Popup (#readOnlyOrderModal) --- */
+#readOnlyOrderModal .modal-content {
+    max-width: 1100px; /* Keep width reasonable */
+    /* Constrain height - Adjust as needed */
+    max-height: calc(90vh - 50px);
+}
+
+#readOnlyOrderModal .read-only-content-area {
+     padding: 10px 5px; /* Reduce padding */
+}
+
+#readOnlyOrderModal .read-only-grid {
+    gap: 15px; /* Reduce gap between grid sections */
+}
+
+#readOnlyOrderModal .read-only-section {
+    margin-bottom: 10px; /* Reduce space below sections */
+    padding: 10px 12px; /* Add padding inside sections */
+    border: 1px solid #eee; /* Add subtle border */
+    border-radius: var(--border-radius);
+    background-color: #fff; /* White background for sections */
+}
+#readOnlyOrderModal .read-only-section h4 {
+    margin-bottom: 8px; /* Reduce space below section titles */
+    font-size: 1em;
+    padding-bottom: 5px;
+}
+#readOnlyOrderModal .read-only-product-list,
+#readOnlyOrderModal .read-only-history-list {
+    max-height: 150px; /* Limit list height */
+    padding: 5px;
+    background-color: var(--light-bg); /* Subtle background for lists */
+    border-radius: 4px;
+    border: 1px solid #eee;
+}
+#readOnlyOrderModal .read-only-product-list li,
+#readOnlyOrderModal .read-only-history-list li {
+     padding: 5px 8px; /* Reduce list item padding */
+     margin-bottom: 4px; /* Reduce space between list items */
+     font-size: 0.88em; /* Slightly smaller font */
+     border: none; /* Remove default border */
+     background-color: #fff; /* White list items */
+     border-radius: 3px;
+}
+
+/* --- 2. Items 'See More' Popup (#itemsOnlyModal) --- */
+#itemsOnlyModal .modal-content {
+    max-width: 550px; /* Make it less wide */
+    /* Constrain height - Adjust as needed */
+    max-height: calc(85vh - 50px);
+}
+#itemsOnlyModal .items-only-content-area {
+    padding: 10px; /* Adjust padding */
+    background-color: #fff; /* White background */
+}
+#itemsOnlyModal .items-only-list li {
+    padding: 6px 5px; /* Reduce list item padding */
+    font-size: 0.92em; /* Adjust font size */
+    border-bottom: 1px dotted #ddd; /* Lighter dotted line */
+}
+#itemsOnlyModal .items-only-list li:last-child {
+    border-bottom: none;
+}
+#itemsOnlyModal .no-items {
+    font-size: 0.9em;
+    padding: 15px 0;
+}
+
+/* --- 3. PO Info Popup (#poDetailsPopup) --- */
+#poDetailsPopup .modal-content {
+    max-width: 900px; /* Adjust width */
+     /* Constrain height - Adjust as needed */
+     max-height: calc(90vh - 50px);
+}
+#poDetailsPopup #poDetailsPopupContent {
+    padding: 10px 5px; /* Reduce padding around content */
+}
+
+#poDetailsPopup .po-details-popup-header p {
+    margin-bottom: 4px; /* Reduce spacing in header */
+    font-size: 0.92em;
+}
+#poDetailsPopup hr {
+    margin: 10px 0; /* Reduce margin around hr */
+}
+#poDetailsPopup h4 {
+    margin-bottom: 8px; /* Reduce space below "Items" title */
+    font-size: 1.05em;
+}
+
+#poDetailsPopup .details-table-popup {
+    margin-bottom: 10px; /* Reduce space below table */
+    font-size: 0.88em; /* Slightly smaller table font */
+}
+
+#poDetailsPopup .details-table-popup th,
+#poDetailsPopup .details-table-popup td {
+    padding: 6px 8px; /* Reduce cell padding */
+}
+#poDetailsPopup .po-notes-popup {
+    padding: 10px; /* Reduce padding */
+    margin-top: 10px; /* Reduce space above notes */
+    font-size: 0.88em; /* Smaller font for notes */
+    background-color: var(--light-bg); /* Subtle background */
+}
