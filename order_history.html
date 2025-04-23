@@ -273,6 +273,7 @@
              </div>
         </div>
     </div>
+
     <div id="whatsapp-reminder-popup" class="popup-overlay">
         <div class="popup-content">
             <button id="popup-close-btn" class="popup-close" title="Close">&times;</button>
@@ -350,8 +351,19 @@
              </div>
          </div>
      </div>
-
-    <script src="js/order_history.js" type="module" defer></script> <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+     <div id="itemsOnlyModal" class="modal modal-md"> <div class="modal-content">
+             <span class="close-btn" id="closeItemsOnlyModal" title="Close">&times;</span>
+             <h2 id="itemsOnlyModalTitle">Order Items</h2>
+             <div id="itemsOnlyModalContent" class="items-only-content-area">
+                 <p>Loading items...</p>
+             </div>
+             <div class="modal-actions">
+                 <button type="button" id="closeItemsOnlyModalBottomBtn" class="button cancel-button">Close</button>
+             </div>
+         </div>
+     </div>
+     <script src="js/order_history.js" type="module" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
 
 </body>
