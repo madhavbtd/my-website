@@ -1,4 +1,4 @@
-/* product_management.css (Version 2.4 - Design Improvements & Unit Case Change) */
+/* product_management.css (Version 2.5 - Modal actions scroll fix) */
 
 /* --- CSS Variables --- */
 :root {
@@ -221,10 +221,23 @@ h1 { margin: 0; font-size: 1.15em; }
     width: 17px; height: 17px; cursor: pointer; flex-shrink: 0; accent-color: var(--primary-color);
 }
 
-/* Modal Actions */
+/* ============================== */
+/* <<< Modal Actions (Updated) >>> */
+/* ============================== */
 .modal-actions {
-    display: flex; justify-content: space-between; gap: 15px; margin-top: 35px; /* More margin */ padding-top: 25px; /* More padding */ border-top: 1px solid #eee; align-items: center;
+    display: flex;
+    justify-content: space-between;
+    gap: 15px;
+    margin-top: 35px; /* You can keep or remove this margin */
+    /* padding-top: 25px; */ /* Removed padding-top */
+    /* border-top: 1px solid #eee; */ /* Removed border-top */
+    align-items: center;
+    position: static; /* Ensure it's not sticky or fixed */
 }
+/* ============================== */
+/* <<< End Updated Section >>>    */
+/* ============================== */
+
 .modal-actions-right { display: flex; gap: 15px; }
 
 .save-button { background-color: var(--success-color); color: white; padding: 10px 22px;} /* Adjusted padding */

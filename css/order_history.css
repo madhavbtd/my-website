@@ -1,6 +1,5 @@
-
 /* === order_history.css === */
-/* Updated Version: Professional, Cleaner, Colorful, Compact Modals - v4 (Button Fix) */
+/* Updated Version: Professional, Cleaner, Colorful, Compact Modals - v5 (Popup Padding Fix) */
 
 /* --- Global Styles & Variables --- */
 :root {
@@ -196,7 +195,6 @@ mark { background-color: var(--warning-color-light); padding: 0.1em 0.2em; borde
     z-index: 1051; animation: popupFadeIn 0.3s ease-out;
     display: flex; flex-direction: column; /* << Important for layout */
     max-height: calc(88vh); /* Max height */
-    /* <<< FIX: Apply overflow-y auto here, add padding back */
     overflow-y: auto;
     padding: 0; /* Keep padding off main container initially */
 }
@@ -205,7 +203,18 @@ mark { background-color: var(--warning-color-light); padding: 0.1em 0.2em; borde
 .modal-content.modal-lg { max-width: 1000px; }
 .modal-content.modal-xl { max-width: 1150px; }
 .modal-content.modal-md { max-width: 650px; }
-.modal-content.small-modal { max-width: 500px; overflow-y: visible; max-height: none; } /* Allow small modals to not scroll */
+/* <<< UPDATED small-modal to not overflow and remove max-height */
+.modal-content.small-modal {
+    max-width: 500px;
+    overflow-y: visible; /* Let content determine height */
+    max-height: none;   /* Remove max height */
+    /* ADDED padding directly here */
+    padding: 25px;
+    /* Adjust padding on header/footer/content-area inside this modal if needed */
+    /* Example: Reset padding on direct children if applying here */
+     /* & > h2, & > .modal-actions { padding-left: 0; padding-right: 0; } /* Optional: Adjust if needed */
+     /* & > .modal-content-area { padding: 0; } /* Optional: Adjust if needed */
+}
 
 .close-btn, #whatsapp-reminder-popup .popup-close {
     color: #aaa; position: absolute; top: 8px; right: 12px; font-size: 26px; font-weight: bold;
@@ -215,6 +224,7 @@ mark { background-color: var(--warning-color-light); padding: 0.1em 0.2em; borde
 .close-btn:hover, .close-btn:focus, #whatsapp-reminder-popup .popup-close:hover, #whatsapp-reminder-popup .popup-close:focus { color: var(--danger-color); }
 
 /* Modal Header (Common) */
+/* <<< MODIFIED: Adjusted padding based on parent padding */
 .modal-content > h2, .modal-content > h3 {
     margin: 0; padding: 12px 20px; font-size: 1.15em; background-color: var(--light-bg);
     border-bottom: 1px solid var(--border-color);
@@ -226,26 +236,39 @@ mark { background-color: var(--warning-color-light); padding: 0.1em 0.2em; borde
     top: 0; /* Stick to top */
     z-index: 1052; /* Ensure header is above content */
 }
+/* Reset margin/padding if parent has padding */
+.small-modal > h2 {
+    margin: -25px -25px 15px -25px; /* Adjust negative margins based on parent padding */
+    padding: 12px 25px; /* Use parent padding */
+    border-radius: var(--border-radius) var(--border-radius) 0 0;
+}
+
+
 #poDetailsPopup h3 { font-size: 1.1em; }
 #itemsOnlyModal h2 { text-align: center; }
 
 /* Modal Content Area (Common for scrollable content between header and footer) */
-/* We target direct divs inside modal-content, excluding header (h2/h3) and footer (.modal-actions) */
-/* Or rely on the specific grid container / content area div */
+/* <<< MODIFIED: Adjusted padding based on parent padding */
 .modal-content-area, /* Use if you have a specific wrapper div */
 #detailsModal .modal-grid-container-complex, /* Specific to details modal */
 #readOnlyOrderModal .read-only-content-area,
 #itemsOnlyModal .items-only-content-area,
 #poDetailsPopup .po-details-content-area,
 #poItemSelectionModal .po-item-selection-content-wrapper,
-#bulkDeleteConfirmModal .modal-content-area,
+/* #bulkDeleteConfirmModal .modal-content-area, /* <<< REMOVED padding from here */
 #whatsapp-reminder-popup .popup-content-area {
-    padding: 15px 20px; /* <<< Apply padding here */
+    padding: 15px 20px; /* <<< Apply padding here (except for bulk delete) */
     flex-grow: 1; /* Allow content to grow */
-    /* Removed overflow-y: auto here, it's on .modal-content now */
+}
+/* Remove padding for bulk delete area as parent .modal-content now has it */
+#bulkDeleteConfirmModal .modal-content-area {
+    padding: 0; /* <<< Removed padding */
+    flex-grow: 1;
 }
 
+
 /* Modal Actions Footer (Common) */
+/* <<< MODIFIED: Adjusted padding based on parent padding */
 .modal-actions {
     display: flex; justify-content: flex-end; gap: 8px; flex-wrap: wrap;
     padding: 10px 20px; border-top: 1px solid var(--border-color);
@@ -255,6 +278,14 @@ mark { background-color: var(--warning-color-light); padding: 0.1em 0.2em; borde
     bottom: 0; /* Stick to bottom */
     z-index: 1052; /* Ensure footer is above content */
 }
+/* Reset margin/padding if parent has padding */
+.small-modal > .modal-actions {
+    margin: 15px -25px -25px -25px; /* Adjust negative margins */
+    padding: 10px 25px; /* Use parent padding */
+    border-radius: 0 0 var(--border-radius) var(--border-radius);
+}
+
+
 .modal-actions .button { font-family: var(--font-family); }
 
 .error-message {
@@ -270,7 +301,6 @@ mark { background-color: var(--warning-color-light); padding: 0.1em 0.2em; borde
 
 /* --- Enhanced Details Modal Specific Styles (#detailsModal) --- */
 #detailsModal .modal-content { max-width: 1100px; }
-/* Grid Container */
 #detailsModal .modal-grid-container-complex {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
@@ -280,17 +310,13 @@ mark { background-color: var(--warning-color-light); padding: 0.1em 0.2em; borde
         "items items items"
         "po po po";
     gap: 15px;
-    /* Removed padding from here, applied to parent */
 }
-/* Assign areas to sections */
 .grid-item-customer { grid-area: customer; }
 .grid-item-order    { grid-area: order; }
 .grid-item-status   { grid-area: status; }
 .grid-item-account  { grid-area: account; }
 .grid-item-items    { grid-area: items; }
 .grid-item-po       { grid-area: po; }
-
-/* Modal Sections */
 #detailsModal .modal-section {
     margin: 0; padding: 15px; border: 1px solid var(--border-color-light);
     border-radius: var(--border-radius); display: flex; flex-direction: column;
@@ -300,34 +326,24 @@ mark { background-color: var(--warning-color-light); padding: 0.1em 0.2em; borde
 #detailsModal .grid-item-order,
 #detailsModal .grid-item-account,
 #detailsModal .grid-item-po { background-color: #fdfdfd; }
-
-/* Section Headers */
 #detailsModal .modal-section h4 {
     margin-top: 0; margin-bottom: 12px; font-size: 1em; color: var(--primary-color);
     border-bottom: 1px solid var(--border-color-light); padding-bottom: 8px;
     font-weight: 600; flex-shrink: 0; display: flex; align-items: center; gap: 6px;
 }
-/* Paragraphs/Labels */
 #detailsModal .modal-section p,
 #detailsModal .modal-section label { margin-bottom: 7px; font-size: 0.9em; flex-shrink: 0; line-height: 1.5; }
 #detailsModal .modal-section p strong { font-weight: 600; color: var(--text-color); min-width: 90px; display: inline-block; margin-right: 8px; }
-/* Highlight key info */
 #modalDisplayOrderId, #modalCustomerName, #modalTotalAmount, #modalBalanceDue, #modalPaymentStatus { font-weight: 600; color: var(--primary-color); }
 #detailsModal .modal-section p > span:not(#modalDisplayOrderId):not(#modalCustomerName):not(#modalTotalAmount):not(#modalBalanceDue):not(#modalPaymentStatus) { font-weight: 500; color: #333; }
-
-/* Status update section */
 .modal-status-info label { display: block; margin-bottom: 5px; font-weight: 500; }
 .status-update-inline { display: flex; flex-direction: column; gap: 10px; margin-top: 5px; margin-bottom: 5px; }
 .status-update-inline select { width: 100%; height: 38px; padding: 8px 12px; border: 1px solid #ced4da; border-radius: var(--border-radius); font-size: 0.9em; box-sizing: border-box; font-family: var(--font-family); }
 #detailsModal .update-status-button { width: 100%; align-self: stretch; }
-
-/* Account data grid layout */
 .modal-account-info h4 { margin-bottom: 10px; }
 .account-data-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 5px 15px; }
 .account-data-pair p { margin-bottom: 5px !important; font-size: 0.9em !important; }
 .account-data-pair p strong { min-width: 95px !important; }
-
-/* Shared list container style (Products, History, POs) */
 #modalProductList, #modalStatusHistoryList, #modalPOList {
     background-color: var(--light-bg); border: 1px solid var(--border-color-light);
     border-radius: var(--border-radius); padding: 10px 12px; max-height: 140px;
@@ -336,37 +352,30 @@ mark { background-color: var(--warning-color-light); padding: 0.1em 0.2em; borde
 #modalProductList ul, #modalStatusHistoryList ul, #modalPOList ul { list-style: none; padding: 0; margin: 0; }
 #modalProductList li, #modalStatusHistoryList li, #modalPOList li { margin-bottom: 5px; padding: 5px 8px; border-bottom: 1px dotted #ccc; line-height: 1.4; background-color: var(--white-bg); border-radius: 3px; }
 #modalProductList li:last-child, #modalStatusHistoryList li:last-child, #modalPOList li:last-child { margin-bottom: 0; border-bottom: none; }
-
-/* Product list grid */
 #modalProductList ul.modal-product-list-ul { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 6px; padding: 0; list-style: none; margin: 0; }
 #modalProductList ul.modal-product-list-ul li { border: 1px solid var(--border-color-light); padding: 6px 10px; border-radius: 4px; background-color: var(--white-bg); font-size: 0.95em; margin-bottom: 0; line-height: 1.3; }
-
-/* Status history list specific */
 #modalStatusHistoryList li { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 5px; }
 #modalStatusHistoryList .history-status { font-weight: 600; }
 #modalStatusHistoryList .history-time { color: var(--text-muted); font-size: 0.9em; white-space: nowrap; }
-
 .no-products, .no-history, .no-pos, .no-items { color: var(--text-muted); font-style: italic; text-align: center; padding: 10px 0; font-size: 0.9em; }
-
-/* Action Buttons specific to Details Modal - Footer */
 #detailsModal .modal-actions.main-actions {
-    justify-content: center; gap: 10px; background-color: var(--light-bg); /* Match base footer */
-    border-top: 1px solid var(--border-color); /* Match base footer */
-    padding: 10px 20px; /* Match base footer */
-    margin-top: 0; /* Remove margin, handled by content spacing */
-    position: sticky; /* Should inherit sticky */
-    bottom: 0; /* Should inherit sticky */
+    justify-content: center; gap: 10px; background-color: var(--light-bg);
+    border-top: 1px solid var(--border-color);
+    padding: 10px 20px;
+    margin-top: 0;
+    position: sticky;
+    bottom: 0;
 }
 #detailsModal .modal-actions.main-actions .button { font-family: var(--font-family); }
 
 
 /* --- WhatsApp Reminder Popup --- */
 #whatsapp-reminder-popup .modal-content { max-width: 480px; overflow-y: visible; max-height: none; padding: 0; }
-#whatsapp-reminder-popup h4 { margin: 0; padding: 12px 20px; font-size: 1.15em; background-color: var(--light-bg); border-bottom: 1px solid var(--border-color); border-radius: var(--border-radius) var(--border-radius) 0 0; color: var(--text-color); text-align: left; font-weight: 600; flex-shrink: 0; position: static; /* No sticky header */ }
+#whatsapp-reminder-popup h4 { margin: 0; padding: 12px 20px; font-size: 1.15em; background-color: var(--light-bg); border-bottom: 1px solid var(--border-color); border-radius: var(--border-radius) var(--border-radius) 0 0; color: var(--text-color); text-align: left; font-weight: 600; flex-shrink: 0; position: static; }
 #whatsapp-reminder-popup .popup-content-area { padding: 15px 20px; }
 #whatsapp-reminder-popup p { margin-bottom: 15px; color: var(--text-muted); font-size: 1em; text-align: center; }
 .message-preview { margin-top: 10px; margin-bottom: 20px; font-size: 0.9em; background-color: var(--primary-color-light); padding: 10px 15px; border-radius: var(--border-radius); text-align: left; border: 1px solid var(--border-color); white-space: pre-wrap; word-wrap: break-word; max-height: 150px; overflow-y: auto; line-height: 1.4; }
-#whatsapp-reminder-popup .modal-actions { padding: 10px 20px; border-top: 1px solid var(--border-color); background-color: var(--light-bg); justify-content: center; position: static; /* No sticky footer */ border-radius: 0 0 var(--border-radius) var(--border-radius);}
+#whatsapp-reminder-popup .modal-actions { padding: 10px 20px; border-top: 1px solid var(--border-color); background-color: var(--light-bg); justify-content: center; position: static; border-radius: 0 0 var(--border-radius) var(--border-radius);}
 .whatsapp-send-btn { background-color: #25d366; color: #fff; text-decoration: none; padding: 8px 20px; border-radius: var(--border-radius); display: inline-flex; align-items: center; gap: 8px; font-weight: 600; transition: background-color 0.2s ease, box-shadow 0.2s ease, transform 0.1s ease; margin: 0; border: none; cursor: pointer; font-size: 0.95em; box-shadow: var(--box-shadow); height: auto; }
 .whatsapp-send-btn:hover { background-color: #1ebe57; box-shadow: var(--box-shadow-lg); transform: translateY(-1px); }
 .whatsapp-send-btn:active { transform: translateY(0px); box-shadow: var(--box-shadow); }
@@ -374,9 +383,25 @@ mark { background-color: var(--warning-color-light); padding: 0.1em 0.2em; borde
 @keyframes popupFadeIn { from { opacity: 0; transform: scale(0.98); } to { opacity: 1; transform: scale(1); } }
 
 /* --- Bulk Delete Modal --- */
-#bulkDeleteConfirmModal .modal-content { padding: 0; max-width: 500px; }
-#bulkDeleteConfirmModal h2 { color: var(--danger-color); font-size: 1.2em; display: flex; align-items: center; gap: 8px; margin: 0; padding: 12px 20px; background-color: #f8d7da; border-bottom: 1px solid #f5c6cb; border-radius: var(--border-radius) var(--border-radius) 0 0; font-weight: 600; position: static; }
-#bulkDeleteConfirmModal .modal-content-area { padding: 15px 20px; }
+/* <<< UPDATED rule to use the padding from .small-modal */
+#bulkDeleteConfirmModal .modal-content {
+    /* padding: 0; /* <<< REMOVED */
+    max-width: 500px;
+    /* Inherits padding from .small-modal */
+}
+#bulkDeleteConfirmModal h2 {
+    color: var(--danger-color); font-size: 1.2em; display: flex; align-items: center; gap: 8px;
+    /* margin: 0; padding: 12px 20px; /* <<< Using parent padding now */
+    background-color: #f8d7da; border-bottom: 1px solid #f5c6cb;
+    /* border-radius: var(--border-radius) var(--border-radius) 0 0; /* <<< Using parent radius */
+    font-weight: 600; position: static;
+    /* Adjust margin based on parent padding */
+    margin: -25px -25px 15px -25px;
+    padding: 12px 25px;
+    border-radius: var(--border-radius) var(--border-radius) 0 0;
+}
+/* <<< UPDATED area padding to 0 */
+#bulkDeleteConfirmModal .modal-content-area { padding: 0; }
 #bulkDeleteConfirmModal p { font-size: 0.9em; margin-bottom: 8px; color: var(--text-color); }
 .order-list-preview { list-style: none; padding: 8px 12px; margin: 0 0 12px 0; background-color: var(--light-bg); border: 1px solid var(--border-color); border-radius: var(--border-radius); max-height: 120px; overflow-y: auto; font-size: 0.85em; }
 .order-list-preview li { padding: 3px 0; border-bottom: 1px dotted #ccc; color: var(--text-muted); }
@@ -386,8 +411,17 @@ mark { background-color: var(--warning-color-light); padding: 0.1em 0.2em; borde
 .confirmation-check { margin-bottom: 15px; display: flex; align-items: center; justify-content: flex-start; gap: 8px; background-color: var(--warning-color-light); padding: 8px 12px; border-radius: var(--border-radius); border: 1px solid var(--warning-color); }
 .confirmation-check input[type="checkbox"] { transform: scale(1.1); cursor: pointer; margin: 0; }
 .confirmation-check label { font-size: 0.85em; color: var(--text-color); cursor: pointer; margin: 0; font-weight: 500; }
-#bulkDeleteConfirmModal .modal-actions { justify-content: flex-end; position: static; border-radius: 0 0 var(--border-radius) var(--border-radius); }
+/* <<< UPDATED actions positioning */
+#bulkDeleteConfirmModal .modal-actions {
+    justify-content: flex-end; position: static;
+    /* border-radius: 0 0 var(--border-radius) var(--border-radius); /* <<< Using parent radius */
+    /* Adjust margin/padding based on parent */
+    margin: 15px -25px -25px -25px;
+    padding: 10px 25px;
+    border-radius: 0 0 var(--border-radius) var(--border-radius);
+}
 #bulkDeleteConfirmModal .delete-button:disabled { background-color: #f5c6cb; border-color: #f5c6cb; color: #721c24; opacity: 0.6; cursor: not-allowed; }
+
 
 /* --- PO Details Popup Styles (#poDetailsPopup) --- */
 #poDetailsPopup .modal-content { max-width: 1000px; padding: 0; }
@@ -544,4 +578,3 @@ mark { background-color: var(--warning-color-light); padding: 0.1em 0.2em; borde
     #detailsModal .modal-section { padding: 10px; }
     #detailsModal .modal-section p { font-size: 0.88em; margin-bottom: 6px; }
 }
-
