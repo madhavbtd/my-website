@@ -304,17 +304,18 @@
 
     <div id="poItemSelectionModal" class="modal modal-xl">
         <div class="modal-content">
-            <span class="close-btn" id="closePoItemSelectionModal" title="Close">&times;</span>
+            <span class="close-btn" id="closePoItemSelectionModalBtn" title="Close">&times;</span>
             <h2>Select Items for Purchase Order</h2>
-            <div class="po-item-selection-content-wrapper">
-                <p>Select the items from Order #<strong id="poItemSelectionDisplayOrderId"></strong> to include in the new Purchase Order.</p>
-                <div class="form-group supplier-search-section"> <label for="poSupplierSearchInput"><i class="fas fa-truck"></i> Select Supplier *</label>
+            <input type="hidden" id="poItemSelectionOrderIdInput"> <div class="po-item-selection-content-wrapper">
+                <p>Select the items from Order #<strong id="poItemSelectionDisplayOrderIdSpan"></strong> to include in the new Purchase Order.</p>
+                <div class="form-group supplier-search-section">
+                    <label for="poSupplierSearchInput"><i class="fas fa-truck"></i> Select Supplier *</label>
                     <input type="text" id="poSupplierSearchInput" placeholder="Type to search supplier..." required autocomplete="off">
                     <input type="hidden" id="poSelectedSupplierId">
                     <input type="hidden" id="poSelectedSupplierName">
                     <div id="poSupplierSuggestions" class="suggestions-list"></div>
                 </div>
-                 <div class="item-selection-list-container">
+                 <div id="poItemSelectionListContainer" class="item-selection-list-container">
                      <h4><i class="fas fa-list-ul"></i> Available Items</h4>
                      <div id="poItemSelectionList" class="item-selection-list">
                         <p>Loading items...</p>
