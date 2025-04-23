@@ -8,45 +8,39 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="css/order_history.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" integrity="sha512-9usAa10IRO0HhonpyAIVpjrylPvoDwiPUiKdWk5t3PyolY1cOd4DSE0Ga+ri4AuTroPR5aQvXU9xC6qOPnzFeg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link rel="stylesheet" href="css/order_history.css"> <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" integrity="sha512-9usAa10IRO0HhonpyAIVpjrylPvoDwiPUiKdWk5t3PyolY1cOd4DSE0Ga+ri4AuTroPR5aQvXU9xC6qOPnzFeg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
 
     <script type="module">
-        // Ensure Firebase is initialized only once per page load
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
         import { getFirestore, collection, doc, getDoc, deleteDoc, updateDoc, onSnapshot, query, orderBy, where, Timestamp, arrayUnion, writeBatch, serverTimestamp, limit, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-         // --- >>> !!! महत्वपूर्ण: इन मानों को अपने वास्तविक Firebase प्रोजेक्ट मानों से बदलें !!! <<< ---
          const firebaseConfig = {
-           apiKey: "YOUR_API_KEY", // आपकी वास्तविक API Key यहाँ डालें
-           authDomain: "YOUR_AUTH_DOMAIN", // आपका वास्तविक Auth Domain यहाँ डालें
-           projectId: "YOUR_PROJECT_ID", // आपका वास्तविक Project ID यहाँ डालें
-           storageBucket: "YOUR_STORAGE_BUCKET", // आपका वास्तविक Storage Bucket यहाँ डालें
-           messagingSenderId: "YOUR_MESSAGING_SENDER_ID", // आपका वास्तविक Sender ID यहाँ डालें
-           appId: "YOUR_APP_ID" // आपका वास्तविक App ID यहाँ डालें
+           // Your Firebase config details remain here
+           apiKey: "AIzaSyBQj5rQmE77kKKGYixP8y3Hcimz8tiAqzQ", // Example, use your actual key
+           authDomain: "madhav-multyprint.firebaseapp.com",
+           projectId: "madhav-multyprint",
+           storageBucket: "madhav-multyprint.appspot.com",
+           messagingSenderId: "104988349637",
+           appId: "1:104988349637:web:faf045b77c6786a4e70cac"
          };
-         // --- >>> !!! सुनिश्चित करें कि ऊपर दिए गए मान सही हैं !!! <<< ---
 
         let app;
         let auth;
         let db;
 
         try {
-             // Initialize Firebase only if it hasn't been initialized yet on this page/session
              if (!window.firebaseAppInitialized) {
                  app = initializeApp(firebaseConfig);
-                 window.firebaseAppInitialized = true; // Mark as initialized
-                 window.firebaseApp = app; // Store the initialized app instance globally
+                 window.firebaseAppInitialized = true;
+                 window.firebaseApp = app;
                  console.log("Firebase initialized on this page (order_history).");
              } else {
-                 // Use the already initialized app instance
                  app = window.firebaseApp;
-                 console.log("Firebase already initialized on this page (order_history). Using existing instance.");
+                 console.log("Firebase already initialized on this page (order_history).");
              }
              auth = getAuth(app);
              db = getFirestore(app);
-
              // Make Firebase services globally accessible for order_history.js
              window.db = db;
              window.auth = auth;
@@ -70,38 +64,19 @@
              // Authentication check
              onAuthStateChanged(auth, (user) => {
                  const currentPage = window.location.pathname.split('/').pop() || 'index.html';
-                 // Redirect to login if not logged in and not already on login page
                  if (!user && currentPage.toLowerCase() !== 'login.html') {
-                     console.log(`User not logged in on ${currentPage}. Redirecting to login.html...`);
-                     window.location.replace('login.html'); // Redirect to login
+                     console.log(`User not logged in on ${currentPage}. Redirecting...`);
+                     window.location.replace('login.html');
                  } else if (user) {
                      console.log(`User logged in on ${currentPage}:`, user.uid);
-                     // Trigger initialization of the main script after auth confirmation
-                     // Ensure order_history.js has this function or adapt initialization
-                     if (typeof window.initializeOrderHistoryPage === 'function') {
-                         window.initializeOrderHistoryPage(user);
-                     } else {
-                         // If order_history.js doesn't export an init function,
-                         // you might need to directly call its setup logic here
-                         // or ensure it runs after this auth check.
-                         console.warn("initializeOrderHistoryPage function not found on window. Ensure order_history.js is loaded and sets up its functions.");
-                     }
-                 } else if (!user && currentPage.toLowerCase() === 'login.html') {
-                     // User is on the login page and not logged in, which is fine.
-                     console.log("User is on the login page and not logged in.");
                  }
              });
 
-             // Function to get current user (can be used by order_history.js)
              window.getCurrentUser = () => auth.currentUser;
 
         } catch(e) {
             console.error("Firebase setup / Auth check error:", e);
-            alert("Error loading application components. Please check the console and try again later.");
-            // Consider disabling functionality if Firebase fails critically
-            if (document.body) {
-                 document.body.innerHTML = '<p style="color:red; text-align:center; margin-top: 50px;">Application failed to load due to configuration error. Please contact support.</p>';
-            }
+            alert("Error loading application. Please try again later.");
         }
     </script>
     </head>
@@ -219,7 +194,9 @@
                 <div id="statusCountsReport"><p>Loading report...</p></div>
             </div>
         </div>
-    </div> <div id="detailsModal" class="modal modal-lg">
+    </div>
+
+    <div id="detailsModal" class="modal modal-lg">
         <div class="modal-content">
             <span class="close-btn" id="closeDetailsModal" title="Close">&times;</span>
             <h2>Order Details & Actions</h2>
@@ -294,15 +271,16 @@
                   <button id="modalDeleteBtn" class="button delete-button"><i class="fas fa-trash-alt"></i> Delete Order</button>
                   <button id="modalEditFullBtn" class="button edit-full-button"><i class="fas fa-edit"></i> Edit Full Order</button>
              </div>
-        </div> </div> <div id="whatsapp-reminder-popup" class="popup-overlay">
-        <div class="modal-content small-modal">
-            <button id="popup-close-btn" class="close-btn" title="Close">&times;</button>
-            <h2 id="whatsapp-popup-title">Status Updated!</h2>
-            <p style="text-align: center; margin-bottom: 15px;">Send update to customer?</p>
+        </div>
+    </div>
+
+    <div id="whatsapp-reminder-popup" class="popup-overlay">
+        <div class="popup-content">
+            <button id="popup-close-btn" class="popup-close" title="Close">&times;</button>
+            <h4 id="whatsapp-popup-title">Status Updated!</h4>
+            <p>Send update to customer?</p>
             <div id="whatsapp-message-preview" class="message-preview"></div>
-            <div class="modal-actions" style="justify-content: center;">
-                <a href="#" id="whatsapp-send-link" class="button whatsapp-send-btn" target="_blank"><i class="fab fa-whatsapp"></i> Send on WhatsApp</a>
-            </div>
+            <a href="#" id="whatsapp-send-link" class="button whatsapp-send-btn" target="_blank"><i class="fab fa-whatsapp"></i> Send on WhatsApp</a>
         </div>
     </div>
 
@@ -373,9 +351,7 @@
              </div>
          </div>
      </div>
-
-     <div id="itemsOnlyModal" class="modal modal-md">
-         <div class="modal-content">
+     <div id="itemsOnlyModal" class="modal modal-md"> <div class="modal-content">
              <span class="close-btn" id="closeItemsOnlyModal" title="Close">&times;</span>
              <h2 id="itemsOnlyModalTitle">Order Items</h2>
              <div id="itemsOnlyModalContent" class="items-only-content-area">
@@ -386,10 +362,9 @@
              </div>
          </div>
      </div>
-
      <script src="js/order_history.js" type="module" defer></script>
-     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
 
 </body>
 </html>
