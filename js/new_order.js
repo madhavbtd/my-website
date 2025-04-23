@@ -1,4 +1,3 @@
-# Updated new_order.js code
 # Only '#' comments are replaced with '//'
 
 // new_order.js - v2.6 (WhatsApp Send Delay)
