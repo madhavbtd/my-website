@@ -13,12 +13,13 @@
     <link rel="stylesheet" href="css/lic_management.css">
 
     <script type="module">
-        // --- Firebase Setup (जैसा आपकी मौजूदा फाइल में है) ---
+        // --- Firebase Setup (Updated) ---
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
         import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
         import {
             getFirestore, collection, doc, addDoc, getDoc, getDocs, updateDoc, deleteDoc, serverTimestamp,
-            query, where, orderBy, limit, Timestamp, runTransaction, onSnapshot // onSnapshot जोड़ा गया
+            query, where, orderBy, limit, Timestamp, runTransaction, onSnapshot,
+            arrayUnion // <<<< arrayUnion जोड़ा गया
          } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
          // **** आपकी Firebase कॉन्फ़िगरेशन ****
@@ -50,7 +51,8 @@
             window.getDoc = getDoc; window.getDocs = getDocs; window.updateDoc = updateDoc; window.deleteDoc = deleteDoc;
             window.serverTimestamp = serverTimestamp; window.query = query; window.where = where;
             window.orderBy = orderBy; window.limit = limit; window.Timestamp = Timestamp; window.runTransaction = runTransaction;
-            window.onSnapshot = onSnapshot; // onSnapshot को ग्लोबल बनाया
+            window.onSnapshot = onSnapshot;
+            window.arrayUnion = arrayUnion; // <<<< arrayUnion को ग्लोबल बनाया
 
             // Authentication Check
             onAuthStateChanged(auth, (user) => {
@@ -60,7 +62,6 @@
                     window.location.replace('login.html');
                 } else if (user) {
                     console.log(`User logged in. Initializing LIC page.`);
-                    // lic_management.js से initializePage फंक्शन को कॉल करें
                     if (typeof initializeLicPage === 'function') {
                          setTimeout(initializeLicPage, 0); // Defer slightly
                     } else {
@@ -102,135 +103,49 @@
          <div class="dashboard-section">
              <h2><i class="fas fa-tachometer-alt"></i> Dashboard</h2>
              <div class="dashboard-grid">
-                 <div class="dashboard-card">
-                     <h4>Total Policies</h4>
-                     <p id="dbTotalPolicies">-</p>
-                     <i class="fas fa-file-contract card-icon"></i>
-                 </div>
-                 <div class="dashboard-card">
-                     <h4>Active Policies</h4>
-                     <p id="dbActivePolicies">-</p>
-                      <i class="fas fa-check-circle card-icon" style="color: #28a745;"></i>
-                  </div>
-                  <div class="dashboard-card">
-                      <h4>Lapsed Policies</h4>
-                      <p id="dbLapsedPolicies">-</p>
-                       <i class="fas fa-exclamation-triangle card-icon" style="color: #dc3545;"></i>
-                   </div>
-                  <div class="dashboard-card">
-                      <h4>Upcoming Premiums (30d)</h4>
-                      <p id="dbUpcomingPremium">-</p>
-                       <i class="fas fa-rupee-sign card-icon"></i>
-                   </div>
-                   <div class="dashboard-card">
-                       <h4>Maturities (Next 90d)</h4>
-                       <p id="dbUpcomingMaturity">-</p>
-                       <i class="fas fa-calendar-check card-icon" style="color: #ffc107;"></i>
-                    </div>
+                 <div class="dashboard-card"><h4>Total Policies</h4><p id="dbTotalPolicies">-</p><i class="fas fa-file-contract card-icon"></i></div>
+                 <div class="dashboard-card"><h4>Active Policies</h4><p id="dbActivePolicies">-</p><i class="fas fa-check-circle card-icon" style="color: #28a745;"></i></div>
+                 <div class="dashboard-card"><h4>Lapsed Policies</h4><p id="dbLapsedPolicies">-</p><i class="fas fa-exclamation-triangle card-icon" style="color: #dc3545;"></i></div>
+                 <div class="dashboard-card"><h4>Upcoming Premiums (30d)</h4><p id="dbUpcomingPremium">-</p><i class="fas fa-rupee-sign card-icon"></i></div>
+                 <div class="dashboard-card"><h4>Maturities (Next 90d)</h4><p id="dbUpcomingMaturity">-</p><i class="fas fa-calendar-check card-icon" style="color: #ffc107;"></i></div>
               </div>
           </div>
          <div class="task-reminder-section">
-             <h2><i class="fas fa-bell warning-icon"></i> Upcoming Follow-ups (Next 7 Days)</h2>
+             <h2><i class="fas fa-bell warning-icon" style="color:#007bff;"></i> Upcoming Follow-ups (Next 7 Days)</h2>
              <ul id="upcomingTaskList">
                  <li class="loading-reminder">Loading upcoming tasks...</li>
              </ul>
          </div>
          <div class="filter-bar">
-            <div class="filter-group">
-                <label for="licSearchInput"><i class="fas fa-search"></i> Search</label>
-                <input type="text" id="licSearchInput" placeholder="Name, Policy No, Mobile...">
-            </div>
-            <div class="filter-group">
-                 <label for="licStatusFilter"><i class="fas fa-filter"></i> Status</label>
-                 <select id="licStatusFilter">
-                     <option value="">All Status</option>
-                     <option value="Active">Active</option>
-                     <option value="Lapsed">Lapsed</option>
-                     <option value="Matured">Matured</option>
-                     <option value="Surrendered">Surrendered</option>
-                 </select>
-            </div>
-             <div class="filter-group">
-                 <label for="licPlanFilter"><i class="fas fa-file-alt"></i> Plan</label>
-                 <input type="text" id="licPlanFilter" placeholder="Enter Plan No/Name">
-             </div>
-            <div class="filter-group">
-                 <label for="licModeFilter"><i class="fas fa-calendar-alt"></i> Mode</label>
-                 <select id="licModeFilter">
-                     <option value="">All Modes</option>
-                     <option value="Yearly">Yearly</option>
-                     <option value="Half-Yearly">Half-Yearly</option>
-                     <option value="Quarterly">Quarterly</option>
-                     <option value="Monthly">Monthly</option>
-                 </select>
-             </div>
-             <div class="filter-group">
-                 <label for="licNachFilter"><i class="fas fa-university"></i> NACH</label>
-                 <select id="licNachFilter">
-                      <option value="">All NACH</option>
-                      <option value="No">No</option>
-                      <option value="Yes">Yes</option>
-                      <option value="Pending">Pending</option>
-                  </select>
-              </div>
-             <div class="filter-group filter-sort">
-                 <label for="sort-lic"><i class="fas fa-sort-amount-down"></i> Sort By</label>
-                 <select id="sort-lic">
-                     <option value="nextInstallmentDate_asc">Next Due Date (Asc)</option>
-                     <option value="nextInstallmentDate_desc">Next Due Date (Desc)</option>
-                     <option value="customerName_asc">Name (A-Z)</option>
-                     <option value="policyNumber_asc">Policy No (Asc)</option>
-                     <option value="createdAt_desc" selected>Recently Added</option>
-                 </select>
-             </div>
-            <div class="filter-group">
-                <button id="clearLicFiltersBtn" type="button" class="button clear-filters-button"><i class="fas fa-times"></i> Clear Filters</button>
-            </div>
-            <div class="filter-group">
-                <button id="addNewPolicyBtn" type="button" class="button add-new-button"><i class="fas fa-plus"></i> Add New Policy</button>
-            </div>
+            <div class="filter-group"><label for="licSearchInput"><i class="fas fa-search"></i> Search</label><input type="text" id="licSearchInput" placeholder="Name, Policy No, Mobile..."></div>
+            <div class="filter-group"><label for="licStatusFilter"><i class="fas fa-filter"></i> Status</label><select id="licStatusFilter"><option value="">All Status</option><option value="Active">Active</option><option value="Lapsed">Lapsed</option><option value="Matured">Matured</option><option value="Surrendered">Surrendered</option></select></div>
+            <div class="filter-group"><label for="licPlanFilter"><i class="fas fa-file-alt"></i> Plan</label><input type="text" id="licPlanFilter" placeholder="Enter Plan No/Name"></div>
+            <div class="filter-group"><label for="licModeFilter"><i class="fas fa-calendar-alt"></i> Mode</label><select id="licModeFilter"><option value="">All Modes</option><option value="Yearly">Yearly</option><option value="Half-Yearly">Half-Yearly</option><option value="Quarterly">Quarterly</option><option value="Monthly">Monthly</option></select></div>
+            <div class="filter-group"><label for="licNachFilter"><i class="fas fa-university"></i> NACH</label><select id="licNachFilter"><option value="">All NACH</option><option value="No">No</option><option value="Yes">Yes</option><option value="Pending">Pending</option></select></div>
+            <div class="filter-group filter-sort"><label for="sort-lic"><i class="fas fa-sort-amount-down"></i> Sort By</label><select id="sort-lic"><option value="nextInstallmentDate_asc">Next Due Date (Asc)</option><option value="nextInstallmentDate_desc">Next Due Date (Desc)</option><option value="customerName_asc">Name (A-Z)</option><option value="policyNumber_asc">Policy No (Asc)</option><option value="createdAt_desc" selected>Recently Added</option></select></div>
+            <div class="filter-group"><button id="clearLicFiltersBtn" type="button" class="button clear-filters-button"><i class="fas fa-times"></i> Clear Filters</button></div>
+            <div class="filter-group"><button id="addNewPolicyBtn" type="button" class="button add-new-button"><i class="fas fa-plus"></i> Add New Policy</button></div>
         </div>
         <div class="table-container">
              <table id="licPolicyTable">
                  <thead>
                      <tr>
-                         <th>Policy No.</th>
-                         <th>Customer Name</th> <th>Mobile No.</th>
-                         <th>Plan</th>
-                         <th>Premium (₹)</th>
-                         <th>Mode</th>
-                         <th>Next Due Date</th>
-                         <th>Status</th>
-                         <th>Actions</th>
+                         <th>Policy No.</th><th>Customer Name</th><th>Mobile No.</th><th>Plan</th><th>Premium (₹)</th><th>Mode</th><th>Next Due Date</th><th>Status</th><th>Actions</th>
                      </tr>
                  </thead>
                  <tbody id="licPolicyTableBody">
-                     <tr><td colspan="9" style="text-align: center; padding: 20px;">Loading policies...</td></tr>
-                     </tbody>
+                     <tr><td colspan="9" class="loading-reminder">Loading policies...</td></tr>
+                 </tbody>
              </table>
          </div>
          <div class="task-management-section">
              <h2><i class="fas fa-calendar-check"></i> Follow-up Tasks</h2>
              <div class="task-actions task-input-grid">
-                 <div class="task-input-group">
-                     <label for="newTaskCustomerName">Customer Name:</label>
-                     <input type="text" id="newTaskCustomerName" placeholder="Enter customer name (optional)...">
-                 </div>
-                 <div class="task-input-group">
-                     <label for="newTaskInput">Description <span class="required">*</span>:</label>
-                     <input type="text" id="newTaskInput" placeholder="Enter follow-up reason/description...">
-                 </div>
-                 <div class="task-input-group">
-                     <label for="newTaskDueDate">Follow-up Date:</label>
-                     <input type="date" id="newTaskDueDate">
-                 </div>
-                 <div class="task-input-group task-input-group-full">
-                     <label for="newTaskComments">Comments:</label>
-                     <textarea id="newTaskComments" rows="2" placeholder="Add any comments..."></textarea>
-                 </div>
-                 <div class="task-input-group task-input-group-button">
-                     <button id="addTaskBtn" class="button primary-button"><i class="fas fa-plus"></i> Add Follow-up</button>
-                 </div>
+                 <div class="task-input-group"><label for="newTaskCustomerName">Customer Name:</label><input type="text" id="newTaskCustomerName" placeholder="Enter customer name (optional)..."></div>
+                 <div class="task-input-group"><label for="newTaskInput">Description <span class="required">*</span>:</label><input type="text" id="newTaskInput" placeholder="Enter follow-up reason/description..."></div>
+                 <div class="task-input-group"><label for="newTaskDueDate">Follow-up Date:</label><input type="date" id="newTaskDueDate"></div>
+                 <div class="task-input-group task-input-group-full"><label for="newTaskComments">Comments:</label><textarea id="newTaskComments" rows="2" placeholder="Add any comments..."></textarea></div>
+                 <div class="task-input-group task-input-group-button"><button id="addTaskBtn" class="button primary-button"><i class="fas fa-plus"></i> Add Follow-up</button></div>
              </div>
              <ul id="taskList">
                  <li class="loading-tasks">Loading tasks...</li>
@@ -243,104 +158,41 @@
 
             <form id="policyForm">
                 <input type="hidden" id="editPolicyId">
-                <h4>Personal Information</h4>
+
+                <h4><i class="fas fa-user-circle"></i> Personal Information</h4>
                 <div class="form-row">
-                    <div class="form-group">
-                        <label for="customerName">Customer Name <span class="required">*</span>:</label>
-                        <input type="text" id="customerName" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="fatherName">Father's Name:</label>
-                        <input type="text" id="fatherName">
-                    </div>
+                    <div class="form-group"><label for="customerName">Customer Name <span class="required">*</span>:</label><input type="text" id="customerName" required></div>
+                    <div class="form-group"><label for="fatherName">Father's Name:</label><input type="text" id="fatherName"></div>
                 </div>
                 <div class="form-row">
-                    <div class="form-group">
-                        <label for="mobileNo">Mobile No <span class="required">*</span>:</label>
-                        <input type="tel" id="mobileNo" required placeholder="10 Digit Mobile Number">
-                    </div>
-                    <div class="form-group">
-                        <label for="dob">Date of Birth:</label>
-                        <input type="date" id="dob">
-                    </div>
+                    <div class="form-group"><label for="mobileNo">Mobile No <span class="required">*</span>:</label><input type="tel" id="mobileNo" required placeholder="10 Digit Mobile Number"></div>
+                    <div class="form-group"><label for="dob">Date of Birth:</label><input type="date" id="dob"></div>
                 </div>
-                <div class="form-group"> <label for="address">Address:</label>
-                    <textarea id="address" rows="2"></textarea>
-                </div>
-                <hr>
-                <h4>Policy Information</h4>
+                <div class="form-group"><label for="address">Address:</label><textarea id="address" rows="2"></textarea></div>
+
+                <h4><i class="fas fa-file-signature"></i> Policy Information</h4>
                 <div class="form-row">
-                    <div class="form-group">
-                       <label for="policyNumber">Policy Number <span class="required">*</span>:</label>
-                       <input type="text" id="policyNumber" required>
-                   </div>
-                   <div class="form-group">
-                       <label for="plan">Plan:</label>
-                       <input type="text" id="plan">
-                   </div>
-                    <div class="form-group">
-                       <label for="sumAssured">Sum Assured (₹):</label>
-                       <input type="number" id="sumAssured" step="1">
-                   </div>
+                   <div class="form-group"><label for="policyNumber">Policy Number <span class="required">*</span>:</label><input type="text" id="policyNumber" required></div>
+                   <div class="form-group"><label for="plan">Plan:</label><input type="text" id="plan"></div>
+                   <div class="form-group"><label for="sumAssured">Sum Assured (₹):</label><input type="number" id="sumAssured" step="1"></div>
                 </div>
                 <div class="form-row">
-                   <div class="form-group">
-                       <label for="policyTerm">Policy Term (Years):</label>
-                       <input type="text" id="policyTerm" placeholder="e.g., 21 or 25-16">
-                   </div>
-                   <div class="form-group">
-                       <label for="issuanceDate">Issuance Date <span class="required">*</span>:</label>
-                       <input type="date" id="issuanceDate" required>
-                   </div>
-                    <div class="form-group">
-                       <label for="modeOfPayment">Mode of Payment <span class="required">*</span>:</label>
-                       <select id="modeOfPayment" required>
-                           <option value="">-- Select Mode --</option>
-                           <option value="Yearly">Yearly</option>
-                           <option value="Half-Yearly">Half-Yearly</option>
-                           <option value="Quarterly">Quarterly</option>
-                           <option value="Monthly">Monthly</option>
-                       </select>
-                   </div>
+                   <div class="form-group"><label for="policyTerm">Policy Term (Years):</label><input type="text" id="policyTerm" placeholder="e.g., 21 or 25-16"></div>
+                   <div class="form-group"><label for="issuanceDate">Issuance Date <span class="required">*</span>:</label><input type="date" id="issuanceDate" required></div>
+                   <div class="form-group"><label for="modeOfPayment">Mode of Payment <span class="required">*</span>:</label><select id="modeOfPayment" required><option value="">-- Select Mode --</option><option value="Yearly">Yearly</option><option value="Half-Yearly">Half-Yearly</option><option value="Quarterly">Quarterly</option><option value="Monthly">Monthly</option></select></div>
                 </div>
-                 <hr>
-                 <h4>Premium & Dates</h4>
+
+                 <h4><i class="fas fa-money-check-alt"></i> Premium & Dates</h4>
                 <div class="form-row">
-                    <div class="form-group">
-                       <label for="premiumAmount">Installment Premium (₹) <span class="required">*</span>:</label>
-                       <input type="number" id="premiumAmount" step="0.01" required>
-                   </div>
-                   <div class="form-group">
-                       <label for="nextInstallmentDate">Next Installment Date <span class="required">*</span>:</label>
-                       <input type="date" id="nextInstallmentDate" required>
-                       <small>First due date. Auto-calculated if blank on Add.</small>
-                   </div>
-                   <div class="form-group">
-                       <label for="maturityDate">Maturity Date:</label>
-                       <input type="date" id="maturityDate">
-                   </div>
+                    <div class="form-group"><label for="premiumAmount">Installment Premium (₹) <span class="required">*</span>:</label><input type="number" id="premiumAmount" step="0.01" required></div>
+                    <div class="form-group"><label for="nextInstallmentDate">Next Installment Date <span class="required">*</span>:</label><input type="date" id="nextInstallmentDate" required><small>First due date. Auto-calculated if blank on Add.</small></div>
+                    <div class="form-group"><label for="maturityDate">Maturity Date:</label><input type="date" id="maturityDate"></div>
                 </div>
-                <hr>
-                 <h4>Status</h4>
+
+                 <h4><i class="fas fa-info-circle"></i> Status</h4>
                 <div class="form-row">
-                     <div class="form-group">
-                       <label for="policyStatus">Policy Status:</label>
-                       <select id="policyStatus">
-                            <option value="Active">Active</option>
-                            <option value="Lapsed">Lapsed</option>
-                            <option value="Matured">Matured</option>
-                            <option value="Surrendered">Surrendered</option>
-                        </select>
-                   </div>
-                    <div class="form-group">
-                        <label for="nachStatus">NACH Status:</label>
-                        <select id="nachStatus">
-                            <option value="">-- Select --</option>
-                            <option value="No">No</option>
-                            <option value="Yes">Yes</option>
-                            <option value="Pending">Pending</option>
-                        </select>
-                    </div>
+                     <div class="form-group"><label for="policyStatus">Policy Status:</label><select id="policyStatus"><option value="Active">Active</option><option value="Lapsed">Lapsed</option><option value="Matured">Matured</option><option value="Surrendered">Surrendered</option></select></div>
+                     <div class="form-group"><label for="nachStatus">NACH Status:</label><select id="nachStatus"><option value="">-- Select --</option><option value="No">No</option><option value="Yes">Yes</option><option value="Pending">Pending</option></select></div>
                 </div>
             </form> <div class="modal-actions">
                 <button type="submit" form="policyForm" id="savePolicyBtn" class="button save-button"><i class="fas fa-save"></i> Save Policy</button>
@@ -349,72 +201,37 @@
         </div> </div>
     <div id="clientDetailView" class="modal">
        <div class="modal-content large-modal">
-             <h2 id="clientDetailName">Client Details</h2>
+            <h2 id="clientDetailName">Client Details</h2>
             <span class="close-btn" id="closeClientDetail" title="Close">&times;</span>
-
              <div id="clientDetailContent">
-                <div class="client-info-section">
-                    <h4><i class="fas fa-user"></i> Personal Information</h4>
-                    <div class="client-info-grid">
-                        <p><strong>Mobile:</strong> <span id="clientDetailMobile">-</span></p>
-                        <p><strong>DOB:</strong> <span id="clientDetailDob">-</span></p>
-                        <p><strong>Father's Name:</strong> <span id="clientDetailFatherName">-</span></p>
-                        <p><strong>Address:</strong> <span id="clientDetailAddress">-</span></p>
-                    </div>
-                </div>
-                 <hr>
-                 <div class="tab-container">
-                    <button class="tab-button active" onclick="openDetailTab(event, 'clientPolicies')"><i class="fas fa-file-contract"></i> Policies</button>
-                    <button class="tab-button" onclick="openDetailTab(event, 'communicationLog')"><i class="fas fa-comments"></i> Communication Log</button>
-                </div>
-                <div id="clientPolicies" class="tab-content active">
-                    <div id="clientPoliciesList" class="client-policy-list-container">
-                        <p>Loading policies...</p>
-                    </div>
-                </div>
-                <div id="communicationLog" class="tab-content">
-                    <div id="communicationLogList" class="log-list-container">
-                        <p>No communication logs found.</p>
-                    </div>
-                    <div class="add-log-entry">
-                        <h4>Add New Note</h4>
-                        <textarea id="newLogNote" rows="3" placeholder="Enter communication details..."></textarea>
-                        <button id="addLogBtn" class="button primary-button"><i class="fas fa-plus"></i> Add Note</button>
-                    </div>
-                </div>
-            </div> <div class="modal-actions">
-                 <button type="button" id="closeClientDetailBtnBottom" class="button cancel-button">Close View</button>
-            </div>
+                <div class="client-info-section"><h4><i class="fas fa-user"></i> Personal Information</h4><div class="client-info-grid"><p><strong>Mobile:</strong> <span id="clientDetailMobile">-</span></p><p><strong>DOB:</strong> <span id="clientDetailDob">-</span></p><p><strong>Father's Name:</strong> <span id="clientDetailFatherName">-</span></p><p><strong>Address:</strong> <span id="clientDetailAddress">-</span></p></div></div><hr>
+                <div class="tab-container"><button class="tab-button active" onclick="openDetailTab(event, 'clientPolicies')"><i class="fas fa-file-contract"></i> Policies</button><button class="tab-button" onclick="openDetailTab(event, 'communicationLog')"><i class="fas fa-comments"></i> Communication Log</button></div>
+                <div id="clientPolicies" class="tab-content active"><div id="clientPoliciesList" class="client-policy-list-container"><p>Loading policies...</p></div></div>
+                <div id="communicationLog" class="tab-content"><div id="communicationLogList" class="log-list-container"><p>No communication logs found.</p></div><div class="add-log-entry"><h4>Add New Note</h4><textarea id="newLogNote" rows="3" placeholder="Enter communication details..."></textarea><button id="addLogBtn" class="button primary-button"><i class="fas fa-plus"></i> Add Note</button></div></div>
+            </div> <div class="modal-actions"><button type="button" id="closeClientDetailBtnBottom" class="button cancel-button">Close View</button></div>
         </div> </div>
     <div id="editTaskModal" class="modal">
         <div class="modal-content"> <h2><i class="fas fa-edit"></i> Edit Follow-up Task</h2>
             <span class="close-btn" id="closeEditTaskModal" title="Close">&times;</span>
-
             <form id="editTaskForm">
                 <input type="hidden" id="editTaskId">
-                <div class="form-group">
-                    <label for="editTaskCustomerName">Customer Name:</label>
-                    <input type="text" id="editTaskCustomerName">
-                </div>
-                <div class="form-group">
-                    <label for="editTaskDescription">Description <span class="required">*</span>:</label>
-                    <input type="text" id="editTaskDescription" required>
-                </div>
-                <div class="form-group">
-                    <label for="editTaskDueDate">Follow-up Date:</label>
-                    <input type="date" id="editTaskDueDate">
-                </div>
-                <div class="form-group">
-                    <label for="editTaskComments">Comments:</label>
-                    <textarea id="editTaskComments" rows="3"></textarea>
-                </div>
-                 <div class="form-group">
-                     <label for="editTaskStatus">Status:</label>
-                     <select id="editTaskStatus">
-                         <option value="pending">Pending</option>
-                         <option value="completed">Completed</option>
-                     </select>
+                <div class="form-row">
+                    <div class="form-group"><label for="editTaskCustomerName">Customer Name:</label><input type="text" id="editTaskCustomerName"></div>
+                    <div class="form-group"><label for="editTaskDueDate">Follow-up Date:</label><input type="date" id="editTaskDueDate"></div>
                  </div>
+                <div class="form-group"><label for="editTaskDescription">Description <span class="required">*</span>:</label><input type="text" id="editTaskDescription" required></div>
+
+                 <div class="form-group">
+                      <label>Comment History:</label>
+                      <div id="editTaskCommentsHistory"><p>Loading history...</p></div>
+                 </div>
+
+                 <div class="form-group">
+                      <label for="editTaskNewComment">Add New Comment:</label>
+                      <textarea id="editTaskNewComment" rows="2" placeholder="Enter new comment here..."></textarea>
+                 </div>
+
+                <div class="form-group"><label for="editTaskStatus">Status:</label><select id="editTaskStatus"><option value="pending">Pending</option><option value="completed">Completed</option></select></div>
             </form> <div class="modal-actions">
                 <button type="submit" form="editTaskForm" id="saveTaskChangesBtn" class="button save-button"><i class="fas fa-save"></i> Save Changes</button>
                 <button type="button" id="cancelEditTaskBtn" class="button cancel-button">Cancel</button>
