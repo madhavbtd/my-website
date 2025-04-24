@@ -1,25 +1,39 @@
-/* css/index.css - Updates for Professional Look & New Features */
+/* css/index.css - Updates for Professional Look & New Features (v2) */
 
-/* --- Base Variables (Keep existing, maybe refine colors) --- */
+/* --- Base Variables (कुछ रंगों को परिष्कृत किया जा सकता है) --- */
 :root {
     --primary-color: #0056b3;
-    --secondary-color: #2c3e50;
-    --accent-color: #ffc107;
-    --success-color: #28a745;
-    --info-color: #17a2b8;
-    --danger-color: #dc3545;
-    --light-bg: #f8f9fa;
-    --border-color: #dee2e6; /* हल्का बॉर्डर */
-    --text-color: #343a40;
-    --text-muted: #6c757d;
+    --secondary-color: #2c3e50; /* गहरा ग्रे/नेवी */
+    --accent-color: #f1c40f; /* पीला एक्सेंट */
+    --success-color: #28a745; /* हरा */
+    --info-color: #17a2b8; /* टील */
+    --warning-color: #ffc107; /* पीला */
+    --danger-color: #dc3545; /* लाल */
+    --light-bg: #f8f9fa; /* बहुत हल्का ग्रे */
+    --medium-gray: #dee2e6; /* बॉर्डर जैसा */
+    --card-bg: #ffffff; /* कार्ड बैकग्राउंड */
+    --text-color: #343a40; /* मुख्य टेक्स्ट */
+    --text-muted: #6c757d; /* हल्का टेक्स्ट */
     --sidebar-text: #ecf0f1;
     --sidebar-hover: #34495e;
-    --sidebar-active-bg: #3a5368; /* नया एक्टिव बैकग्राउंड */
-    --sidebar-active-border: #f1c40f;
-    --card-bg: #ffffff;
-    --card-shadow: 0 2px 8px rgba(0, 0, 0, 0.07);
+    --sidebar-active-bg: #3a5368;
+    --sidebar-active-border: var(--accent-color); /* एक्सेंट रंग का उपयोग */
+
+    --card-shadow: 0 3px 8px rgba(0, 0, 0, 0.06); /* नरम शैडो */
+    --card-shadow-hover: 0 6px 12px rgba(0, 0, 0, 0.09); /* होवर पर थोड़ी गहरी शैडो */
     --card-border-radius: 8px;
-    --base-font-size: 15px; /* थोड़ा छोटा बेस */
+    --base-font-size: 16px; /* पठनीयता के लिए थोड़ा बड़ा */
+    --base-line-height: 1.6; /* थोड़ी अधिक लाइन हाइट */
+
+    /* स्टेटस रंगों को वेरिएबल्स में परिभाषित करें (बॉर्डर या आइकन के लिए) */
+    --status-order-received-color: var(--secondary-color);
+    --status-designing-color: var(--warning-color);
+    --status-verification-color: #fd7e14; /* नारंगी */
+    --status-design-approved-color: #20c997; /* टील-हरा */
+    --status-printing-color: var(--info-color);
+    --status-ready-for-working-color: #6f42c1; /* बैंगनी */
+    --status-delivered-color: #0dcaf0; /* हल्का नीला */
+    --status-completed-color: var(--success-color);
 }
 
 body {
@@ -27,9 +41,9 @@ body {
     font-size: var(--base-font-size);
     margin: 0;
     padding: 0;
-    background-color: #f4f6f8;
+    background-color: #f4f6f8; /* थोड़ा अलग बैकग्राउंड */
     color: var(--text-color);
-    line-height: 1.6;
+    line-height: var(--base-line-height);
 }
 
 .container {
@@ -37,7 +51,7 @@ body {
     min-height: 100vh;
 }
 
-/* --- Sidebar Improvements --- */
+/* --- Sidebar (पहले जैसा) --- */
 .sidebar {
     width: 220px;
     background-color: var(--secondary-color);
@@ -63,160 +77,50 @@ body {
     transition: background-color 0.2s ease, padding-left 0.2s ease, border-left-color 0.2s ease, color 0.2s ease;
     font-size: 0.95em;
     white-space: nowrap;
-    gap: 15px; /* आइकन और टेक्स्ट के बीच गैप */
+    gap: 15px;
 }
-.sidebar ul li a i {
-    width: 20px;
-    text-align: center;
-    font-size: 1.1em;
-    flex-shrink: 0;
-}
-.sidebar ul li a:hover {
-    background-color: var(--sidebar-hover);
-    color: #fff;
-    padding-left: 20px; /* होवर पर थोड़ा इंडेंट */
-    border-left-color: var(--sidebar-hover); /* होवर पर बॉर्डर कलर */
-}
-.sidebar ul li a.active {
-    background-color: var(--sidebar-active-bg); /* एक्टिव के लिए बैकग्राउंड */
-    border-left-color: var(--sidebar-active-border);
-    font-weight: 600;
-    color: #fff;
-}
+.sidebar ul li a i { width: 20px; text-align: center; font-size: 1.1em; flex-shrink: 0; }
+.sidebar ul li a:hover { background-color: var(--sidebar-hover); color: #fff; padding-left: 20px; border-left-color: var(--sidebar-hover); }
+.sidebar ul li a.active { background-color: var(--sidebar-active-bg); border-left-color: var(--sidebar-active-border); font-weight: 600; color: #fff; }
 .sidebar ul li:last-child { margin-top: auto; }
 .sidebar ul li a#logout-link { border-top: 1px solid var(--sidebar-hover); }
-
 
 /* --- Main Content Area --- */
 .main-content {
     flex: 1;
-    padding: 25px;
+    padding: 25px; /* पैडिंग */
     overflow-y: auto;
     height: 100vh;
     box-sizing: border-box;
     background-color: #f4f6f8;
     display: flex;
     flex-direction: column;
-    gap: 25px; /* Sections के बीच गैप */
+    gap: 25px; /* सेक्शन्स के बीच गैप */
 }
-.main-content > *:last-child {
-    margin-bottom: 0; /* आखिरी एलिमेंट के नीचे मार्जिन हटाएं */
-}
+.main-content > *:last-child { margin-bottom: 0; }
 
-/* --- Updated Header --- */
-.header.updated-header {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: space-between;
-    align-items: center;
-    padding: 12px 20px;
-    background-color: var(--card-bg);
-    box-shadow: var(--card-shadow);
-    border-radius: var(--card-border-radius);
-    gap: 15px;
-    border: 1px solid var(--border-color);
-}
-.welcome-text {
-    font-weight: 600;
-    font-size: 1.1em;
-    color: var(--primary-color);
-    flex-shrink: 0;
-    margin-right: auto; /* पुश वेलकम टेक्स्ट लेफ्ट */
-}
-.header-actions {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 15px;
-    /* margin-left: auto; हटाया गया ताकि वेलकम टेक्स्ट लेफ्ट रहे */
-}
-.header-buttons {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
-}
-.button-base {
-    padding: 8px 14px;
-    font-size: 0.9em;
-    border-radius: 5px;
-    text-decoration: none;
-    color: white;
-    border: none;
-    cursor: pointer;
-    font-family: 'Poppins', sans-serif;
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    transition: background-color 0.2s ease, transform 0.1s ease;
-    line-height: 1.4;
-}
+/* --- Updated Header (पहले जैसा) --- */
+.header.updated-header { /* ...पहले जैसा... */ display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; padding: 12px 20px; background-color: var(--card-bg); box-shadow: var(--card-shadow); border-radius: var(--card-border-radius); gap: 15px; border: 1px solid var(--border-color); }
+.welcome-text { font-weight: 600; font-size: 1.1em; color: var(--primary-color); flex-shrink: 0; margin-right: auto; }
+.header-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 15px; }
+.header-buttons { display: flex; flex-wrap: wrap; gap: 10px; }
+.button-base { padding: 8px 14px; font-size: 0.9em; border-radius: 5px; text-decoration: none; color: white; border: none; cursor: pointer; font-family: 'Poppins', sans-serif; display: inline-flex; align-items: center; gap: 6px; transition: background-color 0.2s ease, transform 0.1s ease; line-height: 1.4; }
 .button-base:hover { opacity: 0.9; }
 .button-base:active { transform: scale(0.98); }
 .add-customer-btn { background-color: var(--success-color); }
 .add-supplier-btn { background-color: var(--info-color); }
 .new-order-btn { background-color: var(--primary-color); }
-.quick-payment-btn { background-color: var(--info-color); } /* पेमेंट बटन कलर */
-
-.date-time-container {
-    font-size: 0.9em;
-    font-weight: 500;
-    background-color: var(--light-bg);
-    border: 1px solid var(--border-color);
-    padding: 8px 12px;
-    border-radius: 5px;
-    color: var(--text-muted);
-    white-space: nowrap;
-}
-.header-icons {
-    display: flex;
-    gap: 10px;
-    align-items: center;
-}
-.icon-button {
-    background: none;
-    border: none;
-    font-size: 1.3em;
-    color: var(--text-muted);
-    cursor: pointer;
-    padding: 5px;
-    position: relative;
-    transition: color 0.2s ease;
-}
+.quick-payment-btn { background-color: var(--info-color); }
+.date-time-container { font-size: 0.9em; font-weight: 500; background-color: var(--light-bg); border: 1px solid var(--border-color); padding: 8px 12px; border-radius: 5px; color: var(--text-muted); white-space: nowrap; }
+.header-icons { display: flex; gap: 10px; align-items: center; }
+.icon-button { background: none; border: none; font-size: 1.3em; color: var(--text-muted); cursor: pointer; padding: 5px; position: relative; transition: color 0.2s ease; }
 .icon-button:hover { color: var(--primary-color); }
-.icon-button .badge {
-    position: absolute;
-    top: 0;
-    right: 0;
-    background-color: var(--danger-color);
-    color: white;
-    font-size: 0.6em;
-    padding: 2px 5px;
-    border-radius: 50%;
-    font-weight: bold;
-    display: none;
-}
+.icon-button .badge { position: absolute; top: 0; right: 0; background-color: var(--danger-color); color: white; font-size: 0.6em; padding: 2px 5px; border-radius: 50%; font-weight: bold; display: none; }
 .icon-button .badge.active { display: block; }
 
-/* --- Card Layout Helper --- */
-.card-layout {
-    background-color: var(--card-bg, #ffffff);
-    padding: 20px;
-    border-radius: var(--card-border-radius, 8px);
-    box-shadow: var(--card-shadow, 0 2px 8px rgba(0, 0, 0, 0.07));
-    border: 1px solid var(--border-color, #dee2e6);
-}
-.card-layout h3 {
-    margin-top: 0;
-    margin-bottom: 15px;
-    font-size: 1.1em;
-    font-weight: 600;
-    color: var(--primary-color);
-    border-bottom: 1px solid #eee;
-    padding-bottom: 8px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
+/* --- Card Layout Helper (पहले जैसा) --- */
+.card-layout { background-color: var(--card-bg, #ffffff); padding: 20px; border-radius: var(--card-border-radius, 8px); box-shadow: var(--card-shadow, 0 2px 8px rgba(0, 0, 0, 0.07)); border: 1px solid var(--border-color, #dee2e6); }
+.card-layout h3 { margin-top: 0; margin-bottom: 15px; font-size: 1.1em; font-weight: 600; color: var(--primary-color); border-bottom: 1px solid #eee; padding-bottom: 8px; display: flex; align-items: center; gap: 8px; }
 .card-layout h3 i { font-size: 0.9em; opacity: 0.8; }
 .card-layout ul { list-style: none; padding: 0; margin: 0; font-size: 0.9em; max-height: 150px; overflow-y: auto; }
 .card-layout ul li { padding: 6px 0; border-bottom: 1px dotted #eee; color: var(--text-muted); }
@@ -224,114 +128,188 @@ body {
 .card-layout ul li strong { color: var(--text-color); }
 .card-layout .loading-placeholder { color: #aaa; font-style: italic; }
 
-/* --- KPI Section --- */
+/* --- >>> Updated KPI Section --- */
 .kpi-section {
     display: grid;
+    /* Adjust minmax if 5 items look cramped, e.g., minmax(160px, 1fr) */
     grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-    gap: 15px;
+    gap: 20px; /* थोड़ा ज़्यादा गैप */
+    padding: 20px; /* Add padding to the section itself */
 }
 .kpi-card {
-    display: flex; flex-direction: column; align-items: center; justify-content: center;
-    text-align: center; padding: 15px; border: 1px solid var(--border-color);
-    border-radius: var(--card-border-radius); background-color: var(--light-bg);
-    position: relative; min-height: 100px; transition: transform 0.2s ease, box-shadow 0.2s ease;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 20px 15px; /* ज़्यादा पैडिंग */
+    border: 1px solid var(--border-color);
+    border-radius: var(--card-border-radius);
+    background-color: var(--card-bg); /* White background */
+    box-shadow: var(--card-shadow); /* Apply consistent shadow */
+    min-height: 110px; /* थोड़ी ज़्यादा ऊंचाई */
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    position: relative; /* For potential future additions like tooltips */
 }
-.kpi-card:hover { transform: translateY(-2px); box-shadow: 0 4px 10px rgba(0,0,0,0.08); }
-.kpi-icon { font-size: 1.8em; color: var(--primary-color); opacity: 0.6; margin-bottom: 8px; }
-.kpi-value { font-size: 1.6em; font-weight: 700; color: var(--text-color); line-height: 1.1; }
-.kpi-label { font-size: 0.8em; color: var(--text-muted); margin-top: 5px; text-transform: uppercase; }
+.kpi-card:hover {
+    transform: translateY(-3px); /* Slightly more lift */
+    box-shadow: var(--card-shadow-hover); /* Use hover shadow */
+}
+.kpi-icon {
+    font-size: 1.8em; /* थोड़ा छोटा */
+    color: var(--primary-color);
+    opacity: 0.7; /* थोड़ा हल्का */
+    margin-bottom: 10px; /* थोड़ा ज़्यादा मार्जिन */
+}
+.kpi-value {
+    font-size: 1.8em; /* Slightly larger count */
+    font-weight: 700;
+    color: var(--text-color);
+    line-height: 1.1;
+    margin-bottom: 5px; /* Add margin below count */
+}
+.kpi-label {
+    font-size: 0.8em;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    font-weight: 500; /* थोड़ा बोल्ड लेबल */
+}
+/* --- End Updated KPI Section --- */
 
-/* --- Order Control Panel Improvements --- */
+
+/* --- >>> Updated Order Control Panel --- */
 .order-control-panel {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-    gap: 15px;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); /* Adjust min width if needed */
+    gap: 20px; /* Consistent gap */
 }
-.panel-item {
-    padding: 15px; min-height: 150px; box-shadow: var(--card-shadow); border: 1px solid var(--border-color);
-    border-radius: var(--card-border-radius); font-size: 0.9em; color: var(--text-color);
-    display: flex; flex-direction: column; justify-content: space-between; align-items: center;
-    font-weight: 600; font-family: 'Poppins', sans-serif; text-transform: uppercase;
-    line-height: 1.3; transition: transform 0.2s ease, box-shadow 0.2s ease;
-    background-color: #fff; /* Default background */
-}
-.panel-item:hover { transform: translateY(-3px); box-shadow: 0 5px 10px rgba(0, 0, 0, 0.1); }
-.panel-icon { font-size: 2em; margin-bottom: 10px; }
-.panel-count { font-size: 2.3em; font-weight: 600; display: block; margin-bottom: 10px; color: var(--primary-color); }
-.panel-item a.button-link {
-    background-color: var(--primary-color); color: white; border: none; padding: 6px 12px;
-    cursor: pointer; border-radius: 5px; font-size: 0.8em; margin-top: 8px;
-    font-weight: 500; font-family: 'Poppins', sans-serif; text-transform: capitalize;
-    text-decoration: none; display: inline-block; transition: background-color 0.2s ease;
-}
-.panel-item a.button-link:hover { background-color: #004085; }
-/* Panel Colors (पहले जैसे) */
-.panel-item.light-blue { background-color: #e1f5fe; color: #0d47a1; border-color: #b3e5fc; } .panel-item.light-blue .panel-count { color: #1976d2;}
-.panel-item.light-orange { background-color: #fff3e0; color: #bf360c; border-color: #ffe0b2;} .panel-item.light-orange .panel-count { color: #e65100;}
-.panel-item.light-green { background-color: #e8f5e9; color: #1b5e20; border-color: #c8e6c9;} .panel-item.light-green .panel-count { color: #388e3c;}
-.panel-item.light-red { background-color: #ffebee; color: #b71c1c; border-color: #ffcdd2;} .panel-item.light-red .panel-count { color: #d32f2f;}
 
-/* Loading Spinner */
+.panel-item {
+    background-color: var(--card-bg); /* Consistent background */
+    border: 1px solid var(--border-color);
+    border-left: 5px solid var(--secondary-color); /* Default border color */
+    border-radius: var(--card-border-radius);
+    box-shadow: var(--card-shadow);
+    padding: 20px 15px; /* Consistent padding */
+    min-height: 150px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center; /* Center content vertically */
+    align-items: center; /* Center content horizontally */
+    text-align: center;
+    font-weight: 600;
+    font-family: 'Poppins', sans-serif;
+    text-transform: uppercase;
+    font-size: 0.9em;
+    color: var(--text-color);
+    line-height: 1.4; /* Improved line height */
+    transition: transform 0.2s ease, box-shadow 0.2s ease, border-left-color 0.2s ease;
+    position: relative; /* For positioning the link */
+}
+
+.panel-item:hover {
+    transform: translateY(-4px); /* Slightly more lift */
+    box-shadow: var(--card-shadow-hover);
+    border-left-color: var(--primary-color); /* Highlight on hover */
+}
+
+.panel-icon {
+    font-size: 1.8em; /* थोड़ा एडजस्टेड */
+    margin-bottom: 12px; /* थोड़ी ज़्यादा स्पेस */
+    color: var(--text-muted); /* डिफ़ॉल्ट आइकन रंग */
+    opacity: 0.8;
+}
+
+.panel-count {
+    font-size: 2.1em; /* थोड़ा एडजस्टेड */
+    font-weight: 700; /* ज़्यादा बोल्ड */
+    display: block;
+    margin-bottom: 15px; /* बटन से ज़्यादा दूरी */
+    color: var(--primary-color); /* प्राथमिक रंग */
+}
+
+/* स्टेटस के अनुसार बॉर्डर और आइकन रंग */
+.panel-item.status-order-received { border-left-color: var(--status-order-received-color); }
+.panel-item.status-designing { border-left-color: var(--status-designing-color); }
+.panel-item.status-verification { border-left-color: var(--status-verification-color); }
+.panel-item.status-design-approved { border-left-color: var(--status-design-approved-color); }
+.panel-item.status-printing { border-left-color: var(--status-printing-color); }
+.panel-item.status-ready-for-working { border-left-color: var(--status-ready-for-working-color); }
+.panel-item.status-delivered { border-left-color: var(--status-delivered-color); }
+.panel-item.status-completed { border-left-color: var(--status-completed-color); }
+
+/* वैकल्पिक: आइकन का रंग स्टेटस के अनुसार बदलें */
+.panel-item.status-designing .panel-icon { color: var(--status-designing-color); opacity: 1; }
+.panel-item.status-printing .panel-icon { color: var(--status-printing-color); opacity: 1; }
+.panel-item.status-completed .panel-icon { color: var(--status-completed-color); opacity: 1; }
+/* ... आदि ... */
+
+.panel-item a.button-link {
+    /* स्टाइल को अन्य बटनों के साथ संगत बनाएं */
+    background-color: var(--medium-gray);
+    color: var(--text-color);
+    border: none;
+    padding: 6px 12px;
+    cursor: pointer;
+    border-radius: 5px;
+    font-size: 0.8em;
+    margin-top: auto; /* पुश टू बॉटम */
+    font-weight: 500;
+    text-transform: capitalize;
+    text-decoration: none;
+    display: inline-block;
+    transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.panel-item a.button-link:hover {
+    background-color: var(--secondary-color);
+    color: white;
+}
+/* --- End Updated Order Control Panel --- */
+
+
+/* Loading Spinner (पहले जैसा) */
 .loading-placeholder, .fa-spinner { color: #aaa; font-style: italic; }
 .panel-count .fa-spinner, .kpi-value .fa-spinner { font-size: 0.6em; color: #aaa; }
 .fa-spinner { animation: fa-spin 1.5s infinite linear; display: inline-block; }
 @keyframes fa-spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-/* --- Dashboard Grid Layout --- */
-.dashboard-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: 25px;
-}
+/* --- Dashboard Grid Layout (पहले जैसा) --- */
+.dashboard-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 25px; }
 .info-feed-section ul li { display: flex; justify-content: space-between; align-items: center; }
 .info-feed-section .activity-time { font-size: 0.85em; color: #999; white-space: nowrap; margin-left: 10px;}
 
-/* --- Reminder Section Improvements --- */
-.reminder-section h4 {
-    font-size: 0.9em; color: var(--secondary-color); margin-top: 15px;
-    margin-bottom: 5px; font-weight: 600; padding-bottom: 3px;
-    border-bottom: 1px dotted #ccc;
-}
+/* --- Reminder Section (पहले जैसा) --- */
+.reminder-section h4 { font-size: 0.9em; color: var(--secondary-color); margin-top: 15px; margin-bottom: 5px; font-weight: 600; padding-bottom: 3px; border-bottom: 1px dotted #ccc; }
 .reminder-section h4:first-of-type { margin-top: 0; }
 .reminder-section ul { max-height: 100px; }
 
-/* --- Chart Section --- */
+/* --- Chart Section (पहले जैसा) --- */
 .chart-section .chart-container { position: relative; height: 250px; width: 100%; }
 
-/* --- Search Bar & Suggestions --- */
-.search-bar {
-    display: flex; align-items: center; justify-content: flex-end; flex-wrap: wrap;
-    gap: 10px; background-color: var(--card-bg); padding: 12px 15px;
-    border-radius: var(--card-border-radius); box-shadow: var(--card-shadow);
-    border: 1px solid var(--border-color); position: relative;
-}
+/* --- Search Bar & Suggestions (लेबल अपडेट किया गया) --- */
+.search-bar { display: flex; align-items: center; justify-content: flex-end; flex-wrap: wrap; gap: 10px; background-color: var(--card-bg); padding: 12px 15px; border-radius: var(--card-border-radius); box-shadow: var(--card-shadow); border: 1px solid var(--border-color); position: relative; }
 .search-bar label { margin: 0; color: var(--text-muted); font-size: 0.95em; font-weight: 500; flex-shrink: 0; }
-.search-bar input[type="text"] {
-    padding: 8px 10px; border: 1px solid var(--border-color); border-radius: 5px;
-    font-size: 0.9em; width: 250px; height: 38px; box-sizing: border-box;
-}
+.search-bar input[type="text"] { padding: 8px 10px; border: 1px solid var(--border-color); border-radius: 5px; font-size: 0.9em; width: 250px; height: 38px; box-sizing: border-box; }
 .search-bar input[type="text"]:focus { outline: none; border-color: var(--primary-color); box-shadow: 0 0 0 2px rgba(0, 86, 179, 0.2); }
-.search-bar button {
-    background-color: var(--success-color); color: white; border: none; padding: 8px 14px;
-    cursor: pointer; border-radius: 5px; font-size: 0.9em; height: 38px;
-    line-height: 1; transition: background-color 0.2s ease; flex-shrink: 0;
-}
+.search-bar button { background-color: var(--success-color); color: white; border: none; padding: 8px 14px; cursor: pointer; border-radius: 5px; font-size: 0.9em; height: 38px; line-height: 1; transition: background-color 0.2s ease; flex-shrink: 0; }
 .search-bar button:hover { background-color: #1e7e34; }
-.suggestions-list {
-    display: none; position: absolute; top: calc(100% + 5px); right: 15px;
-    width: 310px; background-color: white; border: 1px solid var(--border-color);
-    border-radius: 5px; box-shadow: 0 5px 10px rgba(0,0,0,0.1);
-    max-height: 200px; overflow-y: auto; z-index: 1050;
-}
+.suggestions-list { display: none; position: absolute; top: calc(100% + 5px); /* इनपुट के नीचे */ /* सर्च इनपुट के सापेक्ष बाएं से शुरू करें */ left: 0; right: auto; width: 100%; /* पूरी चौड़ाई */ max-width: 400px; /* या उपयुक्त अधिकतम चौड़ाई */ background-color: white; border: 1px solid var(--border-color); border-radius: 5px; box-shadow: 0 5px 10px rgba(0,0,0,0.1); max-height: 200px; overflow-y: auto; z-index: 1050; }
+/* सुनिश्चित करें कि यह सर्च इनपुट के बाईं ओर से शुरू हो रहा है */
+.search-bar { position: relative; /* कंटेनर को रिलेटिव बनाएं */ }
+.search-bar input[type="text"] { /* ... */ }
+.search-bar .suggestions-list { /* ऊपर दिए गए स्टाइल */ }
 .suggestions-list div { padding: 8px 12px; cursor: pointer; border-bottom: 1px solid #eee; font-size: 0.9em; }
 .suggestions-list div:last-child { border-bottom: none; }
 .suggestions-list div:hover { background-color: #f0f0f0; }
 .suggestions-list div.no-suggestions { color: var(--text-muted); cursor: default; }
+.suggestions-list div .suggestion-type { /* टाइप दिखाने के लिए स्टाइल */ font-size: 0.8em; color: #888; margin-left: 5px; font-style: italic; }
 
-/* --- Responsive --- */
+
+/* --- Responsive (पहले जैसा, लेकिन एडजस्टमेंट की आवश्यकता हो सकती है) --- */
 @media (max-width: 1200px) {
-     .kpi-section { grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); }
-     .dashboard-grid { grid-template-columns: 1fr; } /* छोटे टैबलेट पर स्टैक करें */
+     .kpi-section { grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 15px; } /* 5 आइटम्स के लिए समायोजित करें */
+     .dashboard-grid { grid-template-columns: 1fr; }
 }
 @media (max-width: 992px) {
     .sidebar { width: 60px; overflow: hidden; position: absolute; left: 0; top: 0; height: 100%; }
@@ -345,6 +323,8 @@ body {
      .welcome-text { font-size: 1em; }
      .header-actions { gap: 10px; }
      .button-base { padding: 7px 12px; font-size: 0.85em; }
+     .kpi-section { grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); } /* टैबलेट पर समायोजित करें */
+     .order-control-panel { grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); } /* टैबलेट पर समायोजित करें */
 }
 @media (max-width: 768px) {
     .container { flex-direction: column; }
@@ -364,21 +344,24 @@ body {
     .header-actions { margin-left: 0; justify-content: center; flex-direction: column; gap: 12px;}
     .header-buttons { justify-content: center; width: 100%; order: 2;}
     .date-time-container { order: 1; text-align: center; }
-    .header-icons { order: 0; align-self: flex-end; } /* Move icons to top right */
+    .header-icons { order: 0; align-self: flex-end; }
     .search-bar { flex-direction: column; align-items: stretch; gap: 10px; padding: 10px; position: relative; }
     .search-bar input[type="text"] { width: 100%; max-width: none; } .search-bar button { width: 100%; }
-    .suggestions-list { position: static; width: 100%; max-width: none; margin-top: 5px; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05); border-radius: 5px; right: auto; left: auto; max-height: 150px; border: 1px solid var(--border-color); }
-    .kpi-section, .order-control-panel { gap: 10px; }
-    .kpi-card { padding: 10px; min-height: 80px;} .kpi-icon { font-size: 1.5em; margin-bottom: 5px;} .kpi-value { font-size: 1.4em; } .kpi-label { font-size: 0.7em; }
-    .panel-item { padding: 12px 10px; min-height: 130px; } .panel-icon { font-size: 1.8em; } .panel-count { font-size: 2em; }
+    /* Suggestion list को input के नीचे दिखाने के लिए समायोजित करें */
+    .search-bar .suggestions-list { position: absolute; width: 100%; /* या इनपुट की चौड़ाई के बराबर */ top: calc(100% + 5px); left: 0; right: 0; max-width: none; margin-top: 0; /* शीर्ष मार्जिन हटाएं */ z-index: 1050; }
+    .kpi-section { grid-template-columns: repeat(3, 1fr); gap: 15px; } /* मोबाइल पर 3 कॉलम? या 2? */
+    .order-control-panel { grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 15px; }
+    .kpi-card { padding: 12px; min-height: 90px;} .kpi-icon { font-size: 1.6em;} .kpi-value { font-size: 1.5em; } .kpi-label { font-size: 0.75em; }
+    .panel-item { padding: 15px 10px; min-height: 130px; } .panel-icon { font-size: 1.7em; } .panel-count { font-size: 1.9em; }
     .dashboard-grid { gap: 20px; } .card-layout { padding: 15px; } .card-layout h3 { font-size: 1em; margin-bottom: 10px;} .card-layout ul { font-size: 0.85em; }
 }
 @media (max-width: 480px) {
      body { font-size: 14px; } .main-content { padding: 10px; gap: 15px;}
      .header-buttons { flex-direction: column; align-items: stretch;} .button-base { justify-content: center; }
-     .kpi-section { grid-template-columns: 1fr 1fr; } /* फोन पर 2 कॉलम */
-     .order-control-panel { grid-template-columns: 1fr 1fr; }
-     .panel-item { padding: 10px 8px; min-height: 120px; } .panel-icon { font-size: 1.6em; } .panel-count { font-size: 1.8em; } .panel-item a.button-link { font-size: 0.75em; padding: 5px 8px; }
-     .search-bar input, .search-bar button { height: 36px; font-size: 0.85em; } .suggestions-list div { font-size: 0.85em; padding: 6px 10px; }
+     .kpi-section { grid-template-columns: repeat(2, 1fr); gap: 10px;} /* फोन पर 2 कॉलम */
+     .order-control-panel { grid-template-columns: repeat(2, 1fr); gap: 10px;} /* फोन पर 2 कॉलम */
+     .panel-item { padding: 12px 8px; min-height: 120px; } .panel-icon { font-size: 1.6em; } .panel-count { font-size: 1.8em; } .panel-item a.button-link { font-size: 0.75em; padding: 5px 8px; }
+     .search-bar input, .search-bar button { height: 36px; font-size: 0.85em; }
+     .search-bar .suggestions-list div { font-size: 0.85em; padding: 6px 10px; }
      .card-layout ul { max-height: 120px; } .chart-section .chart-container { height: 200px; }
 }
