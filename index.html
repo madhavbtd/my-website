@@ -57,8 +57,12 @@
                  <div class="kpi-card"> <i class="fas fa-truck kpi-icon"></i> <div class="kpi-value" id="kpi-total-suppliers"><span class="loading-placeholder">...</span></div> <div class="kpi-label">Total Suppliers</div> </div>
                  <div class="kpi-card"> <i class="fas fa-wallet kpi-icon"></i> <div class="kpi-value" id="kpi-pending-payments"><span class="loading-placeholder">...</span></div> <div class="kpi-label">Pending Payments</div> </div>
                  <div class="kpi-card"> <i class="fas fa-calendar-day kpi-icon"></i> <div class="kpi-value" id="kpi-orders-today"><span class="loading-placeholder">...</span></div> <div class="kpi-label">Orders Today</div> </div>
-            </div>
-
+                 <div class="kpi-card">
+                     <i class="fas fa-file-invoice kpi-icon"></i>
+                     <span class="kpi-value" id="kpi-pending-pos">...</span>
+                     <div class="kpi-label">PENDING POs</div>
+                 </div>
+                 </div>
             <div class="order-control-panel">
                 <div class="panel-item light-blue"> <i class="fas fa-shopping-bag panel-icon"></i> Order Received <span class="panel-count" id="count-order-received"><span class="loading-placeholder">..</span></span> <a href="order_history.html?status=Order+Received" class="button-link">View</a> </div>
                 <div class="panel-item light-orange"> <i class="fas fa-hourglass-half panel-icon"></i> Designing <span class="panel-count" id="count-designing"><span class="loading-placeholder">..</span></span> <a href="order_history.html?status=Designing" class="button-link">View</a> </div>
@@ -71,12 +75,11 @@
             </div>
 
             <div class="search-bar order-search-bar">
-                <label for="order-id-search">Search Order ID:</label>
-                <input type="text" id="order-id-search" placeholder="Enter Order ID...">
+                <label for="order-id-search">Search Order ID / Customer / LIC:</label>
+                <input type="text" id="order-id-search" placeholder="Search...">
                 <button id="order-id-search-button"><i class="fas fa-search"></i></button>
                 <div id="order-suggestions" class="suggestions-list"></div>
             </div>
-
             <div class="dashboard-grid">
                  <div class="info-feed-section card-layout">
                      <h3><i class="fas fa-history"></i> Recent Activity</h3>
@@ -107,8 +110,10 @@
                    </div>
             </div>
 
-        </div> </div> <script src="js/utils.js" type="module" defer></script>
+        </div>
+    </div>
 
+    <script src="js/utils.js" type="module" defer></script>
     <script src="js/dashboard.js" type="module" defer></script>
 
     <script>
