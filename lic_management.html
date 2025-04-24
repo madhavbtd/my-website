@@ -97,7 +97,34 @@
                  </ul>
          </div>
 
-        <div class="filter-bar">
+         <div class="dashboard-section">
+             <h2><i class="fas fa-tachometer-alt"></i> Dashboard</h2>
+             <div class="dashboard-grid">
+                 <div class="dashboard-card">
+                     <h4>Total Policies</h4>
+                     <p id="dbTotalPolicies">-</p>
+                     <i class="fas fa-file-contract card-icon"></i>
+                 </div>
+                 <div class="dashboard-card">
+                     <h4>Active Policies</h4>
+                     <p id="dbActivePolicies">-</p>
+                      <i class="fas fa-check-circle card-icon" style="color: #28a745;"></i> </div>
+                  <div class="dashboard-card">
+                      <h4>Lapsed Policies</h4>
+                      <p id="dbLapsedPolicies">-</p>
+                       <i class="fas fa-exclamation-triangle card-icon" style="color: #dc3545;"></i> </div>
+                  <div class="dashboard-card">
+                      <h4>Upcoming Premiums (30d)</h4>
+                      <p id="dbUpcomingPremium">-</p>
+                       <i class="fas fa-rupee-sign card-icon"></i>
+                   </div>
+                   <div class="dashboard-card">
+                       <h4>Maturities (Next 90d)</h4>
+                       <p id="dbUpcomingMaturity">-</p>
+                       <i class="fas fa-calendar-check card-icon" style="color: #ffc107;"></i> </div>
+              </div>
+          </div>
+         <div class="filter-bar">
             <div class="filter-group">
                 <label for="licSearchInput"><i class="fas fa-search"></i> Search</label>
                 <input type="text" id="licSearchInput" placeholder="Name, Policy No, Mobile...">
@@ -157,8 +184,7 @@
                  <thead>
                      <tr>
                          <th>Policy No.</th>
-                         <th>Customer Name</th>
-                         <th>Mobile No.</th>
+                         <th>Customer Name</th> <th>Mobile No.</th>
                          <th>Plan</th>
                          <th>Premium (₹)</th>
                          <th>Mode</th>
@@ -185,25 +211,24 @@
              </ul>
         </div>
 
-    </div>
-
-    <div id="policyModal" class="modal">
-        <div class="modal-content large-modal"> <span class="close-btn" id="closePolicyModal" title="Close">&times;</span>
+    </div> <div id="policyModal" class="modal">
+        <div class="modal-content large-modal">
+            <span class="close-btn" id="closePolicyModal" title="Close">&times;</span>
             <h2 id="policyModalTitle"><i class="fas fa-file-contract"></i> Add New Policy</h2>
             <form id="policyForm">
-                <input type="hidden" id="editPolicyId"> <div class="form-row">
+                <input type="hidden" id="editPolicyId">
+                <div class="form-row">
                     <div class="form-group">
                         <label for="customerName">Customer Name <span class="required">*</span>:</label>
                         <input type="text" id="customerName" required>
                     </div>
-                     <div class="form-group">
+                    <div class="form-group">
                         <label for="fatherName">Father's Name:</label>
                         <input type="text" id="fatherName">
                     </div>
                 </div>
-
-                 <div class="form-row">
-                     <div class="form-group">
+                <div class="form-row">
+                    <div class="form-group">
                         <label for="mobileNo">Mobile No <span class="required">*</span>:</label>
                         <input type="tel" id="mobileNo" required placeholder="10 Digit Mobile Number">
                     </div>
@@ -211,87 +236,80 @@
                         <label for="dob">Date of Birth:</label>
                         <input type="date" id="dob">
                     </div>
-                 </div>
-
-                 <div class="form-group">
-                     <label for="address">Address:</label>
-                     <textarea id="address" rows="2"></textarea>
-                 </div>
-
-                 <hr>
-
-                 <div class="form-row">
-                     <div class="form-group">
-                        <label for="policyNumber">Policy Number <span class="required">*</span>:</label>
-                        <input type="text" id="policyNumber" required>
-                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="address">Address:</label>
+                    <textarea id="address" rows="2"></textarea>
+                </div>
+                <hr>
+                <div class="form-row">
                     <div class="form-group">
-                        <label for="plan">Plan:</label>
-                        <input type="text" id="plan">
-                    </div>
-                     <div class="form-group">
-                        <label for="sumAssured">Sum Assured (₹):</label>
-                        <input type="number" id="sumAssured" step="1">
-                    </div>
-                 </div>
-
-                 <div class="form-row">
+                       <label for="policyNumber">Policy Number <span class="required">*</span>:</label>
+                       <input type="text" id="policyNumber" required>
+                   </div>
+                   <div class="form-group">
+                       <label for="plan">Plan:</label>
+                       <input type="text" id="plan">
+                   </div>
                     <div class="form-group">
-                        <label for="policyTerm">Policy Term (Years):</label>
-                        <input type="text" id="policyTerm" placeholder="e.g., 21 or 25-16">
-                    </div>
+                       <label for="sumAssured">Sum Assured (₹):</label>
+                       <input type="number" id="sumAssured" step="1">
+                   </div>
+                </div>
+                <div class="form-row">
+                   <div class="form-group">
+                       <label for="policyTerm">Policy Term (Years):</label>
+                       <input type="text" id="policyTerm" placeholder="e.g., 21 or 25-16">
+                   </div>
+                   <div class="form-group">
+                       <label for="issuanceDate">Issuance Date <span class="required">*</span>:</label>
+                       <input type="date" id="issuanceDate" required>
+                   </div>
                     <div class="form-group">
-                        <label for="issuanceDate">Issuance Date <span class="required">*</span>:</label>
-                        <input type="date" id="issuanceDate" required>
-                    </div>
-                     <div class="form-group">
-                        <label for="modeOfPayment">Mode of Payment <span class="required">*</span>:</label>
-                        <select id="modeOfPayment" required>
-                            <option value="">-- Select Mode --</option>
-                            <option value="Yearly">Yearly</option>
-                            <option value="Half-Yearly">Half-Yearly</option>
-                            <option value="Quarterly">Quarterly</option>
-                            <option value="Monthly">Monthly</option>
-                            </select>
-                    </div>
-                 </div>
-
-                 <div class="form-row">
-                     <div class="form-group">
-                        <label for="premiumAmount">Installment Premium (₹) <span class="required">*</span>:</label>
-                        <input type="number" id="premiumAmount" step="0.01" required>
-                    </div>
+                       <label for="modeOfPayment">Mode of Payment <span class="required">*</span>:</label>
+                       <select id="modeOfPayment" required>
+                           <option value="">-- Select Mode --</option>
+                           <option value="Yearly">Yearly</option>
+                           <option value="Half-Yearly">Half-Yearly</option>
+                           <option value="Quarterly">Quarterly</option>
+                           <option value="Monthly">Monthly</option>
+                           </select>
+                   </div>
+                </div>
+                <div class="form-row">
                     <div class="form-group">
-                        <label for="nextInstallmentDate">Next Installment Date <span class="required">*</span>:</label>
-                        <input type="date" id="nextInstallmentDate" required>
-                        <small>First due date. Will be auto-calculated if left blank on Add.</small>
-                    </div>
-                    <div class="form-group">
-                        <label for="maturityDate">Maturity Date:</label>
-                        <input type="date" id="maturityDate">
-                    </div>
-                 </div>
-
-                 <div class="form-row">
-                      <div class="form-group">
-                        <label for="policyStatus">Policy Status:</label>
-                        <select id="policyStatus">
-                             <option value="Active">Active</option>
-                             <option value="Lapsed">Lapsed</option>
-                             <option value="Matured">Matured</option>
-                             <option value="Surrendered">Surrendered</option>
-                         </select>
-                    </div>
+                       <label for="premiumAmount">Installment Premium (₹) <span class="required">*</span>:</label>
+                       <input type="number" id="premiumAmount" step="0.01" required>
+                   </div>
+                   <div class="form-group">
+                       <label for="nextInstallmentDate">Next Installment Date <span class="required">*</span>:</label>
+                       <input type="date" id="nextInstallmentDate" required>
+                       <small>First due date. Will be auto-calculated if left blank on Add.</small>
+                   </div>
+                   <div class="form-group">
+                       <label for="maturityDate">Maturity Date:</label>
+                       <input type="date" id="maturityDate">
+                   </div>
+                </div>
+                <div class="form-row">
                      <div class="form-group">
-                         <label for="nachStatus">NACH Status:</label>
-                         <select id="nachStatus">
-                             <option value="No">No</option>
-                             <option value="Yes">Yes</option>
-                             <option value="Pending">Pending</option>
-                         </select>
-                     </div>
-                 </div>
-
+                       <label for="policyStatus">Policy Status:</label>
+                       <select id="policyStatus">
+                            <option value="Active">Active</option>
+                            <option value="Lapsed">Lapsed</option>
+                            <option value="Matured">Matured</option>
+                            <option value="Surrendered">Surrendered</option>
+                        </select>
+                   </div>
+                    <div class="form-group">
+                        <label for="nachStatus">NACH Status:</label>
+                        <select id="nachStatus">
+                            <option value="No">No</option>
+                            <option value="Yes">Yes</option>
+                            <option value="Pending">Pending</option>
+                        </select>
+                    </div>
+                </div>
                 <div class="modal-actions">
                     <button type="submit" id="savePolicyBtn" class="button save-button"><i class="fas fa-save"></i> Save Policy</button>
                     <button type="button" id="cancelPolicyBtn" class="button cancel-button">Cancel</button>
@@ -299,8 +317,49 @@
             </form>
         </div>
     </div>
+    <div id="clientDetailView" class="modal"> <div class="modal-content large-modal"> <span class="close-btn" id="closeClientDetail" title="Close">&times;</span>
+            <h2 id="clientDetailName">Client Details</h2>
+            <hr style="margin-bottom: 20px;">
 
+            <div id="clientDetailContent">
+                <div class="client-info-section">
+                    <h4><i class="fas fa-user"></i> Personal Information</h4>
+                    <div class="client-info-grid">
+                        <p><strong>Mobile:</strong> <span id="clientDetailMobile">-</span></p>
+                        <p><strong>DOB:</strong> <span id="clientDetailDob">-</span></p>
+                        <p><strong>Father's Name:</strong> <span id="clientDetailFatherName">-</span></p>
+                        <p><strong>Address:</strong> <span id="clientDetailAddress">-</span></p>
+                    </div>
+                </div>
+                 <hr>
 
+                 <div class="tab-container">
+                    <button class="tab-button active" onclick="openDetailTab(event, 'clientPolicies')"><i class="fas fa-file-contract"></i> Policies</button>
+                    <button class="tab-button" onclick="openDetailTab(event, 'communicationLog')"><i class="fas fa-comments"></i> Communication Log</button>
+                    </div>
+
+                <div id="clientPolicies" class="tab-content active">
+                    <div id="clientPoliciesList" class="client-policy-list-container">
+                        <p>Loading policies...</p>
+                    </div>
+                </div>
+
+                <div id="communicationLog" class="tab-content">
+                    <div id="communicationLogList" class="log-list-container">
+                        <p>No communication logs found.</p>
+                    </div>
+                    <div class="add-log-entry">
+                        <h4>Add New Note</h4>
+                        <textarea id="newLogNote" rows="3" placeholder="Enter communication details..."></textarea>
+                        <button id="addLogBtn" class="button primary-button"><i class="fas fa-plus"></i> Add Note</button>
+                    </div>
+                </div>
+
+            </div> <div class="modal-actions" style="margin-top: 20px;">
+                 <button type="button" id="closeClientDetailBtnBottom" class="button cancel-button">Close View</button>
+            </div>
+
+        </div> </div>
     <script src="js/lic_management.js" type="module" defer></script>
 
 </body>
