@@ -3,165 +3,25 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>माधव मल्टीप्रिन्ट डैशबोर्ड</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" integrity="sha512-9usAa10IRO0HhonpyAIVpjrylPvoDwiPUiKdWk5t3PyolY1cOd4DSE0Ga+ri4AuTroPR5aQvXU9xC6qOPnzFeg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <title>माधव मल्टीप्रिन्ट डैशबोर्ड (Fixed)</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
-
     <link rel="stylesheet" href="css/index.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js" defer></script>
 
-    <script type="module">
-        // Import Firebase services
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-        // Import Firestore services needed by this page AND dashboard.js
-        import { getFirestore, collection, onSnapshot, query, where, getDocs, limit } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js"; // Added getDocs, limit
-
-        // **** Your Firebase Configuration ****
-         // Using details from your screenshots and standard patterns
-         const firebaseConfig = {
-           apiKey: "AIzaSyBQj5rQmE77kKKGYixP8y3Hcimz8tiAqzQ", // From screenshot
-           authDomain: "madhav-multyprint.firebaseapp.com",   // Assumed from projectId
-           projectId: "madhav-multyprint",                // From screenshot
-           storageBucket: "madhav-multyprint.appspot.com",   // Assumed from projectId
-           messagingSenderId: "104988349637",             // From screenshot (Project number)
-           appId: "1:104988349637:web:faf045b77c6786a4e70cac" // From your previous file (assuming it's correct)
-         };
-         // !!!!! PLEASE DOUBLE-CHECK THESE VALUES WITH YOUR FIREBASE CONSOLE !!!!!
-
-        let app;
-        let auth;
-        let db;
-
-        try {
-             console.log("index.html: Attempting Firebase initialization..."); // Log added
-             // Initialize Firebase App (only once per page load)
-             if (!window.firebaseAppInitialized) {
-                 app = initializeApp(firebaseConfig); // Uses the config object from above
-                 window.firebaseAppInitialized = true;
-                 window.firebaseApp = app;
-                 console.log("index.html: Firebase initialized successfully."); // Log added
-             } else {
-                 app = window.firebaseApp;
-                 console.log("index.html: Firebase already initialized."); // Log added
-             }
-
-             console.log("index.html: Getting Auth and Firestore instances..."); // Log added
-             auth = getAuth(app);
-             db = getFirestore(app);
-             console.log("index.html: Auth and Firestore instances obtained."); // Log added
-
-             // --- Make functions globally available for dashboard.js ---
-             window.db = db;
-             window.auth = auth;
-             window.collection = collection;
-             window.onSnapshot = onSnapshot;
-             window.query = query;
-             window.where = where;
-             window.getDocs = getDocs; // Expose getDocs globally
-             window.limit = limit;     // Expose limit globally
-             console.log("index.html: Firebase functions made global."); // Log added
-             // --- End Global Exposure ---
-
-
-             // ---->> Authentication State Check (Core Security) <<----
-             console.log("index.html: Setting up onAuthStateChanged listener..."); // Log added
-             onAuthStateChanged(auth, (user) => {
-                 console.log("index.html: onAuthStateChanged triggered."); // Log added
-                 const currentPage = window.location.pathname.split('/').pop() || 'index.html';
-                 console.log("index.html: Current page:", currentPage); // Log added
-
-                 if (user) {
-                     console.log("index.html: User FOUND in onAuthStateChanged. UID:", user.uid, "Email:", user.email); // Log added
-
-                     // Role Verification Block
-                     console.log("index.html: Getting ID token result for role check..."); // Log added
-                     user.getIdTokenResult(true) // Force refresh token
-                         .then((idTokenResult) => {
-                             const userRole = idTokenResult.claims.role;
-                             console.log('index.html: User Role:', userRole); // Log added
-                             window.currentUserRole = userRole; // Store globally
-                             // Update welcome message
-                             const welcomeSpan = document.getElementById('welcome-user');
-                             if (welcomeSpan) {
-                                 welcomeSpan.textContent = `Welcome ${user.email || 'User'} (${userRole || 'Standard'})`;
-                                 console.log("index.html: Welcome message updated."); // Log added
-                             } else {
-                                 console.warn("index.html: Welcome span not found."); // Log added
-                             }
-                         })
-                         .catch((error) => {
-                             console.error('index.html: Error getting user claims:', error); // Log added
-                             window.currentUserRole = undefined;
-                             const welcomeSpan = document.getElementById('welcome-user');
-                              if (welcomeSpan) {
-                                 welcomeSpan.textContent = `Welcome ${user.email || 'User'} (Role Error)`;
-                              }
-                         });
-                     // --- End Role Check ---
-
-                 } else {
-                     console.log("index.html: User NOT FOUND in onAuthStateChanged."); // Log added
-                     // User is not logged in. Redirect.
-                     if (currentPage.toLowerCase() !== 'login.html') {
-                        console.log(`index.html: Not on login page, redirecting to login.html...`); // Log added
-                        window.location.replace('login.html');
-                     } else {
-                        console.log("index.html: Already on login page, no redirect needed."); // Log added
-                     }
-                 }
-             });
-             console.log("index.html: onAuthStateChanged listener attached."); // Log added
-             // ---->> Auth check end <<----
-
-             // --- Logout Link Logic ---
-             // Ensure this runs after the DOM is loaded
-             document.addEventListener('DOMContentLoaded', () => {
-                 console.log("index.html: DOMContentLoaded event fired."); // Log added
-                 const logoutLink = document.getElementById('logout-link');
-                 if (logoutLink) {
-                    console.log("index.html: Logout link found, adding listener."); // Log added
-                    logoutLink.addEventListener('click', (e) => {
-                        e.preventDefault();
-                        console.log("index.html: Logout link clicked."); // Log added
-                        if (confirm("Are you sure you want to logout?")) {
-                            console.log("index.html: Signing out user..."); // Log added
-                            signOut(auth).then(() => {
-                                console.log('index.html: User signed out successfully.'); // Log added
-                                window.location.href = 'login.html';
-                            }).catch((error) => {
-                                console.error('index.html: Sign out error:', error); // Log added
-                                alert("Logout failed.");
-                            });
-                        } else {
-                            console.log("index.html: Logout cancelled by user."); // Log added
-                        }
-                    });
-                 } else {
-                     console.warn("index.html: Logout link with ID 'logout-link' not found."); // Log added
-                 }
-             });
-             // --- Logout logic end ---
-
-        } catch(e) {
-            console.error("index.html: MAJOR ERROR in Firebase setup block:", e); // Log added
-            alert("Critical Error loading application. Please check console.");
-        }
-        console.log("index.html: Module script finished execution."); // Log added
-    </script>
     </head>
 
 <body>
     <div class="container">
         <div class="sidebar">
-            <h2><img src="https://i.ibb.co/Z6gKD9Rd/1.png" alt="माधव मल्टीप्रिन्ट Logo"></h2>
-            <ul>
+             <h2><img src="https://i.ibb.co/Z6gKD9Rd/1.png" alt="माधव मल्टीप्रिन्ट Logo"></h2>
+             <ul>
                 <li><a href="index.html" class="active"><i class="fas fa-tachometer-alt"></i> <span>Dashboard</span></a></li>
                 <li><a href="order_history.html"><i class="fas fa-history"></i> <span>Order History</span></a></li>
                 <li><a href="customer_management.html"><i class="fas fa-users"></i> <span>Customers</span></a></li>
                 <li><a href="supplier_management.html"><i class="fas fa-truck"></i> <span>Suppliers</span></a></li>
-
                 <li><a href="lic_management.html"><i class="fas fa-shield-alt"></i> <span>LIC Management</span></a></li>
                 <li><a href="#"><i class="fas fa-chart-bar"></i> <span>Report</span></a></li>
                 <li><a href="#"><i class="fas fa-code-branch"></i> <span>Branch Manage</span></a></li>
@@ -169,128 +29,93 @@
                 <li><a href="product_management.html"><i class="fas fa-box-open"></i> <span>Product</span></a></li>
                 <li><a href="#"><i class="fas fa-tools"></i> <span>Tools</span></a></li>
                 <li><a href="#" id="logout-link"><i class="fas fa-sign-out-alt"></i> <span>LOGOUT</span></a></li>
-            </ul>
+             </ul>
         </div>
 
         <div class="main-content" id="main-content">
-            <div class="header">
+            <div class="header updated-header">
                 <span class="welcome-text" id="welcome-user">Welcome...</span>
-                <div class="header-buttons">
-                    <a href="customer_management.html?action=add" class="button-base add-customer-btn"><i class="fas fa-user-plus"></i> Add Customer</a>
-                    <a href="supplier_management.html#add" class="button-base add-supplier-btn"><i class="fas fa-truck"></i> Add Supplier</a>
-                    <a href="new_order.html" class="button-base new-order-btn"><i class="fas fa-plus-circle"></i> New Order</a>
+                <div class="header-actions">
+                    <div class="header-buttons">
+                        <a href="customer_management.html?action=add" class="button-base add-customer-btn"><i class="fas fa-user-plus"></i> Add Customer</a>
+                        <a href="supplier_management.html#add" class="button-base add-supplier-btn"><i class="fas fa-truck"></i> Add Supplier</a>
+                        <a href="new_order.html" class="button-base new-order-btn"><i class="fas fa-plus-circle"></i> New Order</a>
+                        <button type="button" id="quickAddPaymentBtn" class="button-base quick-payment-btn"><i class="fas fa-dollar-sign"></i> Quick Payment</button>
+                    </div>
+                    <div class="date-time-container" id="currentDateTime">
+                        <span class="loading-placeholder">Loading date...</span>
+                    </div>
+                     <div class="header-icons">
+                         <button class="icon-button" id="notificationsBtn" title="Notifications"><i class="fas fa-bell"></i><span class="badge" id="notificationCount">0</span></button>
+                         <button class="icon-button" id="settingsBtn" title="Settings"><i class="fas fa-cog"></i></button>
+                     </div>
                 </div>
-                <div class="date-time-container">
-                    <span id="currentDateTime">Loading date...</span>
-                </div>
-             </div>
-
-            <div class="order-control-panel">
-                <div class="panel-item light-blue">
-                    <i class="fas fa-shopping-bag panel-icon"></i> Order Received
-                    <span class="panel-count" id="count-order-received">00</span>
-                    <a href="order_history.html?status=Order+Received" class="button-link">Click to View</a>
-                </div>
-                <div class="panel-item light-orange">
-                    <i class="fas fa-hourglass-half panel-icon"></i> Designing
-                    <span class="panel-count" id="count-designing">00</span>
-                    <a href="order_history.html?status=Designing" class="button-link">Click to View</a>
-                </div>
-                 <div class="panel-item light-green">
-                    <i class="fas fa-check-circle panel-icon"></i> Verification
-                    <span class="panel-count" id="count-verification">00</span>
-                    <a href="order_history.html?status=Verification" class="button-link">Click to View</a>
-                </div>
-                 <div class="panel-item light-red">
-                     <i class="fas fa-thumbs-up panel-icon"></i> Design Approved
-                     <span class="panel-count" id="count-design-approved">00</span>
-                     <a href="order_history.html?status=Design+Approved" class="button-link">Click to View</a>
-                </div>
-                 <div class="panel-item light-blue">
-                     <i class="fas fa-print panel-icon"></i> Printing
-                     <span class="panel-count" id="count-printing">00</span>
-                     <a href="order_history.html?status=Printing" class="button-link">Click to View</a>
-                </div>
-                 <div class="panel-item light-orange">
-                     <i class="fas fa-cog panel-icon"></i> Ready For Working
-                     <span class="panel-count" id="count-ready-for-working">00</span>
-                     <a href="order_history.html?status=Ready+for+Working" class="button-link">Click to View</a>
-                </div>
-                 <div class="panel-item light-green">
-                     <i class="fas fa-truck panel-icon"></i> Delivered
-                     <span class="panel-count" id="count-delivered">00</span>
-                     <a href="order_history.html?status=Delivered" class="button-link">Click to View</a>
-                </div>
-                 <div class="panel-item light-red">
-                     <i class="fas fa-check-double panel-icon"></i> Completed
-                     <span class="panel-count" id="count-completed">00</span>
-                     <a href="order_history.html?status=Completed" class="button-link">Click to View</a>
-                 </div>
             </div>
 
-            <div class="search-bar order-search-bar"> <label for="order-id-search">Search Order ID:</label>
+            <div class="kpi-section card-layout">
+                 <div class="kpi-card"> <i class="fas fa-users kpi-icon"></i> <div class="kpi-value" id="kpi-total-customers"><span class="loading-placeholder">...</span></div> <div class="kpi-label">Total Customers</div> </div>
+                 <div class="kpi-card"> <i class="fas fa-truck kpi-icon"></i> <div class="kpi-value" id="kpi-total-suppliers"><span class="loading-placeholder">...</span></div> <div class="kpi-label">Total Suppliers</div> </div>
+                 <div class="kpi-card"> <i class="fas fa-wallet kpi-icon"></i> <div class="kpi-value" id="kpi-pending-payments"><span class="loading-placeholder">...</span></div> <div class="kpi-label">Pending Payments</div> </div>
+                 <div class="kpi-card"> <i class="fas fa-calendar-day kpi-icon"></i> <div class="kpi-value" id="kpi-orders-today"><span class="loading-placeholder">...</span></div> <div class="kpi-label">Orders Today</div> </div>
+            </div>
+
+            <div class="order-control-panel">
+                <div class="panel-item light-blue"> <i class="fas fa-shopping-bag panel-icon"></i> Order Received <span class="panel-count" id="count-order-received"><span class="loading-placeholder">..</span></span> <a href="order_history.html?status=Order+Received" class="button-link">View</a> </div>
+                <div class="panel-item light-orange"> <i class="fas fa-hourglass-half panel-icon"></i> Designing <span class="panel-count" id="count-designing"><span class="loading-placeholder">..</span></span> <a href="order_history.html?status=Designing" class="button-link">View</a> </div>
+                <div class="panel-item light-green"> <i class="fas fa-check-circle panel-icon"></i> Verification <span class="panel-count" id="count-verification"><span class="loading-placeholder">..</span></span> <a href="order_history.html?status=Verification" class="button-link">View</a> </div>
+                <div class="panel-item light-red"> <i class="fas fa-thumbs-up panel-icon"></i> Design Approved <span class="panel-count" id="count-design-approved"><span class="loading-placeholder">..</span></span> <a href="order_history.html?status=Design+Approved" class="button-link">View</a> </div>
+                <div class="panel-item light-blue"> <i class="fas fa-print panel-icon"></i> Printing <span class="panel-count" id="count-printing"><span class="loading-placeholder">..</span></span> <a href="order_history.html?status=Printing" class="button-link">View</a> </div>
+                <div class="panel-item light-orange"> <i class="fas fa-cog panel-icon"></i> Ready For Working <span class="panel-count" id="count-ready-for-working"><span class="loading-placeholder">..</span></span> <a href="order_history.html?status=Ready+for+Working" class="button-link">View</a> </div>
+                <div class="panel-item light-green"> <i class="fas fa-truck panel-icon"></i> Delivered <span class="panel-count" id="count-delivered"><span class="loading-placeholder">..</span></span> <a href="order_history.html?status=Delivered" class="button-link">View</a> </div>
+                <div class="panel-item light-red"> <i class="fas fa-check-double panel-icon"></i> Completed <span class="panel-count" id="count-completed"><span class="loading-placeholder">..</span></span> <a href="order_history.html?status=Completed" class="button-link">View</a> </div>
+            </div>
+
+            <div class="search-bar order-search-bar">
+                <label for="order-id-search">Search Order ID:</label>
                 <input type="text" id="order-id-search" placeholder="Enter Order ID...">
                 <button id="order-id-search-button"><i class="fas fa-search"></i></button>
                 <div id="order-suggestions" class="suggestions-list"></div>
             </div>
-             <div class="reminder-section">
-                 <h3>Reminder</h3>
-                 <p>No reminders currently.</p>
+
+            <div class="dashboard-grid">
+                 <div class="info-feed-section card-layout">
+                     <h3><i class="fas fa-history"></i> Recent Activity</h3>
+                     <ul id="recent-activity-list">
+                         <li class="loading-placeholder">Loading recent activity...</li>
+                     </ul>
+                 </div>
+                 <div class="reminder-section card-layout">
+                     <h3><i class="fas fa-bell"></i> Reminders & Tasks</h3>
+                     <h4>Upcoming LIC Premiums (15 Days)</h4>
+                     <ul id="lic-reminder-list">
+                          <li class="loading-placeholder">Loading LIC reminders...</li>
+                     </ul>
+                     <h4>Upcoming Tasks (7 Days)</h4>
+                      <ul id="upcoming-task-list">
+                          <li class="loading-placeholder">Loading tasks...</li>
+                      </ul>
+                      <h4>Upcoming Deliveries (3 Days)</h4>
+                      <ul id="upcoming-delivery-list">
+                           <li class="loading-placeholder">Loading deliveries...</li>
+                      </ul>
+                 </div>
+                 <div class="chart-section card-layout">
+                       <h3><i class="fas fa-chart-pie"></i> Order Status Overview</h3>
+                       <div class="chart-container">
+                            <canvas id="orderStatusChart"></canvas>
+                       </div>
+                   </div>
             </div>
-        </div>
-    </div>
+
+        </div> </div> <script src="js/utils.js" type="module" defer></script>
 
     <script src="js/dashboard.js" type="module" defer></script>
 
     <script>
-        function updateDateTime() {
-            const now = new Date();
-            const optsDate = { year: 'numeric', month: 'long', day: 'numeric' };
-            const optsDay = { weekday: 'long' };
-            try {
-                const date = now.toLocaleDateString('en-GB', optsDate);
-                const day = now.toLocaleDateString('en-GB', optsDay);
-                const elem = document.getElementById('currentDateTime');
-                if (elem) elem.textContent = `${date}, ${day}`;
-            } catch (e) { console.error("Error formatting date/time:", e); /*...*/ }
-        }
-
         function setActiveLink() {
-            try {
-                const path = window.location.pathname;
-                // Ensure page defaults to 'index.html' if path is just '/'
-                const page = path.substring(path.lastIndexOf('/') + 1) || 'index.html';
-                const links = document.querySelectorAll('.sidebar ul li a');
-                links.forEach(l => {
-                    const hrefAttr = l.getAttribute('href');
-                    l.classList.remove('active'); // Remove active from all first
-                    if (hrefAttr) {
-                        // Normalize linkPage to handle cases like '/' or '/index.html'
-                        const linkPage = hrefAttr.substring(hrefAttr.lastIndexOf('/') + 1).split('?')[0].split('#')[0] || 'index.html';
-                         // Check if current page matches link page
-                         if (page === linkPage) {
-                             l.classList.add('active');
-                         }
-                         // Special case for root path '/' also activating index.html link
-                         else if ((page === '/' || page === 'index.html') && linkPage === 'index.html') {
-                             l.classList.add('active');
-                         }
-                    }
-                });
-            } catch(e) { console.error("Error setting active link:", e); }
+             try { const path=window.location.pathname; const page=path.substring(path.lastIndexOf('/')+1)||'index.html'; const links=document.querySelectorAll('.sidebar ul li a'); links.forEach(l=>{const hrefAttr=l.getAttribute('href'); l.classList.remove('active'); if(hrefAttr){const linkPage=hrefAttr.substring(hrefAttr.lastIndexOf('/')+1).split('?')[0].split('#')[0]||'index.html'; if(page===linkPage||((page==='/'||page==='index.html')&&linkPage==='index.html')){l.classList.add('active');}}}); } catch(e){console.error("Error setting active link:",e);}
         }
-
-        // Update date/time immediately and then every minute
-        updateDateTime();
-        setInterval(updateDateTime, 60000);
-
-        // Set active link on initial load and when history changes
-        // DOMContentLoaded ensures elements exist before setActiveLink runs
-        window.addEventListener('DOMContentLoaded', () => {
-            setActiveLink();
-             // Ensure Logout link listener is added after DOM is ready too
-             // Note: Moved logout logic to run within DOMContentLoaded in the module script above
-        });
+        window.addEventListener('DOMContentLoaded', setActiveLink);
         window.addEventListener('popstate', setActiveLink);
     </script>
 </body>
