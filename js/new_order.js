@@ -1,6 +1,6 @@
 // Only '#' comments are replaced with '//'
 
-// new_order.js - v2.6.1 (Ledger Compatibility: totalAmount, createdAt, Advance Payment Handling)
+// new_order.js - v2.6.2 (Fixed serverTimestamp in array issue)
 // फ़ाइल का नाम: new_order.js
 
 // --- Firebase Functions ---
@@ -77,7 +77,7 @@ const statusList = [
 
 // --- Initialization ---
 document.addEventListener('DOMContentLoaded', () => {
-    console.log("New Order DOM Loaded (v2.6.1 - Ledger Compatibility). Initializing..."); // Updated version log
+    console.log("New Order DOM Loaded (v2.6.2 - Fixed serverTimestamp in array). Initializing..."); // Updated version log
     if (!orderForm || !addItemBtn || !orderItemsTableBody || !itemRowTemplate || !calculationPreviewArea || !calculationPreviewContent || !orderStatusSelect) {
         console.error("Critical DOM elements missing! Check HTML IDs.", { orderForm: !!orderForm, addItemBtn: !!addItemBtn, orderItemsTableBody: !!orderItemsTableBody, itemRowTemplate: !!itemRowTemplate, calculationPreviewArea: !!calculationPreviewArea, calculationPreviewContent: !!calculationPreviewContent, orderStatusSelect: !!orderStatusSelect });
         alert("Page structure error. Cannot initialize order form.");
@@ -521,11 +521,11 @@ function updateStatusDropdownColor(statusValue) { if (!orderStatusSelect) return
 
 
 // ==================================================================================
-// ===                UPDATED handleFormSubmit Function (v2.6.1)                ===
+// ===                UPDATED handleFormSubmit Function (v2.6.2)                ===
 // ==================================================================================
 async function handleFormSubmit(event) {
     event.preventDefault();
-    console.log("Submit initiated (V2.6.1 - Ledger Compatibility)..."); // Log version compatibility
+    console.log("Submit initiated (V2.6.2 - Fixed serverTimestamp in array)..."); // Log version compatibility
     showFormError(''); // Clear previous errors
     // Ensure necessary Firestore functions are available
     // Make sure serverTimestamp and arrayUnion are available from Firebase setup
@@ -657,7 +657,7 @@ async function handleFormSubmit(event) {
             items.push(iD);
         });
 
-        if (!validItems) { // Re-enable button if validation fails
+        if (!validItems) { // Re-enable button if validation failed
             saveButton.disabled = false;
             if (saveButtonText) saveButtonText.textContent = originalButtonText; else saveButton.innerHTML = originalButtonHTML;
             return; // Stop submission
@@ -687,44 +687,39 @@ async function handleFormSubmit(event) {
         // --- Prepare Final Payload Object for Firestore ---
         const payload = {
             // Identifiers
-            orderId: oId, // User-facing/manual/generated ID
-            customerId: cId, // *** Top-level Customer ID (REQUIRED) ***
+            orderId: oId,
+            customerId: cId,
 
-            // Customer Snapshot (optional, but useful)
+            // Customer Snapshot
             customerDetails: cD,
 
             // Order Dates
-            orderDate: Timestamp.fromDate(new Date(oDV + 'T00:00:00')), // Use start of day
-            deliveryDate: dDV ? Timestamp.fromDate(new Date(dDV + 'T00:00:00')) : null, // Use start of day or null
+            orderDate: Timestamp.fromDate(new Date(oDV + 'T00:00:00')),
+            deliveryDate: dDV ? Timestamp.fromDate(new Date(dDV + 'T00:00:00')) : null,
 
             // Order Meta
             urgent: uV,
             remarks: rV,
-            status: sS, // Current status
+            status: sS,
 
             // Items Array
-            items: items, // Array of item objects processed above
+            items: items,
 
             // Order Financials
             subTotal: subT,
             discountPercentage: dP || 0,
             discountAmount: cDA,
-            // --- >>> CHANGE: Saving 'totalAmount' <<< ---
-            totalAmount: finalAmount, // *** Use the agreed field name ***
-            // 'finalAmount' field is kept for display or other uses, matches totalAmount here
-            finalAmount: finalAmount,
-            // --- Advance Payment is NO LONGER saved in the order itself ---
-            // advancePayment: aP || 0, // << REMOVED from order payload
+            totalAmount: finalAmount, // Saving totalAmount
+            finalAmount: finalAmount, // Keeping finalAmount too
+            // advancePayment removed from here
 
-            // Timestamp for updates
-            updatedAt: serverTimestamp() // Always update this
-            // createdAt will be added only for new orders below
+            // Timestamps
+            updatedAt: serverTimestamp()
         };
         // --- End of Payload Object ---
 
 
         let savedId, msg;
-        let createdAtTimestamp = null; // To potentially reuse for payment date
 
         if (isEditMode) { // --- UPDATE Existing Order ---
             if (!orderIdToEdit) throw new Error("Internal Error: Missing Firestore Document ID for update.");
@@ -732,60 +727,51 @@ async function handleFormSubmit(event) {
 
             // Handle status history update only if status changed
             if (currentOrderData && sS !== currentOrderData.status) {
-                const historyUpdate = { status: sS, timestamp: serverTimestamp() }; // Use server timestamp
-                 // Use arrayUnion if available (safer for concurrency)
+                const historyUpdate = { status: sS, timestamp: serverTimestamp() }; // Use server timestamp here (allowed with arrayUnion)
                  payload.statusHistory = typeof arrayUnion === 'function'
                      ? arrayUnion(historyUpdate)
-                     : (currentOrderData.statusHistory || []).concat([historyUpdate]); // Fallback if arrayUnion not available
+                     : (currentOrderData.statusHistory || []).concat([historyUpdate]);
             } else {
-                 // If status hasn't changed, don't include statusHistory in the update payload
                  delete payload.statusHistory;
             }
 
             await updateDoc(doc(db, "orders", orderIdToEdit), payload);
-            savedId = orderIdToEdit; // Firestore document ID
+            savedId = orderIdToEdit;
             msg = `Order ${oId} updated successfully!`;
 
         } else { // --- ADD New Order ---
-            // --- >>> CHANGE: Use serverTimestamp() for createdAt <<< ---
-            createdAtTimestamp = serverTimestamp(); // Get timestamp object reference
-            payload.createdAt = createdAtTimestamp; // Add server timestamp for new orders
+            payload.createdAt = serverTimestamp(); // Use server timestamp for creation
 
-            // Initialize status history for new orders using the same timestamp reference
-            payload.statusHistory = [{ status: sS, timestamp: payload.createdAt }];
+            // --- >>> FIX: Use Timestamp.now() for initial status history timestamp <<< ---
+            payload.statusHistory = [{ status: sS, timestamp: Timestamp.now() }];
+            // --- >>> End of FIX <<< ---
 
             const orderDocRef = await addDoc(collection(db, "orders"), payload);
-            savedId = orderDocRef.id; // Firestore document ID
+            savedId = orderDocRef.id;
             msg = `Order ${oId} created successfully!`;
-            if(displayOrderIdInput && !manualOrderIdInput.value) displayOrderIdInput.value = oId; // Display generated ID
+            if(displayOrderIdInput && !manualOrderIdInput.value) displayOrderIdInput.value = oId;
         }
 
         console.log(msg, "Firestore Doc ID:", savedId);
 
-        // --- >>> ADD/MODIFY: Handle Advance Payment Saving to 'payments' Collection <<< ---
-        // Save advance payment record ONLY for NEW orders if amount > 0
+        // --- Handle Advance Payment Saving to 'payments' Collection ---
         if (aP > 0 && !isEditMode) {
             console.log(`Advance payment amount entered: ${aP}. Creating payment record...`);
             try {
-                // --- Use serverTimestamp() for payment dates for consistency ---
                 const paymentData = {
-                    customerId: cId, // Link to customer
-                    orderRefId: savedId, // Link to the Firestore order document ID
-                    orderId: oId, // Link to the user-facing order ID
-                    amountPaid: aP, // The advance payment amount
-                    // Use serverTimestamp for payment date to align closely with order creation
-                    paymentDate: serverTimestamp(),
-                    paymentMethod: "Order Advance", // Indicate it's an advance
-                    notes: `Advance payment for Order #${oId}`, // Optional note
+                    customerId: cId,
+                    orderRefId: savedId,
+                    orderId: oId,
+                    amountPaid: aP,
+                    paymentDate: serverTimestamp(), // Use server time for payment date
+                    paymentMethod: "Order Advance",
+                    notes: `Advance payment for Order #${oId}`,
                     createdAt: serverTimestamp() // Timestamp for payment record creation
                 };
-                // Save to 'payments' collection
                 const paymentDocRef = await addDoc(collection(db, "payments"), paymentData);
                 console.log(`Advance payment record added successfully. Payment Doc ID: ${paymentDocRef.id}`);
             } catch (paymentError) {
-                // Log the error, but don't stop the process - the order is already saved.
                 console.error("Error saving advance payment record:", paymentError);
-                // Notify user that the order saved but payment record failed
                 alert(`Order ${oId} was saved successfully, but there was an error recording the advance payment: ${paymentError.message}\n\nPlease add the payment manually later.`);
             }
         }
@@ -798,11 +784,9 @@ async function handleFormSubmit(event) {
         if (cD.whatsappNo) {
              showWhatsAppReminder(cD, oId, deliveryDateInput.value); // Show popup
         } else {
-             // If no WhatsApp, redirect or reset form immediately
              if (!isEditMode) {
                  resetNewOrderForm(); // Reset form for another new order
              } else {
-                 // Redirect back to order history after edit
                  window.location.href = `order_history.html?highlightOrderId=${orderIdToEdit || ''}`;
              }
         }
@@ -814,14 +798,14 @@ async function handleFormSubmit(event) {
         saveButton.disabled = false;
         if (saveButtonText) saveButtonText.textContent = originalButtonText; else saveButton.innerHTML = originalButtonHTML;
     }
-    // 'finally' block removed as button re-enabling is handled within try/catch now
 }
 // ==================================================================================
-// ===            End of UPDATED handleFormSubmit Function (v2.6.1)             ===
+// ===            End of UPDATED handleFormSubmit Function (v2.6.2)             ===
 // ==================================================================================
 
 
 // --- Reset Form ---
+// (No changes needed in this function)
 function resetNewOrderForm() {
     console.log("Resetting form for new order.");
     orderForm.reset(); if(orderItemsTableBody) orderItemsTableBody.innerHTML='';
@@ -836,6 +820,7 @@ function resetNewOrderForm() {
 }
 
 // --- WhatsApp Reminder Functions ---
+// (No changes needed in these functions)
 function showWhatsAppReminder(customer, orderId, deliveryDateStr) {
     if (!whatsappReminderPopup || !whatsappMsgPreview || !whatsappSendLink) { console.warn("WhatsApp popup elements missing."); const redirectUrl = isEditMode ? `order_history.html?highlightOrderId=${orderIdToEdit || ''}` : 'new_order.html'; if (!isEditMode) resetNewOrderForm(); window.location.href = redirectUrl; return; }
     const cN = customer.fullName || 'Customer'; const cNum = customer.whatsappNo?.replace(/[^0-9]/g, '');
@@ -961,4 +946,4 @@ async function loadOrderTotals_NewOrder(customerId) {
 
 
 // --- Log that the script finished loading ---
-console.log("new_order.js script loaded (v2.6.1 - Ledger Compatibility)."); // Updated version log
+console.log("new_order.js script loaded (v2.6.2 - Fixed serverTimestamp in array)."); // Updated version log
