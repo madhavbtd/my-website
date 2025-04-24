@@ -1,5 +1,58 @@
 /* css/lic_management.css - Styles specific to LIC page */
 
+/* Basic Body and Container Styles (Assume these might be in a general CSS file too) */
+body {
+    font-family: 'Poppins', sans-serif;
+    background-color: #f4f7f6;
+    margin: 0;
+    padding: 20px;
+    color: #333;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    background-color: #fff;
+    padding: 25px 30px;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.header {
+    display: flex;
+    align-items: center;
+    color: white;
+    padding: 15px 20px;
+    border-radius: 5px 5px 0 0; /* Rounded top corners */
+    margin: -25px -30px 20px -30px; /* Adjust to align with container padding */
+}
+
+.header h1 {
+    margin: 0;
+    font-size: 1.6em;
+    font-weight: 600;
+}
+
+.header .header-icon {
+    font-size: 1.8em;
+    margin-right: 15px;
+}
+
+.breadcrumb-container {
+    font-size: 0.9em;
+    color: #555;
+    margin-bottom: 20px;
+}
+
+.breadcrumb-container a {
+    color: #007bff;
+    text-decoration: none;
+}
+
+.breadcrumb-container a:hover {
+    text-decoration: underline;
+}
+
 /* Reminder Section Styling */
 .lic-reminder-section {
     background-color: #fff3cd; /* Light yellow background */
@@ -61,7 +114,159 @@
 }
 
 
-/* Task Management Section Styling (Optional) */
+/* Filter Bar Styling */
+.filter-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    margin-bottom: 20px;
+    padding: 15px;
+    background-color: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 5px;
+}
+
+.filter-group {
+    display: flex;
+    flex-direction: column; /* Labels above inputs */
+}
+
+.filter-group label {
+    font-size: 0.85em;
+    margin-bottom: 4px;
+    color: #495057;
+    font-weight: 500;
+}
+
+.filter-group label i {
+    margin-right: 5px;
+}
+
+.filter-group input[type="text"],
+.filter-group select {
+    padding: 8px 10px;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    font-size: 0.9em;
+    min-width: 180px; /* Minimum width for inputs/selects */
+}
+
+.filter-group select {
+    cursor: pointer;
+}
+
+/* Button Styling (General) */
+.button {
+    padding: 8px 15px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.9em;
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    transition: background-color 0.2s ease;
+    margin-top: auto; /* Align buttons at the bottom if labels make height uneven */
+}
+
+.button i {
+    font-size: 0.95em;
+}
+
+.add-new-button {
+    background-color: #28a745; /* Green */
+    color: white;
+}
+.add-new-button:hover { background-color: #218838; }
+
+.clear-filters-button {
+    background-color: #6c757d; /* Grey */
+    color: white;
+}
+.clear-filters-button:hover { background-color: #5a6268; }
+
+.primary-button {
+    background-color: #007bff; /* Blue */
+    color: white;
+}
+.primary-button:hover { background-color: #0056b3; }
+
+
+/* Table Styling */
+.table-container {
+    overflow-x: auto; /* Allow horizontal scrolling on small screens */
+}
+
+#licPolicyTable {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 25px;
+}
+
+#licPolicyTable th,
+#licPolicyTable td {
+    border: 1px solid #dee2e6;
+    padding: 10px 12px; /* Adjusted padding */
+    text-align: left;
+    font-size: 0.9em;
+    white-space: nowrap; /* Prevent text wrapping */
+}
+
+#licPolicyTable th {
+    background-color: #e9ecef;
+    font-weight: 600;
+    color: #495057;
+}
+
+#licPolicyTable tbody tr:nth-child(even) {
+    background-color: #f8f9fa;
+}
+
+#licPolicyTable tbody tr:hover {
+    background-color: #e2e6ea;
+}
+
+/* Status Badge Styling */
+.status-badge {
+    padding: 3px 8px;
+    border-radius: 12px;
+    font-size: 0.8em;
+    font-weight: 500;
+    color: #fff;
+    text-transform: capitalize;
+    display: inline-block; /* Ensure badge fits content */
+}
+.status-active { background-color: #28a745; } /* Green */
+.status-lapsed { background-color: #dc3545; } /* Red */
+.status-matured { background-color: #007bff; } /* Blue */
+.status-surrendered { background-color: #ffc107; color: #212529;} /* Yellow with dark text */
+.status-unknown { background-color: #6c757d; } /* Grey */
+
+
+/* Action Buttons in Table */
+.action-buttons {
+    text-align: center;
+    min-width: 100px; /* Ensure buttons have space */
+    white-space: nowrap;
+}
+
+.action-buttons .button {
+    padding: 5px 8px;
+    margin: 0 3px;
+    font-size: 0.85em;
+}
+
+.edit-button { background-color: #ffc107; color: #333; } /* Yellow */
+.edit-button:hover { background-color: #e0a800; }
+.delete-button { background-color: #dc3545; color: white; } /* Red */
+.delete-button:hover { background-color: #c82333; }
+.info-button { background-color: #17a2b8; color: white; } /* Teal */
+.info-button:hover { background-color: #138496; }
+
+
+/* Task Management Section Styling */
 .task-management-section {
     margin-top: 30px;
     padding: 20px;
@@ -74,17 +279,39 @@
     margin-top: 0;
     font-size: 1.2em;
     margin-bottom: 15px;
+    border-bottom: 1px solid #e9ecef;
+    padding-bottom: 8px;
+}
+
+.task-management-section h2 i {
+    margin-right: 8px;
+    color: #007bff;
 }
 
 .task-actions {
     display: flex;
     gap: 10px;
     margin-bottom: 15px;
-    flex-wrap: wrap;
+    flex-wrap: wrap; /* Allow wrapping on small screens */
 }
-#newTaskInput { flex-grow: 1; padding: 6px 9px; border: 1px solid #ced4da; border-radius: 3px;}
-#newTaskDueDate { padding: 6px 9px; border: 1px solid #ced4da; border-radius: 3px; }
-#addTaskBtn { flex-shrink: 0; background-color: #007bff; color: white;}
+#newTaskInput {
+    flex-grow: 1;
+    padding: 8px 10px;
+    border: 1px solid #ced4da;
+    border-radius: 3px;
+    min-width: 200px; /* Minimum width */
+}
+#newTaskDueDate {
+    padding: 8px 10px;
+    border: 1px solid #ced4da;
+    border-radius: 3px;
+    cursor: pointer;
+}
+#addTaskBtn {
+    flex-shrink: 0; /* Prevent shrinking */
+    background-color: #007bff;
+    color: white;
+}
 #addTaskBtn:hover { background-color: #0056b3;}
 
 
@@ -92,36 +319,206 @@
     list-style: none;
     padding: 0;
     margin: 0;
+    max-height: 300px;
+    overflow-y: auto;
 }
 #taskList li {
     display: flex;
     align-items: center;
-    padding: 8px 0;
+    padding: 10px 5px;
     border-bottom: 1px solid #eee;
+    gap: 10px; /* Space between elements */
 }
- #taskList li span { flex-grow: 1; margin-left: 8px; font-size: 0.9em; }
-.task-checkbox { cursor: pointer; }
-.task-checkbox:checked + span { text-decoration: line-through; color: #6c757d; }
-.delete-task-btn { background: none; border: none; color: #dc3545; cursor: pointer; margin-left: auto; padding: 5px; font-size: 0.9em;}
+ #taskList li:last-child {
+    border-bottom: none;
+ }
+
+#taskList li span {
+    flex-grow: 1;
+    font-size: 0.9em;
+    line-height: 1.4;
+}
+
+.task-checkbox {
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+/* Styling for completed tasks (JS adds/removes 'completed-task' class) */
+#taskList li.completed-task span {
+    text-decoration: line-through;
+    color: #6c757d; /* Grey color for completed text */
+}
+
+.delete-task-btn {
+    background: none;
+    border: none;
+    color: #dc3545;
+    cursor: pointer;
+    padding: 5px;
+    font-size: 1em; /* Slightly larger icon */
+    line-height: 1; /* Align icon better */
+    flex-shrink: 0;
+}
 .delete-task-btn:hover { color: #c82333;}
 
+.loading-tasks {
+    color: #6c757d;
+    font-style: italic;
+    padding: 10px 0;
+}
 
-/* Modal Size Adjustment */
+
+/* Modal Styling */
+.modal {
+    display: none; /* Hidden by default */
+    position: fixed; /* Stay in place */
+    z-index: 1000; /* Sit on top */
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto; /* Enable scroll if needed */
+    background-color: rgba(0,0,0,0.5); /* Black w/ opacity */
+}
+
+.modal.active {
+    display: flex; /* Use flexbox for centering */
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-content {
+    background-color: #fefefe;
+    margin: auto; /* Needed for older browsers, flex handles centering */
+    padding: 30px;
+    border: 1px solid #888;
+    width: 90%; /* Responsive width */
+    max-width: 600px; /* Default max width */
+    border-radius: 8px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    position: relative;
+}
+
 .modal-content.large-modal {
-    max-width: 800px; /* Adjust width for larger forms */
+    max-width: 850px; /* Wider modal for policy form */
 }
-.modal-content .form-row {
-    display: flex;
-    gap: 20px; /* Add gap between columns */
-    flex-wrap: wrap;
-}
- .modal-content .form-row .form-group {
-    flex: 1 1 calc(50% - 10px); /* Allow two columns */
-    min-width: 200px; /* Minimum width before wrapping */
- }
- .modal-content .form-group textarea {
-      width: 100%; /* Ensure textarea takes full width */
- }
 
- /* Ensure required asterisk is visible */
-.required { color: #dc3545; margin-left: 2px; font-weight: bold; }
+.close-btn {
+    color: #aaa;
+    position: absolute;
+    top: 10px;
+    right: 15px;
+    font-size: 28px;
+    font-weight: bold;
+    line-height: 1;
+}
+
+.close-btn:hover,
+.close-btn:focus {
+    color: black;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.modal-content h2 {
+    margin-top: 0;
+    margin-bottom: 25px;
+    font-size: 1.4em;
+    color: #333;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 10px;
+}
+.modal-content h2 i {
+    margin-right: 10px;
+    color: #007bff;
+}
+
+/* Modal Form Styling */
+#policyForm .form-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px; /* Space between columns */
+    margin-bottom: 15px;
+}
+#policyForm .form-group {
+    flex: 1 1 calc(50% - 10px); /* Two columns layout */
+    min-width: 200px; /* Minimum width before wrapping */
+    display: flex;
+    flex-direction: column;
+}
+
+#policyForm .form-group label {
+    margin-bottom: 5px;
+    font-weight: 500;
+    font-size: 0.9em;
+    color: #495057;
+}
+
+#policyForm .form-group input[type="text"],
+#policyForm .form-group input[type="tel"],
+#policyForm .form-group input[type="email"],
+#policyForm .form-group input[type="number"],
+#policyForm .form-group input[type="date"],
+#policyForm .form-group select,
+#policyForm .form-group textarea {
+    width: 100%; /* Full width within the group */
+    padding: 8px 10px;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    font-size: 0.95em;
+    box-sizing: border-box; /* Include padding in width */
+}
+
+#policyForm .form-group textarea {
+    resize: vertical; /* Allow vertical resizing */
+    min-height: 60px;
+}
+
+#policyForm .form-group input:focus,
+#policyForm .form-group select:focus,
+#policyForm .form-group textarea:focus {
+    outline: none;
+    border-color: #80bdff;
+    box-shadow: 0 0 0 0.2rem rgba(0,123,255,.25);
+}
+
+#policyForm .form-group small {
+    font-size: 0.8em;
+    color: #6c757d;
+    margin-top: 3px;
+}
+
+.required {
+    color: #dc3545;
+    margin-left: 3px;
+    font-weight: bold;
+}
+
+#policyForm hr {
+    border: none;
+    border-top: 1px solid #eee;
+    margin: 25px 0;
+}
+
+.modal-actions {
+    margin-top: 25px;
+    display: flex;
+    justify-content: flex-end; /* Align buttons to the right */
+    gap: 10px;
+}
+
+.save-button { background-color: #28a745; color: white; }
+.save-button:hover { background-color: #218838; }
+.cancel-button { background-color: #6c757d; color: white; }
+.cancel-button:hover { background-color: #5a6268; }
+
+/* Spinner for buttons */
+.button .fa-spinner {
+    animation: fa-spin 1s infinite linear;
+}
+
+@keyframes fa-spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}

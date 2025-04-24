@@ -9,26 +9,25 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 
-    <link rel="stylesheet" href="css/customer_management.css">
     <link rel="stylesheet" href="css/lic_management.css">
 
     <script type="module">
-        // --- Firebase Setup (आपकी मौजूदा फाइल से कॉपी करें) ---
+        // --- Firebase Setup ---
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
         import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
         import {
             getFirestore, collection, doc, addDoc, getDoc, getDocs, updateDoc, deleteDoc, serverTimestamp,
-            query, where, orderBy, limit, Timestamp, runTransaction // सभी ज़रूरी फंक्शन्स इम्पोर्ट करें
+            query, where, orderBy, limit, Timestamp, onSnapshot // Import onSnapshot
          } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
          // **** आपकी Firebase कॉन्फ़िगरेशन ****
          const firebaseConfig = {
-           apiKey: "AIzaSyBQj5rQmE77kKKGYixP8y3Hcimz8tiAqzQ", // Your apiKey
-           authDomain: "madhav-multyprint.firebaseapp.com", // Your authDomain
-           projectId: "madhav-multyprint", // Your projectId
-           storageBucket: "madhav-multyprint.appspot.com", // Your storageBucket
-           messagingSenderId: "104988349637", // Your messagingSenderId
-           appId: "1:104988349637:web:faf045b77c6786a4e70cac" // Your appId
+            apiKey: "YOUR_API_KEY", // Replace with your actual API key
+            authDomain: "YOUR_AUTH_DOMAIN", // Replace with your actual auth domain
+            projectId: "YOUR_PROJECT_ID", // Replace with your actual project ID
+            storageBucket: "YOUR_STORAGE_BUCKET", // Replace with your actual storage bucket
+            messagingSenderId: "YOUR_MESSAGING_SENDER_ID", // Replace with your actual messaging sender ID
+            appId: "YOUR_APP_ID" // Replace with your actual app ID
          };
 
         let app; let auth; let db;
@@ -46,27 +45,27 @@
             auth = getAuth(app);
             db = getFirestore(app);
 
-            // Firebase फंक्शन्स को ग्लोबल बनाएं ताकि lic_management.js उन्हें इस्तेमाल कर सके
+            // Firebase फंक्शन्स को ग्लोबल बनाएं
             window.db = db; window.collection = collection; window.doc = doc; window.addDoc = addDoc;
             window.getDoc = getDoc; window.getDocs = getDocs; window.updateDoc = updateDoc; window.deleteDoc = deleteDoc;
             window.serverTimestamp = serverTimestamp; window.query = query; window.where = where;
-            window.orderBy = orderBy; window.limit = limit; window.Timestamp = Timestamp; window.runTransaction = runTransaction;
+            window.orderBy = orderBy; window.limit = limit; window.Timestamp = Timestamp; window.onSnapshot = onSnapshot; // Make onSnapshot global
 
             // Authentication Check
             onAuthStateChanged(auth, (user) => {
                 const currentPage = window.location.pathname.split('/').pop() || 'index.html';
                 if (!user && currentPage.toLowerCase() !== 'login.html') {
                     console.log("User not logged in. Redirecting...");
-                    window.location.replace('login.html');
+                    window.location.replace('login.html'); // Ensure you have a login.html
                 } else if (user) {
-                    console.log(`User logged in. Initializing LIC page.`);
+                    console.log(`User logged in: ${user.uid}. Initializing LIC page.`);
                     // lic_management.js से initializePage फंक्शन को कॉल करें
                     if (typeof initializeLicPage === 'function') {
-                        initializeLicPage();
+                        initializeLicPage(user); // Pass user object if needed
                     } else {
                         document.addEventListener('DOMContentLoaded', () => {
                              if (typeof initializeLicPage === 'function') {
-                                initializeLicPage();
+                                initializeLicPage(user);
                             } else {
                                  console.error("Initialization function 'initializeLicPage' not found!");
                                  alert("Application Error: Page script failed to load.");
@@ -88,8 +87,7 @@
         </div>
 
         <div class="breadcrumb-container">
-            <a href="index.html">Home</a> /
-            <span>LIC Management</span>
+            <a href="index.html">Home</a> / <span>LIC Management</span>
         </div>
 
         <div class="lic-reminder-section">
@@ -111,7 +109,7 @@
                      <option value="Active">Active</option>
                      <option value="Lapsed">Lapsed</option>
                      <option value="Matured">Matured</option>
-                     </select>
+                     <option value="Surrendered">Surrendered</option> </select>
             </div>
              <div class="filter-group filter-sort">
                  <label for="sort-lic"><i class="fas fa-sort-amount-down"></i> Sort By</label>
@@ -143,12 +141,12 @@
                         <th>Mode</th>
                         <th>Next Due Date</th>
                         <th>Status</th>
-                        <th>Actions</th>
+                        <th>NACH Status</th> <th>Actions</th>
                     </tr>
                 </thead>
                 <tbody id="licPolicyTableBody">
-                    <tr><td colspan="9" style="text-align: center; padding: 20px;">Loading policies...</td></tr>
-                    </tbody>
+                    <tr><td colspan="10" style="text-align: center; padding: 20px;">Loading policies...</td></tr>
+                </tbody>
             </table>
         </div>
 
@@ -161,14 +159,18 @@
              </div>
              <ul id="taskList">
                  <li class="loading-tasks">Loading tasks...</li>
-                 </ul>
+             </ul>
         </div>
 
-    </div> <div id="policyModal" class="modal">
-        <div class="modal-content large-modal"> <span class="close-btn" id="closePolicyModal" title="Close">&times;</span>
+    </div>
+
+    <div id="policyModal" class="modal">
+        <div class="modal-content large-modal">
+            <span class="close-btn" id="closePolicyModal" title="Close">&times;</span>
             <h2 id="policyModalTitle"><i class="fas fa-file-contract"></i> Add New Policy</h2>
             <form id="policyForm">
-                <input type="hidden" id="editPolicyId"> <div class="form-row">
+                <input type="hidden" id="editPolicyId">
+                <div class="form-row">
                     <div class="form-group">
                         <label for="customerName">Customer Name <span class="required">*</span>:</label>
                         <input type="text" id="customerName" required>
@@ -229,7 +231,7 @@
                             <option value="Half-Yearly">Half-Yearly</option>
                             <option value="Quarterly">Quarterly</option>
                             <option value="Monthly">Monthly</option>
-                            </select>
+                        </select>
                     </div>
                  </div>
 
