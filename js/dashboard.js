@@ -6,7 +6,7 @@ import { db, auth } from './firebase-init.js';
 // Import necessary functions directly from the SDK
 import { collection, onSnapshot, query, where, getDocs, limit, orderBy, Timestamp, doc, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import { formatTimeAgo } from './utils.js'; // Assuming formatTimeAgo is in utils.js
+import { formatTimeAgo } from './helper_utils.js'; // Assuming formatTimeAgo is in utils.js
 
 // --- DOM Elements ---
 // (पहले जैसा, सभी IDs यहाँ परिभाषित करें)
