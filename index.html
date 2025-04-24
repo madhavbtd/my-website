@@ -3,20 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>माधव मल्टीप्रिन्ट डैशबोर्ड (Updated)</title>
+    <title>माधव मल्टीप्रिन्ट डैशबोर्ड (Fixed)</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/index.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js" defer></script>
+
     </head>
 
 <body>
     <div class="container">
         <div class="sidebar">
-            <h2><img src="https://i.ibb.co/Z6gKD9Rd/1.png" alt="माधव मल्टीप्रिन्ट Logo"></h2>
-            <ul>
+             <h2><img src="https://i.ibb.co/Z6gKD9Rd/1.png" alt="माधव मल्टीप्रिन्ट Logo"></h2>
+             <ul>
                 <li><a href="index.html" class="active"><i class="fas fa-tachometer-alt"></i> <span>Dashboard</span></a></li>
                 <li><a href="order_history.html"><i class="fas fa-history"></i> <span>Order History</span></a></li>
                 <li><a href="customer_management.html"><i class="fas fa-users"></i> <span>Customers</span></a></li>
@@ -28,7 +29,7 @@
                 <li><a href="product_management.html"><i class="fas fa-box-open"></i> <span>Product</span></a></li>
                 <li><a href="#"><i class="fas fa-tools"></i> <span>Tools</span></a></li>
                 <li><a href="#" id="logout-link"><i class="fas fa-sign-out-alt"></i> <span>LOGOUT</span></a></li>
-            </ul>
+             </ul>
         </div>
 
         <div class="main-content" id="main-content">
@@ -51,25 +52,27 @@
                 </div>
             </div>
 
-            <div class="order-control-panel">
-                <div class="panel-item status-order-received"> <i class="fas fa-shopping-bag panel-icon"></i> Order Received <span class="panel-count" id="count-order-received"><span class="loading-placeholder">..</span></span> <a href="order_history.html?status=Order+Received" class="button-link">View</a> </div>
-                <div class="panel-item status-designing"> <i class="fas fa-hourglass-half panel-icon"></i> Designing <span class="panel-count" id="count-designing"><span class="loading-placeholder">..</span></span> <a href="order_history.html?status=Designing" class="button-link">View</a> </div>
-                <div class="panel-item status-verification"> <i class="fas fa-check-circle panel-icon"></i> Verification <span class="panel-count" id="count-verification"><span class="loading-placeholder">..</span></span> <a href="order_history.html?status=Verification" class="button-link">View</a> </div>
-                <div class="panel-item status-design-approved"> <i class="fas fa-thumbs-up panel-icon"></i> Design Approved <span class="panel-count" id="count-design-approved"><span class="loading-placeholder">..</span></span> <a href="order_history.html?status=Design+Approved" class="button-link">View</a> </div>
-                <div class="panel-item status-printing"> <i class="fas fa-print panel-icon"></i> Printing <span class="panel-count" id="count-printing"><span class="loading-placeholder">..</span></span> <a href="order_history.html?status=Printing" class="button-link">View</a> </div>
-                <div class="panel-item status-ready-for-working"> <i class="fas fa-cog panel-icon"></i> Ready For Working <span class="panel-count" id="count-ready-for-working"><span class="loading-placeholder">..</span></span> <a href="order_history.html?status=Ready+for+Working" class="button-link">View</a> </div>
-                <div class="panel-item status-delivered"> <i class="fas fa-truck panel-icon"></i> Delivered <span class="panel-count" id="count-delivered"><span class="loading-placeholder">..</span></span> <a href="order_history.html?status=Delivered" class="button-link">View</a> </div>
-                <div class="panel-item status-completed"> <i class="fas fa-check-double panel-icon"></i> Completed <span class="panel-count" id="count-completed"><span class="loading-placeholder">..</span></span> <a href="order_history.html?status=Completed" class="button-link">View</a> </div>
-            </div>
             <div class="kpi-section card-layout">
                  <div class="kpi-card"> <i class="fas fa-users kpi-icon"></i> <div class="kpi-value" id="kpi-total-customers"><span class="loading-placeholder">...</span></div> <div class="kpi-label">Total Customers</div> </div>
                  <div class="kpi-card"> <i class="fas fa-truck kpi-icon"></i> <div class="kpi-value" id="kpi-total-suppliers"><span class="loading-placeholder">...</span></div> <div class="kpi-label">Total Suppliers</div> </div>
-                 <div class="kpi-card"> <i class="fas fa-file-invoice kpi-icon"></i> <div class="kpi-value" id="kpi-pending-po"><span class="loading-placeholder">...</span></div> <div class="kpi-label">Pending POs</div> </div>
                  <div class="kpi-card"> <i class="fas fa-wallet kpi-icon"></i> <div class="kpi-value" id="kpi-pending-payments"><span class="loading-placeholder">...</span></div> <div class="kpi-label">Pending Payments</div> </div>
                  <div class="kpi-card"> <i class="fas fa-calendar-day kpi-icon"></i> <div class="kpi-value" id="kpi-orders-today"><span class="loading-placeholder">...</span></div> <div class="kpi-label">Orders Today</div> </div>
             </div>
+
+            <div class="order-control-panel">
+                <div class="panel-item light-blue"> <i class="fas fa-shopping-bag panel-icon"></i> Order Received <span class="panel-count" id="count-order-received"><span class="loading-placeholder">..</span></span> <a href="order_history.html?status=Order+Received" class="button-link">View</a> </div>
+                <div class="panel-item light-orange"> <i class="fas fa-hourglass-half panel-icon"></i> Designing <span class="panel-count" id="count-designing"><span class="loading-placeholder">..</span></span> <a href="order_history.html?status=Designing" class="button-link">View</a> </div>
+                <div class="panel-item light-green"> <i class="fas fa-check-circle panel-icon"></i> Verification <span class="panel-count" id="count-verification"><span class="loading-placeholder">..</span></span> <a href="order_history.html?status=Verification" class="button-link">View</a> </div>
+                <div class="panel-item light-red"> <i class="fas fa-thumbs-up panel-icon"></i> Design Approved <span class="panel-count" id="count-design-approved"><span class="loading-placeholder">..</span></span> <a href="order_history.html?status=Design+Approved" class="button-link">View</a> </div>
+                <div class="panel-item light-blue"> <i class="fas fa-print panel-icon"></i> Printing <span class="panel-count" id="count-printing"><span class="loading-placeholder">..</span></span> <a href="order_history.html?status=Printing" class="button-link">View</a> </div>
+                <div class="panel-item light-orange"> <i class="fas fa-cog panel-icon"></i> Ready For Working <span class="panel-count" id="count-ready-for-working"><span class="loading-placeholder">..</span></span> <a href="order_history.html?status=Ready+for+Working" class="button-link">View</a> </div>
+                <div class="panel-item light-green"> <i class="fas fa-truck panel-icon"></i> Delivered <span class="panel-count" id="count-delivered"><span class="loading-placeholder">..</span></span> <a href="order_history.html?status=Delivered" class="button-link">View</a> </div>
+                <div class="panel-item light-red"> <i class="fas fa-check-double panel-icon"></i> Completed <span class="panel-count" id="count-completed"><span class="loading-placeholder">..</span></span> <a href="order_history.html?status=Completed" class="button-link">View</a> </div>
+            </div>
+
             <div class="search-bar order-search-bar">
-                <label for="order-id-search">Search Order / Customer / LIC:</label> <input type="text" id="order-id-search" placeholder="Enter Order ID, Cust Name, LIC Policy...">
+                <label for="order-id-search">Search Order ID:</label>
+                <input type="text" id="order-id-search" placeholder="Enter Order ID...">
                 <button id="order-id-search-button"><i class="fas fa-search"></i></button>
                 <div id="order-suggestions" class="suggestions-list"></div>
             </div>
@@ -104,11 +107,10 @@
                    </div>
             </div>
 
-        </div>
-    </div>
+        </div> </div> <script src="js/utils.js" type="module" defer></script>
 
-    <script src="js/utils.js" type="module" defer></script>
     <script src="js/dashboard.js" type="module" defer></script>
+
     <script>
         function setActiveLink() {
              try { const path=window.location.pathname; const page=path.substring(path.lastIndexOf('/')+1)||'index.html'; const links=document.querySelectorAll('.sidebar ul li a'); links.forEach(l=>{const hrefAttr=l.getAttribute('href'); l.classList.remove('active'); if(hrefAttr){const linkPage=hrefAttr.substring(hrefAttr.lastIndexOf('/')+1).split('?')[0].split('#')[0]||'index.html'; if(page===linkPage||((page==='/'||page==='index.html')&&linkPage==='index.html')){l.classList.add('active');}}}); } catch(e){console.error("Error setting active link:",e);}
