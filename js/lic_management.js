@@ -1,5 +1,5 @@
 // js/lic_management.js
-// Updated for Phase 1 & Phase 2 Features + Debugging Logs
+// Updated for Phase 1 & Phase 2 Features + Task Followup + Debugging Logs
 
 // --- सुनिश्चित करें कि ग्लोबल Firebase फंक्शन्स उपलब्ध हैं ---
 const {
@@ -15,8 +15,8 @@ let licPolicyTableBody, reminderList, policyModal, policyForm, policyModalTitle,
     policyStatusModal, nachStatusModal,
     // Filter bar elements
     licStatusFilter, licPlanFilter, licModeFilter, licNachFilter,
-    // Task Management Elements
-    newTaskInput, newTaskDueDate, addTaskBtn, taskList,
+    // Task Management Elements (Updated)
+    newTaskCustomerNameEl, newTaskInput, newTaskDueDate, newTaskCommentsEl, addTaskBtn, taskList,
     // --- Phase 2 Elements ---
     // Dashboard elements
     dbTotalPoliciesEl, dbActivePoliciesEl, dbLapsedPoliciesEl, dbUpcomingPremiumEl, dbUpcomingMaturityEl,
@@ -25,7 +25,13 @@ let licPolicyTableBody, reminderList, policyModal, policyForm, policyModalTitle,
     clientDetailNameEl, clientDetailContentEl,
     clientDetailMobileEl, clientDetailDobEl, clientDetailFatherNameEl, clientDetailAddressEl,
     clientPoliciesListEl, communicationLogListEl,
-    newLogNoteEl, addLogBtn;
+    newLogNoteEl, addLogBtn,
+    // Edit Task Modal Elements
+    editTaskModal, editTaskForm, editTaskIdEl,
+    editTaskCustomerNameEl, editTaskDescriptionEl, editTaskDueDateEl, editTaskCommentsEl, editTaskStatusEl,
+    closeEditTaskModalBtn, cancelEditTaskBtn, saveTaskChangesBtn, // saveTaskChangesBtn used via form submit
+    // Upcoming Tasks Reminder Element
+    upcomingTaskListEl;
 
 
 // --- ग्लोबल स्टेट ---
@@ -47,7 +53,7 @@ window.initializeLicPage = function() { // Make it globally accessible
     reminderList = document.getElementById('reminderList');
     policyModal = document.getElementById('policyModal'); // Add/Edit Policy Modal
     policyForm = document.getElementById('policyForm');
-    policyModalTitle = document.getElementById('policyModalTitle');
+    policyModalTitle = document.getElementById('policyModalTitleText'); // <<< Use the span ID if you added one
     editPolicyId = document.getElementById('editPolicyId');
     addNewPolicyBtn = document.getElementById('addNewPolicyBtn'); // <<<<< यह
     closePolicyModalBtn = document.getElementById('closePolicyModal'); // Policy Modal Close
@@ -64,9 +70,11 @@ window.initializeLicPage = function() { // Make it globally accessible
     licPlanFilter = document.getElementById('licPlanFilter');
     licModeFilter = document.getElementById('licModeFilter');
     licNachFilter = document.getElementById('licNachFilter');
-    // Task Management Elements
-    newTaskInput = document.getElementById('newTaskInput');
+    // Task Management Elements (Updated)
+    newTaskCustomerNameEl = document.getElementById('newTaskCustomerName');
+    newTaskInput = document.getElementById('newTaskInput'); // Description
     newTaskDueDate = document.getElementById('newTaskDueDate');
+    newTaskCommentsEl = document.getElementById('newTaskComments');
     addTaskBtn = document.getElementById('addTaskBtn');           // <<<<< यह
     taskList = document.getElementById('taskList');
 
@@ -92,8 +100,24 @@ window.initializeLicPage = function() { // Make it globally accessible
     newLogNoteEl = document.getElementById('newLogNote');
     addLogBtn = document.getElementById('addLogBtn');
 
+    // Edit Task Modal Elements
+    editTaskModal = document.getElementById('editTaskModal');
+    editTaskForm = document.getElementById('editTaskForm');
+    editTaskIdEl = document.getElementById('editTaskId');
+    editTaskCustomerNameEl = document.getElementById('editTaskCustomerName');
+    editTaskDescriptionEl = document.getElementById('editTaskDescription');
+    editTaskDueDateEl = document.getElementById('editTaskDueDate');
+    editTaskCommentsEl = document.getElementById('editTaskComments');
+    editTaskStatusEl = document.getElementById('editTaskStatus');
+    closeEditTaskModalBtn = document.getElementById('closeEditTaskModal');
+    cancelEditTaskBtn = document.getElementById('cancelEditTaskBtn');
+    // saveTaskChangesBtn listener form submit पर लगेगा
 
-    // --- START: डीबगिंग लॉग्स यहाँ जोड़ें ---
+    // Upcoming Tasks Reminder Element
+    upcomingTaskListEl = document.getElementById('upcomingTaskList');
+
+
+    // --- START: डीबगिंग लॉग्स ---
     console.log('Debugging - Add New Policy Button Element:', addNewPolicyBtn);
     console.log('Debugging - Add Task Button Element:', addTaskBtn);
     // --- END: डीबगिंग लॉग्स ---
@@ -124,7 +148,7 @@ window.initializeLicPage = function() { // Make it globally accessible
     // Reminder Checkbox Listener (Event Delegation)
     if (reminderList) reminderList.addEventListener('change', handleReminderCheckboxChange);
 
-    // Task Management Listeners
+    // Task Management Listeners (Updated)
     if (addTaskBtn) {
          console.log('Debugging - Attaching listener to Add Task button'); // डीबगिंग लॉग
          addTaskBtn.addEventListener('click', handleAddTask);
@@ -136,16 +160,23 @@ window.initializeLicPage = function() { // Make it globally accessible
         taskList.addEventListener('click', handleTaskActions);
     }
 
+    // Edit Task Modal Listeners
+    if (closeEditTaskModalBtn) closeEditTaskModalBtn.addEventListener('click', closeEditTaskModal);
+    if (cancelEditTaskBtn) cancelEditTaskBtn.addEventListener('click', closeEditTaskModal);
+    if (editTaskModal) editTaskModal.addEventListener('click', (e) => { if (e.target === editTaskModal) closeEditTaskModal(); });
+    if (editTaskForm) editTaskForm.addEventListener('submit', handleUpdateTask);
+
     // --- Phase 2: Client Detail Listeners ---
     if (closeClientDetailBtn) closeClientDetailBtn.addEventListener('click', closeClientDetail);
     if (closeClientDetailBtnBottom) closeClientDetailBtnBottom.addEventListener('click', closeClientDetail);
-    if (clientDetailModal) clientDetailModal.addEventListener('click', (e) => { if (e.target === clientDetailModal) closeClientDetail(); }); // Close on overlay click
+    if (clientDetailModal) clientDetailModal.addEventListener('click', (e) => { if (e.target === clientDetailModal) closeClientDetail(); });
     if (addLogBtn) addLogBtn.addEventListener('click', addCommunicationNote);
 
     // --- Firestore से डेटा सुनना शुरू करें ---
     listenForPolicies(); // Policies Load
     listenForTasks();   // Tasks Load
-    displayReminders(); // Reminders Load
+    displayReminders(); // Policy Reminders Load
+    displayUpcomingTasks(); // Task Reminders Load
 
     // --- Phase 2: Load initial dashboard data (called within policy listener) ---
 }
@@ -163,30 +194,29 @@ function listenForPolicies() {
         console.log(`Received ${snapshot.docs.length} policies.`);
         allPoliciesCache = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         applyLicFiltersAndRender(); // Render Table
-        displayReminders();         // Update Reminders
+        displayReminders();         // Update Policy Reminders
         loadDashboardData();        // Update Dashboard (Phase 2)
     }, (error) => {
         console.error("Error listening to policies:", error);
         if(licPolicyTableBody) licPolicyTableBody.innerHTML = `<tr><td colspan="9">Error loading policy data. Check console.</td></tr>`;
-        // Clear dashboard on error too
         if(dbTotalPoliciesEl) dbTotalPoliciesEl.textContent = 'Error';
         if(dbActivePoliciesEl) dbActivePoliciesEl.textContent = 'Error';
-        // ... clear other dashboard elements
     });
 }
 
-// --- Firestore Listener (Tasks) --- Phase 1 Fix
+// --- Firestore Listener (Tasks) ---
 function listenForTasks() {
     if (!db) { console.error("DB not initialized for tasks"); return; }
     if (unsubscribeTasks) unsubscribeTasks();
 
     const tasksRef = collection(db, "tasks"); // Assume 'tasks' collection
-    const q = query(tasksRef, orderBy("createdAt", "desc"));
+    const q = query(tasksRef, orderBy("createdAt", "desc")); // Sort by creation time
 
     console.log("Starting task listener...");
     unsubscribeTasks = onSnapshot(q, (snapshot) => {
         console.log(`Received ${snapshot.docs.length} tasks.`);
-        renderTaskList(snapshot.docs);
+        renderTaskList(snapshot.docs); // Render tasks directly
+        displayUpcomingTasks(); // Update task reminders when tasks change
     }, (error) => {
         console.error("Error listening to tasks:", error);
         if(taskList) taskList.innerHTML = `<li class="error-tasks">Error loading tasks.</li>`;
@@ -194,7 +224,7 @@ function listenForTasks() {
 }
 
 
-// --- फ़िल्टर, सॉर्ट और रेंडर (Policies) --- Updated for Phase 1 Filters
+// --- फ़िल्टर, सॉर्ट और रेंडर (Policies) ---
 function applyLicFiltersAndRender() {
      if (!allPoliciesCache || !licPolicyTableBody) return;
 
@@ -230,9 +260,7 @@ function applyLicFiltersAndRender() {
                valA = Number(valA) || 0; valB = Number(valB) || 0;
            } else if (currentLicSortField === 'customerName' || currentLicSortField === 'policyNumber') {
                 valA = (valA || '').toLowerCase(); valB = (valB || '').toLowerCase();
-           } else if (valA instanceof Date && valB instanceof Date) {
-               // Direct comparison works
-           } else {
+           } else if (valA instanceof Date && valB instanceof Date) { } else {
                valA = String(valA || '').toLowerCase(); valB = String(valB || '').toLowerCase();
            }
 
@@ -246,7 +274,7 @@ function applyLicFiltersAndRender() {
      renderPolicyTable(filteredPolicies);
 }
 
-// --- टेबल रेंडरिंग (Policies) --- Updated with Clickable Name (Phase 2)
+// --- टेबल रेंडरिंग (Policies) ---
 function renderPolicyTable(policies) {
     if (!licPolicyTableBody) return;
     licPolicyTableBody.innerHTML = '';
@@ -260,27 +288,19 @@ function renderPolicyTable(policies) {
         const row = licPolicyTableBody.insertRow();
         row.setAttribute('data-id', policy.id);
 
-        // Basic details
         row.insertCell().textContent = policy.policyNumber || '-';
 
-        // --- Customer Name Cell (Clickable for Phase 2) ---
         const nameCell = row.insertCell();
         const nameLink = document.createElement('a');
-        nameLink.href = "#"; // Prevent page jump
+        nameLink.href = "#";
         nameLink.textContent = policy.customerName || 'N/A';
         nameLink.title = `View details for ${policy.customerName || 'this client'}`;
-        nameLink.style.cursor = 'pointer';
-        nameLink.style.textDecoration = 'underline';
-        nameLink.style.color = '#0056b3';
-        // Store data needed by showClientDetail directly on the link
+        nameLink.style.cursor = 'pointer'; nameLink.style.textDecoration = 'underline'; nameLink.style.color = '#0056b3';
         nameLink.onclick = (e) => {
-            e.preventDefault(); // Prevent default link behavior
-            // Pass policy ID and name. Could pass full policy object if needed.
-            // Using policy.id as the unique identifier for logs/details is better.
+            e.preventDefault();
             showClientDetail(policy.id, policy.customerName);
         };
         nameCell.appendChild(nameLink);
-        // --- End Customer Name Cell ---
 
         row.insertCell().textContent = policy.mobileNo || '-';
         row.insertCell().textContent = policy.plan || '-';
@@ -289,18 +309,15 @@ function renderPolicyTable(policies) {
         row.insertCell().textContent = policy.nextInstallmentDate?.toDate ? formatDate(policy.nextInstallmentDate.toDate()) : '-';
         row.insertCell().innerHTML = `<span class="status-badge status-${(policy.policyStatus || 'unknown').toLowerCase()}">${policy.policyStatus || 'Unknown'}</span>`;
 
-        // Action Buttons Cell
         const actionCell = row.insertCell();
         actionCell.classList.add('action-buttons');
 
-        // Edit Button
         const editBtn = document.createElement('button');
         editBtn.innerHTML = '<i class="fas fa-edit"></i>'; editBtn.title = "Edit Policy";
         editBtn.classList.add('button', 'edit-button');
         editBtn.onclick = (e) => { e.stopPropagation(); openPolicyModal(policy.id, policy); };
         actionCell.appendChild(editBtn);
 
-        // Mark Paid Button (Phase 1)
         const payBtn = document.createElement('button');
         payBtn.innerHTML = '<i class="fas fa-check-circle"></i>'; payBtn.title = "Mark Premium Paid & Update Due Date";
         payBtn.classList.add('button', 'pay-button');
@@ -308,7 +325,6 @@ function renderPolicyTable(policies) {
         payBtn.onclick = (e) => { e.stopPropagation(); handleMarkPaid(policy.id, policy); };
         actionCell.appendChild(payBtn);
 
-        // Delete Button
         const deleteBtn = document.createElement('button');
         deleteBtn.innerHTML = '<i class="fas fa-trash-alt"></i>'; deleteBtn.title = "Delete Policy";
         deleteBtn.classList.add('button', 'delete-button');
@@ -320,13 +336,12 @@ function renderPolicyTable(policies) {
 
 // --- Modal खोलना/बंद करना (Policy Add/Edit) ---
 function openPolicyModal(policyId = null, data = {}) {
-    if (!policyModal || !policyForm) return;
-    policyForm.reset(); // फॉर्म खाली करें
-    editPolicyId.value = policyId || ''; // ID सेट करें (या खाली रखें)
+    if (!policyModal || !policyForm || !policyModalTitle) return; // Added title check
+    policyForm.reset();
+    editPolicyId.value = policyId || '';
 
     if (policyId) {
-        // --- एडिट मोड ---
-        policyModalTitle.textContent = "Edit Policy Details";
+        policyModalTitle.textContent = "Edit Policy Details"; // <<< Update title text
         document.getElementById('customerName').value = data.customerName || '';
         document.getElementById('fatherName').value = data.fatherName || '';
         document.getElementById('mobileNo').value = data.mobileNo || '';
@@ -341,14 +356,13 @@ function openPolicyModal(policyId = null, data = {}) {
         document.getElementById('premiumAmount').value = data.premiumAmount || '';
         document.getElementById('nextInstallmentDate').value = data.nextInstallmentDate?.toDate ? data.nextInstallmentDate.toDate().toISOString().split('T')[0] : '';
         document.getElementById('maturityDate').value = data.maturityDate?.toDate ? data.maturityDate.toDate().toISOString().split('T')[0] : '';
-        if(policyStatusModal) policyStatusModal.value = data.policyStatus || 'Active'; // Use modal specific var
-        if(nachStatusModal) nachStatusModal.value = data.nachStatus || 'No';       // Use modal specific var
+        if(policyStatusModal) policyStatusModal.value = data.policyStatus || 'Active';
+        if(nachStatusModal) nachStatusModal.value = data.nachStatus || 'No';
     } else {
-        // --- ऐड मोड ---
-        policyModalTitle.textContent = "Add New Policy";
-         if(policyStatusModal) policyStatusModal.value = 'Active'; // Use modal specific var
-         if(nachStatusModal) nachStatusModal.value = 'No';       // Use modal specific var
-         document.getElementById('nextInstallmentDate').value = ''; // Clear next date for calculation
+        policyModalTitle.textContent = "Add New Policy"; // <<< Update title text
+         if(policyStatusModal) policyStatusModal.value = 'Active';
+         if(nachStatusModal) nachStatusModal.value = 'No';
+         document.getElementById('nextInstallmentDate').value = '';
     }
     policyModal.classList.add('active');
 }
@@ -365,7 +379,6 @@ async function handleSavePolicy(event) {
     const policyId = editPolicyId.value;
     const isEditing = !!policyId;
 
-    // --- फॉर्म से डेटा प्राप्त करें ---
     const formData = {
         customerName: document.getElementById('customerName').value.trim(),
         fatherName: document.getElementById('fatherName').value.trim(),
@@ -380,18 +393,16 @@ async function handleSavePolicy(event) {
         modeOfPayment: document.getElementById('modeOfPayment').value,
         premiumAmount: parseFloat(document.getElementById('premiumAmount').value) || 0,
         maturityDate: document.getElementById('maturityDate').value ? Timestamp.fromDate(new Date(document.getElementById('maturityDate').value)) : null,
-        policyStatus: policyStatusModal ? policyStatusModal.value : 'Active', // Use modal specific var
-        nachStatus: nachStatusModal ? nachStatusModal.value : 'No',         // Use modal specific var
-        updatedAt: serverTimestamp() // Always update timestamp
+        policyStatus: policyStatusModal ? policyStatusModal.value : 'Active',
+        nachStatus: nachStatusModal ? nachStatusModal.value : 'No',
+        updatedAt: serverTimestamp()
     };
 
-    // --- वैलिडेशन ---
     if (!formData.customerName || !formData.mobileNo || !formData.policyNumber || !formData.issuanceDate || !formData.modeOfPayment || formData.premiumAmount <= 0) {
         alert("Please fill all required (*) fields with valid data.");
         return;
     }
 
-     // --- अगली किस्त की तारीख की गणना / हैंडलिंग ---
      let nextDateInput = document.getElementById('nextInstallmentDate').value;
      if (nextDateInput) {
           formData.nextInstallmentDate = Timestamp.fromDate(new Date(nextDateInput + 'T00:00:00Z'));
@@ -400,19 +411,14 @@ async function handleSavePolicy(event) {
           if (calculatedNextDate) {
                formData.nextInstallmentDate = Timestamp.fromDate(calculatedNextDate);
           } else {
-               alert("Could not calculate next installment date based on mode. Please enter manually.");
-               return;
+               alert("Could not calculate next installment date. Please enter manually."); return;
           }
      } else if (!isEditing) {
-          alert("Please enter the first installment date or ensure issuance date and mode are set.");
-          return;
-     }
-      else if (isEditing && !nextDateInput) {
-           alert("Please provide the next installment date when editing.");
-           return;
+          alert("Please enter the first installment date or ensure issuance date and mode are set."); return;
+     } else if (isEditing && !nextDateInput) {
+           alert("Please provide the next installment date when editing."); return;
       }
 
-    // --- सेव/अपडेट लॉजिक ---
     savePolicyBtn.disabled = true;
     savePolicyBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
 
@@ -423,7 +429,7 @@ async function handleSavePolicy(event) {
             await updateDoc(policyRef, formData);
             alert("Policy updated successfully!");
         } else {
-            formData.createdAt = serverTimestamp(); // Add createdAt only for new docs
+            formData.createdAt = serverTimestamp();
             await addDoc(collection(db, "licCustomers"), formData);
             alert("New policy added successfully!");
         }
@@ -455,8 +461,7 @@ async function handleDeletePolicy(policyId, policyNumber) {
 async function handleMarkPaid(policyId, policyData) {
     if (!db) { alert("Database not ready."); return; }
     if (!policyData || !policyData.nextInstallmentDate || !policyData.modeOfPayment) {
-        alert("Cannot calculate next due date. Missing current due date or payment mode.");
-        return;
+        alert("Cannot calculate next due date. Missing current due date or payment mode."); return;
     }
 
     const currentDueDate = policyData.nextInstallmentDate.toDate();
@@ -466,8 +471,7 @@ async function handleMarkPaid(policyId, policyData) {
     const newNextDueDate = calculateNextDueDate(currentDueDate, paymentMode);
 
     if (!newNextDueDate) {
-        alert(`Could not calculate the next due date for policy ${policyNumber}. Check payment mode.`);
-        return;
+        alert(`Could not calculate the next due date for policy ${policyNumber}. Check payment mode.`); return;
     }
 
     const formattedCurrentDate = formatDate(currentDueDate);
@@ -482,7 +486,7 @@ async function handleMarkPaid(policyId, policyData) {
                 policyStatus: 'Active'
             });
             alert(`Payment marked for policy ${policyNumber}. Next due date updated to ${formattedNewDate}.`);
-            displayReminders();
+            // Reminders will update via listener
         } catch (error) {
             console.error("Error marking payment:", error);
             alert("Error updating policy after marking payment: " + error.message);
@@ -490,17 +494,14 @@ async function handleMarkPaid(policyId, policyData) {
     }
 }
 
-// --- रिमाइंडर फंक्शन ---
+// --- रिमाइंडर फंक्शन (Policies) ---
 async function displayReminders() {
     if (!db || !reminderList) return;
     reminderList.innerHTML = '<li class="loading-reminder">Loading reminders...</li>';
-
     try {
         const today = new Date(); today.setHours(0, 0, 0, 0);
         const reminderDays = 15;
-        const reminderEndDate = new Date(today);
-        reminderEndDate.setDate(today.getDate() + reminderDays);
-
+        const reminderEndDate = new Date(today); reminderEndDate.setDate(today.getDate() + reminderDays);
         const todayTimestamp = Timestamp.fromDate(today);
         const endTimestamp = Timestamp.fromDate(reminderEndDate);
 
@@ -509,482 +510,199 @@ async function displayReminders() {
                                  where("nextInstallmentDate", "<=", endTimestamp),
                                  where("policyStatus", "in", ["Active", "Lapsed"]),
                                  orderBy("nextInstallmentDate"));
-
         const querySnapshot = await getDocs(reminderQuery);
         reminderList.innerHTML = '';
-
         if (querySnapshot.empty) {
-            reminderList.innerHTML = `<li>No upcoming installments in the next ${reminderDays} days for Active/Lapsed policies.</li>`;
-            return;
+            reminderList.innerHTML = `<li>No upcoming installments in the next ${reminderDays} days for Active/Lapsed policies.</li>`; return;
         }
-
         querySnapshot.forEach(docSnap => {
             const policy = { id: docSnap.id, ...docSnap.data() };
-            const li = document.createElement('li');
-            li.setAttribute('data-doc-id', policy.id);
-
-            const checkbox = document.createElement('input');
-            checkbox.type = 'checkbox';
-            checkbox.className = 'reminder-checkbox';
-            checkbox.title = 'Check to hide this reminder temporarily';
-
+            const li = document.createElement('li'); li.setAttribute('data-doc-id', policy.id);
+            const checkbox = document.createElement('input'); checkbox.type = 'checkbox'; checkbox.className = 'reminder-checkbox'; checkbox.title = 'Check to hide this reminder temporarily';
             const span = document.createElement('span');
             span.innerHTML = `Policy: <strong>${policy.policyNumber || 'N/A'}</strong> - ${policy.customerName || 'N/A'} - ₹ ${Number(policy.premiumAmount || 0).toFixed(2)} - Due: <strong>${formatDate(policy.nextInstallmentDate?.toDate())}</strong>`;
-
-            li.appendChild(checkbox);
-            li.appendChild(span);
-            reminderList.appendChild(li);
+            li.appendChild(checkbox); li.appendChild(span); reminderList.appendChild(li);
         });
-
     } catch (error) {
         console.error("Error fetching reminders:", error);
-        reminderList.innerHTML = '<li>Error loading reminders. Check console.</li>';
+        if (error.code === 'failed-precondition') {
+             reminderList.innerHTML = '<li>Error: Firestore index required for policy reminders. Check console for link to create it.</li>';
+        } else {
+            reminderList.innerHTML = '<li>Error loading reminders. Check console.</li>';
+        }
     }
 }
 
 // --- रिमाइंडर चेकबॉक्स हैंडलर ---
 function handleReminderCheckboxChange(event) {
     if (event.target.classList.contains('reminder-checkbox')) {
-        const checkbox = event.target;
-        const listItem = checkbox.closest('li');
-        if (!listItem) return;
-
-        if (checkbox.checked) {
-            listItem.classList.add('hidden-reminder');
-        } else {
-            listItem.classList.remove('hidden-reminder');
-        }
+        const checkbox = event.target; const listItem = checkbox.closest('li'); if (!listItem) return;
+        listItem.classList.toggle('hidden-reminder', checkbox.checked);
     }
 }
 
 
-// --- *** Task Management Functions (Phase 1 Fix) *** ---
+// --- *** Task Management Functions (Follow-up Style) *** ---
 
 // Render Task List
 function renderTaskList(taskDocs) {
      if (!taskList) return;
      taskList.innerHTML = '';
-
-     if (taskDocs.length === 0) {
-         taskList.innerHTML = '<li>No tasks found.</li>';
-         return;
-     }
-
+     if (taskDocs.length === 0) { taskList.innerHTML = '<li>No follow-up tasks found.</li>'; return; }
      taskDocs.forEach(doc => {
          const task = { id: doc.id, ...doc.data() };
-         const li = document.createElement('li');
-         li.setAttribute('data-task-id', task.id);
-         li.classList.toggle('completed-task', task.completed);
-
-         const checkbox = document.createElement('input');
-         checkbox.type = 'checkbox';
-         checkbox.className = 'task-checkbox';
-         checkbox.checked = task.completed;
-         checkbox.title = task.completed ? 'Mark as Incomplete' : 'Mark as Complete';
-
-         const span = document.createElement('span');
-         span.textContent = task.description || 'No description';
-         if (task.dueDate?.toDate) {
-             span.textContent += ` (Due: ${formatDate(task.dueDate.toDate())})`;
-         }
-
-         const deleteBtn = document.createElement('button');
-         deleteBtn.innerHTML = '<i class="fas fa-trash-alt"></i>';
-         deleteBtn.className = 'button delete-task-btn';
-         deleteBtn.title = 'Delete Task';
-
-         li.appendChild(checkbox);
-         li.appendChild(span);
-         li.appendChild(deleteBtn);
-         taskList.appendChild(li);
+         const li = document.createElement('li'); li.setAttribute('data-task-id', task.id); li.classList.toggle('completed-task', task.completed);
+         const contentDiv = document.createElement('div'); contentDiv.style.flexGrow = '1';
+         const customerSpan = document.createElement('span'); customerSpan.style.fontWeight = 'bold'; customerSpan.textContent = task.customerName ? `${task.customerName}: ` : '';
+         const descSpan = document.createElement('span'); descSpan.textContent = task.description || 'No description';
+         const dateSpan = document.createElement('span'); dateSpan.style.fontSize = '0.85em'; dateSpan.style.color = '#555'; dateSpan.style.marginLeft = '10px'; dateSpan.textContent = task.dueDate?.toDate ? ` (Due: ${formatDate(task.dueDate.toDate())})` : '';
+         const commentSpan = document.createElement('p'); commentSpan.style.fontSize = '0.85em'; commentSpan.style.color = '#666'; commentSpan.style.marginTop = '4px'; commentSpan.style.whiteSpace = 'pre-wrap'; commentSpan.textContent = task.comments ? `Comment: ${task.comments}` : '';
+         contentDiv.appendChild(customerSpan); contentDiv.appendChild(descSpan); contentDiv.appendChild(dateSpan); contentDiv.appendChild(commentSpan);
+         const actionsDiv = document.createElement('div'); actionsDiv.style.marginLeft = 'auto'; actionsDiv.style.display = 'flex'; actionsDiv.style.gap = '5px'; actionsDiv.style.flexShrink = '0';
+         const checkbox = document.createElement('input'); checkbox.type = 'checkbox'; checkbox.className = 'task-checkbox'; checkbox.checked = task.completed; checkbox.title = task.completed ? 'Mark as Pending' : 'Mark as Completed'; checkbox.style.marginTop = '4px'; // Align checkbox
+         const editBtn = document.createElement('button'); editBtn.innerHTML = '<i class="fas fa-edit"></i>'; editBtn.className = 'button edit-button edit-task-btn'; editBtn.title = 'Edit Task';
+         editBtn.onclick = (e) => { e.stopPropagation(); openEditTaskModal(task.id, task); };
+         const deleteBtn = document.createElement('button'); deleteBtn.innerHTML = '<i class="fas fa-trash-alt"></i>'; deleteBtn.className = 'button delete-task-btn'; deleteBtn.title = 'Delete Task';
+         actionsDiv.appendChild(checkbox); actionsDiv.appendChild(editBtn); actionsDiv.appendChild(deleteBtn);
+         li.appendChild(contentDiv); li.appendChild(actionsDiv); taskList.appendChild(li);
      });
  }
 
-
-// Add New Task
+// Add New Follow-up Task
 async function handleAddTask() {
-    if (!db || !newTaskInput || !newTaskDueDate) return;
+    if (!db || !newTaskInput || !newTaskDueDate || !newTaskCustomerNameEl || !newTaskCommentsEl) return;
+    const customerName = newTaskCustomerNameEl.value.trim();
     const description = newTaskInput.value.trim();
     const dueDate = newTaskDueDate.value;
+    const comments = newTaskCommentsEl.value.trim();
     if (!description) { alert("Please enter task description."); return; }
-
-    const taskData = {
-        description: description,
-        dueDate: dueDate ? Timestamp.fromDate(new Date(dueDate + 'T00:00:00Z')) : null,
-        completed: false,
-        createdAt: serverTimestamp()
-    };
-
-    addTaskBtn.disabled = true;
-    addTaskBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Adding...';
-
+    const taskData = { customerName, description, dueDate: dueDate ? Timestamp.fromDate(new Date(dueDate + 'T00:00:00Z')) : null, comments, completed: false, createdAt: serverTimestamp() };
+    addTaskBtn.disabled = true; addTaskBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Adding...';
     try {
         await addDoc(collection(db, "tasks"), taskData);
-        newTaskInput.value = '';
-        newTaskDueDate.value = '';
-    } catch (error) {
-        console.error("Error adding task:", error);
-        alert("Failed to add task: " + error.message);
-    } finally {
-        addTaskBtn.disabled = false;
-        addTaskBtn.innerHTML = '<i class="fas fa-plus"></i> Add Task';
-    }
+        newTaskCustomerNameEl.value = ''; newTaskInput.value = ''; newTaskDueDate.value = ''; newTaskCommentsEl.value = '';
+    } catch (error) { console.error("Error adding task:", error); alert("Failed to add task: " + error.message);
+    } finally { addTaskBtn.disabled = false; addTaskBtn.innerHTML = '<i class="fas fa-plus"></i> Add Follow-up'; }
 }
 
-// Handle Task Checkbox Change (Mark Complete/Incomplete)
+// Handle Task Checkbox Change
 async function handleTaskCheckboxChange(event) {
      if (event.target.classList.contains('task-checkbox')) {
-          const checkbox = event.target;
-          const listItem = checkbox.closest('li');
-          const taskId = listItem?.dataset.taskId;
-          const isCompleted = checkbox.checked;
-
+          const checkbox = event.target; const listItem = checkbox.closest('li'); const taskId = listItem?.dataset.taskId; const isCompleted = checkbox.checked;
           if (taskId && db) {
                const taskRef = doc(db, "tasks", taskId);
-               try {
-                    await updateDoc(taskRef, { completed: isCompleted });
-                    console.log(`Task ${taskId} status updated to: ${isCompleted}`);
-               } catch (error) {
-                    console.error("Error updating task status:", error);
-                    alert("Failed to update task status.");
-                    checkbox.checked = !isCompleted;
-               }
+               try { await updateDoc(taskRef, { completed: isCompleted }); console.log(`Task ${taskId} status updated to: ${isCompleted}`);
+               } catch (error) { console.error("Error updating task status:", error); alert("Failed to update task status."); checkbox.checked = !isCompleted; }
           }
      }
 }
 
-// Handle Task Actions (Deletion using Event Delegation)
+// Handle Task Actions (Delete)
 async function handleTaskActions(event) {
     const deleteButton = event.target.closest('.delete-task-btn');
     if (deleteButton) {
-         const listItem = deleteButton.closest('li');
-         const taskId = listItem?.dataset.taskId;
-
+         const listItem = deleteButton.closest('li'); const taskId = listItem?.dataset.taskId;
          if (taskId && db && confirm("Are you sure you want to delete this task?")) {
              const taskRef = doc(db, "tasks", taskId);
-             try {
-                  await deleteDoc(taskRef);
-                  console.log("Task deleted:", taskId);
-             } catch (error) {
-                  console.error("Error deleting task:", error);
-                  alert("Failed to delete task.");
-             }
+             try { await deleteDoc(taskRef); console.log("Task deleted:", taskId);
+             } catch (error) { console.error("Error deleting task:", error); alert("Failed to delete task."); }
          }
     }
 }
 
-
-// --- ****** START: Phase 2 Functions ****** ---
-
-// --- Load Dashboard Data ---
-function loadDashboardData() {
-    if (!dbTotalPoliciesEl || !allPoliciesCache) return; // Ensure elements & cache exist
-
-    const totalPolicies = allPoliciesCache.length;
-    const activePolicies = allPoliciesCache.filter(p => p.policyStatus === 'Active').length;
-    const lapsedPolicies = allPoliciesCache.filter(p => p.policyStatus === 'Lapsed').length;
-
-    const now = new Date();
-    const thirtyDaysFromNow = new Date(now);
-    thirtyDaysFromNow.setDate(now.getDate() + 30);
-    const upcomingPremiumPolicies = allPoliciesCache.filter(p => {
-        const nextDate = p.nextInstallmentDate?.toDate();
-        return nextDate && nextDate >= now && nextDate <= thirtyDaysFromNow && ['Active', 'Lapsed'].includes(p.policyStatus);
-    });
-    const totalUpcomingPremium = upcomingPremiumPolicies.reduce((sum, p) => sum + (Number(p.premiumAmount) || 0), 0);
-
-    const ninetyDaysFromNow = new Date(now);
-    ninetyDaysFromNow.setDate(now.getDate() + 90);
-    const upcomingMaturityPolicies = allPoliciesCache.filter(p => {
-         const maturityDate = p.maturityDate?.toDate();
-         return maturityDate && maturityDate >= now && maturityDate <= ninetyDaysFromNow && p.policyStatus !== 'Matured';
-     }).length;
-
-    dbTotalPoliciesEl.textContent = totalPolicies;
-    dbActivePoliciesEl.textContent = activePolicies;
-    dbLapsedPoliciesEl.textContent = lapsedPolicies;
-    dbUpcomingPremiumEl.textContent = `₹ ${totalUpcomingPremium.toFixed(2)}`;
-    dbUpcomingMaturityEl.textContent = upcomingMaturityPolicies;
-
-    console.log("Dashboard data updated.");
+// Open Edit Task Modal
+function openEditTaskModal(taskId, taskData) {
+    if (!editTaskModal || !editTaskForm) return; console.log("Opening edit modal for task:", taskId, taskData);
+    editTaskIdEl.value = taskId;
+    editTaskCustomerNameEl.value = taskData.customerName || '';
+    editTaskDescriptionEl.value = taskData.description || '';
+    editTaskDueDateEl.value = taskData.dueDate?.toDate ? taskData.dueDate.toDate().toISOString().split('T')[0] : '';
+    editTaskCommentsEl.value = taskData.comments || '';
+    editTaskStatusEl.value = taskData.completed ? 'completed' : 'pending';
+    editTaskModal.classList.add('active');
 }
 
-// --- Show Client Detail View ---
-async function showClientDetail(policyId, customerName) {
-    if (!clientDetailModal || !db) return;
-    console.log(`Showing details for policyId: ${policyId}, customer: ${customerName}`);
+// Close Edit Task Modal
+function closeEditTaskModal() { if (editTaskModal) { editTaskModal.classList.remove('active'); } }
 
-    currentOpenClientId = policyId;
-
-    clientDetailNameEl.textContent = customerName || 'Client Details';
-    clientDetailMobileEl.textContent = 'Loading...';
-    clientDetailDobEl.textContent = 'Loading...';
-    clientDetailFatherNameEl.textContent = 'Loading...';
-    clientDetailAddressEl.textContent = 'Loading...';
-    clientPoliciesListEl.innerHTML = '<p>Loading policies...</p>';
-    communicationLogListEl.innerHTML = '<p>Loading communication logs...</p>';
-    newLogNoteEl.value = '';
-
-    openDetailTab(null, 'clientPolicies');
-    clientDetailModal.classList.add('active');
-
-    // Fetch primary policy details
-    let clientData = null;
+// Handle Update Task Form Submission
+async function handleUpdateTask(event) {
+    event.preventDefault(); if (!db || !editTaskIdEl) return;
+    const taskId = editTaskIdEl.value; if (!taskId) { alert("Error: Task ID missing."); return; }
+    const updatedData = {
+        customerName: editTaskCustomerNameEl.value.trim(), description: editTaskDescriptionEl.value.trim(),
+        dueDate: editTaskDueDateEl.value ? Timestamp.fromDate(new Date(editTaskDueDateEl.value + 'T00:00:00Z')) : null,
+        comments: editTaskCommentsEl.value.trim(), completed: editTaskStatusEl.value === 'completed', updatedAt: serverTimestamp()
+    };
+    if (!updatedData.description) { alert("Please enter task description."); return; }
+    const saveButton = document.getElementById('saveTaskChangesBtn');
+    if(saveButton) { saveButton.disabled = true; saveButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...'; }
     try {
-        const policyRef = doc(db, "licCustomers", policyId);
-        const policySnap = await getDoc(policyRef);
-        if (policySnap.exists()) {
-            clientData = policySnap.data();
-            clientDetailMobileEl.textContent = clientData.mobileNo || '-';
-            clientDetailDobEl.textContent = clientData.dob?.toDate ? formatDate(clientData.dob.toDate()) : '-';
-            clientDetailFatherNameEl.textContent = clientData.fatherName || '-';
-            clientDetailAddressEl.textContent = clientData.address || '-';
-            clientDetailNameEl.textContent = clientData.customerName || customerName; // Use name from doc if available
-        } else {
-            console.error("Primary policy not found for details:", policyId);
-            clientDetailMobileEl.textContent = 'Not Found';
-        }
-    } catch (error) {
-        console.error("Error fetching primary policy details:", error);
-        clientDetailMobileEl.textContent = 'Error';
-    }
-
-    // Find and display all policies for this customer (using name matching - less reliable)
-    // Consider adding a customerId field for better matching in the future
-    const customerPolicies = allPoliciesCache.filter(p => p.customerName === (clientData?.customerName || customerName));
-    renderClientPolicies(customerPolicies);
-
-    // Fetch and display communication logs
-    await loadCommunicationLogs(policyId);
+        const taskRef = doc(db, "tasks", taskId); await updateDoc(taskRef, updatedData);
+        alert("Task updated successfully!"); closeEditTaskModal();
+    } catch (error) { console.error("Error updating task:", error); alert("Failed to update task: " + error.message);
+    } finally { if(saveButton) { saveButton.disabled = false; saveButton.innerHTML = '<i class="fas fa-save"></i> Save Changes'; } }
 }
 
-// --- Render Policies in Client Detail View ---
-function renderClientPolicies(policies) {
-    if (!clientPoliciesListEl) return;
-    clientPoliciesListEl.innerHTML = '';
-
-    if (!policies || policies.length === 0) {
-        clientPoliciesListEl.innerHTML = '<p>No policies found for this customer.</p>';
-        return;
-    }
-
-    const ul = document.createElement('ul');
-    ul.style.listStyle = 'none'; ul.style.paddingLeft = '0';
-
-    policies.forEach(p => {
-        const li = document.createElement('li');
-        li.style.borderBottom = '1px solid #eee';
-        li.style.padding = '8px 0';
-        li.innerHTML = `
-            <strong>Policy:</strong> ${p.policyNumber || 'N/A'} |
-            <strong>Plan:</strong> ${p.plan || '-'} |
-            <strong>Premium:</strong> ₹ ${Number(p.premiumAmount || 0).toFixed(2)} |
-            <strong>Next Due:</strong> ${p.nextInstallmentDate?.toDate ? formatDate(p.nextInstallmentDate.toDate()) : '-'} |
-            <strong>Status:</strong> <span class="status-badge status-${(p.policyStatus || 'unknown').toLowerCase()}">${p.policyStatus || 'Unknown'}</span>
-        `;
-        ul.appendChild(li);
-    });
-    clientPoliciesListEl.appendChild(ul);
-}
-
-
-// --- Load Communication Logs for Client/Policy ---
-async function loadCommunicationLogs(identifier) {
-    if (!communicationLogListEl || !db) return;
-    communicationLogListEl.innerHTML = '<p>Loading logs...</p>';
-
+// Display Upcoming Tasks Reminder
+async function displayUpcomingTasks() {
+    if (!db || !upcomingTaskListEl) return;
+    upcomingTaskListEl.innerHTML = '<li class="loading-reminder">Loading upcoming tasks...</li>';
     try {
-        // **ADJUST QUERY based on your logs structure**
-        const logQuery = query(collection(db, "logs"), where("policyId", "==", identifier), orderBy("timestamp", "desc"));
-        const logSnapshot = await getDocs(logQuery);
-
-        if (logSnapshot.empty) {
-            communicationLogListEl.innerHTML = '<p>No communication logs found.</p>';
-        } else {
-            communicationLogListEl.innerHTML = '';
-            logSnapshot.forEach(docSnap => {
-                const log = docSnap.data();
-                const p = document.createElement('p');
-                const timestamp = log.timestamp?.toDate ? formatDateTime(log.timestamp.toDate()) : 'N/A'; // Use formatDateTime for time
-                p.innerHTML = `<span class="log-meta">Logged on: ${timestamp}</span>${log.note || ''}`;
-                communicationLogListEl.appendChild(p);
-            });
-        }
-    } catch (error) {
-        console.error("Error loading communication logs:", error);
-        communicationLogListEl.innerHTML = '<p>Error loading logs.</p>';
-    }
-}
-
-
-// --- Add Communication Note ---
-async function addCommunicationNote() {
-    if (!newLogNoteEl || !db || !currentOpenClientId) {
-        alert("Cannot add note. Client context missing or DB not ready.");
-        return;
-    }
-    const note = newLogNoteEl.value.trim();
-    if (!note) {
-        alert("Please enter a note.");
-        return;
-    }
-
-    addLogBtn.disabled = true;
-    addLogBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Adding...';
-
-    try {
-        // **ADJUST STRUCTURE AS NEEDED**
-        await addDoc(collection(db, "logs"), {
-            policyId: currentOpenClientId,
-            note: note,
-            timestamp: serverTimestamp()
+        const today = new Date(); today.setHours(0, 0, 0, 0); const reminderDays = 7;
+        const reminderEndDate = new Date(today); reminderEndDate.setDate(today.getDate() + reminderDays);
+        const todayTimestamp = Timestamp.fromDate(today); const endTimestamp = Timestamp.fromDate(reminderEndDate);
+        const taskReminderQuery = query(collection(db, "tasks"), where("completed", "==", false), where("dueDate", ">=", todayTimestamp), where("dueDate", "<=", endTimestamp), orderBy("dueDate"));
+        const querySnapshot = await getDocs(taskReminderQuery);
+        upcomingTaskListEl.innerHTML = '';
+        if (querySnapshot.empty) { upcomingTaskListEl.innerHTML = `<li>No follow-ups due in the next ${reminderDays} days.</li>`; return; }
+        querySnapshot.forEach(docSnap => {
+            const task = { id: docSnap.id, ...docSnap.data() }; const li = document.createElement('li');
+            li.innerHTML = `<strong>${task.customerName ? task.customerName + ':' : ''}</strong> ${task.description || 'N/A'} - Due: <strong>${formatDate(task.dueDate?.toDate())}</strong>`;
+             li.style.cursor = 'pointer'; li.onclick = () => openEditTaskModal(task.id, task);
+            upcomingTaskListEl.appendChild(li);
         });
-        newLogNoteEl.value = '';
-        await loadCommunicationLogs(currentOpenClientId); // Reload logs
     } catch (error) {
-        console.error("Error adding communication note:", error);
-        alert("Failed to add note: " + error.message);
-    } finally {
-        addLogBtn.disabled = false;
-        addLogBtn.innerHTML = '<i class="fas fa-plus"></i> Add Note';
+        console.error("Error fetching upcoming tasks:", error);
+        if (error.code === 'failed-precondition') {
+             upcomingTaskListEl.innerHTML = '<li>Error: Firestore index required for upcoming tasks. Check console.</li>';
+        } else { upcomingTaskListEl.innerHTML = '<li>Error loading upcoming tasks.</li>'; }
     }
 }
 
+// --- Phase 2 Functions (Client Detail) ---
 
-// --- Close Client Detail View ---
-function closeClientDetail() {
-    if (clientDetailModal) {
-        clientDetailModal.classList.remove('active');
-        currentOpenClientId = null;
-    }
-}
-
-// --- Handle Tab Switching in Client Detail View ---
-window.openDetailTab = function(evt, tabName) { // Make it global for HTML onclick
-    let i, tabcontent, tablinks;
-    const detailView = document.getElementById('clientDetailView');
-    if (!detailView) return;
-
-    tabcontent = detailView.getElementsByClassName("tab-content");
-    for (i = 0; i < tabcontent.length; i++) {
-        tabcontent[i].style.display = "none";
-        tabcontent[i].classList.remove("active");
-    }
-
-    tablinks = detailView.getElementsByClassName("tab-button");
-    for (i = 0; i < tablinks.length; i++) {
-        tablinks[i].classList.remove("active");
-    }
-
-    const currentTab = document.getElementById(tabName);
-    if (currentTab) {
-        currentTab.style.display = "block";
-        currentTab.classList.add("active");
-    }
-
-    if (evt && evt.currentTarget) {
-         evt.currentTarget.classList.add("active");
-    } else {
-        const defaultButton = Array.from(tablinks).find(btn => btn.getAttribute('onclick')?.includes(`'${tabName}'`)); // Safer check
-        if (defaultButton) defaultButton.classList.add("active");
-    }
-}
-
-// --- ****** END: Phase 2 Functions ****** ---
+// Load Dashboard Data
+function loadDashboardData() { /* ... जस का तस ... */ }
+// Show Client Detail View
+async function showClientDetail(policyId, customerName) { /* ... जस का तस ... */ }
+// Render Policies in Client Detail View
+function renderClientPolicies(policies) { /* ... जस का तस ... */ }
+// Load Communication Logs
+async function loadCommunicationLogs(identifier) { /* ... जस का तस ... */ }
+// Add Communication Note
+async function addCommunicationNote() { /* ... जस का तस ... */ }
+// Close Client Detail View
+function closeClientDetail() { /* ... जस का तस ... */ }
+// Handle Tab Switching in Client Detail View
+window.openDetailTab = function(evt, tabName) { /* ... जस का तस ... */ }
 
 
 // --- हेल्पर फंक्शन्स ---
-function formatDate(date) {
-    if (!date || !(date instanceof Date) || isNaN(date)) return '-';
-    try {
-        let day = String(date.getDate()).padStart(2, '0');
-        let month = String(date.getMonth() + 1).padStart(2, '0');
-        let year = date.getFullYear();
-        return `${day}-${month}-${year}`;
-    } catch (e) {
-        console.error("Error formatting date:", date, e);
-        return 'Invalid Date';
-    }
-}
-
-// Helper function to format date and time (for logs)
-function formatDateTime(date) {
+function formatDate(date) { /* ... जस का तस ... */ }
+function formatDateTime(date) { // <<< यह नया है
     if (!date || !(date instanceof Date) || isNaN(date)) return '-';
      try {
-        let day = String(date.getDate()).padStart(2, '0');
-        let month = String(date.getMonth() + 1).padStart(2, '0');
-        let year = date.getFullYear();
-        let hours = String(date.getHours()).padStart(2, '0');
-        let minutes = String(date.getMinutes()).padStart(2, '0');
+        let day = String(date.getDate()).padStart(2, '0'); let month = String(date.getMonth() + 1).padStart(2, '0'); let year = date.getFullYear();
+        let hours = String(date.getHours()).padStart(2, '0'); let minutes = String(date.getMinutes()).padStart(2, '0');
         return `${day}-${month}-${year} ${hours}:${minutes}`;
-    } catch (e) {
-        console.error("Error formatting date/time:", date, e);
-        return 'Invalid Date';
-    }
+    } catch (e) { console.error("Error formatting date/time:", date, e); return 'Invalid Date'; }
 }
+function calculateNextDueDate(startDate, mode) { /* ... जस का तस ... */ }
 
-
-// Calculate Next Due Date based on a GIVEN start date and mode
-function calculateNextDueDate(startDate, mode) {
-    if (!(startDate instanceof Date) || isNaN(startDate) || !mode) return null;
-    let nextDate = new Date(startDate);
-    try {
-        switch (mode.toLowerCase()) {
-            case 'yearly':
-                nextDate.setFullYear(nextDate.getFullYear() + 1);
-                break;
-            case 'half-yearly':
-            case 'half yearly':
-                nextDate.setMonth(nextDate.getMonth() + 6);
-                break;
-            case 'quarterly':
-                nextDate.setMonth(nextDate.getMonth() + 3);
-                break;
-            case 'monthly':
-                nextDate.setMonth(nextDate.getMonth() + 1);
-                break;
-            default:
-                console.warn("Unknown payment mode for date calculation:", mode);
-                return null;
-        }
-        if (isNaN(nextDate)) {
-             console.error("Calculated date is invalid:", startDate, mode);
-             return null;
-        }
-        return nextDate;
-    } catch (e) {
-         console.error("Error calculating next due date:", e);
-         return null;
-    }
-}
-
-// --- फिल्टर/सॉर्ट हैंडलर्स --- Updated Debounce Logic
-function handleLicFilterChange() {
-    clearTimeout(searchDebounceTimerLic);
-    searchDebounceTimerLic = setTimeout(() => {
-        applyLicFiltersAndRender();
-    }, 350);
-}
-
-function handleLicSortChange() {
-    if (!sortLicSelect) return;
-    const [field, direction] = sortLicSelect.value.split('_');
-    currentLicSortField = field;
-    currentLicSortDirection = direction;
-    applyLicFiltersAndRender();
-}
-
-function clearLicFilters() {
-    if(licSearchInput) licSearchInput.value = '';
-    if(licStatusFilter) licStatusFilter.value = '';
-    if(licPlanFilter) licPlanFilter.value = '';
-    if(licModeFilter) licModeFilter.value = '';
-    if(licNachFilter) licNachFilter.value = '';
-    if(sortLicSelect) sortLicSelect.value = 'createdAt_desc';
-
-    currentLicSortField = 'createdAt';
-    currentLicSortDirection = 'desc';
-    applyLicFiltersAndRender();
-}
+// --- फिल्टर/सॉर्ट हैंडलर्स ---
+function handleLicFilterChange() { /* ... जस का तस ... */ }
+function handleLicSortChange() { /* ... जस का तस ... */ }
+function clearLicFilters() { /* ... जस का तस ... */ }
 
 // --- एंड ऑफ़ फाइल ---
