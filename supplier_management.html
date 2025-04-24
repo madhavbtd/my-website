@@ -6,221 +6,53 @@
     <title>Supplier & PO Management</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="css/supplier_management.css"> <link rel="stylesheet" href="css/index.css"> <script type="module">
+    <link rel="stylesheet" href="css/supplier_management.css"> <link rel="stylesheet" href="css/index.css">
+    <script type="module">
         // Firebase Auth Check (remains same)
         import { auth } from './js/firebase-init.js';
         import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-        try {
-            if (!auth) { throw new Error("Auth failed."); }
-            onAuthStateChanged(auth, (user) => {
-                if (!user && !window.location.pathname.endsWith('login.html')) {
-                    window.location.replace('login.html');
-                } else if (user) {
-                    console.log("Auth OK:", user.uid);
-                }
-            });
-        } catch(e) {
-            console.error("Auth Err:", e);
-            try{
-                document.getElementById('main-content').innerHTML = `<div class="error-message">App Error: ${e.message} Cannot contact authentication service.</div>`;
-            } catch(innerE) {
-                 console.error("DOM write Err:", innerE);
-            }
-        }
+        try { if (!auth) { throw new Error("Auth failed."); } onAuthStateChanged(auth, (user) => { if (!user && !window.location.pathname.endsWith('login.html')) { window.location.replace('login.html'); } else if (user) { console.log("Auth OK:", user.uid); } }); } catch(e) { console.error("Auth Err:", e); try{ document.getElementById('main-content').innerHTML = `<div class="error-message">App Error: ${e.message}</div>`; } catch{} }
     </script>
 </head>
 <body>
-    <div class="container">
-        <div class="sidebar">
-             <h2><img src="https://i.ibb.co/Z6gKD9Rd/1.png" alt="माधव मल्टीप्रिन्ट Logo" id="sidebarLogo"></h2>
-             <ul>
-                 <li><a href="index.html"><i class="fas fa-tachometer-alt"></i> <span>Dashboard</span></a></li>
-                 <li><a href="order_history.html"><i class="fas fa-history"></i> <span>Order History</span></a></li>
-                 <li><a href="new_order.html"><i class="fas fa-plus-circle"></i> <span>New Order</span></a></li>
-                 <li><a href="customer_management.html"><i class="fas fa-users"></i> <span>Customer Management</span></a></li>
-                 <li><a href="supplier_management.html" class="active"><i class="fas fa-truck"></i> <span>Supplier & PO</span></a></li>
-                 <li><a href="product_management.html"><i class="fas fa-box-open"></i> <span>Product Management</span></a></li>
-                 <li><a href="lic_management.html"><i class="fas fa-umbrella-beach"></i> <span>LIC Management</span></a></li>
-                 <li><a href="#" id="logoutButtonSidebar"><i class="fas fa-sign-out-alt"></i> <span>Logout</span></a></li>
-             </ul>
-        </div>
+     <div class="container">
+         <div class="main-content" id="main-content">
+            <div class="page-header"> <h1><i class="fas fa-truck"></i> Supplier & PO Management</h1> </div>
+            <div class="breadcrumb"> <a href="index.html">Dashboard</a> / <span>Suppliers & POs</span> </div>
+            <div class="actions-bar"> <button id="viewSuppliersBtn" class="button view-suppliers-button"><i class="fas fa-users"></i> View Suppliers List</button> <a href="new_po.html" id="createPoBtn" class="button add-new-button" style="background-color: var(--primary-color);"><i class="fas fa-file-alt"></i> Create New PO</a> </div>
 
-        <div class="main-content" id="main-content">
-            <div class="page-header">
-                <h1><i class="fas fa-truck"></i> Supplier & PO Management</h1>
-                <div class="header-actions">
-                    <button id="viewSuppliersBtn" class="button info-button">
-                        <i class="fas fa-address-book"></i> View/Manage Suppliers
-                    </button>
-                    <a href="new_po.html" class="button success-button">
-                        <i class="fas fa-plus"></i> New Purchase Order
-                    </a>
+            <div class="section-container" id="pos-section">
+                <h2><i class="fas fa-file-invoice-dollar"></i> Purchase Orders</h2>
+                <div class="po-filters">
+                    <div class="filter-group"> <label for="poSearchInput">Search:</label> <input type="text" id="poSearchInput" placeholder="PO# or Supplier..."> </div>
+                    <div class="filter-group"> <label for="poStatusFilter">Status:</label> <select id="poStatusFilter"> <option value="">All Status</option> <option value="New">New</option> <option value="Sent">Sent</option> <option value="Printing">Printing</option> <option value="Received">Received</option> <option value="Product Received">Product Received</option> <option value="PO Paid">PO Paid</option> <option value="Cancel">Cancel</option> </select> </div>
+                    <div class="filter-group"> <label for="poStartDateFilter">From Date:</label> <input type="date" id="poStartDateFilter" class="date-filter"> </div>
+                    <div class="filter-group"> <label for="poEndDateFilter">To Date:</label> <input type="date" id="poEndDateFilter" class="date-filter"> </div>
+                    <div class="filter-group filter-buttons"> <button id="poFilterBtn" class="button filter-action-button"><i class="fas fa-filter"></i> Apply Filters</button> <button id="poClearFilterBtn" class="button cancel-button filter-action-button"><i class="fas fa-times"></i> Clear Filters</button> </div>
                 </div>
-            </div>
-
-             <div class="filter-bar card-layout">
-                <input type="text" id="poSearchInput" placeholder="Search by PO# or Supplier Name..." class="form-input">
-                <select id="poStatusFilter" class="form-select">
-                    <option value="">All Statuses</option>
-                    <option value="Pending">Pending</option>
-                    <option value="Approved">Approved</option>
-                    <option value="Ordered">Ordered</option>
-                    <option value="Received">Received</option>
-                    <option value="Completed">Completed</option>
-                    <option value="Cancelled">Cancelled</option>
-                </select>
-                <input type="date" id="poStartDateFilter" class="form-input date-input" title="Filter Start Date">
-                <input type="date" id="poEndDateFilter" class="form-input date-input" title="Filter End Date">
-                <button id="poFilterBtn" class="button"><i class="fas fa-filter"></i> Apply Filters</button>
-                <button id="poClearFilterBtn" class="button cancel-button"><i class="fas fa-times"></i> Clear</button>
-            </div>
-
-            <div class="table-container card-layout">
-                <h3>Purchase Orders</h3>
-                <div class="table-responsive">
+                <div class="table-container">
                     <table id="poTable">
-                        <thead>
-                            <tr>
-                                <th>PO #</th>
-                                <th>Supplier</th>
-                                <th>Order Date</th>
-                                <th>Status</th>
-                                <th style="text-align: right;">Amount</th>
-                                <th>Quantity Details</th>
-                                <th>Print Sizes</th>
-                                <th style="width: 180px;">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody id="poTableBody">
-                            <tr><td colspan="8"><i class="fas fa-spinner fa-spin"></i> Loading purchase orders...</td></tr>
-                        </tbody>
+                        <thead> <tr> <th>PO Number</th> <th>Supplier</th> <th>Order Date</th> <th>Status</th> <th>Amount</th> <th>Quantity Info</th> <th>Print Sizes (WxH Unit)</th> <th>Actions</th> </tr> </thead>
+                        <tbody id="poTableBody"> <tr><td colspan="8">Initializing...</td></tr> </tbody>
                     </table>
                 </div>
-                 <div id="poTotalsDisplay" class="table-totals"></div>
+                <div id="poTotalsDisplay" class="po-totals"></div>
             </div>
-        </div> </div> <div id="suppliersListModal" class="modal large-modal">
-        <div class="modal-content">
-            <span class="close-btn" id="closeSuppliersListModal" title="Close">&times;</span>
-            <h2><i class="fas fa-address-book"></i> Manage Suppliers</h2>
-            <div class="modal-header-actions">
-                <button id="addSupplierInModalBtn" class="button success-button"><i class="fas fa-plus"></i> Add New Supplier</button>
-            </div>
-            <div class="table-responsive modal-table-container">
-                <table id="supplierTableModal">
-                    <thead>
-                        <tr>
-                            <th>Name</th>
-                            <th>Company</th>
-                            <th>WhatsApp</th>
-                            <th>Email</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody id="supplierTableBodyModal">
-                        <tr><td colspan="5"><i class="fas fa-spinner fa-spin"></i> Loading suppliers...</td></tr>
-                    </tbody>
-                </table>
-            </div>
-            <div class="modal-actions">
-                 <button type="button" id="closeSuppliersListBtnBottom" class="button cancel-button">Close</button>
-            </div>
-        </div>
-    </div>
+         </div>
+     </div>
 
-    <div id="supplierModal" class="modal">
-        <div class="modal-content">
-            <span class="close-btn" id="closeSupplierModal" title="Close">&times;</span>
-            <h2 id="supplierModalTitle">Add New Supplier</h2>
-            <form id="supplierForm">
-                <input type="hidden" id="supplierIdInput">
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="supplierNameInput">Supplier Name <span class="required">*</span>:</label>
-                        <input type="text" id="supplierNameInput" required placeholder="Full Name">
-                    </div>
-                    <div class="form-group">
-                        <label for="supplierCompanyInput">Company Name:</label>
-                        <input type="text" id="supplierCompanyInput" placeholder="Optional Company Name">
-                    </div>
-                </div>
-                 <div class="form-row">
-                    <div class="form-group">
-                        <label for="supplierWhatsappInput">WhatsApp No:</label>
-                        <input type="tel" id="supplierWhatsappInput" placeholder="e.g., 91XXXXXXXXXX">
-                    </div>
-                    <div class="form-group">
-                        <label for="supplierEmailInput">Email:</label>
-                        <input type="email" id="supplierEmailInput" placeholder="Optional Email">
-                    </div>
-                </div>
-                 <div class="form-row">
-                    <div class="form-group">
-                        <label for="supplierAddressInput">Address:</label>
-                        <textarea id="supplierAddressInput" rows="2" placeholder="Optional Address"></textarea>
-                    </div>
-                    <div class="form-group">
-                        <label for="supplierGstInput">GST No:</label>
-                        <input type="text" id="supplierGstInput" placeholder="Optional GST Number">
-                    </div>
-                 </div>
-                <div id="supplierErrorMsg" class="error-message" style="display: none;"></div>
-                <div class="modal-actions">
-                    <button type="submit" id="saveSupplierBtn" class="button save-button">Save Supplier</button>
-                    <button type="button" id="cancelSupplierBtn" class="button cancel-button">Cancel</button>
-                </div>
-            </form>
-        </div>
-    </div>
+     <div id="supplierModal" class="modal"> <div class="modal-content"> <span class="close-btn" id="closeSupplierModal">&times;</span> <h2 id="supplierModalTitle">Add New Supplier</h2> <form id="supplierForm"> <input type="hidden" id="supplierIdInput"> <div class="form-group"><label for="supplierNameInput">Supplier Name *</label><input type="text" id="supplierNameInput" required></div> <div class="form-group"><label for="supplierCompanyInput">Company Name</label><input type="text" id="supplierCompanyInput"></div> <div class="form-group"><label for="supplierWhatsappInput">WhatsApp No</label><input type="tel" id="supplierWhatsappInput"></div> <div class="form-group"><label for="supplierEmailInput">Email</label><input type="email" id="supplierEmailInput"></div> <div class="form-group"><label for="supplierAddressInput">Address</label><textarea id="supplierAddressInput" rows="2"></textarea></div> <div class="form-group"><label for="supplierGstInput">GST No</label><input type="text" id="supplierGstInput"></div> <div class="modal-actions"> <button type="button" id="cancelSupplierBtn" class="button cancel-button">Cancel</button> <button type="submit" id="saveSupplierBtn" class="button save-button">Save Supplier</button> </div> <div id="supplierErrorMsg" class="error-message" style="display: none;"></div> </form> </div> </div>
+     <div id="statusUpdateModal" class="modal"> <div class="modal-content"> <span class="close-btn" id="closeStatusModal">&times;</span> <h2 id="statusModalTitle">Update PO Status</h2> <form id="statusUpdateForm"> <input type="hidden" id="statusUpdatePOId"> <p>Current Status: <strong id="currentPOStatus"></strong></p> <div class="form-group"> <label for="statusSelect">New Status *</label> <select id="statusSelect" required> <option value="">-- Select Status --</option> <option value="New">New</option> <option value="Sent">Sent</option> <option value="Printing">Printing</option> <option value="Received">Received</option> <option value="Product Received">Product Received</option> <option value="PO Paid">PO Paid</option> <option value="Cancel">Cancel</option> </select> </div> <div class="modal-actions"> <button type="button" id="cancelStatusBtn" class="button cancel-button">Cancel</button> <button type="submit" id="saveStatusBtn" class="button save-button">Update Status</button> </div> <div id="statusErrorMsg" class="error-message" style="display: none;"></div> </form> </div> </div>
+     <div id="poDetailsModal" class="modal"> <div class="modal-content modal-lg"> <span class="close-btn" id="closePoDetailsModal">&times;</span> <h2 id="poDetailsModalTitle">Purchase Order Items</h2> <div id="poDetailsContent" class="po-details-container"> <p>Loading details...</p> </div> <div class="modal-actions"> <button type="button" id="printPoDetailsBtn" class="button print-button"> <i class="fas fa-print"></i> Print Details </button> <button type="button" id="closePoDetailsBtn" class="button cancel-button">Close</button> </div> </div> </div>
+     <div id="suppliersListModal" class="modal modal-xl"> <div class="modal-content"> <span class="close-btn" id="closeSuppliersListModal">&times;</span> <div class="suppliers-modal-header"> <h2><i class="fas fa-users"></i> Suppliers List</h2> <button id="addSupplierInModalBtn" class="button add-new-button"><i class="fas fa-plus"></i> Add New Supplier</button> </div> <div class="table-container suppliers-table-container"> <table id="supplierTableModal"> <thead> <tr> <th>Name</th> <th>Company</th> <th>WhatsApp No</th> <th>Email</th> <th>Actions</th> </tr> </thead> <tbody id="supplierTableBodyModal"> <tr><td colspan="5">Loading Suppliers...</td></tr> </tbody> </table> </div> <div class="modal-actions"> <button type="button" id="closeSuppliersListBtnBottom" class="button cancel-button">Close</button> </div> </div> </div>
 
-    <div id="statusUpdateModal" class="modal">
-        <div class="modal-content small-modal">
-             <span class="close-btn" id="closeStatusModal" title="Close">&times;</span>
-             <h2 id="statusModalTitle">Update PO Status</h2>
-             <form id="statusUpdateForm">
-                 <input type="hidden" id="statusUpdatePOId">
-                 <p>Current Status: <strong id="currentPOStatusSpan">N/A</strong></p>
-                 <div class="form-group">
-                     <label for="statusSelect">New Status <span class="required">*</span>:</label>
-                     <select id="statusSelect" required>
-                         <option value="" disabled selected>-- Select New Status --</option>
-                         <option value="Pending">Pending</option>
-                         <option value="Approved">Approved</option>
-                         <option value="Ordered">Ordered</option>
-                         <option value="Received">Received</option>
-                         <option value="Completed">Completed</option>
-                         <option value="Cancelled">Cancelled</option>
-                     </select>
-                 </div>
-                 <div id="statusErrorMsg" class="error-message" style="display: none;"></div>
-                 <div class="modal-actions">
-                     <button type="submit" id="saveStatusBtn" class="button save-button">Update Status</button>
-                     <button type="button" id="cancelStatusBtn" class="button cancel-button">Cancel</button>
-                 </div>
-             </form>
-        </div>
-    </div>
-
-    <div id="poDetailsModal" class="modal large-modal">
-        <div class="modal-content">
-             <span class="close-btn" id="closePoDetailsModal" title="Close">&times;</span>
-             <h2 id="poDetailsModalTitle">PO Details</h2>
-             <div id="poDetailsContent" class="modal-scrollable-content">
-                <p><i class="fas fa-spinner fa-spin"></i> Loading details...</p>
-            </div>
-             <div class="modal-actions">
-                 <button type="button" id="printPoDetailsBtn" class="button print-button"><i class="fas fa-print"></i> Print Details</button>
-                 <button type="button" id="closePoDetailsBtn" class="button cancel-button">Close</button>
-             </div>
-        </div>
-    </div>
-
-     <div id="poShareModal" class="modal large-modal">
-        <div class="modal-content">
-            <span class="close-btn" id="closePoShareModal" title="Close">&times;</span>
-            <h2 id="poShareModalTitle">Purchase Order</h2>
-            <div class="modal-scrollable-content" id="poShareModalPrintArea">
-                <div class="po-share-header">
-                   <div id="poShareInfo"> Loading... </div>
+    <div id="poShareModal" class="modal">
+        <div class="modal-content modal-lg po-share-modal-content">
+            <span class="close-btn" id="closePoShareModal">&times;</span>
+            <div id="poShareScrollableContent">
+                <div id="poShareHeader">
+                    <h2 id="poShareModalTitle">Purchase Order</h2>
+                    <div id="poShareInfo"> Loading... </div>
                 </div>
                 <p id="poShareGreeting">Loading greeting...</p>
                 <hr class="po-share-divider">
@@ -248,9 +80,6 @@
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
-
-    <script src="./js/firebase-init.js" type="module" defer></script>
-    <script src="js/utils.js" type="module" defer></script>
     <script src="js/supplier_management.js" type="module" defer></script>
 
 </body>
