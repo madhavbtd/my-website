@@ -1,6 +1,7 @@
 // js/order_history.js
 // Updated Version: Includes PO Creation, Enhanced Details, Read-Only Popup, items field fix, WhatsApp fix, Single Item Display in Table, Items Only Popup, etc.
 // Added Debug Logging for PO Item Selection Modal Elements
+// Customer ID linking fix applied in handleTableClick
 
 const {
     db, collection, onSnapshot, query, orderBy, where,
@@ -286,6 +287,7 @@ function listenForOrders() {
                  data: {
                      id: doc.id, // Include Firestore ID within data object
                      orderId: doc.data().orderId || '',
+                     customerId: doc.data().customerId || null, // <<< Include top-level customerId
                      customerDetails: doc.data().customerDetails || {},
                      items: doc.data().items || [], // Using 'items' field
                      orderDate: doc.data().orderDate || null,
@@ -538,6 +540,7 @@ function displayOrderRow(firestoreId, data, searchTerm = '') {
 }
 
 // Handles clicks within the order table body
+// >>>>>> CODE UPDATED HERE <<<<<<
 function handleTableClick(event) {
     const target = event.target;
     const row = target.closest('tr');
@@ -559,11 +562,17 @@ function handleTableClick(event) {
         openReadOnlyOrderPopup(firestoreId, orderData);
     } else if (target.closest('.customer-name-link')) {
         event.preventDefault();
-        const customerId = orderData.customerDetails?.customerId;
+        // *** महत्वपूर्ण बदलाव: ग्राहक ID को सीधे orderData.customerId से लिया गया है ***
+        // पहले यह orderData.customerDetails?.customerId था
+        const customerId = orderData.customerId; // Get customerId from the top level
+
         if (customerId) {
+            // Customer ID मिलने पर ग्राहक के अकाउंट पेज पर रीडायरेक्ट करें
             window.location.href = `customer_account_detail.html?id=${customerId}`;
         } else {
-            alert('Customer details/ID not found for linking. Please ensure customerId is saved within customerDetails in the order document.'); // More informative alert
+            // Customer ID न मिलने पर एरर दिखाएं (यह अब कम होना चाहिए)
+            console.error(`Customer ID missing for order Firestore ID: ${firestoreId}`, orderData); // बेहतर लॉगिंग
+            alert('Customer linking ID not found for this order. Please check how the order was saved.'); // अपडेटेड अलर्ट
         }
     } else if (target.closest('.create-po-button')) { // <--- This is the green button
          event.preventDefault();
@@ -582,6 +591,7 @@ function handleTableClick(event) {
         sendWhatsAppMessage(firestoreId, orderData);
     }
 }
+// >>>>>> END OF UPDATED CODE <<<<<<
 
 // --- Open Details Modal ---
 async function openDetailsModal(firestoreId, orderData) {
@@ -1584,4 +1594,4 @@ function closeItemsOnlyPopup() {
     }
 }
 
-console.log("order_history.js script loaded successfully (with Items Only Popup and Debug Logging)."); // Log version
+console.log("order_history.js script loaded successfully (with Items Only Popup, Debug Logging, and Customer ID Fix)."); // Log version
