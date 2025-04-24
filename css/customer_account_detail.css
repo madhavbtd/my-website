@@ -1,157 +1,477 @@
-/* css/customer_account_detail.css (Version 2.4 - Improved Table Design & Scrollbars) */
+/* css/customer_account_detail.css (Version 2.4.0 - Ledger Styles Included) */
+
+/* --- Base Styles & Variables (Ensure these match your customer_management.css if needed) --- */
+:root {
+    /* Define your color variables here for consistency */
+    --primary-color: #0056b3;
+    --success-color: #28a745;
+    --danger-color: #dc3545;
+    --warning-color: #ffc107;
+    --info-color: #17a2b8;
+    --secondary-color: #6c757d;
+    --light-bg: #f8f9fa;
+    --border-color: #dee2e6; /* Default border */
+    --text-color: #212529; /* Default text */
+    --text-muted: #6c757d; /* Muted text */
+    --border-radius: 6px; /* Consistent border radius */
+    --box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    --font-family: 'Poppins', sans-serif;
+}
 
 /* --- Poppins Font --- */
 body, input, button, select, textarea {
-    font-family: var(--font-family, 'Poppins', sans-serif);
+    font-family: var(--font-family);
 }
 
-/* === पिछले वर्ज़न के स्टाइल === */
-.status-badge { font-weight: 500; padding: 3px 10px; border-radius: 12px; font-size: 0.8em; color: white; background-color: var(--secondary-color, #6c757d); white-space: nowrap; display: inline-block; line-height: 1.2; text-align: center; vertical-align: middle; }
-.status-badge.status-active { background-color: var(--success-color, #28a745); }
-.status-badge.status-inactive { background-color: var(--secondary-color, #6c757d); }
-.customer-info-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 25px; margin-bottom: 30px; }
-.info-box { background-color: #ffffff; border: 1px solid var(--border-color, #e0e0e0); border-radius: var(--border-radius, 8px); padding: 20px 25px; box-shadow: var(--box-shadow, 0 3px 8px rgba(0, 0, 0, 0.06)); }
-.info-box h2 { font-size: 1.15em; color: var(--primary-color, #0056b3); margin-top: 0; margin-bottom: 20px; padding-bottom: 12px; border-bottom: 1px solid #eee; display: flex; align-items: center; gap: 10px; font-weight: 600; }
-.info-box h2 i { color: var(--primary-color, #0056b3); opacity: 0.8; }
-.info-box p { margin-bottom: 12px; font-size: 0.95em; line-height: 1.6; color: #555; }
-.info-box p strong { font-weight: 600; color: #222; min-width: 110px; display: inline-block; margin-right: 5px;}
-@media (max-width: 992px) { .customer-info-grid { grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); } .customer-details-box, .account-summary-box, .customer-notes-box { grid-column: auto; grid-row: auto; } }
-#summary-balance.balance-due { color: var(--danger-color, #dc3545); font-weight: bold; }
-#summary-balance.balance-credit { color: var(--success-color, #28a745); font-weight: bold; }
-#summary-balance.balance-info { color: var(--text-muted, #6c757d); font-weight: normal; font-style: italic; }
-.order-row-clickable { cursor: pointer; transition: background-color 0.15s ease; }
-.order-row-clickable:hover { background-color: #f0f8ff; } /* Hover effect from V2.3 */
-.cust-detail-actions { align-items: center; min-height: 50px; flex-wrap: wrap; gap: 12px; padding: 15px 20px; background-color: #f8f9fa; border: 1px solid #e9ecef; border-radius: var(--border-radius, 6px); margin-bottom: 30px; }
-.cust-detail-actions .button, .cust-detail-actions a.button { min-width: 150px; height: 40px; box-sizing: border-box; justify-content: center; padding: 8px 18px; font-weight: 500; border: none; color: white; box-shadow: 0 2px 4px rgba(0,0,0,0.1); transition: all 0.2s ease; }
-.cust-detail-actions .button:hover, .cust-detail-actions a.button:hover { transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.15); }
-.cust-detail-actions #editCustomerBtn { background-color: var(--info-color, #17a2b8); } .cust-detail-actions #editCustomerBtn:hover { background-color: #117a8b; }
-.cust-detail-actions #addPaymentBtn { background-color: var(--success-color, #28a745); } .cust-detail-actions #addPaymentBtn:hover { background-color: #1e7e34; }
-.cust-detail-actions #addNewOrderLink { background-color: var(--primary-color, #0056b3); } .cust-detail-actions #addNewOrderLink:hover { background-color: #00418a; }
-.cust-detail-actions #toggleStatusBtn.secondary-button { background-color: var(--warning-color, #ffc107); color: #212529; }
-.cust-detail-actions #toggleStatusBtn.secondary-button:hover { background-color: #e0a800; }
-.cust-detail-actions #toggleStatusBtn.success-button { background-color: var(--success-color, #28a745); color: white; }
-.cust-detail-actions #toggleStatusBtn.success-button:hover { background-color: #1e7e34; }
-.cust-detail-actions #deleteCustomerBtn { background-color: var(--danger-color, #dc3545); } .cust-detail-actions #deleteCustomerBtn:hover { background-color: #bd2130; }
-.modal .modal-content { padding: 30px 35px; border-radius: 8px; border: none; box-shadow: 0 5px 15px rgba(0,0,0,0.2); }
-.modal h2 { font-weight: 600; font-size: 1.3em; text-align: center; margin-top: 0; margin-bottom: 35px; padding-bottom: 18px; border-bottom: 1px solid #eee; display: flex; align-items: center; justify-content: center; gap: 12px; }
-.modal .form-group { margin-bottom: 18px; }
-.modal .form-group label { margin-bottom: 8px; font-weight: 500; color: #444; font-size: 0.9em; }
-.modal .form-group input[type="text"], .modal .form-group input[type="tel"], .modal .form-group input[type="email"], .modal .form-group input[type="number"], .modal .form-group input[type="date"], .modal .form-group select, .modal .form-group textarea { font-size: 0.95em; padding: 10px 14px; border: 1px solid #ccc; border-radius: 5px; width: 100%; box-sizing: border-box; }
-.modal .form-group input:focus, .modal .form-group select:focus, .modal .form-group textarea:focus { border-color: var(--primary-color, #0056b3); box-shadow: 0 0 0 0.2rem rgba(0, 86, 179, 0.25); outline: none; }
- .modal .form-group input[type="radio"] { margin-right: 5px; vertical-align: middle; }
- .modal .form-group label[for*="creditEdit"] { margin-right: 15px; font-weight: normal; font-size: 0.95em; }
-.modal .modal-actions { margin-top: 35px; padding-top: 20px; border-top: 1px solid #eee; justify-content: flex-end; }
-.modal .modal-actions .button { font-weight: 500; padding: 10px 20px; height: auto; }
-#detailsModal .modal-content h2 { color: var(--primary-color, #0056b3); }
-#addPaymentModal .modal-content h2 { color: var(--success-color, #28a745); }
-#customerEditModal .modal-content h2 { color: var(--info-color, #17a2b8); }
-#confirmToggleStatusModal .modal-content h2 { color: var(--warning-color, #ffc107); }
-#confirmDeleteModal .modal-content h2 { color: var(--danger-color, #dc3545); }
-.modal h2 .warning-icon { color: var(--warning-color, #ffc107); } .modal h2 .danger-icon { color: var(--danger-color, #dc3545); } .modal h2 .info-icon { color: var(--info-color, #17a2b8); } .modal h2 .success-icon { color: var(--success-color, #28a745); }
-#customerEditModal .modal-content { max-width: 700px; }
-#detailsModal .modal-section { margin-bottom: 25px; padding-bottom: 20px; border-bottom: 1px solid #eee; } #detailsModal .modal-section:last-of-type { border-bottom: none; margin-bottom: 0; padding-bottom: 0; } #detailsModal .modal-section label { font-weight: 600; color: var(--primary-color, #0056b3); margin-bottom: 10px; display: block; }
-.warning-message { font-weight: 500; color: #856404; background-color: #fff3cd; border: 1px solid #ffeeba; border-radius: var(--border-radius, 6px); padding: 12px 18px; margin-top: 15px; margin-bottom: 20px; font-size: 0.9em; text-align: center; } #confirmDeleteModal .warning-message { color: var(--danger-color, #dc3545); background-color: #f8d7da; border: 1px solid #f5c6cb; }
-.confirmation-check { margin-top: 25px; margin-bottom: 25px; display: flex; align-items: flex-start; gap: 10px; background-color: #f8f9fa; padding: 15px; border-radius: 6px; border: 1px solid #dee2e6; }
-.confirmation-check input[type="checkbox"] { transform: scale(1.1); cursor: pointer; margin: 0; margin-top: 3px; flex-shrink: 0; }
-.confirmation-check label { font-size: 0.9em; color: #333; cursor: pointer; margin: 0; font-weight: 500; line-height: 1.4; }
-#confirmToggleBtn.secondary-button { background-color: var(--warning-color, #ffc107); color: #212529; } #confirmToggleBtn.success-button { background-color: var(--success-color, #28a745); color: white; }
-#confirmDeleteBtn { background-color: var(--danger-color, #dc3545); color: white; }
-#confirmToggleBtn:disabled, #confirmDeleteBtn:disabled { background-color: #adb5bd; cursor: not-allowed; opacity: 0.65; }
-#customerEditForm { display: grid; grid-template-columns: 1fr 1fr; gap: 0px 25px; align-items: start; }
-#customerEditForm .form-group { margin-bottom: 20px; }
-#customerEditForm .form-group-address, #customerEditForm .form-group-notes, #customerEditForm .form-group-credit-radio, #creditLimitEditGroup { grid-column: 1 / -1; }
-#customerEditForm .modal-actions { grid-column: 1 / -1; }
-@media (max-width: 600px) { #customerEditForm { grid-template-columns: 1fr; gap: 0px; } #customerEditForm .form-group-address, #customerEditForm .form-group-notes, #customerEditForm .form-group-credit-radio, #creditLimitEditGroup, #customerEditForm .modal-actions { grid-column: auto; } }
+/* === सामान्य लेआउट और कंटेनर (यदि आवश्यक हो) === */
+/* .container styles might be in customer_management.css, ensure consistency */
+/* .header styles might be in customer_management.css */
+/* .breadcrumb-container styles might be in customer_management.css */
 
-/* --- >>> वर्ज़न 2.4: टेबल डिज़ाइन सुधार और स्क्रॉलबार <<< --- */
-.history-section h2 { /* टेबल हेडिंग्स को बेहतर करें */
-    font-size: 1.2em;
-    margin-bottom: 15px;
-    padding-bottom: 10px;
-    border-bottom: 2px solid var(--primary-color, #0056b3);
-    color: var(--primary-color, #0056b3);
+/* === Action Bar Styles === */
+.actions-bar.cust-detail-actions {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap; /* Allow wrapping on smaller screens */
+    gap: 12px; /* Space between buttons */
+    padding: 15px 20px;
+    background-color: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: var(--border-radius);
+    margin-bottom: 30px; /* Space below action bar */
+    min-height: 50px;
+}
+
+.cust-detail-actions .button,
+.cust-detail-actions a.button {
+    min-width: 150px; /* Minimum width for buttons */
+    height: 40px; /* Fixed height */
+    box-sizing: border-box;
+    display: inline-flex; /* Align icon and text */
+    align-items: center;
+    justify-content: center;
+    padding: 8px 18px;
+    font-weight: 500;
+    border: none;
+    color: white; /* Default text color for colored buttons */
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    transition: all 0.2s ease;
+    text-decoration: none; /* Remove underline from links styled as buttons */
+    cursor: pointer;
+}
+
+.cust-detail-actions .button:hover,
+.cust-detail-actions a.button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+
+/* Specific Button Colors */
+.cust-detail-actions #editCustomerBtn { background-color: var(--info-color); }
+.cust-detail-actions #editCustomerBtn:hover { background-color: #117a8b; } /* Darker info */
+.cust-detail-actions #addPaymentBtn { background-color: var(--success-color); }
+.cust-detail-actions #addPaymentBtn:hover { background-color: #1e7e34; } /* Darker success */
+.cust-detail-actions #addNewOrderLink { background-color: var(--primary-color); }
+.cust-detail-actions #addNewOrderLink:hover { background-color: #00418a; } /* Darker primary */
+.cust-detail-actions #toggleStatusBtn.secondary-button { background-color: var(--warning-color); color: #212529; } /* Warning color for disable */
+.cust-detail-actions #toggleStatusBtn.secondary-button:hover { background-color: #e0a800; }
+.cust-detail-actions #toggleStatusBtn.success-button { background-color: var(--success-color); color: white; } /* Success color for enable */
+.cust-detail-actions #toggleStatusBtn.success-button:hover { background-color: #1e7e34; }
+.cust-detail-actions #deleteCustomerBtn { background-color: var(--danger-color); }
+.cust-detail-actions #deleteCustomerBtn:hover { background-color: #bd2130; } /* Darker danger */
+
+.cust-detail-actions .button:disabled,
+.cust-detail-actions a.button.disabled {
+    background-color: #adb5bd;
+    cursor: not-allowed;
+    opacity: 0.65;
+    transform: none;
+    box-shadow: none;
+}
+
+/* === Customer Info Grid Styles === */
+.customer-info-grid {
+    display: grid;
+    /* Adjust grid columns for responsiveness */
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 25px;
+    margin-bottom: 30px;
+}
+
+.info-box {
+    background-color: #ffffff;
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    padding: 20px 25px;
+    box-shadow: var(--box-shadow);
+}
+
+.info-box h2 {
+    font-size: 1.15em;
+    color: var(--primary-color);
+    margin-top: 0;
+    margin-bottom: 20px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid #eee;
     display: flex;
     align-items: center;
     gap: 10px;
+    font-weight: 600;
+}
+.info-box h2 i {
+    color: var(--primary-color);
+    opacity: 0.8;
 }
 
+.info-box p {
+    margin-bottom: 12px;
+    font-size: 0.95em;
+    line-height: 1.6;
+    color: #555; /* Slightly lighter text for details */
+}
+.info-box p strong {
+    font-weight: 600;
+    color: var(--text-color); /* Darker text for labels */
+    min-width: 110px; /* Align labels */
+    display: inline-block;
+    margin-right: 5px;
+}
+
+/* Account Summary Specific Styles */
+#summary-balance.balance-due { color: var(--danger-color); font-weight: bold; }
+#summary-balance.balance-credit { color: var(--success-color); font-weight: bold; }
+#summary-balance.balance-info { color: var(--text-muted); font-weight: normal; /*font-style: italic;*/ } /* Removed italic for consistency */
+
+
+/* === Status Badge Styles === */
+.status-badge {
+    font-weight: 500;
+    padding: 3px 10px;
+    border-radius: 12px; /* Pill shape */
+    font-size: 0.8em;
+    color: white;
+    background-color: var(--secondary-color); /* Default/Unknown */
+    white-space: nowrap;
+    display: inline-block;
+    line-height: 1.2;
+    text-align: center;
+    vertical-align: middle;
+    text-transform: capitalize; /* Capitalize status text */
+}
+/* Specific status colors */
+.status-badge.status-active,
+.status-badge.status-completed, /* Add other positive statuses */
+.status-badge.status-delivered { background-color: var(--success-color); }
+
+.status-badge.status-inactive { background-color: var(--secondary-color); }
+
+.status-badge.status-designing, /* Example intermediate statuses */
+.status-badge.status-printing,
+.status-badge.status-verification { background-color: var(--info-color); }
+
+.status-badge.status-order-received, /* Example initial status */
+.status-badge.status-design-approved { background-color: var(--primary-color); }
+
+.status-badge.status-unknown { background-color: var(--secondary-color); }
+/* Add more status classes as needed */
+
+
+/* === History Section and Table Styles (V2.4.0) === */
+.history-section {
+    margin-top: 30px; /* Space above history sections */
+}
+
+.history-section h2 {
+    font-size: 1.2em;
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid var(--primary-color);
+    color: var(--primary-color);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 600; /* Make section headers bolder */
+}
+.history-section h2 i {
+    opacity: 0.9;
+}
+
+/* Table Container with Scroll */
 .history-section .table-container {
-    max-height: 400px; /* <<< टेबल की अधिकतम ऊंचाई (एडजस्ट करें) */
-    overflow-y: auto;  /* <<< वर्टीकल स्क्रॉलबार */
-    border: 1px solid var(--border-color, #dee2e6);
-    border-radius: var(--border-radius, 6px);
-    margin-bottom: 30px; /* टेबल के नीचे स्पेस */
-    background-color: #fff;
-    padding: 0; /* कंटेनर से पैडिंग हटाएँ */
-    box-shadow: none; /* साफ़ लुक के लिए शैडो हटाएं */
+    max-height: 400px; /* Adjust max height as needed */
+    overflow-y: auto;  /* Enable vertical scrollbar */
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    margin-bottom: 30px; /* Space below each table */
+    background-color: #fff; /* Ensure background for content */
 }
 
-/* टेबल का अपना बॉर्डर हटाएं */
+/* Base Table Styles */
 .history-section table {
     width: 100%;
     border-collapse: collapse;
-    border: none;
-    font-size: 0.9em;
+    border: none; /* Remove table's own border */
+    font-size: 0.9em; /* Slightly smaller font for tables */
 }
 
-/* टेबल हेडर (thead) स्टाइल */
+/* Table Header (thead) */
 .history-section thead th {
-    background-color: var(--light-bg, #f8f9fa);
-    padding: 12px 15px; /* पैडिंग */
+    background-color: var(--light-bg);
+    padding: 12px 15px;
     text-align: left;
-    font-weight: 600; /* बोल्ड */
-    color: var(--text-color, #343a40);
-    border-bottom: 2px solid var(--border-color, #dee2e6); /* नीचे मोटी लाइन */
-    position: sticky; /* स्क्रॉल करते समय हेडर ऊपर चिपका रहे */
+    font-weight: 600;
+    color: var(--text-color);
+    border-bottom: 2px solid var(--border-color);
+    position: sticky; /* Make header stick during scroll */
     top: 0;
-    z-index: 1; /* यह सुनिश्चित करता है कि हेडर स्क्रॉलिंग सामग्री के ऊपर हो */
+    z-index: 1; /* Keep header above scrolling content */
 }
 
-/* टेबल बॉडी रो (tbody tr) स्टाइल */
+/* Table Body Rows (tbody tr) */
 .history-section tbody tr {
-    border-bottom: 1px solid #eff2f5; /* पंक्तियों के बीच हल्की लाइन */
+    border-bottom: 1px solid #eff2f5; /* Lighter border between rows */
     transition: background-color 0.15s ease;
 }
 .history-section tbody tr:last-child {
-    border-bottom: none; /* आखिरी पंक्ति के नीचे लाइन न हो */
+    border-bottom: none; /* No border below the last row */
 }
 .history-section tbody tr:hover {
-    background-color: #f5f8fa; /* माउस ले जाने पर हल्का रंग */
+    background-color: #f5f8fa; /* Subtle hover effect */
+}
+.history-section tbody tr.order-row-clickable { /* Specific hover for clickable order rows */
+    cursor: pointer;
+}
+.history-section tbody tr.order-row-clickable:hover {
+    background-color: #eaf5ff; /* Slightly different hover for clickable */
 }
 
-/* टेबल सेल (td) स्टाइल */
+
+/* Table Data Cells (td) */
 .history-section td {
-    padding: 12px 15px; /* पैडिंग */
+    padding: 10px 15px; /* Adjust padding if needed */
     text-align: left;
     vertical-align: middle;
-    color: var(--text-muted, #6c757d); /* डेटा के लिए हल्का रंग */
+    color: var(--text-muted); /* Default cell text color */
     line-height: 1.4;
 }
 
-/* विशिष्ट कॉलम स्टाइल */
+/* Specific Column Styling */
 #customerOrderTable td:nth-child(1), /* Order ID */
-#customerPaymentTable td:nth-child(2) /* Amount Paid */ {
-    font-weight: 500; /* थोड़ा बोल्ड */
-    color: var(--text-color, #343a40); /* गहरा रंग */
+#customerPaymentTable td:nth-child(2), /* Amount Paid */
+#accountLedgerTable td:nth-child(1) /* Ledger Date */ {
+    font-weight: 500;
+    color: var(--text-color); /* Darker text for key info */
 }
+
 #customerOrderTable td:nth-child(3), /* Products */
-#customerPaymentTable td:nth-child(4) /* Notes */ {
-    white-space: normal; /* टेक्स्ट रैप हो सके */
+#customerPaymentTable td:nth-child(4), /* Payment Notes */
+#accountLedgerTable td:nth-child(2) /* Ledger Description */ {
+    white-space: normal; /* Allow wrapping for longer text */
     min-width: 150px;
 }
-#customerPaymentTable td:last-child { /* Payment टेबल का एक्शन कॉलम */
+
+/* Payment History Table - Action Column (if used) */
+#customerPaymentTable td:last-child {
      text-align: center;
-     width: 60px; /* फिक्स चौड़ाई */
+     width: 60px; /* Fixed width for action buttons */
 }
-.delete-payment-btn { /* पेमेंट डिलीट बटन स्टाइल */
+.delete-payment-btn { /* Style for delete button in payment table */
     padding: 4px 8px;
     font-size: 0.85em;
     line-height: 1;
+    background-color: transparent;
+    border: none;
+    color: var(--danger-color);
+    cursor: pointer;
+}
+.delete-payment-btn:hover {
+    color: #a01c29; /* Darker red */
 }
 
-/* कस्टम स्क्रॉलबार स्टाइल (Optional) */
+
+/* --- Account Ledger Table Specific Styles (V2.4.0) --- */
+.ledger-table-container {
+    max-height: 500px; /* Allow more height for ledger if needed */
+}
+
+#accountLedgerTable th,
+#accountLedgerTable td {
+    padding: 10px 12px; /* Consistent padding */
+}
+
+#accountLedgerTable th {
+    font-size: 0.85em; /* Slightly smaller header font */
+}
+
+/* Align Debit, Credit, Balance columns to the right */
+#accountLedgerTable th:nth-child(3), /* Debit Header */
+#accountLedgerTable td:nth-child(3), /* Debit Cell */
+#accountLedgerTable th:nth-child(4), /* Credit Header */
+#accountLedgerTable td:nth-child(4), /* Credit Cell */
+#accountLedgerTable th:nth-child(5), /* Balance Header */
+#accountLedgerTable td:nth-child(5) /* Balance Cell */ {
+    text-align: right;
+    font-family: Consolas, 'Courier New', monospace; /* Monospace font for numbers */
+}
+
+/* Ledger Balance Cell Styling */
+#accountLedgerTable td.ledger-balance-positive {
+    /* color: var(--success-color); */ /* Optional: Green for positive */
+    font-weight: 500;
+}
+#accountLedgerTable td.ledger-balance-negative {
+    color: var(--danger-color); /* Red for negative balance */
+    font-weight: 500;
+}
+
+
+/* Custom Scrollbar Styles (Optional, Webkit browsers) */
 .history-section .table-container::-webkit-scrollbar { width: 8px; }
 .history-section .table-container::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 10px; }
 .history-section .table-container::-webkit-scrollbar-thumb { background: #ccc; border-radius: 10px; }
 .history-section .table-container::-webkit-scrollbar-thumb:hover { background: #aaa; }
-/* --- >>> टेबल डिज़ाइन और स्क्रॉलबार समाप्त <<< --- */
+
+
+/* === Modal Styles === */
+/* Base Modal Styles (likely from customer_management.css - ensure consistency) */
+.modal { display: none; position: fixed; z-index: 1050; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.55); align-items: center; justify-content: center; padding: 15px; box-sizing: border-box; }
+.modal.active { display: flex; }
+.modal-content { background-color: #fff; margin: auto; padding: 25px 30px; border: none; /* Remove default border */ width: 90%; max-width: 600px; /* Default max width */ border-radius: var(--border-radius); position: relative; box-shadow: 0 5px 20px rgba(0,0,0,0.25); z-index: 1051; }
+.modal-content.small-modal { max-width: 450px; } /* For confirmation modals */
+.close-btn { color: #aaa; position: absolute; top: 10px; right: 15px; font-size: 28px; font-weight: bold; cursor: pointer; line-height: 1; background: none; border: none; padding: 0; }
+.close-btn:hover, .close-btn:focus { color: black; }
+
+/* Modal Header */
+.modal h2 { margin-top: 0; margin-bottom: 25px; font-size: 1.3em; font-weight: 600; color: #333; text-align: center; border-bottom: 1px solid #eee; padding-bottom: 15px; display: flex; align-items: center; justify-content: center; gap: 10px; }
+.modal h2 i { font-size: 1.1em; opacity: 0.9; }
+/* Modal Header Icon Colors */
+.modal h2 .info-icon { color: var(--info-color); }
+.modal h2 .success-icon { color: var(--success-color); }
+.modal h2 .warning-icon { color: var(--warning-color); }
+.modal h2 .danger-icon { color: var(--danger-color); }
+
+/* Modal Form Styles */
+.modal .form-group { margin-bottom: 18px; }
+.modal .form-group label { display: block; margin-bottom: 8px; font-weight: 500; color: #444; font-size: 0.9em; }
+.modal .form-group input[type="text"],
+.modal .form-group input[type="tel"],
+.modal .form-group input[type="email"],
+.modal .form-group input[type="number"],
+.modal .form-group input[type="date"],
+.modal .form-group select,
+.modal .form-group textarea {
+    font-size: 0.95em;
+    padding: 10px 14px;
+    border: 1px solid #ccc;
+    border-radius: 4px; /* Slightly smaller radius */
+    width: 100%;
+    box-sizing: border-box;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.modal .form-group input:focus,
+.modal .form-group select:focus,
+.modal .form-group textarea:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 0.2rem rgba(0, 86, 179, 0.25); /* Focus ring */
+    outline: none;
+}
+.modal .form-group .required { color: var(--danger-color); margin-left: 3px; font-weight: bold; }
+.modal .form-group textarea { resize: vertical; min-height: 70px; }
+/* Radio button styling for credit */
+.modal .form-group input[type="radio"] { margin-right: 5px; vertical-align: middle; }
+.modal .form-group label[for*="creditEdit"] { margin-right: 15px; font-weight: normal; font-size: 0.95em; display: inline-block; margin-bottom: 0; } /* Adjust labels for radios */
+.modal .form-group-credit-radio div { margin-top: 5px; } /* Space for radio buttons */
+
+/* Edit Customer Modal Grid Layout */
+#customerEditForm {
+    display: grid;
+    grid-template-columns: 1fr 1fr; /* Two equal columns */
+    gap: 0px 25px; /* Only column gap */
+    align-items: start;
+}
+#customerEditForm .form-group { margin-bottom: 20px; }
+/* Spanning elements across grid */
+#customerEditForm .form-group-address,
+#customerEditForm .form-group-notes,
+#customerEditForm .form-group-credit-radio,
+#creditLimitEditGroup { grid-column: 1 / -1; } /* Span full width */
+#customerEditForm .modal-actions { grid-column: 1 / -1; } /* Span full width */
+/* Adjust Edit Customer Modal Size */
+#customerEditModal .modal-content { max-width: 750px; }
+
+/* Order Details Modal Specifics */
+#detailsModal .modal-content { max-width: 700px; }
+#detailsModal .modal-info p { margin-bottom: 8px; font-size: 0.95em; }
+#detailsModal .modal-section { margin-bottom: 25px; padding-bottom: 20px; border-bottom: 1px solid #eee; }
+#detailsModal .modal-section:last-of-type { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+#detailsModal .modal-section label { font-weight: 600; color: var(--primary-color); margin-bottom: 10px; display: block; font-size: 1em; }
+#detailsModal .modal-section ul { margin-top: 5px; }
+#detailsModal .modal-section li { font-size: 0.95em; }
+#detailsModal .update-status-button { margin-left: 10px; }
+
+/* Confirmation Modals (Toggle/Delete) */
+.confirmation-check { margin-top: 25px; margin-bottom: 25px; display: flex; align-items: flex-start; gap: 10px; background-color: #f8f9fa; padding: 15px; border-radius: var(--border-radius); border: 1px solid var(--border-color); }
+.confirmation-check input[type="checkbox"] { transform: scale(1.1); cursor: pointer; margin: 0; margin-top: 3px; flex-shrink: 0; }
+.confirmation-check label { font-size: 0.9em; color: #333; cursor: pointer; margin: 0; font-weight: 500; line-height: 1.4; }
+.warning-message { font-weight: 500; color: #856404; background-color: #fff3cd; border: 1px solid #ffeeba; border-radius: var(--border-radius); padding: 12px 18px; margin-top: 15px; margin-bottom: 20px; font-size: 0.9em; text-align: center; }
+#confirmDeleteModal .warning-message { color: var(--danger-color); background-color: #f8d7da; border: 1px solid #f5c6cb; }
+#confirmToggleBtn:disabled, #confirmDeleteBtn:disabled { background-color: #adb5bd; cursor: not-allowed; opacity: 0.65; }
+
+
+/* Modal Actions (Footer Buttons) */
+.modal .modal-actions {
+    margin-top: 30px;
+    padding-top: 20px;
+    border-top: 1px solid #eee;
+    display: flex;
+    justify-content: flex-end; /* Align buttons to the right */
+    gap: 10px;
+}
+.modal .modal-actions .button {
+    font-weight: 500;
+    padding: 10px 20px;
+    height: auto; /* Allow natural height */
+    min-width: 100px; /* Minimum width for action buttons */
+}
+/* Specific action button colors */
+.modal .save-button { background-color: var(--success-color); }
+.modal .save-button:hover { background-color: #1e7e34; }
+.modal .update-status-button { background-color: var(--info-color); }
+.modal .update-status-button:hover { background-color: #117a8b; }
+.modal .edit-full-button { background-color: var(--warning-color); color: #212529; }
+.modal .edit-full-button:hover { background-color: #e0a800; }
+.modal .delete-button { background-color: var(--danger-color); }
+.modal .delete-button:hover { background-color: #bd2130; }
+.modal .cancel-button { background-color: var(--secondary-color); }
+.modal .cancel-button:hover { background-color: #5a6268; }
+
+/* --- Responsive Adjustments --- */
+@media (max-width: 992px) {
+    .customer-info-grid { grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); } /* Adjust minmax */
+}
+
+@media (max-width: 768px) {
+    .cust-detail-actions { padding: 15px; }
+    .cust-detail-actions .button, .cust-detail-actions a.button { min-width: 130px; font-size: 0.9em; padding: 8px 15px; }
+    .info-box { padding: 15px 20px; }
+    .info-box h2 { font-size: 1.1em; margin-bottom: 15px; padding-bottom: 10px; }
+    .info-box p { font-size: 0.9em; }
+    .history-section table { font-size: 0.85em; }
+    .history-section td, .history-section th { padding: 8px 10px; }
+    .modal-content { padding: 20px; }
+    #customerEditForm { grid-template-columns: 1fr; gap: 0px; } /* Stack form fields */
+    #customerEditForm .form-group-address,
+    #customerEditForm .form-group-notes,
+    #customerEditForm .form-group-credit-radio,
+    #creditLimitEditGroup,
+    #customerEditForm .modal-actions { grid-column: auto; } /* Reset spanning */
+    #customerEditModal .modal-content { max-width: 90%; } /* Wider on mobile */
+    #detailsModal .modal-content { max-width: 90%; }
+}
+
+@media (max-width: 480px) {
+    .cust-detail-actions { flex-direction: column; align-items: stretch; }
+    .cust-detail-actions .button, .cust-detail-actions a.button { width: 100%; } /* Full width buttons */
+    .modal .modal-actions { flex-direction: column; }
+    .modal .modal-actions .button { width: 100%; justify-content: center; } /* Full width modal buttons */
+}
