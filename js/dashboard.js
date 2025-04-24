@@ -1,513 +1,279 @@
-// js/dashboard.js (v3 - Multi-Search, Reminders, Tasks, Quick Pay Setup)
+/* css/index.css - vFinal (Mobile Sidebar Nav Fix & Layout Updates) */
 
-// Import initialized db and auth from firebase-init.js
-import { db, auth } from './firebase-init.js';
-
-// Import necessary functions directly from the SDK
-import { collection, onSnapshot, query, where, getDocs, limit, orderBy, Timestamp, doc, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-
-// --- DOM Elements ---
-const countElements = { "Order Received": document.getElementById('count-order-received'), "Designing": document.getElementById('count-designing'), "Verification": document.getElementById('count-verification'), "Design Approved": document.getElementById('count-design-approved'), "Ready for Working": document.getElementById('count-ready-for-working'), "Printing": document.getElementById('count-printing'), "Delivered": document.getElementById('count-delivered'), "Completed": document.getElementById('count-completed') };
-const dashboardSearchInput = document.getElementById('dashboardSearchInput'); // <<< Updated ID
-const dashboardSearchButton = document.getElementById('dashboardSearchButton'); // <<< Updated ID
-const suggestionsContainer = document.getElementById('dashboardSuggestions');   // <<< Updated ID
-const welcomeUserSpan = document.getElementById('welcome-user');
-const dateTimeSpan = document.getElementById('currentDateTime');
-const logoutLink = document.getElementById('logout-link');
-const kpiPendingPayments = document.getElementById('kpi-pending-payments');
-const kpiOrdersToday = document.getElementById('kpi-orders-today');
-const recentActivityList = document.getElementById('recent-activity-list');
-const licReminderList = document.getElementById('lic-reminder-list');
-const upcomingTaskList = document.getElementById('upcoming-task-list');
-const upcomingDeliveryList = document.getElementById('upcoming-delivery-list');
-const orderStatusChartCanvas = document.getElementById('orderStatusChart');
-const customerDuesList = document.getElementById('customer-dues-list'); // <<< New Dues List
-
-// Quick Payment Modal Elements
-const quickPaymentModal = document.getElementById('quickPaymentModal');
-const closeQuickPaymentModalBtn = document.getElementById('closeQuickPaymentModal');
-const cancelQuickPaymentBtn = document.getElementById('cancelQuickPaymentBtn');
-const quickPaymentForm = document.getElementById('quickPaymentForm');
-const quickPaymentCustomerSearch = document.getElementById('quickPaymentCustomerSearch');
-const quickPaymentCustomerId = document.getElementById('quickPaymentCustomerId');
-const quickPaymentCustomerSuggestions = document.getElementById('quickPaymentCustomerSuggestions');
-const quickPaymentSelectedCustomer = document.getElementById('quickPaymentSelectedCustomer');
-const saveQuickPaymentBtn = document.getElementById('saveQuickPaymentBtn');
-const quickPaymentError = document.getElementById('quickPaymentError');
-const quickAddPaymentBtn = document.getElementById('quickAddPaymentBtn'); // The button in the header
-
-// Global state
-let suggestionDebounceTimer;
-let customerSearchDebounceTimerQP; // Separate timer for quick payment search
-let dateTimeIntervalId = null;
-let userRole = null;
-let allOrdersCache = []; // Cache for orders (used in search)
-let allLicPoliciesCache = []; // Cache for LIC policies (used in search)
-let allCustomersCacheQP = []; // Cache for customers (used in quick payment search)
-let licPoliciesListenerUnsubscribe = null;
-let orderCountsListenerUnsubscribe = null;
-let customerListenerUnsubscribeQP = null;
-let orderChartInstance = null;
-
-// --- Initialization on DOM Load ---
-document.addEventListener('DOMContentLoaded', () => {
-    console.log("[DEBUG] Dashboard DOM Loaded (v3).");
-    if (!auth) { console.error("Auth instance not found!"); alert("Critical Error: Auth system failed."); return; }
-    setupEventListeners();
-    listenForAuthChanges();
-});
-
-// --- Setup Event Listeners ---
-function setupEventListeners() {
-    if (dashboardSearchInput) {
-        dashboardSearchInput.addEventListener('input', handleDashboardSearchInput);
-        dashboardSearchInput.addEventListener('blur', () => setTimeout(clearSuggestions, 150));
-    }
-    if (dashboardSearchButton) dashboardSearchButton.addEventListener('click', triggerDashboardSearch);
-    if (logoutLink) logoutLink.addEventListener('click', handleLogout);
-    if (quickAddPaymentBtn) quickAddPaymentBtn.addEventListener('click', openQuickPaymentModal);
-
-    // Quick Payment Modal Listeners
-    if (closeQuickPaymentModalBtn) closeQuickPaymentModalBtn.addEventListener('click', closeQuickPaymentModal);
-    if (cancelQuickPaymentBtn) cancelQuickPaymentBtn.addEventListener('click', closeQuickPaymentModal);
-    if (quickPaymentModal) quickPaymentModal.addEventListener('click', (e) => { if (e.target === quickPaymentModal) closeQuickPaymentModal(); });
-    if (quickPaymentForm) quickPaymentForm.addEventListener('submit', handleSaveQuickPayment);
-    if (quickPaymentCustomerSearch) quickPaymentCustomerSearch.addEventListener('input', handleQuickPaymentCustomerSearch);
-
-    // Hide suggestions when clicking outside
-    document.addEventListener('click', (e) => {
-        if (suggestionsContainer && suggestionsContainer.style.display === 'block' && !dashboardSearchInput.contains(e.target) && !suggestionsContainer.contains(e.target)) {
-            clearSuggestions();
-        }
-        if (quickPaymentCustomerSuggestions && quickPaymentCustomerSuggestions.style.display === 'block' && !quickPaymentCustomerSearch.contains(e.target) && !quickPaymentCustomerSuggestions.contains(e.target)) {
-            hideSuggestionBox(quickPaymentCustomerSuggestions);
-        }
-    });
-
-    console.log("[DEBUG] Dashboard event listeners set up (v3).");
+/* --- Base Variables --- */
+:root {
+    --primary-color: #0056b3;
+    --secondary-color: #2c3e50;
+    --accent-color: #ffc107;
+    --success-color: #28a745;
+    --info-color: #17a2b8;
+    --danger-color: #dc3545;
+    --light-bg: #f8f9fa;
+    --border-color: #dee2e6;
+    --text-color: #343a40;
+    --text-muted: #6c757d;
+    --sidebar-text: #ecf0f1;
+    --sidebar-hover: #34495e;
+    --sidebar-active-bg: #3a5368;
+    --sidebar-active-border: #f1c40f;
+    --card-bg: #ffffff;
+    --card-shadow: 0 2px 8px rgba(0, 0, 0, 0.07);
+    --card-border-radius: 8px;
+    --base-font-size: 15px;
 }
 
-// --- Date/Time Update ---
-function updateDateTime() { /* ... पहले जैसा ... */ if (!dateTimeSpan) return; const now = new Date(); const optsDate = { year: 'numeric', month: 'short', day: 'numeric' }; const optsTime = { hour: 'numeric', minute: '2-digit', hour12: true }; const optsDay = { weekday: 'long' }; try { const date = now.toLocaleDateString('en-IN', optsDate); const day = now.toLocaleDateString('en-IN', optsDay); const time = now.toLocaleTimeString('en-US', optsTime); dateTimeSpan.textContent = `${date} | ${day} | ${time}`; dateTimeSpan.classList.remove('loading-placeholder'); } catch (e) { console.error("Error formatting date/time:", e); dateTimeSpan.textContent = 'Error loading time'; dateTimeSpan.classList.remove('loading-placeholder'); } }
-function startDateTimeUpdate() { /* ... पहले जैसा ... */ if (dateTimeIntervalId) clearInterval(dateTimeIntervalId); updateDateTime(); dateTimeIntervalId = setInterval(updateDateTime, 10000); }
-
-// --- Authentication Handling ---
-function listenForAuthChanges() {
-    onAuthStateChanged(auth, (user) => {
-        if (user) {
-            console.log("[DEBUG] User authenticated.");
-            startDateTimeUpdate();
-            user.getIdTokenResult(true).then((idTokenResult) => { userRole = idTokenResult.claims.role || 'Standard'; if (welcomeUserSpan) welcomeUserSpan.textContent = `Welcome ${user.email || 'User'} (${userRole})`; }).catch(error => { console.error('Error getting user role:', error); if (welcomeUserSpan) welcomeUserSpan.textContent = `Welcome ${user.email || 'User'} (Role Error)`; });
-            initializeDashboardDataFetching(); // Load data after auth confirmed
-        } else {
-            console.log("[DEBUG] User not authenticated. Redirecting...");
-            if (dateTimeIntervalId) clearInterval(dateTimeIntervalId); if (dateTimeSpan) dateTimeSpan.textContent = ''; if (welcomeUserSpan) welcomeUserSpan.textContent = 'Not Logged In';
-            if (!window.location.pathname.endsWith('login.html')) { window.location.replace('login.html'); }
-        }
-    });
+/* --- General Body & Container --- */
+body {
+    font-family: 'Poppins', sans-serif;
+    font-size: var(--base-font-size);
+    margin: 0;
+    padding: 0;
+    background-color: #f4f6f8;
+    color: var(--text-color);
+    line-height: 1.6;
+    overflow-x: hidden; /* Prevent horizontal scroll */
+}
+.container {
+    display: flex;
+    min-height: 100vh;
 }
 
-// --- Logout Handler ---
-function handleLogout(e) { /* ... पहले जैसा ... */ e.preventDefault(); if (confirm("Are you sure?")) { signOut(auth).then(() => { window.location.href = 'login.html'; }).catch((error) => { console.error('Sign out error:', error); alert("Logout failed."); }); } }
-
-// --- Initialize Data Fetching ---
-function initializeDashboardDataFetching() {
-    console.log("[DEBUG] Initializing data fetching (v3)...");
-    listenForOrderCounts();
-    fetchAndCacheLicPolicies(); // Start caching LIC policies for search
-    fetchAndCacheCustomersForQP(); // Start caching customers for quick payment
-    loadDashboardKPIs();
-    loadRecentActivity();
-    loadRemindersAndTasks();
-    loadCustomerDues();
+/* --- Sidebar --- */
+.sidebar {
+    width: 220px;
+    background-color: var(--secondary-color);
+    color: var(--sidebar-text);
+    padding-top: 0;
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+    box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+    transition: width 0.3s ease;
+    z-index: 1010; /* Ensure sidebar is above content */
 }
-
-// --- Loading Indicators ---
-function showLoading(element, type = 'text') { /* ... पहले जैसा ... */ if (!element) return; if (type === 'spinner') { element.innerHTML = '<i class="fas fa-spinner fa-spin" style="font-size: 0.8em; color: #aaa;"></i>'; } else if (type === 'list') { element.innerHTML = '<li class="loading-placeholder" style="color:#aaa; font-style:italic;">Loading...</li>'; } else { element.innerHTML = '<span class="loading-placeholder" style="color:#aaa;">...</span>'; } }
-
-// --- Dashboard Counts ---
-function updateDashboardCounts(orders) { /* ... पहले जैसा, Chart अपडेट शामिल ... */ const statusCounts = { "Order Received": 0, "Designing": 0, "Verification": 0, "Design Approved": 0, "Ready for Working": 0, "Printing": 0, "Delivered": 0, "Completed": 0 }; orders.forEach(order => { const status = order.status; if (status && statusCounts.hasOwnProperty(status)) { statusCounts[status]++; } }); let totalActiveOrders = 0; for (const status in countElements) { if (countElements[status]) { const count = statusCounts[status] || 0; countElements[status].textContent = count.toString().padStart(2, '0'); if (status !== "Completed" && status !== "Delivered") { totalActiveOrders += count; } } } console.log(`[DEBUG] Dashboard Counts Updated. Total Active: ${totalActiveOrders}`); initializeOrUpdateChart(statusCounts); }
-function listenForOrderCounts() { /* ... पहले जैसा ... */ Object.values(countElements).forEach(el => showLoading(el)); try { if (orderCountsListenerUnsubscribe) orderCountsListenerUnsubscribe(); const ordersRef = collection(db, "orders"); const q = query(ordersRef); orderCountsListenerUnsubscribe = onSnapshot(q, (snapshot) => { const orders = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })); allOrdersCache = orders; updateDashboardCounts(orders); }, (error) => { console.error("[DEBUG] Error listening to order counts:", error); Object.values(countElements).forEach(el => { if(el) el.textContent = 'Err'; }); }); } catch (e) { console.error("Error setting up counts listener:", e); Object.values(countElements).forEach(el => { if(el) el.textContent = 'Err'; }); } }
-
-// --- Load KPIs ---
-async function loadDashboardKPIs() { /* ... Total Customers/Suppliers हटाया गया ... */ showLoading(kpiOrdersToday); showLoading(kpiPendingPayments); try { const todayStart = new Date(); todayStart.setHours(0, 0, 0, 0); const todayEnd = new Date(); todayEnd.setHours(23, 59, 59, 999); const q = query(collection(db, "orders"), where('createdAt', '>=', Timestamp.fromDate(todayStart)), where('createdAt', '<=', Timestamp.fromDate(todayEnd))); const todaySnapshot = await getDocs(q); if(kpiOrdersToday) kpiOrdersToday.textContent = todaySnapshot.size; } catch (e) { console.error("KPI Error (Orders Today):", e); if(kpiOrdersToday) kpiOrdersToday.textContent = 'Err'; } console.warn("Pending Payments KPI needs proper calculation logic."); setTimeout(() => { if(kpiPendingPayments) kpiPendingPayments.textContent = '₹ ...'; }, 1500); }
-
-// --- Load Recent Activity ---
-async function loadRecentActivity() { /* ... पहले जैसा ... */ if (!recentActivityList) return; showLoading(recentActivityList, 'list'); try { const q = query(collection(db, "orders"), orderBy('updatedAt', 'desc'), limit(5)); const snapshot = await getDocs(q); recentActivityList.innerHTML = ''; if (snapshot.empty) { recentActivityList.innerHTML = '<li>No recent activity.</li>'; } else { snapshot.forEach(doc => { const order = doc.data(); const li = document.createElement('li'); const orderId = order.orderId || `Sys:${doc.id.substring(0,6)}`; const custName = order.customerDetails?.fullName || 'Unknown'; const status = order.status || 'N/A'; const time = order.updatedAt?.toDate ? formatTimeAgo(order.updatedAt.toDate()) : 'recent'; li.innerHTML = `<span>Order <strong>${orderId}</strong> (${custName}) status: ${status}</span><span class="activity-time">${time}</span>`; li.style.cursor = 'pointer'; li.onclick = () => { window.location.href = `order_history.html?openModalForId=${doc.id}`; }; recentActivityList.appendChild(li); }); } } catch (e) { console.error("Error fetching recent activity:", e); if(recentActivityList) recentActivityList.innerHTML = '<li>Error loading activity.</li>'; } }
-
-// --- Load Reminders & Tasks (Actual Implementation) ---
-async function loadRemindersAndTasks() {
-    const now = new Date();
-    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    const fifteenDaysLater = new Date(todayStart); fifteenDaysLater.setDate(todayStart.getDate() + 15);
-    const sevenDaysLater = new Date(todayStart); sevenDaysLater.setDate(todayStart.getDate() + 7);
-    const threeDaysLater = new Date(todayStart); threeDaysLater.setDate(todayStart.getDate() + 3); threeDaysLater.setHours(23, 59, 59, 999);
-
-
-    // Load LIC Reminders
-    if (licReminderList) {
-        showLoading(licReminderList, 'list');
-        try {
-            const licQuery = query(collection(db, "licCustomers"),
-                                 where('nextInstallmentDate', '>=', Timestamp.fromDate(todayStart)),
-                                 where('nextInstallmentDate', '<=', Timestamp.fromDate(fifteenDaysLater)),
-                                 where('policyStatus', 'in', ['Active', 'Lapsed']),
-                                 orderBy('nextInstallmentDate', 'asc'),
-                                 limit(5)); // Limit results
-            const licSnapshot = await getDocs(licQuery);
-            licReminderList.innerHTML = '';
-            if(licSnapshot.empty){ licReminderList.innerHTML = '<li>No LIC premiums due soon.</li>'; }
-            else {
-                 licSnapshot.forEach(doc => {
-                      const policy = doc.data(); const li = document.createElement('li');
-                      li.innerHTML = `${policy.customerName || '?'} (${policy.policyNumber || '?'}) - Due: <strong>${policy.nextInstallmentDate.toDate().toLocaleDateString('en-GB')}</strong>`;
-                      // Add link to lic_management.html?policyId=... or a detail modal
-                      li.style.cursor = 'pointer';
-                      li.title=`View Policy ${policy.policyNumber}`;
-                      li.onclick = () => { window.location.href = `lic_management.html?policyId=${doc.id}`; }; // Example Link
-                      licReminderList.appendChild(li);
-                 });
-            }
-        } catch (e) { console.error("Error fetching LIC reminders:", e); if(licReminderList) licReminderList.innerHTML = '<li>Error loading LIC data.</li>'; }
-    }
-
-    // Load Upcoming Tasks
-    if (upcomingTaskList) {
-         showLoading(upcomingTaskList, 'list');
-         try {
-             const taskQuery = query(collection(db, "tasks"),
-                                  where('completed', '==', false),
-                                  where('dueDate', '>=', Timestamp.fromDate(todayStart)),
-                                  where('dueDate', '<=', Timestamp.fromDate(sevenDaysLater)),
-                                  orderBy('dueDate', 'asc'),
-                                  limit(5)); // Limit results
-            const taskSnapshot = await getDocs(taskQuery);
-            upcomingTaskList.innerHTML = '';
-            if(taskSnapshot.empty){ upcomingTaskList.innerHTML = '<li>No tasks due soon.</li>'; }
-            else {
-                 taskSnapshot.forEach(doc => {
-                     const task = doc.data(); const li = document.createElement('li');
-                     li.innerHTML = `${task.customerName ? task.customerName + ': ' : ''}${task.description} - Due: <strong>${task.dueDate.toDate().toLocaleDateString('en-GB')}</strong>`;
-                      // Add link to open task edit modal (requires function from lic_management.js or similar)
-                      li.style.cursor = 'pointer';
-                      li.title = `View/Edit Task`;
-                      // li.onclick = () => { /* Function to open task modal needs implementation */ };
-                     upcomingTaskList.appendChild(li);
-                 });
-            }
-         } catch (e) { console.error("Error fetching upcoming tasks:", e); if(upcomingTaskList) upcomingTaskList.innerHTML = '<li>Error loading tasks.</li>'; }
-    }
-
-     // Load Upcoming Deliveries
-     if (upcomingDeliveryList) {
-         showLoading(upcomingDeliveryList, 'list');
-         try {
-             const qDel = query(collection(db, "orders"),
-                              where('deliveryDate', '>=', Timestamp.fromDate(todayStart)),
-                              where('deliveryDate', '<=', Timestamp.fromDate(threeDaysLater)), // Use 3 days
-                              orderBy('deliveryDate', 'asc'),
-                              limit(5)); // Limit results
-              const delSnapshot = await getDocs(qDel);
-              upcomingDeliveryList.innerHTML = '';
-              if(delSnapshot.empty) { upcomingDeliveryList.innerHTML = '<li>No deliveries due soon.</li>'; }
-              else {
-                   delSnapshot.forEach(doc => {
-                        const order = doc.data(); const li = document.createElement('li');
-                        li.innerHTML = `Order <strong>${order.orderId || 'N/A'}</strong> (${order.customerDetails?.fullName || '?'}) - Due: ${order.deliveryDate.toDate().toLocaleDateString('en-GB')}`;
-                        li.style.cursor = 'pointer';
-                        li.title = `View Order ${order.orderId || '?'}`;
-                        li.onclick = () => { window.location.href = `order_history.html?openModalForId=${doc.id}`; };
-                        upcomingDeliveryList.appendChild(li);
-                   });
-              }
-         } catch (e) { console.error("Error fetching upcoming deliveries:", e); if(upcomingDeliveryList) upcomingDeliveryList.innerHTML = '<li>Error loading deliveries.</li>'; }
-     }
+.sidebar h2 {
+    text-align: center;
+    background-color: white;
+    padding: 15px 10px;
+    margin: 0;
+    border-bottom: 1px solid var(--border-color);
+    flex-shrink: 0;
+    height: 60px; /* Consistent height */
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
-
-// --- Load Customer Dues ---
-async function loadCustomerDues() {
-    if (!customerDuesList) return;
-    showLoading(customerDuesList, 'list');
-    console.warn("Customer Dues section relies on 'currentBalance' field in 'customers' collection or needs complex calculation.");
-    // **** Placeholder Logic: Replace with actual logic ****
-    // Option 1: Use stored balance (Recommended)
-     try {
-         const customerQuery = query(collection(db, "customers"),
-                                    where('currentBalance', '>', 0), // Query for positive balance
-                                    orderBy('currentBalance', 'desc'),
-                                    limit(10));
-         const customerSnapshot = await getDocs(customerQuery);
-         customerDuesList.innerHTML = '';
-         if (customerSnapshot.empty) {
-             customerDuesList.innerHTML = '<li>No customers with outstanding dues found.</li>';
-         } else {
-              customerSnapshot.forEach(doc => {
-                  const customer = doc.data();
-                  const li = document.createElement('li');
-                  li.dataset.customerId = doc.id;
-                  li.innerHTML = `<span class="customer-name">${customer.fullName || 'N/A'}</span> <span class="due-amount">₹ ${parseFloat(customer.currentBalance || 0).toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>`;
-                  li.addEventListener('click', () => { window.location.href = `customer_account_detail.html?id=${doc.id}`; });
-                  customerDuesList.appendChild(li);
-              });
-         }
-     } catch (e) {
-         console.error("Error fetching customer dues:", e);
-          if (e.message && e.message.includes('index')) {
-              console.warn("Firestore index on 'customers/currentBalance' (desc) might be required.");
-              customerDuesList.innerHTML = '<li>Error loading dues (Index missing?).</li>';
-          } else {
-             customerDuesList.innerHTML = '<li>Error loading customer dues.</li>';
-          }
-     }
-    // Option 2: Calculate manually (Slow, not recommended for dashboard)
-    // setTimeout(() => { customerDuesList.innerHTML = '<li>(Dues Calculation Not Implemented)</li>'; }, 1300);
+.sidebar h2 img#sidebarLogo { /* Target logo by ID */
+    max-width: 90%;
+    max-height: 45px; /* Limit max height */
+    width: auto; /* Allow auto width */
+    height: auto; /* Allow auto height */
+    vertical-align: middle;
+    transition: max-width 0.3s ease, max-height 0.3s ease;
 }
-
-// --- Dashboard Multi-Search Functions ---
-function handleDashboardSearchInput() { clearTimeout(suggestionDebounceTimer); const searchTerm = dashboardSearchInput.value.trim(); if (searchTerm.length > 0) { suggestionDebounceTimer = setTimeout(() => fetchAndDisplayDashboardSuggestions(searchTerm), 300); } else { clearSuggestions(); } }
-function triggerDashboardSearch() { const searchTerm = dashboardSearchInput.value.trim(); fetchAndDisplayDashboardSuggestions(searchTerm); }
-function clearSuggestions() { if (suggestionsContainer) { suggestionsContainer.innerHTML = ''; suggestionsContainer.style.display = 'none'; } }
-async function fetchAndDisplayDashboardSuggestions(searchTerm) {
-    // Client-side search implementation
-    if (!suggestionsContainer || !allOrdersCache) return;
-    if (!searchTerm) { clearSuggestions(); return; }
-
-    const searchTermLower = searchTerm.toLowerCase();
-    suggestionsContainer.innerHTML = '';
-    let combinedResults = [];
-
-    // Filter Orders
-    const filteredOrders = allOrdersCache.filter(order => {
-        if (!order) return false;
-        const orderIdMatch = String(order.orderId || '').toLowerCase().includes(searchTermLower);
-        const custNameMatch = String(order.customerDetails?.fullName || '').toLowerCase().includes(searchTermLower);
-        const sysIdMatch = String(order.id || '').toLowerCase().includes(searchTermLower);
-        return orderIdMatch || custNameMatch || sysIdMatch;
-    }).slice(0, 5);
-    filteredOrders.forEach(order => combinedResults.push({ type: 'Order', id: order.id, displayId: order.orderId || `Sys:${order.id.substring(0,6)}`, name: order.customerDetails?.fullName || '?', link: `order_history.html?openModalForId=${order.id}` }));
-
-    // Filter LIC Policies (using cached data)
-    if (allLicPoliciesCache && allLicPoliciesCache.length > 0) {
-        const filteredLic = allLicPoliciesCache.filter(policy => {
-            if (!policy) return false;
-            const policyNumMatch = String(policy.policyNumber || '').toLowerCase().includes(searchTermLower);
-            const custNameMatch = String(policy.customerName || '').toLowerCase().includes(searchTermLower);
-            return policyNumMatch || custNameMatch;
-        }).slice(0, 5);
-        filteredLic.forEach(policy => combinedResults.push({ type: 'LIC', id: policy.id, displayId: policy.policyNumber || '?', name: policy.customerName || '?', link: `lic_management.html?policyId=${policy.id}` }));
-    } else {
-         console.log("LIC Cache not ready for search yet.");
-         // Optionally add a message to suggestions: results.push({ type: 'Info', name: 'LIC search unavailable...' });
-    }
-
-    // Filter Customers (using cached data from quick payment)
-     if (allCustomersCacheQP && allCustomersCacheQP.length > 0) {
-        const filteredCustomers = allCustomersCacheQP.filter(cust => {
-            if (!cust) return false;
-            const custNameMatch = String(cust.fullName || '').toLowerCase().includes(searchTermLower);
-            const custWhatsappMatch = String(cust.whatsappNo || '').toLowerCase().includes(searchTermLower);
-            return custNameMatch || custWhatsappMatch;
-        }).slice(0, 5);
-        filteredCustomers.forEach(cust => combinedResults.push({ type: 'Customer', id: cust.id, displayId: cust.fullName || '?', name: cust.whatsappNo || '?', link: `customer_account_detail.html?id=${cust.id}` }));
-    } else {
-         console.log("Customer Cache (QP) not ready for search yet.");
-    }
-
-
-    // Display Combined Results
-    if (combinedResults.length === 0) { suggestionsContainer.innerHTML = '<div class="no-suggestions">No matches found.</div>'; }
-    else {
-        combinedResults.forEach(result => {
-            const suggestionDiv = document.createElement('div');
-            const typeColor = result.type === 'Order' ? 'var(--primary-color)' : (result.type === 'LIC' ? '#6f42c1' : '#17a2b8');
-            suggestionDiv.innerHTML = `<span style="font-weight: bold; color: ${typeColor};">[${result.type}]</span> <strong>${result.displayId}</strong> - ${result.name}`;
-            suggestionDiv.setAttribute('data-link', result.link);
-            suggestionDiv.addEventListener('mousedown', (e) => { e.preventDefault(); window.location.href = result.link; clearSuggestions(); });
-            suggestionsContainer.appendChild(suggestionDiv);
-        });
-    }
-    suggestionsContainer.style.display = 'block';
+.sidebar ul {
+    list-style-type: none;
+    padding: 10px 0;
+    margin: 0;
+    flex-grow: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
 }
-
-// --- Chart Functions ---
-function initializeOrUpdateChart(statusCounts) { /* ... पहले जैसा ... */ if (!orderStatusChartCanvas || !window.Chart) { console.warn("Chart canvas or Chart.js library not found."); return; } const labels = Object.keys(statusCounts); const data = Object.values(statusCounts); const backgroundColors = labels.map(label => { switch(label) { case "Order Received": return 'rgba(108, 117, 125, 0.7)'; case "Designing": return 'rgba(255, 193, 7, 0.7)'; case "Verification": return 'rgba(253, 126, 20, 0.7)'; case "Design Approved": return 'rgba(32, 201, 151, 0.7)'; case "Printing": return 'rgba(23, 162, 184, 0.7)'; case "Ready for Working": return 'rgba(111, 66, 193, 0.7)'; case "Delivered": return 'rgba(13, 202, 240, 0.7)'; case "Completed": return 'rgba(40, 167, 69, 0.7)'; default: return 'rgba(200, 200, 200, 0.7)'; } }); const borderColors = backgroundColors.map(color => color.replace('0.7', '1')); const chartData = { labels: labels, datasets: [{ label: 'Order Count', data: data, backgroundColor: backgroundColors, borderColor: borderColors, borderWidth: 1 }] }; const chartOptions = { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, padding: 15, font: { size: 10 } } }, tooltip: { callbacks: { label: function(c){ return `${c.dataset.label||''}: ${c.parsed||0}`; }}}, title: { display: false } }, cutout: '50%' }; if (orderChartInstance) { orderChartInstance.destroy(); } try { orderChartInstance = new Chart(orderStatusChartCanvas, { type: 'doughnut', data: chartData, options: chartOptions }); console.log("[DEBUG] Chart initialized/updated."); } catch (e) { console.error("Error creating chart:", e); } }
-
-// --- Helper: Time Ago ---
-function formatTimeAgo(date) { /* ... पहले जैसा ... */ if (!(date instanceof Date)) return ''; const seconds = Math.floor((new Date() - date) / 1000); if (seconds < 5) return "just now"; if (seconds < 60) return Math.floor(seconds) + "s ago"; const minutes = Math.floor(seconds / 60); if (minutes < 60) return minutes + "m ago"; const hours = Math.floor(minutes / 60); if (hours < 24) return hours + "h ago"; const days = Math.floor(hours / 24); if (days < 30) return days + "d ago"; const months = Math.floor(days / 30); if (months < 12) return months + "mo ago"; const years = Math.floor(days / 365); return years + "y ago"; }
-// --- Helper: Hide Suggestion Box ---
-function hideSuggestionBox(box) { if(box){ box.style.display = 'none'; box.innerHTML = '<ul></ul>'; }}
-
-
-// --- Quick Payment Modal Functions ---
-function openQuickPaymentModal() {
-    if (!quickPaymentModal) { console.error("Quick Payment modal not found."); return; }
-    console.log("Opening Quick Payment modal.");
-    quickPaymentForm.reset();
-    quickPaymentCustomerId.value = '';
-    quickPaymentSelectedCustomer.textContent = '';
-    quickPaymentError.style.display = 'none';
-    if (saveQuickPaymentBtn) saveQuickPaymentBtn.disabled = true; // Disable save until customer selected
-    if (document.getElementById('quickPaymentDate')) document.getElementById('quickPaymentDate').valueAsDate = new Date();
-    quickPaymentModal.classList.add('active');
-    fetchAndCacheCustomersForQP(); // Ensure customer cache is ready
+.sidebar ul li a {
+    padding: 12px 20px;
+    text-decoration: none;
+    color: var(--sidebar-text);
+    display: flex;
+    align-items: center;
+    border-left: 4px solid transparent;
+    transition: background-color 0.2s ease, padding-left 0.2s ease, border-left-color 0.2s ease, color 0.2s ease;
+    font-size: 0.95em;
+    white-space: nowrap;
+    gap: 15px;
+    position: relative;
 }
+.sidebar ul li a i { width: 20px; text-align: center; font-size: 1.1em; flex-shrink: 0; }
+.sidebar ul li a:hover { background-color: var(--sidebar-hover); color: #fff; padding-left: 20px; border-left-color: var(--sidebar-hover); }
+.sidebar ul li a.active { background-color: var(--sidebar-active-bg); border-left-color: var(--sidebar-active-border); font-weight: 600; color: #fff; }
+.sidebar ul li:last-child { margin-top: auto; }
+.sidebar ul li a#logout-link { border-top: 1px solid var(--sidebar-hover); }
 
-function closeQuickPaymentModal() {
-    if (quickPaymentModal) quickPaymentModal.classList.remove('active');
+/* --- Main Content Area --- */
+.main-content {
+    flex: 1;
+    padding: 25px;
+    overflow-y: auto;
+    height: 100vh;
+    box-sizing: border-box;
+    background-color: #f4f6f8;
+    display: flex;
+    flex-direction: column;
+    gap: 25px;
+    position: relative;
+    z-index: 1;
 }
+.main-content > *:last-child { margin-bottom: 0; }
 
-async function fetchAndCacheCustomersForQP() {
-    // Prevent multiple fetches if already done or in progress
-    if (customerListenerUnsubscribeQP || allCustomersCacheQP.length > 0) {
-        // console.log("Customers for QP already cached or listener active.");
-        return;
-    }
-    console.log("Fetching customers for Quick Payment search...");
-    try {
-        const custQuery = query(collection(db, "customers"), orderBy('fullName')); // Order by name
-        // Use onSnapshot to keep cache updated (optional)
-        customerListenerUnsubscribeQP = onSnapshot(custQuery, (snapshot) => {
-            allCustomersCacheQP = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-            console.log(`[DEBUG] Cached ${allCustomersCacheQP.length} customers for QP.`);
-        }, (error) => {
-            console.error("Error listening to customers for QP:", error);
-            allCustomersCacheQP = [];
-        });
-    } catch (e) {
-        console.error("Error setting up customer listener for QP:", e);
-        allCustomersCacheQP = [];
-    }
+/* --- Updated Header --- */
+.header.updated-header { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; padding: 12px 20px; background-color: var(--card-bg); box-shadow: var(--card-shadow); border-radius: var(--card-border-radius); gap: 15px; border: 1px solid var(--border-color); }
+.welcome-text { font-weight: 600; font-size: 1.1em; color: var(--primary-color); flex-shrink: 0; margin-right: auto; }
+.header-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 15px; }
+.header-buttons { display: flex; flex-wrap: wrap; gap: 10px; }
+.button-base { padding: 8px 14px; font-size: 0.9em; border-radius: 5px; text-decoration: none; color: white; border: none; cursor: pointer; font-family: 'Poppins', sans-serif; display: inline-flex; align-items: center; gap: 6px; transition: background-color 0.2s ease, transform 0.1s ease; line-height: 1.4; }
+.button-base:hover { opacity: 0.9; } .button-base:active { transform: scale(0.98); }
+.add-customer-btn { background-color: var(--success-color); }
+.add-supplier-btn { background-color: var(--info-color); }
+.new-order-btn { background-color: var(--primary-color); }
+.quick-payment-btn { background-color: var(--info-color); }
+.date-time-container { font-size: 0.9em; font-weight: 500; background-color: var(--light-bg); border: 1px solid var(--border-color); padding: 8px 12px; border-radius: 5px; color: var(--text-muted); white-space: nowrap; }
+.header-icons { display: flex; gap: 10px; align-items: center; }
+.icon-button { background: none; border: none; font-size: 1.3em; color: var(--text-muted); cursor: pointer; padding: 5px; position: relative; transition: color 0.2s ease; }
+.icon-button:hover { color: var(--primary-color); }
+.icon-button .badge { position: absolute; top: 0; right: 0; background-color: var(--danger-color); color: white; font-size: 0.6em; padding: 2px 5px; border-radius: 50%; font-weight: bold; display: none; }
+.icon-button .badge.active { display: block; }
+
+/* --- Card Layout Helper --- */
+.card-layout { background-color: var(--card-bg, #ffffff); padding: 20px; border-radius: var(--card-border-radius, 8px); box-shadow: var(--card-shadow, 0 2px 8px rgba(0, 0, 0, 0.07)); border: 1px solid var(--border-color, #dee2e6); }
+.card-layout h3 { margin-top: 0; margin-bottom: 15px; font-size: 1.1em; font-weight: 600; color: var(--primary-color); border-bottom: 1px solid #eee; padding-bottom: 8px; display: flex; align-items: center; gap: 8px; }
+.card-layout h3 i { font-size: 0.9em; opacity: 0.8; }
+.card-layout ul { list-style: none; padding: 0; margin: 0; font-size: 0.9em; max-height: 150px; overflow-y: auto; }
+.card-layout ul li { padding: 6px 0; border-bottom: 1px dotted #eee; color: var(--text-muted); }
+.card-layout ul li:last-child { border-bottom: none; }
+.card-layout ul li strong { color: var(--text-color); }
+.card-layout .loading-placeholder { color: #aaa; font-style: italic; }
+
+/* --- KPI Section (Reduced Items) --- */
+.kpi-section { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; }
+.kpi-card { display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 15px; border: 1px solid var(--border-color); border-radius: var(--card-border-radius); background-color: var(--light-bg); position: relative; min-height: 100px; transition: transform 0.2s ease, box-shadow 0.2s ease; }
+.kpi-card:hover { transform: translateY(-2px); box-shadow: 0 4px 10px rgba(0,0,0,0.08); }
+.kpi-icon { font-size: 1.8em; color: var(--primary-color); opacity: 0.6; margin-bottom: 8px; }
+.kpi-value { font-size: 1.6em; font-weight: 700; color: var(--text-color); line-height: 1.1; }
+.kpi-label { font-size: 0.8em; color: var(--text-muted); margin-top: 5px; text-transform: uppercase; }
+
+/* --- Order Control Panel --- */
+.order-control-panel { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 15px; }
+.panel-item { padding: 15px; min-height: 150px; box-shadow: var(--card-shadow); border: 1px solid var(--border-color); border-radius: var(--card-border-radius); font-size: 0.9em; color: var(--text-color); display: flex; flex-direction: column; justify-content: space-between; align-items: center; font-weight: 600; font-family: 'Poppins', sans-serif; text-transform: uppercase; line-height: 1.3; transition: transform 0.2s ease, box-shadow 0.2s ease; background-color: #fff; }
+.panel-item:hover { transform: translateY(-3px); box-shadow: 0 5px 10px rgba(0, 0, 0, 0.1); }
+.panel-icon { font-size: 2em; margin-bottom: 10px; }
+.panel-count { font-size: 2.3em; font-weight: 600; display: block; margin-bottom: 10px; color: var(--primary-color); }
+.panel-item a.button-link { background-color: var(--primary-color); color: white; border: none; padding: 6px 12px; cursor: pointer; border-radius: 5px; font-size: 0.8em; margin-top: 8px; font-weight: 500; font-family: 'Poppins', sans-serif; text-transform: capitalize; text-decoration: none; display: inline-block; transition: background-color 0.2s ease; }
+.panel-item a.button-link:hover { background-color: #004085; }
+.panel-item.light-blue { background-color: #e1f5fe; color: #0d47a1; border-color: #b3e5fc; } .panel-item.light-blue .panel-count { color: #1976d2;}
+.panel-item.light-orange { background-color: #fff3e0; color: #bf360c; border-color: #ffe0b2;} .panel-item.light-orange .panel-count { color: #e65100;}
+.panel-item.light-green { background-color: #e8f5e9; color: #1b5e20; border-color: #c8e6c9;} .panel-item.light-green .panel-count { color: #388e3c;}
+.panel-item.light-red { background-color: #ffebee; color: #b71c1c; border-color: #ffcdd2;} .panel-item.light-red .panel-count { color: #d32f2f;}
+
+/* Loading Spinner */
+.loading-placeholder, .fa-spinner { color: #aaa; font-style: italic; }
+.panel-count .fa-spinner, .kpi-value .fa-spinner { font-size: 0.6em; color: #aaa; }
+.fa-spinner { animation: fa-spin 1.5s infinite linear; display: inline-block; }
+@keyframes fa-spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+/* --- Dashboard Grid Layout --- */
+.dashboard-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 25px; }
+/* Customer Dues Section Styles */
+.customer-dues-section ul { max-height: 250px; overflow-y: auto; list-style: none; padding: 0; margin: 0; }
+.customer-dues-section ul li { padding: 8px 5px; border-bottom: 1px dotted #eee; display: flex; justify-content: space-between; align-items: center; cursor: pointer; transition: background-color 0.2s ease; font-size: 0.9em; }
+.customer-dues-section ul li:last-child { border-bottom: none; }
+.customer-dues-section ul li:hover { background-color: #f0f5f9; }
+.customer-dues-section .customer-name { font-weight: 500; color: var(--text-color); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding-right: 10px; }
+.customer-dues-section .due-amount { font-weight: 600; color: var(--danger-color); white-space: nowrap; margin-left: 10px;}
+.info-feed-section ul li { display: flex; justify-content: space-between; align-items: center; }
+.info-feed-section .activity-time { font-size: 0.85em; color: #999; white-space: nowrap; margin-left: 10px;}
+
+/* --- Reminder Section Improvements --- */
+.reminder-section h4 { font-size: 0.9em; color: var(--secondary-color); margin-top: 15px; margin-bottom: 5px; font-weight: 600; padding-bottom: 3px; border-bottom: 1px dotted #ccc; }
+.reminder-section h4:first-of-type { margin-top: 0; }
+.reminder-section ul { max-height: 100px; } /* Limit list height */
+.reminder-section ul li { line-height: 1.5; } /* Improve line spacing */
+
+/* --- Chart Section --- */
+.chart-section .chart-container { position: relative; height: 280px; width: 100%; }
+
+/* --- Search Bar & Suggestions --- */
+.search-bar { display: flex; align-items: center; justify-content: flex-end; flex-wrap: wrap; gap: 10px; background-color: var(--card-bg); padding: 12px 15px; border-radius: var(--card-border-radius); box-shadow: var(--card-shadow); border: 1px solid var(--border-color); position: relative; }
+.search-bar label { margin: 0; color: var(--text-muted); font-size: 0.95em; font-weight: 500; flex-shrink: 0; }
+.search-bar input[type="text"]#dashboardSearchInput { padding: 8px 10px; border: 1px solid var(--border-color); border-radius: 5px; font-size: 0.9em; width: 300px; height: 38px; box-sizing: border-box; }
+.search-bar input[type="text"]#dashboardSearchInput:focus { outline: none; border-color: var(--primary-color); box-shadow: 0 0 0 2px rgba(0, 86, 179, 0.2); }
+.search-bar button#dashboardSearchButton { background-color: var(--success-color); color: white; border: none; padding: 8px 14px; cursor: pointer; border-radius: 5px; font-size: 0.9em; height: 38px; line-height: 1; transition: background-color 0.2s ease; flex-shrink: 0; }
+.search-bar button#dashboardSearchButton:hover { background-color: #1e7e34; }
+.suggestions-list#dashboardSuggestions { display: none; position: absolute; top: calc(100% + 5px); /* Position below bar */ /* Adjust right/left based on final layout */ right: 15px; width: 360px; background-color: white; border: 1px solid var(--border-color); border-radius: 5px; box-shadow: 0 5px 10px rgba(0,0,0,0.1); max-height: 250px; overflow-y: auto; z-index: 1050; }
+.suggestions-list#dashboardSuggestions div { padding: 8px 12px; cursor: pointer; border-bottom: 1px solid #eee; font-size: 0.9em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.suggestions-list#dashboardSuggestions div:last-child { border-bottom: none; }
+.suggestions-list#dashboardSuggestions div:hover { background-color: #f0f0f0; }
+.suggestions-list#dashboardSuggestions div.no-suggestions { color: var(--text-muted); cursor: default; }
+.suggestions-list#dashboardSuggestions div strong { font-weight: 600; } /* Highlight search term if needed */
+
+/* --- Quick Payment Modal Styles --- */
+.modal { z-index: 1050; /* Ensure modal is above suggestions */ }
+.modal-content.small-modal { max-width: 500px; }
+#quickPaymentModal .suggestions-box { position: relative; }
+#quickPaymentModal .suggestions-box ul { position: absolute; list-style: none; margin: 1px 0 0; padding: 0; border: 1px solid #ced4da; background-color: #fff; max-height: 150px; overflow-y: auto; z-index: 1100; border-radius: 0 0 var(--card-border-radius) var(--card-border-radius); box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); width: 100%; box-sizing: border-box; display: none; left: 0; top: 100%; }
+#quickPaymentModal .suggestions-box.active ul { display: block; }
+#quickPaymentModal .suggestions-box li { padding: 8px 12px; font-size: .9em; cursor: pointer; border-bottom: 1px solid #f0f0f0; }
+#quickPaymentModal .suggestions-box li:last-child { border-bottom: none; }
+#quickPaymentModal .suggestions-box li:hover { background-color: #e9ecef; }
+#quickPaymentModal .error-message { color: var(--danger-color); font-size: 0.85em; margin-top: 10px; text-align: center; }
+#quickPaymentSelectedCustomer { padding: 5px 0; font-size: 0.9em; }
+
+/* --- Responsive --- */
+@media (max-width: 1200px) { .kpi-section { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); } .dashboard-grid { grid-template-columns: 1fr; } }
+@media (max-width: 992px) {
+    .sidebar { width: 60px; overflow: hidden; position: fixed; left: 0; top: 0; height: 100%; }
+    .sidebar:hover { width: 220px; box-shadow: 4px 0 10px rgba(0,0,0,0.2); }
+    .sidebar h2 { padding: 10px 5px; height: 60px; } .sidebar h2 img#sidebarLogo { max-width: 40px; max-height: 40px; }
+    .sidebar:hover h2 img#sidebarLogo { max-width: 90%; max-height: 45px; }
+    .sidebar ul li a span { display: none; } .sidebar:hover ul li a span { display: inline; }
+    .sidebar ul li a { justify-content: center; padding: 12px 0; }
+    .sidebar:hover ul li a { justify-content: flex-start; padding: 12px 20px;}
+    .sidebar ul li a i { margin-right: 0; } .sidebar:hover ul li a i { margin-right: 12px; }
+    .main-content { padding-left: 80px; }
+    .welcome-text { font-size: 1em; } .header-actions { gap: 10px; }
+    .button-base { padding: 7px 12px; font-size: 0.85em; }
+    .dashboard-grid { gap: 20px; }
 }
-
-function handleQuickPaymentCustomerSearch() {
-    clearTimeout(customerSearchDebounceTimerQP);
-    if (!quickPaymentCustomerSearch || !quickPaymentCustomerSuggestions) return;
-
-    const searchTerm = quickPaymentCustomerSearch.value.trim();
-    quickPaymentCustomerId.value = ''; // Clear selected ID when searching
-    quickPaymentSelectedCustomer.textContent = '';
-    if(saveQuickPaymentBtn) saveQuickPaymentBtn.disabled = true; // Disable save
-
-    if (searchTerm.length < 1) {
-        hideSuggestionBox(quickPaymentCustomerSuggestions);
-        return;
-    }
-    customerSearchDebounceTimerQP = setTimeout(() => {
-        filterAndRenderQPCustomerSuggestions(searchTerm);
-    }, 300);
+@media (max-width: 768px) {
+    .container { flex-direction: column; }
+    .sidebar { width: 100%; min-height: auto; height: auto; flex-direction: row; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.1); position: sticky; top: 0; overflow: visible; padding-top: 0; z-index: 1010; background-color: var(--secondary-color); }
+    .sidebar:hover { width: 100%; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+    .sidebar h2 { padding: 5px 15px; flex-shrink: 0; border-bottom: none; height: 50px; display:flex; align-items:center; }
+    .sidebar h2 img#sidebarLogo { max-width: 120px; max-height: 40px; width: auto; height: auto; } /* Prevent logo enlargement */
+    .sidebar ul { display: flex; overflow-x: auto; flex-grow: 1; padding: 0 5px; justify-content: flex-start; border-top: none; z-index: 1; height: 50px; align-items: center;}
+    .sidebar ul li { flex-shrink: 0; margin-top: 0; } .sidebar ul li:last-child { margin-top: 0; }
+    /* --- Mobile Nav Link Fix --- */
+    .sidebar ul li a { padding: 10px; border-left: none; border-bottom: 3px solid transparent; white-space: nowrap; justify-content: center; pointer-events: auto !important; z-index: 2 !important; height: 100%; display: flex; align-items: center; flex-direction: column; /* Stack icon and text */ font-size: 0.8em; gap: 2px; }
+    .sidebar ul li a i { margin-right: 0; font-size: 1.2em; }
+    .sidebar ul li a span { display: inline; font-size: 0.8em; }
+    .sidebar ul li a:hover { padding-left: 10px; background-color: var(--sidebar-hover); border-bottom-color: var(--sidebar-hover); }
+    .sidebar ul li a.active { border-left: none; border-bottom-color: var(--sidebar-active-border); background-color: transparent; color: var(--sidebar-active-border); font-weight: 600; }
+    /* --- End Mobile Nav Link Fix --- */
+    .main-content { padding: 15px; height: auto; min-height: calc(100vh - 50px); padding-left: 15px; gap: 20px; margin-top: 50px; }
+    .header.updated-header { flex-direction: column; gap: 10px; align-items: stretch; padding: 10px 15px; }
+    .welcome-text { text-align: center; order: -1; width: 100%; margin-bottom: 10px; }
+    .header-actions { margin-left: 0; justify-content: center; flex-direction: column; gap: 12px;}
+    .header-buttons { justify-content: center; width: 100%; order: 2;}
+    .date-time-container { order: 1; text-align: center; }
+    .header-icons { order: 0; align-self: flex-end; }
+    .search-bar { flex-direction: column; align-items: stretch; gap: 10px; padding: 10px; position: relative; }
+    .search-bar input[type="text"]#dashboardSearchInput { width: 100%; max-width: none; } .search-bar button#dashboardSearchButton { width: 100%; }
+    .suggestions-list#dashboardSuggestions { position: static; width: 100%; margin-top: 5px; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05); border-radius: 5px; right: auto; left: auto; max-height: 150px; border: 1px solid var(--border-color); }
+    .kpi-section, .order-control-panel { gap: 10px; }
+    .kpi-card { padding: 10px; min-height: 80px;} .kpi-icon { font-size: 1.5em; margin-bottom: 5px;} .kpi-value { font-size: 1.4em; } .kpi-label { font-size: 0.7em; }
+    .panel-item { padding: 12px 10px; min-height: 130px; } .panel-icon { font-size: 1.8em; } .panel-count { font-size: 2em; }
+    .dashboard-grid { gap: 20px; grid-template-columns: 1fr; }
+    .card-layout { padding: 15px; } .card-layout h3 { font-size: 1em; margin-bottom: 10px;} .card-layout ul { font-size: 0.85em; }
 }
-
-function filterAndRenderQPCustomerSuggestions(term) {
-    if (!quickPaymentCustomerSuggestions || !allCustomersCacheQP) return;
-    const list = quickPaymentCustomerSuggestions.querySelector('ul');
-    if (!list) return; // Should have ul inside
-
-    const termLower = term.toLowerCase();
-    const filtered = allCustomersCacheQP.filter(c =>
-        String(c.fullName || '').toLowerCase().includes(termLower) ||
-        String(c.whatsappNo || '').toLowerCase().includes(termLower)
-    ).slice(0, 10);
-
-    list.innerHTML = ''; // Clear previous suggestions
-    if (filtered.length === 0) {
-        list.innerHTML = '<li class="no-suggestions">No matching customers.</li>';
-    } else {
-        filtered.forEach(c => {
-            const li = document.createElement('li');
-            li.textContent = `${c.fullName} (${c.whatsappNo || 'No WhatsApp'})`;
-            li.dataset.customerId = c.id;
-            li.dataset.customerName = c.fullName;
-            li.addEventListener('mousedown', selectQPCustomer); // Use mousedown
-            list.appendChild(li);
-        });
-    }
-    quickPaymentCustomerSuggestions.style.display = 'block';
-    // Position suggestions (basic example, might need refinement)
-    const inputRect = quickPaymentCustomerSearch.getBoundingClientRect();
-    quickPaymentCustomerSuggestions.style.position = 'absolute';
-    quickPaymentCustomerSuggestions.style.width = `${inputRect.width}px`;
-    quickPaymentCustomerSuggestions.style.top = `${inputRect.bottom}px`; // Position below input
-    quickPaymentCustomerSuggestions.style.left = `${inputRect.left}px`;
-    quickPaymentCustomerSuggestions.style.zIndex = '1100'; // Ensure it's above modal content
-    quickPaymentCustomerSuggestions.style.backgroundColor = 'white';
-    quickPaymentCustomerSuggestions.style.border = '1px solid #ccc';
+@media (max-width: 480px) {
+     body { font-size: 14px; } .main-content { padding: 10px; gap: 15px;}
+     .header-buttons { flex-direction: column; align-items: stretch;} .button-base { justify-content: center; }
+     .kpi-section { grid-template-columns: 1fr 1fr; }
+     .order-control-panel { grid-template-columns: 1fr 1fr; }
+     .panel-item { padding: 10px 8px; min-height: 120px; } .panel-icon { font-size: 1.6em; } .panel-count { font-size: 1.8em; } .panel-item a.button-link { font-size: 0.75em; padding: 5px 8px; }
+     .search-bar input, .search-bar button { height: 36px; font-size: 0.85em; } .suggestions-list div { font-size: 0.85em; padding: 6px 10px; }
+     .card-layout ul { max-height: 120px; } .chart-section .chart-container { height: 200px; }
+     .customer-dues-section ul li { flex-direction: column; align-items: flex-start; gap: 2px; }
+     .customer-dues-section .due-amount { margin-left: 0; }
+     .sidebar ul li a { padding: 8px 5px; } /* Further reduce padding */
+     .sidebar ul li a i { font-size: 1.1em; }
+     .sidebar ul li a span { font-size: 0.75em; }
 }
-
-function selectQPCustomer(event) {
-    event.preventDefault();
-    const targetLi = event.currentTarget;
-    const custId = targetLi.dataset.customerId;
-    const custName = targetLi.dataset.customerName;
-
-    if (custId && custName) {
-        quickPaymentCustomerSearch.value = custName; // Display selected name
-        quickPaymentCustomerId.value = custId;     // Store ID in hidden field
-        quickPaymentSelectedCustomer.textContent = `Selected: ${custName}`;
-        if(saveQuickPaymentBtn) saveQuickPaymentBtn.disabled = false; // Enable save button
-        hideSuggestionBox(quickPaymentCustomerSuggestions);
-        // Focus amount field
-        document.getElementById('quickPaymentAmount')?.focus();
-    } else {
-        console.error("Missing customer data on selected suggestion.");
-    }
-}
-
-async function handleSaveQuickPayment(event) {
-    event.preventDefault();
-    const custId = quickPaymentCustomerId.value;
-    const amountInput = document.getElementById('quickPaymentAmount');
-    const dateInput = document.getElementById('quickPaymentDate');
-    const methodSelect = document.getElementById('quickPaymentMethod');
-    const notesInput = document.getElementById('quickPaymentNotes');
-
-    if (!custId) { showQuickPaymentError("Please select a customer."); return; }
-    if (!amountInput || !dateInput || !methodSelect || !saveQuickPaymentBtn) { showQuickPaymentError("Form elements missing."); return; }
-
-    const amount = parseFloat(amountInput.value);
-    const date = dateInput.value;
-    const method = methodSelect.value;
-    const notes = notesInput?.value.trim() || null;
-
-    if (isNaN(amount) || amount <= 0) { showQuickPaymentError("Invalid amount."); amountInput.focus(); return; }
-    if (!date) { showQuickPaymentError("Payment date required."); dateInput.focus(); return; }
-
-    saveQuickPaymentBtn.disabled = true;
-    saveQuickPaymentBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
-    showQuickPaymentError(''); // Clear error
-
-    try {
-        const paymentDateTimestamp = Timestamp.fromDate(new Date(date + 'T00:00:00'));
-        const paymentData = {
-            customerId: custId,
-            amountPaid: amount,
-            paymentDate: paymentDateTimestamp,
-            paymentMethod: method,
-            notes: notes,
-            createdAt: serverTimestamp()
-        };
-        await addDoc(collection(db, "payments"), paymentData);
-        alert("Payment saved successfully!");
-        closeQuickPaymentModal();
-        // Refresh relevant dashboard data (e.g., pending payments KPI)
-        loadDashboardKPIs(); // Reload KPIs
-        loadCustomerDues(); // Reload dues list
-
-    } catch (e) {
-        console.error("Error saving quick payment:", e);
-        showQuickPaymentError(`Error: ${e.message}`);
-    } finally {
-        if (saveQuickPaymentBtn) {
-            saveQuickPaymentBtn.disabled = false;
-            saveQuickPaymentBtn.innerHTML = '<i class="fas fa-save"></i> Save';
-        }
-    }
-}
-
-function showQuickPaymentError(message) {
-    if (!quickPaymentError) return;
-    quickPaymentError.textContent = message;
-    quickPaymentError.style.display = message ? 'block' : 'none';
-}
-
-console.log("dashboard.js (v3) script loaded.");

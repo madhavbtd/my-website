@@ -71,7 +71,8 @@
                 <label for="dashboardSearchInput">Search Order/Customer/LIC:</label>
                 <input type="text" id="dashboardSearchInput" placeholder="Enter Order ID, Name, or LIC Policy No...">
                 <button id="dashboardSearchButton"><i class="fas fa-search"></i></button>
-                <div id="dashboardSuggestions" class="suggestions-list"></div> </div>
+                <div id="dashboardSuggestions" class="suggestions-list"></div>
+            </div>
 
             <div class="dashboard-grid">
                  <div class="customer-dues-section card-layout">
@@ -116,7 +117,7 @@
                      <input type="hidden" id="quickPaymentCustomerId">
                      <div id="quickPaymentCustomerSuggestions" class="suggestions-box"><ul></ul></div>
                  </div>
-                 <div id="quickPaymentSelectedCustomer" style="margin-bottom: 10px; font-weight: bold;"></div>
+                 <div id="quickPaymentSelectedCustomer" style="margin-bottom: 10px; font-weight: bold; color: var(--primary-color);"></div>
                  <div class="form-group"> <label for="quickPaymentAmount">Amount Paid <span class="required">*</span>:</label> <input type="number" id="quickPaymentAmount" step="0.01" required placeholder="e.g., 500.00"> </div>
                  <div class="form-group"> <label for="quickPaymentDate">Payment Date <span class="required">*</span>:</label> <input type="date" id="quickPaymentDate" required> </div>
                  <div class="form-group"> <label for="quickPaymentMethod">Payment Method:</label> <select id="quickPaymentMethod"> <option value="Cash">Cash</option> <option value="Online">Online</option> <option value="Cheque">Cheque</option> <option value="Other">Other</option> </select> </div>
@@ -128,17 +129,13 @@
      </div>
 
     <script src="js/utils.js" type="module" defer></script>
-    <script src="js/dashboard.js" type="module" defer></script> <script>
+    <script src="js/dashboard.js" type="module" defer></script>
+
+    <script>
         function setActiveLink() {
              try { const path=window.location.pathname; const page=path.substring(path.lastIndexOf('/')+1)||'index.html'; const links=document.querySelectorAll('.sidebar ul li a'); links.forEach(l=>{const hrefAttr=l.getAttribute('href'); l.classList.remove('active'); if(hrefAttr){const linkPage=hrefAttr.substring(hrefAttr.lastIndexOf('/')+1).split('?')[0].split('#')[0]||'index.html'; if(page===linkPage||((page==='/'||page==='index.html')&&linkPage==='index.html')){l.classList.add('active');}}}); } catch(e){console.error("Error setting active link:",e);}
         }
-        // रन करें जब DOM तैयार हो
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', setActiveLink);
-        } else {
-            setActiveLink(); // DOM पहले से लोड है
-        }
-        // Popstate पर भी रन करें (ब्राउज़र बैक/फॉरवर्ड)
+        if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', setActiveLink); } else { setActiveLink(); }
         window.addEventListener('popstate', setActiveLink);
     </script>
 </body>
