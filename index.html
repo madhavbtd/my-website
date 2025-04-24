@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>माधव मल्टीप्रिन्ट डैशबोर्ड (Updated)</title>
+    <title>माधव मल्टीप्रिन्ट डैशबोर्ड (Fixed)</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -11,40 +11,7 @@
     <link rel="stylesheet" href="css/index.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js" defer></script>
 
-    <script type="module">
-        // Import Firebase services
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-        // Import Firestore services needed by this page AND dashboard.js
-        import { getFirestore, collection, onSnapshot, query, where, getDocs, limit, orderBy, Timestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js"; // Added orderBy, Timestamp
-
-        // **** Your Firebase Configuration ****
-        const firebaseConfig = {
-          apiKey: "AIzaSyBQj5rQmE77kKKGYixP8y3Hcimz8tiAqzQ",
-          authDomain: "madhav-multyprint.firebaseapp.com",
-          projectId: "madhav-multyprint",
-          storageBucket: "madhav-multyprint.appspot.com",
-          messagingSenderId: "104988349637",
-          appId: "1:104988349637:web:faf045b77c6786a4e70cac"
-        };
-
-        let app; let auth; let db;
-        try {
-             if (!window.firebaseAppInitialized) {
-                 app = initializeApp(firebaseConfig);
-                 window.firebaseAppInitialized = true; window.firebaseApp = app; console.log("index.html: Firebase initialized.");
-             } else { app = window.firebaseApp; console.log("index.html: Firebase already initialized."); }
-             auth = getAuth(app); db = getFirestore(app);
-             // --- Make functions globally available for dashboard.js ---
-             window.db = db; window.auth = auth; window.collection = collection; window.onSnapshot = onSnapshot;
-             window.query = query; window.where = where; window.getDocs = getDocs; window.limit = limit;
-             window.orderBy = orderBy; window.Timestamp = Timestamp; window.signOut = signOut; // Export signOut
-             console.log("index.html: Firebase functions made global.");
-             // --- Authentication State Check (पहले जैसा) ---
-             onAuthStateChanged(auth, (user) => { /* ... आपका मौजूदा Auth चेक कोड ... */ });
-        } catch(e) { console.error("index.html: MAJOR ERROR in Firebase setup block:", e); alert("Critical Error loading application."); }
-    </script>
-</head>
+    </head>
 
 <body>
     <div class="container">
@@ -76,7 +43,7 @@
                         <button type="button" id="quickAddPaymentBtn" class="button-base quick-payment-btn"><i class="fas fa-dollar-sign"></i> Quick Payment</button>
                     </div>
                     <div class="date-time-container" id="currentDateTime">
-                         <span class="loading-placeholder">Loading date...</span>
+                        <span class="loading-placeholder">Loading date...</span>
                     </div>
                      <div class="header-icons">
                          <button class="icon-button" id="notificationsBtn" title="Notifications"><i class="fas fa-bell"></i><span class="badge" id="notificationCount">0</span></button>
@@ -86,26 +53,10 @@
             </div>
 
             <div class="kpi-section card-layout">
-                 <div class="kpi-card">
-                     <i class="fas fa-users kpi-icon"></i>
-                     <div class="kpi-value" id="kpi-total-customers"><span class="loading-placeholder">...</span></div>
-                     <div class="kpi-label">Total Customers</div>
-                 </div>
-                 <div class="kpi-card">
-                     <i class="fas fa-truck kpi-icon"></i>
-                     <div class="kpi-value" id="kpi-total-suppliers"><span class="loading-placeholder">...</span></div>
-                     <div class="kpi-label">Total Suppliers</div>
-                 </div>
-                  <div class="kpi-card">
-                     <i class="fas fa-wallet kpi-icon"></i>
-                     <div class="kpi-value" id="kpi-pending-payments"><span class="loading-placeholder">...</span></div>
-                     <div class="kpi-label">Pending Payments</div>
-                 </div>
-                 <div class="kpi-card">
-                     <i class="fas fa-calendar-day kpi-icon"></i>
-                     <div class="kpi-value" id="kpi-orders-today"><span class="loading-placeholder">...</span></div>
-                     <div class="kpi-label">Orders Today</div>
-                 </div>
+                 <div class="kpi-card"> <i class="fas fa-users kpi-icon"></i> <div class="kpi-value" id="kpi-total-customers"><span class="loading-placeholder">...</span></div> <div class="kpi-label">Total Customers</div> </div>
+                 <div class="kpi-card"> <i class="fas fa-truck kpi-icon"></i> <div class="kpi-value" id="kpi-total-suppliers"><span class="loading-placeholder">...</span></div> <div class="kpi-label">Total Suppliers</div> </div>
+                 <div class="kpi-card"> <i class="fas fa-wallet kpi-icon"></i> <div class="kpi-value" id="kpi-pending-payments"><span class="loading-placeholder">...</span></div> <div class="kpi-label">Pending Payments</div> </div>
+                 <div class="kpi-card"> <i class="fas fa-calendar-day kpi-icon"></i> <div class="kpi-value" id="kpi-orders-today"><span class="loading-placeholder">...</span></div> <div class="kpi-label">Orders Today</div> </div>
             </div>
 
             <div class="order-control-panel">
@@ -131,9 +82,8 @@
                      <h3><i class="fas fa-history"></i> Recent Activity</h3>
                      <ul id="recent-activity-list">
                          <li class="loading-placeholder">Loading recent activity...</li>
-                         </ul>
+                     </ul>
                  </div>
-
                  <div class="reminder-section card-layout">
                      <h3><i class="fas fa-bell"></i> Reminders & Tasks</h3>
                      <h4>Upcoming LIC Premiums (15 Days)</h4>
@@ -149,7 +99,6 @@
                            <li class="loading-placeholder">Loading deliveries...</li>
                       </ul>
                  </div>
-
                  <div class="chart-section card-layout">
                        <h3><i class="fas fa-chart-pie"></i> Order Status Overview</h3>
                        <div class="chart-container">
@@ -158,19 +107,16 @@
                    </div>
             </div>
 
-        </div> </div> <script src="js/dashboard.js" type="module" defer></script>
-    <script src="js/utils.js" type="module" defer></script>
+        </div> </div> <script src="js/utils.js" type="module" defer></script>
+
+    <script src="js/dashboard.js" type="module" defer></script>
 
     <script>
-        // यह स्क्रिप्ट ब्लॉक अब मुख्य रूप से केवल साइडबार एक्टिव लिंक को हैंडल करेगा
-        // Date/Time लॉजिक dashboard.js में ले जाया जाएगा
         function setActiveLink() {
-             // ... (आपका मौजूदा setActiveLink कोड) ...
+             try { const path=window.location.pathname; const page=path.substring(path.lastIndexOf('/')+1)||'index.html'; const links=document.querySelectorAll('.sidebar ul li a'); links.forEach(l=>{const hrefAttr=l.getAttribute('href'); l.classList.remove('active'); if(hrefAttr){const linkPage=hrefAttr.substring(hrefAttr.lastIndexOf('/')+1).split('?')[0].split('#')[0]||'index.html'; if(page===linkPage||((page==='/'||page==='index.html')&&linkPage==='index.html')){l.classList.add('active');}}}); } catch(e){console.error("Error setting active link:",e);}
         }
         window.addEventListener('DOMContentLoaded', setActiveLink);
         window.addEventListener('popstate', setActiveLink);
-
-         // Logout लिंक का लॉजिक dashboard.js में DOMContentLoaded में जोड़ा जाएगा
     </script>
 </body>
 </html>

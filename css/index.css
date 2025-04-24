@@ -25,7 +25,11 @@
 body {
     font-family: 'Poppins', sans-serif;
     font-size: var(--base-font-size);
-    /* ... अन्य बॉडी स्टाइल ... */
+    margin: 0;
+    padding: 0;
+    background-color: #f4f6f8;
+    color: var(--text-color);
+    line-height: 1.6;
 }
 
 .container {
@@ -34,14 +38,42 @@ body {
 }
 
 /* --- Sidebar Improvements --- */
+.sidebar {
+    width: 220px;
+    background-color: var(--secondary-color);
+    color: var(--sidebar-text);
+    padding-top: 0;
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+    box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+    transition: width 0.3s ease;
+    z-index: 1000;
+}
+.sidebar h2 { text-align: center; background-color: white; padding: 15px 10px; margin: 0; border-bottom: 1px solid var(--border-color); }
+.sidebar h2 img { max-width: 90%; height: auto; vertical-align: middle; }
+.sidebar ul { list-style-type: none; padding: 10px 0; margin: 0; flex-grow: 1; overflow-y: auto; }
 .sidebar ul li a {
-    /* ... मौजूदा स्टाइल ... */
+    padding: 12px 20px;
+    text-decoration: none;
+    color: var(--sidebar-text);
+    display: flex;
+    align-items: center;
     border-left: 4px solid transparent;
-    transition: background-color 0.2s ease, padding-left 0.2s ease, border-left-color 0.2s ease;
+    transition: background-color 0.2s ease, padding-left 0.2s ease, border-left-color 0.2s ease, color 0.2s ease;
+    font-size: 0.95em;
+    white-space: nowrap;
     gap: 15px; /* आइकन और टेक्स्ट के बीच गैप */
+}
+.sidebar ul li a i {
+    width: 20px;
+    text-align: center;
+    font-size: 1.1em;
+    flex-shrink: 0;
 }
 .sidebar ul li a:hover {
     background-color: var(--sidebar-hover);
+    color: #fff;
     padding-left: 20px; /* होवर पर थोड़ा इंडेंट */
     border-left-color: var(--sidebar-hover); /* होवर पर बॉर्डर कलर */
 }
@@ -51,28 +83,8 @@ body {
     font-weight: 600;
     color: #fff;
 }
-/* छोटे स्क्रीन पर साइडबार होवर के लिए */
-@media (max-width: 992px) {
-    .sidebar:hover {
-         box-shadow: 5px 0 15px rgba(0,0,0,0.2); /* थोड़ा गहरा शैडो */
-    }
-     /* मोबाइल पर एक्टिव लिंक स्टाइल */
-     .sidebar ul li a.active {
-        background-color: var(--sidebar-active-bg);
-        border-bottom-color: var(--sidebar-active-border); /* नीचे बॉर्डर */
-        color: var(--sidebar-text); /* Override active color for mobile */
-    }
-    .sidebar ul li a:hover {
-         background-color: var(--sidebar-hover); /* Ensure hover works on mobile */
-    }
-}
-@media (max-width: 768px) {
-     .sidebar ul li a.active {
-        background-color: transparent; /* मोबाइल पर एक्टिव बैकग्राउंड हटाएं */
-        color: var(--sidebar-active-border); /* एक्टिव कलर बदलें */
-        border-bottom: 3px solid var(--sidebar-active-border);
-    }
-}
+.sidebar ul li:last-child { margin-top: auto; }
+.sidebar ul li a#logout-link { border-top: 1px solid var(--sidebar-hover); }
 
 
 /* --- Main Content Area --- */
@@ -94,40 +106,57 @@ body {
 /* --- Updated Header --- */
 .header.updated-header {
     display: flex;
-    flex-wrap: wrap; /* Allow wrapping */
+    flex-wrap: wrap;
     justify-content: space-between;
     align-items: center;
-    padding: 12px 20px; /* थोड़ा कम पैडिंग */
+    padding: 12px 20px;
     background-color: var(--card-bg);
     box-shadow: var(--card-shadow);
     border-radius: var(--card-border-radius);
     gap: 15px;
+    border: 1px solid var(--border-color);
 }
 .welcome-text {
     font-weight: 600;
     font-size: 1.1em;
     color: var(--primary-color);
-    flex-shrink: 0; /* इसे सिकुड़ने न दें */
+    flex-shrink: 0;
+    margin-right: auto; /* पुश वेलकम टेक्स्ट लेफ्ट */
 }
 .header-actions {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
     gap: 15px;
-    margin-left: auto; /* इसे दाईं ओर धकेलें */
+    /* margin-left: auto; हटाया गया ताकि वेलकम टेक्स्ट लेफ्ट रहे */
 }
 .header-buttons {
     display: flex;
     flex-wrap: wrap;
     gap: 10px;
 }
-.button-base { /* Base style for header buttons */
+.button-base {
     padding: 8px 14px;
     font-size: 0.9em;
     border-radius: 5px;
-    /* ... अन्य मौजूदा बटन स्टाइल ... */
+    text-decoration: none;
+    color: white;
+    border: none;
+    cursor: pointer;
+    font-family: 'Poppins', sans-serif;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: background-color 0.2s ease, transform 0.1s ease;
+    line-height: 1.4;
 }
-.quick-payment-btn { background-color: var(--info-color); }
+.button-base:hover { opacity: 0.9; }
+.button-base:active { transform: scale(0.98); }
+.add-customer-btn { background-color: var(--success-color); }
+.add-supplier-btn { background-color: var(--info-color); }
+.new-order-btn { background-color: var(--primary-color); }
+.quick-payment-btn { background-color: var(--info-color); } /* पेमेंट बटन कलर */
+
 .date-time-container {
     font-size: 0.9em;
     font-weight: 500;
@@ -136,6 +165,7 @@ body {
     padding: 8px 12px;
     border-radius: 5px;
     color: var(--text-muted);
+    white-space: nowrap;
 }
 .header-icons {
     display: flex;
@@ -145,7 +175,7 @@ body {
 .icon-button {
     background: none;
     border: none;
-    font-size: 1.3em; /* बड़ा आइकन */
+    font-size: 1.3em;
     color: var(--text-muted);
     cursor: pointer;
     padding: 5px;
@@ -163,18 +193,17 @@ body {
     padding: 2px 5px;
     border-radius: 50%;
     font-weight: bold;
-    display: none; /* Initially hidden */
+    display: none;
 }
-.icon-button .badge.active { display: block; } /* Show when active */
-
+.icon-button .badge.active { display: block; }
 
 /* --- Card Layout Helper --- */
 .card-layout {
-    background-color: var(--card-bg);
+    background-color: var(--card-bg, #ffffff);
     padding: 20px;
-    border-radius: var(--card-border-radius);
-    box-shadow: var(--card-shadow);
-    border: 1px solid var(--border-color);
+    border-radius: var(--card-border-radius, 8px);
+    box-shadow: var(--card-shadow, 0 2px 8px rgba(0, 0, 0, 0.07));
+    border: 1px solid var(--border-color, #dee2e6);
 }
 .card-layout h3 {
     margin-top: 0;
@@ -188,23 +217,9 @@ body {
     align-items: center;
     gap: 8px;
 }
-.card-layout h3 i {
-    font-size: 0.9em;
-    opacity: 0.8;
-}
-.card-layout ul {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-    font-size: 0.9em;
-    max-height: 150px; /* लिमिट ऊंचाई और स्क्रॉल */
-    overflow-y: auto;
-}
-.card-layout ul li {
-    padding: 6px 0;
-    border-bottom: 1px dotted #eee;
-    color: var(--text-muted);
-}
+.card-layout h3 i { font-size: 0.9em; opacity: 0.8; }
+.card-layout ul { list-style: none; padding: 0; margin: 0; font-size: 0.9em; max-height: 150px; overflow-y: auto; }
+.card-layout ul li { padding: 6px 0; border-bottom: 1px dotted #eee; color: var(--text-muted); }
 .card-layout ul li:last-child { border-bottom: none; }
 .card-layout ul li strong { color: var(--text-color); }
 .card-layout .loading-placeholder { color: #aaa; font-style: italic; }
@@ -216,166 +231,154 @@ body {
     gap: 15px;
 }
 .kpi-card {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    text-align: center;
-    padding: 15px;
-    border: 1px solid var(--border-color);
-    border-radius: var(--card-border-radius);
-    background-color: var(--light-bg);
-    position: relative;
-    min-height: 100px;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    text-align: center; padding: 15px; border: 1px solid var(--border-color);
+    border-radius: var(--card-border-radius); background-color: var(--light-bg);
+    position: relative; min-height: 100px; transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
-.kpi-icon {
-    font-size: 1.8em;
-    color: var(--primary-color);
-    opacity: 0.6;
-    margin-bottom: 8px;
-}
-.kpi-value {
-    font-size: 1.6em;
-    font-weight: 700;
-    color: var(--text-color);
-    line-height: 1.1;
-}
-.kpi-label {
-    font-size: 0.8em;
-    color: var(--text-muted);
-    margin-top: 5px;
-    text-transform: uppercase;
-}
+.kpi-card:hover { transform: translateY(-2px); box-shadow: 0 4px 10px rgba(0,0,0,0.08); }
+.kpi-icon { font-size: 1.8em; color: var(--primary-color); opacity: 0.6; margin-bottom: 8px; }
+.kpi-value { font-size: 1.6em; font-weight: 700; color: var(--text-color); line-height: 1.1; }
+.kpi-label { font-size: 0.8em; color: var(--text-muted); margin-top: 5px; text-transform: uppercase; }
 
 /* --- Order Control Panel Improvements --- */
 .order-control-panel {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); /* थोड़ा छोटा minmax */
-    gap: 15px; /* कम गैप */
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 15px;
 }
 .panel-item {
-    /* ... मौजूदा स्टाइल ... */
-    padding: 15px; /* थोड़ा कम पैडिंग */
-    min-height: 150px; /* कम ऊंचाई */
-    box-shadow: var(--card-shadow);
-    border: 1px solid var(--border-color);
+    padding: 15px; min-height: 150px; box-shadow: var(--card-shadow); border: 1px solid var(--border-color);
+    border-radius: var(--card-border-radius); font-size: 0.9em; color: var(--text-color);
+    display: flex; flex-direction: column; justify-content: space-between; align-items: center;
+    font-weight: 600; font-family: 'Poppins', sans-serif; text-transform: uppercase;
+    line-height: 1.3; transition: transform 0.2s ease, box-shadow 0.2s ease;
+    background-color: #fff; /* Default background */
 }
-.panel-icon { font-size: 2em; }
-.panel-count { font-size: 2.3em; font-weight: 600; } /* पतला काउंट */
+.panel-item:hover { transform: translateY(-3px); box-shadow: 0 5px 10px rgba(0, 0, 0, 0.1); }
+.panel-icon { font-size: 2em; margin-bottom: 10px; }
+.panel-count { font-size: 2.3em; font-weight: 600; display: block; margin-bottom: 10px; color: var(--primary-color); }
 .panel-item a.button-link {
-    font-size: 0.8em;
-    padding: 6px 12px;
-    margin-top: 8px;
+    background-color: var(--primary-color); color: white; border: none; padding: 6px 12px;
+    cursor: pointer; border-radius: 5px; font-size: 0.8em; margin-top: 8px;
+    font-weight: 500; font-family: 'Poppins', sans-serif; text-transform: capitalize;
+    text-decoration: none; display: inline-block; transition: background-color 0.2s ease;
 }
-/* Add loading spinner style */
-.loading-placeholder,
-.panel-count .fa-spinner,
-.kpi-value .fa-spinner {
-    font-size: 0.8em;
-    color: #aaa;
-    display: inline-block; /* स्पिनर के लिए */
-}
-.panel-count .fa-spinner,
-.kpi-value .fa-spinner { font-size: 0.6em; } /* स्पिनर थोड़ा छोटा */
-.fa-spinner { animation: fa-spin 1.5s infinite linear; }
-@keyframes fa-spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+.panel-item a.button-link:hover { background-color: #004085; }
+/* Panel Colors (पहले जैसे) */
+.panel-item.light-blue { background-color: #e1f5fe; color: #0d47a1; border-color: #b3e5fc; } .panel-item.light-blue .panel-count { color: #1976d2;}
+.panel-item.light-orange { background-color: #fff3e0; color: #bf360c; border-color: #ffe0b2;} .panel-item.light-orange .panel-count { color: #e65100;}
+.panel-item.light-green { background-color: #e8f5e9; color: #1b5e20; border-color: #c8e6c9;} .panel-item.light-green .panel-count { color: #388e3c;}
+.panel-item.light-red { background-color: #ffebee; color: #b71c1c; border-color: #ffcdd2;} .panel-item.light-red .panel-count { color: #d32f2f;}
 
+/* Loading Spinner */
+.loading-placeholder, .fa-spinner { color: #aaa; font-style: italic; }
+.panel-count .fa-spinner, .kpi-value .fa-spinner { font-size: 0.6em; color: #aaa; }
+.fa-spinner { animation: fa-spin 1.5s infinite linear; display: inline-block; }
+@keyframes fa-spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
 /* --- Dashboard Grid Layout --- */
 .dashboard-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); /* Responsive columns */
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
     gap: 25px;
 }
-.info-feed-section ul li {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
+.info-feed-section ul li { display: flex; justify-content: space-between; align-items: center; }
 .info-feed-section .activity-time { font-size: 0.85em; color: #999; white-space: nowrap; margin-left: 10px;}
 
 /* --- Reminder Section Improvements --- */
 .reminder-section h4 {
-    font-size: 0.9em;
-    color: var(--secondary-color);
-    margin-top: 15px;
-    margin-bottom: 5px;
-    font-weight: 600;
-    padding-bottom: 3px;
+    font-size: 0.9em; color: var(--secondary-color); margin-top: 15px;
+    margin-bottom: 5px; font-weight: 600; padding-bottom: 3px;
     border-bottom: 1px dotted #ccc;
 }
 .reminder-section h4:first-of-type { margin-top: 0; }
-.reminder-section ul { max-height: 100px; } /* थोड़ा कम मैक्स हाइट */
+.reminder-section ul { max-height: 100px; }
 
 /* --- Chart Section --- */
-.chart-section .chart-container {
-    position: relative;
-    height: 250px; /* चार्ट के लिए ऊंचाई सेट करें */
-    width: 100%;
-}
+.chart-section .chart-container { position: relative; height: 250px; width: 100%; }
 
 /* --- Search Bar & Suggestions --- */
 .search-bar {
-    /* ... मौजूदा स्टाइल ... */
-    padding: 12px 15px;
+    display: flex; align-items: center; justify-content: flex-end; flex-wrap: wrap;
+    gap: 10px; background-color: var(--card-bg); padding: 12px 15px;
+    border-radius: var(--card-border-radius); box-shadow: var(--card-shadow);
+    border: 1px solid var(--border-color); position: relative;
 }
+.search-bar label { margin: 0; color: var(--text-muted); font-size: 0.95em; font-weight: 500; flex-shrink: 0; }
 .search-bar input[type="text"] {
-    padding: 8px 10px;
-    height: 38px;
-    font-size: 0.9em;
+    padding: 8px 10px; border: 1px solid var(--border-color); border-radius: 5px;
+    font-size: 0.9em; width: 250px; height: 38px; box-sizing: border-box;
 }
+.search-bar input[type="text"]:focus { outline: none; border-color: var(--primary-color); box-shadow: 0 0 0 2px rgba(0, 86, 179, 0.2); }
 .search-bar button {
-    height: 38px;
-    padding: 8px 14px;
+    background-color: var(--success-color); color: white; border: none; padding: 8px 14px;
+    cursor: pointer; border-radius: 5px; font-size: 0.9em; height: 38px;
+    line-height: 1; transition: background-color 0.2s ease; flex-shrink: 0;
 }
+.search-bar button:hover { background-color: #1e7e34; }
 .suggestions-list {
-    /* ... मौजूदा स्टाइल ... */
-    border: 1px solid var(--border-color);
-    box-shadow: 0 5px 10px rgba(0,0,0,0.1);
-    border-radius: 5px;
+    display: none; position: absolute; top: calc(100% + 5px); right: 15px;
+    width: 310px; background-color: white; border: 1px solid var(--border-color);
+    border-radius: 5px; box-shadow: 0 5px 10px rgba(0,0,0,0.1);
+    max-height: 200px; overflow-y: auto; z-index: 1050;
 }
-.suggestions-list div { padding: 8px 12px; font-size: 0.9em; }
+.suggestions-list div { padding: 8px 12px; cursor: pointer; border-bottom: 1px solid #eee; font-size: 0.9em; }
+.suggestions-list div:last-child { border-bottom: none; }
+.suggestions-list div:hover { background-color: #f0f0f0; }
+.suggestions-list div.no-suggestions { color: var(--text-muted); cursor: default; }
 
-
-/* --- Responsive Refinements --- */
+/* --- Responsive --- */
 @media (max-width: 1200px) {
      .kpi-section { grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); }
      .dashboard-grid { grid-template-columns: 1fr; } /* छोटे टैबलेट पर स्टैक करें */
 }
-
-@media (max-width: 768px) {
-    .main-content { padding: 15px; gap: 20px; }
-    .header.updated-header { padding: 10px 15px; }
-    .header-actions { margin-left: 0; justify-content: center; }
-    .welcome-text { text-align: center; order: -1; width: 100%; margin-bottom: 10px; }
-    .kpi-section, .order-control-panel { gap: 10px; }
-    .kpi-card { padding: 10px; min-height: 80px;}
-    .kpi-icon { font-size: 1.5em; margin-bottom: 5px;}
-    .kpi-value { font-size: 1.4em; }
-    .kpi-label { font-size: 0.7em; }
-    .panel-item { padding: 12px 10px; min-height: 130px; }
-    .panel-icon { font-size: 1.8em; }
-    .panel-count { font-size: 2em; }
-    .search-bar { padding: 10px; }
-    .card-layout { padding: 15px; }
-    .card-layout h3 { font-size: 1em; margin-bottom: 10px;}
-    .card-layout ul { font-size: 0.85em; }
+@media (max-width: 992px) {
+    .sidebar { width: 60px; overflow: hidden; position: absolute; left: 0; top: 0; height: 100%; }
+    .sidebar:hover { width: 220px; box-shadow: 4px 0 10px rgba(0,0,0,0.2); }
+    .sidebar h2 { padding: 10px 5px; } .sidebar h2 img { max-width: 40px; transition: max-width 0.3s ease; }
+    .sidebar:hover h2 img { max-width: 90%; }
+    .sidebar ul li a span { display: none; } .sidebar:hover ul li a span { display: inline; }
+    .sidebar ul li a { justify-content: center; padding: 12px 0; } .sidebar:hover ul li a { justify-content: flex-start; padding: 12px 20px;}
+    .sidebar ul li a i { margin-right: 0; } .sidebar:hover ul li a i { margin-right: 12px; }
+    .main-content { padding-left: 80px; }
+     .welcome-text { font-size: 1em; }
+     .header-actions { gap: 10px; }
+     .button-base { padding: 7px 12px; font-size: 0.85em; }
 }
-
+@media (max-width: 768px) {
+    .container { flex-direction: column; }
+    .sidebar { width: 100%; min-height: auto; height: auto; flex-direction: row; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.1); position: static; overflow: visible; padding-top: 0; z-index: 1000; }
+    .sidebar:hover { width: 100%; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+    .sidebar h2 { padding: 5px 15px; flex-shrink: 0; border-bottom: none; }
+    .sidebar h2 img { max-width: 120px; }
+    .sidebar ul { display: flex; overflow-x: auto; flex-grow: 1; padding: 0 5px; justify-content: flex-start; border-top: none; position: relative; z-index: 1; }
+    .sidebar ul li { flex-shrink: 0; margin-top: 0; } .sidebar ul li:last-child { margin-top: 0; }
+    .sidebar ul li a { padding: 12px 10px; border-left: none; border-bottom: 3px solid transparent; white-space: nowrap; justify-content: center; pointer-events: auto !important; z-index: 2 !important; position: relative; }
+    .sidebar ul li a i { margin-right: 5px; } .sidebar ul li a span { display: inline; }
+    .sidebar ul li a:hover { padding-left: 10px; background-color: var(--sidebar-hover); }
+    .sidebar ul li a.active { border-left: none; border-bottom-color: var(--sidebar-active-border); background-color: transparent; color: var(--sidebar-active-border); font-weight: 600; }
+    .main-content { padding: 15px; height: auto; min-height: calc(100vh - 60px); padding-left: 15px; gap: 20px; }
+    .header.updated-header { flex-direction: column; gap: 10px; align-items: stretch; padding: 10px 15px; }
+    .welcome-text { text-align: center; order: -1; width: 100%; margin-bottom: 10px; }
+    .header-actions { margin-left: 0; justify-content: center; flex-direction: column; gap: 12px;}
+    .header-buttons { justify-content: center; width: 100%; order: 2;}
+    .date-time-container { order: 1; text-align: center; }
+    .header-icons { order: 0; align-self: flex-end; } /* Move icons to top right */
+    .search-bar { flex-direction: column; align-items: stretch; gap: 10px; padding: 10px; position: relative; }
+    .search-bar input[type="text"] { width: 100%; max-width: none; } .search-bar button { width: 100%; }
+    .suggestions-list { position: static; width: 100%; max-width: none; margin-top: 5px; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05); border-radius: 5px; right: auto; left: auto; max-height: 150px; border: 1px solid var(--border-color); }
+    .kpi-section, .order-control-panel { gap: 10px; }
+    .kpi-card { padding: 10px; min-height: 80px;} .kpi-icon { font-size: 1.5em; margin-bottom: 5px;} .kpi-value { font-size: 1.4em; } .kpi-label { font-size: 0.7em; }
+    .panel-item { padding: 12px 10px; min-height: 130px; } .panel-icon { font-size: 1.8em; } .panel-count { font-size: 2em; }
+    .dashboard-grid { gap: 20px; } .card-layout { padding: 15px; } .card-layout h3 { font-size: 1em; margin-bottom: 10px;} .card-layout ul { font-size: 0.85em; }
+}
 @media (max-width: 480px) {
-     body { font-size: 14px; }
-     .main-content { padding: 10px; gap: 15px;}
-     .header.updated-header { gap: 10px; }
-     .header-buttons { justify-content: center; }
-     .button-base { font-size: 0.85em; padding: 7px 10px; }
+     body { font-size: 14px; } .main-content { padding: 10px; gap: 15px;}
+     .header-buttons { flex-direction: column; align-items: stretch;} .button-base { justify-content: center; }
      .kpi-section { grid-template-columns: 1fr 1fr; } /* फोन पर 2 कॉलम */
-     .order-control-panel { grid-template-columns: 1fr 1fr; } /* फोन पर 2 कॉलम */
-     .panel-item { padding: 10px 8px; min-height: 120px; }
-     .panel-icon { font-size: 1.6em; }
-     .panel-count { font-size: 1.8em; }
-     .panel-item a.button-link { font-size: 0.75em; padding: 5px 8px; }
-     .search-bar input, .search-bar button { height: 36px; font-size: 0.85em; }
-     .suggestions-list div { font-size: 0.85em; padding: 6px 10px; }
-     .card-layout ul { max-height: 120px; }
-     .chart-section .chart-container { height: 200px; }
+     .order-control-panel { grid-template-columns: 1fr 1fr; }
+     .panel-item { padding: 10px 8px; min-height: 120px; } .panel-icon { font-size: 1.6em; } .panel-count { font-size: 1.8em; } .panel-item a.button-link { font-size: 0.75em; padding: 5px 8px; }
+     .search-bar input, .search-bar button { height: 36px; font-size: 0.85em; } .suggestions-list div { font-size: 0.85em; padding: 6px 10px; }
+     .card-layout ul { max-height: 120px; } .chart-section .chart-container { height: 200px; }
 }
