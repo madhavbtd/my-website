@@ -9,25 +9,27 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 
-    <link rel="stylesheet" href="css/lic_management.css"> <script type="module">
-        // --- Firebase Setup ---
+    <link rel="stylesheet" href="css/customer_management.css">
+    <link rel="stylesheet" href="css/lic_management.css">
+
+    <script type="module">
+        // --- Firebase Setup (आपकी मौजूदा फाइल से कॉपी करें) ---
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
         import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
         import {
             getFirestore, collection, doc, addDoc, getDoc, getDocs, updateDoc, deleteDoc, serverTimestamp,
-            query, where, orderBy, limit, Timestamp, onSnapshot // Import onSnapshot
+            query, where, orderBy, limit, Timestamp, runTransaction // सभी ज़रूरी फंक्शन्स इम्पोर्ट करें
          } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-         // **** अपनी Firebase कॉन्फ़िगरेशन यहाँ डालें ****
+         // **** आपकी Firebase कॉन्फ़िगरेशन ****
          const firebaseConfig = {
-            apiKey: "YOUR_API_KEY", // Replace with your actual API key
-            authDomain: "YOUR_AUTH_DOMAIN", // Replace with your actual auth domain
-            projectId: "YOUR_PROJECT_ID", // Replace with your actual project ID
-            storageBucket: "YOUR_STORAGE_BUCKET", // Replace with your actual storage bucket
-            messagingSenderId: "YOUR_MESSAGING_SENDER_ID", // Replace with your actual messaging sender ID
-            appId: "YOUR_APP_ID" // Replace with your actual app ID
+           apiKey: "AIzaSyBQj5rQmE77kKKGYixP8y3Hcimz8tiAqzQ", // Your apiKey
+           authDomain: "madhav-multyprint.firebaseapp.com", // Your authDomain
+           projectId: "madhav-multyprint", // Your projectId
+           storageBucket: "madhav-multyprint.appspot.com", // Your storageBucket
+           messagingSenderId: "104988349637", // Your messagingSenderId
+           appId: "1:104988349637:web:faf045b77c6786a4e70cac" // Your appId
          };
-         // ************************************
 
         let app; let auth; let db;
         try {
@@ -44,45 +46,38 @@
             auth = getAuth(app);
             db = getFirestore(app);
 
-            // Firebase फंक्शन्स को ग्लोबल बनाएं
+            // Firebase फंक्शन्स को ग्लोबल बनाएं ताकि lic_management.js उन्हें इस्तेमाल कर सके
             window.db = db; window.collection = collection; window.doc = doc; window.addDoc = addDoc;
             window.getDoc = getDoc; window.getDocs = getDocs; window.updateDoc = updateDoc; window.deleteDoc = deleteDoc;
             window.serverTimestamp = serverTimestamp; window.query = query; window.where = where;
-            window.orderBy = orderBy; window.limit = limit; window.Timestamp = Timestamp; window.onSnapshot = onSnapshot; // Make onSnapshot global
+            window.orderBy = orderBy; window.limit = limit; window.Timestamp = Timestamp; window.runTransaction = runTransaction;
 
             // Authentication Check
             onAuthStateChanged(auth, (user) => {
                 const currentPage = window.location.pathname.split('/').pop() || 'index.html';
-                 // Redirect to login if not logged in AND not already on login page
                 if (!user && currentPage.toLowerCase() !== 'login.html') {
-                    console.log("User not logged in. Redirecting to login page...");
-                    window.location.replace('login.html'); // Ensure you have a login.html
+                    console.log("User not logged in. Redirecting...");
+                    window.location.replace('login.html');
                 } else if (user) {
-                    // User is logged in, proceed to initialize the LIC page
-                    console.log(`User logged in: ${user.uid}. Initializing LIC page.`);
-                    // Delay initialization slightly if needed, or call directly
-                    // Ensure lic_management.js is loaded and initializeLicPage function exists
+                    console.log(`User logged in. Initializing LIC page.`);
+                    // lic_management.js से initializePage फंक्शन को कॉल करें
                     if (typeof initializeLicPage === 'function') {
-                        initializeLicPage(user); // Pass user object
+                        initializeLicPage();
                     } else {
-                         // Fallback if script hasn't loaded yet
                         document.addEventListener('DOMContentLoaded', () => {
                              if (typeof initializeLicPage === 'function') {
-                                initializeLicPage(user);
+                                initializeLicPage();
                             } else {
-                                 console.error("Initialization function 'initializeLicPage' not found even after DOMContentLoaded!");
-                                 alert("Application Error: Page script failed to load correctly.");
+                                 console.error("Initialization function 'initializeLicPage' not found!");
+                                 alert("Application Error: Page script failed to load.");
                              }
                         });
                     }
-                } else if (!user && currentPage.toLowerCase() === 'login.html') {
-                    // User is not logged in, but is correctly on the login page. Do nothing here.
-                    console.log("User not logged in, already on login page.");
                 }
             });
         } catch(e) {
             console.error("Firebase setup error:", e);
-            alert("Critical Application Error during Firebase setup. Please try again later.");
+            alert("Critical Application Error. Please try again later.");
         }
     </script>
 
@@ -93,7 +88,8 @@
         </div>
 
         <div class="breadcrumb-container">
-            <a href="index.html">Home</a> / <span>LIC Management</span>
+            <a href="index.html">Home</a> /
+            <span>LIC Management</span>
         </div>
 
         <div class="lic-reminder-section">
@@ -115,8 +111,7 @@
                      <option value="Active">Active</option>
                      <option value="Lapsed">Lapsed</option>
                      <option value="Matured">Matured</option>
-                     <option value="Surrendered">Surrendered</option>
-                 </select>
+                     </select>
             </div>
              <div class="filter-group filter-sort">
                  <label for="sort-lic"><i class="fas fa-sort-amount-down"></i> Sort By</label>
@@ -148,12 +143,12 @@
                         <th>Mode</th>
                         <th>Next Due Date</th>
                         <th>Status</th>
-                        <th>NACH Status</th> <th>Actions</th>
+                        <th>Actions</th>
                     </tr>
                 </thead>
                 <tbody id="licPolicyTableBody">
-                    <tr><td colspan="10" style="text-align: center; padding: 20px;">Loading policies...</td></tr>
-                </tbody>
+                    <tr><td colspan="9" style="text-align: center; padding: 20px;">Loading policies...</td></tr>
+                    </tbody>
             </table>
         </div>
 
@@ -166,18 +161,14 @@
              </div>
              <ul id="taskList">
                  <li class="loading-tasks">Loading tasks...</li>
-             </ul>
+                 </ul>
         </div>
 
-    </div>
-
-    <div id="policyModal" class="modal">
-        <div class="modal-content large-modal">
-            <span class="close-btn" id="closePolicyModal" title="Close">&times;</span>
+    </div> <div id="policyModal" class="modal">
+        <div class="modal-content large-modal"> <span class="close-btn" id="closePolicyModal" title="Close">&times;</span>
             <h2 id="policyModalTitle"><i class="fas fa-file-contract"></i> Add New Policy</h2>
             <form id="policyForm">
-                <input type="hidden" id="editPolicyId">
-                <div class="form-row">
+                <input type="hidden" id="editPolicyId"> <div class="form-row">
                     <div class="form-group">
                         <label for="customerName">Customer Name <span class="required">*</span>:</label>
                         <input type="text" id="customerName" required>
@@ -238,7 +229,7 @@
                             <option value="Half-Yearly">Half-Yearly</option>
                             <option value="Quarterly">Quarterly</option>
                             <option value="Monthly">Monthly</option>
-                        </select>
+                            </select>
                     </div>
                  </div>
 
@@ -250,7 +241,7 @@
                     <div class="form-group">
                         <label for="nextInstallmentDate">Next Installment Date <span class="required">*</span>:</label>
                         <input type="date" id="nextInstallmentDate" required>
-                        <small>First due date. Auto-calculated on Add if left blank.</small>
+                        <small>First due date. Will be auto-calculated if left blank on Add.</small>
                     </div>
                     <div class="form-group">
                         <label for="maturityDate">Maturity Date:</label>
