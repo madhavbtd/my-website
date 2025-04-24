@@ -3,22 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>माधव मल्टीप्रिन्ट डैशबोर्ड (Fixed)</title>
+    <title>माधव मल्टीप्रिन्ट डैशबोर्ड (vFinal)</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/index.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js" defer></script>
-
-    </head>
+</head>
 
 <body>
     <div class="container">
         <div class="sidebar">
-             <h2><img src="https://i.ibb.co/Z6gKD9Rd/1.png" alt="माधव मल्टीप्रिन्ट Logo"></h2>
+             <h2><img src="https://i.ibb.co/Z6gKD9Rd/1.png" alt="माधव मल्टीप्रिन्ट Logo" id="sidebarLogo"></h2>
              <ul>
-                <li><a href="index.html" class="active"><i class="fas fa-tachometer-alt"></i> <span>Dashboard</span></a></li>
+                 <li><a href="index.html" class="active"><i class="fas fa-tachometer-alt"></i> <span>Dashboard</span></a></li>
                 <li><a href="order_history.html"><i class="fas fa-history"></i> <span>Order History</span></a></li>
                 <li><a href="customer_management.html"><i class="fas fa-users"></i> <span>Customers</span></a></li>
                 <li><a href="supplier_management.html"><i class="fas fa-truck"></i> <span>Suppliers</span></a></li>
@@ -52,13 +51,6 @@
                 </div>
             </div>
 
-            <div class="kpi-section card-layout">
-                 <div class="kpi-card"> <i class="fas fa-users kpi-icon"></i> <div class="kpi-value" id="kpi-total-customers"><span class="loading-placeholder">...</span></div> <div class="kpi-label">Total Customers</div> </div>
-                 <div class="kpi-card"> <i class="fas fa-truck kpi-icon"></i> <div class="kpi-value" id="kpi-total-suppliers"><span class="loading-placeholder">...</span></div> <div class="kpi-label">Total Suppliers</div> </div>
-                 <div class="kpi-card"> <i class="fas fa-wallet kpi-icon"></i> <div class="kpi-value" id="kpi-pending-payments"><span class="loading-placeholder">...</span></div> <div class="kpi-label">Pending Payments</div> </div>
-                 <div class="kpi-card"> <i class="fas fa-calendar-day kpi-icon"></i> <div class="kpi-value" id="kpi-orders-today"><span class="loading-placeholder">...</span></div> <div class="kpi-label">Orders Today</div> </div>
-            </div>
-
             <div class="order-control-panel">
                 <div class="panel-item light-blue"> <i class="fas fa-shopping-bag panel-icon"></i> Order Received <span class="panel-count" id="count-order-received"><span class="loading-placeholder">..</span></span> <a href="order_history.html?status=Order+Received" class="button-link">View</a> </div>
                 <div class="panel-item light-orange"> <i class="fas fa-hourglass-half panel-icon"></i> Designing <span class="panel-count" id="count-designing"><span class="loading-placeholder">..</span></span> <a href="order_history.html?status=Designing" class="button-link">View</a> </div>
@@ -70,20 +62,25 @@
                 <div class="panel-item light-red"> <i class="fas fa-check-double panel-icon"></i> Completed <span class="panel-count" id="count-completed"><span class="loading-placeholder">..</span></span> <a href="order_history.html?status=Completed" class="button-link">View</a> </div>
             </div>
 
-            <div class="search-bar order-search-bar">
-                <label for="order-id-search">Search Order ID:</label>
-                <input type="text" id="order-id-search" placeholder="Enter Order ID...">
-                <button id="order-id-search-button"><i class="fas fa-search"></i></button>
-                <div id="order-suggestions" class="suggestions-list"></div>
+            <div class="kpi-section card-layout">
+                 <div class="kpi-card"> <i class="fas fa-wallet kpi-icon"></i> <div class="kpi-value" id="kpi-pending-payments"><span class="loading-placeholder">...</span></div> <div class="kpi-label">Pending Payments</div> </div>
+                 <div class="kpi-card"> <i class="fas fa-calendar-day kpi-icon"></i> <div class="kpi-value" id="kpi-orders-today"><span class="loading-placeholder">...</span></div> <div class="kpi-label">Orders Today</div> </div>
             </div>
 
+            <div class="search-bar order-search-bar">
+                <label for="dashboardSearchInput">Search Order/Customer/LIC:</label>
+                <input type="text" id="dashboardSearchInput" placeholder="Enter Order ID, Name, or LIC Policy No...">
+                <button id="dashboardSearchButton"><i class="fas fa-search"></i></button>
+                <div id="dashboardSuggestions" class="suggestions-list"></div> </div>
+
             <div class="dashboard-grid">
-                 <div class="info-feed-section card-layout">
-                     <h3><i class="fas fa-history"></i> Recent Activity</h3>
-                     <ul id="recent-activity-list">
-                         <li class="loading-placeholder">Loading recent activity...</li>
+                 <div class="customer-dues-section card-layout">
+                     <h3><i class="fas fa-file-invoice-dollar"></i> Top Customer Dues</h3>
+                     <ul id="customer-dues-list">
+                         <li class="loading-placeholder">Loading customer dues...</li>
                      </ul>
                  </div>
+
                  <div class="reminder-section card-layout">
                      <h3><i class="fas fa-bell"></i> Reminders & Tasks</h3>
                      <h4>Upcoming LIC Premiums (15 Days)</h4>
@@ -99,6 +96,7 @@
                            <li class="loading-placeholder">Loading deliveries...</li>
                       </ul>
                  </div>
+
                  <div class="chart-section card-layout">
                        <h3><i class="fas fa-chart-pie"></i> Order Status Overview</h3>
                        <div class="chart-container">
@@ -107,15 +105,40 @@
                    </div>
             </div>
 
-        </div> </div> <script src="js/utils.js" type="module" defer></script>
+        </div> </div> <div id="quickPaymentModal" class="modal">
+         <div class="modal-content small-modal">
+             <span class="close-btn" id="closeQuickPaymentModal" title="Close">&times;</span>
+             <h2><i class="fas fa-dollar-sign success-icon"></i> Quick Payment Received</h2>
+             <form id="quickPaymentForm">
+                 <div class="form-group">
+                     <label for="quickPaymentCustomerSearch">Customer <span class="required">*</span>:</label>
+                     <input type="text" id="quickPaymentCustomerSearch" required placeholder="Search Customer Name/WhatsApp...">
+                     <input type="hidden" id="quickPaymentCustomerId">
+                     <div id="quickPaymentCustomerSuggestions" class="suggestions-box"><ul></ul></div>
+                 </div>
+                 <div id="quickPaymentSelectedCustomer" style="margin-bottom: 10px; font-weight: bold;"></div>
+                 <div class="form-group"> <label for="quickPaymentAmount">Amount Paid <span class="required">*</span>:</label> <input type="number" id="quickPaymentAmount" step="0.01" required placeholder="e.g., 500.00"> </div>
+                 <div class="form-group"> <label for="quickPaymentDate">Payment Date <span class="required">*</span>:</label> <input type="date" id="quickPaymentDate" required> </div>
+                 <div class="form-group"> <label for="quickPaymentMethod">Payment Method:</label> <select id="quickPaymentMethod"> <option value="Cash">Cash</option> <option value="Online">Online</option> <option value="Cheque">Cheque</option> <option value="Other">Other</option> </select> </div>
+                 <div class="form-group"> <label for="quickPaymentNotes">Notes:</label> <textarea id="quickPaymentNotes" rows="2" placeholder="Optional notes"></textarea> </div>
+                 <div class="modal-actions"> <button type="submit" id="saveQuickPaymentBtn" class="button save-button" disabled><i class="fas fa-save"></i> Save</button> <button type="button" id="cancelQuickPaymentBtn" class="button cancel-button">Cancel</button> </div>
+                  <div id="quickPaymentError" class="error-message" style="display: none;"></div>
+             </form>
+         </div>
+     </div>
 
-    <script src="js/dashboard.js" type="module" defer></script>
-
-    <script>
+    <script src="js/utils.js" type="module" defer></script>
+    <script src="js/dashboard.js" type="module" defer></script> <script>
         function setActiveLink() {
              try { const path=window.location.pathname; const page=path.substring(path.lastIndexOf('/')+1)||'index.html'; const links=document.querySelectorAll('.sidebar ul li a'); links.forEach(l=>{const hrefAttr=l.getAttribute('href'); l.classList.remove('active'); if(hrefAttr){const linkPage=hrefAttr.substring(hrefAttr.lastIndexOf('/')+1).split('?')[0].split('#')[0]||'index.html'; if(page===linkPage||((page==='/'||page==='index.html')&&linkPage==='index.html')){l.classList.add('active');}}}); } catch(e){console.error("Error setting active link:",e);}
         }
-        window.addEventListener('DOMContentLoaded', setActiveLink);
+        // रन करें जब DOM तैयार हो
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', setActiveLink);
+        } else {
+            setActiveLink(); // DOM पहले से लोड है
+        }
+        // Popstate पर भी रन करें (ब्राउज़र बैक/फॉरवर्ड)
         window.addEventListener('popstate', setActiveLink);
     </script>
 </body>
