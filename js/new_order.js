@@ -1,12 +1,13 @@
 // Only '#' comments are replaced with '//'
 
-// new_order.js - v2.6 (WhatsApp Send Delay)
+// new_order.js - v2.6.1 (Ledger Compatibility: totalAmount, createdAt, Advance Payment Handling)
 // फ़ाइल का नाम: new_order.js
 
 // --- Firebase Functions ---
+// Ensure serverTimestamp and arrayUnion are imported and available globally
 const {
     db, collection, addDoc, doc, getDoc, getDocs, updateDoc,
-    query, where, orderBy, limit, Timestamp, arrayUnion // Added arrayUnion for status history
+    query, where, orderBy, limit, Timestamp, arrayUnion, serverTimestamp // Added serverTimestamp
 } = window;
 
 // --- Global Variables ---
@@ -76,7 +77,7 @@ const statusList = [
 
 // --- Initialization ---
 document.addEventListener('DOMContentLoaded', () => {
-    console.log("New Order DOM Loaded (v2.6 - WhatsApp Send Delay). Initializing..."); // Updated version log
+    console.log("New Order DOM Loaded (v2.6.1 - Ledger Compatibility). Initializing..."); // Updated version log
     if (!orderForm || !addItemBtn || !orderItemsTableBody || !itemRowTemplate || !calculationPreviewArea || !calculationPreviewContent || !orderStatusSelect) {
         console.error("Critical DOM elements missing! Check HTML IDs.", { orderForm: !!orderForm, addItemBtn: !!addItemBtn, orderItemsTableBody: !!orderItemsTableBody, itemRowTemplate: !!itemRowTemplate, calculationPreviewArea: !!calculationPreviewArea, calculationPreviewContent: !!calculationPreviewContent, orderStatusSelect: !!orderStatusSelect });
         alert("Page structure error. Cannot initialize order form.");
@@ -85,7 +86,7 @@ document.addEventListener('DOMContentLoaded', () => {
     waitForDbConnection(initializeForm);
 
     // Event Listeners
-    orderForm.addEventListener('submit', handleFormSubmit);
+    orderForm.addEventListener('submit', handleFormSubmit); // Uses the updated function below
     addItemBtn.addEventListener('click', handleAddItem);
     orderItemsTableBody.addEventListener('click', handleItemTableClick);
     orderItemsTableBody.addEventListener('input', handleItemTableInput);
@@ -106,7 +107,9 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // --- DB Connection Wait ---
-function waitForDbConnection(callback) { if(window.db&&typeof window.query==='function'&&typeof window.collection==='function'){console.log("DB confirmed."); callback();}else{let a=0;const m=20,i=setInterval(()=>{a++; if(window.db&&typeof window.query==='function'&&typeof window.collection==='function'){clearInterval(i);console.log("DB confirmed later."); callback();}else if(a>=m){clearInterval(i);console.error("DB timeout.");alert("DB connection failed.");if(saveButton)saveButton.disabled=true;}},250);}}
+// Ensure serverTimestamp and arrayUnion are checked here too
+function waitForDbConnection(callback) { if(window.db && typeof window.query === 'function' && typeof window.collection === 'function' && typeof window.serverTimestamp === 'function' && typeof window.arrayUnion === 'function'){ console.log("DB confirmed (with serverTimestamp/arrayUnion)."); callback(); } else { let a = 0; const m = 20, i = setInterval(() => { a++; if(window.db && typeof window.query === 'function' && typeof window.collection === 'function' && typeof window.serverTimestamp === 'function' && typeof window.arrayUnion === 'function') { clearInterval(i); console.log("DB confirmed later (with serverTimestamp/arrayUnion)."); callback(); } else if(a >= m) { clearInterval(i); console.error("DB timeout or missing functions (serverTimestamp/arrayUnion)."); alert("DB connection failed or functions missing."); if(saveButton) saveButton.disabled = true; } }, 250); } }
+
 
 // --- Global Click Handler ---
 function handleGlobalClick(event) {
@@ -210,14 +213,14 @@ async function loadOrderForEdit(docId) {
             manualOrderIdInput.value=currentOrderData.orderId||'';
             // Use createdAt first if available, fallback to orderDate
             const primaryDate = currentOrderData.createdAt || currentOrderData.orderDate;
-            orderDateInput.value = primaryDate?.toDate ? primaryDate.toDate().toISOString().split('T')[0] : (primaryDate || ''); // Handle string date
+            orderDateInput.value = primaryDate?.toDate ? primaryDate.toDate().toISOString().split('T')[0] : (typeof primaryDate === 'string' ? primaryDate : ''); // Handle string date/timestamp
 
-            deliveryDateInput.value=currentOrderData.deliveryDate?.toDate ? currentOrderData.deliveryDate.toDate().toISOString().split('T')[0] : (currentOrderData.deliveryDate || '');// Handle string date
+            deliveryDateInput.value=currentOrderData.deliveryDate?.toDate ? currentOrderData.deliveryDate.toDate().toISOString().split('T')[0] : (typeof currentOrderData.deliveryDate === 'string' ? currentOrderData.deliveryDate : '');// Handle string date/timestamp
             remarksInput.value=currentOrderData.remarks||'';
             const uV=currentOrderData.urgent||'No';
             const uR=orderForm.querySelector(`input[name="urgent"][value="${uV}"]`);
             if(uR)uR.checked=true;
-            const loadedStatus = currentOrderData.status || "Order Received";
+            const loadedStatus = currentOrderData.status || "Order Received"; // Use top-level status
             orderStatusSelect.value = loadedStatus;
             updateStatusDropdownColor(loadedStatus);
             if(!orderItemsTableBody){console.error("Item table body missing!");return;}
@@ -240,7 +243,7 @@ async function loadOrderForEdit(docId) {
                     if(nR){
                          populateItemRow(nR, itemDataForPopulation);
                          if (itemDataForPopulation.productId) {
-                             nR.dataset.productId = itemDataForPopulation.productId;
+                             nR.dataset.productId = itemDataForPopulation.productId; // Ensure product ID is stored on row
                          }
                     } else {
                         console.error("Failed to add row for item:",i);
@@ -250,8 +253,9 @@ async function loadOrderForEdit(docId) {
             if(orderItemsTableBody.children.length===0){handleAddItem();} // Add a blank row if no items loaded
             if(summaryDiscountPercentInput)summaryDiscountPercentInput.value=currentOrderData.discountPercentage||'';
             if(summaryDiscountAmountInput)summaryDiscountAmountInput.value=currentOrderData.discountAmount||'';
-            if(summaryAdvancePaymentInput)summaryAdvancePaymentInput.value=currentOrderData.advancePayment||'';
-            updateOrderSummary();
+            // Do NOT populate advance payment here - it's a past transaction
+            if(summaryAdvancePaymentInput) summaryAdvancePaymentInput.value = ''; // Always clear on edit load
+            updateOrderSummary(); // Calculate summary based on loaded items/discount
         } else {
             console.error("Order document not found for editing!");
             showFormError("Error: The order you are trying to edit could not be found.");
@@ -274,7 +278,7 @@ function handleItemTableClick(event) {
          const r=event.target.closest('.item-row');
          if(r){
               r.remove();
-              hideProductSuggestions();
+              hideProductSuggestions(); // Hide suggestions if delete is clicked
               updateOrderSummary();
               updateCalculationPreview();
           }
@@ -304,6 +308,7 @@ function updateCalculationPreview() { if (!calculationPreviewArea || !calculatio
 
 // --- Order Summary Calculation ---
 function updateOrderSummary() { let s=0; if(orderItemsTableBody) orderItemsTableBody.querySelectorAll('.item-row .item-amount').forEach(sp=>s+=parseFloat(sp.textContent||0)); let dP=parseFloat(summaryDiscountPercentInput?.value||0),dA=parseFloat(summaryDiscountAmountInput?.value||0),cDA=0; const activeEl = document.activeElement; if(!isDiscountInputProgrammaticChange){if(activeEl===summaryDiscountPercentInput&&!isNaN(dP)){cDA=s*(dP/100); isDiscountInputProgrammaticChange=true; if(summaryDiscountAmountInput) summaryDiscountAmountInput.value=cDA.toFixed(2); isDiscountInputProgrammaticChange=false;}else if(activeEl===summaryDiscountAmountInput&&!isNaN(dA)){cDA=dA; if(s>0){const cP=(cDA/s)*100; isDiscountInputProgrammaticChange=true; if(summaryDiscountPercentInput) summaryDiscountPercentInput.value=cP.toFixed(2); isDiscountInputProgrammaticChange=false;}else{isDiscountInputProgrammaticChange=true; if(summaryDiscountPercentInput) summaryDiscountPercentInput.value=''; isDiscountInputProgrammaticChange=false;}}else{if(!isNaN(dP)&&dP>0)cDA=s*(dP/100); else if(!isNaN(dA)&&dA>0)cDA=dA; else cDA=0;}} cDA=Math.max(0,Math.min(cDA,s)); const fA=s-cDA,aP=parseFloat(summaryAdvancePaymentInput?.value||0),tB=fA-aP; if(summarySubtotalSpan)summarySubtotalSpan.textContent=s.toFixed(2); if(summaryFinalAmountSpan)summaryFinalAmountSpan.textContent=fA.toFixed(2); if(summaryTotalBalanceSpan)summaryTotalBalanceSpan.textContent=tB.toFixed(2); checkCreditLimit();}
+
 
 function handleDiscountInput(event) { if(isDiscountInputProgrammaticChange)return; const cI=event.target; isDiscountInputProgrammaticChange=true; if(cI===summaryDiscountPercentInput){if(summaryDiscountAmountInput)summaryDiscountAmountInput.value='';}else if(cI===summaryDiscountAmountInput){if(summaryDiscountPercentInput)summaryDiscountPercentInput.value='';} isDiscountInputProgrammaticChange=false; updateOrderSummary();}
 
@@ -345,18 +350,21 @@ async function fetchAndDisplayCustomerDetails(customerId) {
     try {
         let c = customerCache.find(cust => cust.id === customerId);
         if (!c) {
+            console.log(`Customer ${customerId} not in cache, fetching from DB...`);
             const customerDoc = await getDoc(doc(db, "customers", customerId));
             if (customerDoc.exists()) {
                 c = { id: customerDoc.id, ...customerDoc.data() };
+                // Optionally add to cache here if needed, though preFetchCaches should handle it
             } else {
                 console.warn("Customer not found in DB:", customerId);
+                 showFormError(`Selected customer (ID: ${customerId.substring(0,6)}...) not found in database. Please check selection or add as new customer.`);
                 resetCustomerSelectionUI(true); // Clear inputs if not found
                 return;
             }
         }
-        selectedCustomerData = c;
+        selectedCustomerData = c; // Store full customer data globally
 
-        // Ensure input fields are populated
+        // Ensure input fields are populated (if they were empty)
         if(!customerNameInput.value && c.fullName) customerNameInput.value = c.fullName;
         if(!customerWhatsAppInput.value && c.whatsappNo) customerWhatsAppInput.value = c.whatsappNo;
         if(!customerAddressInput.value && (c.billingAddress || c.address)) customerAddressInput.value = c.billingAddress || c.address;
@@ -366,29 +374,54 @@ async function fetchAndDisplayCustomerDetails(customerId) {
         let balanceText = 'Calculating...'; let balanceNum = NaN;
         if(customerBalanceArea){ customerCurrentBalanceSpan.textContent = balanceText; customerBalanceArea.style.display = 'block'; }
         try {
+            // Fetch totals using helper functions
             const totalPaid = await loadPaymentTotals_NewOrder(customerId);
-            const totalOrderValue = await loadOrderTotals_NewOrder(customerId); // Uses top-level customerId now
-            if (totalOrderValue !== 'N/A') { balanceNum = Number(totalOrderValue) - Number(totalPaid); balanceText = formatCurrency(balanceNum); }
-            else if (totalPaid > 0) { balanceText = `(Paid: ${formatCurrency(totalPaid)})`; balanceNum = -totalPaid; }
-            else { balanceText = '₹0.00'; balanceNum = 0; }
-        } catch (calcError) { console.error("Error calculating balance:", calcError); balanceText = 'Error'; balanceNum = NaN; }
+            const totalOrderValue = await loadOrderTotals_NewOrder(customerId); // Uses customerId now
+            // Calculate balance based on fetched totals
+            if (totalOrderValue !== 'N/A') { // Check if order total could be calculated
+                 balanceNum = Number(totalOrderValue) - Number(totalPaid);
+                 balanceText = formatCurrency(balanceNum);
+             } else if (totalPaid > 0) { // If only payments exist
+                 balanceText = `(Paid: ${formatCurrency(totalPaid)})`;
+                 balanceNum = -totalPaid; // Represent as credit
+             } else { // No orders, no payments
+                 balanceText = '₹0.00';
+                 balanceNum = 0;
+             }
+        } catch (calcError) {
+            console.error("Error calculating balance:", calcError);
+            balanceText = 'Error'; balanceNum = NaN;
+        }
 
-        // Update Balance Display
-        if(customerBalanceArea){ customerCurrentBalanceSpan.textContent = balanceText; customerCurrentBalanceSpan.classList.remove('positive-balance','negative-balance'); if (!isNaN(balanceNum)) { if (balanceNum > 0.01) customerCurrentBalanceSpan.classList.add('negative-balance'); else if (balanceNum < -0.01) customerCurrentBalanceSpan.classList.add('positive-balance'); customerCurrentBalanceSpan.title = balanceNum > 0.01 ? `Due: ${formatCurrency(balanceNum)}` : (balanceNum < -0.01 ? `Credit: ${formatCurrency(Math.abs(balanceNum))}` : 'Zero Balance'); } else { customerCurrentBalanceSpan.title = `Balance: ${balanceText}`; } customerBalanceArea.style.display = 'block'; }
+        // Update Balance Display in UI
+        if(customerBalanceArea){
+             customerCurrentBalanceSpan.textContent = balanceText;
+             // Apply styling based on balance
+             customerCurrentBalanceSpan.classList.remove('positive-balance', 'negative-balance'); // Reset classes
+             if (!isNaN(balanceNum)) {
+                 if (balanceNum > 0.01) customerCurrentBalanceSpan.classList.add('negative-balance'); // Customer owes money
+                 else if (balanceNum < -0.01) customerCurrentBalanceSpan.classList.add('positive-balance'); // Customer has credit
+                 // Add title for tooltip (optional)
+                 customerCurrentBalanceSpan.title = balanceNum > 0.01 ? `Due: ${formatCurrency(balanceNum)}` : (balanceNum < -0.01 ? `Credit: ${formatCurrency(Math.abs(balanceNum))}` : 'Zero Balance');
+             } else {
+                 customerCurrentBalanceSpan.title = `Balance: ${balanceText}`; // Fallback title
+             }
+             customerBalanceArea.style.display = 'block'; // Show the balance area
+         }
         // Update Account Link
         if(viewCustomerAccountLink && customerAccountLinkArea){ viewCustomerAccountLink.href = `customer_account_detail.html?id=${encodeURIComponent(customerId)}`; customerAccountLinkArea.style.display = 'block'; }
         // Update Credit Limit Check
-        checkCreditLimit(balanceNum);
+        checkCreditLimit(balanceNum); // Pass calculated balance
 
     } catch (e) { console.error("Error in fetchAndDisplayCustomerDetails:", e); resetCustomerSelectionUI(true); } // Clear inputs on error
 }
 function resetCustomerSelectionUI(clearInputs = true) {
-    selectedCustomerData = null;
-    if(customerAccountLinkArea) customerAccountLinkArea.style.display = 'none';
-    if(customerBalanceArea) customerBalanceArea.style.display = 'none';
-    if(customerCurrentBalanceSpan) customerCurrentBalanceSpan.textContent = '';
-    if(creditLimitWarningDiv) creditLimitWarningDiv.style.display = 'none';
-    if (clearInputs) {
+    selectedCustomerData = null; // Clear global customer data
+    if(customerAccountLinkArea) customerAccountLinkArea.style.display = 'none'; // Hide link
+    if(customerBalanceArea) customerBalanceArea.style.display = 'none'; // Hide balance
+    if(customerCurrentBalanceSpan) customerCurrentBalanceSpan.textContent = ''; // Clear balance text
+    if(creditLimitWarningDiv) creditLimitWarningDiv.style.display = 'none'; // Hide credit warning
+    if (clearInputs) { // Clear form inputs if requested
         if(customerNameInput) customerNameInput.value = '';
         if(customerWhatsAppInput) customerWhatsAppInput.value = '';
         if(customerAddressInput) customerAddressInput.value = '';
@@ -396,19 +429,40 @@ function resetCustomerSelectionUI(clearInputs = true) {
         if(selectedCustomerIdInput) selectedCustomerIdInput.value = ''; // Clear hidden input
         selectedCustomerId = null; // Clear the global ID
     }
+    // Do NOT clear product items when resetting customer
 }
 
 // --- Credit Limit Check ---
 function checkCreditLimit(currentBalanceNum = NaN) {
-    if (!selectedCustomerData || !selectedCustomerData.creditAllowed) { if(creditLimitWarningDiv) creditLimitWarningDiv.style.display = 'none'; return; }
+    // Only check if customer data is loaded and credit is allowed
+    if (!selectedCustomerData || !selectedCustomerData.creditAllowed) {
+         if(creditLimitWarningDiv) creditLimitWarningDiv.style.display = 'none';
+         return;
+    }
     const creditLimit = parseFloat(selectedCustomerData.creditLimit || 0);
+    // Get the current order's value from the summary span
     const finalAmountText = summaryFinalAmountSpan?.textContent || '0';
-    const newOrderValue = parseFloat(finalAmountText.replace(/[^0-9.-]+/g,"")) || 0;
-    if (isNaN(currentBalanceNum) || isNaN(newOrderValue) || creditLimit <= 0) { if(creditLimitWarningDiv) creditLimitWarningDiv.style.display = 'none'; return; }
-    const potentialBalance = currentBalanceNum + newOrderValue;
-    if (potentialBalance > creditLimit) { if(creditLimitWarningDiv) { creditLimitWarningDiv.textContent = `Warning: Potential balance (${formatCurrency(potentialBalance)}) exceeds credit limit of ${formatCurrency(creditLimit)}.`; creditLimitWarningDiv.style.display = 'block'; } }
-    else { if(creditLimitWarningDiv) creditLimitWarningDiv.style.display = 'none'; }
+    const newOrderValue = parseFloat(finalAmountText.replace(/[^0-9.-]+/g,"")) || 0; // Parse amount string
+
+    // Check if values are valid for calculation
+    if (isNaN(currentBalanceNum) || isNaN(newOrderValue) || creditLimit <= 0) {
+        if(creditLimitWarningDiv) creditLimitWarningDiv.style.display = 'none'; // Hide if calculation not possible
+        return;
+    }
+
+    const potentialBalance = currentBalanceNum + newOrderValue; // Potential balance IF this order is added
+
+    // Show warning if potential balance exceeds limit
+    if (potentialBalance > creditLimit) {
+        if(creditLimitWarningDiv) {
+             creditLimitWarningDiv.textContent = `Warning: Potential balance (${formatCurrency(potentialBalance)}) exceeds credit limit of ${formatCurrency(creditLimit)}.`;
+             creditLimitWarningDiv.style.display = 'block';
+         }
+    } else {
+        if(creditLimitWarningDiv) creditLimitWarningDiv.style.display = 'none'; // Hide warning if within limit
+    }
 }
+
 
 // --- Product Autocomplete ---
 function getOrCreateProductSuggestionsDiv() { if (!productSuggestionsDiv) { productSuggestionsDiv = document.createElement('div'); productSuggestionsDiv.className = 'product-suggestions-list'; productSuggestionsDiv.style.display = 'none'; document.body.appendChild(productSuggestionsDiv); productSuggestionsDiv.addEventListener('click', handleSuggestionClick); } return productSuggestionsDiv; }
@@ -422,150 +476,350 @@ function renderProductSuggestions(suggestions, term, suggestionsContainer) { if(
 function selectProductSuggestion(productData, inputElement) {
     try {
         const r = inputElement.closest('.item-row'); if (!r || !productData || !productData.id) { console.error("Row or productData or productData.id missing in selectProductSuggestion"); hideProductSuggestions(); return; }
-        r.dataset.productId = productData.id; const pNI = r.querySelector('.product-name'), uTS = r.querySelector('.unit-type-select'), rI = r.querySelector('.rate-input'), qI = r.querySelector('.quantity-input');
+        r.dataset.productId = productData.id; // Store product ID on the row
+        const pNI = r.querySelector('.product-name'), uTS = r.querySelector('.unit-type-select'), rI = r.querySelector('.rate-input'), qI = r.querySelector('.quantity-input');
         if (!pNI || !uTS || !rI || !qI ) { console.error("Error in selectProductSuggestion: Row elements missing!"); hideProductSuggestions(); return; }
-        pNI.value = productData.name || ''; rI.value = productData.salePrice !== undefined ? String(productData.salePrice) : ''; const mR = productData.minSalePrice; rI.dataset.minRate = mR !== undefined && mR !== null ? String(mR) : '-1';
-        let dUT = 'Qty'; if (productData.unit) { const uL = String(productData.unit).toLowerCase(); if (uL.includes('sq') || uL.includes('ft') || uL.includes('feet')) dUT = 'Sq Feet'; } uTS.value = dUT;
-        hideProductSuggestions(); const cE = new Event('change', { bubbles: true }); uTS.dispatchEvent(cE); updateItemAmount(r);
-        let nI = null; if (dUT === 'Sq Feet') nI = r.querySelector('.width-input'); if (!nI) nI = qI; if (nI) { nI.focus(); if (typeof nI.select === 'function') nI.select(); } else { rI.focus(); }
-    } catch (error) { console.error("Error inside selectProductSuggestion:", error); hideProductSuggestions(); }
+        // Fill known data
+        pNI.value = productData.name || '';
+        rI.value = productData.salePrice !== undefined ? String(productData.salePrice) : '';
+        const mR = productData.minSalePrice;
+        rI.dataset.minRate = mR !== undefined && mR !== null ? String(mR) : '-1'; // Store min rate
+
+        // Determine default unit type based on product data
+        let dUT = 'Qty'; // Default to Qty
+        if (productData.unit) {
+             const uL = String(productData.unit).toLowerCase();
+             if (uL.includes('sq') || uL.includes('ft') || uL.includes('feet')) dUT = 'Sq Feet';
+             // Add other unit type checks if necessary (e.g., 'pcs', 'meter')
+        }
+        uTS.value = dUT; // Set unit type dropdown
+
+        hideProductSuggestions(); // Hide suggestions list
+        // Trigger change event on unit type select to update UI (like showing/hiding Sq Ft inputs)
+        const changeEvent = new Event('change', { bubbles: true });
+        uTS.dispatchEvent(changeEvent);
+        updateItemAmount(r); // Recalculate item amount after filling data
+
+        // Focus next logical input field
+        let nextInput = null;
+        if (dUT === 'Sq Feet') nextInput = r.querySelector('.width-input'); // Focus width if Sq Ft
+        if (!nextInput) nextInput = qI; // Otherwise focus quantity
+        if (nextInput) {
+            nextInput.focus();
+            if (typeof nextInput.select === 'function') nextInput.select(); // Select text if possible
+        } else {
+            rI.focus(); // Fallback to rate input
+        }
+    } catch (error) {
+        console.error("Error inside selectProductSuggestion:", error);
+        hideProductSuggestions(); // Ensure suggestions are hidden on error
+    }
 }
 
 // --- Status Dropdown Handling ---
 function updateStatusDropdownColor(statusValue) { if (!orderStatusSelect) return; statusList.forEach(status => { const className = `status-select-${status.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`; orderStatusSelect.classList.remove(className); }); orderStatusSelect.classList.remove('status-select-default'); if (statusValue) { const currentClassName = `status-select-${statusValue.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`; orderStatusSelect.classList.add(currentClassName); } else { orderStatusSelect.classList.add('status-select-default'); } }
 
-// --- Form Submit Handler ---
+
+// ==================================================================================
+// ===                UPDATED handleFormSubmit Function (v2.6.1)                ===
+// ==================================================================================
 async function handleFormSubmit(event) {
     event.preventDefault();
-    console.log("Submit initiated...");
-    showFormError('');
-    if(!db||!addDoc||!doc||!updateDoc||!Timestamp||!getDoc||!getDocs||!collection||!query||!limit){showFormError("Database functions unavailable.");return;}
-    if(!saveButton){console.error("Save button element missing!");return;}
+    console.log("Submit initiated (V2.6.1 - Ledger Compatibility)..."); // Log version compatibility
+    showFormError(''); // Clear previous errors
+    // Ensure necessary Firestore functions are available
+    // Make sure serverTimestamp and arrayUnion are available from Firebase setup
+    if (!db || !addDoc || !doc || !updateDoc || !Timestamp || !getDoc || !getDocs || !collection || !query || !limit || typeof window.serverTimestamp !== 'function' || typeof window.arrayUnion !== 'function') {
+        showFormError("Database functions unavailable. Please check Firebase setup.");
+        console.error("Missing Firestore functions: check db, addDoc, doc, updateDoc, Timestamp, getDoc, getDocs, collection, query, limit, serverTimestamp, arrayUnion")
+        return;
+    }
+    if (!saveButton) { console.error("Save button element missing!"); return; }
 
-    saveButton.disabled=true;
-    const originalButtonText = saveButtonText ? saveButtonText.textContent : 'Save Order';
-    const originalButtonHTML = saveButton.innerHTML;
-    if(saveButtonText)saveButtonText.textContent=isEditMode?'Updating...':'Saving...';else saveButton.innerHTML='<i class="fas fa-spinner fa-spin"></i> Saving...';
+    // Disable button and show loading state
+    saveButton.disabled = true;
+    const originalButtonText = saveButtonText ? saveButtonText.textContent : (isEditMode ? 'Update Order' : 'Save Order');
+    const originalButtonHTML = saveButton.innerHTML; // Store original HTML
+    if (saveButtonText) saveButtonText.textContent = isEditMode ? 'Updating...' : 'Saving...';
+    else saveButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
 
-    try{
-        const cFN=customerNameInput.value.trim();
-        const cW=customerWhatsAppInput.value.trim();
-        let cId=selectedCustomerId; // Use the globally stored customer ID
+    try {
+        // --- Collect Customer Data ---
+        const cFN = customerNameInput.value.trim();
+        const cW = customerWhatsAppInput.value.trim();
+        let cId = selectedCustomerId; // Use the globally stored customer ID from selection/URL
 
-        if(!cFN) throw new Error("Customer Name is required.");
-        if(!cW) throw new Error("WhatsApp No is required.");
-
-        if (!cId) { // Validate Customer ID
+        // --- Validate Customer Data ---
+        if (!cFN) throw new Error("Customer Name is required.");
+        if (!cW) throw new Error("WhatsApp No is required.");
+        if (!cId) { // This validation is crucial!
             console.error("customerId is null/undefined before saving!");
-            throw new Error("Customer is not selected or linked properly. Please search and select the customer again.");
+            // Try getting from hidden input as a fallback (though it should match selectedCustomerId)
+            cId = selectedCustomerIdInput?.value || null;
+            if (!cId) {
+                 throw new Error("Customer is not selected or linked properly. Please search and select the customer again.");
+            }
+            console.warn("Used customerId from hidden input as fallback:", cId);
+            selectedCustomerId = cId; // Ensure global var is updated if fallback was used
         }
         console.log('Proceeding to save order with customerId:', cId);
 
-        // Create customerDetails object
-        const cD={ fullName:cFN, whatsappNo:cW, address:customerAddressInput.value.trim()||'', contactNo:customerContactInput.value.trim()||'' };
-        // Comment out or remove adding customerId to cD
-        // cD.customerId = cId; // << लाइन कमेंट कर दी गई है
+        // Create customerDetails object (for embedding if needed, but without customerId inside)
+        const cD = {
+            fullName: cFN,
+            whatsappNo: cW,
+            address: customerAddressInput.value.trim() || '',
+            contactNo: customerContactInput.value.trim() || ''
+        };
 
-        const oDV=orderDateInput.value;
-        const dDV=deliveryDateInput.value||'';
-        const uV=orderForm.querySelector('input[name="urgent"]:checked')?.value||'No';
-        const rV=remarksInput.value.trim()||'';
-        const sS = orderStatusSelect.value; // Get selected status
+        // --- Collect Order MetaData ---
+        const oDV = orderDateInput.value;
+        const dDV = deliveryDateInput.value || ''; // Optional delivery date
+        const uV = orderForm.querySelector('input[name="urgent"]:checked')?.value || 'No';
+        const rV = remarksInput.value.trim() || '';
+        const sS = orderStatusSelect.value; // Current selected status
 
-        if(!oDV) throw new Error("Order Date is required.");
+        if (!oDV) throw new Error("Order Date is required.");
 
-        let oId;const mId=manualOrderIdInput.value.trim();const eId=displayOrderIdInput.value;
-        if(isEditMode){oId=currentOrderData?.orderId||eId||orderIdToEdit;}else if(mId){oId=mId;}else{oId=Date.now().toString();console.log(`Generated Order ID: ${oId}`);}
+        // --- Determine Order ID ---
+        let oId;
+        const mId = manualOrderIdInput.value.trim();
+        const eId = displayOrderIdInput.value; // ID displayed from loaded data in edit mode
 
-        const items=[];const rows=orderItemsTableBody.querySelectorAll('.item-row');
-        if(rows.length===0)throw new Error("Please add at least one item to the order.");
+        if (isEditMode) {
+            // Use ID from loaded data, fallback to displayed ID, fallback to URL param ID
+            oId = currentOrderData?.orderId || eId || orderIdToEdit;
+            if (!oId) throw new Error("Internal Error: Missing Order ID for update.");
+        } else if (mId) { // Use manual ID if provided for new order
+            oId = mId;
+        } else { // Generate ID if none provided for new order
+            oId = Date.now().toString(); // Simple timestamp-based ID
+            console.log(`Generated Order ID: ${oId}`);
+        }
 
-        let validItems=true;
-        rows.forEach((row,idx)=>{ // Process items
-            if(!validItems)return;
-            const pNI=row.querySelector('.product-name'),uTS=row.querySelector('.unit-type-select'),qI=row.querySelector('.quantity-input'),rI=row.querySelector('.rate-input'),dUS=row.querySelector('.dimension-unit-select'),wI=row.querySelector('.width-input'),hI=row.querySelector('.height-input');
-            const productId=row.dataset.productId||null;const pN=pNI?.value.trim(),uT=uTS?.value,q=parseInt(qI?.value||0),r=parseFloat(rI?.value||''),mR=parseFloat(rI?.dataset.minRate||-1);
-            if(!pN){validItems=false;showFormError(`Item ${idx+1}: Product Name required.`);pNI?.focus();return;}
-            if(isNaN(q)||q<=0){validItems=false;showFormError(`Item ${idx+1}: Valid Quantity required.`);qI?.focus();return;}
-            if(isNaN(r)||r<0){validItems=false;showFormError(`Item ${idx+1}: Valid Rate required.`);rI?.focus();return;}
-            if(mR>=0&&r<mR&&Math.abs(r-mR)>0.001){validItems=false;showFormError(`Item ${idx+1}: Rate < Min Sale Price (${formatCurrency(mR)}).`);rI?.focus();return;}
-            const iD={productId:productId,productName:pN,unitType:uT,quantity:q,rate:r,minSalePrice:mR>=0?mR:null};
-            if(uT==='Sq Feet'){const dU=dUS?.value||'feet',w=parseFloat(wI?.value||0),h=parseFloat(hI?.value||0);if(isNaN(w)||w<=0){validItems=false;showFormError(`Item ${idx+1}: Valid Width required.`);wI?.focus();return;}if(isNaN(h)||h<=0){validItems=false;showFormError(`Item ${idx+1}: Valid Height required.`);hI?.focus();return;}const cR=calculateFlexDimensions(dU,w,h);iD.dimensionUnit=dU;iD.width=w;iD.height=h;iD.realSqFt=cR.realSqFt;iD.printSqFt=cR.printSqFt;iD.itemAmount=parseFloat((cR.printSqFt*q*r).toFixed(2));}else{iD.itemAmount=parseFloat((q*r).toFixed(2));}items.push(iD);
+        // --- Collect and Validate Items ---
+        const items = [];
+        const rows = orderItemsTableBody.querySelectorAll('.item-row');
+        if (rows.length === 0) throw new Error("Please add at least one item to the order.");
+
+        let validItems = true;
+        rows.forEach((row, idx) => {
+            if (!validItems) return; // Stop processing if an error occurred
+            const pNI = row.querySelector('.product-name');
+            const uTS = row.querySelector('.unit-type-select');
+            const qI = row.querySelector('.quantity-input');
+            const rI = row.querySelector('.rate-input');
+            const dUS = row.querySelector('.dimension-unit-select');
+            const wI = row.querySelector('.width-input');
+            const hI = row.querySelector('.height-input');
+
+            const productId = row.dataset.productId || null; // Get linked product ID if available
+            const pN = pNI?.value.trim();
+            const uT = uTS?.value;
+            const q = parseInt(qI?.value || 0);
+            const r = parseFloat(rI?.value || '');
+            const mR = parseFloat(rI?.dataset.minRate || -1);
+
+            // Validations
+            if (!pN) { validItems = false; showFormError(`Item ${idx + 1}: Product Name required.`); pNI?.focus(); return; }
+            if (isNaN(q) || q <= 0) { validItems = false; showFormError(`Item ${idx + 1}: Valid Quantity required.`); qI?.focus(); return; }
+            if (isNaN(r) || r < 0) { validItems = false; showFormError(`Item ${idx + 1}: Valid Rate required (must be 0 or more).`); rI?.focus(); return; }
+            // Check against min sale price (allow rate=minRate)
+            if (mR >= 0 && r < mR && Math.abs(r - mR) > 0.001) { // Use tolerance for float comparison
+                 validItems = false; showFormError(`Item ${idx + 1}: Rate ${formatCurrency(r)} is below Minimum Sale Price (${formatCurrency(mR)}).`); rI?.focus(); return;
+            }
+
+            const iD = { // Build item data object
+                productId: productId,
+                productName: pN,
+                unitType: uT,
+                quantity: q,
+                rate: r,
+                minSalePrice: mR >= 0 ? mR : null // Store min rate if valid
+            };
+
+            if (uT === 'Sq Feet') {
+                const dU = dUS?.value || 'feet';
+                const w = parseFloat(wI?.value || 0);
+                const h = parseFloat(hI?.value || 0);
+                if (isNaN(w) || w <= 0) { validItems = false; showFormError(`Item ${idx + 1}: Valid Width required.`); wI?.focus(); return; }
+                if (isNaN(h) || h <= 0) { validItems = false; showFormError(`Item ${idx + 1}: Valid Height required.`); hI?.focus(); return; }
+                const cR = calculateFlexDimensions(dU, w, h); // Calculate dimensions
+                iD.dimensionUnit = dU;
+                iD.width = w;
+                iD.height = h;
+                iD.realSqFt = cR.realSqFt;
+                iD.printSqFt = cR.printSqFt;
+                iD.itemAmount = parseFloat((cR.printSqFt * q * r).toFixed(2)); // Calculate item amount based on print area
+            } else {
+                iD.itemAmount = parseFloat((q * r).toFixed(2)); // Calculate item amount based on quantity
+            }
+            items.push(iD);
         });
 
-        if(!validItems){ // Re-enable button if validation fails
-            saveButton.disabled=false; if(saveButtonText) saveButtonText.textContent = originalButtonText; else saveButton.innerHTML = originalButtonHTML; return;
+        if (!validItems) { // Re-enable button if validation fails
+            saveButton.disabled = false;
+            if (saveButtonText) saveButtonText.textContent = originalButtonText; else saveButton.innerHTML = originalButtonHTML;
+            return; // Stop submission
         }
 
-        let subT=0;items.forEach(i=>{subT+=i.itemAmount;});
-        let dP=parseFloat(summaryDiscountPercentInput?.value||0),dA=parseFloat(summaryDiscountAmountInput?.value||0);
-        let cDA=0;if(!isNaN(dP)&&dP>0)cDA=parseFloat((subT*(dP/100)).toFixed(2));else if(!isNaN(dA)&&dA>0)cDA=dA;cDA=Math.max(0,Math.min(cDA,subT));
-        let finalAmount=parseFloat((subT-cDA).toFixed(2));
-        let aP=parseFloat(summaryAdvancePaymentInput?.value||0);
+        // --- Calculate Order Totals ---
+        let subT = 0;
+        items.forEach(i => { subT += i.itemAmount; }); // Calculate subtotal from item amounts
 
-        // --- Final Payload Object ---
-        const payload={
-            orderId:oId,
-            customerDetails:cD, // Keep nested details if needed
-            orderDate:Timestamp.fromDate(new Date(oDV + 'T00:00:00')),
-            deliveryDate:dDV ? Timestamp.fromDate(new Date(dDV + 'T00:00:00')) : null,
-            urgent:uV,
-            remarks:rV,
-            status:sS,
-            items:items,
-            subTotal:subT,
-            discountPercentage:dP||0,
-            discountAmount:cDA||0,
-            finalAmount:finalAmount,
-            advancePayment:aP||0,
-            updatedAt:Timestamp.now()
+        let dP = parseFloat(summaryDiscountPercentInput?.value || 0);
+        let dA = parseFloat(summaryDiscountAmountInput?.value || 0);
+        let cDA = 0; // Calculated Discount Amount
+        // Prioritize Percentage if both are entered, otherwise use whichever is entered
+        if (!isNaN(dP) && dP > 0) {
+            cDA = parseFloat((subT * (dP / 100)).toFixed(2));
+        } else if (!isNaN(dA) && dA > 0) {
+            cDA = dA;
+             // Recalculate percentage based on amount if needed (optional)
+             if (subT > 0) dP = parseFloat(((cDA / subT) * 100).toFixed(2)); else dP = 0;
+        }
+        // Ensure discount doesn't exceed subtotal
+        cDA = Math.max(0, Math.min(cDA, subT));
+
+        let finalAmount = parseFloat((subT - cDA).toFixed(2)); // This is the final order value
+        let aP = parseFloat(summaryAdvancePaymentInput?.value || 0); // Advance Payment amount
+
+        // --- Prepare Final Payload Object for Firestore ---
+        const payload = {
+            // Identifiers
+            orderId: oId, // User-facing/manual/generated ID
+            customerId: cId, // *** Top-level Customer ID (REQUIRED) ***
+
+            // Customer Snapshot (optional, but useful)
+            customerDetails: cD,
+
+            // Order Dates
+            orderDate: Timestamp.fromDate(new Date(oDV + 'T00:00:00')), // Use start of day
+            deliveryDate: dDV ? Timestamp.fromDate(new Date(dDV + 'T00:00:00')) : null, // Use start of day or null
+
+            // Order Meta
+            urgent: uV,
+            remarks: rV,
+            status: sS, // Current status
+
+            // Items Array
+            items: items, // Array of item objects processed above
+
+            // Order Financials
+            subTotal: subT,
+            discountPercentage: dP || 0,
+            discountAmount: cDA,
+            // --- >>> CHANGE: Saving 'totalAmount' <<< ---
+            totalAmount: finalAmount, // *** Use the agreed field name ***
+            // 'finalAmount' field is kept for display or other uses, matches totalAmount here
+            finalAmount: finalAmount,
+            // --- Advance Payment is NO LONGER saved in the order itself ---
+            // advancePayment: aP || 0, // << REMOVED from order payload
+
+            // Timestamp for updates
+            updatedAt: serverTimestamp() // Always update this
+            // createdAt will be added only for new orders below
         };
-        // --- End Payload Object ---
+        // --- End of Payload Object ---
 
-        // --- >>> Add top-level customerId <<<---
-        payload.customerId = cId; // << लाइन यहाँ जोड़ी गई है
 
-        if(!isEditMode){
-            payload.createdAt=Timestamp.now(); // Add createdAt for new orders
-            payload.statusHistory = [{ status: sS, timestamp: Timestamp.now() }]; // Initialize status history
-        } else { // Handle edit mode
-            delete payload.createdAt; // Don't overwrite createdAt on edit
-             if (currentOrderData && sS !== currentOrderData.status) { // Update status history if changed
-                 const historyUpdate = { status: sS, timestamp: Timestamp.now() };
-                 payload.statusHistory = typeof arrayUnion === 'function' ? arrayUnion(historyUpdate) : (currentOrderData.statusHistory || []).concat([historyUpdate]);
-                 if (typeof arrayUnion !== 'function' && currentOrderData.statusHistory) { const exists = currentOrderData.statusHistory.some(entry => entry.status === historyUpdate.status && entry.timestamp.isEqual(historyUpdate.timestamp)); if (exists) payload.statusHistory = currentOrderData.statusHistory; }
-             } else { delete payload.statusHistory; } // Don't update history if status unchanged
+        let savedId, msg;
+        let createdAtTimestamp = null; // To potentially reuse for payment date
+
+        if (isEditMode) { // --- UPDATE Existing Order ---
+            if (!orderIdToEdit) throw new Error("Internal Error: Missing Firestore Document ID for update.");
+            delete payload.createdAt; // Prevent overwriting createdAt
+
+            // Handle status history update only if status changed
+            if (currentOrderData && sS !== currentOrderData.status) {
+                const historyUpdate = { status: sS, timestamp: serverTimestamp() }; // Use server timestamp
+                 // Use arrayUnion if available (safer for concurrency)
+                 payload.statusHistory = typeof arrayUnion === 'function'
+                     ? arrayUnion(historyUpdate)
+                     : (currentOrderData.statusHistory || []).concat([historyUpdate]); // Fallback if arrayUnion not available
+            } else {
+                 // If status hasn't changed, don't include statusHistory in the update payload
+                 delete payload.statusHistory;
+            }
+
+            await updateDoc(doc(db, "orders", orderIdToEdit), payload);
+            savedId = orderIdToEdit; // Firestore document ID
+            msg = `Order ${oId} updated successfully!`;
+
+        } else { // --- ADD New Order ---
+            // --- >>> CHANGE: Use serverTimestamp() for createdAt <<< ---
+            createdAtTimestamp = serverTimestamp(); // Get timestamp object reference
+            payload.createdAt = createdAtTimestamp; // Add server timestamp for new orders
+
+            // Initialize status history for new orders using the same timestamp reference
+            payload.statusHistory = [{ status: sS, timestamp: payload.createdAt }];
+
+            const orderDocRef = await addDoc(collection(db, "orders"), payload);
+            savedId = orderDocRef.id; // Firestore document ID
+            msg = `Order ${oId} created successfully!`;
+            if(displayOrderIdInput && !manualOrderIdInput.value) displayOrderIdInput.value = oId; // Display generated ID
         }
 
-        let savedId,msg;
-        if(isEditMode){ // Update existing document
-            if(!orderIdToEdit)throw new Error("Internal Error: Missing Order ID for update.");
-            await updateDoc(doc(db,"orders",orderIdToEdit),payload);savedId=orderIdToEdit;msg=`Order ${oId} updated successfully!`;
-        } else { // Add new document
-            const ref=await addDoc(collection(db,"orders"),payload);savedId=ref.id;msg=`Order ${oId} created successfully!`;displayOrderIdInput.value=oId;
-        }
-        console.log(msg,"Firestore Doc ID:",savedId);
+        console.log(msg, "Firestore Doc ID:", savedId);
 
-        // Add payment record for advance payment on NEW orders only
-        if(aP > 0 && !isEditMode) {
-            console.log("Adding advance payment record...");
-            try{ const pD = { customerId: cId, orderRefId: savedId, orderId: oId, amountPaid: aP, paymentDate: payload.createdAt || Timestamp.now(), paymentMethod: "Order Advance", notes: `Advance for Order #${oId}`, createdAt: Timestamp.now() }; await addDoc(collection(db,"payments"), pD); console.log("Advance payment record added."); }
-            catch(pE) { console.error("Advance payment saving error:", pE); alert(`Order saved, but failed to record advance payment: ${pE.message}`); }
+        // --- >>> ADD/MODIFY: Handle Advance Payment Saving to 'payments' Collection <<< ---
+        // Save advance payment record ONLY for NEW orders if amount > 0
+        if (aP > 0 && !isEditMode) {
+            console.log(`Advance payment amount entered: ${aP}. Creating payment record...`);
+            try {
+                // --- Use serverTimestamp() for payment dates for consistency ---
+                const paymentData = {
+                    customerId: cId, // Link to customer
+                    orderRefId: savedId, // Link to the Firestore order document ID
+                    orderId: oId, // Link to the user-facing order ID
+                    amountPaid: aP, // The advance payment amount
+                    // Use serverTimestamp for payment date to align closely with order creation
+                    paymentDate: serverTimestamp(),
+                    paymentMethod: "Order Advance", // Indicate it's an advance
+                    notes: `Advance payment for Order #${oId}`, // Optional note
+                    createdAt: serverTimestamp() // Timestamp for payment record creation
+                };
+                // Save to 'payments' collection
+                const paymentDocRef = await addDoc(collection(db, "payments"), paymentData);
+                console.log(`Advance payment record added successfully. Payment Doc ID: ${paymentDocRef.id}`);
+            } catch (paymentError) {
+                // Log the error, but don't stop the process - the order is already saved.
+                console.error("Error saving advance payment record:", paymentError);
+                // Notify user that the order saved but payment record failed
+                alert(`Order ${oId} was saved successfully, but there was an error recording the advance payment: ${paymentError.message}\n\nPlease add the payment manually later.`);
+            }
         }
+        // --- End of Advance Payment Handling ---
 
+        // Show success message
         alert(msg);
 
-        // Handle redirection or popup
-        if(cD.whatsappNo){ showWhatsAppReminder(cD,oId,deliveryDateInput.value); }
-        else { if(!isEditMode) { resetNewOrderForm(); } else { window.location.href = `order_history.html?highlightOrderId=${orderIdToEdit || ''}`; } }
+        // Handle redirection or WhatsApp popup
+        if (cD.whatsappNo) {
+             showWhatsAppReminder(cD, oId, deliveryDateInput.value); // Show popup
+        } else {
+             // If no WhatsApp, redirect or reset form immediately
+             if (!isEditMode) {
+                 resetNewOrderForm(); // Reset form for another new order
+             } else {
+                 // Redirect back to order history after edit
+                 window.location.href = `order_history.html?highlightOrderId=${orderIdToEdit || ''}`;
+             }
+        }
 
-    } catch(error) {
-        console.error("Form submission error:",error);
-        showFormError("Error saving order: "+error.message);
-    } finally {
-        saveButton.disabled=false; if(saveButtonText) saveButtonText.textContent = originalButtonText; else saveButton.innerHTML = originalButtonHTML;
+    } catch (error) {
+        console.error("Form submission failed:", error);
+        showFormError("Error saving order: " + error.message);
+        // Re-enable button on error
+        saveButton.disabled = false;
+        if (saveButtonText) saveButtonText.textContent = originalButtonText; else saveButton.innerHTML = originalButtonHTML;
     }
+    // 'finally' block removed as button re-enabling is handled within try/catch now
 }
+// ==================================================================================
+// ===            End of UPDATED handleFormSubmit Function (v2.6.1)             ===
+// ==================================================================================
+
 
 // --- Reset Form ---
 function resetNewOrderForm() {
@@ -586,27 +840,125 @@ function showWhatsAppReminder(customer, orderId, deliveryDateStr) {
     if (!whatsappReminderPopup || !whatsappMsgPreview || !whatsappSendLink) { console.warn("WhatsApp popup elements missing."); const redirectUrl = isEditMode ? `order_history.html?highlightOrderId=${orderIdToEdit || ''}` : 'new_order.html'; if (!isEditMode) resetNewOrderForm(); window.location.href = redirectUrl; return; }
     const cN = customer.fullName || 'Customer'; const cNum = customer.whatsappNo?.replace(/[^0-9]/g, '');
     if (!cNum) { console.warn("Cannot send WhatsApp, number missing/invalid."); const redirectUrl = isEditMode ? `order_history.html?highlightOrderId=${orderIdToEdit || ''}` : 'new_order.html'; if (!isEditMode) resetNewOrderForm(); window.location.href = redirectUrl; return; }
-    let fDD = ' जल्द से जल्द'; try { if (deliveryDateStr) fDD = new Date(deliveryDateStr).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }); } catch (e) { console.error("Error formatting delivery date:", e); }
-    let msg = `प्रिय ${cN},\nआपका ऑर्डर (Order ID: ${orderId}) सफलतापूर्वक सहेज लिया गया है। डिलीवरी की अनुमानित तिथि: ${fDD}.\nधन्यवाद,\nMadhav Offset`;
+    let fDD = ' जल्द से जल्द'; try { if (deliveryDateStr) fDD = new Date(deliveryDateStr + 'T00:00:00').toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }); } catch (e) { console.error("Error formatting delivery date:", e); } // Added T00:00:00 for consistency
+    let msg = `प्रिय ${cN},\nआपका ऑर्डर (Order ID: ${orderId}) सफलतापूर्वक सहेज लिया गया है। डिलीवरी की अनुमानित तिथि: ${fDD}.\nधन्यवाद,\nMadhav Offset`; // Simplified Org Name
     whatsappMsgPreview.innerText = msg; const eM = encodeURIComponent(msg); const wUrl = `https://wa.me/91${cNum}?text=${eM}`; whatsappSendLink.href = wUrl;
     whatsappSendLink.style.pointerEvents = 'auto'; whatsappSendLink.style.opacity = '1';
-    const redirectUrl = isEditMode ? `order_history.html?highlightOrderId=${orderIdToEdit || ''}` : 'new_order.html'; const delayMilliseconds = 1000;
+    const redirectUrl = isEditMode ? `order_history.html?highlightOrderId=${orderIdToEdit || ''}` : 'new_order.html'; const delayMilliseconds = 1000; // Delay before redirect
 
-    // Updated Event Handlers
-    whatsappSendLink.onclick = (event) => { console.log("WhatsApp link clicked..."); whatsappSendLink.style.pointerEvents = 'none'; whatsappSendLink.style.opacity = '0.7'; setTimeout(() => { console.log("Redirecting after delay..."); if (!isEditMode) resetNewOrderForm(); window.location.href = redirectUrl; }, delayMilliseconds); };
-    popupCloseBtn.onclick = () => { console.log("Popup close clicked..."); if (!isEditMode) resetNewOrderForm(); window.location.href = redirectUrl; closeWhatsAppPopup(); };
-    whatsappReminderPopup.onclick = (event) => { if (event.target === whatsappReminderPopup) { console.log("Popup overlay clicked..."); if (!isEditMode) resetNewOrderForm(); window.location.href = redirectUrl; closeWhatsAppPopup(); } };
+    // --- Event Handlers for Popup Actions ---
+    // Using named functions for clarity and easier removal
+    const handleSendClick = () => {
+        console.log("WhatsApp link clicked...");
+        whatsappSendLink.style.pointerEvents = 'none'; // Prevent multiple clicks
+        whatsappSendLink.style.opacity = '0.7';
+        // Redirect after a delay, allowing WhatsApp tab to potentially open
+        setTimeout(() => {
+            console.log("Redirecting after send delay...");
+            if (!isEditMode) resetNewOrderForm(); // Reset only if it was a new order
+            window.location.href = redirectUrl; // Redirect
+        }, delayMilliseconds);
+        // No need to close popup here, redirection handles it
+    };
 
-    whatsappReminderPopup.classList.add('active');
+    const handleCloseOrOverlayClick = () => {
+        console.log("Popup closed without sending...");
+         if (!isEditMode) resetNewOrderForm(); // Reset only if it was a new order
+         window.location.href = redirectUrl; // Redirect immediately
+        closeWhatsAppPopup(); // Close the popup visually
+    };
+
+    // Remove previous listeners before adding new ones
+    whatsappSendLink.onclick = null;
+    popupCloseBtn.onclick = null;
+    whatsappReminderPopup.onclick = null;
+
+    // Add new listeners
+    whatsappSendLink.onclick = handleSendClick;
+    popupCloseBtn.onclick = handleCloseOrOverlayClick;
+    whatsappReminderPopup.onclick = (event) => {
+        if (event.target === whatsappReminderPopup) { // Only trigger on overlay click
+            handleCloseOrOverlayClick();
+        }
+    };
+
+    whatsappReminderPopup.classList.add('active'); // Show the popup
 }
 
-function closeWhatsAppPopup() { if (whatsappReminderPopup) { whatsappReminderPopup.classList.remove('active'); if (whatsappSendLink) whatsappSendLink.onclick = null; if (popupCloseBtn) popupCloseBtn.onclick = null; whatsappReminderPopup.onclick = null; if (whatsappSendLink) { whatsappSendLink.style.pointerEvents = 'auto'; whatsappSendLink.style.opacity = '1'; } } }
 
-// ----- Balance Calculation Helper Functions -----
-async function loadPaymentTotals_NewOrder(customerId) { let totalPaid = 0; if (!db || !collection || !query || !where || !getDocs) { console.error("_newOrder: DB functions missing for payments."); return 0; } try { const q = query(collection(db, "payments"), where("customerId", "==", customerId)); const querySnapshot = await getDocs(q); querySnapshot.forEach(doc => { totalPaid += Number(doc.data().amountPaid || 0); }); return totalPaid; } catch (error) { console.error("_newOrder: Error loading payment total:", error); if (error.code === 'failed-precondition' || error.message.includes("index")) { console.warn("_newOrder: Firestore index missing for payments/customerId. Balance inaccurate."); } return 0; } }
-async function loadOrderTotals_NewOrder(customerId) { let totalOrderValue = 0; let foundOrders = false; if (!db || !collection || !query || !where || !getDocs) { console.error("_newOrder: DB functions missing for orders."); return 'N/A'; } try { const q = query(collection(db, "orders"), where("customerId", "==", customerId)); // Uses top-level customerId
-        const querySnapshot = await getDocs(q); querySnapshot.forEach(doc => { foundOrders = true; totalOrderValue += Number(doc.data().finalAmount || 0); }); // Uses finalAmount
-        return foundOrders ? totalOrderValue : 'N/A'; } catch (error) { console.error("_newOrder: Error loading order total value:", error); if (error.code === 'failed-precondition' || error.message.includes("index")) { console.warn("_newOrder: Firestore index missing for orders/customerId. Balance inaccurate."); } return 'N/A'; } }
+function closeWhatsAppPopup() {
+    if (whatsappReminderPopup) {
+        whatsappReminderPopup.classList.remove('active');
+        // Clean up listeners to prevent memory leaks
+        if (whatsappSendLink) whatsappSendLink.onclick = null;
+        if (popupCloseBtn) popupCloseBtn.onclick = null;
+        whatsappReminderPopup.onclick = null;
+        // Reset link style
+        if (whatsappSendLink) {
+            whatsappSendLink.style.pointerEvents = 'auto';
+            whatsappSendLink.style.opacity = '1';
+        }
+    }
+}
+
+
+// ----- Balance Calculation Helper Functions (for New Order Page) -----
+// These fetch SUMMARIES, not individual records like the detail page ledger
+async function loadPaymentTotals_NewOrder(customerId) {
+    let totalPaid = 0;
+    if (!db || !collection || !query || !where || !getDocs) {
+        console.error("_newOrder: DB functions missing for payments.");
+        return 0; // Return 0 if DB unavailable
+    }
+    try {
+        const q = query(collection(db, "payments"), where("customerId", "==", customerId));
+        const querySnapshot = await getDocs(q);
+        querySnapshot.forEach(doc => {
+            totalPaid += Number(doc.data().amountPaid || 0);
+        });
+        // console.log(`_newOrder: Total paid for ${customerId}: ${totalPaid}`);
+        return totalPaid;
+    } catch (error) {
+        console.error("_newOrder: Error loading payment total:", error);
+        // Check specifically for index error related to payments query
+        if (error.code === 'failed-precondition' || error.message.includes("index")) {
+            console.warn("_newOrder: Firestore index missing for payments/customerId. Balance calculation might be inaccurate.");
+             showFormError("Notice: Cannot calculate exact previous balance (missing payments index)."); // Inform user
+        }
+        return 0; // Return 0 on error
+    }
+}
+
+async function loadOrderTotals_NewOrder(customerId) {
+    let totalOrderValue = 0;
+    let foundOrders = false;
+    if (!db || !collection || !query || !where || !getDocs) {
+        console.error("_newOrder: DB functions missing for orders.");
+        return 'N/A'; // Return 'N/A' if DB unavailable
+    }
+    try {
+        // Query orders based on the top-level customerId
+        const q = query(collection(db, "orders"), where("customerId", "==", customerId));
+        const querySnapshot = await getDocs(q);
+        querySnapshot.forEach(doc => {
+            foundOrders = true;
+            // Use totalAmount (as decided) falling back to finalAmount for older data maybe?
+            // For consistency, using totalAmount as the primary field.
+            totalOrderValue += Number(doc.data().totalAmount || doc.data().finalAmount || 0);
+        });
+        // console.log(`_newOrder: Total order value for ${customerId}: ${foundOrders ? totalOrderValue : 'N/A'}`);
+        return foundOrders ? totalOrderValue : 0; // Return 0 if no orders found, simplifies balance calc
+    } catch (error) {
+        console.error("_newOrder: Error loading order total value:", error);
+         // Check specifically for index error related to orders query
+         if (error.code === 'failed-precondition' || error.message.includes("index")) {
+            console.warn("_newOrder: Firestore index missing for orders/customerId. Balance calculation might be inaccurate.");
+             showFormError("Notice: Cannot calculate exact previous balance (missing orders index)."); // Inform user
+        }
+        return 'N/A'; // Return 'N/A' on error
+    }
+}
+
 
 // --- Log that the script finished loading ---
-console.log("new_order.js script loaded (v2.6 - WhatsApp Send Delay)."); // Updated version log
+console.log("new_order.js script loaded (v2.6.1 - Ledger Compatibility)."); // Updated version log
