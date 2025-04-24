@@ -117,19 +117,29 @@ body {
 /* Filter Bar Styling */
 .filter-bar {
     display: flex;
-    flex-wrap: wrap;
-    gap: 15px;
+    flex-wrap: wrap; /* Allow items to wrap on smaller screens */
+    gap: 15px; /* Space between filter groups */
     margin-bottom: 20px;
     padding: 15px;
-    background-color: #f8f9fa;
+    background-color: #f8f9fa; /* Light background for the bar */
     border: 1px solid #dee2e6;
     border-radius: 5px;
+    align-items: flex-end; /* Align items based on their bottom edge */
 }
 
 .filter-group {
     display: flex;
     flex-direction: column; /* Labels above inputs */
+    flex-grow: 1; /* Allow groups to grow */
+    min-width: 150px; /* Minimum width for filter groups */
 }
+
+/* Specific width for search bar if needed */
+.filter-group:has(#licSearchInput) {
+    flex-grow: 2; /* Make search slightly wider */
+    min-width: 200px;
+}
+
 
 .filter-group label {
     font-size: 0.85em;
@@ -140,6 +150,7 @@ body {
 
 .filter-group label i {
     margin-right: 5px;
+    color: #6c757d; /* Icon color */
 }
 
 .filter-group input[type="text"],
@@ -148,7 +159,8 @@ body {
     border: 1px solid #ced4da;
     border-radius: 4px;
     font-size: 0.9em;
-    min-width: 180px; /* Minimum width for inputs/selects */
+    width: 100%; /* Make input/select fill the group width */
+    box-sizing: border-box; /* Include padding in width calculation */
 }
 
 .filter-group select {
@@ -167,65 +179,98 @@ body {
     align-items: center;
     justify-content: center;
     gap: 6px;
-    transition: background-color 0.2s ease;
-    margin-top: auto; /* Align buttons at the bottom if labels make height uneven */
+    transition: background-color 0.2s ease, box-shadow 0.2s ease;
+    line-height: 1.5; /* Ensure consistent height */
+    white-space: nowrap; /* Prevent button text wrapping */
 }
+
+.button:hover {
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+.button:disabled {
+    opacity: 0.65;
+    cursor: not-allowed;
+    box-shadow: none;
+}
+
 
 .button i {
     font-size: 0.95em;
 }
 
-.add-new-button {
-    background-color: #28a745; /* Green */
-    color: white;
-}
-.add-new-button:hover { background-color: #218838; }
+/* Specific Button Styles */
+.add-new-button { background-color: #28a745; color: white; }
+.add-new-button:hover:not(:disabled) { background-color: #218838; }
 
-.clear-filters-button {
-    background-color: #6c757d; /* Grey */
-    color: white;
-}
-.clear-filters-button:hover { background-color: #5a6268; }
+.clear-filters-button { background-color: #6c757d; color: white; }
+.clear-filters-button:hover:not(:disabled) { background-color: #5a6268; }
 
-.primary-button {
-    background-color: #007bff; /* Blue */
-    color: white;
-}
-.primary-button:hover { background-color: #0056b3; }
+.primary-button { background-color: #007bff; color: white; }
+.primary-button:hover:not(:disabled) { background-color: #0056b3; }
+
+.save-button { background-color: #28a745; color: white; }
+.save-button:hover:not(:disabled) { background-color: #218838; }
+
+.cancel-button { background-color: #6c757d; color: white; }
+.cancel-button:hover:not(:disabled) { background-color: #5a6268; }
+
+.edit-button { background-color: #ffc107; color: #212529; } /* Yellow */
+.edit-button:hover:not(:disabled) { background-color: #e0a800; }
+
+.delete-button { background-color: #dc3545; color: white; } /* Red */
+.delete-button:hover:not(:disabled) { background-color: #c82333; }
+
+.info-button { background-color: #17a2b8; color: white; } /* Teal */
+.info-button:hover:not(:disabled) { background-color: #138496; }
 
 
 /* Table Styling */
 .table-container {
     overflow-x: auto; /* Allow horizontal scrolling on small screens */
+    width: 100%;
 }
 
 #licPolicyTable {
     width: 100%;
     border-collapse: collapse;
     margin-bottom: 25px;
+    table-layout: auto; /* Adjust based on content, or fixed if needed */
 }
 
 #licPolicyTable th,
 #licPolicyTable td {
     border: 1px solid #dee2e6;
-    padding: 10px 12px; /* Adjusted padding */
+    padding: 10px 12px; /* Comfortable padding */
     text-align: left;
     font-size: 0.9em;
-    white-space: nowrap; /* Prevent text wrapping */
+    vertical-align: middle; /* Align content vertically */
 }
 
 #licPolicyTable th {
-    background-color: #e9ecef;
+    background-color: #e9ecef; /* Light grey header */
     font-weight: 600;
     color: #495057;
+    white-space: nowrap; /* Prevent header text wrapping */
 }
 
+/* Align numeric/status columns */
+#licPolicyTable td:nth-child(5), /* Premium */
+#licPolicyTable td:nth-child(8), /* Status */
+#licPolicyTable td:nth-child(9) { /* NACH */
+    text-align: center;
+}
+#licPolicyTable td:nth-child(10) { /* Actions */
+    text-align: center;
+}
+
+
 #licPolicyTable tbody tr:nth-child(even) {
-    background-color: #f8f9fa;
+    background-color: #f8f9fa; /* Zebra striping */
 }
 
 #licPolicyTable tbody tr:hover {
-    background-color: #e2e6ea;
+    background-color: #e9ecef; /* Hover effect */
 }
 
 /* Status Badge Styling */
@@ -236,7 +281,9 @@ body {
     font-weight: 500;
     color: #fff;
     text-transform: capitalize;
-    display: inline-block; /* Ensure badge fits content */
+    display: inline-block;
+    min-width: 60px; /* Ensure minimum width */
+    text-align: center;
 }
 .status-active { background-color: #28a745; } /* Green */
 .status-lapsed { background-color: #dc3545; } /* Red */
@@ -247,23 +294,14 @@ body {
 
 /* Action Buttons in Table */
 .action-buttons {
-    text-align: center;
-    min-width: 100px; /* Ensure buttons have space */
-    white-space: nowrap;
+    min-width: 80px; /* Ensure buttons fit */
 }
 
 .action-buttons .button {
     padding: 5px 8px;
-    margin: 0 3px;
+    margin: 0 2px; /* Small gap between buttons */
     font-size: 0.85em;
 }
-
-.edit-button { background-color: #ffc107; color: #333; } /* Yellow */
-.edit-button:hover { background-color: #e0a800; }
-.delete-button { background-color: #dc3545; color: white; } /* Red */
-.delete-button:hover { background-color: #c82333; }
-.info-button { background-color: #17a2b8; color: white; } /* Teal */
-.info-button:hover { background-color: #138496; }
 
 
 /* Task Management Section Styling */
@@ -293,6 +331,7 @@ body {
     gap: 10px;
     margin-bottom: 15px;
     flex-wrap: wrap; /* Allow wrapping on small screens */
+    align-items: center; /* Align items vertically */
 }
 #newTaskInput {
     flex-grow: 1;
@@ -306,13 +345,11 @@ body {
     border: 1px solid #ced4da;
     border-radius: 3px;
     cursor: pointer;
+    min-width: 130px;
 }
 #addTaskBtn {
     flex-shrink: 0; /* Prevent shrinking */
-    background-color: #007bff;
-    color: white;
 }
-#addTaskBtn:hover { background-color: #0056b3;}
 
 
 #taskList {
@@ -321,13 +358,16 @@ body {
     margin: 0;
     max-height: 300px;
     overflow-y: auto;
+    border: 1px solid #e9ecef; /* Add border around list */
+    border-radius: 4px;
 }
 #taskList li {
     display: flex;
     align-items: center;
-    padding: 10px 5px;
+    padding: 10px 12px;
     border-bottom: 1px solid #eee;
     gap: 10px; /* Space between elements */
+    background-color: #fff; /* White background for items */
 }
  #taskList li:last-child {
     border-bottom: none;
@@ -337,17 +377,20 @@ body {
     flex-grow: 1;
     font-size: 0.9em;
     line-height: 1.4;
+    word-break: break-word; /* Break long task descriptions */
 }
 
 .task-checkbox {
     cursor: pointer;
     flex-shrink: 0;
+    margin-right: 5px;
 }
 
 /* Styling for completed tasks (JS adds/removes 'completed-task' class) */
 #taskList li.completed-task span {
     text-decoration: line-through;
     color: #6c757d; /* Grey color for completed text */
+    font-style: italic;
 }
 
 .delete-task-btn {
@@ -359,13 +402,19 @@ body {
     font-size: 1em; /* Slightly larger icon */
     line-height: 1; /* Align icon better */
     flex-shrink: 0;
+    opacity: 0.7;
+    transition: opacity 0.2s ease;
 }
-.delete-task-btn:hover { color: #c82333;}
+.delete-task-btn:hover {
+    color: #c82333;
+    opacity: 1;
+}
 
 .loading-tasks {
     color: #6c757d;
     font-style: italic;
-    padding: 10px 0;
+    padding: 15px;
+    text-align: center;
 }
 
 
@@ -378,27 +427,35 @@ body {
     top: 0;
     width: 100%;
     height: 100%;
-    overflow: auto; /* Enable scroll if needed */
-    background-color: rgba(0,0,0,0.5); /* Black w/ opacity */
+    overflow-y: auto; /* Enable scroll ONLY for vertical overflow */
+    background-color: rgba(0,0,0,0.6); /* Darker overlay */
 }
 
 .modal.active {
     display: flex; /* Use flexbox for centering */
-    align-items: center;
-    justify-content: center;
+    align-items: center; /* Center vertically */
+    justify-content: center; /* Center horizontally */
+    padding: 20px 0; /* Add padding top/bottom for scroll */
 }
 
 .modal-content {
     background-color: #fefefe;
-    margin: auto; /* Needed for older browsers, flex handles centering */
-    padding: 30px;
-    border: 1px solid #888;
+    margin: auto; /* For older browsers if flex fails */
+    padding: 25px 30px;
+    border: 1px solid #ccc;
     width: 90%; /* Responsive width */
     max-width: 600px; /* Default max width */
     border-radius: 8px;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
     position: relative;
+    animation: slideDown 0.3s ease-out; /* Simple animation */
 }
+
+@keyframes slideDown {
+    from { transform: translateY(-30px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
 
 .modal-content.large-modal {
     max-width: 850px; /* Wider modal for policy form */
@@ -428,10 +485,12 @@ body {
     color: #333;
     border-bottom: 1px solid #eee;
     padding-bottom: 10px;
+    display: flex;
+    align-items: center;
 }
 .modal-content h2 i {
     margin-right: 10px;
-    color: #007bff;
+    color: #007bff; /* Icon color */
 }
 
 /* Modal Form Styling */
@@ -442,11 +501,16 @@ body {
     margin-bottom: 15px;
 }
 #policyForm .form-group {
-    flex: 1 1 calc(50% - 10px); /* Two columns layout */
+    flex: 1 1 calc(50% - 15px); /* Two columns layout with gap considered */
     min-width: 200px; /* Minimum width before wrapping */
     display: flex;
-    flex-direction: column;
+    flex-direction: column; /* Label on top */
 }
+/* Make address full width */
+#policyForm .form-group:has(#address) {
+    flex-basis: 100%;
+}
+
 
 #policyForm .form-group label {
     margin-bottom: 5px;
@@ -463,18 +527,21 @@ body {
 #policyForm .form-group select,
 #policyForm .form-group textarea {
     width: 100%; /* Full width within the group */
-    padding: 8px 10px;
+    padding: 9px 12px; /* Slightly larger padding */
     border: 1px solid #ced4da;
     border-radius: 4px;
     font-size: 0.95em;
     box-sizing: border-box; /* Include padding in width */
+    transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
 }
 
 #policyForm .form-group textarea {
     resize: vertical; /* Allow vertical resizing */
     min-height: 60px;
+    font-family: inherit; /* Use same font as inputs */
 }
 
+/* Focus styles */
 #policyForm .form-group input:focus,
 #policyForm .form-group select:focus,
 #policyForm .form-group textarea:focus {
@@ -486,7 +553,8 @@ body {
 #policyForm .form-group small {
     font-size: 0.8em;
     color: #6c757d;
-    margin-top: 3px;
+    margin-top: 4px;
+    line-height: 1.3;
 }
 
 .required {
@@ -503,15 +571,12 @@ body {
 
 .modal-actions {
     margin-top: 25px;
+    padding-top: 20px;
+    border-top: 1px solid #eee; /* Separator line */
     display: flex;
     justify-content: flex-end; /* Align buttons to the right */
     gap: 10px;
 }
-
-.save-button { background-color: #28a745; color: white; }
-.save-button:hover { background-color: #218838; }
-.cancel-button { background-color: #6c757d; color: white; }
-.cancel-button:hover { background-color: #5a6268; }
 
 /* Spinner for buttons */
 .button .fa-spinner {
@@ -521,4 +586,24 @@ body {
 @keyframes fa-spin {
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
+}
+
+/* Responsive adjustments if needed */
+@media (max-width: 768px) {
+    .filter-bar {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    .filter-group {
+        min-width: 100%; /* Full width on small screens */
+    }
+    #policyForm .form-group {
+        flex-basis: 100%; /* Stack form fields vertically */
+    }
+    .modal-content {
+        padding: 20px;
+    }
+    .modal-content h2 {
+        font-size: 1.2em;
+    }
 }

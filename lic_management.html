@@ -9,9 +9,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 
-    <link rel="stylesheet" href="css/lic_management.css">
-
-    <script type="module">
+    <link rel="stylesheet" href="css/lic_management.css"> <script type="module">
         // --- Firebase Setup ---
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
         import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
@@ -20,7 +18,7 @@
             query, where, orderBy, limit, Timestamp, onSnapshot // Import onSnapshot
          } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-         // **** आपकी Firebase कॉन्फ़िगरेशन ****
+         // **** अपनी Firebase कॉन्फ़िगरेशन यहाँ डालें ****
          const firebaseConfig = {
             apiKey: "YOUR_API_KEY", // Replace with your actual API key
             authDomain: "YOUR_AUTH_DOMAIN", // Replace with your actual auth domain
@@ -29,6 +27,7 @@
             messagingSenderId: "YOUR_MESSAGING_SENDER_ID", // Replace with your actual messaging sender ID
             appId: "YOUR_APP_ID" // Replace with your actual app ID
          };
+         // ************************************
 
         let app; let auth; let db;
         try {
@@ -54,29 +53,36 @@
             // Authentication Check
             onAuthStateChanged(auth, (user) => {
                 const currentPage = window.location.pathname.split('/').pop() || 'index.html';
+                 // Redirect to login if not logged in AND not already on login page
                 if (!user && currentPage.toLowerCase() !== 'login.html') {
-                    console.log("User not logged in. Redirecting...");
+                    console.log("User not logged in. Redirecting to login page...");
                     window.location.replace('login.html'); // Ensure you have a login.html
                 } else if (user) {
+                    // User is logged in, proceed to initialize the LIC page
                     console.log(`User logged in: ${user.uid}. Initializing LIC page.`);
-                    // lic_management.js से initializePage फंक्शन को कॉल करें
+                    // Delay initialization slightly if needed, or call directly
+                    // Ensure lic_management.js is loaded and initializeLicPage function exists
                     if (typeof initializeLicPage === 'function') {
-                        initializeLicPage(user); // Pass user object if needed
+                        initializeLicPage(user); // Pass user object
                     } else {
+                         // Fallback if script hasn't loaded yet
                         document.addEventListener('DOMContentLoaded', () => {
                              if (typeof initializeLicPage === 'function') {
                                 initializeLicPage(user);
                             } else {
-                                 console.error("Initialization function 'initializeLicPage' not found!");
-                                 alert("Application Error: Page script failed to load.");
+                                 console.error("Initialization function 'initializeLicPage' not found even after DOMContentLoaded!");
+                                 alert("Application Error: Page script failed to load correctly.");
                              }
                         });
                     }
+                } else if (!user && currentPage.toLowerCase() === 'login.html') {
+                    // User is not logged in, but is correctly on the login page. Do nothing here.
+                    console.log("User not logged in, already on login page.");
                 }
             });
         } catch(e) {
             console.error("Firebase setup error:", e);
-            alert("Critical Application Error. Please try again later.");
+            alert("Critical Application Error during Firebase setup. Please try again later.");
         }
     </script>
 
@@ -109,7 +115,8 @@
                      <option value="Active">Active</option>
                      <option value="Lapsed">Lapsed</option>
                      <option value="Matured">Matured</option>
-                     <option value="Surrendered">Surrendered</option> </select>
+                     <option value="Surrendered">Surrendered</option>
+                 </select>
             </div>
              <div class="filter-group filter-sort">
                  <label for="sort-lic"><i class="fas fa-sort-amount-down"></i> Sort By</label>
@@ -243,7 +250,7 @@
                     <div class="form-group">
                         <label for="nextInstallmentDate">Next Installment Date <span class="required">*</span>:</label>
                         <input type="date" id="nextInstallmentDate" required>
-                        <small>First due date. Will be auto-calculated if left blank on Add.</small>
+                        <small>First due date. Auto-calculated on Add if left blank.</small>
                     </div>
                     <div class="form-group">
                         <label for="maturityDate">Maturity Date:</label>
