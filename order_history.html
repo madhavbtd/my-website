@@ -3,72 +3,366 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>माधव मल्टीप्रिन्ट डैशबोर्ड (vFinal Debug)</title> <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <title>Order History & Management</title>
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="css/index.css"> <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js" defer></script>
-</head>
+    <link rel="stylesheet" href="css/order_history.css"> <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" integrity="sha512-9usAa10IRO0HhonpyAIVpjrylPvoDwiPUiKdWk5t3PyolY1cOd4DSE0Ga+ri4AuTroPR5aQvXU9xC6qOPnzFeg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
 
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+        import { getFirestore, collection, doc, getDoc, deleteDoc, updateDoc, onSnapshot, query, orderBy, where, Timestamp, arrayUnion, writeBatch, serverTimestamp, limit, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+         const firebaseConfig = {
+           // Your Firebase config details remain here
+           apiKey: "AIzaSyBQj5rQmE77kKKGYixP8y3Hcimz8tiAqzQ", // Example, use your actual key
+           authDomain: "madhav-multyprint.firebaseapp.com",
+           projectId: "madhav-multyprint",
+           storageBucket: "madhav-multyprint.appspot.com",
+           messagingSenderId: "104988349637",
+           appId: "1:104988349637:web:faf045b77c6786a4e70cac"
+         };
+
+        let app;
+        let auth;
+        let db;
+
+        try {
+             if (!window.firebaseAppInitialized) {
+                 app = initializeApp(firebaseConfig);
+                 window.firebaseAppInitialized = true;
+                 window.firebaseApp = app;
+                 console.log("Firebase initialized on this page (order_history).");
+             } else {
+                 app = window.firebaseApp;
+                 console.log("Firebase already initialized on this page (order_history).");
+             }
+             auth = getAuth(app);
+             db = getFirestore(app);
+             // Make Firebase services globally accessible for order_history.js
+             window.db = db;
+             window.auth = auth;
+             window.collection = collection;
+             window.doc = doc;
+             window.getDoc = getDoc;
+             window.deleteDoc = deleteDoc;
+             window.updateDoc = updateDoc;
+             window.onSnapshot = onSnapshot;
+             window.query = query;
+             window.orderBy = orderBy;
+             window.where = where;
+             window.Timestamp = Timestamp;
+             window.arrayUnion = arrayUnion;
+             window.writeBatch = writeBatch;
+             window.serverTimestamp = serverTimestamp;
+             window.limit = limit;
+             window.addDoc = addDoc;
+             window.getDocs = getDocs;
+
+             // Authentication check
+             onAuthStateChanged(auth, (user) => {
+                 const currentPage = window.location.pathname.split('/').pop() || 'index.html';
+                 if (!user && currentPage.toLowerCase() !== 'login.html') {
+                     console.log(`User not logged in on ${currentPage}. Redirecting...`);
+                     window.location.replace('login.html');
+                 } else if (user) {
+                     console.log(`User logged in on ${currentPage}:`, user.uid);
+                 }
+             });
+
+             window.getCurrentUser = () => auth.currentUser;
+
+        } catch(e) {
+            console.error("Firebase setup / Auth check error:", e);
+            alert("Error loading application. Please try again later.");
+        }
+    </script>
+    </head>
 <body>
     <div class="container">
-        <div class="sidebar">
-             <h2><img src="https://i.ibb.co/Z6gKD9Rd/1.png" alt="माधव मल्टीप्रिन्ट Logo" id="sidebarLogo"></h2>
-             <ul>
-                 <li><a href="index.html" class="active"><i class="fas fa-tachometer-alt"></i> <span>Dashboard</span></a></li>
-                 <li><a href="order_history.html"><i class="fas fa-history"></i> <span>Order History</span></a></li>
-                 <li><a href="customer_management.html"><i class="fas fa-users"></i> <span>Customers</span></a></li>
-                 <li><a href="supplier_management.html"><i class="fas fa-truck"></i> <span>Suppliers</span></a></li>
-                 <li><a href="lic_management.html"><i class="fas fa-shield-alt"></i> <span>LIC Management</span></a></li>
-                 <li><a href="#"><i class="fas fa-chart-bar"></i> <span>Report</span></a></li>
-                 <li><a href="#"><i class="fas fa-code-branch"></i> <span>Branch Manage</span></a></li>
-                 <li><a href="#"><i class="fas fa-cog"></i> <span>Settings</span></a></li>
-                 <li><a href="product_management.html"><i class="fas fa-box-open"></i> <span>Product</span></a></li>
-                 <li><a href="#"><i class="fas fa-tools"></i> <span>Tools</span></a></li>
-                 <li><a href="#" id="logout-link"><i class="fas fa-sign-out-alt"></i> <span>LOGOUT</span></a></li>
-             </ul>
+        <div class="header">
+            <i class="fas fa-history header-icon"></i>
+            <h1>Order History & Management</h1>
         </div>
 
-        <div class="main-content" id="main-content">
-            <div class="header updated-header">
-                 <span class="welcome-text" id="welcome-user">Welcome...</span>
-                 <div class="header-actions">
-                     <div class="header-buttons"> <a href="customer_management.html?action=add" class="button-base add-customer-btn"><i class="fas fa-user-plus"></i> Add Customer</a> <a href="supplier_management.html#add" class="button-base add-supplier-btn"><i class="fas fa-truck"></i> Add Supplier</a> <a href="new_order.html" class="button-base new-order-btn"><i class="fas fa-plus-circle"></i> New Order</a> <button type="button" id="quickAddPaymentBtn" class="button-base quick-payment-btn"><i class="fas fa-dollar-sign"></i> Quick Payment</button> </div>
-                     <div class="date-time-container" id="currentDateTime"> <span class="loading-placeholder">Loading date...</span> </div>
-                      <div class="header-icons"> <button class="icon-button" id="notificationsBtn" title="Notifications"><i class="fas fa-bell"></i><span class="badge" id="notificationCount">0</span></button> <button class="icon-button" id="settingsBtn" title="Settings"><i class="fas fa-cog"></i></button> </div>
+        <div class="breadcrumb">
+            <a href="index.html">Home</a> / <span>Order History</span>
+        </div>
+
+        <div class="actions-bar">
+             <a href="new_order.html" class="button add-new-button"><i class="fas fa-plus"></i> New Order</a>
+             <button id="newCustomerBtn" class="button info-button"><i class="fas fa-user-plus"></i> New Customer</button>
+             <a href="new_po.html" class="button primary-button"><i class="fas fa-file-alt"></i> New PO</a>
+             <button id="paymentReceivedBtn" class="button success-button"><i class="fas fa-dollar-sign"></i> Payment Received</button>
+             <button id="exportCsvBtn" class="button export-button"><i class="fas fa-file-csv"></i> Export to CSV</button>
+        </div>
+
+        <div class="filter-bar">
+            <div class="filter-group">
+                <label for="filterDate"><i class="fas fa-calendar-alt"></i> Order Date:</label>
+                <input type="date" id="filterDate">
+            </div>
+            <div class="filter-group">
+                <label for="filterSearch"><i class="fas fa-search"></i> Search:</label>
+                <input type="text" id="filterSearch" placeholder="Order ID, Cust. Name, Item...">
+            </div>
+            <div class="filter-group">
+                <label for="filterStatus"><i class="fas fa-flag"></i> Status:</label>
+                <select id="filterStatus">
+                    <option value="">All Statuses</option>
+                     <option value="Order Received">Order Received</option>
+                    <option value="Designing">Designing</option>
+                    <option value="Verification">Verification</option>
+                    <option value="Design Approved">Design Approved</option>
+                     <option value="Printing">Printing</option>
+                    <option value="Ready for Working">Ready for Working</option>
+                    <option value="Delivered">Delivered</option>
+                    <option value="Completed">Completed</option>
+                </select>
+            </div>
+            <div class="filter-group filter-sort">
+                <label for="sort-orders"><i class="fas fa-sort"></i> Sort by:</label>
+                <select id="sort-orders">
+                    <option value="createdAt_desc">Newest First (Created)</option>
+                    <option value="createdAt_asc">Oldest First (Created)</option>
+                     <option value="updatedAt_desc">Newest First (Updated)</option>
+                    <option value="updatedAt_asc">Oldest First (Updated)</option>
+                    <option value="orderDate_desc">Order Date (Newest)</option>
+                    <option value="orderDate_asc">Order Date (Oldest)</option>
+                 </select>
+            </div>
+            <div class="filter-group">
+                 <button id="clearFiltersBtn" class="button clear-filters-button" title="Clear all filters"><i class="fas fa-times"></i> Clear Filters</button>
+            </div>
+        </div>
+
+        <div class="bulk-actions-bar" id="bulkActionsBar" style="display: none;">
+             <span id="selectedCount">0 items selected</span>
+             <div class="bulk-actions-controls">
+                 <label for="bulkStatusSelect" class="bulk-label">Change status to:</label>
+                 <select id="bulkStatusSelect" class="bulk-select">
+                     <option value="" disabled selected>Select Status</option>
+                     <option value="Order Received">Order Received</option>
+                     <option value="Designing">Designing</option>
+                     <option value="Verification">Verification</option>
+                     <option value="Design Approved">Design Approved</option>
+                     <option value="Printing">Printing</option>
+                     <option value="Ready for Working">Ready for Working</option>
+                     <option value="Delivered">Delivered</option>
+                     <option value="Completed">Completed</option>
+                 </select>
+                 <button id="bulkUpdateStatusBtn" class="button bulk-button bulk-update" disabled><i class="fas fa-sync-alt"></i> Update Selected (Max 10)</button>
+                 <button id="bulkDeleteBtn" class="button bulk-button bulk-delete" disabled><i class="fas fa-trash-alt"></i> Delete Selected (Max 5)</button>
+             </div>
+        </div>
+
+        <div class="table-container">
+             <table id="orderTable">
+                 <thead>
+                    <tr>
+                        <th class="col-checkbox"><input type="checkbox" id="selectAllCheckbox" title="Select All Visible"></th>
+                        <th>Order ID</th>
+                        <th>Customer Name</th>
+                         <th>Items</th>
+                        <th>Order Date</th>
+                        <th>Delivery Date</th>
+                        <th>Priority</th>
+                         <th>Status</th>
+                         <th>PO Info</th>
+                        <th>Action</th>
+                        <th>Send Wtsp</th>
+                    </tr>
+                </thead>
+                 <tbody id="orderTableBody">
+                    <tr>
+                        <td colspan="11" id="loadingMessage">Loading orders...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="summary-reporting-container">
+            <div class="order-summary-counts">
+                 <span>Total Displayed: <strong id="total-orders">0</strong></span> |
+                <span>Completed/Delivered: <strong id="completed-delivered-orders">0</strong></span> |
+                 <span>Pending: <strong id="pending-orders">0</strong></span>
+            </div>
+            <div id="reportingSection" class="reporting-section">
+                <h4>Displayed Orders Report</h4>
+                <div id="statusCountsReport"><p>Loading report...</p></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="detailsModal" class="modal modal-lg">
+        <div class="modal-content">
+            <span class="close-btn" id="closeDetailsModal" title="Close">&times;</span>
+            <h2>Order Details & Actions</h2>
+            <input type="hidden" id="modalOrderId">
+            <div class="modal-grid-container-complex">
+                <div class="modal-section modal-customer-info grid-item-customer">
+                    <h4>Customer Details</h4>
+                    <p><strong>Order ID:</strong> <span id="modalDisplayOrderId"></span></p>
+                    <p><strong>Customer:</strong> <span id="modalCustomerName"></span></p>
+                    <p><strong>WhatsApp:</strong> <span id="modalCustomerWhatsApp"></span></p>
+                    <p><strong>Contact:</strong> <span id="modalCustomerContact"></span></p>
+                    <p><strong>Address:</strong> <span id="modalCustomerAddress"></span></p>
+                </div>
+                <div class="modal-section modal-order-info grid-item-order">
+                    <h4>Order Info</h4>
+                    <p><strong>Order Date:</strong> <span id="modalOrderDate"></span></p>
+                    <p><strong>Delivery Date:</strong> <span id="modalDeliveryDate"></span></p>
+                    <p><strong>Priority:</strong> <span id="modalPriority"></span></p>
+                    <p><strong>Remarks:</strong> <span id="modalRemarks"></span></p>
+                </div>
+                <div class="modal-section modal-status-info grid-item-status">
+                    <h4>Status & Tracking</h4>
+                    <label for="modalOrderStatus">Current Status:</label>
+                    <div class="status-update-inline">
+                        <select id="modalOrderStatus">
+                            <option value="Order Received">Order Received</option>
+                            <option value="Designing">Designing</option>
+                            <option value="Verification">Verification</option>
+                            <option value="Design Approved">Design Approved</option>
+                            <option value="Printing">Printing</option>
+                            <option value="Ready for Working">Ready for Working</option>
+                            <option value="Delivered">Delivered</option>
+                            <option value="Completed">Completed</option>
+                        </select>
+                        <button id="modalUpdateStatusBtn" class="button update-status-button"><i class="fas fa-sync-alt"></i> Update Status</button>
+                    </div>
+                    <label style="margin-top: 15px;">Status History:</label>
+                    <div id="modalStatusHistoryList"><p>Loading history...</p></div>
+                </div>
+                <div class="modal-section modal-account-info grid-item-account">
+                   <h4>Account Data</h4>
+                   <div class="account-data-grid">
+                      <div class="account-data-pair">
+                          <p><strong>Total Amount:</strong> <span id="modalTotalAmount">Loading...</span></p>
+                          <p><strong>Amount Paid:</strong> <span id="modalAmountPaid">Loading...</span></p>
+                      </div>
+                      <div class="account-data-pair">
+                          <p><strong>Balance Due:</strong> <span id="modalBalanceDue">Loading...</span></p>
+                          <p><strong>Payment Status:</strong> <span id="modalPaymentStatus">Loading...</span></p>
+                      </div>
+                   </div>
+                </div>
+                <div class="modal-section modal-product-info grid-item-items">
+                    <h4>Items</h4>
+                   <div id="modalProductList"><p>Loading...</p></div>
+                </div>
+                <div class="modal-section modal-po-info grid-item-po">
+                    <h4>Purchase Orders</h4>
+                    <div id="modalPOList"><p>Loading POs...</p></div>
+                </div>
+            </div>
+             <div class="modal-actions main-actions">
+                  <button id="addPaymentBtn" class="button add-payment-button"><i class="fas fa-plus"></i> Add Payment</button>
+                  <button id="modalCreatePOBtn" class="button create-po-button"><i class="fas fa-file-alt"></i> Create New PO</button>
+                  <button id="modalDeleteBtn" class="button delete-button"><i class="fas fa-trash-alt"></i> Delete Order</button>
+                  <button id="modalEditFullBtn" class="button edit-full-button"><i class="fas fa-edit"></i> Edit Full Order</button>
+             </div>
+        </div>
+    </div>
+
+    <div id="whatsapp-reminder-popup" class="popup-overlay">
+        <div class="popup-content">
+            <button id="popup-close-btn" class="popup-close" title="Close">&times;</button>
+            <h4 id="whatsapp-popup-title">Status Updated!</h4>
+            <p>Send update to customer?</p>
+            <div id="whatsapp-message-preview" class="message-preview"></div>
+            <a href="#" id="whatsapp-send-link" class="button whatsapp-send-btn" target="_blank"><i class="fab fa-whatsapp"></i> Send on WhatsApp</a>
+        </div>
+    </div>
+
+    <div id="bulkDeleteConfirmModal" class="modal">
+        <div class="modal-content small-modal">
+            <span class="close-btn" id="closeBulkDeleteModal" title="Close">&times;</span>
+            <h2><i class="fas fa-exclamation-triangle warning-icon"></i> Confirm Deletion</h2>
+            <p>You are about to permanently delete the following <strong id="bulkDeleteCount">0</strong> order(s):</p>
+            <ul id="bulkDeleteOrderList" class="order-list-preview"></ul>
+            <p class="warning-message">This action cannot be undone.</p>
+            <div class="confirmation-check">
+                <input type="checkbox" id="confirmDeleteCheckbox">
+                <label for="confirmDeleteCheckbox">I understand and want to permanently delete these orders.</label>
+            </div>
+            <div class="modal-actions">
+                <button id="cancelBulkDeleteBtn" class="button cancel-button">Cancel</button>
+                <button id="confirmBulkDeleteBtn" class="button delete-button" disabled><i class="fas fa-trash-alt"></i> Delete Orders</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="poItemSelectionModal" class="modal modal-lg"> <div class="modal-content">
+            <span class="close-btn" id="closePoItemSelectionModalBtn" title="Close">&times;</span>
+            <h2>Select Items for Purchase Order</h2>
+            <input type="hidden" id="poItemSelectionOrderIdInput">
+            <div class="po-item-selection-content-wrapper">
+                <p>Select the items from Order #<strong id="poItemSelectionDisplayOrderIdSpan"></strong> to include in the new Purchase Order.</p>
+                <div class="form-group supplier-search-section">
+                    <label for="poSupplierSearchInput"><i class="fas fa-truck"></i> Select Supplier *</label>
+                    <input type="text" id="poSupplierSearchInput" placeholder="Type to search supplier..." required autocomplete="off">
+                    <input type="hidden" id="poSelectedSupplierId">
+                    <input type="hidden" id="poSelectedSupplierName">
+                    <div id="poSupplierSuggestions" class="suggestions-list"></div> </div>
+                 <div id="poItemSelectionListContainer" class="item-selection-list-container">
+                     <h4><i class="fas fa-list-ul"></i> Available Items</h4>
+                     <div id="poItemSelectionList" class="item-selection-list">
+                        <p>Loading items...</p>
+                    </div>
                  </div>
+             </div>
+             <div id="poItemSelectionError" class="error-message" style="display: none;"></div>
+             <div class="modal-actions">
+                <button id="cancelPoItemSelectionBtn" type="button" class="button cancel-button">Cancel</button>
+                <button id="proceedToCreatePOBtn" type="button" class="button save-button" disabled><i class="fas fa-arrow-right"></i> Proceed to Create PO</button>
             </div>
+        </div>
+    </div>
 
-            <div class="order-control-panel">
-                  <div class="panel-item light-blue"> <i class="fas fa-shopping-bag panel-icon"></i> Order Received <span class="panel-count" id="count-order-received"><span class="loading-placeholder">..</span></span> <a href="order_history.html?status=Order+Received" class="button-link">View</a> </div>
-                  <div class="panel-item light-orange"> <i class="fas fa-hourglass-half panel-icon"></i> Designing <span class="panel-count" id="count-designing"><span class="loading-placeholder">..</span></span> <a href="order_history.html?status=Designing" class="button-link">View</a> </div>
-                  <div class="panel-item light-green"> <i class="fas fa-check-circle panel-icon"></i> Verification <span class="panel-count" id="count-verification"><span class="loading-placeholder">..</span></span> <a href="order_history.html?status=Verification" class="button-link">View</a> </div>
-                  <div class="panel-item light-red"> <i class="fas fa-thumbs-up panel-icon"></i> Design Approved <span class="panel-count" id="count-design-approved"><span class="loading-placeholder">..</span></span> <a href="order_history.html?status=Design+Approved" class="button-link">View</a> </div>
-                  <div class="panel-item light-blue"> <i class="fas fa-print panel-icon"></i> Printing <span class="panel-count" id="count-printing"><span class="loading-placeholder">..</span></span> <a href="order_history.html?status=Printing" class="button-link">View</a> </div>
-                  <div class="panel-item light-orange"> <i class="fas fa-cog panel-icon"></i> Ready For Working <span class="panel-count" id="count-ready-for-working"><span class="loading-placeholder">..</span></span> <a href="order_history.html?status=Ready+for+Working" class="button-link">View</a> </div>
-                  <div class="panel-item light-green"> <i class="fas fa-truck panel-icon"></i> Delivered <span class="panel-count" id="count-delivered"><span class="loading-placeholder">..</span></span> <a href="order_history.html?status=Delivered" class="button-link">View</a> </div>
-                  <div class="panel-item light-red"> <i class="fas fa-check-double panel-icon"></i> Completed <span class="panel-count" id="count-completed"><span class="loading-placeholder">..</span></span> <a href="order_history.html?status=Completed" class="button-link">View</a> </div>
-            </div>
+     <div id="poDetailsPopup" class="modal modal-xl">
+         <div class="modal-content">
+             <span class="close-btn" id="closePoDetailsPopupBtn" title="Close">&times;</span>
+             <div id="poDetailsPopupContent">
+                 <p>Loading PO details...</p>
+             </div>
+             <div class="modal-actions">
+                 <button type="button" id="printPoDetailsPopupBtn" class="button print-button"><i class="fas fa-print"></i> Print</button>
+                 <button type="button" id="closePoDetailsPopupBottomBtn" class="button cancel-button">Close</button>
+             </div>
+         </div>
+     </div>
 
-            <div class="kpi-section card-layout">
-                 <div class="kpi-card"> <i class="fas fa-tasks kpi-icon" style="color: var(--info-color);"></i> <div class="kpi-value" id="kpi-active-orders"><span class="loading-placeholder">...</span></div> <div class="kpi-label">Active Orders</div> </div>
-                 <div class="kpi-card"> <i class="fas fa-wallet kpi-icon"></i> <div class="kpi-value" id="kpi-pending-payments"><span class="loading-placeholder">...</span></div> <div class="kpi-label">Pending Payments</div> </div>
-                 <div class="kpi-card"> <i class="fas fa-calendar-day kpi-icon"></i> <div class="kpi-value" id="kpi-orders-today"><span class="loading-placeholder">...</span></div> <div class="kpi-label">Orders Today</div> </div>
-            </div>
+     <div id="readOnlyOrderModal" class="modal modal-xl">
+         <div class="modal-content">
+             <span class="close-btn" id="closeReadOnlyOrderModal" title="Close">&times;</span>
+             <h2 id="readOnlyOrderModalTitle">Order Details</h2>
+             <div id="readOnlyOrderModalContent" class="read-only-content-area">
+                <p>Loading details...</p>
+             </div>
+             <div class="modal-actions">
+                 <button type="button" id="closeReadOnlyOrderModalBottomBtn" class="button cancel-button">Close</button>
+             </div>
+         </div>
+     </div>
 
-            <div class="search-bar order-search-bar">
-                 <label for="dashboardSearchInput">Search Order/Customer/LIC:</label> <input type="text" id="dashboardSearchInput" placeholder="Enter Order ID, Name, or LIC Policy No..."> <button id="dashboardSearchButton"><i class="fas fa-search"></i></button> <div id="dashboardSuggestions" class="suggestions-list"></div>
-            </div>
+     <div id="itemsOnlyModal" class="modal modal-md"> <div class="modal-content">
+             <span class="close-btn" id="closeItemsOnlyModal" title="Close">&times;</span>
+             <h2 id="itemsOnlyModalTitle">Order Items</h2>
+             <div id="itemsOnlyModalContent" class="items-only-content-area">
+                 <p>Loading items...</p>
+             </div>
+             <div class="modal-actions">
+                 <button type="button" id="closeItemsOnlyModalBottomBtn" class="button cancel-button">Close</button>
+             </div>
+         </div>
+     </div>
 
-            <div class="dashboard-grid">
-                 <div class="customer-dues-section card-layout"> <h3><i class="fas fa-file-invoice-dollar"></i> Top Customer Dues</h3> <ul id="customer-dues-list"> <li class="loading-placeholder">Loading customer dues...</li> </ul> </div>
-                 <div class="reminder-section card-layout"> <h3><i class="fas fa-bell"></i> Reminders & Tasks</h3> <h4>Upcoming LIC Premiums (15 Days)</h4> <ul id="lic-reminder-list"> <li class="loading-placeholder">Loading LIC reminders...</li> </ul> <h4>Upcoming Tasks (7 Days)</h4> <ul id="upcoming-task-list"> <li class="loading-placeholder">Loading tasks...</li> </ul> <h4>Upcoming Deliveries (3 Days)</h4> <ul id="upcoming-delivery-list"> <li class="loading-placeholder">Loading deliveries...</li> </ul> </div>
-                 <div class="chart-section card-layout"> <h3><i class="fas fa-chart-pie"></i> Order Status Overview</h3> <div class="chart-container"> <canvas id="orderStatusChart"></canvas> </div> </div>
-            </div>
+     <script src="js/order_history.js" type="module" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
 
-        </div> </div> <div id="quickPaymentModal" class="modal"> <div class="modal-content small-modal"> <span class="close-btn" id="closeQuickPaymentModal" title="Close">&times;</span> <h2><i class="fas fa-dollar-sign success-icon"></i> Quick Payment Received</h2> <form id="quickPaymentForm"> <div class="form-group"> <label for="quickPaymentCustomerSearch">Customer <span class="required">*</span>:</label> <input type="text" id="quickPaymentCustomerSearch" required placeholder="Search Customer Name/WhatsApp..."> <input type="hidden" id="quickPaymentCustomerId"> <div id="quickPaymentCustomerSuggestions" class="suggestions-box"><ul></ul></div> </div> <div id="quickPaymentSelectedCustomer" style="margin-bottom: 10px; font-weight: bold; color: var(--primary-color);"></div> <div class="form-group"> <label for="quickPaymentAmount">Amount Paid <span class="required">*</span>:</label> <input type="number" id="quickPaymentAmount" step="0.01" required placeholder="e.g., 500.00"> </div> <div class="form-group"> <label for="quickPaymentDate">Payment Date <span class="required">*</span>:</label> <input type="date" id="quickPaymentDate" required> </div> <div class="form-group"> <label for="quickPaymentMethod">Payment Method:</label> <select id="quickPaymentMethod"> <option value="Cash">Cash</option> <option value="Online">Online</option> <option value="Cheque">Cheque</option> <option value="Other">Other</option> </select> </div> <div class="form-group"> <label for="quickPaymentNotes">Notes:</label> <textarea id="quickPaymentNotes" rows="2" placeholder="Optional notes"></textarea> </div> <div class="modal-actions"> <button type="submit" id="saveQuickPaymentBtn" class="button save-button" disabled><i class="fas fa-save"></i> Save</button> <button type="button" id="cancelQuickPaymentBtn" class="button cancel-button">Cancel</button> </div> <div id="quickPaymentError" class="error-message" style="display: none;"></div> </form> </div> </div>
-
-    <script src="js/utils.js" type="module" defer></script>
-    <script src="js/dashboard.js" type="module" defer></script> <script> function setActiveLink() { try { const path=window.location.pathname; const page=path.substring(path.lastIndexOf('/')+1)||'index.html'; const links=document.querySelectorAll('.sidebar ul li a'); links.forEach(l=>{const hrefAttr=l.getAttribute('href'); l.classList.remove('active'); if(hrefAttr){const linkPage=hrefAttr.substring(hrefAttr.lastIndexOf('/')+1).split('?')[0].split('#')[0]||'index.html'; if(page===linkPage||((page==='/'||page==='index.html')&&linkPage==='index.html')){l.classList.add('active');}}}); } catch(e){console.error("Error setting active link:",e);} } if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', setActiveLink); } else { setActiveLink(); } window.addEventListener('popstate', setActiveLink); </script>
 </body>
 </html>
