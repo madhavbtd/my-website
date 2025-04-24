@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -13,10 +12,11 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" integrity="sha512-9usAa10IRO0HhonpyAIVpjrylPvoDwiPUiKdWk5t3PyolY1cOd4DSE0Ga+ri4AuTroPR5aQvXU9xC6qOPnzFeg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
 
     <script type="module">
-        // --- Firebase Setup (Same as before) ---
+        // --- Firebase App and Auth Imports ---
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
         import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-        import { getFirestore, collection, addDoc, doc, updateDoc, getDocs, query, where, getDoc, orderBy, limit, Timestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+        // --- Firestore Imports (UPDATED: Added arrayUnion, serverTimestamp) ---
+        import { getFirestore, collection, addDoc, doc, updateDoc, getDocs, query, where, getDoc, orderBy, limit, Timestamp, arrayUnion, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
         // **** Your Firebase Configuration ****
         const firebaseConfig = {
@@ -31,20 +31,60 @@
 
         let app; let auth; let db;
         try {
-            if (!window.firebaseAppInitialized) { app = initializeApp(firebaseConfig); window.firebaseAppInitialized = true; window.firebaseApp = app; console.log("Firebase initialized on new_order.html"); } else { app = window.firebaseApp; console.log("Firebase already initialized (new_order.html)"); }
-            auth = getAuth(app); db = getFirestore(app);
-            window.db = db; window.auth = auth; window.collection = collection; window.addDoc = addDoc; window.doc = doc; window.updateDoc = updateDoc; window.getDocs = getDocs; window.query = query; window.where = where; window.getDoc = getDoc; window.orderBy = orderBy; window.limit = limit; window.Timestamp = Timestamp;
-            console.log("Firestore functions made global.");
+            // Initialize Firebase App (only once per page load)
+            if (!window.firebaseAppInitialized) {
+                app = initializeApp(firebaseConfig);
+                window.firebaseAppInitialized = true;
+                window.firebaseApp = app; // Store globally
+                console.log("Firebase initialized on new_order.html (V2.6.1 Compatible)");
+            } else {
+                app = window.firebaseApp; // Use existing instance
+                console.log("Firebase already initialized (new_order.html)");
+            }
+            auth = getAuth(app);
+            db = getFirestore(app);
 
+            // --- Make Firebase/Firestore functions globally available ---
+            window.db = db;
+            window.auth = auth;
+            window.collection = collection;
+            window.addDoc = addDoc;
+            window.doc = doc;
+            window.updateDoc = updateDoc;
+            window.getDocs = getDocs;
+            window.query = query;
+            window.where = where;
+            window.getDoc = getDoc;
+            window.orderBy = orderBy;
+            window.limit = limit;
+            window.Timestamp = Timestamp;
+            // --- >>> UPDATED: Added global assignments <<< ---
+            window.arrayUnion = arrayUnion;
+            window.serverTimestamp = serverTimestamp;
+            // --- >>> End of Update <<< ---
+
+            console.log("Firestore functions made global (incl. arrayUnion, serverTimestamp).");
+
+            // Authentication State Check
             onAuthStateChanged(auth, (user) => {
                 const currentPage = window.location.pathname.split('/').pop().toLowerCase() || 'index.html';
-                if (!user && currentPage !== 'login.html') { console.log("User not logged in. Redirecting..."); window.location.replace('login.html'); }
-                else if (user) { console.log(`User logged in on ${currentPage}`); }
+                if (!user && currentPage !== 'login.html') {
+                    console.log("User not logged in. Redirecting...");
+                    window.location.replace('login.html'); // Ensure correct path to login.html
+                } else if (user) {
+                    console.log(`User logged in on ${currentPage}`);
+                    // Note: new_order.js now handles its own initialization logic after DOMContentLoaded
+                }
             });
+            // Function to get current user if needed by other scripts
             window.getCurrentUser = () => auth.currentUser;
-        } catch(e) { console.error("Firebase setup / Auth check error:", e); alert("Error loading application configuration."); }
+
+        } catch(e) {
+            console.error("Firebase setup / Auth check error:", e);
+            alert("Error loading application configuration.");
+        }
     </script>
-</head>
+    </head>
 <body>
     <div class="container">
         <div class="header" id="formHeader">
@@ -121,7 +161,6 @@
                             </div>
                         </div>
                         <div class="form-row">
-                             <!-- Status Dropdown Moved Here -->
                              <div class="form-group form-group-half">
                                  <label for="orderStatusSelect">Status</label>
                                  <select id="orderStatusSelect" name="order_status" class="form-input status-select">
@@ -153,8 +192,6 @@
                  </div>
             </div>
 
-            <!-- Removed the old inline status section -->
-
             <div class="form-section-card">
 
                 <div class="section-title">3. Product & Job Details</div>
@@ -173,8 +210,7 @@
                             </tr>
                         </thead>
                         <tbody id="orderItemsTableBody">
-
-                        </tbody>
+                            </tbody>
                     </table>
                 </div>
                 <button type="button" id="addItemBtn" class="button add-item-button"><i class="fas fa-plus"></i> Add Item</button>
