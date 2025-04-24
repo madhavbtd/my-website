@@ -1,0 +1,127 @@
+/* css/lic_management.css - Styles specific to LIC page */
+
+/* Reminder Section Styling */
+.lic-reminder-section {
+    background-color: #fff3cd; /* Light yellow background */
+    border: 1px solid #ffeeba; /* Yellow border */
+    border-radius: 5px;
+    padding: 15px 20px;
+    margin-bottom: 25px;
+}
+
+.lic-reminder-section h2 {
+    margin-top: 0;
+    margin-bottom: 15px;
+    font-size: 1.2em;
+    color: #856404; /* Dark yellow text */
+    border-bottom: 1px solid #ffeeba;
+    padding-bottom: 8px;
+}
+
+.lic-reminder-section h2 .warning-icon {
+    margin-right: 8px;
+    color: #ffc107; /* Bootstrap warning yellow */
+}
+
+#reminderList {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    max-height: 200px; /* Limit height and make scrollable */
+    overflow-y: auto;
+}
+
+#reminderList li {
+    padding: 8px 5px;
+    border-bottom: 1px dashed #ffeeba;
+    font-size: 0.9em;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+ #reminderList li:last-child {
+    border-bottom: none;
+}
+
+#reminderList .loading-reminder {
+    color: #6c757d;
+    font-style: italic;
+}
+
+.reminder-checkbox {
+    margin-right: 5px;
+    cursor: pointer;
+    flex-shrink: 0; /* Prevent checkbox from shrinking */
+}
+
+/* Style for hiding checked reminder items (controlled by JS) */
+#reminderList li.hidden-reminder {
+    display: none;
+}
+
+
+/* Task Management Section Styling (Optional) */
+.task-management-section {
+    margin-top: 30px;
+    padding: 20px;
+    background-color: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 5px;
+}
+
+.task-management-section h2 {
+    margin-top: 0;
+    font-size: 1.2em;
+    margin-bottom: 15px;
+}
+
+.task-actions {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 15px;
+    flex-wrap: wrap;
+}
+#newTaskInput { flex-grow: 1; padding: 6px 9px; border: 1px solid #ced4da; border-radius: 3px;}
+#newTaskDueDate { padding: 6px 9px; border: 1px solid #ced4da; border-radius: 3px; }
+#addTaskBtn { flex-shrink: 0; background-color: #007bff; color: white;}
+#addTaskBtn:hover { background-color: #0056b3;}
+
+
+#taskList {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+#taskList li {
+    display: flex;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px solid #eee;
+}
+ #taskList li span { flex-grow: 1; margin-left: 8px; font-size: 0.9em; }
+.task-checkbox { cursor: pointer; }
+.task-checkbox:checked + span { text-decoration: line-through; color: #6c757d; }
+.delete-task-btn { background: none; border: none; color: #dc3545; cursor: pointer; margin-left: auto; padding: 5px; font-size: 0.9em;}
+.delete-task-btn:hover { color: #c82333;}
+
+
+/* Modal Size Adjustment */
+.modal-content.large-modal {
+    max-width: 800px; /* Adjust width for larger forms */
+}
+.modal-content .form-row {
+    display: flex;
+    gap: 20px; /* Add gap between columns */
+    flex-wrap: wrap;
+}
+ .modal-content .form-row .form-group {
+    flex: 1 1 calc(50% - 10px); /* Allow two columns */
+    min-width: 200px; /* Minimum width before wrapping */
+ }
+ .modal-content .form-group textarea {
+      width: 100%; /* Ensure textarea takes full width */
+ }
+
+ /* Ensure required asterisk is visible */
+.required { color: #dc3545; margin-left: 2px; font-weight: bold; }
