@@ -1,580 +1,155 @@
-/* === order_history.css === */
-/* Updated Version: Professional, Cleaner, Colorful, Compact Modals - v5 (Popup Padding Fix) */
+/* css/index.css - vFinal Fixes */
 
-/* --- Global Styles & Variables --- */
-:root {
-    --primary-color: #0056b3; /* Deep Blue */
-    --primary-color-light: #e6f0ff; /* Light Blue */
-    --secondary-color: #6c757d; /* Grey */
-    --success-color: #28a745; /* Green */
-    --success-color-light: #eaf7ec; /* Light Green */
-    --warning-color: #ffc107; /* Yellow */
-    --warning-color-light: #fff8e6; /* Light Yellow */
-    --info-color: #17a2b8; /* Teal */
-    --info-color-light: #e8f7fa; /* Light Teal */
-    --danger-color: #dc3545; /* Red */
-    --light-bg: #f8f9fa; /* Very Light Grey */
-    --white-bg: #ffffff; /* White */
-    --border-color: #dee2e6; /* Light Grey Border */
-    --border-color-light: #e9ecef; /* Even Lighter Border */
-    --text-color: #343a40; /* Dark Grey Text */
-    --text-muted: #6c757d; /* Medium Grey Text */
-    --font-family: 'Poppins', "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
-    --border-radius: 5px;
-    --box-shadow: 0 2px 4px rgba(0, 0, 0, 0.06);
-    --box-shadow-lg: 0 4px 8px rgba(0, 0, 0, 0.08);
-    --highlight-color: #fff3cd;
-    --selected-row-bg: #e0ecf8;
-    --po-item-header-bg: #f0f8ff;
-    --po-item-list-bg: #fdfdff;
-    --po-item-entry-bg: #ffffff;
-}
-body {
-    font-family: var(--font-family);
-    margin: 0;
-    padding: 20px;
-    background-color: #f4f6f9;
-    color: var(--text-color);
-    line-height: 1.5;
-    font-size: 15px;
-    overflow-x: hidden;
-}
-.container {
-    background-color: var(--white-bg);
-    padding: 25px 30px;
-    border-radius: var(--border-radius);
-    box-shadow: var(--box-shadow-lg);
-    width: 100%;
-    max-width: 1350px;
-    margin: 20px auto;
-    box-sizing: border-box;
-}
+/* --- Base Variables and Styles --- */
+:root { /* ... पहले जैसा ... */ --primary-color: #0056b3; --secondary-color: #2c3e50; --accent-color: #ffc107; --success-color: #28a745; --info-color: #17a2b8; --danger-color: #dc3545; --light-bg: #f8f9fa; --border-color: #dee2e6; --text-color: #343a40; --text-muted: #6c757d; --sidebar-text: #ecf0f1; --sidebar-hover: #34495e; --sidebar-active-bg: #3a5368; --sidebar-active-border: #f1c40f; --card-bg: #ffffff; --card-shadow: 0 2px 8px rgba(0, 0, 0, 0.07); --card-border-radius: 8px; --base-font-size: 15px; }
+body { /* ... पहले जैसा ... */ font-family: 'Poppins', sans-serif; font-size: var(--base-font-size); margin: 0; padding: 0; background-color: #f4f6f8; color: var(--text-color); line-height: 1.6; overflow-x: hidden; }
+.container { /* ... पहले जैसा ... */ display: flex; min-height: 100vh; }
 
-/* --- Header & Breadcrumb --- */
-.header { background-color: var(--primary-color); color: white; padding: 15px 20px; border-radius: var(--border-radius) var(--border-radius) 0 0; margin: -25px -30px 20px -30px; font-size: 1.2em; font-weight: 600; text-align: center; display: flex; align-items: center; justify-content: center; gap: 10px; }
-.header-icon { font-size: 1.1em; }
-h1 { margin: 0; font-size: 1em; }
-.breadcrumb { font-size: 0.9em; color: var(--text-muted); margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid var(--border-color); }
-.breadcrumb a { color: var(--primary-color); text-decoration: none; font-weight: 500; }
-.breadcrumb a:hover { text-decoration: underline; }
-.breadcrumb span { margin-left: 5px; color: var(--text-color); }
-.breadcrumb span::before { content: "/"; margin-right: 5px; color: var(--text-muted); }
+/* --- Sidebar --- */
+.sidebar { /* ... पहले जैसा ... */ width: 220px; background-color: var(--secondary-color); color: var(--sidebar-text); padding-top: 0; display: flex; flex-direction: column; flex-shrink: 0; box-shadow: 2px 0 5px rgba(0,0,0,0.1); transition: width 0.3s ease; z-index: 1010; }
+.sidebar h2 { /* ... पहले जैसा ... */ text-align: center; background-color: white; padding: 15px 10px; margin: 0; border-bottom: 1px solid var(--border-color); flex-shrink: 0; height: 60px; display: flex; align-items: center; justify-content: center; }
+.sidebar h2 img#sidebarLogo { /* ... पहले जैसा ... */ max-width: 90%; max-height: 45px; width: auto; height: auto; vertical-align: middle; transition: max-width 0.3s ease, max-height 0.3s ease; }
+.sidebar ul { /* ... पहले जैसा ... */ list-style-type: none; padding: 10px 0; margin: 0; flex-grow: 1; overflow-y: auto; overflow-x: hidden; }
+.sidebar ul li a { /* ... पहले जैसा ... */ padding: 12px 20px; text-decoration: none; color: var(--sidebar-text); display: flex; align-items: center; border-left: 4px solid transparent; transition: background-color 0.2s ease, padding-left 0.2s ease, border-left-color 0.2s ease, color 0.2s ease; font-size: 0.95em; white-space: nowrap; gap: 15px; position: relative; }
+.sidebar ul li a i { /* ... पहले जैसा ... */ width: 20px; text-align: center; font-size: 1.1em; flex-shrink: 0; }
+.sidebar ul li a:hover { /* ... पहले जैसा ... */ background-color: var(--sidebar-hover); color: #fff; padding-left: 20px; border-left-color: var(--sidebar-hover); }
+.sidebar ul li a.active { /* ... पहले जैसा ... */ background-color: var(--sidebar-active-bg); border-left-color: var(--sidebar-active-border); font-weight: 600; color: #fff; }
+.sidebar ul li:last-child { /* ... पहले जैसा ... */ margin-top: auto; }
+.sidebar ul li a#logout-link { /* ... पहले जैसा ... */ border-top: 1px solid var(--sidebar-hover); }
 
-/* --- Buttons (Base and Specific) --- */
-.button {
-    padding: 7px 16px; font-size: 0.9em; border: none; border-radius: var(--border-radius); cursor: pointer; font-weight: 500; display: inline-flex; align-items: center; justify-content: center; gap: 6px; text-decoration: none; transition: background-color 0.2s ease, box-shadow 0.2s ease, transform 0.1s ease, opacity 0.2s ease; white-space: nowrap; height: 36px; box-shadow: var(--box-shadow); color: white; box-sizing: border-box; font-family: var(--font-family);
-}
-.button:hover { box-shadow: var(--box-shadow-lg); transform: translateY(-1px); }
-.button:active { transform: translateY(0px); box-shadow: var(--box-shadow); }
-.button:disabled { opacity: 0.6; cursor: not-allowed; box-shadow: none; transform: none; background-color: #adb5bd !important; color: #fff !important; }
-.button:disabled:hover { background-color: #adb5bd; box-shadow: none; transform: none; }
-.button i { margin-right: 5px; font-size: 0.95em; }
-/* Specific Button Colors */
-.add-new-button, .success-button, .save-button { background-color: var(--success-color); }
-.add-new-button:hover, .success-button:hover, .save-button:hover { background-color: #218838; }
-.export-button { background-color: #5bc0de; }
-.export-button:hover { background-color: #31b0d5; }
-.clear-filters-button, .secondary-button, .cancel-button { background-color: var(--secondary-color); }
-.clear-filters-button:hover, .secondary-button:hover, .cancel-button:hover { background-color: #5a6268; }
-.info-button, .print-button { background-color: var(--info-color); }
-.info-button:hover, .print-button:hover { background-color: #117a8b; }
-.primary-button, .details-edit-button { background-color: var(--primary-color); }
-.primary-button:hover, .details-edit-button:hover { background-color: #004085; }
-.update-status-button { background-color: var(--warning-color); color: #333; font-weight: 500; font-family: var(--font-family); }
-.update-status-button:hover { background-color: #e0a800; }
-.edit-full-button { background-color: #5bc0de; color: white; }
-.edit-full-button:hover { background-color: #31b0d5; }
-.delete-button { background-color: var(--danger-color); color: white; }
-.delete-button:hover { background-color: #c82333; }
-.add-payment-button { background-color: var(--success-color); font-size: 0.85em; padding: 5px 10px; height: 32px; }
-.add-payment-button:hover { background-color: #218838; }
-.create-po-button { background-color: var(--primary-color); font-size: 0.85em; padding: 5px 10px; height: 32px; }
-.create-po-button:hover { background-color: #004085; }
+/* --- Main Content Area --- */
+.main-content { /* ... पहले जैसा ... */ flex: 1; padding: 25px; overflow-y: auto; height: 100vh; box-sizing: border-box; background-color: #f4f6f8; display: flex; flex-direction: column; gap: 25px; position: relative; z-index: 1; }
+.main-content > *:last-child { /* ... पहले जैसा ... */ margin-bottom: 0; }
 
-/* --- Action Bar & Filter Bar --- */
-.actions-bar { display: flex; justify-content: flex-end; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 8px; }
-.filter-bar { display: flex; flex-wrap: wrap; gap: 15px; padding: 15px; background-color: var(--white-bg); border: 1px solid var(--border-color); border-radius: var(--border-radius); margin-bottom: 15px; align-items: flex-end; box-shadow: var(--box-shadow); }
-.filter-group { display: flex; flex-direction: column; gap: 4px; flex-grow: 1; min-width: 150px; }
-.filter-group:has(#filterDate) { min-width: 160px; flex-grow: 0.5;}
-.filter-group:has(#filterStatus) { min-width: 170px; flex-grow: 0.8; }
-.filter-group.filter-sort { min-width: 200px; flex-grow: 1; }
-.filter-group:has(#filterSearch) { flex-grow: 1.5; }
-.filter-group label { font-size: 0.85em; font-weight: 500; color: var(--text-color); white-space: nowrap; margin-bottom: 2px; }
-.filter-group label i { margin-right: 5px; color: var(--primary-color); width: 1.1em; text-align: center; }
-.filter-group input[type="date"], .filter-group input[type="text"], .filter-group select { padding: 8px 10px; border: 1px solid #ced4da; border-radius: var(--border-radius); font-size: 0.9em; height: 36px; background-color: var(--white-bg); box-sizing: border-box; width: 100%; color: var(--text-color); font-family: var(--font-family); }
-.filter-group input::placeholder { color: #aaa; opacity: 1; }
-.filter-group input:focus, .filter-group select:focus { border-color: var(--primary-color); outline: 0; box-shadow: 0 0 0 0.2rem rgba(0, 86, 179, 0.2); }
+/* --- Header --- */
+.header.updated-header { /* ... पहले जैसा ... */ display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; padding: 12px 20px; background-color: var(--card-bg); box-shadow: var(--card-shadow); border-radius: var(--card-border-radius); gap: 15px; border: 1px solid var(--border-color); }
+.welcome-text { /* ... पहले जैसा ... */ font-weight: 600; font-size: 1.1em; color: var(--primary-color); flex-shrink: 0; margin-right: auto; }
+.header-actions { /* ... पहले जैसा ... */ display: flex; flex-wrap: wrap; align-items: center; gap: 15px; }
+.header-buttons { /* ... पहले जैसा ... */ display: flex; flex-wrap: wrap; gap: 10px; }
+.button-base { /* ... पहले जैसा ... */ padding: 8px 14px; font-size: 0.9em; border-radius: 5px; text-decoration: none; color: white; border: none; cursor: pointer; font-family: 'Poppins', sans-serif; display: inline-flex; align-items: center; gap: 6px; transition: background-color 0.2s ease, transform 0.1s ease; line-height: 1.4; }
+.button-base:hover { /* ... पहले जैसा ... */ opacity: 0.9; } .button-base:active { /* ... पहले जैसा ... */ transform: scale(0.98); }
+.add-customer-btn { /* ... पहले जैसा ... */ background-color: var(--success-color); }
+.add-supplier-btn { /* ... पहले जैसा ... */ background-color: var(--info-color); }
+.new-order-btn { /* ... पहले जैसा ... */ background-color: var(--primary-color); }
+.quick-payment-btn { /* ... पहले जैसा ... */ background-color: var(--info-color); }
+.date-time-container { /* ... पहले जैसा ... */ font-size: 0.9em; font-weight: 500; background-color: var(--light-bg); border: 1px solid var(--border-color); padding: 8px 12px; border-radius: 5px; color: var(--text-muted); white-space: nowrap; }
+.header-icons { /* ... पहले जैसा ... */ display: flex; gap: 10px; align-items: center; }
+.icon-button { /* ... पहले जैसा ... */ background: none; border: none; font-size: 1.3em; color: var(--text-muted); cursor: pointer; padding: 5px; position: relative; transition: color 0.2s ease; }
+.icon-button:hover { /* ... पहले जैसा ... */ color: var(--primary-color); }
+.icon-button .badge { /* ... पहले जैसा ... */ position: absolute; top: 0; right: 0; background-color: var(--danger-color); color: white; font-size: 0.6em; padding: 2px 5px; border-radius: 50%; font-weight: bold; display: none; }
+.icon-button .badge.active { /* ... पहले जैसा ... */ display: block; }
 
-/* --- Bulk Actions Bar --- */
-.bulk-actions-bar { display: flex; align-items: center; justify-content: space-between; padding: 10px 15px; background-color: var(--primary-color-light); border: 1px solid var(--primary-color); border-radius: var(--border-radius); margin-bottom: 15px; flex-wrap: wrap; gap: 10px; box-shadow: none; }
-.bulk-actions-bar #selectedCount { font-weight: 600; color: var(--primary-color); font-size: 0.9em; }
-.bulk-actions-controls { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-.bulk-label { font-size: 0.85em; font-weight: 500; margin-right: 4px; }
-.bulk-select { padding: 6px 10px; border: 1px solid #ced4da; border-radius: var(--border-radius); font-size: 0.85em; height: 34px; min-width: 150px; font-family: var(--font-family); }
-.bulk-button { padding: 5px 12px; font-size: 0.85em; height: 34px; }
-.bulk-update { background-color: var(--warning-color); color: #333; }
-.bulk-update:hover { background-color: #e0a800; }
-.bulk-delete { background-color: var(--danger-color); color: white; }
-.bulk-delete:hover { background-color: #c82333; }
+/* --- Card Layout Helper --- */
+.card-layout { /* ... पहले जैसा ... */ background-color: var(--card-bg, #ffffff); padding: 20px; border-radius: var(--card-border-radius, 8px); box-shadow: var(--card-shadow, 0 2px 8px rgba(0, 0, 0, 0.07)); border: 1px solid var(--border-color, #dee2e6); }
+.card-layout h3 { /* ... पहले जैसा ... */ margin-top: 0; margin-bottom: 15px; font-size: 1.1em; font-weight: 600; color: var(--primary-color); border-bottom: 1px solid #eee; padding-bottom: 8px; display: flex; align-items: center; gap: 8px; }
+.card-layout h3 i { /* ... पहले जैसा ... */ font-size: 0.9em; opacity: 0.8; }
+.card-layout ul { /* ... पहले जैसा ... */ list-style: none; padding: 0; margin: 0; font-size: 0.9em; max-height: 150px; overflow-y: auto; }
+.card-layout ul li { /* ... पहले जैसा ... */ padding: 6px 0; border-bottom: 1px dotted #eee; color: var(--text-muted); }
+.card-layout ul li:last-child { /* ... पहले जैसा ... */ border-bottom: none; }
+.card-layout ul li strong { /* ... पहले जैसा ... */ color: var(--text-color); }
+.card-layout .loading-placeholder { /* ... पहले जैसा ... */ color: #aaa; font-style: italic; }
 
-/* --- Table Styles --- */
-.table-container { width: 100%; max-height: 68vh; overflow-y: auto; border: 1px solid var(--border-color); border-radius: var(--border-radius); margin-bottom: 20px; background-color: var(--white-bg); box-shadow: var(--box-shadow); position: relative; overflow-x: auto; }
-#orderTable { width: 100%; border-collapse: collapse; font-size: 0.88em; border: none; min-width: 1000px; }
-#orderTable thead th { position: sticky; top: 0; z-index: 10; background-color: var(--light-bg); padding: 10px 12px; text-align: left; font-weight: 600; color: var(--text-color); white-space: nowrap; border-bottom: 2px solid var(--border-color); }
-#orderTable thead th.col-checkbox { z-index: 11; }
-#orderTable td { padding: 9px 12px; text-align: left; vertical-align: middle; border-bottom: 1px solid var(--border-color-light); color: var(--text-color); word-wrap: break-word; white-space: normal; }
-#orderTable tbody tr { transition: background-color 0.15s ease; }
-#orderTable tbody tr:last-child td { border-bottom: none; }
-#orderTable tbody tr:hover { background-color: #f1f1f1; }
-#orderTable tbody tr.selected-row { background-color: var(--selected-row-bg) !important; font-weight: 500; }
-th.col-checkbox, td.col-checkbox { width: 35px; text-align: center; padding-left: 8px; padding-right: 8px; }
-th.col-checkbox input, td.col-checkbox input { cursor: pointer; transform: scale(1.1); }
-.customer-name-display { display: block; font-weight: 600; margin-bottom: 2px; color: var(--text-color); }
-.customer-mobile-inline { display: block; font-size: 0.9em; color: var(--text-muted); }
-#loadingMessage, #noOrdersMessage { text-align: center; color: var(--text-muted); font-style: italic; padding: 30px !important; font-size: 1em; }
-.po-info-cell { font-size: 0.85em; line-height: 1.4; }
-.po-info-cell a { color: var(--primary-color); text-decoration: none; display: inline-block; margin-bottom: 3px; padding: 2px 5px; border-radius: 3px; background-color: var(--primary-color-light); transition: background-color 0.2s ease; }
-.po-info-cell a:hover { text-decoration: none; background-color: #d4e4f7;}
-.po-info-cell .button.create-po-button.icon-only { background-color: var(--success-color); color: white; padding: 0; width: 32px; height: 32px; font-size: 1.1em; line-height: 32px; text-align: center; min-width: auto; box-shadow: none; border-radius: 50%; }
-.po-info-cell .button.create-po-button.icon-only:hover { background-color: #218838; box-shadow: var(--box-shadow); transform: scale(1.05); }
-.po-info-cell .button.create-po-button.icon-only i { margin-right: 0; }
-
-/* --- Table Clickable Links --- */
-a.order-id-link, a.customer-name-link, a.view-po-details-link, a.see-more-link { color: var(--primary-color); text-decoration: none; cursor: pointer; font-weight: 500; }
-a.order-id-link:hover, a.customer-name-link:hover, a.view-po-details-link:hover { text-decoration: underline; color: #003d80; }
-a.see-more-link { font-size: 0.85em; color: var(--secondary-color); font-style: italic; margin-left: 5px; padding: 2px 5px; border-radius: 3px; background-color: #f1f3f5; }
-a.see-more-link:hover { background-color: #e9ecef; text-decoration: none; }
-
-/* --- Search Highlighting & Status Badge --- */
-mark { background-color: var(--warning-color-light); padding: 0.1em 0.2em; border-radius: 3px; color: inherit; font-weight: 600; border: 1px solid #ffeeba; }
-.status-badge { font-weight: 500; padding: 4px 10px; border-radius: var(--border-radius); font-size: 0.82em; color: white; background-color: var(--secondary-color); white-space: nowrap; display: inline-block; line-height: 1.3; text-align: center; border: 1px solid rgba(0,0,0,0.05); }
-.status-badge.status-order-received { background-color: var(--secondary-color); }
-.status-badge.status-designing { background-color: var(--warning-color); color: #333; }
-.status-badge.status-verification { background-color: #fd7e14; }
-.status-badge.status-design-approved { background-color: #20c997; }
-.status-badge.status-ready-for-working { background-color: #0dcaf0; color: #333; }
-.status-badge.status-printing { background-color: var(--info-color); }
-.status-badge.status-delivered { background-color: var(--success-color); }
-.status-badge.status-completed { background-color: var(--success-color); }
-.status-badge.status-cancelled { background-color: var(--danger-color); }
-.status-badge.status-unknown { background-color: #adb5bd; }
-.priority-yes { color: var(--danger-color); font-weight: 600; }
-.priority-no { color: var(--text-muted); }
-
-/* --- Table Action Buttons --- */
-.details-edit-button { padding: 5px 10px; font-size: 0.85em; border-radius: var(--border-radius); white-space: nowrap; box-shadow: none; height: auto; }
-.whatsapp-button { background-color: #25d366; color: white; border: none; border-radius: 50%; width: 30px; height: 30px; font-size: 1em; text-align: center; cursor: pointer; padding: 0; display: inline-flex; align-items: center; justify-content: center; transition: background-color 0.2s ease, transform 0.1s ease; vertical-align: middle; box-shadow: none; }
-.whatsapp-button:hover { background-color: #1ebe57; transform: scale(1.05); }
-.whatsapp-button:active { transform: scale(0.95); }
-
-/* --- Summary & Reporting --- */
-.summary-reporting-container { display: flex; flex-direction: column; gap: 15px; margin-top: 20px; }
-.order-summary-counts, .reporting-section { padding: 15px 20px; background-color: var(--white-bg); border: 1px solid var(--border-color); border-radius: var(--border-radius); box-shadow: var(--box-shadow); }
-.order-summary-counts { font-size: 0.92em; color: var(--text-color); display: flex; justify-content: space-around; align-items: center; flex-wrap: wrap; gap: 15px 25px; }
-.order-summary-counts span { font-weight: 500; }
-.order-summary-counts strong { color: var(--primary-color); font-weight: 700; margin-left: 5px; font-size: 1.05em; }
-.reporting-section h4 { margin-top: 0; margin-bottom: 12px; font-size: 1.05em; color: var(--primary-color); font-weight: 600; border-bottom: 1px solid var(--border-color-light); padding-bottom: 8px; }
-#statusCountsReport ul { list-style: none; padding: 0; margin: 0; font-size: 0.9em; column-count: 2; column-gap: 20px; }
-#statusCountsReport li { margin-bottom: 6px; color: var(--text-color); }
-#statusCountsReport li strong { font-weight: 600; color: var(--text-color); }
-#statusCountsReport p { color: var(--text-muted); font-style: italic; }
-
-/* ========================== */
-/* === Modal Base Styles === */
-/* ========================== */
-.modal, .popup-overlay {
-    display: none; position: fixed; z-index: 1050; left: 0; top: 0; width: 100%; height: 100%;
-    background-color: rgba(0,0,0,0.6); align-items: center; justify-content: center;
-    padding: 15px; box-sizing: border-box;
-}
-.modal.active, .popup-overlay.active { display: flex; }
-
-.modal-content {
-    background-color: var(--white-bg); margin: auto; border: none; width: 95%;
-    border-radius: var(--border-radius); position: relative; box-shadow: 0 5px 15px rgba(0,0,0,0.2);
-    z-index: 1051; animation: popupFadeIn 0.3s ease-out;
-    display: flex; flex-direction: column; /* << Important for layout */
-    max-height: calc(88vh); /* Max height */
-    overflow-y: auto;
-    padding: 0; /* Keep padding off main container initially */
-}
-
-/* Modal Sizes */
-.modal-content.modal-lg { max-width: 1000px; }
-.modal-content.modal-xl { max-width: 1150px; }
-.modal-content.modal-md { max-width: 650px; }
-/* <<< UPDATED small-modal to not overflow and remove max-height */
-.modal-content.small-modal {
-    max-width: 500px;
-    overflow-y: visible; /* Let content determine height */
-    max-height: none;   /* Remove max height */
-    /* ADDED padding directly here */
-    padding: 25px;
-    /* Adjust padding on header/footer/content-area inside this modal if needed */
-    /* Example: Reset padding on direct children if applying here */
-     /* & > h2, & > .modal-actions { padding-left: 0; padding-right: 0; } /* Optional: Adjust if needed */
-     /* & > .modal-content-area { padding: 0; } /* Optional: Adjust if needed */
-}
-
-.close-btn, #whatsapp-reminder-popup .popup-close {
-    color: #aaa; position: absolute; top: 8px; right: 12px; font-size: 26px; font-weight: bold;
-    cursor: pointer; line-height: 1; background: none; border: none; padding: 0;
-    transition: color 0.2s ease; z-index: 1055;
-}
-.close-btn:hover, .close-btn:focus, #whatsapp-reminder-popup .popup-close:hover, #whatsapp-reminder-popup .popup-close:focus { color: var(--danger-color); }
-
-/* Modal Header (Common) */
-/* <<< MODIFIED: Adjusted padding based on parent padding */
-.modal-content > h2, .modal-content > h3 {
-    margin: 0; padding: 12px 20px; font-size: 1.15em; background-color: var(--light-bg);
-    border-bottom: 1px solid var(--border-color);
-    border-radius: var(--border-radius) var(--border-radius) 0 0; /* Only top radius */
-    color: var(--text-color); text-align: left; font-weight: 600;
-    flex-shrink: 0; /* Prevent header from shrinking */
-    font-family: var(--font-family);
-    position: sticky; /* <<< Make Header Sticky */
-    top: 0; /* Stick to top */
-    z-index: 1052; /* Ensure header is above content */
-}
-/* Reset margin/padding if parent has padding */
-.small-modal > h2 {
-    margin: -25px -25px 15px -25px; /* Adjust negative margins based on parent padding */
-    padding: 12px 25px; /* Use parent padding */
-    border-radius: var(--border-radius) var(--border-radius) 0 0;
-}
-
-
-#poDetailsPopup h3 { font-size: 1.1em; }
-#itemsOnlyModal h2 { text-align: center; }
-
-/* Modal Content Area (Common for scrollable content between header and footer) */
-/* <<< MODIFIED: Adjusted padding based on parent padding */
-.modal-content-area, /* Use if you have a specific wrapper div */
-#detailsModal .modal-grid-container-complex, /* Specific to details modal */
-#readOnlyOrderModal .read-only-content-area,
-#itemsOnlyModal .items-only-content-area,
-#poDetailsPopup .po-details-content-area,
-#poItemSelectionModal .po-item-selection-content-wrapper,
-/* #bulkDeleteConfirmModal .modal-content-area, /* <<< REMOVED padding from here */
-#whatsapp-reminder-popup .popup-content-area {
-    padding: 15px 20px; /* <<< Apply padding here (except for bulk delete) */
-    flex-grow: 1; /* Allow content to grow */
-}
-/* Remove padding for bulk delete area as parent .modal-content now has it */
-#bulkDeleteConfirmModal .modal-content-area {
-    padding: 0; /* <<< Removed padding */
-    flex-grow: 1;
-}
-
-
-/* Modal Actions Footer (Common) */
-/* <<< MODIFIED: Adjusted padding based on parent padding */
-.modal-actions {
-    display: flex; justify-content: flex-end; gap: 8px; flex-wrap: wrap;
-    padding: 10px 20px; border-top: 1px solid var(--border-color);
-    background-color: var(--light-bg); flex-shrink: 0; /* Prevent footer from shrinking */
-    border-radius: 0 0 var(--border-radius) var(--border-radius); /* Only bottom radius */
-    position: sticky; /* <<< Make Footer Sticky */
-    bottom: 0; /* Stick to bottom */
-    z-index: 1052; /* Ensure footer is above content */
-}
-/* Reset margin/padding if parent has padding */
-.small-modal > .modal-actions {
-    margin: 15px -25px -25px -25px; /* Adjust negative margins */
-    padding: 10px 25px; /* Use parent padding */
-    border-radius: 0 0 var(--border-radius) var(--border-radius);
-}
-
-
-.modal-actions .button { font-family: var(--font-family); }
-
-.error-message {
-    color: var(--danger-color); background-color: #fdecea; border: 1px solid var(--danger-color);
-    border-radius: var(--border-radius); padding: 8px 12px; font-weight: 500; text-align: center;
-    margin: 10px 0; /* Adjust margin */
-    box-sizing: border-box; display: block; /* Make sure it displays if class is added */
-}
-
-/* ============================================= */
-/* === Specific Modal Content Styles === */
-/* ============================================= */
-
-/* --- Enhanced Details Modal Specific Styles (#detailsModal) --- */
-#detailsModal .modal-content { max-width: 1100px; }
-#detailsModal .modal-grid-container-complex {
+/* --- KPI Section (Adjusted for 3 Items) --- */
+.kpi-section {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    grid-template-areas:
-        "customer order status"
-        "account account status"
-        "items items items"
-        "po po po";
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); /* <<<--- Adjusted minmax for 3 items */
     gap: 15px;
 }
-.grid-item-customer { grid-area: customer; }
-.grid-item-order    { grid-area: order; }
-.grid-item-status   { grid-area: status; }
-.grid-item-account  { grid-area: account; }
-.grid-item-items    { grid-area: items; }
-.grid-item-po       { grid-area: po; }
-#detailsModal .modal-section {
-    margin: 0; padding: 15px; border: 1px solid var(--border-color-light);
-    border-radius: var(--border-radius); display: flex; flex-direction: column;
-    background-color: var(--white-bg); min-height: 0;
-    box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+/* Adjust grid for exactly 3 items to prevent stretching */
+@media (min-width: 600px) { /* Example breakpoint */
+    .kpi-section { grid-template-columns: repeat(3, 1fr); }
 }
-#detailsModal .grid-item-order,
-#detailsModal .grid-item-account,
-#detailsModal .grid-item-po { background-color: #fdfdfd; }
-#detailsModal .modal-section h4 {
-    margin-top: 0; margin-bottom: 12px; font-size: 1em; color: var(--primary-color);
-    border-bottom: 1px solid var(--border-color-light); padding-bottom: 8px;
-    font-weight: 600; flex-shrink: 0; display: flex; align-items: center; gap: 6px;
-}
-#detailsModal .modal-section p,
-#detailsModal .modal-section label { margin-bottom: 7px; font-size: 0.9em; flex-shrink: 0; line-height: 1.5; }
-#detailsModal .modal-section p strong { font-weight: 600; color: var(--text-color); min-width: 90px; display: inline-block; margin-right: 8px; }
-#modalDisplayOrderId, #modalCustomerName, #modalTotalAmount, #modalBalanceDue, #modalPaymentStatus { font-weight: 600; color: var(--primary-color); }
-#detailsModal .modal-section p > span:not(#modalDisplayOrderId):not(#modalCustomerName):not(#modalTotalAmount):not(#modalBalanceDue):not(#modalPaymentStatus) { font-weight: 500; color: #333; }
-.modal-status-info label { display: block; margin-bottom: 5px; font-weight: 500; }
-.status-update-inline { display: flex; flex-direction: column; gap: 10px; margin-top: 5px; margin-bottom: 5px; }
-.status-update-inline select { width: 100%; height: 38px; padding: 8px 12px; border: 1px solid #ced4da; border-radius: var(--border-radius); font-size: 0.9em; box-sizing: border-box; font-family: var(--font-family); }
-#detailsModal .update-status-button { width: 100%; align-self: stretch; }
-.modal-account-info h4 { margin-bottom: 10px; }
-.account-data-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 5px 15px; }
-.account-data-pair p { margin-bottom: 5px !important; font-size: 0.9em !important; }
-.account-data-pair p strong { min-width: 95px !important; }
-#modalProductList, #modalStatusHistoryList, #modalPOList {
-    background-color: var(--light-bg); border: 1px solid var(--border-color-light);
-    border-radius: var(--border-radius); padding: 10px 12px; max-height: 140px;
-    overflow-y: auto; font-size: 0.88em; margin-top: auto; flex-grow: 1; min-height: 45px;
-}
-#modalProductList ul, #modalStatusHistoryList ul, #modalPOList ul { list-style: none; padding: 0; margin: 0; }
-#modalProductList li, #modalStatusHistoryList li, #modalPOList li { margin-bottom: 5px; padding: 5px 8px; border-bottom: 1px dotted #ccc; line-height: 1.4; background-color: var(--white-bg); border-radius: 3px; }
-#modalProductList li:last-child, #modalStatusHistoryList li:last-child, #modalPOList li:last-child { margin-bottom: 0; border-bottom: none; }
-#modalProductList ul.modal-product-list-ul { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 6px; padding: 0; list-style: none; margin: 0; }
-#modalProductList ul.modal-product-list-ul li { border: 1px solid var(--border-color-light); padding: 6px 10px; border-radius: 4px; background-color: var(--white-bg); font-size: 0.95em; margin-bottom: 0; line-height: 1.3; }
-#modalStatusHistoryList li { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 5px; }
-#modalStatusHistoryList .history-status { font-weight: 600; }
-#modalStatusHistoryList .history-time { color: var(--text-muted); font-size: 0.9em; white-space: nowrap; }
-.no-products, .no-history, .no-pos, .no-items { color: var(--text-muted); font-style: italic; text-align: center; padding: 10px 0; font-size: 0.9em; }
-#detailsModal .modal-actions.main-actions {
-    justify-content: center; gap: 10px; background-color: var(--light-bg);
-    border-top: 1px solid var(--border-color);
-    padding: 10px 20px;
-    margin-top: 0;
-    position: sticky;
-    bottom: 0;
-}
-#detailsModal .modal-actions.main-actions .button { font-family: var(--font-family); }
+.kpi-card { /* ... पहले जैसा ... */ display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 15px; border: 1px solid var(--border-color); border-radius: var(--card-border-radius); background-color: var(--light-bg); position: relative; min-height: 100px; transition: transform 0.2s ease, box-shadow 0.2s ease; }
+.kpi-card:hover { /* ... पहले जैसा ... */ transform: translateY(-2px); box-shadow: 0 4px 10px rgba(0,0,0,0.08); }
+.kpi-icon { /* ... पहले जैसा ... */ font-size: 1.8em; color: var(--primary-color); opacity: 0.6; margin-bottom: 8px; }
+.kpi-value { /* ... पहले जैसा ... */ font-size: 1.6em; font-weight: 700; color: var(--text-color); line-height: 1.1; }
+.kpi-label { /* ... पहले जैसा ... */ font-size: 0.8em; color: var(--text-muted); margin-top: 5px; text-transform: uppercase; }
 
+/* --- Order Control Panel --- */
+.order-control-panel { /* ... पहले जैसा ... */ display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 15px; }
+.panel-item { /* ... पहले जैसा ... */ padding: 15px; min-height: 150px; box-shadow: var(--card-shadow); border: 1px solid var(--border-color); border-radius: var(--card-border-radius); font-size: 0.9em; color: var(--text-color); display: flex; flex-direction: column; justify-content: space-between; align-items: center; font-weight: 600; font-family: 'Poppins', sans-serif; text-transform: uppercase; line-height: 1.3; transition: transform 0.2s ease, box-shadow 0.2s ease; background-color: #fff; }
+.panel-item:hover { /* ... पहले जैसा ... */ transform: translateY(-3px); box-shadow: 0 5px 10px rgba(0, 0, 0, 0.1); }
+.panel-icon { /* ... पहले जैसा ... */ font-size: 2em; margin-bottom: 10px; }
+.panel-count { /* ... पहले जैसा ... */ font-size: 2.3em; font-weight: 600; display: block; margin-bottom: 10px; color: var(--primary-color); }
+.panel-item a.button-link { /* ... पहले जैसा ... */ background-color: var(--primary-color); color: white; border: none; padding: 6px 12px; cursor: pointer; border-radius: 5px; font-size: 0.8em; margin-top: 8px; font-weight: 500; font-family: 'Poppins', sans-serif; text-transform: capitalize; text-decoration: none; display: inline-block; transition: background-color 0.2s ease; }
+.panel-item a.button-link:hover { /* ... पहले जैसा ... */ background-color: #004085; }
+.panel-item.light-blue { /* ... पहले जैसा ... */ background-color: #e1f5fe; color: #0d47a1; border-color: #b3e5fc; } .panel-item.light-blue .panel-count { color: #1976d2;}
+.panel-item.light-orange { /* ... पहले जैसा ... */ background-color: #fff3e0; color: #bf360c; border-color: #ffe0b2;} .panel-item.light-orange .panel-count { color: #e65100;}
+.panel-item.light-green { /* ... पहले जैसा ... */ background-color: #e8f5e9; color: #1b5e20; border-color: #c8e6c9;} .panel-item.light-green .panel-count { color: #388e3c;}
+.panel-item.light-red { /* ... पहले जैसा ... */ background-color: #ffebee; color: #b71c1c; border-color: #ffcdd2;} .panel-item.light-red .panel-count { color: #d32f2f;}
 
-/* --- WhatsApp Reminder Popup --- */
-#whatsapp-reminder-popup .modal-content { max-width: 480px; overflow-y: visible; max-height: none; padding: 0; }
-#whatsapp-reminder-popup h4 { margin: 0; padding: 12px 20px; font-size: 1.15em; background-color: var(--light-bg); border-bottom: 1px solid var(--border-color); border-radius: var(--border-radius) var(--border-radius) 0 0; color: var(--text-color); text-align: left; font-weight: 600; flex-shrink: 0; position: static; }
-#whatsapp-reminder-popup .popup-content-area { padding: 15px 20px; }
-#whatsapp-reminder-popup p { margin-bottom: 15px; color: var(--text-muted); font-size: 1em; text-align: center; }
-.message-preview { margin-top: 10px; margin-bottom: 20px; font-size: 0.9em; background-color: var(--primary-color-light); padding: 10px 15px; border-radius: var(--border-radius); text-align: left; border: 1px solid var(--border-color); white-space: pre-wrap; word-wrap: break-word; max-height: 150px; overflow-y: auto; line-height: 1.4; }
-#whatsapp-reminder-popup .modal-actions { padding: 10px 20px; border-top: 1px solid var(--border-color); background-color: var(--light-bg); justify-content: center; position: static; border-radius: 0 0 var(--border-radius) var(--border-radius);}
-.whatsapp-send-btn { background-color: #25d366; color: #fff; text-decoration: none; padding: 8px 20px; border-radius: var(--border-radius); display: inline-flex; align-items: center; gap: 8px; font-weight: 600; transition: background-color 0.2s ease, box-shadow 0.2s ease, transform 0.1s ease; margin: 0; border: none; cursor: pointer; font-size: 0.95em; box-shadow: var(--box-shadow); height: auto; }
-.whatsapp-send-btn:hover { background-color: #1ebe57; box-shadow: var(--box-shadow-lg); transform: translateY(-1px); }
-.whatsapp-send-btn:active { transform: translateY(0px); box-shadow: var(--box-shadow); }
-.whatsapp-send-btn i { font-size: 1.1em; }
-@keyframes popupFadeIn { from { opacity: 0; transform: scale(0.98); } to { opacity: 1; transform: scale(1); } }
+/* Loading Spinner */
+.loading-placeholder, .fa-spinner { /* ... पहले जैसा ... */ color: #aaa; font-style: italic; }
+.panel-count .fa-spinner, .kpi-value .fa-spinner { /* ... पहले जैसा ... */ font-size: 0.6em; color: #aaa; }
+.fa-spinner { /* ... पहले जैसा ... */ animation: fa-spin 1.5s infinite linear; display: inline-block; }
+@keyframes fa-spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-/* --- Bulk Delete Modal --- */
-/* <<< UPDATED rule to use the padding from .small-modal */
-#bulkDeleteConfirmModal .modal-content {
-    /* padding: 0; /* <<< REMOVED */
-    max-width: 500px;
-    /* Inherits padding from .small-modal */
-}
-#bulkDeleteConfirmModal h2 {
-    color: var(--danger-color); font-size: 1.2em; display: flex; align-items: center; gap: 8px;
-    /* margin: 0; padding: 12px 20px; /* <<< Using parent padding now */
-    background-color: #f8d7da; border-bottom: 1px solid #f5c6cb;
-    /* border-radius: var(--border-radius) var(--border-radius) 0 0; /* <<< Using parent radius */
-    font-weight: 600; position: static;
-    /* Adjust margin based on parent padding */
-    margin: -25px -25px 15px -25px;
-    padding: 12px 25px;
-    border-radius: var(--border-radius) var(--border-radius) 0 0;
-}
-/* <<< UPDATED area padding to 0 */
-#bulkDeleteConfirmModal .modal-content-area { padding: 0; }
-#bulkDeleteConfirmModal p { font-size: 0.9em; margin-bottom: 8px; color: var(--text-color); }
-.order-list-preview { list-style: none; padding: 8px 12px; margin: 0 0 12px 0; background-color: var(--light-bg); border: 1px solid var(--border-color); border-radius: var(--border-radius); max-height: 120px; overflow-y: auto; font-size: 0.85em; }
-.order-list-preview li { padding: 3px 0; border-bottom: 1px dotted #ccc; color: var(--text-muted); }
-.order-list-preview li:last-child { border-bottom: none; }
-.order-list-preview li strong { color: var(--text-color); font-weight: 600; }
-.warning-message { font-weight: 600; color: var(--danger-color); margin-bottom: 12px !important; text-align: center; font-size: 0.95em !important; }
-.confirmation-check { margin-bottom: 15px; display: flex; align-items: center; justify-content: flex-start; gap: 8px; background-color: var(--warning-color-light); padding: 8px 12px; border-radius: var(--border-radius); border: 1px solid var(--warning-color); }
-.confirmation-check input[type="checkbox"] { transform: scale(1.1); cursor: pointer; margin: 0; }
-.confirmation-check label { font-size: 0.85em; color: var(--text-color); cursor: pointer; margin: 0; font-weight: 500; }
-/* <<< UPDATED actions positioning */
-#bulkDeleteConfirmModal .modal-actions {
-    justify-content: flex-end; position: static;
-    /* border-radius: 0 0 var(--border-radius) var(--border-radius); /* <<< Using parent radius */
-    /* Adjust margin/padding based on parent */
-    margin: 15px -25px -25px -25px;
-    padding: 10px 25px;
-    border-radius: 0 0 var(--border-radius) var(--border-radius);
-}
-#bulkDeleteConfirmModal .delete-button:disabled { background-color: #f5c6cb; border-color: #f5c6cb; color: #721c24; opacity: 0.6; cursor: not-allowed; }
+/* --- Dashboard Grid Layout --- */
+.dashboard-grid { /* ... पहले जैसा ... */ display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 25px; }
+/* Customer Dues Section Styles */
+.customer-dues-section ul { /* ... पहले जैसा ... */ max-height: 250px; overflow-y: auto; list-style: none; padding: 0; margin: 0; }
+.customer-dues-section ul li { /* ... पहले जैसा ... */ padding: 8px 5px; border-bottom: 1px dotted #eee; display: flex; justify-content: space-between; align-items: center; cursor: pointer; transition: background-color 0.2s ease; font-size: 0.9em; }
+.customer-dues-section ul li:last-child { /* ... पहले जैसा ... */ border-bottom: none; }
+.customer-dues-section ul li:hover { /* ... पहले जैसा ... */ background-color: #f0f5f9; }
+.customer-dues-section .customer-name { /* ... पहले जैसा ... */ font-weight: 500; color: var(--text-color); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding-right: 10px; }
+.customer-dues-section .due-amount { /* ... पहले जैसा ... */ font-weight: 600; color: var(--danger-color); white-space: nowrap; margin-left: 10px;}
+.info-feed-section ul li { /* ... पहले जैसा ... */ display: flex; justify-content: space-between; align-items: center; }
+.info-feed-section .activity-time { /* ... पहले जैसा ... */ font-size: 0.85em; color: #999; white-space: nowrap; margin-left: 10px;}
 
+/* --- Reminder Section Improvements --- */
+.reminder-section h4 { /* ... पहले जैसा ... */ font-size: 0.9em; color: var(--secondary-color); margin-top: 15px; margin-bottom: 5px; font-weight: 600; padding-bottom: 3px; border-bottom: 1px dotted #ccc; }
+.reminder-section h4:first-of-type { /* ... पहले जैसा ... */ margin-top: 0; }
+.reminder-section ul { /* ... पहले जैसा ... */ max-height: 100px; }
 
-/* --- PO Details Popup Styles (#poDetailsPopup) --- */
-#poDetailsPopup .modal-content { max-width: 1000px; padding: 0; }
-#poDetailsPopup h3 { position: sticky; top: 0; z-index: 1052;} /* Sticky Header */
-#poDetailsPopup .modal-content-area { padding: 15px 20px; }
-#poDetailsPopup .po-details-popup-header { margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px dashed var(--border-color); }
-#poDetailsPopup p { font-size: 0.9em; margin-bottom: 4px; line-height: 1.5; }
-#poDetailsPopup p strong { font-weight: 600; color: var(--text-color); min-width: 90px; display: inline-block; }
-#poDetailsPopup hr { border: none; border-top: 1px solid var(--border-color); margin: 10px 0; flex-shrink: 0; }
-#poDetailsPopup h4 { margin-top: 0; margin-bottom: 8px; font-size: 1em; color: var(--primary-color); border-bottom: 1px solid var(--border-color-light); padding-bottom: 5px; font-weight: 600; flex-shrink: 0; }
-#poDetailsPopup .details-table-popup { width: 100%; border-collapse: collapse; font-size: 0.85em; margin-bottom: 10px; background-color: var(--white-bg); border: 1px solid var(--border-color); border-radius: var(--border-radius); overflow: hidden; }
-#poDetailsPopup .details-table-popup thead th { background-color: var(--light-bg); font-weight: 600; border-bottom: 1px solid var(--border-color); padding: 6px 8px; text-align: left; }
-#poDetailsPopup .details-table-popup td { border: none; padding: 5px 8px; text-align: left; vertical-align: top; border-bottom: 1px solid var(--border-color-light); }
-#poDetailsPopup .details-table-popup tr:last-child td { border-bottom: none; }
-.po-notes-popup { margin-top: 10px; padding: 10px; border: 1px solid var(--border-color-light); border-radius: var(--border-radius); font-size: 0.85em; background-color: var(--light-bg); flex-shrink: 0; }
-.po-notes-popup strong { display: block; margin-bottom: 5px; font-weight: 600; }
-#poDetailsPopup .modal-actions { position: sticky; bottom: 0; z-index: 1052;} /* Sticky Footer */
+/* --- Chart Section --- */
+.chart-section .chart-container { /* ... पहले जैसा ... */ position: relative; height: 280px; width: 100%; }
 
-/* --- Read-Only Order Modal Styles (#readOnlyOrderModal) --- */
-#readOnlyOrderModal .modal-content { max-width: 1000px; padding: 0; }
-#readOnlyOrderModal h2 { position: sticky; top: 0; z-index: 1052;} /* Sticky Header */
-#readOnlyOrderModal .read-only-content-area { padding: 15px 20px; }
-.read-only-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 12px; }
-.read-only-section { margin-bottom: 0; padding: 12px 15px; border: 1px solid var(--border-color-light); border-radius: var(--border-radius); background-color: var(--white-bg); box-shadow: 0 1px 2px rgba(0,0,0,0.04); }
-.read-only-section h4 { margin-top: 0; margin-bottom: 10px; font-size: 1em; color: var(--primary-color); border-bottom: 1px solid var(--border-color-light); padding-bottom: 6px; font-weight: 600; }
-.read-only-section p { margin-bottom: 7px; font-size: 0.9em; line-height: 1.5; }
-.read-only-section p strong { font-weight: 600; color: var(--text-color); min-width: 90px; display: inline-block; margin-right: 6px; }
-.read-only-product-list, .read-only-history-list { list-style: none; padding: 8px; margin: 0; max-height: 130px; overflow-y: auto; background-color: var(--light-bg); border-radius: var(--border-radius); border: 1px solid var(--border-color-light); }
-.read-only-product-list li, .read-only-history-list li { background-color: var(--white-bg); padding: 4px 6px; border-radius: 3px; margin-bottom: 4px; font-size: 0.9em; border: none; }
-.read-only-history-list li { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 5px;}
-.read-only-history-list li strong { margin-right: 8px; }
-#readOnlyOrderModal .modal-actions { justify-content: flex-end; position: sticky; bottom: 0; z-index: 1052; } /* Sticky Footer */
+/* --- Search Bar & Suggestions --- */
+.search-bar { /* ... पहले जैसा ... */ display: flex; align-items: center; justify-content: flex-end; flex-wrap: wrap; gap: 10px; background-color: var(--card-bg); padding: 12px 15px; border-radius: var(--card-border-radius); box-shadow: var(--card-shadow); border: 1px solid var(--border-color); position: relative; }
+.search-bar label { /* ... पहले जैसा ... */ margin: 0; color: var(--text-muted); font-size: 0.95em; font-weight: 500; flex-shrink: 0; }
+.search-bar input[type="text"]#dashboardSearchInput { /* ... पहले जैसा ... */ padding: 8px 10px; border: 1px solid var(--border-color); border-radius: 5px; font-size: 0.9em; width: 300px; height: 38px; box-sizing: border-box; }
+.search-bar input[type="text"]#dashboardSearchInput:focus { /* ... पहले जैसा ... */ outline: none; border-color: var(--primary-color); box-shadow: 0 0 0 0.2rem rgba(0, 86, 179, 0.2); }
+.search-bar button#dashboardSearchButton { /* ... पहले जैसा ... */ background-color: var(--success-color); color: white; border: none; padding: 8px 14px; cursor: pointer; border-radius: 5px; font-size: 0.9em; height: 38px; line-height: 1; transition: background-color 0.2s ease; flex-shrink: 0; }
+.search-bar button#dashboardSearchButton:hover { /* ... पहले जैसा ... */ background-color: #1e7e34; }
+.suggestions-list#dashboardSuggestions { /* ... पहले जैसा ... */ display: none; position: absolute; top: calc(100% + 5px); right: 15px; width: 360px; background-color: white; border: 1px solid var(--border-color); border-radius: 5px; box-shadow: 0 5px 10px rgba(0,0,0,0.1); max-height: 250px; overflow-y: auto; z-index: 1050; }
+.suggestions-list#dashboardSuggestions div { /* ... पहले जैसा ... */ padding: 8px 12px; cursor: pointer; border-bottom: 1px solid #eee; font-size: 0.9em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.suggestions-list#dashboardSuggestions div:last-child { /* ... पहले जैसा ... */ border-bottom: none; }
+.suggestions-list#dashboardSuggestions div:hover { /* ... पहले जैसा ... */ background-color: #f0f0f0; }
+.suggestions-list#dashboardSuggestions div.no-suggestions { /* ... पहले जैसा ... */ color: var(--text-muted); cursor: default; }
+.suggestions-list#dashboardSuggestions div strong { /* ... पहले जैसा ... */ font-weight: 600; }
 
-/* --- Items Only Modal Styles (#itemsOnlyModal) --- */
-#itemsOnlyModal .modal-content { max-width: 500px; padding: 0; }
-#itemsOnlyModal h2 { position: sticky; top: 0; z-index: 1052;} /* Sticky Header */
-#itemsOnlyModal .items-only-content-area { padding: 15px; background-color: var(--white-bg); border: none; flex-grow: 1; overflow-y: auto; min-height: 100px; }
-.items-only-list { list-style-type: decimal; padding: 0 0 0 25px; margin: 0; }
-.items-only-list li { padding: 5px 0; border-bottom: 1px dotted var(--border-color-light); font-size: 0.9em; line-height: 1.4; margin-bottom: 5px; }
-.items-only-list li:last-child { border-bottom: none; margin-bottom: 0; }
-.items-only-list li strong { font-weight: 600; color: var(--text-color); }
-#itemsOnlyModal .no-items { font-size: 0.9em; padding: 15px 0; color: var(--text-muted); font-style: italic; text-align: center; }
-#itemsOnlyModal .modal-actions { justify-content: center; position: sticky; bottom: 0; z-index: 1052; } /* Sticky Footer */
-
-/* === PO Item Selection Modal Styles (#poItemSelectionModal) === */
-#poItemSelectionModal .modal-content { max-width: 900px; padding: 0; }
-#poItemSelectionModal h2 { position: sticky; top: 0; z-index: 1052;} /* Sticky Header */
-#poItemSelectionModal .po-item-selection-content-wrapper { padding: 15px 20px; flex-grow: 1; overflow: hidden; min-height: 0; display: grid; grid-template-columns: minmax(260px, 35%) 1fr; gap: 15px; align-items: stretch; }
-#poItemSelectionModal > .modal-content > .po-item-selection-content-wrapper > p:first-of-type { margin-bottom: 0; padding: 0 0 10px 0; font-size: 0.9em; color: var(--text-muted); flex-shrink: 0; grid-column: 1 / -1; }
-#poItemSelectionModal .supplier-search-section { margin-bottom: 0; padding: 12px 15px; border: 1px solid var(--primary-color-light); border-radius: var(--border-radius); background-color: var(--primary-color-light); display: flex; flex-direction: column; overflow: visible; position: relative; }
-#poItemSelectionModal .supplier-search-section label { font-weight: 600; font-size: 0.95em; color: var(--primary-color); margin-bottom: 8px; display: block; flex-shrink: 0; }
-#poItemSelectionModal .supplier-search-section label i { margin-right: 6px; }
-#poItemSelectionModal .supplier-search-section input#poSupplierSearchInput { padding: 8px 12px; font-size: 0.9em; border-radius: var(--border-radius); border: 1px solid #ced4da; transition: border-color 0.2s ease, box-shadow 0.2s ease; height: auto; margin-bottom: 8px; flex-shrink: 0; position: relative; z-index: 2; }
-#poItemSelectionModal .supplier-search-section input#poSupplierSearchInput:focus { border-color: var(--primary-color); box-shadow: 0 0 0 0.2rem rgba(0, 86, 179, 0.2); outline: none; }
-#poItemSelectionModal .suggestions-list { position: static; max-height: 150px; z-index: auto; border: 1px solid var(--border-color); box-shadow: none; border-radius: var(--border-radius); overflow-y: auto; background-color: var(--white-bg); margin-top: -5px; margin-bottom: 5px; width: 100%; box-sizing: border-box; display: none; order: 1; flex-grow: 1; }
-#poItemSelectionModal .suggestions-list div { padding: 6px 10px; font-size: 0.85em; cursor: pointer; border-bottom: 1px solid var(--border-color-light); }
-#poItemSelectionModal .suggestions-list div:last-child { border-bottom: none; }
-#poItemSelectionModal .suggestions-list div:hover { background-color: var(--primary-color-light); color: var(--primary-color); font-weight: 500; }
-.item-selection-list-container { padding: 12px 15px; border: 1px solid var(--success-color-light); border-radius: var(--border-radius); background-color: var(--white-bg); display: flex; flex-direction: column; margin-bottom: 0; overflow: hidden; }
-.item-selection-list-container h4 { margin-top: 0; margin-bottom: 8px; font-size: 0.95em; color: var(--success-color); border-bottom: 1px solid var(--success-color-light); padding-bottom: 5px; font-weight: 600; flex-shrink: 0; display: flex; align-items: center; gap: 6px; }
-.item-selection-list-container h4 i { font-size: 0.9em; }
-#poItemSelectionList { border: none; border-radius: 0; padding: 8px; overflow-y: auto; margin: 0; background-color: var(--po-item-list-bg); border: 1px solid var(--border-color-light); border-radius: var(--border-radius); flex-grow: 1; }
-.item-selection-entry { display: flex; align-items: center; gap: 10px; margin-bottom: 5px; padding: 6px 8px; border: none; background-color: var(--po-item-entry-bg); border-radius: 4px; box-shadow: 0 1px 2px rgba(0,0,0,0.04); transition: background-color 0.2s ease; }
-.item-selection-entry:hover { background-color: #f9f9f9; }
-.item-selection-entry input[type="checkbox"] { transform: scale(1.1); cursor: pointer; accent-color: var(--success-color); flex-shrink: 0; }
-.item-selection-entry input[type="checkbox"]:disabled { accent-color: var(--secondary-color); }
-.item-selection-entry label { font-size: 0.9em; line-height: 1.3; flex-grow: 1; cursor: pointer; color: var(--text-color); }
-.item-selection-entry label strong { color: var(--text-color); }
-.item-selection-entry label .in-po-label { color: var(--danger-color); font-weight: 500; margin-left: 5px; font-size: 0.9em;}
-#poItemSelectionModal .modal-actions { grid-column: 1 / -1; order: 1; flex-shrink: 0; position: sticky; bottom: 0; z-index: 1052;} /* Sticky Footer */
-#poItemSelectionError { grid-column: 1 / -1; order: 0; width: auto; text-align: center; padding: 5px 15px; margin-bottom: -5px; }
-
+/* --- Quick Payment Modal Styles ( <<<--- सत्यापित ---<<< ) --- */
+.modal { display: none; position: fixed; z-index: 1050; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.6); align-items: center; justify-content: center; padding: 15px; box-sizing: border-box; }
+.modal.active { display: flex; }
+.modal-content { background-color: #fff; margin: auto; padding: 25px 30px; border: none; width: 90%; border-radius: 8px; position: relative; box-shadow: 0 5px 15px rgba(0,0,0,0.25); z-index: 1051; max-height: 90vh; overflow-y: auto; display: flex; flex-direction: column; }
+.modal-content.small-modal { max-width: 500px; }
+.close-btn { color: #aaa; position: absolute; top: 10px; right: 15px; font-size: 28px; font-weight: bold; cursor: pointer; line-height: 1; background: none; border: none; padding: 0; }
+.close-btn:hover, .close-btn:focus { color: black; }
+.modal h2 { margin-top: 0; margin-bottom: 25px; font-size: 1.3em; font-weight: 600; color: #333; text-align: center; border-bottom: 1px solid #eee; padding-bottom: 15px; }
+.modal h2 i { margin-right: 8px; }
+.modal .form-group { margin-bottom: 18px; }
+.modal .form-group label { display: block; margin-bottom: 8px; font-weight: 500; color: #444; font-size: 0.9em; }
+.modal .form-group input[type="text"], .modal .form-group input[type="tel"], .modal .form-group input[type="email"], .modal .form-group input[type="number"], .modal .form-group input[type="date"], .modal .form-group select, .modal .form-group textarea { font-size: 0.95em; padding: 10px 14px; border: 1px solid #ccc; border-radius: 4px; width: 100%; box-sizing: border-box; transition: border-color 0.2s ease, box-shadow 0.2s ease; font-family: 'Poppins', sans-serif; }
+.modal .form-group input:focus, .modal .form-group select:focus, .modal .form-group textarea:focus { border-color: var(--primary-color); box-shadow: 0 0 0 0.2rem rgba(0, 86, 179, 0.25); outline: none; }
+.modal .form-group .required { color: var(--danger-color); margin-left: 3px; font-weight: bold; }
+.modal .form-group textarea { resize: vertical; min-height: 70px; }
+.modal-actions { margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee; display: flex; justify-content: flex-end; gap: 10px; }
+.modal-actions .button { font-weight: 500; padding: 10px 20px; min-width: 100px; }
+.modal .save-button { background-color: var(--success-color); color: white; } .modal .save-button:hover { background-color: #1e7e34; }
+.modal .cancel-button { background-color: var(--secondary-color); color: white; } .modal .cancel-button:hover { background-color: #5a6268; }
+#quickPaymentModal .suggestions-box { position: relative; }
+#quickPaymentModal .suggestions-box ul { position: absolute; list-style: none; margin: 1px 0 0; padding: 0; border: 1px solid #ced4da; background-color: #fff; max-height: 150px; overflow-y: auto; z-index: 1100; border-radius: 0 0 var(--card-border-radius) var(--card-border-radius); box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); width: 100%; box-sizing: border-box; display: none; left: 0; top: 100%; }
+#quickPaymentModal .suggestions-box ul { display: block; } /* JS इसे नियंत्रित करेगा */
+#quickPaymentModal .suggestions-box li { padding: 8px 12px; font-size: .9em; cursor: pointer; border-bottom: 1px solid #f0f0f0; }
+#quickPaymentModal .suggestions-box li:last-child { border-bottom: none; }
+#quickPaymentModal .suggestions-box li:hover { background-color: #e9ecef; }
+#quickPaymentModal .error-message { color: var(--danger-color); font-size: 0.85em; margin-top: 10px; text-align: center; }
+#quickPaymentSelectedCustomer { padding: 5px 0; font-size: 0.9em; color: var(--primary-color); }
 
 /* --- Responsive --- */
-@media (max-width: 992px) {
-    .filter-bar { flex-direction: column; align-items: stretch; gap: 12px; }
-    .filter-group { min-width: 100%; }
-    .bulk-actions-bar { flex-direction: column; align-items: stretch; }
-    .bulk-actions-controls { justify-content: space-between; }
-    #statusCountsReport ul { column-count: 1; }
-    #detailsModal .modal-grid-container-complex { grid-template-columns: 1fr 1fr; grid-template-areas: "customer order" "account status" "items items" "po po"; }
-    .account-data-grid { grid-template-columns: 1fr; }
-    .read-only-grid { grid-template-columns: 1fr; }
-    #poItemSelectionModal .po-item-selection-content-wrapper { display: flex; flex-direction: column; gap: 10px; }
-    #poItemSelectionModal .supplier-search-section,
-    .item-selection-list-container { flex-basis: auto; min-height: auto; }
-    #poItemSelectionModal .modal-actions, #poItemSelectionError { grid-column: auto; }
-    #poItemSelectionModal .suggestions-list { position: static; width: 100%; margin-top: 5px; }
-}
-@media (max-width: 768px) {
-    body { padding: 10px; font-size: 14px; }
-    .container { max-width: 100%; padding: 15px; margin: 10px 0;}
-    .header { margin: -15px -15px 15px -15px; font-size: 1.15em;}
-    .breadcrumb { margin-bottom: 15px; padding-bottom: 10px;}
-    .actions-bar { justify-content: flex-end; gap: 6px; }
-    .actions-bar .button { padding: 6px 10px; font-size: 0.85em; height: 34px; flex-shrink: 0; }
-    #orderTable { font-size: 0.85em; min-width: 700px; }
-    #orderTable th, #orderTable td { padding: 8px 10px; white-space: normal; }
-    .modal-content { width: 95%; padding: 0; max-width: 100%; max-height: calc(90vh); }
-    .modal-content.modal-md { max-width: 95%; }
-    .modal-content.modal-lg, .modal-content.modal-xl { max-width: 95%; }
-    .modal-content > h2, .modal-content > h3 { padding: 10px 15px; font-size: 1.1em; }
-    .modal-content-area, /* Adjust padding for content area */
-    #detailsModal .modal-grid-container-complex { padding: 12px 15px; }
-    .modal-actions { padding: 8px 15px; gap: 6px; }
-    .modal-actions .button { font-size: 0.85em; padding: 7px 12px; height: 34px;}
-    .order-summary-counts{ justify-content: space-between; font-size: 0.9em; padding: 12px 15px;}
-    .status-update-inline { flex-direction: column; align-items: stretch; }
-    .status-update-inline select { max-width: none; }
-    #detailsModal .update-status-button { width: auto; align-self: flex-end;}
-    .bulk-actions-controls { flex-direction: column; align-items: stretch; gap: 8px;}
-    .bulk-select, .bulk-button { width: 100%; }
-    .summary-reporting-container { gap: 12px; }
-    .order-summary-counts, .reporting-section { padding: 12px 15px; }
-    #modalProductList ul.modal-product-list-ul { grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); }
-    #detailsModal .modal-grid-container-complex { grid-template-columns: 1fr; grid-template-areas: "customer" "order" "status" "account" "items" "po"; gap: 12px; }
-    .read-only-grid { grid-template-columns: 1fr; }
-    #detailsModal .modal-section { padding: 12px; }
-}
-@media (max-width: 480px) {
-    body { padding: 5px; }
-    .container { padding: 10px; }
-    .header { padding: 10px 12px; font-size: 1.1em; margin: -10px -10px 10px -10px;}
-    .filter-bar { padding: 10px; gap: 10px; }
-    #orderTable { font-size: 0.82em; min-width: 500px; }
-    #orderTable th, #orderTable td { padding: 6px 8px; }
-    th.col-checkbox, td.col-checkbox { width: 30px; padding: 6px 5px;}
-    th.col-checkbox input, td.col-checkbox input { transform: scale(1); }
-    .status-badge { padding: 3px 7px; font-size: 0.78em; }
-    .details-edit-button { padding: 4px 8px; font-size: 0.8em; }
-    .whatsapp-button { width: 26px; height: 26px; font-size: 0.9em; }
-    .modal-content { max-height: calc(95vh); }
-    .modal-content > h2, .modal-content > h3 { font-size: 1.05em; padding: 8px 12px; }
-    .modal-content-area, /* Adjust padding for content area */
-    #detailsModal .modal-grid-container-complex { padding: 10px 12px; }
-    .modal-actions { flex-direction: column; padding: 8px 12px; }
-    .modal-actions .button { width: 100%; justify-content: center;}
-    .actions-bar { flex-wrap: wrap; justify-content: flex-start;}
-    .actions-bar .button { flex-grow: 1; min-width: 100px; text-align: center;}
-    .account-data-grid { grid-template-columns: 1fr; }
-    #modalProductList ul.modal-product-list-ul { grid-template-columns: 1fr; gap: 4px;}
-    .po-details-section { padding: 8px 10px; }
-    #poDetailsPopup .details-table-popup { font-size: 0.8em; }
-    #poDetailsPopup .details-table-popup th,
-    #poDetailsPopup .details-table-popup td { padding: 4px 5px; }
-    .po-notes-popup { font-size: 0.8em; }
-    .item-selection-entry { gap: 6px; padding: 5px; }
-    .item-selection-entry label { font-size: 0.85em; }
-    #poItemSelectionModal .supplier-search-section,
-    .item-selection-list-container { padding: 10px; }
-    #poItemSelectionModal .supplier-search-section input#poSupplierSearchInput { padding: 7px 10px; font-size: 0.9em; }
-    #poItemSelectionModal .suggestions-list { width: 100%; }
-    #detailsModal .modal-actions.main-actions .button { min-width: 100px; }
-    #detailsModal .modal-section { padding: 10px; }
-    #detailsModal .modal-section p { font-size: 0.88em; margin-bottom: 6px; }
-}
+@media (max-width: 1200px) { .kpi-section { grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); } .dashboard-grid { grid-template-columns: 1fr; } }
+@media (max-width: 992px) { .sidebar { width: 60px; overflow: hidden; position: fixed; left: 0; top: 0; height: 100%; } .sidebar:hover { width: 220px; box-shadow: 4px 0 10px rgba(0,0,0,0.2); } .sidebar h2 { padding: 10px 5px; height: 60px; } .sidebar h2 img#sidebarLogo { max-width: 40px; max-height: 40px; } .sidebar:hover h2 img#sidebarLogo { max-width: 90%; max-height: 45px; } .sidebar ul li a span { display: none; } .sidebar:hover ul li a span { display: inline; } .sidebar ul li a { justify-content: center; padding: 12px 0; } .sidebar:hover ul li a { justify-content: flex-start; padding: 12px 20px;} .sidebar ul li a i { margin-right: 0; } .sidebar:hover ul li a i { margin-right: 12px; } .main-content { padding-left: 80px; } .welcome-text { font-size: 1em; } .header-actions { gap: 10px; } .button-base { padding: 7px 12px; font-size: 0.85em; } .dashboard-grid { gap: 20px; } }
+@media (max-width: 768px) { .container { flex-direction: column; } .sidebar { width: 100%; min-height: auto; height: auto; flex-direction: row; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.1); position: sticky; top: 0; overflow: visible; padding-top: 0; z-index: 1010; background-color: var(--secondary-color); } .sidebar:hover { width: 100%; box-shadow: 0 2px 5px rgba(0,0,0,0.1); } .sidebar h2 { padding: 5px 15px; flex-shrink: 0; border-bottom: none; height: 50px; display:flex; align-items:center; } .sidebar h2 img#sidebarLogo { max-width: 120px; max-height: 40px; width: auto; height: auto; } .sidebar ul { display: flex; overflow-x: auto; flex-grow: 1; padding: 0 5px; justify-content: flex-start; border-top: none; z-index: 1; height: 50px; align-items: center;} .sidebar ul li { flex-shrink: 0; margin-top: 0; } .sidebar ul li:last-child { margin-top: 0; } .sidebar ul li a { padding: 10px; border-left: none; border-bottom: 3px solid transparent; white-space: nowrap; justify-content: center; pointer-events: auto !important; z-index: 2 !important; height: 100%; display: flex; align-items: center; flex-direction: column; font-size: 0.8em; gap: 2px; } .sidebar ul li a i { margin-right: 0; font-size: 1.2em; } .sidebar ul li a span { display: inline; font-size: 0.8em; } .sidebar ul li a:hover { padding-left: 10px; background-color: var(--sidebar-hover); border-bottom-color: var(--sidebar-hover); } .sidebar ul li a.active { border-left: none; border-bottom-color: var(--sidebar-active-border); background-color: transparent; color: var(--sidebar-active-border); font-weight: 600; } .main-content { padding: 15px; height: auto; min-height: calc(100vh - 50px); padding-left: 15px; gap: 20px; margin-top: 50px; } .header.updated-header { flex-direction: column; gap: 10px; align-items: stretch; padding: 10px 15px; } .welcome-text { text-align: center; order: -1; width: 100%; margin-bottom: 10px; } .header-actions { margin-left: 0; justify-content: center; flex-direction: column; gap: 12px;} .header-buttons { justify-content: center; width: 100%; order: 2;} .date-time-container { order: 1; text-align: center; } .header-icons { order: 0; align-self: flex-end; } .search-bar { flex-direction: column; align-items: stretch; gap: 10px; padding: 10px; position: relative; } .search-bar input[type="text"]#dashboardSearchInput { width: 100%; max-width: none; } .search-bar button#dashboardSearchButton { width: 100%; } .suggestions-list#dashboardSuggestions { position: static; width: 100%; margin-top: 5px; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05); border-radius: 8px; right: auto; left: auto; max-height: 150px; border: 1px solid var(--border-color); } .kpi-section, .order-control-panel { gap: 10px; } .kpi-card { padding: 10px; min-height: 80px;} .kpi-icon { font-size: 1.5em; margin-bottom: 5px;} .kpi-value { font-size: 1.4em; } .kpi-label { font-size: 0.7em; } .panel-item { padding: 12px 10px; min-height: 130px; } .panel-icon { font-size: 1.8em; } .panel-count { font-size: 2em; } .dashboard-grid { gap: 20px; grid-template-columns: 1fr; } .card-layout { padding: 15px; } .card-layout h3 { font-size: 1em; margin-bottom: 10px;} .card-layout ul { font-size: 0.85em; } }
+@media (max-width: 480px) { body { font-size: 14px; } .main-content { padding: 10px; gap: 15px;} .header-buttons { flex-direction: column; align-items: stretch;} .button-base { justify-content: center; } .kpi-section { grid-template-columns: 1fr 1fr; } .order-control-panel { grid-template-columns: 1fr 1fr; } .panel-item { padding: 10px 8px; min-height: 120px; } .panel-icon { font-size: 1.6em; } .panel-count { font-size: 1.8em; } .panel-item a.button-link { font-size: 0.75em; padding: 5px 8px; } .search-bar input, .search-bar button { height: 36px; font-size: 0.85em; } .suggestions-list div { font-size: 0.85em; padding: 6px 10px; } .card-layout ul { max-height: 120px; } .chart-section .chart-container { height: 200px; } .customer-dues-section ul li { flex-direction: column; align-items: flex-start; gap: 2px; } .customer-dues-section .due-amount { margin-left: 0; } .sidebar ul li a { padding: 8px 5px; } .sidebar ul li a i { font-size: 1.1em; } .sidebar ul li a span { font-size: 0.75em; } }
+/* Quick Payment Modal Specific Styles */
+#quickPaymentModal .suggestions-box ul { max-height: 120px; }
