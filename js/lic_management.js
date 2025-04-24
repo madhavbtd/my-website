@@ -3,27 +3,32 @@
 // --- सुनिश्चित करें कि ग्लोबल Firebase फंक्शन्स उपलब्ध हैं ---
 const {
     db, collection, doc, addDoc, getDoc, getDocs, updateDoc, deleteDoc, serverTimestamp,
-    query, where, orderBy, limit, Timestamp, runTransaction
+    query, where, orderBy, limit, Timestamp, runTransaction, onSnapshot // onSnapshot इस्तेमाल होगा
 } = window;
 
 // --- DOM एलिमेंट वेरिएबल्स ---
 let licPolicyTableBody, reminderList, policyModal, policyForm, policyModalTitle, editPolicyId,
     addNewPolicyBtn, closePolicyModalBtn, cancelPolicyBtn, savePolicyBtn,
-    licSearchInput, sortLicSelect, clearLicFiltersBtn, policyStatus, nachStatus,
-    // Add more element variables as needed (e.g., for Task Management)
+    licSearchInput, sortLicSelect, clearLicFiltersBtn,
+    // Modal के अंदर के status/nach elements
+    policyStatusModal, nachStatusModal,
+    // Filter bar elements
+    licStatusFilter, licPlanFilter, licModeFilter, licNachFilter,
+    // Task Management Elements
     newTaskInput, newTaskDueDate, addTaskBtn, taskList;
 
 
 // --- ग्लोबल स्टेट ---
 let currentLicSortField = 'createdAt';
 let currentLicSortDirection = 'desc';
-let unsubscribePolicies = null; // Firestore listener को बंद करने के लिए
+let unsubscribePolicies = null; // Firestore policy listener को बंद करने के लिए
+let unsubscribeTasks = null; // Firestore task listener को बंद करने के लिए
 let allPoliciesCache = []; // सभी पॉलिसियों का कैश
 let searchDebounceTimerLic;
 
 
 // --- पेज इनिशियलाइज़ेशन ---
-function initializeLicPage() {
+window.initializeLicPage = function() { // Make it globally accessible
     console.log("Initializing LIC Management Page...");
 
     // DOM एलिमेंट्स प्राप्त करें
@@ -40,8 +45,14 @@ function initializeLicPage() {
     licSearchInput = document.getElementById('licSearchInput');
     sortLicSelect = document.getElementById('sort-lic');
     clearLicFiltersBtn = document.getElementById('clearLicFiltersBtn');
-    policyStatus = document.getElementById('policyStatus'); // Status dropdown in modal
-    nachStatus = document.getElementById('nachStatus');   // NACH dropdown in modal
+    // Modal dropdowns
+    policyStatusModal = document.getElementById('policyStatus');
+    nachStatusModal = document.getElementById('nachStatus');
+    // Filter bar dropdowns/inputs
+    licStatusFilter = document.getElementById('licStatusFilter');
+    licPlanFilter = document.getElementById('licPlanFilter');
+    licModeFilter = document.getElementById('licModeFilter');
+    licNachFilter = document.getElementById('licNachFilter');
 
     // Task Management Elements
     newTaskInput = document.getElementById('newTaskInput');
@@ -49,13 +60,21 @@ function initializeLicPage() {
     addTaskBtn = document.getElementById('addTaskBtn');
     taskList = document.getElementById('taskList');
 
+
     // इवेंट लिस्टनर्स जोड़ें
     if (addNewPolicyBtn) addNewPolicyBtn.addEventListener('click', () => openPolicyModal()); // Add mode
     if (closePolicyModalBtn) closePolicyModalBtn.addEventListener('click', closePolicyModal);
     if (cancelPolicyBtn) cancelPolicyBtn.addEventListener('click', closePolicyModal);
     if (policyModal) policyModal.addEventListener('click', (e) => { if (e.target === policyModal) closePolicyModal(); });
     if (policyForm) policyForm.addEventListener('submit', handleSavePolicy);
-    if (licSearchInput) licSearchInput.addEventListener('input', handleLicSearchInput);
+
+    // Filter listeners
+    if (licSearchInput) licSearchInput.addEventListener('input', handleLicFilterChange); // Use common handler
+    if (licStatusFilter) licStatusFilter.addEventListener('change', handleLicFilterChange);
+    if (licPlanFilter) licPlanFilter.addEventListener('input', handleLicFilterChange); // Use input for text filter
+    if (licModeFilter) licModeFilter.addEventListener('change', handleLicFilterChange);
+    if (licNachFilter) licNachFilter.addEventListener('change', handleLicFilterChange);
+
     if (sortLicSelect) sortLicSelect.addEventListener('change', handleLicSortChange);
     if (clearLicFiltersBtn) clearLicFiltersBtn.addEventListener('click', clearLicFilters);
 
@@ -68,69 +87,119 @@ function initializeLicPage() {
     if (addTaskBtn) addTaskBtn.addEventListener('click', handleAddTask);
     if (taskList) {
         taskList.addEventListener('change', handleTaskCheckboxChange); // For marking complete
-        taskList.addEventListener('click', handleTaskDeleteClick); // For deleting tasks
+        taskList.addEventListener('click', handleTaskActions); // For deleting tasks (using delegation)
     }
 
-
-    // Firestore से डेटा सुनना शुरू करें
-    listenForPolicies();
-    // रिमाइंडर लोड करें
-    displayReminders();
-    // टास्क लोड करें (अगर टास्क फीचर इस्तेमाल कर रहे हैं)
-    // loadTasks();
+    // --- Firestore से डेटा सुनना शुरू करें ---
+    listenForPolicies(); // Policies Load
+    listenForTasks();   // Tasks Load (Phase 1 Fix)
+    displayReminders(); // Reminders Load
 }
 
-// --- Firestore Listener ---
+// --- Firestore Listener (Policies) ---
 function listenForPolicies() {
-    if (unsubscribePolicies) unsubscribePolicies(); // पुराना listener बंद करें
     if (!db) { console.error("DB not initialized"); return; }
+    if (unsubscribePolicies) unsubscribePolicies(); // पुराना listener बंद करें
 
     const policiesRef = collection(db, "licCustomers"); // आपके कलेक्शन का नाम
     // Listener के लिए सरल क्वेरी, सॉर्टिंग/फिल्टरिंग क्लाइंट-साइड में होगी
-    const q = query(policiesRef, orderBy(currentLicSortField, currentLicSortDirection)); // Initial sort
+    const q = query(policiesRef); // Remove initial sort from listener, apply in render
 
-    unsubscribePolicies = db.onSnapshot(q, (snapshot) => { // Use db.onSnapshot or appropriate v9+ syntax
+    console.log("Starting policy listener...");
+    unsubscribePolicies = onSnapshot(q, (snapshot) => { // Use onSnapshot for real-time updates
+        console.log(`Received ${snapshot.docs.length} policies.`);
         allPoliciesCache = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         applyLicFiltersAndRender(); // डेटा आने पर टेबल रेंडर करें
+        displayReminders(); // Update reminders whenever policies change
     }, (error) => {
         console.error("Error listening to policies:", error);
-        if(licPolicyTableBody) licPolicyTableBody.innerHTML = `<tr><td colspan="9">Error loading data.</td></tr>`;
+        if(licPolicyTableBody) licPolicyTableBody.innerHTML = `<tr><td colspan="9">Error loading policy data. Check console.</td></tr>`;
     });
 }
 
-// --- फ़िल्टर, सॉर्ट और रेंडर ---
+// --- Firestore Listener (Tasks) --- Phase 1 Fix
+function listenForTasks() {
+    if (!db) { console.error("DB not initialized for tasks"); return; }
+    if (unsubscribeTasks) unsubscribeTasks(); // पुराना listener बंद करें
+
+    const tasksRef = collection(db, "tasks"); // Assume 'tasks' collection
+    const q = query(tasksRef, orderBy("createdAt", "desc")); // Sort by creation time
+
+    console.log("Starting task listener...");
+    unsubscribeTasks = onSnapshot(q, (snapshot) => {
+        console.log(`Received ${snapshot.docs.length} tasks.`);
+        renderTaskList(snapshot.docs); // Render tasks directly
+    }, (error) => {
+        console.error("Error listening to tasks:", error);
+        if(taskList) taskList.innerHTML = `<li class="error-tasks">Error loading tasks.</li>`;
+    });
+}
+
+
+// --- फ़िल्टर, सॉर्ट और रेंडर (Policies) --- Updated for Phase 1 Filters
 function applyLicFiltersAndRender() {
-     if (!allPoliciesCache) return;
+     if (!allPoliciesCache || !licPolicyTableBody) return;
      console.log("Applying LIC filters and rendering...");
-     const searchTerm = licSearchInput.value.trim().toLowerCase();
+
+     // Get filter values
+     const searchTerm = licSearchInput ? licSearchInput.value.trim().toLowerCase() : '';
+     const statusFilter = licStatusFilter ? licStatusFilter.value : '';
+     const planFilter = licPlanFilter ? licPlanFilter.value.trim().toLowerCase() : '';
+     const modeFilter = licModeFilter ? licModeFilter.value : '';
+     const nachFilter = licNachFilter ? licNachFilter.value : '';
 
      // 1. फ़िल्टर करें
      let filteredPolicies = allPoliciesCache.filter(policy => {
-         // सर्च लॉजिक (नाम, पॉलिसी नंबर, मोबाइल पर सर्च करें)
+         // Search Logic
          const nameMatch = (policy.customerName || '').toLowerCase().includes(searchTerm);
          const policyNoMatch = (policy.policyNumber || '').toLowerCase().includes(searchTerm);
          const mobileMatch = (policy.mobileNo || '').toLowerCase().includes(searchTerm);
-         // आप और फ़िल्टर यहाँ जोड़ सकते हैं (जैसे स्टेटस फ़िल्टर)
-         return nameMatch || policyNoMatch || mobileMatch;
+         const searchMatch = searchTerm === '' || nameMatch || policyNoMatch || mobileMatch;
+
+         // Status Filter Logic
+         const statusMatch = statusFilter === '' || (policy.policyStatus || '').toLowerCase() === statusFilter.toLowerCase();
+
+         // Plan Filter Logic (Case-insensitive contains)
+         const planMatch = planFilter === '' || (policy.plan || '').toLowerCase().includes(planFilter);
+
+         // Mode Filter Logic
+         const modeMatch = modeFilter === '' || (policy.modeOfPayment || '') === modeFilter;
+
+         // NACH Filter Logic
+         const nachMatch = nachFilter === '' || (policy.nachStatus || '') === nachFilter;
+
+         return searchMatch && statusMatch && planMatch && modeMatch && nachMatch;
      });
 
      // 2. सॉर्ट करें (वर्तमान सॉर्ट चयन के आधार पर)
      filteredPolicies.sort((a, b) => {
           let valA = a[currentLicSortField];
           let valB = b[currentLicSortField];
-          // Timestamps और Numbers के लिए सही सॉर्टिंग हैंडल करें
+
+           // Handle Timestamps
            if (valA && typeof valA.toDate === 'function') valA = valA.toDate();
            if (valB && typeof valB.toDate === 'function') valB = valB.toDate();
+
+           // Handle specific field types for comparison
            if (currentLicSortField === 'premiumAmount' || currentLicSortField === 'sumAssured') {
-               valA = Number(valA) || 0; valB = Number(valB) || 0;
+               valA = Number(valA) || 0;
+               valB = Number(valB) || 0;
+           } else if (currentLicSortField === 'customerName' || currentLicSortField === 'policyNumber') {
+                valA = (valA || '').toLowerCase();
+                valB = (valB || '').toLowerCase();
+           } else if (valA instanceof Date && valB instanceof Date) {
+               // Date comparison handled directly
+           } else {
+               // Default to string comparison
+               valA = String(valA || '').toLowerCase();
+               valB = String(valB || '').toLowerCase();
            }
-           if (currentLicSortField === 'customerName') {
-                valA = (valA || '').toLowerCase(); valB = (valB || '').toLowerCase();
-           }
-          // तुलना
+
+          // Comparison logic
           let comparison = 0;
           if (valA > valB) comparison = 1;
           else if (valA < valB) comparison = -1;
+
           return currentLicSortDirection === 'desc' ? (comparison * -1) : comparison;
      });
 
@@ -139,14 +208,16 @@ function applyLicFiltersAndRender() {
      renderPolicyTable(filteredPolicies);
 }
 
-// --- टेबल रेंडरिंग ---
+// --- टेबल रेंडरिंग (Policies) --- Updated with Pay Button (Phase 1)
 function renderPolicyTable(policies) {
     if (!licPolicyTableBody) return;
     licPolicyTableBody.innerHTML = ''; // टेबल खाली करें
+
     if (policies.length === 0) {
         licPolicyTableBody.innerHTML = `<tr><td colspan="9" style="text-align: center;">No policies found matching criteria.</td></tr>`;
         return;
     }
+
     policies.forEach(policy => {
         const row = licPolicyTableBody.insertRow();
         row.setAttribute('data-id', policy.id); // Firestore ID स्टोर करें
@@ -156,42 +227,47 @@ function renderPolicyTable(policies) {
         row.insertCell().textContent = policy.customerName || 'N/A';
         row.insertCell().textContent = policy.mobileNo || '-';
         row.insertCell().textContent = policy.plan || '-';
-        row.insertCell().textContent = policy.premiumAmount ? `₹ ${policy.premiumAmount.toFixed(2)}` : '-';
+        row.insertCell().textContent = policy.premiumAmount ? `₹ ${Number(policy.premiumAmount).toFixed(2)}` : '-'; // Ensure number formatting
         row.insertCell().textContent = policy.modeOfPayment || '-';
         row.insertCell().textContent = policy.nextInstallmentDate?.toDate ? formatDate(policy.nextInstallmentDate.toDate()) : '-';
         row.insertCell().innerHTML = `<span class="status-badge status-${(policy.policyStatus || 'unknown').toLowerCase()}">${policy.policyStatus || 'Unknown'}</span>`; // स्टेटस के लिए बैज
 
-        // एक्शन बटन सेल
+        // --- एक्शन बटन सेल - Updated ---
         const actionCell = row.insertCell();
-        actionCell.classList.add('action-buttons'); // स्टाइल के लिए क्लास
+        actionCell.classList.add('action-buttons');
 
         // Edit बटन
         const editBtn = document.createElement('button');
         editBtn.innerHTML = '<i class="fas fa-edit"></i>';
         editBtn.title = "Edit Policy";
-        editBtn.classList.add('button', 'edit-button'); // अपनी थीम क्लास का उपयोग करें
+        editBtn.classList.add('button', 'edit-button');
         editBtn.onclick = (e) => { e.stopPropagation(); openPolicyModal(policy.id, policy); };
         actionCell.appendChild(editBtn);
+
+        // --- Mark Paid बटन (Phase 1) ---
+        const payBtn = document.createElement('button');
+        payBtn.innerHTML = '<i class="fas fa-check-circle"></i>'; // Checkmark icon
+        payBtn.title = "Mark Premium Paid & Update Due Date";
+        payBtn.classList.add('button', 'pay-button'); // Add class for styling
+        // Disable if policy is not Active or Lapsed, or no next date/mode
+        payBtn.disabled = !['Active', 'Lapsed'].includes(policy.policyStatus) || !policy.nextInstallmentDate || !policy.modeOfPayment;
+        payBtn.onclick = (e) => { e.stopPropagation(); handleMarkPaid(policy.id, policy); };
+        actionCell.appendChild(payBtn);
+        // --- End Mark Paid Button ---
 
         // Delete बटन
         const deleteBtn = document.createElement('button');
         deleteBtn.innerHTML = '<i class="fas fa-trash-alt"></i>';
         deleteBtn.title = "Delete Policy";
-        deleteBtn.classList.add('button', 'delete-button'); // अपनी थीम क्लास का उपयोग करें
+        deleteBtn.classList.add('button', 'delete-button');
         deleteBtn.onclick = (e) => { e.stopPropagation(); handleDeletePolicy(policy.id, policy.policyNumber); };
         actionCell.appendChild(deleteBtn);
 
-         // (Optional) Detail View Link/Button
-         // const detailBtn = document.createElement('button'); // या 'a' टैग
-         // detailBtn.innerHTML = '<i class="fas fa-eye"></i>';
-         // detailBtn.title = "View Details";
-         // detailBtn.classList.add('button', 'info-button');
-         // detailBtn.onclick = (e) => { e.stopPropagation(); window.location.href=`lic_policy_detail.html?id=${policy.id}`; }; // एक अलग डिटेल पेज पर भेजें
-         // actionCell.appendChild(detailBtn);
     });
 }
 
-// --- Modal खोलना/बंद करना ---
+
+// --- Modal खोलना/बंद करना --- (No major changes needed here)
 function openPolicyModal(policyId = null, data = {}) {
     if (!policyModal || !policyForm) return;
     policyForm.reset(); // फॉर्म खाली करें
@@ -200,7 +276,6 @@ function openPolicyModal(policyId = null, data = {}) {
     if (policyId) {
         // --- एडिट मोड ---
         policyModalTitle.textContent = "Edit Policy Details";
-        // फॉर्म में मौजूदा डेटा भरें
         document.getElementById('customerName').value = data.customerName || '';
         document.getElementById('fatherName').value = data.fatherName || '';
         document.getElementById('mobileNo').value = data.mobileNo || '';
@@ -215,17 +290,14 @@ function openPolicyModal(policyId = null, data = {}) {
         document.getElementById('premiumAmount').value = data.premiumAmount || '';
         document.getElementById('nextInstallmentDate').value = data.nextInstallmentDate?.toDate ? data.nextInstallmentDate.toDate().toISOString().split('T')[0] : '';
         document.getElementById('maturityDate').value = data.maturityDate?.toDate ? data.maturityDate.toDate().toISOString().split('T')[0] : '';
-        if(policyStatus) policyStatus.value = data.policyStatus || 'Active';
-        if(nachStatus) nachStatus.value = data.nachStatus || 'No';
+        if(policyStatusModal) policyStatusModal.value = data.policyStatus || 'Active'; // Use modal specific var
+        if(nachStatusModal) nachStatusModal.value = data.nachStatus || 'No';       // Use modal specific var
     } else {
         // --- ऐड मोड ---
         policyModalTitle.textContent = "Add New Policy";
-        // यहाँ आप डिफ़ॉल्ट वैल्यू सेट कर सकते हैं, जैसे स्टेटस 'Active'
-         if(policyStatus) policyStatus.value = 'Active';
-         if(nachStatus) nachStatus.value = 'No';
-         // अगली किस्त की तारीख को खाली छोड़ दें ताकि handleSavePolicy में कैलकुलेट हो सके
-         document.getElementById('nextInstallmentDate').value = '';
-
+         if(policyStatusModal) policyStatusModal.value = 'Active'; // Use modal specific var
+         if(nachStatusModal) nachStatusModal.value = 'No';       // Use modal specific var
+         document.getElementById('nextInstallmentDate').value = ''; // Clear next date for calculation
     }
     policyModal.classList.add('active');
 }
@@ -234,12 +306,12 @@ function closePolicyModal() {
     if (policyModal) policyModal.classList.remove('active');
 }
 
-// --- पॉलिसी सेव/अपडेट करना ---
+// --- पॉलिसी सेव/अपडेट करना --- (No major changes needed here)
 async function handleSavePolicy(event) {
     event.preventDefault();
     if (!db) { alert("Database not ready."); return; }
 
-    const policyId = editPolicyId.value; // Get ID from hidden input
+    const policyId = editPolicyId.value;
     const isEditing = !!policyId;
 
     // --- फॉर्म से डेटा प्राप्त करें ---
@@ -253,14 +325,14 @@ async function handleSavePolicy(event) {
         plan: document.getElementById('plan').value.trim(),
         sumAssured: Number(document.getElementById('sumAssured').value) || 0,
         policyTerm: document.getElementById('policyTerm').value.trim(),
-        issuanceDate: document.getElementById('issuanceDate').value ? Timestamp.fromDate(new Date(document.getElementById('issuanceDate').value + 'T00:00:00Z')) : null, // Ensure Timestamp
+        issuanceDate: document.getElementById('issuanceDate').value ? Timestamp.fromDate(new Date(document.getElementById('issuanceDate').value + 'T00:00:00Z')) : null,
         modeOfPayment: document.getElementById('modeOfPayment').value,
         premiumAmount: parseFloat(document.getElementById('premiumAmount').value) || 0,
-        // nextInstallmentDate को नीचे हैंडल करेंगे
         maturityDate: document.getElementById('maturityDate').value ? Timestamp.fromDate(new Date(document.getElementById('maturityDate').value)) : null,
-        policyStatus: policyStatus ? policyStatus.value : 'Active',
-        nachStatus: nachStatus ? nachStatus.value : 'No',
-        updatedAt: serverTimestamp()
+        policyStatus: policyStatusModal ? policyStatusModal.value : 'Active', // Use modal specific var
+        nachStatus: nachStatusModal ? nachStatusModal.value : 'No',         // Use modal specific var
+        // nextInstallmentDate handled below
+        updatedAt: serverTimestamp() // Always update timestamp
     };
 
     // --- वैलिडेशन ---
@@ -269,26 +341,29 @@ async function handleSavePolicy(event) {
         return;
     }
 
-     // --- अगली किस्त की तारीख की गणना ---
+     // --- अगली किस्त की तारीख की गणना / हैंडलिंग ---
      let nextDateInput = document.getElementById('nextInstallmentDate').value;
      if (nextDateInput) {
-          // अगर यूजर ने तारीख डाली है, तो उसे इस्तेमाल करें
           formData.nextInstallmentDate = Timestamp.fromDate(new Date(nextDateInput + 'T00:00:00Z'));
      } else if (!isEditing && formData.issuanceDate && formData.modeOfPayment) {
-          // अगर नया रिकॉर्ड है और यूजर ने तारीख नहीं डाली, तो कैलकुलेट करें
           const calculatedNextDate = calculateNextDueDate(formData.issuanceDate.toDate(), formData.modeOfPayment);
           if (calculatedNextDate) {
                formData.nextInstallmentDate = Timestamp.fromDate(calculatedNextDate);
           } else {
-               alert("Could not calculate next installment date based on mode of payment.");
-               return; // रोकें अगर गणना संभव नहीं है
+               alert("Could not calculate next installment date based on mode. Please enter manually.");
+               return;
           }
-     } else if (isEditing && !nextDateInput) {
-          // अगर एडिट कर रहे हैं और तारीख हटा दी गई है, तो एरर दें या मौजूदा रखें
-          alert("Please provide the next installment date when editing.");
+     } else if (!isEditing) {
+          // New policy, but no date entered AND couldn't calculate (e.g., missing issuance date)
+          alert("Please enter the first installment date or ensure issuance date and mode are set.");
           return;
-          // या formData.nextInstallmentDate = मौजूदा डेटा से लें (अगर ज़रूरत हो)
      }
+     // If editing and date is cleared, it remains null/undefined in formData, Firestore field might be deleted or ignored depending on updateDoc behavior / Firestore rules.
+     // It's often better to require it during edit:
+      else if (isEditing && !nextDateInput) {
+           alert("Please provide the next installment date when editing.");
+           return; // Or fetch existing value if needed
+      }
 
 
     // --- सेव/अपडेट लॉजिक ---
@@ -297,40 +372,36 @@ async function handleSavePolicy(event) {
 
     try {
         if (isEditing) {
-            // अपडेट
             const policyRef = doc(db, "licCustomers", policyId);
-            // createdAt फ़ील्ड को अपडेट न करें
-            delete formData.createdAt; // Avoid overwriting createdAt
+            // Ensure createdAt is not overwritten if it exists
+            delete formData.createdAt;
             await updateDoc(policyRef, formData);
             alert("Policy updated successfully!");
         } else {
-            // ऐड
-            formData.createdAt = serverTimestamp(); // केवल नए रिकॉर्ड के लिए createdAt जोड़ें
+            formData.createdAt = serverTimestamp(); // Add createdAt only for new docs
             await addDoc(collection(db, "licCustomers"), formData);
             alert("New policy added successfully!");
         }
         closePolicyModal();
-        // टेबल और रिमाइंडर ऑटो-रिफ्रेश होंगे listener के कारण, या आप मैन्युअली कॉल कर सकते हैं
-        displayReminders(); // रिमाइंडर तुरंत अपडेट करें
+        // Listener will refresh table and reminders automatically.
 
     } catch (error) {
         console.error("Error saving policy:", error);
         alert("Error saving policy: " + error.message);
     } finally {
         savePolicyBtn.disabled = false;
-        savePolicyBtn.innerHTML = '<i class="fas fa-save"></i> Save Policy'; // Restore button text
+        savePolicyBtn.innerHTML = '<i class="fas fa-save"></i> Save Policy';
     }
 }
 
-// --- पॉलिसी डिलीट करना ---
+// --- पॉलिसी डिलीट करना --- (No changes needed here)
 async function handleDeletePolicy(policyId, policyNumber) {
     if (!db) { alert("Database not ready."); return; }
     if (confirm(`Are you sure you want to delete policy number "${policyNumber || policyId}"? This cannot be undone.`)) {
         try {
             await deleteDoc(doc(db, "licCustomers", policyId));
             alert(`Policy ${policyNumber || policyId} deleted successfully.`);
-            // Listener टेबल को ऑटो-अपडेट कर देगा
-             displayReminders(); // रिमाइंडर लिस्ट भी अपडेट करें
+            // Listener will update table and reminders.
         } catch (error) {
             console.error("Error deleting policy:", error);
             alert("Error deleting policy: " + error.message);
@@ -338,45 +409,90 @@ async function handleDeletePolicy(policyId, policyNumber) {
     }
 }
 
-// --- रिमाइंडर फंक्शन ---
+
+// --- प्रीमियम भुगतान मार्क करना (Phase 1) ---
+async function handleMarkPaid(policyId, policyData) {
+    if (!db) { alert("Database not ready."); return; }
+    if (!policyData || !policyData.nextInstallmentDate || !policyData.modeOfPayment) {
+        alert("Cannot calculate next due date. Missing current due date or payment mode.");
+        return;
+    }
+
+    const currentDueDate = policyData.nextInstallmentDate.toDate();
+    const paymentMode = policyData.modeOfPayment;
+    const policyNumber = policyData.policyNumber || policyId;
+
+    // Calculate the *next* due date based on the *current* one
+    const newNextDueDate = calculateNextDueDate(currentDueDate, paymentMode);
+
+    if (!newNextDueDate) {
+        alert(`Could not calculate the next due date for policy ${policyNumber}. Check payment mode.`);
+        return;
+    }
+
+    const formattedCurrentDate = formatDate(currentDueDate);
+    const formattedNewDate = formatDate(newNextDueDate);
+
+    if (confirm(`Mark premium due on ${formattedCurrentDate} as paid for policy ${policyNumber}?\n The next due date will be set to ${formattedNewDate}.`)) {
+        const policyRef = doc(db, "licCustomers", policyId);
+        try {
+            await updateDoc(policyRef, {
+                nextInstallmentDate: Timestamp.fromDate(newNextDueDate),
+                lastPaymentDate: serverTimestamp(), // Optionally track last payment
+                policyStatus: 'Active' // Optionally reactivate if it was Lapsed
+            });
+            alert(`Payment marked for policy ${policyNumber}. Next due date updated to ${formattedNewDate}.`);
+            // Listener will refresh the table. You might want to manually trigger reminder refresh too.
+            displayReminders();
+        } catch (error) {
+            console.error("Error marking payment:", error);
+            alert("Error updating policy after marking payment: " + error.message);
+        }
+    }
+}
+
+
+// --- रिमाइंडर फंक्शन --- (No major changes needed here, but fetch might be slightly optimized)
 async function displayReminders() {
     if (!db || !reminderList) return;
-    reminderList.innerHTML = '<li class="loading-reminder">Loading reminders...</li>'; // लोडिंग दिखाएं
+    reminderList.innerHTML = '<li class="loading-reminder">Loading reminders...</li>';
 
     try {
-        const today = new Date();
-        const reminderDays = 15; // कितने दिन पहले रिमाइंडर चाहिए
+        const today = new Date(); today.setHours(0, 0, 0, 0); // Start of today
+        const reminderDays = 15;
         const reminderEndDate = new Date(today);
         reminderEndDate.setDate(today.getDate() + reminderDays);
 
         const todayTimestamp = Timestamp.fromDate(today);
         const endTimestamp = Timestamp.fromDate(reminderEndDate);
 
+        // Query Firestore directly for reminders
         const reminderQuery = query(collection(db, "licCustomers"),
                                  where("nextInstallmentDate", ">=", todayTimestamp),
                                  where("nextInstallmentDate", "<=", endTimestamp),
-                                 orderBy("nextInstallmentDate")); // तारीख के अनुसार सॉर्ट करें
+                                 where("policyStatus", "in", ["Active", "Lapsed"]), // Only show for active/lapsed
+                                 orderBy("nextInstallmentDate"));
 
         const querySnapshot = await getDocs(reminderQuery);
-        reminderList.innerHTML = ''; // लिस्ट खाली करें
+        reminderList.innerHTML = ''; // Clear list
 
         if (querySnapshot.empty) {
-            reminderList.innerHTML = '<li>No upcoming installments in the next ' + reminderDays + ' days.</li>';
+            reminderList.innerHTML = `<li>No upcoming installments in the next ${reminderDays} days for Active/Lapsed policies.</li>`;
             return;
         }
 
         querySnapshot.forEach(docSnap => {
             const policy = { id: docSnap.id, ...docSnap.data() };
             const li = document.createElement('li');
-            li.setAttribute('data-doc-id', policy.id); // Store ID for checkbox handler
+            li.setAttribute('data-doc-id', policy.id);
 
             const checkbox = document.createElement('input');
             checkbox.type = 'checkbox';
             checkbox.className = 'reminder-checkbox';
-             // आप चाहें तो इसे डिफ़ॉल्ट रूप से अनचेक रख सकते हैं
+            checkbox.title = 'Check to hide this reminder temporarily';
 
             const span = document.createElement('span');
-            span.innerHTML = `Policy: <strong>${policy.policyNumber || 'N/A'}</strong> - Name: <strong>${policy.customerName || 'N/A'}</strong> - Amount: <strong>₹ ${policy.premiumAmount?.toFixed(2) || 'N/A'}</strong> - Due: <strong>${formatDate(policy.nextInstallmentDate?.toDate())}</strong>`;
+            span.innerHTML = `Policy: <strong>${policy.policyNumber || 'N/A'}</strong> - ${policy.customerName || 'N/A'} - ₹ ${Number(policy.premiumAmount || 0).toFixed(2)} - Due: <strong>${formatDate(policy.nextInstallmentDate?.toDate())}</strong>`;
 
             li.appendChild(checkbox);
             li.appendChild(span);
@@ -385,121 +501,167 @@ async function displayReminders() {
 
     } catch (error) {
         console.error("Error fetching reminders:", error);
-        reminderList.innerHTML = '<li>Error loading reminders.</li>';
+        reminderList.innerHTML = '<li>Error loading reminders. Check console.</li>';
     }
 }
 
-// --- रिमाइंडर चेकबॉक्स हैंडलर ---
+// --- रिमाइंडर चेकबॉक्स हैंडलर --- (No changes needed)
 function handleReminderCheckboxChange(event) {
     if (event.target.classList.contains('reminder-checkbox')) {
         const checkbox = event.target;
         const listItem = checkbox.closest('li');
-        const docId = listItem?.dataset.docId;
+        if (!listItem) return;
 
-        if (checkbox.checked && listItem) {
-            // विकल्प A: सिर्फ छिपाएं
-            listItem.classList.add('hidden-reminder'); // CSS में .hidden-reminder { display: none; } डालें
-            console.log(`Reminder for ${docId} hidden temporarily.`);
-
-            // विकल्प B (अधिक जटिल): Firestore में अपडेट करें कि यह हैंडल हो गया है
-            // const policyRef = doc(db, "licCustomers", docId);
-            // try {
-            //    await updateDoc(policyRef, { reminderHandledUntil: Timestamp.now() });
-            //    console.log(`Marked reminder ${docId} as handled.`);
-            //    listItem.classList.add('hidden-reminder'); // छिपाएं
-            // } catch (error) {
-            //     console.error("Error marking reminder as handled:", error);
-            //     checkbox.checked = false; // विफल होने पर अनचेक करें
-            // }
-
-        } else if (!checkbox.checked && listItem) {
-             // अगर अनचेक किया जाता है, तो दोबारा दिखाएं (अगर छिपाया गया था)
-             listItem.classList.remove('hidden-reminder');
+        if (checkbox.checked) {
+            listItem.classList.add('hidden-reminder');
+        } else {
+            listItem.classList.remove('hidden-reminder');
         }
     }
 }
 
 
-// --- टास्क मैनेजमेंट फंक्शन्स (Skeleton) ---
+// --- *** Task Management Functions (Phase 1 Fix) *** ---
+
+// Render Task List
+function renderTaskList(taskDocs) {
+     if (!taskList) return;
+     taskList.innerHTML = ''; // Clear current list
+
+     if (taskDocs.length === 0) {
+         taskList.innerHTML = '<li>No tasks found.</li>';
+         return;
+     }
+
+     taskDocs.forEach(doc => {
+         const task = { id: doc.id, ...doc.data() };
+         const li = document.createElement('li');
+         li.setAttribute('data-task-id', task.id);
+         li.classList.toggle('completed-task', task.completed); // Add class if completed
+
+         const checkbox = document.createElement('input');
+         checkbox.type = 'checkbox';
+         checkbox.className = 'task-checkbox';
+         checkbox.checked = task.completed;
+         checkbox.title = task.completed ? 'Mark as Incomplete' : 'Mark as Complete';
+
+         const span = document.createElement('span');
+         span.textContent = task.description || 'No description';
+         if (task.dueDate?.toDate) {
+             span.textContent += ` (Due: ${formatDate(task.dueDate.toDate())})`;
+         }
+
+         const deleteBtn = document.createElement('button');
+         deleteBtn.innerHTML = '<i class="fas fa-trash-alt"></i>';
+         deleteBtn.className = 'button delete-task-btn'; // Use button classes
+         deleteBtn.title = 'Delete Task';
+         // No onclick here, handled by delegation in handleTaskActions
+
+         li.appendChild(checkbox);
+         li.appendChild(span);
+         li.appendChild(deleteBtn);
+         taskList.appendChild(li);
+     });
+ }
+
+
+// Add New Task
 async function handleAddTask() {
+    if (!db || !newTaskInput || !newTaskDueDate) return;
     const description = newTaskInput.value.trim();
     const dueDate = newTaskDueDate.value;
     if (!description) { alert("Please enter task description."); return; }
 
     const taskData = {
         description: description,
-        dueDate: dueDate ? Timestamp.fromDate(new Date(dueDate)) : null,
+        dueDate: dueDate ? Timestamp.fromDate(new Date(dueDate + 'T00:00:00Z')) : null, // Ensure timestamp
         completed: false,
         createdAt: serverTimestamp()
-        // आप चाहें तो इसे किसी कस्टमर से लिंक कर सकते हैं (e.g., customerId: currentCustomerId)
     };
 
+    addTaskBtn.disabled = true;
+    addTaskBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Adding...';
+
     try {
-        // Firestore में 'tasks' कलेक्शन में सेव करें (या कस्टमर के सब-कलेक्शन में)
-        // await addDoc(collection(db, "tasks"), taskData);
-        alert("Task added (Implement Firestore save!)");
+        // Firestore में 'tasks' कलेक्शन में सेव करें
+        await addDoc(collection(db, "tasks"), taskData); // *** UNCOMMENTED ***
+        // alert("Task added successfully!"); // Optional: Listener will update UI
         newTaskInput.value = '';
         newTaskDueDate.value = '';
-        // loadTasks(); // टास्क लिस्ट रिफ्रेश करें
     } catch (error) {
         console.error("Error adding task:", error);
-        alert("Failed to add task.");
+        alert("Failed to add task: " + error.message);
+    } finally {
+        addTaskBtn.disabled = false;
+        addTaskBtn.innerHTML = '<i class="fas fa-plus"></i> Add Task';
     }
 }
 
-function handleTaskCheckboxChange(event) {
+// Handle Task Checkbox Change (Mark Complete/Incomplete)
+async function handleTaskCheckboxChange(event) {
      if (event.target.classList.contains('task-checkbox')) {
           const checkbox = event.target;
           const listItem = checkbox.closest('li');
           const taskId = listItem?.dataset.taskId;
           const isCompleted = checkbox.checked;
 
-          if (taskId) {
-               console.log(`Task ${taskId} status changed to: ${isCompleted}`);
-               // Firestore में 'tasks' कलेक्शन में completed स्टेटस अपडेट करें
-               // const taskRef = doc(db, "tasks", taskId);
-               // try {
-               //     await updateDoc(taskRef, { completed: isCompleted });
-               //     listItem.querySelector('span').style.textDecoration = isCompleted ? 'line-through' : 'none';
-               //     listItem.querySelector('span').style.color = isCompleted ? '#6c757d' : 'inherit';
-               // } catch (error) { console.error("Error updating task status:", error); checkbox.checked = !isCompleted; } // Revert on error
+          if (taskId && db) {
+               const taskRef = doc(db, "tasks", taskId);
+               try {
+                    // Update completed status in Firestore
+                    await updateDoc(taskRef, { completed: isCompleted }); // *** UNCOMMENTED ***
+                    // Listener will update the UI style
+                    console.log(`Task ${taskId} status updated to: ${isCompleted}`);
+               } catch (error) {
+                    console.error("Error updating task status:", error);
+                    alert("Failed to update task status.");
+                    checkbox.checked = !isCompleted; // Revert on error
+               }
           }
      }
 }
 
-function handleTaskDeleteClick(event) {
-    if (event.target.closest('.delete-task-btn')) {
-         const listItem = event.target.closest('li');
+// Handle Task Actions (Deletion using Event Delegation)
+async function handleTaskActions(event) {
+    // Check if the click was on a delete button or its icon
+    const deleteButton = event.target.closest('.delete-task-btn');
+    if (deleteButton) {
+         const listItem = deleteButton.closest('li');
          const taskId = listItem?.dataset.taskId;
-         if (taskId && confirm("Delete this task?")) {
-              console.log("Deleting task:", taskId);
-              // Firestore से टास्क डिलीट करें
-              // try {
-              //      await deleteDoc(doc(db, "tasks", taskId));
-              //      listItem.remove();
-              // } catch (error) { console.error("Error deleting task:", error); alert("Failed to delete task.");}
+
+         if (taskId && db && confirm("Are you sure you want to delete this task?")) {
+             const taskRef = doc(db, "tasks", taskId);
+             try {
+                  // Delete task from Firestore
+                  await deleteDoc(taskRef); // *** UNCOMMENTED ***
+                  // Listener will remove it from the UI.
+                  console.log("Task deleted:", taskId);
+             } catch (error) {
+                  console.error("Error deleting task:", error);
+                  alert("Failed to delete task.");
+             }
          }
     }
 }
 
-// function loadTasks() {
-//     // Firestore से 'tasks' कलेक्शन से टास्क लाएं और #taskList में दिखाएं
-//     taskList.innerHTML = '<li class="loading-tasks">Implement task loading...</li>';
-// }
-
 
 // --- हेल्पर फंक्शन्स ---
 function formatDate(date) {
-    if (!date || !(date instanceof Date)) return '-';
-    // सरल भारतीय फॉर्मेट dd-mm-yyyy
-    let day = String(date.getDate()).padStart(2, '0');
-    let month = String(date.getMonth() + 1).padStart(2, '0'); // Month is 0-indexed
-    let year = date.getFullYear();
-    return `${day}-${month}-${year}`;
+    if (!date || !(date instanceof Date) || isNaN(date)) return '-'; // Added NaN check
+    try {
+        let day = String(date.getDate()).padStart(2, '0');
+        let month = String(date.getMonth() + 1).padStart(2, '0'); // Month is 0-indexed
+        let year = date.getFullYear();
+        return `${day}-${month}-${year}`;
+    } catch (e) {
+        console.error("Error formatting date:", date, e);
+        return 'Invalid Date';
+    }
 }
 
+// Calculate Next Due Date based on a GIVEN start date and mode
 function calculateNextDueDate(startDate, mode) {
-    if (!(startDate instanceof Date) || !mode) return null;
+    if (!(startDate instanceof Date) || isNaN(startDate) || !mode) return null; // Added NaN check
     let nextDate = new Date(startDate);
     try {
         switch (mode.toLowerCase()) {
@@ -507,6 +669,7 @@ function calculateNextDueDate(startDate, mode) {
                 nextDate.setFullYear(nextDate.getFullYear() + 1);
                 break;
             case 'half-yearly':
+            case 'half yearly': // Handle variations
                 nextDate.setMonth(nextDate.getMonth() + 6);
                 break;
             case 'quarterly':
@@ -517,7 +680,12 @@ function calculateNextDueDate(startDate, mode) {
                 break;
             default:
                 console.warn("Unknown payment mode for date calculation:", mode);
-                return null; // अज्ञात मोड के लिए गणना न करें
+                return null;
+        }
+        // Check if the calculated date is valid
+        if (isNaN(nextDate)) {
+             console.error("Calculated date is invalid:", startDate, mode);
+             return null;
         }
         return nextDate;
     } catch (e) {
@@ -526,12 +694,13 @@ function calculateNextDueDate(startDate, mode) {
     }
 }
 
-// --- फिल्टर/सॉर्ट हैंडलर्स ---
-function handleLicSearchInput() {
+// --- फिल्टर/सॉर्ट हैंडलर्स --- Updated Debounce Logic
+function handleLicFilterChange() {
+    // Debounce filtering to avoid excessive calls on input/change
     clearTimeout(searchDebounceTimerLic);
     searchDebounceTimerLic = setTimeout(() => {
         applyLicFiltersAndRender();
-    }, 350);
+    }, 350); // Adjust delay as needed
 }
 
 function handleLicSortChange() {
@@ -539,18 +708,24 @@ function handleLicSortChange() {
     const [field, direction] = sortLicSelect.value.split('_');
     currentLicSortField = field;
     currentLicSortDirection = direction;
+    // Apply immediately on sort change
     applyLicFiltersAndRender();
 }
 
 function clearLicFilters() {
     if(licSearchInput) licSearchInput.value = '';
-    if(sortLicSelect) sortLicSelect.value = 'createdAt_desc'; // डिफ़ॉल्ट सॉर्ट पर रीसेट करें
+    if(licStatusFilter) licStatusFilter.value = ''; // Reset Status
+    if(licPlanFilter) licPlanFilter.value = '';   // Reset Plan
+    if(licModeFilter) licModeFilter.value = '';   // Reset Mode
+    if(licNachFilter) licNachFilter.value = '';   // Reset NACH
+    if(sortLicSelect) sortLicSelect.value = 'createdAt_desc'; // Reset Sort
+
+    // Reset global sort state
     currentLicSortField = 'createdAt';
     currentLicSortDirection = 'desc';
-    // आप चाहें तो अन्य फ़िल्टर (जैसे स्टेटस) भी यहाँ रीसेट कर सकते हैं
+
+    // Apply filters immediately
     applyLicFiltersAndRender();
 }
 
-
-// --- सुनिश्चित करें कि पेज लोड होने पर इनिशियलाइज़ेशन हो ---
-// DOMContentLoaded इवेंट लिस्नर आपके HTML के Firebase सेटअप ब्लॉक में initializeLicPage को कॉल करेगा।
+// --- एंड ऑफ़ फाइल ---

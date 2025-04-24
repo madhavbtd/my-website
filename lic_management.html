@@ -9,48 +9,45 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 
-    <link rel="stylesheet" href="css/customer_management.css">
-    <link rel="stylesheet" href="css/lic_management.css">
-
-    <script type="module">
-        // --- Firebase Setup (आपकी मौजूदा फाइल से कॉपी करें) ---
+    <link rel="stylesheet" href="css/customer_management.css"> <link rel="stylesheet" href="css/lic_management.css">   <script type="module">
+        // --- Firebase Setup (जैसा आपकी मौजूदा फाइल में है) ---
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
         import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
         import {
             getFirestore, collection, doc, addDoc, getDoc, getDocs, updateDoc, deleteDoc, serverTimestamp,
-            query, where, orderBy, limit, Timestamp, runTransaction // सभी ज़रूरी फंक्शन्स इम्पोर्ट करें
+            query, where, orderBy, limit, Timestamp, runTransaction, onSnapshot // onSnapshot जोड़ा गया
          } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
          // **** आपकी Firebase कॉन्फ़िगरेशन ****
          const firebaseConfig = {
-           apiKey: "AIzaSyBQj5rQmE77kKKGYixP8y3Hcimz8tiAqzQ", // Your apiKey
-           authDomain: "madhav-multyprint.firebaseapp.com", // Your authDomain
-           projectId: "madhav-multyprint", // Your projectId
-           storageBucket: "madhav-multyprint.appspot.com", // Your storageBucket
-           messagingSenderId: "104988349637", // Your messagingSenderId
-           appId: "1:104988349637:web:faf045b77c6786a4e70cac" // Your appId
+             apiKey: "AIzaSyBQj5rQmE77kKKGYixP8y3Hcimz8tiAqzQ", // Your apiKey
+             authDomain: "madhav-multyprint.firebaseapp.com", // Your authDomain
+             projectId: "madhav-multyprint", // Your projectId
+             storageBucket: "madhav-multyprint.appspot.com", // Your storageBucket
+             messagingSenderId: "104988349637", // Your messagingSenderId
+             appId: "1:104988349637:web:faf045b77c6786a4e70cac" // Your appId
          };
 
         let app; let auth; let db;
         try {
-            // Initialize Firebase App (only once per page load)
             if (!window.firebaseAppInitialized) {
                 app = initializeApp(firebaseConfig);
                 window.firebaseAppInitialized = true;
-                window.firebaseApp = app; // Store globally
+                window.firebaseApp = app;
                 console.log("Firebase initialized for LIC Management");
             } else {
-                app = window.firebaseApp; // Use existing instance
+                app = window.firebaseApp;
                 console.log("Firebase already initialized for LIC Management");
             }
             auth = getAuth(app);
             db = getFirestore(app);
 
-            // Firebase फंक्शन्स को ग्लोबल बनाएं ताकि lic_management.js उन्हें इस्तेमाल कर सके
+            // Firebase फंक्शन्स को ग्लोबल बनाएं
             window.db = db; window.collection = collection; window.doc = doc; window.addDoc = addDoc;
             window.getDoc = getDoc; window.getDocs = getDocs; window.updateDoc = updateDoc; window.deleteDoc = deleteDoc;
             window.serverTimestamp = serverTimestamp; window.query = query; window.where = where;
             window.orderBy = orderBy; window.limit = limit; window.Timestamp = Timestamp; window.runTransaction = runTransaction;
+            window.onSnapshot = onSnapshot; // onSnapshot को ग्लोबल बनाया
 
             // Authentication Check
             onAuthStateChanged(auth, (user) => {
@@ -60,19 +57,20 @@
                     window.location.replace('login.html');
                 } else if (user) {
                     console.log(`User logged in. Initializing LIC page.`);
-                    // lic_management.js से initializePage फंक्शन को कॉल करें
+                    // lic_management.js से initializePage फंक्शन को कॉल करें (DOMContentLoaded में)
                     if (typeof initializeLicPage === 'function') {
-                        initializeLicPage();
+                         // Defer initialization slightly to ensure scripts are loaded
+                         setTimeout(initializeLicPage, 0);
                     } else {
-                        document.addEventListener('DOMContentLoaded', () => {
-                             if (typeof initializeLicPage === 'function') {
-                                initializeLicPage();
-                            } else {
-                                 console.error("Initialization function 'initializeLicPage' not found!");
-                                 alert("Application Error: Page script failed to load.");
-                             }
-                        });
-                    }
+                         document.addEventListener('DOMContentLoaded', () => {
+                              if (typeof initializeLicPage === 'function') {
+                                 initializeLicPage();
+                             } else {
+                                  console.error("Initialization function 'initializeLicPage' not found!");
+                                  alert("Application Error: Page script failed to load.");
+                              }
+                         });
+                     }
                 }
             });
         } catch(e) {
@@ -93,11 +91,11 @@
         </div>
 
         <div class="lic-reminder-section">
-            <h2><i class="fas fa-bell warning-icon"></i> Upcoming Installments (Next 15 Days)</h2>
-            <ul id="reminderList">
-                <li class="loading-reminder">Loading reminders...</li>
-                </ul>
-        </div>
+             <h2><i class="fas fa-bell warning-icon"></i> Upcoming Installments (Next 15 Days)</h2>
+             <ul id="reminderList">
+                 <li class="loading-reminder">Loading reminders...</li>
+                 </ul>
+         </div>
 
         <div class="filter-bar">
             <div class="filter-group">
@@ -105,14 +103,38 @@
                 <input type="text" id="licSearchInput" placeholder="Name, Policy No, Mobile...">
             </div>
             <div class="filter-group">
-                 <label for="licStatusFilter"><i class="fas fa-filter"></i> Filter by Status</label>
+                 <label for="licStatusFilter"><i class="fas fa-filter"></i> Status</label>
                  <select id="licStatusFilter">
                      <option value="">All Status</option>
                      <option value="Active">Active</option>
                      <option value="Lapsed">Lapsed</option>
                      <option value="Matured">Matured</option>
-                     </select>
+                     <option value="Surrendered">Surrendered</option>
+                 </select>
             </div>
+             <div class="filter-group">
+                 <label for="licPlanFilter"><i class="fas fa-file-alt"></i> Plan</label>
+                 <input type="text" id="licPlanFilter" placeholder="Enter Plan No/Name">
+             </div>
+            <div class="filter-group">
+                 <label for="licModeFilter"><i class="fas fa-calendar-alt"></i> Mode</label>
+                 <select id="licModeFilter">
+                     <option value="">All Modes</option>
+                     <option value="Yearly">Yearly</option>
+                     <option value="Half-Yearly">Half-Yearly</option>
+                     <option value="Quarterly">Quarterly</option>
+                     <option value="Monthly">Monthly</option>
+                 </select>
+             </div>
+             <div class="filter-group">
+                 <label for="licNachFilter"><i class="fas fa-university"></i> NACH</label>
+                 <select id="licNachFilter">
+                      <option value="">All NACH</option>
+                      <option value="No">No</option>
+                      <option value="Yes">Yes</option>
+                      <option value="Pending">Pending</option>
+                  </select>
+              </div>
              <div class="filter-group filter-sort">
                  <label for="sort-lic"><i class="fas fa-sort-amount-down"></i> Sort By</label>
                  <select id="sort-lic">
@@ -124,33 +146,32 @@
                  </select>
              </div>
             <div class="filter-group">
-                <button id="clearLicFiltersBtn" type="button" class="button clear-filters-button"><i class="fas fa-times"></i> Clear</button>
+                <button id="clearLicFiltersBtn" type="button" class="button clear-filters-button"><i class="fas fa-times"></i> Clear Filters</button>
             </div>
             <div class="filter-group">
                 <button id="addNewPolicyBtn" type="button" class="button add-new-button"><i class="fas fa-plus"></i> Add New Policy</button>
             </div>
         </div>
-
         <div class="table-container">
-            <table id="licPolicyTable">
-                <thead>
-                    <tr>
-                        <th>Policy No.</th>
-                        <th>Customer Name</th>
-                        <th>Mobile No.</th>
-                        <th>Plan</th>
-                        <th>Premium (₹)</th>
-                        <th>Mode</th>
-                        <th>Next Due Date</th>
-                        <th>Status</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody id="licPolicyTableBody">
-                    <tr><td colspan="9" style="text-align: center; padding: 20px;">Loading policies...</td></tr>
-                    </tbody>
-            </table>
-        </div>
+             <table id="licPolicyTable">
+                 <thead>
+                     <tr>
+                         <th>Policy No.</th>
+                         <th>Customer Name</th>
+                         <th>Mobile No.</th>
+                         <th>Plan</th>
+                         <th>Premium (₹)</th>
+                         <th>Mode</th>
+                         <th>Next Due Date</th>
+                         <th>Status</th>
+                         <th>Actions</th>
+                     </tr>
+                 </thead>
+                 <tbody id="licPolicyTableBody">
+                     <tr><td colspan="9" style="text-align: center; padding: 20px;">Loading policies...</td></tr>
+                     </tbody>
+             </table>
+         </div>
 
         <div class="task-management-section">
              <h2><i class="fas fa-tasks"></i> My Tasks</h2>
@@ -161,10 +182,12 @@
              </div>
              <ul id="taskList">
                  <li class="loading-tasks">Loading tasks...</li>
-                 </ul>
+             </ul>
         </div>
 
-    </div> <div id="policyModal" class="modal">
+    </div>
+
+    <div id="policyModal" class="modal">
         <div class="modal-content large-modal"> <span class="close-btn" id="closePolicyModal" title="Close">&times;</span>
             <h2 id="policyModalTitle"><i class="fas fa-file-contract"></i> Add New Policy</h2>
             <form id="policyForm">
@@ -276,6 +299,7 @@
             </form>
         </div>
     </div>
+
 
     <script src="js/lic_management.js" type="module" defer></script>
 
