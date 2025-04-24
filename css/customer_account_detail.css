@@ -1,4 +1,4 @@
-/* css/customer_account_detail.css (Version 2.4.0 - Ledger Styles Included) */
+/* css/customer_account_detail.css (Version 2.4.1 - Ledger Font & Scroll Adjusted) */
 
 /* --- Base Styles & Variables (Ensure these match your customer_management.css if needed) --- */
 :root {
@@ -176,7 +176,7 @@ body, input, button, select, textarea {
 /* Add more status classes as needed */
 
 
-/* === History Section and Table Styles (V2.4.0) === */
+/* === History Section and Table Styles (V2.4.1 - Scroll/Font Adjusted) === */
 .history-section {
     margin-top: 30px; /* Space above history sections */
 }
@@ -196,15 +196,29 @@ body, input, button, select, textarea {
     opacity: 0.9;
 }
 
-/* Table Container with Scroll */
+/* Table Container with Scroll (Adjusted Height) */
 .history-section .table-container {
-    max-height: 400px; /* Adjust max height as needed */
+    max-height: 350px; /* <<< Adjusted max height for earlier scroll */
     overflow-y: auto;  /* Enable vertical scrollbar */
     border: 1px solid var(--border-color);
     border-radius: var(--border-radius);
     margin-bottom: 30px; /* Space below each table */
     background-color: #fff; /* Ensure background for content */
+    padding: 0; /* Remove padding from container if table has its own */
 }
+
+/* Specific container for Ledger Table (if different height needed, otherwise redundant) */
+.ledger-table-container {
+    max-height: 350px; /* <<< Adjusted max height for earlier scroll */
+    overflow-y: auto;  /* Ensure overflow is set */
+    /* Inherits other styles from .table-container or define below */
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    margin-bottom: 30px;
+    background-color: #fff;
+    padding: 0;
+}
+
 
 /* Base Table Styles */
 .history-section table {
@@ -253,29 +267,30 @@ body, input, button, select, textarea {
     vertical-align: middle;
     color: var(--text-muted); /* Default cell text color */
     line-height: 1.4;
+    /* Font should inherit from body (Poppins) by default */
 }
 
 /* Specific Column Styling */
 #customerOrderTable td:nth-child(1), /* Order ID */
-#customerPaymentTable td:nth-child(2), /* Amount Paid */
+/* #customerPaymentTable td:nth-child(2), // Payment table potentially removed */
 #accountLedgerTable td:nth-child(1) /* Ledger Date */ {
     font-weight: 500;
     color: var(--text-color); /* Darker text for key info */
 }
 
 #customerOrderTable td:nth-child(3), /* Products */
-#customerPaymentTable td:nth-child(4), /* Payment Notes */
+/* #customerPaymentTable td:nth-child(4), // Payment table potentially removed */
 #accountLedgerTable td:nth-child(2) /* Ledger Description */ {
     white-space: normal; /* Allow wrapping for longer text */
     min-width: 150px;
 }
 
-/* Payment History Table - Action Column (if used) */
-#customerPaymentTable td:last-child {
+/* Payment History Table - Action Column (If used) */
+/* #customerPaymentTable td:last-child {
      text-align: center;
-     width: 60px; /* Fixed width for action buttons */
+     width: 60px;
 }
-.delete-payment-btn { /* Style for delete button in payment table */
+.delete-payment-btn {
     padding: 4px 8px;
     font-size: 0.85em;
     line-height: 1;
@@ -285,14 +300,11 @@ body, input, button, select, textarea {
     cursor: pointer;
 }
 .delete-payment-btn:hover {
-    color: #a01c29; /* Darker red */
-}
+    color: #a01c29;
+} */
 
 
-/* --- Account Ledger Table Specific Styles (V2.4.0) --- */
-.ledger-table-container {
-    max-height: 500px; /* Allow more height for ledger if needed */
-}
+/* --- Account Ledger Table Specific Styles (V2.4.1) --- */
 
 #accountLedgerTable th,
 #accountLedgerTable td {
@@ -311,7 +323,9 @@ body, input, button, select, textarea {
 #accountLedgerTable th:nth-child(5), /* Balance Header */
 #accountLedgerTable td:nth-child(5) /* Balance Cell */ {
     text-align: right;
-    font-family: Consolas, 'Courier New', monospace; /* Monospace font for numbers */
+    /* --- >>> CHANGE: Removed monospace font <<< --- */
+    /* font-family: Consolas, 'Courier New', monospace; */
+    /* Now inherits Poppins from body */
 }
 
 /* Ledger Balance Cell Styling */
@@ -326,10 +340,24 @@ body, input, button, select, textarea {
 
 
 /* Custom Scrollbar Styles (Optional, Webkit browsers) */
-.history-section .table-container::-webkit-scrollbar { width: 8px; }
-.history-section .table-container::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 10px; }
-.history-section .table-container::-webkit-scrollbar-thumb { background: #ccc; border-radius: 10px; }
-.history-section .table-container::-webkit-scrollbar-thumb:hover { background: #aaa; }
+.history-section .table-container::-webkit-scrollbar,
+.ledger-table-container::-webkit-scrollbar {
+     width: 8px;
+}
+.history-section .table-container::-webkit-scrollbar-track,
+.ledger-table-container::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 10px;
+}
+.history-section .table-container::-webkit-scrollbar-thumb,
+.ledger-table-container::-webkit-scrollbar-thumb {
+    background: #ccc;
+    border-radius: 10px;
+}
+.history-section .table-container::-webkit-scrollbar-thumb:hover,
+.ledger-table-container::-webkit-scrollbar-thumb:hover {
+     background: #aaa;
+}
 
 
 /* === Modal Styles === */
@@ -367,6 +395,7 @@ body, input, button, select, textarea {
     width: 100%;
     box-sizing: border-box;
     transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    font-family: var(--font-family); /* Ensure inputs use Poppins */
 }
 .modal .form-group input:focus,
 .modal .form-group select:focus,
@@ -391,6 +420,7 @@ body, input, button, select, textarea {
 }
 #customerEditForm .form-group { margin-bottom: 20px; }
 /* Spanning elements across grid */
+#customerEditForm .form-row { display: contents; } /* Allow form groups to directly participate in grid */
 #customerEditForm .form-group-address,
 #customerEditForm .form-group-notes,
 #customerEditForm .form-group-credit-radio,
@@ -434,15 +464,15 @@ body, input, button, select, textarea {
     min-width: 100px; /* Minimum width for action buttons */
 }
 /* Specific action button colors */
-.modal .save-button { background-color: var(--success-color); }
+.modal .save-button { background-color: var(--success-color); color: white; }
 .modal .save-button:hover { background-color: #1e7e34; }
-.modal .update-status-button { background-color: var(--info-color); }
+.modal .update-status-button { background-color: var(--info-color); color: white; }
 .modal .update-status-button:hover { background-color: #117a8b; }
 .modal .edit-full-button { background-color: var(--warning-color); color: #212529; }
 .modal .edit-full-button:hover { background-color: #e0a800; }
-.modal .delete-button { background-color: var(--danger-color); }
+.modal .delete-button { background-color: var(--danger-color); color: white; }
 .modal .delete-button:hover { background-color: #bd2130; }
-.modal .cancel-button { background-color: var(--secondary-color); }
+.modal .cancel-button { background-color: var(--secondary-color); color: white; }
 .modal .cancel-button:hover { background-color: #5a6268; }
 
 /* --- Responsive Adjustments --- */
