@@ -1,11 +1,11 @@
 // js/lic_management.js
-// Updated with implementations for missing functions
+// Updated with implementations, Next Due Date logic, and dynamic display
 
 // --- सुनिश्चित करें कि ग्लोबल Firebase फंक्शन्स उपलब्ध हैं ---
 const {
     db, collection, doc, addDoc, getDoc, getDocs, updateDoc, deleteDoc, serverTimestamp,
     query, where, orderBy, limit, Timestamp, runTransaction, onSnapshot,
-    arrayUnion // <<<< Task History के लिए जोड़ा गया
+    arrayUnion
 } = window;
 
 // --- DOM एलिमेंट वेरिएबल्स ---
@@ -30,9 +30,9 @@ let licPolicyTableBody, reminderList, policyModal, policyForm, policyModalTitle,
     // Edit Task Modal Elements
     editTaskModal, editTaskForm, editTaskIdEl,
     editTaskCustomerNameEl, editTaskDescriptionEl, editTaskDueDateEl, editTaskCommentsEl, editTaskStatusEl,
-    editTaskNewCommentEl, // <<< नया कमेंट जोड़ने के लिए
-    editTaskCommentsHistoryEl, // <<< कमेंट हिस्ट्री दिखाने के लिए
-    closeEditTaskModalBtn, cancelEditTaskBtn, saveTaskChangesBtn, // saveTaskChangesBtn used via form submit
+    editTaskNewCommentEl,
+    editTaskCommentsHistoryEl,
+    closeEditTaskModalBtn, cancelEditTaskBtn, saveTaskChangesBtn,
     // Upcoming Tasks Reminder Element
     upcomingTaskListEl;
 
@@ -44,54 +44,47 @@ let unsubscribePolicies = null; // Firestore policy listener
 let unsubscribeTasks = null; // Firestore task listener
 let allPoliciesCache = []; // सभी पॉलिसियों का कैश
 let searchDebounceTimerLic;
-let currentOpenClientId = null; // Track which client detail is open (use policyId or customerName/ID)
+let currentOpenClientId = null;
 
 
 // --- पेज इनिशियलाइज़ेशन ---
-window.initializeLicPage = function() { // Make it globally accessible
+window.initializeLicPage = function() {
     console.log("Initializing LIC Management Page...");
 
     // --- DOM एलिमेंट्स प्राप्त करें ---
     licPolicyTableBody = document.getElementById('licPolicyTableBody');
     reminderList = document.getElementById('reminderList');
-    policyModal = document.getElementById('policyModal'); // Add/Edit Policy Modal
+    policyModal = document.getElementById('policyModal');
     policyForm = document.getElementById('policyForm');
-    policyModalTitle = document.getElementById('policyModalTitleText'); // Use the span ID
+    policyModalTitle = document.getElementById('policyModalTitleText');
     editPolicyId = document.getElementById('editPolicyId');
     addNewPolicyBtn = document.getElementById('addNewPolicyBtn');
-    closePolicyModalBtn = document.getElementById('closePolicyModal'); // Policy Modal Close
-    cancelPolicyBtn = document.getElementById('cancelPolicyBtn'); // Policy Modal Cancel
-    savePolicyBtn = document.getElementById('savePolicyBtn'); // <<<< यह बटन सबमिट के लिए है, सीधे क्लिक लिस्नर नहीं
+    closePolicyModalBtn = document.getElementById('closePolicyModal');
+    cancelPolicyBtn = document.getElementById('cancelPolicyBtn');
+    savePolicyBtn = document.getElementById('savePolicyBtn'); // Button exists but action is via form submit
     licSearchInput = document.getElementById('licSearchInput');
     sortLicSelect = document.getElementById('sort-lic');
     clearLicFiltersBtn = document.getElementById('clearLicFiltersBtn');
-    // Modal dropdowns (Policy Add/Edit)
     policyStatusModal = document.getElementById('policyStatus');
     nachStatusModal = document.getElementById('nachStatus');
-    // Filter bar dropdowns/inputs
     licStatusFilter = document.getElementById('licStatusFilter');
     licPlanFilter = document.getElementById('licPlanFilter');
     licModeFilter = document.getElementById('licModeFilter');
     licNachFilter = document.getElementById('licNachFilter');
-    // Task Management Elements (Updated)
     newTaskCustomerNameEl = document.getElementById('newTaskCustomerName');
-    newTaskInput = document.getElementById('newTaskInput'); // Description
+    newTaskInput = document.getElementById('newTaskInput');
     newTaskDueDate = document.getElementById('newTaskDueDate');
     newTaskCommentsEl = document.getElementById('newTaskComments');
     addTaskBtn = document.getElementById('addTaskBtn');
     taskList = document.getElementById('taskList');
-
-    // --- Phase 2: Get Dashboard Elements ---
     dbTotalPoliciesEl = document.getElementById('dbTotalPolicies');
     dbActivePoliciesEl = document.getElementById('dbActivePolicies');
     dbLapsedPoliciesEl = document.getElementById('dbLapsedPolicies');
     dbUpcomingPremiumEl = document.getElementById('dbUpcomingPremium');
     dbUpcomingMaturityEl = document.getElementById('dbUpcomingMaturity');
-
-    // --- Phase 2: Get Client Detail View Elements ---
     clientDetailModal = document.getElementById('clientDetailView');
-    closeClientDetailBtn = document.getElementById('closeClientDetail'); // Top X button
-    closeClientDetailBtnBottom = document.getElementById('closeClientDetailBtnBottom'); // Bottom close button
+    closeClientDetailBtn = document.getElementById('closeClientDetail');
+    closeClientDetailBtnBottom = document.getElementById('closeClientDetailBtnBottom');
     clientDetailNameEl = document.getElementById('clientDetailName');
     clientDetailContentEl = document.getElementById('clientDetailContent');
     clientDetailMobileEl = document.getElementById('clientDetailMobile');
@@ -102,8 +95,6 @@ window.initializeLicPage = function() { // Make it globally accessible
     communicationLogListEl = document.getElementById('communicationLogList');
     newLogNoteEl = document.getElementById('newLogNote');
     addLogBtn = document.getElementById('addLogBtn');
-
-    // Edit Task Modal Elements (Updated)
     editTaskModal = document.getElementById('editTaskModal');
     editTaskForm = document.getElementById('editTaskForm');
     editTaskIdEl = document.getElementById('editTaskId');
@@ -115,35 +106,27 @@ window.initializeLicPage = function() { // Make it globally accessible
     editTaskStatusEl = document.getElementById('editTaskStatus');
     closeEditTaskModalBtn = document.getElementById('closeEditTaskModal');
     cancelEditTaskBtn = document.getElementById('cancelEditTaskBtn');
-    // saveTaskChangesBtn listener form submit पर लगेगा (नीचे देखें)
-
-    // Upcoming Tasks Reminder Element
     upcomingTaskListEl = document.getElementById('upcomingTaskList');
 
-    // --- START: डीबगिंग लॉग्स ---
+    // --- डीबगिंग लॉग्स ---
     console.log('Debugging - Add New Policy Button Element:', addNewPolicyBtn);
     console.log('Debugging - Add Task Button Element:', addTaskBtn);
-    // --- END: डीबगिंग लॉग्स ---
 
-    // --- इवेंट लिस्टनर्स जोड़ें ---
-    // Policy Modal Buttons & Form
+    // --- इवेंट लिस्टनर्स ---
     if (addNewPolicyBtn) {
-         console.log('Debugging - Attaching listener to Add New Policy button'); // डीबगिंग लॉग
+         console.log('Debugging - Attaching listener to Add New Policy button');
          addNewPolicyBtn.addEventListener('click', () => openPolicyModal());
-    } else {
-         console.error('ERROR: Could not find Add New Policy button element!'); // एरर लॉग
-    }
+    } else { console.error('ERROR: Add New Policy button not found!'); }
+
+    if (policyForm) {
+        policyForm.addEventListener('submit', handleSavePolicy);
+        console.log('Debugging - Attaching listener to Policy Form submit');
+    } else { console.error('ERROR: Policy Form not found!'); }
+
     if (closePolicyModalBtn) closePolicyModalBtn.addEventListener('click', closePolicyModal);
     if (cancelPolicyBtn) cancelPolicyBtn.addEventListener('click', closePolicyModal);
     if (policyModal) policyModal.addEventListener('click', (e) => { if (e.target === policyModal) closePolicyModal(); });
-    if (policyForm) {
-        policyForm.addEventListener('submit', handleSavePolicy); // <<< फॉर्म सबमिट पर handleSavePolicy कॉल करें
-        console.log('Debugging - Attaching listener to Policy Form submit');
-    } else {
-         console.error('ERROR: Could not find Policy Form element!');
-    }
 
-    // Filter listeners
     if (licSearchInput) licSearchInput.addEventListener('input', handleLicFilterChange);
     if (licStatusFilter) licStatusFilter.addEventListener('change', handleLicFilterChange);
     if (licPlanFilter) licPlanFilter.addEventListener('input', handleLicFilterChange);
@@ -152,43 +135,33 @@ window.initializeLicPage = function() { // Make it globally accessible
     if (sortLicSelect) sortLicSelect.addEventListener('change', handleLicSortChange);
     if (clearLicFiltersBtn) clearLicFiltersBtn.addEventListener('click', clearLicFilters);
 
-    // Reminder Checkbox Listener (Event Delegation) - This seems less relevant now
-    // if (reminderList) reminderList.addEventListener('change', handleReminderCheckboxChange);
-
-    // Task Management Listeners (Updated)
     if (addTaskBtn) {
-         console.log('Debugging - Attaching listener to Add Task button'); // डीबगिंग लॉग
-         addTaskBtn.addEventListener('click', handleAddTask); // <<< सीधे बटन क्लिक पर handleAddTask कॉल करें
-    } else {
-         console.error('ERROR: Could not find Add Task button element!'); // एरर लॉग
-    }
+         console.log('Debugging - Attaching listener to Add Task button');
+         addTaskBtn.addEventListener('click', handleAddTask);
+    } else { console.error('ERROR: Add Task button not found!'); }
+
     if (taskList) {
         taskList.addEventListener('change', handleTaskCheckboxChange);
         taskList.addEventListener('click', handleTaskActions);
     }
 
-    // Edit Task Modal Listeners
+    if (editTaskForm) {
+        editTaskForm.addEventListener('submit', handleUpdateTask);
+        console.log('Debugging - Attaching listener to Edit Task Form submit');
+    } else { console.error('ERROR: Edit Task Form not found!'); }
+
     if (closeEditTaskModalBtn) closeEditTaskModalBtn.addEventListener('click', closeEditTaskModal);
     if (cancelEditTaskBtn) cancelEditTaskBtn.addEventListener('click', closeEditTaskModal);
     if (editTaskModal) editTaskModal.addEventListener('click', (e) => { if (e.target === editTaskModal) closeEditTaskModal(); });
-    if (editTaskForm) {
-        editTaskForm.addEventListener('submit', handleUpdateTask); // <<< Edit Task सेव करने के लिए
-        console.log('Debugging - Attaching listener to Edit Task Form submit');
-    } else {
-        console.error('ERROR: Could not find Edit Task Form element!');
-    }
 
-
-    // --- Phase 2: Client Detail Listeners ---
     if (closeClientDetailBtn) closeClientDetailBtn.addEventListener('click', closeClientDetail);
     if (closeClientDetailBtnBottom) closeClientDetailBtnBottom.addEventListener('click', closeClientDetail);
     if (clientDetailModal) clientDetailModal.addEventListener('click', (e) => { if (e.target === clientDetailModal) closeClientDetail(); });
     if (addLogBtn) addLogBtn.addEventListener('click', addCommunicationNote);
 
-    // --- Firestore से डेटा सुनना शुरू करें ---
-    listenForPolicies(); // Policies Load
-    listenForTasks();   // Tasks Load
-    // displayReminders() और displayUpcomingTasks() संबंधित श्रोताओं के अंदर कॉल होंगे
+    // --- Firestore Listeners ---
+    listenForPolicies();
+    listenForTasks();
 
     console.log("Initialization complete.");
 }
@@ -196,31 +169,27 @@ window.initializeLicPage = function() { // Make it globally accessible
 // --- Firestore Listener (Policies) ---
 function listenForPolicies() {
     if (!db) { console.error("DB not initialized"); return; }
-    if (unsubscribePolicies) unsubscribePolicies(); // Stop previous listener if any
+    if (unsubscribePolicies) unsubscribePolicies();
     const policiesRef = collection(db, "licCustomers");
 
-    // Apply initial sorting from dropdown
     const sortValue = sortLicSelect ? sortLicSelect.value : 'createdAt_desc';
     const [field, direction] = sortValue.split('_');
     currentLicSortField = field || 'createdAt';
     currentLicSortDirection = direction || 'desc';
 
-    // Build the query (only sorting for now, filtering happens client-side)
     const q = query(policiesRef, orderBy(currentLicSortField, currentLicSortDirection));
-
     console.log(`Starting policy listener with sort: ${currentLicSortField} ${currentLicSortDirection}`);
 
     unsubscribePolicies = onSnapshot(q, (snapshot) => {
         console.log(`Received ${snapshot.docs.length} policies.`);
         allPoliciesCache = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        applyLicFiltersAndRender(); // Render Table with client-side filtering & server-side sorting
-        displayReminders();         // Update Policy Reminders
-        loadDashboardData();        // Update Dashboard
+        applyLicFiltersAndRender();
+        displayReminders();
+        loadDashboardData();
     }, (error) => {
         console.error("Error listening to policies:", error);
         if(licPolicyTableBody) licPolicyTableBody.innerHTML = `<tr><td colspan="9">Error loading policy data: ${error.message}. Check console and Firestore rules.</td></tr>`;
         if(dbTotalPoliciesEl) dbTotalPoliciesEl.textContent = 'Error';
-        // Clear other dashboard elements on error too
         if (dbActivePoliciesEl) dbActivePoliciesEl.textContent = 'Error';
         if (dbLapsedPoliciesEl) dbLapsedPoliciesEl.textContent = 'Error';
         if (dbUpcomingPremiumEl) dbUpcomingPremiumEl.textContent = 'Error';
@@ -231,16 +200,16 @@ function listenForPolicies() {
 // --- Firestore Listener (Tasks) ---
 function listenForTasks() {
     if (!db) { console.error("DB not initialized for tasks"); return; }
-    if (unsubscribeTasks) unsubscribeTasks(); // Stop previous listener
+    if (unsubscribeTasks) unsubscribeTasks();
     const tasksRef = collection(db, "tasks");
-    const q = query(tasksRef, orderBy("createdAt", "desc")); // Always sort tasks by creation date desc
+    const q = query(tasksRef, orderBy("createdAt", "desc"));
 
     console.log("Starting task listener...");
     unsubscribeTasks = onSnapshot(q, (snapshot) => {
         const tasks = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         console.log(`Received ${tasks.length} tasks.`);
-        renderTaskList(tasks); // Render tasks directly
-        displayUpcomingTasks(tasks); // Update task reminders using fetched tasks
+        renderTaskList(tasks);
+        displayUpcomingTasks(tasks);
     }, (error) => {
         console.error("Error listening to tasks:", error);
         if(taskList) taskList.innerHTML = `<li class="error-tasks">Error loading tasks: ${error.message}. Check console and Firestore rules.</li>`;
@@ -255,7 +224,6 @@ function applyLicFiltersAndRender() {
          console.warn("applyLicFiltersAndRender: Cache or table body not ready.");
          return;
      }
-
      const searchTerm = licSearchInput ? licSearchInput.value.trim().toLowerCase() : '';
      const statusFilterValue = licStatusFilter ? licStatusFilter.value : '';
      const planFilterValue = licPlanFilter ? licPlanFilter.value.trim().toLowerCase() : '';
@@ -269,23 +237,17 @@ function applyLicFiltersAndRender() {
             (policy.customerName || '').toLowerCase().includes(searchTerm) ||
             (policy.policyNumber || '').toLowerCase().includes(searchTerm) ||
             (policy.mobileNo || '').toLowerCase().includes(searchTerm);
-
          const statusMatch = statusFilterValue === '' || (policy.policyStatus || '').toLowerCase() === statusFilterValue.toLowerCase();
          const planMatch = planFilterValue === '' || (policy.plan || '').toLowerCase().includes(planFilterValue);
          const modeMatch = modeFilter === '' || (policy.modeOfPayment || '') === modeFilter;
          const nachMatch = nachFilter === '' || (policy.nachStatus || '') === nachFilter;
-
          return searchMatch && statusMatch && planMatch && modeMatch && nachMatch;
      });
-
      console.log(`Policies before filtering: ${allPoliciesCache.length}, After filtering: ${filteredPolicies.length}`);
-
-     // Sorting is now handled by the Firestore query in listenForPolicies
-     // We just render the client-side filtered results
-     renderPolicyTable(filteredPolicies);
+     renderPolicyTable(filteredPolicies); // Render with client-side filtering
 }
 
-// --- टेबल रेंडरिंग (Policies) ---
+// --- टेबल रेंडरिंग (Policies) - Updated for Dynamic Next Due Date ---
 function renderPolicyTable(policies) {
     if (!licPolicyTableBody) return;
     licPolicyTableBody.innerHTML = ''; // Clear previous table content
@@ -294,6 +256,9 @@ function renderPolicyTable(policies) {
         licPolicyTableBody.innerHTML = `<tr><td colspan="9" style="text-align: center;">No policies found matching criteria.</td></tr>`;
         return;
     }
+
+    const today = new Date(); // Get today's date once for comparison
+    today.setHours(0, 0, 0, 0); // Normalize to start of day
 
     policies.forEach(policy => {
         const row = licPolicyTableBody.insertRow();
@@ -308,20 +273,54 @@ function renderPolicyTable(policies) {
         nameLink.textContent = policy.customerName || 'N/A';
         nameLink.title = `View details for ${policy.customerName || 'this client'}`;
         nameLink.style.cursor = 'pointer';
-        nameLink.style.textDecoration = 'underline';
-        nameLink.style.color = '#0056b3';
-        // Use a closure to capture the correct policyId and customerName for the event listener
         nameLink.onclick = (e) => {
             e.preventDefault();
-            showClientDetail(policy.id, policy.customerName); // Pass ID and name
+            showClientDetail(policy.id, policy.customerName);
         };
         nameCell.appendChild(nameLink);
 
         row.insertCell().textContent = policy.mobileNo || '-';
         row.insertCell().textContent = policy.plan || '-';
-        row.insertCell().textContent = policy.premiumAmount ? `₹ ${Number(policy.premiumAmount).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : '-'; // Format currency
+        row.insertCell().textContent = policy.premiumAmount ? `₹ ${Number(policy.premiumAmount).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : '-';
         row.insertCell().textContent = policy.modeOfPayment || '-';
-        row.insertCell().textContent = policy.nextInstallmentDate?.toDate ? formatDate(policy.nextInstallmentDate.toDate()) : '-';
+
+        // --- Calculate and Display Dynamic Next Due Date ---
+        let displayDueDateStr = '-';
+        const storedNextDueDate = policy.nextInstallmentDate?.toDate(); // Get stored date as Date object
+        if (storedNextDueDate && policy.modeOfPayment) {
+             let displayDate = new Date(storedNextDueDate); // Clone the date
+             displayDate.setHours(0,0,0,0); // Normalize stored date
+
+             // If the stored date is in the past, calculate future dates
+             // Add a safety limit to prevent infinite loops in case of bad data/logic
+             let safetyCounter = 0;
+             const maxIterations = 120; // Max 10 years of monthly payments, adjust if needed
+             while (displayDate < today && safetyCounter < maxIterations) {
+                 const calculated = calculateNextDueDate(displayDate, policy.modeOfPayment);
+                 if (!calculated) { // Break if calculation fails (e.g., unknown mode)
+                      displayDate = null;
+                      console.warn(`Could not calculate next due date for policy ${policy.policyNumber} from ${formatDate(displayDate)} with mode ${policy.modeOfPayment}`);
+                      break;
+                  }
+                  displayDate = calculated;
+                  displayDate.setHours(0,0,0,0); // Normalize calculated date
+                  safetyCounter++;
+             }
+
+              if (safetyCounter >= maxIterations) {
+                  console.error(`Exceeded max iterations calculating next due date for policy ${policy.policyNumber}. Check data or calculation logic.`);
+                  displayDueDateStr = 'Calc Limit';
+              } else if (displayDate) {
+                  displayDueDateStr = formatDate(displayDate);
+              } else {
+                  displayDueDateStr = 'Calc Error'; // Indicate calculation problem
+              }
+        } else if (storedNextDueDate) {
+            // If date exists but mode is missing, just show stored date
+            displayDueDateStr = formatDate(storedNextDueDate);
+        }
+        row.insertCell().textContent = displayDueDateStr;
+        // ----------------------------------------------------
 
         // Status Badge
         const statusCell = row.insertCell();
@@ -340,11 +339,7 @@ function renderPolicyTable(policies) {
         editBtn.innerHTML = '<i class="fas fa-edit"></i>';
         editBtn.title = "Edit Policy";
         editBtn.classList.add('button', 'edit-button');
-        // Pass the full policy object to openPolicyModal for editing
-        editBtn.onclick = (e) => {
-            e.stopPropagation(); // Prevent triggering row click if any
-            openPolicyModal(policy.id, policy);
-        };
+        editBtn.onclick = (e) => { e.stopPropagation(); openPolicyModal(policy.id, policy); };
         actionCell.appendChild(editBtn);
 
         // Pay Button (Mark Paid)
@@ -352,12 +347,10 @@ function renderPolicyTable(policies) {
         payBtn.innerHTML = '<i class="fas fa-check-circle"></i>';
         payBtn.title = "Mark Premium Paid & Update Due Date";
         payBtn.classList.add('button', 'pay-button');
-        // Enable only if Active/Lapsed, has next date and mode
-        payBtn.disabled = !['Active', 'Lapsed'].includes(policy.policyStatus) || !policy.nextInstallmentDate || !policy.modeOfPayment;
-        payBtn.onclick = (e) => {
-            e.stopPropagation();
-            handleMarkPaid(policy.id, policy);
-        };
+         // Disable if status is not Active/Lapsed, or if the calculated display date indicates an error or is missing
+         const isPayable = ['Active', 'Lapsed'].includes(policy.policyStatus) && displayDueDateStr !== '-' && !displayDueDateStr.startsWith('Calc');
+         payBtn.disabled = !isPayable;
+        payBtn.onclick = (e) => { e.stopPropagation(); handleMarkPaid(policy.id, policy); };
         actionCell.appendChild(payBtn);
 
         // Delete Button
@@ -365,10 +358,7 @@ function renderPolicyTable(policies) {
         deleteBtn.innerHTML = '<i class="fas fa-trash-alt"></i>';
         deleteBtn.title = "Delete Policy";
         deleteBtn.classList.add('button', 'delete-button');
-        deleteBtn.onclick = (e) => {
-            e.stopPropagation();
-            handleDeletePolicy(policy.id, policy.policyNumber);
-        };
+        deleteBtn.onclick = (e) => { e.stopPropagation(); handleDeletePolicy(policy.id, policy.policyNumber); };
         actionCell.appendChild(deleteBtn);
     });
 }
@@ -380,8 +370,8 @@ function openPolicyModal(policyId = null, data = {}) {
         console.error("Cannot open policy modal: Required elements not found.");
         return;
     }
-    policyForm.reset(); // Clear the form first
-    editPolicyId.value = policyId || ''; // Set the hidden ID field
+    policyForm.reset();
+    editPolicyId.value = policyId || '';
 
     if (policyId && data) {
         // --- EDIT MODE: Populate form data ---
@@ -398,25 +388,21 @@ function openPolicyModal(policyId = null, data = {}) {
         document.getElementById('issuanceDate').value = data.issuanceDate?.toDate ? data.issuanceDate.toDate().toISOString().split('T')[0] : '';
         document.getElementById('modeOfPayment').value = data.modeOfPayment || '';
         document.getElementById('premiumAmount').value = data.premiumAmount || '';
+        // Populate the hidden nextInstallmentDate field for reference, though it's not directly edited
         document.getElementById('nextInstallmentDate').value = data.nextInstallmentDate?.toDate ? data.nextInstallmentDate.toDate().toISOString().split('T')[0] : '';
         document.getElementById('maturityDate').value = data.maturityDate?.toDate ? data.maturityDate.toDate().toISOString().split('T')[0] : '';
-        // Dropdowns
         if(policyStatusModal) policyStatusModal.value = data.policyStatus || 'Active';
         if(nachStatusModal) nachStatusModal.value = data.nachStatus || '';
     } else {
         // --- ADD MODE ---
         policyModalTitle.textContent = "Add New Policy";
-        // Set defaults for dropdowns in add mode
         if(policyStatusModal) policyStatusModal.value = 'Active';
-        if(nachStatusModal) nachStatusModal.value = 'No'; // Default NACH to No maybe?
-        // Clear date fields explicitly if needed
+        if(nachStatusModal) nachStatusModal.value = 'No';
         document.getElementById('dob').value = '';
         document.getElementById('issuanceDate').value = '';
-        document.getElementById('nextInstallmentDate').value = '';
+        document.getElementById('nextInstallmentDate').value = ''; // Keep hidden field blank in add mode
         document.getElementById('maturityDate').value = '';
     }
-
-    // --- Show the modal ---
     policyModal.classList.add('active');
 }
 
@@ -424,7 +410,7 @@ function closePolicyModal() {
     if (policyModal) policyModal.classList.remove('active');
 }
 
-// --- पॉलिसी सेव/अपडेट करना ---
+// --- पॉलिसी सेव/अपडेट करना - Updated for Auto Calculation on Add ---
 async function handleSavePolicy(event) {
     event.preventDefault(); // Prevent default form submission
     if (!db) { console.error("DB not initialized"); return; }
@@ -439,11 +425,16 @@ async function handleSavePolicy(event) {
     const issuanceDateStr = document.getElementById('issuanceDate').value;
     const modeOfPayment = document.getElementById('modeOfPayment').value;
     const premiumAmountStr = document.getElementById('premiumAmount').value;
-    let nextInstallmentDateStr = document.getElementById('nextInstallmentDate').value; // Allow manual entry or calculation
+    // NEXT INSTALLMENT DATE IS NO LONGER READ FROM FORM FOR 'ADD'
 
     // --- Basic Validation ---
     if (!customerName || !policyNumber || !mobileNo || !issuanceDateStr || !modeOfPayment || !premiumAmountStr) {
         alert("Please fill in all required fields (*).");
+        return;
+    }
+    // Basic mobile number format check (10 digits)
+    if (!/^\d{10}$/.test(mobileNo)) {
+        alert("Please enter a valid 10-digit mobile number.");
         return;
     }
 
@@ -454,25 +445,6 @@ async function handleSavePolicy(event) {
     }
 
     const issuanceDate = Timestamp.fromDate(new Date(issuanceDateStr + 'T00:00:00Z')); // Store as Timestamp
-
-    // Calculate next installment date if not provided in ADD mode
-    if (!isEditing && !nextInstallmentDateStr && issuanceDate && modeOfPayment) {
-        try {
-             const calculatedDate = calculateNextDueDate(issuanceDate.toDate(), modeOfPayment);
-             if (calculatedDate) {
-                  nextInstallmentDateStr = calculatedDate.toISOString().split('T')[0];
-                   console.log(`Calculated next due date: ${nextInstallmentDateStr}`);
-             } else {
-                  console.warn("Could not calculate next due date automatically.");
-                  // Optionally force user to enter it:
-                  // alert("Could not calculate next due date automatically. Please enter it manually."); return;
-             }
-        } catch (e) {
-             console.error("Error calculating next due date:", e);
-             alert("Error calculating next due date. Please enter it manually.");
-             return;
-        }
-    }
 
     // --- Prepare data object for Firestore ---
     const policyData = {
@@ -488,35 +460,72 @@ async function handleSavePolicy(event) {
         issuanceDate: issuanceDate,
         modeOfPayment: modeOfPayment,
         premiumAmount: premiumAmount,
-        nextInstallmentDate: nextInstallmentDateStr ? Timestamp.fromDate(new Date(nextInstallmentDateStr + 'T00:00:00Z')) : null,
+        // nextInstallmentDate will be set below
         maturityDate: document.getElementById('maturityDate').value ? Timestamp.fromDate(new Date(document.getElementById('maturityDate').value + 'T00:00:00Z')) : null,
         policyStatus: policyStatusModal.value || 'Active',
         nachStatus: nachStatusModal.value || 'No',
-        // Add/update timestamps
         updatedAt: serverTimestamp() // Always set updatedAt
     };
 
-    // Add createdAt only if it's a new policy
+    // --- Calculate Next Installment Date ONLY for NEW policies ---
     if (!isEditing) {
         policyData.createdAt = serverTimestamp();
+        try {
+            const firstDueDate = calculateNextDueDate(issuanceDate.toDate(), modeOfPayment);
+            if (firstDueDate) {
+                policyData.nextInstallmentDate = Timestamp.fromDate(firstDueDate);
+                console.log(`Calculated first due date: ${formatDate(firstDueDate)}`);
+            } else {
+                policyData.nextInstallmentDate = null; // Set to null if calculation fails
+                console.warn("Could not calculate the first due date.");
+                // Decide if you want to prevent saving or allow saving without a date
+                // Option 1: Prevent saving
+                // alert("Error: Could not automatically calculate the first due date based on Issuance Date and Mode. Cannot save policy.");
+                // return; // Stop execution
+                // Option 2: Allow saving with null date (as implemented now)
+                 alert("Warning: Could not automatically calculate the first due date based on Issuance Date and Mode. Saving with no due date.");
+            }
+        } catch (e) {
+            console.error("Error calculating first due date:", e);
+            policyData.nextInstallmentDate = null;
+            alert("Error calculating the first due date. Please check Mode of Payment.");
+        }
+    } else {
+         // For editing, preserve the existing nextInstallmentDate from cache/data
+         const existingPolicyData = allPoliciesCache.find(p => p.id === policyId);
+         // Only update if it exists in existing data, otherwise keep it potentially null/undefined in update object
+         if (existingPolicyData && existingPolicyData.nextInstallmentDate) {
+             policyData.nextInstallmentDate = existingPolicyData.nextInstallmentDate;
+         }
+         // NOTE: If modeOfPayment or issuanceDate is changed during EDIT,
+         // you might want to add logic here to ask the user if they want to recalculate
+         // the nextInstallmentDate based on the *new* issuance/mode.
+         // For now, it only preserves the date that was loaded into the form.
     }
+
 
     console.log("Saving policy data:", policyData);
 
     // --- Disable save button ---
-    const saveButton = document.getElementById('savePolicyBtn'); // Get button inside handler
+    const saveButton = document.getElementById('savePolicyBtn');
     if(saveButton) { saveButton.disabled = true; saveButton.textContent = 'Saving...'; }
 
     // --- Save to Firestore ---
     try {
         if (isEditing) {
-            // Update existing document
             const policyRef = doc(db, "licCustomers", policyId);
             await updateDoc(policyRef, policyData);
             console.log("Policy updated successfully:", policyId);
             alert("Policy details updated successfully!");
         } else {
             // Add new document
+             if (!policyData.nextInstallmentDate && modeOfPayment) { // Added check for mode as well
+                 // Optional: Confirm before saving without a date if calculation failed but mode exists
+                 // if (!confirm("Warning: Could not calculate next due date. Save anyway?")) {
+                 //     throw new Error("Save cancelled by user.");
+                 // }
+                 console.warn("Saving policy without a calculated next installment date.");
+             }
             const policiesRef = collection(db, "licCustomers");
             const docRef = await addDoc(policiesRef, policyData);
             console.log("Policy added successfully with ID:", docRef.id);
@@ -532,7 +541,6 @@ async function handleSavePolicy(event) {
     }
 }
 
-
 // --- पॉलिसी डिलीट करना ---
 async function handleDeletePolicy(policyId, policyNumber) {
     if (!db || !policyId) return;
@@ -542,7 +550,7 @@ async function handleDeletePolicy(policyId, policyNumber) {
             await deleteDoc(policyRef);
             console.log("Policy deleted successfully:", policyId);
             alert("Policy deleted successfully.");
-            // The listener will automatically update the table
+            // Listener updates the table
         } catch (error) {
             console.error("Error deleting policy:", error);
             alert(`Failed to delete policy: ${error.message}`);
@@ -552,36 +560,38 @@ async function handleDeletePolicy(policyId, policyNumber) {
 
 // --- प्रीमियम भुगतान मार्क करना ---
 async function handleMarkPaid(policyId, policyData) {
+    // Use the originally stored nextInstallmentDate from policyData for calculation
     if (!db || !policyId || !policyData.nextInstallmentDate || !policyData.modeOfPayment) {
-        alert("Cannot mark as paid: Missing required policy data (ID, Next Due Date, Mode).");
+        alert("Cannot mark as paid: Missing required policy data (ID, Stored Next Due Date, Mode).");
         return;
     }
 
-    const currentDueDate = policyData.nextInstallmentDate.toDate();
+    const currentStoredDueDate = policyData.nextInstallmentDate.toDate();
     const mode = policyData.modeOfPayment;
 
     try {
-        const nextDueDate = calculateNextDueDate(currentDueDate, mode);
-        if (!nextDueDate) {
+        // Calculate the next due date based on the *stored* due date
+        const nextCalculatedDueDate = calculateNextDueDate(currentStoredDueDate, mode);
+        if (!nextCalculatedDueDate) {
             alert("Could not calculate the next due date based on the mode.");
             return;
         }
 
-        const nextDueDateStr = formatDate(nextDueDate);
-        if (!confirm(`Mark premium paid for policy ${policyData.policyNumber}?\n\nCurrent Due: ${formatDate(currentDueDate)}\nNext Due Date will be set to: ${nextDueDateStr}`)) {
+        const nextDueDateStr = formatDate(nextCalculatedDueDate);
+        if (!confirm(`Mark premium paid for policy ${policyData.policyNumber}?\n\nCurrent Stored Due: ${formatDate(currentStoredDueDate)}\nNext Due Date will be updated in database to: ${nextDueDateStr}`)) {
             return;
         }
 
         const policyRef = doc(db, "licCustomers", policyId);
         await updateDoc(policyRef, {
-            nextInstallmentDate: Timestamp.fromDate(nextDueDate),
+            nextInstallmentDate: Timestamp.fromDate(nextCalculatedDueDate), // Update stored date
             policyStatus: 'Active', // Ensure status is Active after payment
             updatedAt: serverTimestamp()
         });
 
-        console.log(`Policy ${policyId} marked paid. Next due date set to ${nextDueDateStr}.`);
-        alert(`Policy ${policyData.policyNumber} marked as paid.\nNext due date updated to ${nextDueDateStr}.`);
-        // Listener will update the table
+        console.log(`Policy ${policyId} marked paid. Stored next due date updated to ${nextDueDateStr}.`);
+        alert(`Policy ${policyData.policyNumber} marked as paid.\nNext due date in database updated to ${nextDueDateStr}.`);
+        // Listener will update the table, which will then display the new date dynamically
 
     } catch (error) {
         console.error("Error marking policy as paid:", error);
@@ -593,23 +603,40 @@ async function handleMarkPaid(policyId, policyData) {
 // --- रिमाइंडर फंक्शन (Policies) ---
 function displayReminders() {
     if (!reminderList || !allPoliciesCache) return;
-    reminderList.innerHTML = '<li class="loading-reminder">Loading reminders...</li>'; // Show loading initially
+    reminderList.innerHTML = '<li class="loading-reminder">Loading reminders...</li>';
 
-    const today = new Date(); today.setHours(0, 0, 0, 0); // Start of today
-    const fifteenDaysLater = new Date(today);
-    fifteenDaysLater.setDate(today.getDate() + 15); // End of the 15th day
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    const fifteenDaysLater = new Date(today); fifteenDaysLater.setDate(today.getDate() + 15);
 
-    const upcomingPolicies = allPoliciesCache.filter(policy => {
-        if (!policy.nextInstallmentDate || !policy.nextInstallmentDate.toDate) return false;
-        const dueDate = policy.nextInstallmentDate.toDate(); dueDate.setHours(0, 0, 0, 0);
-        // Include policies due today up to 15 days from now
-        return dueDate >= today && dueDate <= fifteenDaysLater && ['Active', 'Lapsed'].includes(policy.policyStatus);
+    const upcomingPolicies = [];
+    allPoliciesCache.forEach(policy => {
+         // Use the same dynamic date calculation as the table
+         const storedNextDueDate = policy.nextInstallmentDate?.toDate();
+         if (storedNextDueDate && policy.modeOfPayment && ['Active', 'Lapsed'].includes(policy.policyStatus)) {
+              let displayDate = new Date(storedNextDueDate);
+              displayDate.setHours(0,0,0,0);
+              let safetyCounter = 0;
+              const maxIterations = 120;
+              while (displayDate < today && safetyCounter < maxIterations) {
+                  const calculated = calculateNextDueDate(displayDate, policy.modeOfPayment);
+                   if (!calculated) { displayDate = null; break; }
+                   displayDate = calculated;
+                   displayDate.setHours(0,0,0,0);
+                   safetyCounter++;
+              }
+
+               // If a valid future date was found/calculated and it's within 15 days
+               if (displayDate && displayDate >= today && displayDate <= fifteenDaysLater) {
+                    // Add the policy and its calculated display date to the list
+                    upcomingPolicies.push({ ...policy, displayDueDate: displayDate });
+               }
+         }
     });
 
-    // Sort by due date ascending
-    upcomingPolicies.sort((a, b) => a.nextInstallmentDate.toDate() - b.nextInstallmentDate.toDate());
+    // Sort by the calculated display due date
+    upcomingPolicies.sort((a, b) => a.displayDueDate - b.displayDueDate);
 
-    reminderList.innerHTML = ''; // Clear loading/previous reminders
+    reminderList.innerHTML = '';
 
     if (upcomingPolicies.length === 0) {
         reminderList.innerHTML = '<li>No upcoming installments in the next 15 days.</li>';
@@ -618,9 +645,8 @@ function displayReminders() {
 
     upcomingPolicies.forEach(policy => {
         const li = document.createElement('li');
-        // Removed checkbox as its function was unclear
         li.innerHTML = `
-            <span>${policy.customerName || 'N/A'} (${policy.policyNumber || 'N/A'}) - Due: <strong>${formatDate(policy.nextInstallmentDate.toDate())}</strong> (₹ ${Number(policy.premiumAmount || 0).toLocaleString('en-IN')})</span>
+            <span>${policy.customerName || 'N/A'} (${policy.policyNumber || 'N/A'}) - Due: <strong>${formatDate(policy.displayDueDate)}</strong> (₹ ${Number(policy.premiumAmount || 0).toLocaleString('en-IN')})</span>
         `;
         li.title = `Plan: ${policy.plan || '-'}, Mode: ${policy.modeOfPayment || '-'}`;
         reminderList.appendChild(li);
@@ -628,381 +654,170 @@ function displayReminders() {
 }
 
 
-// --- *** Task Management Functions (Follow-up Style) *** ---
+// --- Task Management Functions ---
+// (These functions remain the same as the previous correct version)
 
-// Render Task List (Updated for History Display)
-function renderTaskList(tasks) { // Accepts tasks array directly
+// Render Task List
+function renderTaskList(tasks) {
      if (!taskList) return;
-     taskList.innerHTML = ''; // Clear previous list
-
+     taskList.innerHTML = '';
      if (!tasks || tasks.length === 0) {
          taskList.innerHTML = '<li>No follow-up tasks found.</li>';
          return;
      }
-
      tasks.forEach(task => {
          const li = document.createElement('li');
          li.setAttribute('data-task-id', task.id);
-         li.classList.toggle('completed-task', task.completed); // Add class if completed
-
-         // Content Div (Customer, Description, Due Date, Last Comment)
+         li.classList.toggle('completed-task', task.completed);
          const contentDiv = document.createElement('div');
          contentDiv.style.flexGrow = '1';
-
          const customerSpan = document.createElement('span');
          customerSpan.style.fontWeight = 'bold';
          customerSpan.textContent = task.customerName ? `${task.customerName}: ` : '';
-
          const descSpan = document.createElement('span');
          descSpan.textContent = task.description || 'No description';
-
          const dateSpan = document.createElement('span');
-         dateSpan.style.fontSize = '0.85em';
-         dateSpan.style.color = '#555';
-         dateSpan.style.marginLeft = '10px';
+         dateSpan.style.fontSize = '0.85em'; dateSpan.style.color = '#555'; dateSpan.style.marginLeft = '10px';
          dateSpan.textContent = task.dueDate?.toDate ? ` (Due: ${formatDate(task.dueDate.toDate())})` : '';
-
-         contentDiv.appendChild(customerSpan);
-         contentDiv.appendChild(descSpan);
-         contentDiv.appendChild(dateSpan);
-
-         // Display Latest Comment (if any)
+         contentDiv.appendChild(customerSpan); contentDiv.appendChild(descSpan); contentDiv.appendChild(dateSpan);
          const commentSpan = document.createElement('p');
-         commentSpan.style.fontSize = '0.85em';
-         commentSpan.style.color = '#666';
-         commentSpan.style.marginTop = '4px';
-         commentSpan.style.whiteSpace = 'pre-wrap'; // Preserve line breaks in comments
+         commentSpan.style.fontSize = '0.85em'; commentSpan.style.color = '#666'; commentSpan.style.marginTop = '4px'; commentSpan.style.whiteSpace = 'pre-wrap';
          if (task.comments && Array.isArray(task.comments) && task.comments.length > 0) {
-             // Sort comments to find the latest (descending by timestamp)
              task.comments.sort((a, b) => (b.timestamp?.toDate() || 0) - (a.timestamp?.toDate() || 0));
-             const latestComment = task.comments[0]; // Get the most recent one
+             const latestComment = task.comments[0];
              const commentDate = latestComment.timestamp?.toDate ? formatDateTime(latestComment.timestamp.toDate()) : '';
              commentSpan.textContent = `Latest Comment ${commentDate ? `(${commentDate})` : ''}: ${latestComment.text || ''}`;
-         } else if (task.comments && typeof task.comments === 'string' && task.comments.trim() !== '') {
-             // Handle legacy string comments if necessary
-             commentSpan.textContent = `Comment: ${task.comments}`;
-         } else {
-             commentSpan.textContent = ''; // No comments or empty array
-             commentSpan.style.display = 'none'; // Hide if no comment
-         }
+         } else { commentSpan.style.display = 'none'; }
          contentDiv.appendChild(commentSpan);
-
-         // Actions Div (Checkbox, Edit, Delete)
          const actionsDiv = document.createElement('div');
-         actionsDiv.classList.add('task-actions-container'); // Add a class for styling if needed
-         actionsDiv.style.marginLeft = 'auto'; // Push actions to the right
-         actionsDiv.style.display = 'flex';
-         actionsDiv.style.gap = '8px'; // Space between buttons
-         actionsDiv.style.flexShrink = '0'; // Prevent shrinking
-         actionsDiv.style.alignItems = 'center'; // Align items vertically
-
-         // Checkbox
+         actionsDiv.classList.add('task-actions-container'); actionsDiv.style.marginLeft = 'auto'; actionsDiv.style.display = 'flex'; actionsDiv.style.gap = '8px'; actionsDiv.style.flexShrink = '0'; actionsDiv.style.alignItems = 'center';
          const checkbox = document.createElement('input');
-         checkbox.type = 'checkbox';
-         checkbox.className = 'task-checkbox';
-         checkbox.checked = task.completed;
-         checkbox.title = task.completed ? 'Mark as Pending' : 'Mark as Completed';
-         checkbox.setAttribute('data-task-id', task.id); // Add id for event handler
-
-         // Edit Button
+         checkbox.type = 'checkbox'; checkbox.className = 'task-checkbox'; checkbox.checked = task.completed; checkbox.title = task.completed ? 'Mark as Pending' : 'Mark as Completed'; checkbox.setAttribute('data-task-id', task.id);
          const editBtn = document.createElement('button');
-         editBtn.innerHTML = '<i class="fas fa-edit"></i>';
-         editBtn.className = 'button edit-button edit-task-btn'; // Use existing styles
-         editBtn.title = 'Edit Task';
-         editBtn.onclick = (e) => {
-             e.stopPropagation(); // Prevent other clicks
-             openEditTaskModal(task.id, task); // Pass ID and full task data
-         };
-
-         // Delete Button
+         editBtn.innerHTML = '<i class="fas fa-edit"></i>'; editBtn.className = 'button edit-button edit-task-btn'; editBtn.title = 'Edit Task';
+         editBtn.onclick = (e) => { e.stopPropagation(); openEditTaskModal(task.id, task); };
          const deleteBtn = document.createElement('button');
-         deleteBtn.innerHTML = '<i class="fas fa-trash-alt"></i>';
-         deleteBtn.className = 'button delete-task-btn'; // Use existing styles
-         deleteBtn.title = 'Delete Task';
-         deleteBtn.setAttribute('data-task-id', task.id); // Add id for event handler
-
-         actionsDiv.appendChild(checkbox);
-         actionsDiv.appendChild(editBtn);
-         actionsDiv.appendChild(deleteBtn);
-
-         li.appendChild(contentDiv);
-         li.appendChild(actionsDiv);
-         taskList.appendChild(li);
+         deleteBtn.innerHTML = '<i class="fas fa-trash-alt"></i>'; deleteBtn.className = 'button delete-task-btn'; deleteBtn.title = 'Delete Task'; deleteBtn.setAttribute('data-task-id', task.id);
+         actionsDiv.appendChild(checkbox); actionsDiv.appendChild(editBtn); actionsDiv.appendChild(deleteBtn);
+         li.appendChild(contentDiv); li.appendChild(actionsDiv); taskList.appendChild(li);
      });
  }
-
 
 // Add New Follow-up Task
 async function handleAddTask() {
     if (!db || !newTaskInput) return;
-
     const description = newTaskInput.value.trim();
     const customerName = newTaskCustomerNameEl.value.trim();
     const dueDateStr = newTaskDueDate.value;
     const initialComment = newTaskCommentsEl.value.trim();
-
-    if (!description) {
-        alert("Please enter the task description.");
-        newTaskInput.focus();
-        return;
-    }
-
+    if (!description) { alert("Please enter the task description."); newTaskInput.focus(); return; }
     const taskData = {
-        customerName: customerName || null, // Store null if empty
-        description: description,
+        customerName: customerName || null, description: description,
         dueDate: dueDateStr ? Timestamp.fromDate(new Date(dueDateStr + 'T00:00:00Z')) : null,
-        completed: false, // New tasks are pending
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
-        comments: [] // Initialize comments as an empty array
+        completed: false, createdAt: serverTimestamp(), updatedAt: serverTimestamp(), comments: []
     };
-
-    // Add the initial comment if provided
-    if (initialComment) {
-        taskData.comments.push({
-            text: initialComment,
-            timestamp: serverTimestamp() // Use server timestamp for consistency
-        });
-    }
-
+    if (initialComment) { taskData.comments.push({ text: initialComment, timestamp: serverTimestamp() }); }
     console.log("Adding task:", taskData);
-    addTaskBtn.disabled = true;
-    addTaskBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Adding...';
-
+    addTaskBtn.disabled = true; addTaskBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Adding...';
     try {
         const tasksRef = collection(db, "tasks");
         await addDoc(tasksRef, taskData);
         alert("Follow-up task added successfully!");
-
-        // Clear the form
-        newTaskInput.value = '';
-        newTaskCustomerNameEl.value = '';
-        newTaskDueDate.value = '';
-        newTaskCommentsEl.value = '';
-
-    } catch (error) {
-        console.error("Error adding task:", error);
-        alert(`Failed to add task: ${error.message}`);
-    } finally {
-        addTaskBtn.disabled = false;
-        addTaskBtn.innerHTML = '<i class="fas fa-plus"></i> Add Follow-up';
-    }
+        newTaskInput.value = ''; newTaskCustomerNameEl.value = ''; newTaskDueDate.value = ''; newTaskCommentsEl.value = '';
+    } catch (error) { console.error("Error adding task:", error); alert(`Failed to add task: ${error.message}`);
+    } finally { addTaskBtn.disabled = false; addTaskBtn.innerHTML = '<i class="fas fa-plus"></i> Add Follow-up'; }
 }
 
-
-// Handle Task Checkbox Change (using event delegation on taskList)
+// Handle Task Checkbox Change
 async function handleTaskCheckboxChange(event) {
     if (event.target.classList.contains('task-checkbox')) {
-        const checkbox = event.target;
-        const taskId = checkbox.getAttribute('data-task-id');
-        const isCompleted = checkbox.checked;
-
-        if (!db || !taskId) return;
-
-        console.log(`Task ${taskId} completion changed to: ${isCompleted}`);
-        const taskRef = doc(db, "tasks", taskId);
-        checkbox.disabled = true; // Disable temporarily
-
-        try {
-            await updateDoc(taskRef, {
-                completed: isCompleted,
-                updatedAt: serverTimestamp()
-            });
-            console.log(`Task ${taskId} status updated.`);
-            // Optionally update the visual style immediately
-             checkbox.closest('li').classList.toggle('completed-task', isCompleted);
-        } catch (error) {
-            console.error("Error updating task status:", error);
-            alert(`Failed to update task status: ${error.message}`);
-            // Revert checkbox state on error
-            checkbox.checked = !isCompleted;
-        } finally {
-             checkbox.disabled = false;
-        }
+        const checkbox = event.target; const taskId = checkbox.getAttribute('data-task-id'); const isCompleted = checkbox.checked;
+        if (!db || !taskId) return; console.log(`Task ${taskId} completion changed to: ${isCompleted}`);
+        const taskRef = doc(db, "tasks", taskId); checkbox.disabled = true;
+        try { await updateDoc(taskRef, { completed: isCompleted, updatedAt: serverTimestamp() }); console.log(`Task ${taskId} status updated.`); checkbox.closest('li').classList.toggle('completed-task', isCompleted);
+        } catch (error) { console.error("Error updating task status:", error); alert(`Failed to update task status: ${error.message}`); checkbox.checked = !isCompleted;
+        } finally { checkbox.disabled = false; }
     }
 }
 
-// Handle Task Actions (Delete Only, using event delegation)
+// Handle Task Actions (Delete Only)
 async function handleTaskActions(event) {
     if (event.target.closest('.delete-task-btn')) {
-        const deleteButton = event.target.closest('.delete-task-btn');
-        const taskId = deleteButton.getAttribute('data-task-id');
-
+        const deleteButton = event.target.closest('.delete-task-btn'); const taskId = deleteButton.getAttribute('data-task-id');
         if (!db || !taskId) return;
-
         if (confirm("Are you sure you want to delete this task?")) {
-             deleteButton.disabled = true; // Disable temporarily
-             deleteButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
-
-            try {
-                const taskRef = doc(db, "tasks", taskId);
-                await deleteDoc(taskRef);
-                console.log(`Task ${taskId} deleted successfully.`);
-                alert("Task deleted.");
-                // Listener will update the list automatically
-            } catch (error) {
-                console.error("Error deleting task:", error);
-                alert(`Failed to delete task: ${error.message}`);
-                 deleteButton.disabled = false; // Re-enable on error
-                 deleteButton.innerHTML = '<i class="fas fa-trash-alt"></i>';
-            }
+             deleteButton.disabled = true; deleteButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+            try { const taskRef = doc(db, "tasks", taskId); await deleteDoc(taskRef); console.log(`Task ${taskId} deleted successfully.`); alert("Task deleted.");
+            } catch (error) { console.error("Error deleting task:", error); alert(`Failed to delete task: ${error.message}`); deleteButton.disabled = false; deleteButton.innerHTML = '<i class="fas fa-trash-alt"></i>'; }
         }
     }
-    // Note: Edit button click is handled directly on the button itself in renderTaskList
 }
 
-
-// Open Edit Task Modal (Updated for History)
+// Open Edit Task Modal
 function openEditTaskModal(taskId, taskData) {
-    if (!editTaskModal || !editTaskForm || !editTaskIdEl || !editTaskCustomerNameEl || !editTaskDescriptionEl || !editTaskDueDateEl || !editTaskStatusEl || !editTaskCommentsHistoryEl || !editTaskNewCommentEl) {
-        console.error("Cannot open edit task modal: Required elements not found.");
-        return;
-    }
+    if (!editTaskModal || !editTaskForm || !editTaskIdEl || !editTaskCustomerNameEl || !editTaskDescriptionEl || !editTaskDueDateEl || !editTaskStatusEl || !editTaskCommentsHistoryEl || !editTaskNewCommentEl) { console.error("Cannot open edit task modal: Required elements not found."); return; }
     console.log("Opening edit modal for task:", taskId, taskData);
-
-    // Populate basic fields
-    editTaskIdEl.value = taskId;
-    editTaskCustomerNameEl.value = taskData.customerName || '';
-    editTaskDescriptionEl.value = taskData.description || '';
+    editTaskIdEl.value = taskId; editTaskCustomerNameEl.value = taskData.customerName || ''; editTaskDescriptionEl.value = taskData.description || '';
     editTaskDueDateEl.value = taskData.dueDate?.toDate ? taskData.dueDate.toDate().toISOString().split('T')[0] : '';
-    editTaskStatusEl.value = taskData.completed ? 'completed' : 'pending';
-    editTaskNewCommentEl.value = ''; // Clear new comment field
-
-    // Display Comment History
-    editTaskCommentsHistoryEl.innerHTML = ''; // Clear previous history
+    editTaskStatusEl.value = taskData.completed ? 'completed' : 'pending'; editTaskNewCommentEl.value = '';
+    editTaskCommentsHistoryEl.innerHTML = '';
     if (taskData.comments && Array.isArray(taskData.comments) && taskData.comments.length > 0) {
          editTaskCommentsHistoryEl.innerHTML = '<h4>Comment History:</h4>';
-         // Sort comments by timestamp if available, oldest first
          const sortedComments = [...taskData.comments].sort((a, b) => (a.timestamp?.toDate() || 0) - (b.timestamp?.toDate() || 0));
-
          sortedComments.forEach(comment => {
-            const p = document.createElement('p');
-            const commentDate = comment.timestamp?.toDate ? formatDateTime(comment.timestamp.toDate()) : 'Earlier';
-            // Use innerHTML to allow formatting like bold or spans if needed later
-            p.innerHTML = `<span class="log-meta">(${commentDate}):</span> ${comment.text || ''}`;
-            editTaskCommentsHistoryEl.appendChild(p);
-         });
-    } else {
-        // Provide feedback if no history
-        editTaskCommentsHistoryEl.innerHTML = '<p><i>No comment history available.</i></p>';
-    }
-
+            const p = document.createElement('p'); const commentDate = comment.timestamp?.toDate ? formatDateTime(comment.timestamp.toDate()) : 'Earlier';
+            p.innerHTML = `<span class="log-meta">(${commentDate}):</span> ${comment.text || ''}`; editTaskCommentsHistoryEl.appendChild(p); });
+    } else { editTaskCommentsHistoryEl.innerHTML = '<p><i>No comment history available.</i></p>'; }
     editTaskModal.classList.add('active');
 }
 
 // Close Edit Task Modal
-function closeEditTaskModal() {
-    if (editTaskModal) {
-        editTaskModal.classList.remove('active');
-    }
-}
+function closeEditTaskModal() { if (editTaskModal) { editTaskModal.classList.remove('active'); } }
 
-// Handle Update Task Form Submission (Updated for History)
+// Handle Update Task Form Submission
 async function handleUpdateTask(event) {
     event.preventDefault();
-    if (!db || !editTaskIdEl || !editTaskDescriptionEl || !editTaskStatusEl) {
-        console.error("Cannot update task: DB or required form elements missing.");
-        return;
-    }
-
-    const taskId = editTaskIdEl.value;
-    if (!taskId) {
-        alert("Error: Task ID missing.");
-        return;
-    }
-
-    const description = editTaskDescriptionEl.value.trim();
-    if (!description) {
-        alert("Please enter task description.");
-        editTaskDescriptionEl.focus();
-        return;
-    }
-
+    if (!db || !editTaskIdEl || !editTaskDescriptionEl || !editTaskStatusEl) { console.error("Cannot update task: DB or required form elements missing."); return; }
+    const taskId = editTaskIdEl.value; if (!taskId) { alert("Error: Task ID missing."); return; }
+    const description = editTaskDescriptionEl.value.trim(); if (!description) { alert("Please enter task description."); editTaskDescriptionEl.focus(); return; }
     const updatedData = {
-        customerName: editTaskCustomerNameEl.value.trim() || null,
-        description: description,
+        customerName: editTaskCustomerNameEl.value.trim() || null, description: description,
         dueDate: editTaskDueDateEl.value ? Timestamp.fromDate(new Date(editTaskDueDateEl.value + 'T00:00:00Z')) : null,
-        completed: editTaskStatusEl.value === 'completed',
-        updatedAt: serverTimestamp()
+        completed: editTaskStatusEl.value === 'completed', updatedAt: serverTimestamp()
     };
-
     const newCommentText = editTaskNewCommentEl?.value.trim();
-
-    const saveButton = document.getElementById('saveTaskChangesBtn');
-    if(saveButton) { saveButton.disabled = true; saveButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...'; }
-
+    const saveButton = document.getElementById('saveTaskChangesBtn'); if(saveButton) { saveButton.disabled = true; saveButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...'; }
     try {
         const taskRef = doc(db, "tasks", taskId);
-
-        // Use a transaction or batched write if adding comment, otherwise simple update
         if (newCommentText && typeof window.arrayUnion === 'function') {
-            // Add new comment using arrayUnion
-            const newCommentObject = {
-                 text: newCommentText,
-                 timestamp: serverTimestamp() // Server timestamp for the comment
-            };
-             // Add the comment field update along with other data
+            const newCommentObject = { text: newCommentText, timestamp: serverTimestamp() };
              updatedData.comments = window.arrayUnion(newCommentObject);
-             await updateDoc(taskRef, updatedData);
-             console.log("Task updated with new comment using arrayUnion.");
-        } else {
-             // Update basic fields only (or if arrayUnion failed)
-             await updateDoc(taskRef, updatedData);
-             console.log("Task updated (no new comment or arrayUnion unavailable).");
-        }
-
-        alert("Task updated successfully!");
-        closeEditTaskModal();
-
-    } catch (error) {
-        console.error("Error updating task:", error);
-        alert(`Failed to update task: ${error.message}`);
-    } finally {
-        if(saveButton) { saveButton.disabled = false; saveButton.innerHTML = '<i class="fas fa-save"></i> Save Changes'; }
-    }
+             await updateDoc(taskRef, updatedData); console.log("Task updated with new comment using arrayUnion.");
+        } else { await updateDoc(taskRef, updatedData); console.log("Task updated (no new comment or arrayUnion unavailable)."); }
+        alert("Task updated successfully!"); closeEditTaskModal();
+    } catch (error) { console.error("Error updating task:", error); alert(`Failed to update task: ${error.message}`);
+    } finally { if(saveButton) { saveButton.disabled = false; saveButton.innerHTML = '<i class="fas fa-save"></i> Save Changes'; } }
 }
 
-
 // Display Upcoming Tasks Reminder
-function displayUpcomingTasks(tasks) { // Accepts tasks array
+function displayUpcomingTasks(tasks) {
     if (!upcomingTaskListEl) return;
-    upcomingTaskListEl.innerHTML = '<li class="loading-reminder">Loading upcoming tasks...</li>'; // Show loading
-
-    if (!tasks) {
-         console.warn("Upcoming tasks display called without tasks data.");
-          upcomingTaskListEl.innerHTML = '<li>Could not load task data.</li>';
-          return;
-    }
-
+    upcomingTaskListEl.innerHTML = '<li class="loading-reminder">Loading upcoming tasks...</li>';
+    if (!tasks) { console.warn("Upcoming tasks display called without tasks data."); upcomingTaskListEl.innerHTML = '<li>Could not load task data.</li>'; return; }
     const today = new Date(); today.setHours(0, 0, 0, 0);
-    const sevenDaysLater = new Date(today);
-    sevenDaysLater.setDate(today.getDate() + 7);
-
+    const sevenDaysLater = new Date(today); sevenDaysLater.setDate(today.getDate() + 7);
     const upcomingDueTasks = tasks.filter(task => {
-        if (task.completed || !task.dueDate?.toDate) return false; // Ignore completed or dateless tasks
+        if (task.completed || !task.dueDate?.toDate) return false;
         const dueDate = task.dueDate.toDate(); dueDate.setHours(0, 0, 0, 0);
         return dueDate >= today && dueDate <= sevenDaysLater;
     });
-
-    // Sort by due date ascending
     upcomingDueTasks.sort((a, b) => (a.dueDate?.toDate() || 0) - (b.dueDate?.toDate() || 0));
-
-    upcomingTaskListEl.innerHTML = ''; // Clear loading/previous
-
-    if (upcomingDueTasks.length === 0) {
-        upcomingTaskListEl.innerHTML = '<li>No follow-ups due in the next 7 days.</li>';
-        return;
-    }
-
+    upcomingTaskListEl.innerHTML = '';
+    if (upcomingDueTasks.length === 0) { upcomingTaskListEl.innerHTML = '<li>No follow-ups due in the next 7 days.</li>'; return; }
     upcomingDueTasks.forEach(task => {
         const li = document.createElement('li');
-        // Make the reminder clickable to open the edit modal
-        li.innerHTML = `
-            <a>${task.customerName ? task.customerName + ': ' : ''}${task.description} - Due: <strong>${formatDate(task.dueDate.toDate())}</strong></a>
-        `;
-         li.style.cursor = 'pointer';
-         li.onclick = () => openEditTaskModal(task.id, task);
-         li.title = 'Click to view/edit task';
+        li.innerHTML = `<a>${task.customerName ? task.customerName + ': ' : ''}${task.description} - Due: <strong>${formatDate(task.dueDate.toDate())}</strong></a>`;
+         li.style.cursor = 'pointer'; li.onclick = () => openEditTaskModal(task.id, task); li.title = 'Click to view/edit task';
         upcomingTaskListEl.appendChild(li);
     });
 }
@@ -1010,298 +825,141 @@ function displayUpcomingTasks(tasks) { // Accepts tasks array
 
 // --- Phase 2 Functions (Client Detail) ---
 
-// Load Dashboard Data (Called from policy listener)
+// Load Dashboard Data
 function loadDashboardData() {
-    if (!allPoliciesCache || !dbTotalPoliciesEl || !dbActivePoliciesEl || !dbLapsedPoliciesEl || !dbUpcomingPremiumEl || !dbUpcomingMaturityEl) {
-        console.warn("Dashboard elements or policy cache not ready.");
-        return;
-    }
-
+    if (!allPoliciesCache || !dbTotalPoliciesEl || !dbActivePoliciesEl || !dbLapsedPoliciesEl || !dbUpcomingPremiumEl || !dbUpcomingMaturityEl) { console.warn("Dashboard elements or policy cache not ready."); return; }
     const totalPolicies = allPoliciesCache.length;
     const activePolicies = allPoliciesCache.filter(p => p.policyStatus === 'Active').length;
     const lapsedPolicies = allPoliciesCache.filter(p => p.policyStatus === 'Lapsed').length;
-
-    // Calculate upcoming premiums (next 30 days)
     const today = new Date(); today.setHours(0, 0, 0, 0);
     const thirtyDaysLater = new Date(today); thirtyDaysLater.setDate(today.getDate() + 30);
     let upcomingPremiumTotal = 0;
     allPoliciesCache.forEach(p => {
         if (p.nextInstallmentDate?.toDate && ['Active', 'Lapsed'].includes(p.policyStatus)) {
-            const dueDate = p.nextInstallmentDate.toDate(); dueDate.setHours(0, 0, 0, 0);
-            if (dueDate >= today && dueDate <= thirtyDaysLater) {
-                upcomingPremiumTotal += Number(p.premiumAmount || 0);
-            }
+             // Use the same dynamic date calculation as the table for upcoming premium check
+              let displayDate = new Date(p.nextInstallmentDate.toDate());
+              displayDate.setHours(0,0,0,0);
+              let safetyCounter = 0;
+              const maxIterations = 120;
+              while (displayDate < today && safetyCounter < maxIterations) {
+                  const calculated = calculateNextDueDate(displayDate, p.modeOfPayment);
+                   if (!calculated || !p.modeOfPayment) { displayDate = null; break; }
+                   displayDate = calculated;
+                   displayDate.setHours(0,0,0,0);
+                   safetyCounter++;
+              }
+              // Check if the *calculated* upcoming date falls within the next 30 days
+              if (displayDate && displayDate >= today && displayDate <= thirtyDaysLater) {
+                   upcomingPremiumTotal += Number(p.premiumAmount || 0);
+              }
         }
     });
-
-    // Calculate upcoming maturities (next 90 days)
     const ninetyDaysLater = new Date(today); ninetyDaysLater.setDate(today.getDate() + 90);
     const upcomingMaturitiesCount = allPoliciesCache.filter(p => {
-         if (p.maturityDate?.toDate && ['Active', 'Lapsed'].includes(p.policyStatus)) { // Consider only active/lapsed for maturity? Or all?
+         if (p.maturityDate?.toDate) { // Check all policies for maturity, regardless of status? Or filter?
              const maturityDate = p.maturityDate.toDate(); maturityDate.setHours(0, 0, 0, 0);
              return maturityDate >= today && maturityDate <= ninetyDaysLater;
-         }
-         return false;
-     }).length;
-
-
-    // Update Dashboard UI
+         } return false; }).length;
     dbTotalPoliciesEl.textContent = totalPolicies;
     dbActivePoliciesEl.textContent = activePolicies;
     dbLapsedPoliciesEl.textContent = lapsedPolicies;
     dbUpcomingPremiumEl.textContent = `₹ ${upcomingPremiumTotal.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
     dbUpcomingMaturityEl.textContent = upcomingMaturitiesCount;
-
     console.log("Dashboard data loaded.");
 }
 
-
 // Show Client Detail Modal
 async function showClientDetail(policyId, customerName) {
-    if (!clientDetailModal || !db || !policyId) {
-         console.error("Cannot show client detail: Modal or DB or Policy ID missing.");
-         return;
-     }
-
+    if (!clientDetailModal || !db || !policyId) { console.error("Cannot show client detail: Modal or DB or Policy ID missing."); return; }
     console.log(`Showing details for policy ID: ${policyId}, Customer: ${customerName}`);
-    currentOpenClientId = policyId; // Track which client detail is open (using policyId as identifier)
-
-    // Set loading states
+    currentOpenClientId = policyId;
     clientDetailNameEl.textContent = `Details for ${customerName || 'Client'}`;
-    clientDetailMobileEl.textContent = 'Loading...';
-    clientDetailDobEl.textContent = 'Loading...';
-    clientDetailFatherNameEl.textContent = 'Loading...';
-    clientDetailAddressEl.textContent = 'Loading...';
-    clientPoliciesListEl.innerHTML = '<p>Loading policies...</p>';
-    communicationLogListEl.innerHTML = '<p>Loading communication logs...</p>';
-    newLogNoteEl.value = ''; // Clear previous note input
-
-    // Activate the first tab by default
-    openDetailTab(null, 'clientPolicies', true); // Pass true to prevent event issues
-
-    clientDetailModal.classList.add('active'); // Show the modal
-
-    // --- Fetch data ---
+    clientDetailMobileEl.textContent = 'Loading...'; clientDetailDobEl.textContent = 'Loading...'; clientDetailFatherNameEl.textContent = 'Loading...'; clientDetailAddressEl.textContent = 'Loading...';
+    clientPoliciesListEl.innerHTML = '<p>Loading policies...</p>'; communicationLogListEl.innerHTML = '<p>Loading communication logs...</p>'; newLogNoteEl.value = '';
+    openDetailTab(null, 'clientPolicies', true);
+    clientDetailModal.classList.add('active');
     try {
-        // 1. Fetch the specific policy clicked (might contain more details)
-        const policyRef = doc(db, "licCustomers", policyId);
-        const policySnap = await getDoc(policyRef);
-
+        const policyRef = doc(db, "licCustomers", policyId); const policySnap = await getDoc(policyRef);
         if (policySnap.exists()) {
             const policyData = policySnap.data();
-            clientDetailNameEl.textContent = `Details for ${policyData.customerName || 'Client'}`; // Update name if needed
-            clientDetailMobileEl.textContent = policyData.mobileNo || '-';
-            clientDetailDobEl.textContent = policyData.dob?.toDate ? formatDate(policyData.dob.toDate()) : '-';
-            clientDetailFatherNameEl.textContent = policyData.fatherName || '-';
-            clientDetailAddressEl.textContent = policyData.address || '-';
-
-             // 2. Fetch ALL policies for this customer based on a common identifier (e.g., mobile number or customer name)
-             // IMPORTANT: Choose a reliable identifier. Mobile number might be better if names can have variations.
-             // Using mobile number here as an example. Adjust if needed.
-             const identifierField = 'mobileNo'; // Or 'customerName'
-             const identifierValue = policyData.mobileNo; // Or policyData.customerName
-
+            clientDetailNameEl.textContent = `Details for ${policyData.customerName || 'Client'}`; clientDetailMobileEl.textContent = policyData.mobileNo || '-'; clientDetailDobEl.textContent = policyData.dob?.toDate ? formatDate(policyData.dob.toDate()) : '-'; clientDetailFatherNameEl.textContent = policyData.fatherName || '-'; clientDetailAddressEl.textContent = policyData.address || '-';
+            const identifierField = 'mobileNo'; // Use mobile number to find related policies/logs
+            const identifierValue = policyData.mobileNo;
              if (identifierValue) {
                 const policiesQuery = query(collection(db, "licCustomers"), where(identifierField, "==", identifierValue));
-                const customerPoliciesSnap = await getDocs(policiesQuery);
-                const customerPolicies = customerPoliciesSnap.docs.map(d => ({ id: d.id, ...d.data() }));
-                renderClientPolicies(customerPolicies); // Render the list of policies
-
-                // 3. Load communication logs using the same identifier
-                loadCommunicationLogs(identifierValue);
-             } else {
-                  console.warn("Cannot fetch related policies/logs: Identifier field (e.g., mobileNo) is empty for the selected policy.");
-                  clientPoliciesListEl.innerHTML = '<p>Could not load related policies (missing identifier).</p>';
-                  communicationLogListEl.innerHTML = '<p>Could not load communication logs (missing identifier).</p>';
-             }
-
-        } else {
-            console.error(`Policy with ID ${policyId} not found.`);
-            alert("Error: Could not find policy details.");
-            closeClientDetail(); // Close modal if policy not found
-        }
-    } catch (error) {
-        console.error("Error fetching client details:", error);
-        alert(`Error loading client details: ${error.message}`);
-        // Show error states in the modal
-        clientDetailMobileEl.textContent = 'Error';
-        // ... set other fields to 'Error' ...
-        clientPoliciesListEl.innerHTML = '<p>Error loading policies.</p>';
-        communicationLogListEl.innerHTML = '<p>Error loading communication logs.</p>';
-    }
+                const customerPoliciesSnap = await getDocs(policiesQuery); const customerPolicies = customerPoliciesSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+                renderClientPolicies(customerPolicies); loadCommunicationLogs(identifierValue);
+             } else { console.warn("Cannot fetch related policies/logs: Identifier field (mobileNo) is empty."); clientPoliciesListEl.innerHTML = '<p>Could not load related policies (missing identifier).</p>'; communicationLogListEl.innerHTML = '<p>Could not load logs (missing identifier).</p>'; }
+        } else { console.error(`Policy with ID ${policyId} not found.`); alert("Error: Could not find policy details."); closeClientDetail(); }
+    } catch (error) { console.error("Error fetching client details:", error); alert(`Error loading client details: ${error.message}`); clientDetailMobileEl.textContent = 'Error'; clientPoliciesListEl.innerHTML = '<p>Error loading policies.</p>'; communicationLogListEl.innerHTML = '<p>Error loading logs.</p>'; }
 }
 
-
-// Render the list of policies for the client in the detail view
+// Render Client Policies in Detail View
 function renderClientPolicies(policies) {
-    if (!clientPoliciesListEl) return;
-    clientPoliciesListEl.innerHTML = ''; // Clear previous list
-
-    if (!policies || policies.length === 0) {
-        clientPoliciesListEl.innerHTML = '<p>No policies found for this client.</p>';
-        return;
-    }
-
-    const ul = document.createElement('ul');
-    policies.sort((a, b) => (a.policyNumber || '').localeCompare(b.policyNumber || '')); // Sort by policy number
-
+    if (!clientPoliciesListEl) return; clientPoliciesListEl.innerHTML = '';
+    if (!policies || policies.length === 0) { clientPoliciesListEl.innerHTML = '<p>No policies found for this client.</p>'; return; }
+    const ul = document.createElement('ul'); policies.sort((a, b) => (a.policyNumber || '').localeCompare(b.policyNumber || ''));
     policies.forEach(policy => {
-        const li = document.createElement('li');
-        const statusText = policy.policyStatus || 'Unknown';
-        li.innerHTML = `
-            <strong>Policy No:</strong> ${policy.policyNumber || '-'} |
-            <strong>Plan:</strong> ${policy.plan || '-'} |
-            <strong>Premium:</strong> ₹ ${Number(policy.premiumAmount || 0).toLocaleString('en-IN')} (${policy.modeOfPayment || '-'}) |
-            <strong>Next Due:</strong> ${policy.nextInstallmentDate?.toDate ? formatDate(policy.nextInstallmentDate.toDate()) : '-'} |
-            <span class="status-badge status-${statusText.toLowerCase()}">${statusText}</span>
-        `;
-        ul.appendChild(li);
-    });
+        const li = document.createElement('li'); const statusText = policy.policyStatus || 'Unknown';
+        // Use dynamic date display here too
+         let displayDueDateStr = '-';
+         const storedNextDueDate = policy.nextInstallmentDate?.toDate();
+         if (storedNextDueDate && policy.modeOfPayment) {
+             let displayDate = new Date(storedNextDueDate); displayDate.setHours(0,0,0,0);
+             const today = new Date(); today.setHours(0,0,0,0);
+             let safetyCounter = 0; const maxIterations = 120;
+              while (displayDate < today && safetyCounter < maxIterations) {
+                   const calculated = calculateNextDueDate(displayDate, policy.modeOfPayment);
+                   if (!calculated) { displayDate = null; break; }
+                   displayDate = calculated; displayDate.setHours(0,0,0,0);
+                   safetyCounter++;
+              }
+             if (displayDate) displayDueDateStr = formatDate(displayDate); else displayDueDateStr = 'Calc Error';
+         } else if (storedNextDueDate) { displayDueDateStr = formatDate(storedNextDueDate); }
+
+        li.innerHTML = `<strong>Policy No:</strong> ${policy.policyNumber || '-'} | <strong>Plan:</strong> ${policy.plan || '-'} | <strong>Premium:</strong> ₹ ${Number(policy.premiumAmount || 0).toLocaleString('en-IN')} (${policy.modeOfPayment || '-'}) | <strong>Next Due:</strong> ${displayDueDateStr} | <span class="status-badge status-${statusText.toLowerCase()}">${statusText}</span>`;
+        ul.appendChild(li); });
     clientPoliciesListEl.appendChild(ul);
 }
 
-
-// Load communication logs for a specific client identifier
+// Load Communication Logs
 async function loadCommunicationLogs(identifier) {
-    if (!communicationLogListEl || !db || !identifier) return;
-    communicationLogListEl.innerHTML = '<p>Loading logs...</p>'; // Show loading
-
-    try {
-        // Assuming logs are stored in a subcollection named 'communicationLogs' within the customer document
-        // OR in a top-level collection 'communicationLogs' filtered by an identifier.
-        // --- OPTION 1: Subcollection (Requires knowing the *document ID* of the customer) ---
-        // This is harder if we only have mobile number. Would need to find the customer doc ID first.
-
-        // --- OPTION 2: Top-level Collection (Simpler if using mobile/name as identifier) ---
-        // Let's assume a top-level 'communicationLogs' collection
-        const logsRef = collection(db, "communicationLogs");
-        // Filter by the identifier (e.g., mobileNo or customerName)
-        // Ensure you have an index created in Firestore for 'clientIdentifier' and 'timestamp'
-        const q = query(logsRef, where("clientIdentifier", "==", identifier), orderBy("timestamp", "desc"));
-
-        const logSnapshot = await getDocs(q);
-        const logs = logSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-
-        communicationLogListEl.innerHTML = ''; // Clear loading
-
-        if (logs.length === 0) {
-            communicationLogListEl.innerHTML = '<p>No communication logs found.</p>';
-            return;
-        }
-
-        logs.forEach(log => {
-            const p = document.createElement('p');
-            const logDate = log.timestamp?.toDate ? formatDateTime(log.timestamp.toDate()) : 'Earlier';
-            p.innerHTML = `<span class="log-meta">(${logDate}):</span> ${log.note || ''}`;
-            communicationLogListEl.appendChild(p);
-        });
+    if (!communicationLogListEl || !db || !identifier) return; communicationLogListEl.innerHTML = '<p>Loading logs...</p>';
+    try { const logsRef = collection(db, "communicationLogs"); const q = query(logsRef, where("clientIdentifier", "==", identifier), orderBy("timestamp", "desc"));
+        const logSnapshot = await getDocs(q); const logs = logSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })); communicationLogListEl.innerHTML = '';
+        if (logs.length === 0) { communicationLogListEl.innerHTML = '<p>No communication logs found.</p>'; return; }
+        logs.forEach(log => { const p = document.createElement('p'); const logDate = log.timestamp?.toDate ? formatDateTime(log.timestamp.toDate()) : 'Earlier';
+            p.innerHTML = `<span class="log-meta">(${logDate}):</span> ${log.note || ''}`; communicationLogListEl.appendChild(p); });
          console.log(`Loaded ${logs.length} communication logs for identifier: ${identifier}`);
-
-    } catch (error) {
-        console.error(`Error loading communication logs for ${identifier}:`, error);
-        communicationLogListEl.innerHTML = `<p>Error loading logs: ${error.message}</p>`;
-    }
+    } catch (error) { console.error(`Error loading communication logs for ${identifier}:`, error); communicationLogListEl.innerHTML = `<p>Error loading logs: ${error.message}</p>`; }
 }
 
-
-// Add a new communication note
+// Add Communication Note
 async function addCommunicationNote() {
-    if (!db || !newLogNoteEl || !currentOpenClientId) {
-         alert("Cannot add note: Required data or context missing.");
-         return;
-     }
-
-    const noteText = newLogNoteEl.value.trim();
-    if (!noteText) {
-        alert("Please enter a note to add.");
-        newLogNoteEl.focus();
-        return;
-    }
-
-    // We need the client identifier (e.g., mobile number) associated with currentOpenClientId (which is policyId)
-    // Let's find it from the cache or refetch policy details
-    const policyData = allPoliciesCache.find(p => p.id === currentOpenClientId);
-    const clientIdentifier = policyData?.mobileNo; // Using mobile as identifier - CHANGE IF NEEDED
-
-    if (!clientIdentifier) {
-         alert("Could not determine the client identifier (e.g., mobile number) to save the log. Cannot add note.");
-         return;
-     }
-
-
-    const logData = {
-        clientIdentifier: clientIdentifier, // Store the identifier (e.g., mobile number)
-        note: noteText,
-        timestamp: serverTimestamp(),
-        policyContextId: currentOpenClientId // Optional: Store which policy view triggered the log
-    };
-
-    addLogBtn.disabled = true;
-    addLogBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Adding...';
-
-    try {
-        // Assuming a top-level 'communicationLogs' collection
-        const logsRef = collection(db, "communicationLogs");
-        await addDoc(logsRef, logData);
-
-        console.log("Communication log added successfully.");
-        newLogNoteEl.value = ''; // Clear input
-        // Reload logs for the current identifier to show the new one
-        loadCommunicationLogs(clientIdentifier);
-
-    } catch (error) {
-        console.error("Error adding communication log:", error);
-        alert(`Failed to add communication log: ${error.message}`);
-    } finally {
-        addLogBtn.disabled = false;
-        addLogBtn.innerHTML = '<i class="fas fa-plus"></i> Add Note';
-    }
+    if (!db || !newLogNoteEl || !currentOpenClientId) { alert("Cannot add note: Required data or context missing."); return; }
+    const noteText = newLogNoteEl.value.trim(); if (!noteText) { alert("Please enter a note to add."); newLogNoteEl.focus(); return; }
+    const policyData = allPoliciesCache.find(p => p.id === currentOpenClientId); const clientIdentifier = policyData?.mobileNo;
+    if (!clientIdentifier) { alert("Could not determine the client identifier (e.g., mobile number) to save the log. Cannot add note."); return; }
+    const logData = { clientIdentifier: clientIdentifier, note: noteText, timestamp: serverTimestamp(), policyContextId: currentOpenClientId };
+    addLogBtn.disabled = true; addLogBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Adding...';
+    try { const logsRef = collection(db, "communicationLogs"); await addDoc(logsRef, logData); console.log("Communication log added successfully."); newLogNoteEl.value = ''; loadCommunicationLogs(clientIdentifier);
+    } catch (error) { console.error("Error adding communication log:", error); alert(`Failed to add communication log: ${error.message}`);
+    } finally { addLogBtn.disabled = false; addLogBtn.innerHTML = '<i class="fas fa-plus"></i> Add Note'; }
 }
-
 
 // Close Client Detail Modal
-function closeClientDetail() {
-    if (clientDetailModal) {
-        clientDetailModal.classList.remove('active');
-        currentOpenClientId = null; // Reset tracker
-        console.log("Client detail modal closed.");
-    }
-}
+function closeClientDetail() { if (clientDetailModal) { clientDetailModal.classList.remove('active'); currentOpenClientId = null; console.log("Client detail modal closed."); } }
 
-
-// Function to switch tabs in the Client Detail modal
+// Open Client Detail Tab
 window.openDetailTab = function(evt, tabName, isInitialCall = false) {
-    // Prevent error if called without event on initial load
     if (evt && !isInitialCall) evt.preventDefault();
-
-    // Get all elements with class="tab-content" and hide them
     const tabcontent = clientDetailModal.getElementsByClassName("tab-content");
-    for (let i = 0; i < tabcontent.length; i++) {
-        tabcontent[i].style.display = "none";
-        tabcontent[i].classList.remove("active");
-    }
-
-    // Get all elements with class="tab-button" and remove the class "active"
+    for (let i = 0; i < tabcontent.length; i++) { tabcontent[i].style.display = "none"; tabcontent[i].classList.remove("active"); }
     const tablinks = clientDetailModal.getElementsByClassName("tab-button");
-    for (let i = 0; i < tablinks.length; i++) {
-        tablinks[i].classList.remove("active");
-    }
-
-    // Show the current tab, and add an "active" class to the button that opened the tab
-    const currentTab = document.getElementById(tabName);
-    if(currentTab) {
-        currentTab.style.display = "block";
-        currentTab.classList.add("active");
-    }
-
-    // Add active class to the button if called via event
-     if (evt && evt.currentTarget) {
-          evt.currentTarget.classList.add("active");
-     } else if (isInitialCall) {
-          // Find the button corresponding to the tabName and make it active
-          const activeButton = Array.from(tablinks).find(btn => btn.getAttribute('onclick').includes(`'${tabName}'`));
-          if (activeButton) activeButton.classList.add("active");
-     }
+    for (let i = 0; i < tablinks.length; i++) { tablinks[i].classList.remove("active"); }
+    const currentTab = document.getElementById(tabName); if(currentTab) { currentTab.style.display = "block"; currentTab.classList.add("active"); }
+     if (evt && evt.currentTarget) { evt.currentTarget.classList.add("active");
+     } else if (isInitialCall) { const activeButton = Array.from(tablinks).find(btn => btn.getAttribute('onclick').includes(`'${tabName}'`)); if (activeButton) activeButton.classList.add("active"); }
 }
 
 
@@ -1310,89 +968,84 @@ window.openDetailTab = function(evt, tabName, isInitialCall = false) {
 // Format Date as DD-MM-YYYY
 function formatDate(date) {
     if (!date || !(date instanceof Date)) return '-';
-    let day = date.getDate().toString().padStart(2, '0');
-    let month = (date.getMonth() + 1).toString().padStart(2, '0'); // Month is 0-indexed
-    let year = date.getFullYear();
-    return `${day}-${month}-${year}`;
+    try {
+        let day = date.getDate().toString().padStart(2, '0');
+        let month = (date.getMonth() + 1).toString().padStart(2, '0');
+        let year = date.getFullYear();
+        // Basic check for invalid date components resulting from bad input
+        if (isNaN(day) || isNaN(month) || isNaN(year) || year < 1900 || year > 2100) return 'Invalid Date';
+        return `${day}-${month}-${year}`;
+    } catch (e) {
+        console.error("Error formatting date:", date, e);
+        return 'Date Error';
+    }
 }
 
 // Format Date and Time as DD-MM-YYYY HH:MM AM/PM
 function formatDateTime(date) {
     if (!date || !(date instanceof Date)) return '-';
-    let day = date.getDate().toString().padStart(2, '0');
-    let month = (date.getMonth() + 1).toString().padStart(2, '0');
-    let year = date.getFullYear();
-    let hours = date.getHours();
-    let minutes = date.getMinutes().toString().padStart(2, '0');
-    let ampm = hours >= 12 ? 'PM' : 'AM';
-    hours = hours % 12;
-    hours = hours ? hours : 12; // the hour '0' should be '12'
-    let hoursStr = hours.toString().padStart(2, '0');
-    return `${day}-${month}-${year} ${hoursStr}:${minutes} ${ampm}`;
+     try {
+         let day = date.getDate().toString().padStart(2, '0');
+         let month = (date.getMonth() + 1).toString().padStart(2, '0');
+         let year = date.getFullYear();
+         if (isNaN(day) || isNaN(month) || isNaN(year) || year < 1900 || year > 2100) return 'Invalid DateTime';
+         let hours = date.getHours();
+         let minutes = date.getMinutes().toString().padStart(2, '0');
+         let ampm = hours >= 12 ? 'PM' : 'AM';
+         hours = hours % 12; hours = hours ? hours : 12;
+         let hoursStr = hours.toString().padStart(2, '0');
+         return `${day}-${month}-${year} ${hoursStr}:${minutes} ${ampm}`;
+     } catch (e) {
+         console.error("Error formatting datetime:", date, e);
+         return 'DateTime Error';
+     }
 }
-
 
 // Calculate next due date based on start date and mode
 function calculateNextDueDate(startDate, mode) {
      if (!startDate || !(startDate instanceof Date) || !mode) {
          console.error("calculateNextDueDate: Invalid input", startDate, mode);
-         return null; // Or throw an error
+         return null;
      }
-     let nextDate = new Date(startDate);
-     // Set time to 00:00:00 to avoid timezone issues affecting date calculations
-     nextDate.setHours(0, 0, 0, 0);
+     try {
+        // Create a new Date object based on the start date's components in UTC to avoid timezone shifts messing up the day
+        let nextDate = new Date(Date.UTC(startDate.getFullYear(), startDate.getMonth(), startDate.getDate()));
 
-     switch (mode) {
-         case 'Yearly':
-             nextDate.setFullYear(nextDate.getFullYear() + 1);
-             break;
-         case 'Half-Yearly':
-             nextDate.setMonth(nextDate.getMonth() + 6);
-             break;
-         case 'Quarterly':
-             nextDate.setMonth(nextDate.getMonth() + 3);
-             break;
-         case 'Monthly':
-             nextDate.setMonth(nextDate.getMonth() + 1);
-             break;
-         default:
-             console.error(`calculateNextDueDate: Unknown mode "${mode}"`);
-             return null; // Or throw error for unknown mode
+         switch (mode) {
+             case 'Yearly':
+                 nextDate.setUTCFullYear(nextDate.getUTCFullYear() + 1);
+                 break;
+             case 'Half-Yearly':
+                 nextDate.setUTCMonth(nextDate.getUTCMonth() + 6);
+                 break;
+             case 'Quarterly':
+                 nextDate.setUTCMonth(nextDate.getUTCMonth() + 3);
+                 break;
+             case 'Monthly':
+                 nextDate.setUTCMonth(nextDate.getUTCMonth() + 1);
+                 break;
+             default:
+                 console.error(`calculateNextDueDate: Unknown mode "${mode}"`);
+                 return null;
+         }
+          // Return as a Date object (it will be interpreted in local time by default when used, but the date components are correct from UTC)
+         return nextDate;
+     } catch (e) {
+         console.error("Error calculating next due date:", startDate, mode, e);
+         return null;
      }
-     return nextDate;
 }
 
 
 // --- फिल्टर/सॉर्ट हैंडलर्स ---
-
-// Debounced filter handler
 function handleLicFilterChange() {
     clearTimeout(searchDebounceTimerLic);
-    searchDebounceTimerLic = setTimeout(() => {
-        applyLicFiltersAndRender();
-    }, 300); // Wait 300ms after user stops typing/changing
+    searchDebounceTimerLic = setTimeout(() => { applyLicFiltersAndRender(); }, 300);
 }
-
-// Sort handler - Refetches data from Firestore with new sorting
-function handleLicSortChange() {
-    console.log("Sort changed:", sortLicSelect.value);
-    // Re-initialize the policy listener with the new sort order
-    listenForPolicies();
-}
-
-// Clear all filters and re-render
+function handleLicSortChange() { console.log("Sort changed:", sortLicSelect.value); listenForPolicies(); }
 function clearLicFilters() {
-    if (licSearchInput) licSearchInput.value = '';
-    if (licStatusFilter) licStatusFilter.value = '';
-    if (licPlanFilter) licPlanFilter.value = '';
-    if (licModeFilter) licModeFilter.value = '';
-    if (licNachFilter) licNachFilter.value = '';
-    // Optionally reset sort to default and re-listen
-    // if (sortLicSelect) sortLicSelect.value = 'createdAt_desc';
-    // listenForPolicies();
-    // Or just re-apply client-side filters if sorting isn't reset
-    applyLicFiltersAndRender();
-    console.log("Filters cleared.");
+    if (licSearchInput) licSearchInput.value = ''; if (licStatusFilter) licStatusFilter.value = ''; if (licPlanFilter) licPlanFilter.value = ''; if (licModeFilter) licModeFilter.value = ''; if (licNachFilter) licNachFilter.value = '';
+    applyLicFiltersAndRender(); console.log("Filters cleared.");
 }
 
 // --- एंड ऑफ़ फाइल ---

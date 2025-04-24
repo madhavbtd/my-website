@@ -9,10 +9,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 
-    <link rel="stylesheet" href="css/customer_management.css">
-    <link rel="stylesheet" href="css/lic_management.css">
-
-    <script type="module">
+    <link rel="stylesheet" href="css/customer_management.css"> <link rel="stylesheet" href="css/lic_management.css"> <script type="module">
         // --- Firebase Setup (Updated) ---
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
         import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
@@ -24,23 +21,24 @@
 
          // **** आपकी Firebase कॉन्फ़िगरेशन ****
          const firebaseConfig = {
-             apiKey: "AIzaSyBQj5rQmE77kKKGYixP8y3Hcimz8tiAqzQ", // Your apiKey
-             authDomain: "madhav-multyprint.firebaseapp.com", // Your authDomain
-             projectId: "madhav-multyprint", // Your projectId
-             storageBucket: "madhav-multyprint.appspot.com", // Your storageBucket
-             messagingSenderId: "104988349637", // Your messagingSenderId
-             appId: "1:104988349637:web:faf045b77c6786a4e70cac" // Your appId
+            apiKey: "AIzaSyBQj5rQmE77kKKGYixP8y3Hcimz8tiAqzQ", // Your apiKey - Keep this secure!
+            authDomain: "madhav-multyprint.firebaseapp.com", // Your authDomain
+            projectId: "madhav-multyprint", // Your projectId
+            storageBucket: "madhav-multyprint.appspot.com", // Your storageBucket
+            messagingSenderId: "104988349637", // Your messagingSenderId
+            appId: "1:104988349637:web:faf045b77c6786a4e70cac" // Your appId
          };
 
         let app; let auth; let db;
         try {
+            // Ensure Firebase is initialized only once globally
             if (!window.firebaseAppInitialized) {
                 app = initializeApp(firebaseConfig);
                 window.firebaseAppInitialized = true;
-                window.firebaseApp = app;
+                window.firebaseApp = app; // Store the initialized app globally
                 console.log("Firebase initialized for LIC Management");
             } else {
-                app = window.firebaseApp;
+                app = window.firebaseApp; // Reuse existing app instance
                 console.log("Firebase already initialized for LIC Management");
             }
             auth = getAuth(app);
@@ -52,40 +50,51 @@
             window.serverTimestamp = serverTimestamp; window.query = query; window.where = where;
             window.orderBy = orderBy; window.limit = limit; window.Timestamp = Timestamp; window.runTransaction = runTransaction;
             window.onSnapshot = onSnapshot;
-            window.arrayUnion = arrayUnion; // <<<< arrayUnion को ग्लोबल बनाया
+            window.arrayUnion = arrayUnion;
 
             // Authentication Check
             onAuthStateChanged(auth, (user) => {
                 const currentPage = window.location.pathname.split('/').pop() || 'index.html';
+                // Redirect to login if not logged in and not already on login page
                 if (!user && currentPage.toLowerCase() !== 'login.html') {
                     console.log("User not logged in. Redirecting...");
-                    window.location.replace('login.html');
+                    window.location.replace('login.html'); // Use replace to prevent back button issues
                 } else if (user) {
-                    console.log(`User logged in. Initializing LIC page.`);
-                    if (typeof initializeLicPage === 'function') {
-                         setTimeout(initializeLicPage, 0); // Defer slightly
-                    } else {
+                    console.log(`User logged in (${user.email}). Initializing LIC page.`);
+                    // Ensure the page initialization function is called after the DOM is ready
+                    // Use a small timeout to ensure JS file is fully loaded and parsed
+                     if (document.readyState === 'loading') {
                          document.addEventListener('DOMContentLoaded', () => {
                               if (typeof initializeLicPage === 'function') {
-                                 initializeLicPage();
-                             } else {
-                                  console.error("Initialization function 'initializeLicPage' not found!");
-                                  alert("Application Error: Page script failed to load.");
+                                 setTimeout(initializeLicPage, 0);
+                              } else {
+                                  console.error("CRITICAL: Initialization function 'initializeLicPage' not found after DOMContentLoaded!");
                               }
                          });
+                     } else {
+                          if (typeof initializeLicPage === 'function') {
+                             setTimeout(initializeLicPage, 0);
+                          } else {
+                               console.error("CRITICAL: Initialization function 'initializeLicPage' not found immediately!");
+                          }
                      }
+                } else if (!user && currentPage.toLowerCase() === 'login.html') {
+                     console.log("User not logged in, on login page.");
+                     // No action needed if already on login page
                 }
             });
         } catch(e) {
             console.error("Firebase setup error:", e);
-            alert("Critical Application Error. Please try again later.");
+            alert("Critical Application Error initializing Firebase. Please try again later or contact support.");
+            // Optionally disable UI elements here
         }
     </script>
 
 </head>
 <body>
     <div class="container">
-        <div class="header" style="background-color: #007bff;"> <i class="fas fa-shield-alt header-icon"></i> <h1>LIC Customer Management</h1>
+        <div class="header"> <i class="fas fa-shield-alt header-icon"></i>
+            <h1>LIC Customer Management</h1>
         </div>
 
         <div class="breadcrumb-container">
@@ -99,6 +108,11 @@
                  <li class="loading-reminder">Loading reminders...</li>
              </ul>
          </div>
+         <div class="task-reminder-section">
+             <h2><i class="fas fa-tasks warning-icon"></i> Upcoming Follow-ups (Next 7 Days)</h2> <ul id="upcomingTaskList">
+                 <li class="loading-reminder">Loading upcoming tasks...</li>
+             </ul>
+         </div>
 
          <div class="dashboard-section">
              <h2><i class="fas fa-tachometer-alt"></i> Dashboard</h2>
@@ -110,22 +124,16 @@
                  <div class="dashboard-card"><h4>Maturities (Next 90d)</h4><p id="dbUpcomingMaturity">-</p><i class="fas fa-calendar-check card-icon" style="color: #ffc107;"></i></div>
               </div>
           </div>
-         <div class="task-reminder-section">
-             <h2><i class="fas fa-bell warning-icon" style="color:#007bff;"></i> Upcoming Follow-ups (Next 7 Days)</h2>
-             <ul id="upcomingTaskList">
-                 <li class="loading-reminder">Loading upcoming tasks...</li>
-             </ul>
-         </div>
+
          <div class="filter-bar">
             <div class="filter-group"><label for="licSearchInput"><i class="fas fa-search"></i> Search</label><input type="text" id="licSearchInput" placeholder="Name, Policy No, Mobile..."></div>
             <div class="filter-group"><label for="licStatusFilter"><i class="fas fa-filter"></i> Status</label><select id="licStatusFilter"><option value="">All Status</option><option value="Active">Active</option><option value="Lapsed">Lapsed</option><option value="Matured">Matured</option><option value="Surrendered">Surrendered</option></select></div>
             <div class="filter-group"><label for="licPlanFilter"><i class="fas fa-file-alt"></i> Plan</label><input type="text" id="licPlanFilter" placeholder="Enter Plan No/Name"></div>
             <div class="filter-group"><label for="licModeFilter"><i class="fas fa-calendar-alt"></i> Mode</label><select id="licModeFilter"><option value="">All Modes</option><option value="Yearly">Yearly</option><option value="Half-Yearly">Half-Yearly</option><option value="Quarterly">Quarterly</option><option value="Monthly">Monthly</option></select></div>
             <div class="filter-group"><label for="licNachFilter"><i class="fas fa-university"></i> NACH</label><select id="licNachFilter"><option value="">All NACH</option><option value="No">No</option><option value="Yes">Yes</option><option value="Pending">Pending</option></select></div>
-            <div class="filter-group filter-sort"><label for="sort-lic"><i class="fas fa-sort-amount-down"></i> Sort By</label><select id="sort-lic"><option value="nextInstallmentDate_asc">Next Due Date (Asc)</option><option value="nextInstallmentDate_desc">Next Due Date (Desc)</option><option value="customerName_asc">Name (A-Z)</option><option value="policyNumber_asc">Policy No (Asc)</option><option value="createdAt_desc" selected>Recently Added</option></select></div>
-            <div class="filter-group"><button id="clearLicFiltersBtn" type="button" class="button clear-filters-button"><i class="fas fa-times"></i> Clear Filters</button></div>
-            <div class="filter-group"><button id="addNewPolicyBtn" type="button" class="button add-new-button"><i class="fas fa-plus"></i> Add New Policy</button></div>
-        </div>
+            <div class="filter-group filter-sort"><label for="sort-lic"><i class="fas fa-sort-amount-down"></i> Sort By</label><select id="sort-lic"><option value="nextInstallmentDate_asc">Next Due Date (Asc)</option><option value="nextInstallmentDate_desc">Next Due Date (Desc)</option><option value="customerName_asc">Name (A-Z)</option><option value="customerName_desc">Name (Z-A)</option><option value="policyNumber_asc">Policy No (Asc)</option><option value="policyNumber_desc">Policy No (Desc)</option><option value="createdAt_desc" selected>Recently Added</option><option value="createdAt_asc">Oldest Added</option></select></div>
+            <div class="filter-group"><button id="clearLicFiltersBtn" type="button" class="button clear-filters-button"><i class="fas fa-times"></i> Clear</button></div> <div class="filter-group"><button id="addNewPolicyBtn" type="button" class="button add-new-button"><i class="fas fa-plus"></i> New Policy</button></div> </div>
+
         <div class="table-container">
              <table id="licPolicyTable">
                  <thead>
@@ -138,26 +146,26 @@
                  </tbody>
              </table>
          </div>
+
          <div class="task-management-section">
              <h2><i class="fas fa-calendar-check"></i> Follow-up Tasks</h2>
-             <div class="task-actions task-input-grid">
-                 <div class="task-input-group"><label for="newTaskCustomerName">Customer Name:</label><input type="text" id="newTaskCustomerName" placeholder="Enter customer name (optional)..."></div>
-                 <div class="task-input-group"><label for="newTaskInput">Description <span class="required">*</span>:</label><input type="text" id="newTaskInput" placeholder="Enter follow-up reason/description..."></div>
-                 <div class="task-input-group"><label for="newTaskDueDate">Follow-up Date:</label><input type="date" id="newTaskDueDate"></div>
-                 <div class="task-input-group task-input-group-full"><label for="newTaskComments">Comments:</label><textarea id="newTaskComments" rows="2" placeholder="Add any comments..."></textarea></div>
-                 <div class="task-input-group task-input-group-button"><button id="addTaskBtn" class="button primary-button"><i class="fas fa-plus"></i> Add Follow-up</button></div>
-             </div>
-             <ul id="taskList">
-                 <li class="loading-tasks">Loading tasks...</li>
-             </ul>
-        </div>
-        </div> <div id="policyModal" class="modal">
+             <div class="task-layout-container">
+                 <div class="task-actions task-input-grid">
+                     <div class="task-input-group"><label for="newTaskCustomerName">Customer Name:</label><input type="text" id="newTaskCustomerName" placeholder="Enter customer name (optional)..."></div>
+                     <div class="task-input-group"><label for="newTaskInput">Description <span class="required">*</span>:</label><input type="text" id="newTaskInput" placeholder="Enter follow-up reason/description..."></div>
+                     <div class="task-input-group"><label for="newTaskDueDate">Follow-up Date:</label><input type="date" id="newTaskDueDate"></div>
+                     <div class="task-input-group task-input-group-full"><label for="newTaskComments">Comments:</label><textarea id="newTaskComments" rows="2" placeholder="Add any comments..."></textarea></div>
+                     <div class="task-input-group task-input-group-button"><button id="addTaskBtn" class="button primary-button"><i class="fas fa-plus"></i> Add Follow-up</button></div>
+                 </div>
+                 <ul id="taskList">
+                     <li class="loading-tasks">Loading tasks...</li>
+                 </ul>
+             </div></div></div> <div id="policyModal" class="modal">
         <div class="modal-content large-modal">
-            <h2><i class="fas fa-file-contract"></i><span id="policyModalTitleText">Add New Policy</span></h2>
+            <h2><i class="fas fa-file-contract"></i> <span id="policyModalTitleText">Add New Policy</span></h2>
             <span class="close-btn" id="closePolicyModal" title="Close">&times;</span>
 
-            <form id="policyForm">
-                <input type="hidden" id="editPolicyId">
+            <form id="policyForm" novalidate> <input type="hidden" id="editPolicyId">
 
                 <h4><i class="fas fa-user-circle"></i> Personal Information</h4>
                 <div class="form-row">
@@ -165,7 +173,7 @@
                     <div class="form-group"><label for="fatherName">Father's Name:</label><input type="text" id="fatherName"></div>
                 </div>
                 <div class="form-row">
-                    <div class="form-group"><label for="mobileNo">Mobile No <span class="required">*</span>:</label><input type="tel" id="mobileNo" required placeholder="10 Digit Mobile Number"></div>
+                    <div class="form-group"><label for="mobileNo">Mobile No <span class="required">*</span>:</label><input type="tel" id="mobileNo" required placeholder="10 Digit Mobile Number" pattern="\d{10}"></div>
                     <div class="form-group"><label for="dob">Date of Birth:</label><input type="date" id="dob"></div>
                 </div>
                 <div class="form-group"><label for="address">Address:</label><textarea id="address" rows="2"></textarea></div>
@@ -174,7 +182,7 @@
                 <div class="form-row">
                    <div class="form-group"><label for="policyNumber">Policy Number <span class="required">*</span>:</label><input type="text" id="policyNumber" required></div>
                    <div class="form-group"><label for="plan">Plan:</label><input type="text" id="plan"></div>
-                   <div class="form-group"><label for="sumAssured">Sum Assured (₹):</label><input type="number" id="sumAssured" step="1"></div>
+                   <div class="form-group"><label for="sumAssured">Sum Assured (₹):</label><input type="number" id="sumAssured" step="1" min="0"></div>
                 </div>
                 <div class="form-row">
                    <div class="form-group"><label for="policyTerm">Policy Term (Years):</label><input type="text" id="policyTerm" placeholder="e.g., 21 or 25-16"></div>
@@ -184,8 +192,12 @@
 
                  <h4><i class="fas fa-money-check-alt"></i> Premium & Dates</h4>
                 <div class="form-row">
-                    <div class="form-group"><label for="premiumAmount">Installment Premium (₹) <span class="required">*</span>:</label><input type="number" id="premiumAmount" step="0.01" required></div>
-                    <div class="form-group"><label for="nextInstallmentDate">Next Installment Date <span class="required">*</span>:</label><input type="date" id="nextInstallmentDate" required><small>First due date. Auto-calculated if blank on Add.</small></div>
+                    <div class="form-group"><label for="premiumAmount">Installment Premium (₹) <span class="required">*</span>:</label><input type="number" id="premiumAmount" step="0.01" required min="0"></div>
+
+                    <div class="form-group form-group-hidden"> <label for="nextInstallmentDate">Next Installment Date:</label>
+                        <input type="date" id="nextInstallmentDate">
+                        <small>Auto-calculated on Add New.</small>
+                    </div>
                     <div class="form-group"><label for="maturityDate">Maturity Date:</label><input type="date" id="maturityDate"></div>
                 </div>
 
@@ -194,26 +206,54 @@
                      <div class="form-group"><label for="policyStatus">Policy Status:</label><select id="policyStatus"><option value="Active">Active</option><option value="Lapsed">Lapsed</option><option value="Matured">Matured</option><option value="Surrendered">Surrendered</option></select></div>
                      <div class="form-group"><label for="nachStatus">NACH Status:</label><select id="nachStatus"><option value="">-- Select --</option><option value="No">No</option><option value="Yes">Yes</option><option value="Pending">Pending</option></select></div>
                 </div>
-            </form> <div class="modal-actions">
+            </form>
+            <div class="modal-actions">
                 <button type="submit" form="policyForm" id="savePolicyBtn" class="button save-button"><i class="fas fa-save"></i> Save Policy</button>
                 <button type="button" id="cancelPolicyBtn" class="button cancel-button">Cancel</button>
             </div>
-        </div> </div>
-    <div id="clientDetailView" class="modal">
+        </div>
+    </div> <div id="clientDetailView" class="modal">
        <div class="modal-content large-modal">
             <h2 id="clientDetailName">Client Details</h2>
             <span class="close-btn" id="closeClientDetail" title="Close">&times;</span>
              <div id="clientDetailContent">
-                <div class="client-info-section"><h4><i class="fas fa-user"></i> Personal Information</h4><div class="client-info-grid"><p><strong>Mobile:</strong> <span id="clientDetailMobile">-</span></p><p><strong>DOB:</strong> <span id="clientDetailDob">-</span></p><p><strong>Father's Name:</strong> <span id="clientDetailFatherName">-</span></p><p><strong>Address:</strong> <span id="clientDetailAddress">-</span></p></div></div><hr>
-                <div class="tab-container"><button class="tab-button active" onclick="openDetailTab(event, 'clientPolicies')"><i class="fas fa-file-contract"></i> Policies</button><button class="tab-button" onclick="openDetailTab(event, 'communicationLog')"><i class="fas fa-comments"></i> Communication Log</button></div>
-                <div id="clientPolicies" class="tab-content active"><div id="clientPoliciesList" class="client-policy-list-container"><p>Loading policies...</p></div></div>
-                <div id="communicationLog" class="tab-content"><div id="communicationLogList" class="log-list-container"><p>No communication logs found.</p></div><div class="add-log-entry"><h4>Add New Note</h4><textarea id="newLogNote" rows="3" placeholder="Enter communication details..."></textarea><button id="addLogBtn" class="button primary-button"><i class="fas fa-plus"></i> Add Note</button></div></div>
-            </div> <div class="modal-actions"><button type="button" id="closeClientDetailBtnBottom" class="button cancel-button">Close View</button></div>
-        </div> </div>
-    <div id="editTaskModal" class="modal">
-        <div class="modal-content"> <h2><i class="fas fa-edit"></i> Edit Follow-up Task</h2>
+                <div class="client-info-section">
+                    <h4><i class="fas fa-user"></i> Personal Information</h4>
+                    <div class="client-info-grid">
+                        <p><strong>Mobile:</strong> <span id="clientDetailMobile">-</span></p>
+                        <p><strong>DOB:</strong> <span id="clientDetailDob">-</span></p>
+                        <p><strong>Father's Name:</strong> <span id="clientDetailFatherName">-</span></p>
+                        <p><strong>Address:</strong> <span id="clientDetailAddress">-</span></p>
+                    </div>
+                </div>
+                <hr style="border: none; border-top: 1px solid #eee; margin: 15px 0;"> <div class="tab-container">
+                    <button class="tab-button active" onclick="openDetailTab(event, 'clientPolicies')"><i class="fas fa-file-contract"></i> Policies</button>
+                    <button class="tab-button" onclick="openDetailTab(event, 'communicationLog')"><i class="fas fa-comments"></i> Communication Log</button>
+                </div>
+                <div id="clientPolicies" class="tab-content active">
+                    <div id="clientPoliciesList" class="client-policy-list-container">
+                        <p>Loading policies...</p>
+                    </div>
+                </div>
+                <div id="communicationLog" class="tab-content">
+                    <div id="communicationLogList" class="log-list-container">
+                        <p>No communication logs found.</p>
+                    </div>
+                    <div class="add-log-entry">
+                        <h4>Add New Note</h4>
+                        <textarea id="newLogNote" rows="3" placeholder="Enter communication details..."></textarea>
+                        <button id="addLogBtn" class="button primary-button"><i class="fas fa-plus"></i> Add Note</button>
+                    </div>
+                </div>
+            </div> <div class="modal-actions">
+                <button type="button" id="closeClientDetailBtnBottom" class="button cancel-button">Close View</button>
+            </div>
+        </div>
+    </div> <div id="editTaskModal" class="modal">
+        <div class="modal-content">
+            <h2><i class="fas fa-edit"></i> Edit Follow-up Task</h2>
             <span class="close-btn" id="closeEditTaskModal" title="Close">&times;</span>
-            <form id="editTaskForm">
+            <form id="editTaskForm" novalidate>
                 <input type="hidden" id="editTaskId">
                 <div class="form-row">
                     <div class="form-group"><label for="editTaskCustomerName">Customer Name:</label><input type="text" id="editTaskCustomerName"></div>
@@ -232,12 +272,13 @@
                  </div>
 
                 <div class="form-group"><label for="editTaskStatus">Status:</label><select id="editTaskStatus"><option value="pending">Pending</option><option value="completed">Completed</option></select></div>
-            </form> <div class="modal-actions">
+            </form>
+            <div class="modal-actions">
                 <button type="submit" form="editTaskForm" id="saveTaskChangesBtn" class="button save-button"><i class="fas fa-save"></i> Save Changes</button>
                 <button type="button" id="cancelEditTaskBtn" class="button cancel-button">Cancel</button>
             </div>
-        </div> </div>
-    <script src="js/lic_management.js" type="module" defer></script>
+        </div>
+    </div> <script src="js/lic_management.js" type="module" defer></script>
 
 </body>
 </html>
