@@ -1,19 +1,56 @@
 /* css/style.css */
 
-/* ... (स्टेज 1 का मौजूदा कोड) ... */
+/* बेसिक रीसेट और फॉन्ट */
+body {
+    margin: 0;
+    padding: 0;
+    font-family: 'Poppins', sans-serif;
+    background-color: #f4f7f9;
+    color: #333;
+    line-height: 1.6;
+    font-size: 15px; /* बेस फॉन्ट साइज */
+}
 
-/* हेडर स्टाइल */
+h1, h2, h3 {
+    color: #0056b3; /* प्राथमिक रंग */
+    font-weight: 600;
+}
+
+a {
+    color: #0056b3;
+    text-decoration: none;
+    transition: color 0.2s ease;
+}
+a:hover { text-decoration: none; color: #003d80; }
+
+/* कंटेनर */
+.container {
+    max-width: 1200px;
+    margin: 0 auto; /* हेडर/फुटर के बाहर के लिए */
+    padding: 0 20px; /* साइड पैडिंग */
+}
+main.container {
+    padding-top: 30px;
+    padding-bottom: 30px;
+    background-color: #fff; /* मुख्य सामग्री के लिए सफेद पृष्ठभूमि */
+    min-height: calc(100vh - 220px); /* अनुमानित ऊंचाई */
+    margin-top: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 1px 5px rgba(0,0,0,0.07);
+    border-radius: 6px;
+}
+
+/* हेडर और नेविगेशन */
 header {
-    background-color: #fff; /* सफेद हेडर */
+    background-color: #fff;
     border-bottom: 1px solid #eee;
-    padding: 15px 0;
+    padding: 10px 0;
     box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-    position: sticky; /* हेडर को ऊपर चिपकाए रखें (वैकल्पिक) */
+    position: sticky;
     top: 0;
     z-index: 1000;
 }
-
-header nav {
+header nav { /* container क्लास अब nav पर भी लागू */
     max-width: 1200px;
     margin: 0 auto;
     padding: 0 20px;
@@ -21,74 +58,176 @@ header nav {
     justify-content: space-between;
     align-items: center;
 }
-
-.logo img { /* मान लें कि लोगो के लिए एक क्लास है */
-    max-height: 50px; /* लोगो की ऊंचाई सेट करें */
-}
-
-header nav a {
+.logo a { font-weight: bold; font-size: 1.5em; color: #333; }
+.logo a:hover { text-decoration: none; }
+.nav-links { display: flex; gap: 10px; align-items: center; }
+.nav-links a {
     color: #333;
-    padding: 8px 15px;
+    padding: 10px 15px;
     border-radius: 4px;
     font-weight: 500;
     transition: background-color 0.2s ease, color 0.2s ease;
+    font-size: 0.95em;
+}
+.nav-links a:hover, .nav-links a.active { background-color: #0056b3; color: #fff; }
+.admin-login-link { background-color: #6c757d; color: #fff !important; font-size: 0.9em; padding: 8px 12px; }
+.admin-login-link:hover { background-color: #5a6268; }
+.mobile-menu-toggle { display: none; /* मोबाइल के लिए बाद में स्टाइल करें */ }
+
+/* मुख्य कंटेंट एरिया */
+main { /* अब container क्लास का उपयोग नहीं कर रहा है */
+    /* पैडिंग अब main.container से आ रही है */
 }
 
-header nav a:hover, header nav a.active {
-    background-color: #0056b3;
-    color: #fff;
-    text-decoration: none;
-}
-
-.admin-login-link {
-    background-color: #6c757d;
-    color: #fff !important;
-    margin-left: 20px; /* थोड़ा गैप */
-}
-.admin-login-link:hover {
-    background-color: #5a6268;
-}
-
-/* हीरो सेक्शन (होमपेज) उदाहरण */
-.hero-section {
-    background-color: #e9f5ff; /* हल्का नीला बैकग्राउंड */
-    padding: 60px 20px;
-    text-align: center;
-    margin-bottom: 30px;
-}
-.hero-section h1 {
-    color: #0056b3;
-    font-size: 2.5em;
-    margin-bottom: 15px;
-}
-.hero-section p {
-    font-size: 1.1em;
-    color: #555;
-    margin-bottom: 25px;
-}
-
-/* बटन स्टाइल */
-.button-primary {
-    background-color: #0056b3;
-    color: white;
-    padding: 12px 25px;
-    border: none;
-    border-radius: 5px;
-    font-size: 1em;
-    font-weight: 500;
-    cursor: pointer;
-    transition: background-color 0.2s ease;
-}
-.button-primary:hover {
-    background-color: #004085;
-}
-
-/* फुटर स्टाइल */
+/* फुटर */
 footer {
     text-align: center;
-    margin-top: 40px;
-    padding: 25px;
+    margin-top: 0; /* main.container के बाद तुरंत */
+    padding: 30px 20px;
     background-color: #343a40;
     color: #f8f9fa;
     font-size: 0.9em;
+}
+footer a { color: #adb5bd; }
+footer a:hover { color: #fff; }
+
+/* --- स्टेज 2 के उदाहरण स्टाइल्स --- */
+/* हीरो सेक्शन */
+.hero-section {
+    background: linear-gradient(to right, #e9f5ff, #d0eaff); /* ग्रेडियेंट बैकग्राउंड */
+    padding: 80px 20px;
+    text-align: center;
+    margin: -20px -20px 30px -20px; /* कंटेनर के किनारों तक फैलाएं */
+    border-radius: 0 0 6px 6px; /* केवल नीचे के कोने गोल */
+}
+.hero-section h1 { color: #004085; font-size: 2.8em; margin-bottom: 15px; font-weight: 700; }
+.hero-section p { font-size: 1.2em; color: #495057; margin-bottom: 30px; }
+
+/* सेवा ग्रिड */
+.info-section { padding: 40px 0; }
+.info-section h2 { text-align: center; margin-bottom: 40px; font-size: 1.8em; }
+.services-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 30px; }
+.service-item {
+    background-color: #fff;
+    padding: 25px;
+    border-radius: 6px;
+    text-align: center;
+    border: 1px solid #eee;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.service-item:hover { transform: translateY(-5px); box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+.service-item i { color: #0056b3; margin-bottom: 15px; }
+.service-item h3 { margin-top: 0; margin-bottom: 10px; font-size: 1.2em; }
+.service-item p { font-size: 0.95em; color: #666; }
+
+/* प्रशंसापत्र */
+.testimonial {
+    background-color: #f8f9fa;
+    padding: 20px;
+    border-left: 4px solid #0056b3;
+    margin-bottom: 20px;
+    font-style: italic;
+    color: #555;
+}
+.testimonial span { display: block; text-align: right; font-weight: 600; margin-top: 10px; font-style: normal; }
+
+/* बटन स्टाइल */
+.button-primary {
+    background-color: #0056b3; color: white; padding: 12px 30px; border: none; border-radius: 5px;
+    font-size: 1.05em; font-weight: 500; cursor: pointer; transition: background-color 0.2s ease; display: inline-block;
+}
+.button-primary:hover { background-color: #004085; }
+
+
+/* --- स्टेज 3: उत्पाद सूची स्टाइल --- */
+.product-list { margin-top: 30px; }
+.product-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 25px; }
+.product-card {
+    border: 1px solid #eee; border-radius: 6px; overflow: hidden; background-color: #fff;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06); display: flex; flex-direction: column;
+    transition: box-shadow 0.2s ease;
+}
+.product-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+.product-card a { text-decoration: none; color: inherit; display: flex; flex-direction: column; height: 100%; }
+.product-card img {
+    width: 100%; height: 200px; /* निश्चित ऊंचाई */ object-fit: cover; /* इमेज को कवर करें */
+    display: block; border-bottom: 1px solid #eee;
+}
+.product-card h3 {
+    font-size: 1.1em; margin: 15px 15px 5px 15px; padding: 0; color: #333;
+    flex-grow: 1; /* नाम को बढ़ने दें */
+}
+.product-card p.price {
+    font-size: 1em; color: #0056b3; font-weight: 600; margin: 0 15px 15px 15px; padding: 0;
+}
+.product-card button {
+    background-color: #f1f1f1; color: #333; border: none; padding: 10px 15px;
+    cursor: pointer; margin: 0 15px 15px 15px; border-radius: 4px; font-weight: 500;
+    transition: background-color 0.2s ease; align-self: flex-start; /* बटन को नीचे रखें */
+}
+.product-card button:hover { background-color: #ddd; }
+
+/* --- स्टेज 4: उत्पाद विवरण स्टाइल --- */
+.product-layout { display: flex; flex-wrap: wrap; gap: 30px; margin-top: 20px; }
+.product-images { flex: 1 1 400px; /* न्यूनतम चौड़ाई */ }
+.product-images img { max-width: 100%; height: auto; border-radius: 6px; border: 1px solid #eee; }
+.product-info { flex: 1 1 400px; /* न्यूनतम चौड़ाई */ }
+.product-info h1 { margin-top: 0; font-size: 1.8em; }
+#customization-options { background-color: #f9f9f9; padding: 20px; border-radius: 5px; margin: 20px 0; border: 1px solid #eee; }
+#customization-options h3 { margin-top: 0; margin-bottom: 15px; font-size: 1.1em; color: #555; }
+#price-display { margin: 20px 0; font-size: 1.3em; font-weight: bold; }
+#price-display .calculated-price { color: #0056b3; }
+#price-display .price-error { color: #dc3545; font-size: 1em; font-weight: normal; }
+#add-to-cart-btn { /* .button-primary स्टाइल का उपयोग करें */ }
+
+/* --- स्टेज 5: कार्ट पेज स्टाइल --- */
+.cart-layout { display: flex; flex-wrap: wrap; gap: 30px; }
+#cart-items-section { flex: 2 1 500px; /* कार्ट आइटम के लिए अधिक जगह */ }
+#order-form { flex: 1 1 350px; }
+#cart-items ul { list-style: none; padding: 0; margin: 0; }
+#cart-items li {
+    display: flex; flex-wrap: wrap; align-items: center; gap: 15px;
+    padding: 15px 0; border-bottom: 1px solid #eee;
+}
+#cart-items li:last-child { border-bottom: none; }
+.cart-item-info { flex-grow: 1; min-width: 150px; }
+.cart-item-info strong { display: block; font-size: 1.05em; }
+.cart-item-info small { font-size: 0.85em; color: #666; }
+.cart-item-qty { display: flex; align-items: center; gap: 5px; }
+.cart-item-qty input { width: 60px; text-align: center; padding: 5px; font-size: 0.9em; height: auto; }
+.cart-item-price { font-weight: 600; min-width: 80px; text-align: right; }
+.cart-item-remove button { background: none; border: none; color: #dc3545; cursor: pointer; font-size: 0.9em; opacity: 0.7; }
+.cart-item-remove button:hover { opacity: 1; text-decoration: underline; }
+#cart-summary {
+    margin-top: 20px; padding-top: 15px; border-top: 2px solid #333;
+    text-align: right; font-size: 1.2em; font-weight: bold;
+}
+#order-status-message { margin-top: 15px; font-weight: bold; }
+
+/* फॉर्म समूह (डुप्लिकेट स्टाइल से बचें) */
+.form-group { margin-bottom: 15px; }
+.form-group label { display: block; margin-bottom: 6px; font-weight: 500; }
+.form-group input, .form-group textarea, .form-group select {
+    width: 100%; padding: 10px; border: 1px solid #ccc;
+    border-radius: 4px; box-sizing: border-box; font-size: 0.95em;
+}
+.form-group textarea { resize: vertical; min-height: 70px; }
+.form-group small { font-size: 0.8em; color: #666; display: block; margin-top: 4px; }
+.required { color: #dc3545; margin-left: 2px; }
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+    header nav { flex-direction: column; align-items: flex-start; }
+    .nav-links { width: 100%; flex-direction: column; align-items: flex-start; margin-top: 10px; }
+    .admin-login-link { margin-left: 0; margin-top: 10px; }
+    main.container { margin-top: 15px; margin-bottom: 15px; padding: 15px; }
+    .hero-section { padding: 50px 15px; }
+    .hero-section h1 { font-size: 2em; }
+    .hero-section p { font-size: 1em; }
+    .services-grid { grid-template-columns: 1fr; }
+    .product-grid { grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; }
+    .product-card img { height: 150px; }
+    .product-layout { flex-direction: column; }
+    .cart-layout { flex-direction: column; }
 }

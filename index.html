@@ -1,68 +1,81 @@
-<main>
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>होम - माधव मल्टीप्रिंट</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <header>
+        <nav class="container">
+            <div class="logo">
+                 <a href="index.html" style="font-weight: bold; font-size: 1.2em;">माधव मल्टीप्रिंट</a>
+            </div>
+            <div class="nav-links">
+                <a href="index.html" class="active">होम</a>
+                <a href="products.html">उत्पाद</a>
+                <a href="about.html">हमारे बारे में</a>
+                <a href="contact.html">संपर्क</a>
+                <a href="cart.html">कार्ट (<span id="cart-count">0</span>)</a>
+                <a href="/admin/login.html" class="admin-login-link" target="_blank">एडमिन लॉगिन</a>
+            </div>
+            <button class="mobile-menu-toggle" aria-label="Toggle menu">☰</button>
+        </nav>
+    </header>
+
+    <main>
         <section class="hero-section">
              <h1>उच्च गुणवत्ता वाली प्रिंटिंग सेवाएँ</h1>
              <p>फ्लेक्स बैनर, वेडिंग कार्ड, बिल बुक, विज़िटिंग कार्ड और बहुत कुछ!</p>
              <a href="products.html" class="button-primary">हमारे उत्पाद देखें</a>
         </section>
 
-        <section class="container">
+        <section class="container info-section">
             <h2>हमारी मुख्य सेवाएँ</h2>
             <div class="services-grid">
                 <div class="service-item">
+                    <i class="fas fa-print fa-2x"></i>
                     <h3>फ्लेक्स प्रिंटिंग</h3>
                     <p>किसी भी आकार के आकर्षक फ्लेक्स बैनर।</p>
                 </div>
                 <div class="service-item">
+                     <i class="fas fa-address-card fa-2x"></i>
                     <h3>विज़िटिंग कार्ड</h3>
                     <p>पेशेवर दिखने वाले विज़िटिंग कार्ड।</p>
                 </div>
+                 <div class="service-item">
+                     <i class="fas fa-book fa-2x"></i>
+                    <h3>बिल बुक/रसीद बुक</h3>
+                    <p>आपकी ज़रूरत के अनुसार कस्टम बिल बुक।</p>
                 </div>
+                 <div class="service-item">
+                    <i class="fas fa-envelope fa-2x"></i>
+                    <h3>शादी के कार्ड</h3>
+                    <p>अनोखे और सुन्दर शादी के निमंत्रण पत्र।</p>
+                </div>
+            </div>
         </section>
 
-         <section class="container">
+         <section class="container info-section">
             <h2>ग्राहक प्रशंसापत्र (Testimonials)</h2>
+             <div class="testimonial">
+                 <p>"उत्कृष्ट गुणवत्ता और समय पर डिलीवरी। अत्यधिक अनुशंसित!"</p>
+                 <span>- ग्राहक का नाम</span>
+             </div>
              </section>
     </main>
-    ```
 
-**3. `contact.html` में फॉर्म जोड़ना (उदाहरण):**
+    <footer>
+        <p>&copy; 2025 माधव मल्टीप्रिंट. सर्वाधिकार सुरक्षित।</p>
+        <p><a href="#">गोपनीयता नीति</a> | <a href="#">नियम और शर्तें</a></p>
+    </footer>
 
-```html
-    <main class="container">
-        <h1>हमसे संपर्क करें</h1>
-        <div class="contact-layout">
-            <form id="contact-form">
-                <div class="form-group">
-                    <label for="name">आपका नाम:</label>
-                    <input type="text" id="name" name="name" required>
-                </div>
-                <div class="form-group">
-                    <label for="email">आपका ईमेल:</label>
-                    <input type="email" id="email" name="email" required>
-                </div>
-                <div class="form-group">
-                    <label for="subject">विषय:</label>
-                    <input type="text" id="subject" name="subject">
-                </div>
-                <div class="form-group">
-                    <label for="message">संदेश:</label>
-                    <textarea id="message" name="message" rows="5" required></textarea>
-                </div>
-                <button type="submit" class="button-primary">संदेश भेजें</button>
-            </form>
-            <div class="contact-details">
-                <h3>संपर्क जानकारी</h3>
-                <p><i class="fas fa-phone"></i> [आपका फ़ोन नंबर]</p>
-                <p><i class="fas fa-envelope"></i> [आपका ईमेल]</p>
-                <p><i class="fas fa-map-marker-alt"></i> [आपका पता]</p>
-                <div id="map-placeholder" style="height: 200px; background-color: #eee; margin-top: 15px;"></div>
-            </div>
-        </div>
-    </main>
-    ```
-
-**आपका अगला कदम:**
-
-* आपको अपने लोगो (यदि है) और 'हमारे बारे में' तथा 'संपर्क' पेजों के लिए वास्तविक सामग्री प्रदान करनी होगी।
-* आपको बताना होगा कि आप `marwarprint.com` जैसी डिज़ाइन चाहते हैं या अपनी कोई विशेष पसंद है।
-* हम इन स्टैटिक पेजों (`index.html`, `about.html`, `contact.html`) का HTML और CSS लिखना शुरू कर सकते हैं।
+    <script src="js/firebase-config.js" type="module"></script>
+    <script src="js/main.js" type="module" defer></script>
+</body>
+</html>

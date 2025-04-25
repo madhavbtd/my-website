@@ -6,23 +6,33 @@
     <title>उत्पाद - माधव मल्टीप्रिंट</title>
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+     <link rel="preconnect" href="https://fonts.googleapis.com">
+     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
     <header>
-        <nav>
-            <a href="index.html">होम</a>
-            <a href="products.html">उत्पाद</a>
-            <a href="about.html">हमारे बारे में</a>
-            <a href="contact.html">संपर्क</a>
-            <a href="cart.html">कार्ट</a>
-            <a href="/admin/login.html" class="admin-login-link">एडमिन लॉगिन</a>
+         <nav class="container">
+            <div class="logo">
+                 <a href="index.html" style="font-weight: bold; font-size: 1.2em;">माधव मल्टीप्रिंट</a>
+            </div>
+            <div class="nav-links">
+                <a href="index.html">होम</a>
+                <a href="products.html" class="active">उत्पाद</a>
+                <a href="about.html">हमारे बारे में</a>
+                <a href="contact.html">संपर्क</a>
+                <a href="cart.html">कार्ट (<span id="cart-count">0</span>)</a>
+                <a href="/admin/login.html" class="admin-login-link" target="_blank">एडमिन लॉगिन</a>
+            </div>
+            <button class="mobile-menu-toggle" aria-label="Toggle menu">☰</button>
         </nav>
     </header>
 
-    <main>
+    <main class="container">
         <h1>हमारे उत्पाद और सेवाएँ</h1>
         <div class="filters">
-            </div>
+            <p>फ़िल्टर विकल्प जल्द ही आ रहे हैं...</p>
+        </div>
         <div class="product-list">
             <p>उत्पाद लोड हो रहे हैं...</p>
         </div>
@@ -34,5 +44,5 @@
 
     <script src="js/firebase-config.js" type="module"></script>
     <script src="js/main.js" type="module" defer></script>
-    </body>
+    <script src="js/products.js" type="module" defer></script> </body>
 </html>
