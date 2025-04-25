@@ -1,233 +1,191 @@
-/* css/style.css */
+/* css/style.css (Updated for Stage 2) */
 
 /* बेसिक रीसेट और फॉन्ट */
+:root {
+    --primary-color: #0056b3;
+    --primary-color-dark: #004085;
+    --secondary-color: #6c757d;
+    --light-bg: #f8f9fa;
+    --white-bg: #ffffff;
+    --text-color: #343a40;
+    --text-muted: #6c757d;
+    --border-color: #dee2e6;
+    --font-family: 'Poppins', sans-serif; /* Poppins Font */
+    --border-radius: 6px;
+    --box-shadow: 0 2px 5px rgba(0, 0, 0, 0.08);
+}
+
 body {
     margin: 0;
     padding: 0;
-    font-family: 'Poppins', sans-serif;
+    font-family: var(--font-family);
     background-color: #f4f7f9;
-    color: #333;
+    color: var(--text-color);
     line-height: 1.6;
-    font-size: 15px; /* बेस फॉन्ट साइज */
+    font-size: 15px;
 }
 
 h1, h2, h3 {
-    color: #0056b3; /* प्राथमिक रंग */
+    color: var(--primary-color);
     font-weight: 600;
+    margin-bottom: 0.8em; /* हेडिंग्स के नीचे थोड़ा गैप */
 }
+h1 { font-size: 2.2em; }
+h2 { font-size: 1.8em; }
+h3 { font-size: 1.3em; color: var(--secondary-color);}
 
-a {
-    color: #0056b3;
-    text-decoration: none;
-    transition: color 0.2s ease;
-}
-a:hover { text-decoration: none; color: #003d80; }
+p { margin-bottom: 1em; color: var(--text-muted); }
+
+a { color: var(--primary-color); text-decoration: none; transition: color 0.2s ease; }
+a:hover { text-decoration: none; color: var(--primary-color-dark); }
+
+img { max-width: 100%; height: auto; display: block; }
 
 /* कंटेनर */
 .container {
     max-width: 1200px;
-    margin: 0 auto; /* हेडर/फुटर के बाहर के लिए */
-    padding: 0 20px; /* साइड पैडिंग */
+    margin-left: auto;
+    margin-right: auto;
+    padding-left: 20px;
+    padding-right: 20px;
 }
-main.container {
+main.container { /* केवल मुख्य सामग्री के लिए अतिरिक्त स्टाइल */
     padding-top: 30px;
     padding-bottom: 30px;
-    background-color: #fff; /* मुख्य सामग्री के लिए सफेद पृष्ठभूमि */
-    min-height: calc(100vh - 220px); /* अनुमानित ऊंचाई */
+    background-color: var(--white-bg);
+    min-height: calc(100vh - 250px);
     margin-top: 20px;
     margin-bottom: 20px;
-    box-shadow: 0 1px 5px rgba(0,0,0,0.07);
-    border-radius: 6px;
+    box-shadow: var(--box-shadow);
+    border-radius: var(--border-radius);
 }
+
 
 /* हेडर और नेविगेशन */
 header {
-    background-color: #fff;
-    border-bottom: 1px solid #eee;
+    background-color: var(--white-bg);
+    border-bottom: 1px solid var(--border-color);
     padding: 10px 0;
     box-shadow: 0 1px 3px rgba(0,0,0,0.05);
     position: sticky;
     top: 0;
     z-index: 1000;
 }
-header nav { /* container क्लास अब nav पर भी लागू */
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 0 20px;
+header nav.container { /* नेव बार को कंटेनर चौड़ाई में रखें */
     display: flex;
     justify-content: space-between;
     align-items: center;
 }
-.logo a { font-weight: bold; font-size: 1.5em; color: #333; }
-.logo a:hover { text-decoration: none; }
-.nav-links { display: flex; gap: 10px; align-items: center; }
+.logo img { max-height: 55px; /* लोगो की ऊंचाई */ }
+.nav-links { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
 .nav-links a {
-    color: #333;
-    padding: 10px 15px;
-    border-radius: 4px;
-    font-weight: 500;
-    transition: background-color 0.2s ease, color 0.2s ease;
+    color: #333; padding: 10px 15px; border-radius: var(--border-radius);
+    font-weight: 500; transition: background-color 0.2s ease, color 0.2s ease;
     font-size: 0.95em;
 }
-.nav-links a:hover, .nav-links a.active { background-color: #0056b3; color: #fff; }
-.admin-login-link { background-color: #6c757d; color: #fff !important; font-size: 0.9em; padding: 8px 12px; }
+.nav-links a:hover, .nav-links a.active { background-color: var(--primary-color); color: #fff; }
+.admin-login-link {
+    background-color: var(--secondary-color); color: #fff !important; font-size: 0.9em;
+    padding: 8px 15px; margin-left: 15px; /* थोड़ा गैप */
+}
 .admin-login-link:hover { background-color: #5a6268; }
-.mobile-menu-toggle { display: none; /* मोबाइल के लिए बाद में स्टाइल करें */ }
+.mobile-menu-toggle { display: none; /* मोबाइल के लिए */ background: none; border: none; font-size: 1.8em; cursor: pointer; }
 
-/* मुख्य कंटेंट एरिया */
-main { /* अब container क्लास का उपयोग नहीं कर रहा है */
-    /* पैडिंग अब main.container से आ रही है */
-}
 
-/* फुटर */
-footer {
-    text-align: center;
-    margin-top: 0; /* main.container के बाद तुरंत */
-    padding: 30px 20px;
-    background-color: #343a40;
-    color: #f8f9fa;
-    font-size: 0.9em;
-}
-footer a { color: #adb5bd; }
-footer a:hover { color: #fff; }
-
-/* --- स्टेज 2 के उदाहरण स्टाइल्स --- */
-/* हीरो सेक्शन */
+/* हीरो सेक्शन (होमपेज) */
 .hero-section {
-    background: linear-gradient(to right, #e9f5ff, #d0eaff); /* ग्रेडियेंट बैकग्राउंड */
-    padding: 80px 20px;
+    background: linear-gradient(to right, rgba(0, 86, 179, 0.05), rgba(0, 86, 179, 0.1)), url('images/hero-background.jpg') no-repeat center center/cover; /* एक बैकग्राउंड इमेज जोड़ें (वैकल्पिक) */
+    background-color: #eef5ff; /* फॉलबैक रंग */
+    color: var(--text-color);
+    padding: 100px 20px; /* ज्यादा पैडिंग */
     text-align: center;
-    margin: -20px -20px 30px -20px; /* कंटेनर के किनारों तक फैलाएं */
-    border-radius: 0 0 6px 6px; /* केवल नीचे के कोने गोल */
+    /* margin: -20px -20px 30px -20px; हटाएं क्योंकि main.container है */
+    border-radius: 0 0 var(--border-radius) var(--border-radius); /* हेडर के नीचे */
+    margin-bottom: 40px;
 }
-.hero-section h1 { color: #004085; font-size: 2.8em; margin-bottom: 15px; font-weight: 700; }
-.hero-section p { font-size: 1.2em; color: #495057; margin-bottom: 30px; }
-
-/* सेवा ग्रिड */
-.info-section { padding: 40px 0; }
-.info-section h2 { text-align: center; margin-bottom: 40px; font-size: 1.8em; }
-.services-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 30px; }
-.service-item {
-    background-color: #fff;
-    padding: 25px;
-    border-radius: 6px;
-    text-align: center;
-    border: 1px solid #eee;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-.service-item:hover { transform: translateY(-5px); box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
-.service-item i { color: #0056b3; margin-bottom: 15px; }
-.service-item h3 { margin-top: 0; margin-bottom: 10px; font-size: 1.2em; }
-.service-item p { font-size: 0.95em; color: #666; }
-
-/* प्रशंसापत्र */
-.testimonial {
-    background-color: #f8f9fa;
-    padding: 20px;
-    border-left: 4px solid #0056b3;
-    margin-bottom: 20px;
-    font-style: italic;
-    color: #555;
-}
-.testimonial span { display: block; text-align: right; font-weight: 600; margin-top: 10px; font-style: normal; }
+.hero-section h1 { color: var(--primary-color-dark); font-size: 3em; margin-bottom: 20px; font-weight: 700; }
+.hero-section p { font-size: 1.2em; color: var(--secondary-color); margin-bottom: 35px; max-width: 600px; margin-left: auto; margin-right: auto; }
 
 /* बटन स्टाइल */
 .button-primary {
-    background-color: #0056b3; color: white; padding: 12px 30px; border: none; border-radius: 5px;
-    font-size: 1.05em; font-weight: 500; cursor: pointer; transition: background-color 0.2s ease; display: inline-block;
+    background-color: var(--primary-color); color: white; padding: 14px 35px; border: none; border-radius: var(--border-radius);
+    font-size: 1.05em; font-weight: 500; cursor: pointer; transition: background-color 0.2s ease, transform 0.1s ease; display: inline-block;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
-.button-primary:hover { background-color: #004085; }
+.button-primary:hover { background-color: var(--primary-color-dark); transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15); }
+.button-primary:active { transform: translateY(0); }
 
+/* सामान्य सेक्शन */
+.info-section { padding: 40px 0; }
+.info-section h2 { text-align: center; margin-bottom: 40px; font-size: 2em; }
 
-/* --- स्टेज 3: उत्पाद सूची स्टाइल --- */
-.product-list { margin-top: 30px; }
-.product-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 25px; }
-.product-card {
-    border: 1px solid #eee; border-radius: 6px; overflow: hidden; background-color: #fff;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.06); display: flex; flex-direction: column;
-    transition: box-shadow 0.2s ease;
+/* सेवा ग्रिड */
+.services-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 30px; }
+.service-item {
+    background-color: var(--white-bg); padding: 30px; border-radius: var(--border-radius);
+    text-align: center; border: 1px solid var(--border-color); box-shadow: var(--box-shadow);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
-.product-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
-.product-card a { text-decoration: none; color: inherit; display: flex; flex-direction: column; height: 100%; }
-.product-card img {
-    width: 100%; height: 200px; /* निश्चित ऊंचाई */ object-fit: cover; /* इमेज को कवर करें */
-    display: block; border-bottom: 1px solid #eee;
-}
-.product-card h3 {
-    font-size: 1.1em; margin: 15px 15px 5px 15px; padding: 0; color: #333;
-    flex-grow: 1; /* नाम को बढ़ने दें */
-}
-.product-card p.price {
-    font-size: 1em; color: #0056b3; font-weight: 600; margin: 0 15px 15px 15px; padding: 0;
-}
-.product-card button {
-    background-color: #f1f1f1; color: #333; border: none; padding: 10px 15px;
-    cursor: pointer; margin: 0 15px 15px 15px; border-radius: 4px; font-weight: 500;
-    transition: background-color 0.2s ease; align-self: flex-start; /* बटन को नीचे रखें */
-}
-.product-card button:hover { background-color: #ddd; }
+.service-item:hover { transform: translateY(-5px); box-shadow: 0 6px 15px rgba(0,0,0,0.1); }
+.service-item i { color: var(--primary-color); margin-bottom: 20px; }
+.service-item h3 { margin-top: 0; margin-bottom: 10px; font-size: 1.25em; color: var(--text-color); }
+.service-item p { font-size: 0.95em; color: var(--text-muted); }
 
-/* --- स्टेज 4: उत्पाद विवरण स्टाइल --- */
-.product-layout { display: flex; flex-wrap: wrap; gap: 30px; margin-top: 20px; }
-.product-images { flex: 1 1 400px; /* न्यूनतम चौड़ाई */ }
-.product-images img { max-width: 100%; height: auto; border-radius: 6px; border: 1px solid #eee; }
-.product-info { flex: 1 1 400px; /* न्यूनतम चौड़ाई */ }
-.product-info h1 { margin-top: 0; font-size: 1.8em; }
-#customization-options { background-color: #f9f9f9; padding: 20px; border-radius: 5px; margin: 20px 0; border: 1px solid #eee; }
-#customization-options h3 { margin-top: 0; margin-bottom: 15px; font-size: 1.1em; color: #555; }
-#price-display { margin: 20px 0; font-size: 1.3em; font-weight: bold; }
-#price-display .calculated-price { color: #0056b3; }
-#price-display .price-error { color: #dc3545; font-size: 1em; font-weight: normal; }
-#add-to-cart-btn { /* .button-primary स्टाइल का उपयोग करें */ }
+/* प्रशंसापत्र */
+.testimonial {
+    background-color: var(--light-bg); padding: 25px; border-left: 5px solid var(--primary-color);
+    margin: 20px auto; font-style: italic; color: #555; border-radius: 0 var(--border-radius) var(--border-radius) 0;
+    max-width: 700px; box-shadow: var(--box-shadow);
+}
+.testimonial span { display: block; text-align: right; font-weight: 600; margin-top: 15px; font-style: normal; color: var(--text-color); }
 
-/* --- स्टेज 5: कार्ट पेज स्टाइल --- */
-.cart-layout { display: flex; flex-wrap: wrap; gap: 30px; }
-#cart-items-section { flex: 2 1 500px; /* कार्ट आइटम के लिए अधिक जगह */ }
-#order-form { flex: 1 1 350px; }
-#cart-items ul { list-style: none; padding: 0; margin: 0; }
-#cart-items li {
-    display: flex; flex-wrap: wrap; align-items: center; gap: 15px;
-    padding: 15px 0; border-bottom: 1px solid #eee;
-}
-#cart-items li:last-child { border-bottom: none; }
-.cart-item-info { flex-grow: 1; min-width: 150px; }
-.cart-item-info strong { display: block; font-size: 1.05em; }
-.cart-item-info small { font-size: 0.85em; color: #666; }
-.cart-item-qty { display: flex; align-items: center; gap: 5px; }
-.cart-item-qty input { width: 60px; text-align: center; padding: 5px; font-size: 0.9em; height: auto; }
-.cart-item-price { font-weight: 600; min-width: 80px; text-align: right; }
-.cart-item-remove button { background: none; border: none; color: #dc3545; cursor: pointer; font-size: 0.9em; opacity: 0.7; }
-.cart-item-remove button:hover { opacity: 1; text-decoration: underline; }
-#cart-summary {
-    margin-top: 20px; padding-top: 15px; border-top: 2px solid #333;
-    text-align: right; font-size: 1.2em; font-weight: bold;
-}
-#order-status-message { margin-top: 15px; font-weight: bold; }
+/* संपर्क पेज लेआउट */
+.contact-layout { display: flex; flex-wrap: wrap; gap: 40px; margin-top: 30px; }
+#contact-form { flex: 2 1 400px; }
+.contact-details { flex: 1 1 300px; background-color: var(--light-bg); padding: 20px; border-radius: var(--border-radius); border: 1px solid var(--border-color); }
+.contact-details h3 { margin-top: 0; color: var(--primary-color); }
+.contact-details p { margin-bottom: 10px; display: flex; align-items: center; gap: 10px; font-size: 0.95em; }
+.contact-details i { color: var(--primary-color); width: 18px; text-align: center; }
 
-/* फॉर्म समूह (डुप्लिकेट स्टाइल से बचें) */
-.form-group { margin-bottom: 15px; }
-.form-group label { display: block; margin-bottom: 6px; font-weight: 500; }
-.form-group input, .form-group textarea, .form-group select {
-    width: 100%; padding: 10px; border: 1px solid #ccc;
-    border-radius: 4px; box-sizing: border-box; font-size: 0.95em;
+/* फुटर */
+footer {
+    text-align: center; margin-top: 0; padding: 40px 20px; background-color: #343a40; color: #e9ecef; font-size: 0.9em;
 }
-.form-group textarea { resize: vertical; min-height: 70px; }
-.form-group small { font-size: 0.8em; color: #666; display: block; margin-top: 4px; }
-.required { color: #dc3545; margin-left: 2px; }
+footer p { margin-bottom: 5px; color: #adb5bd;}
+footer a { color: #ced4da; }
+footer a:hover { color: #fff; }
+
+/* बेसिक फॉर्म स्टाइल */
+.form-group { margin-bottom: 20px; }
+.form-group label { display: block; margin-bottom: 8px; font-weight: 500; }
+.form-group input[type="text"],
+.form-group input[type="email"],
+.form-group input[type="tel"],
+.form-group textarea {
+    width: 100%; padding: 12px; border: 1px solid var(--border-color); border-radius: var(--border-radius); box-sizing: border-box;
+    font-size: 1em; font-family: var(--font-family); transition: border-color .2s ease, box-shadow .2s ease;
+}
+.form-group textarea { resize: vertical; min-height: 120px; }
+.form-group input:focus, .form-group textarea:focus {
+    border-color: var(--primary-color); outline: 0; box-shadow: 0 0 0 0.2rem rgba(0, 86, 179, 0.2);
+}
+.form-group .required { color: var(--danger-color); margin-left: 3px; }
+
 
 /* Responsive Adjustments */
 @media (max-width: 768px) {
-    header nav { flex-direction: column; align-items: flex-start; }
-    .nav-links { width: 100%; flex-direction: column; align-items: flex-start; margin-top: 10px; }
-    .admin-login-link { margin-left: 0; margin-top: 10px; }
-    main.container { margin-top: 15px; margin-bottom: 15px; padding: 15px; }
-    .hero-section { padding: 50px 15px; }
-    .hero-section h1 { font-size: 2em; }
+    body { font-size: 14px; }
+    h1 { font-size: 1.8em; }
+    h2 { font-size: 1.5em; }
+    .hero-section h1 { font-size: 2.2em; }
     .hero-section p { font-size: 1em; }
-    .services-grid { grid-template-columns: 1fr; }
-    .product-grid { grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; }
-    .product-card img { height: 150px; }
-    .product-layout { flex-direction: column; }
-    .cart-layout { flex-direction: column; }
+    .button-primary { padding: 12px 25px; font-size: 0.95em; }
+    header nav.container { padding: 0 15px; }
+    .nav-links { display: none; /* इसे JS से टॉगल करें */ flex-direction: column; width: 100%; background-color: #fff; position: absolute; top: 100%; left: 0; box-shadow: 0 4px 8px rgba(0,0,0,0.1); padding: 10px 0; }
+    .nav-links.active { display: flex; } /* JS टॉगल के लिए */
+    .nav-links a { width: 100%; text-align: left; padding: 10px 20px; border-radius: 0; }
+    .admin-login-link { margin-left: 0; margin-top: 5px; text-align: center; display: block; }
+    .mobile-menu-toggle { display: block; /* मोबाइल पर बटन दिखाएं */ }
+    main.container { padding: 20px 15px; margin-top: 15px; margin-bottom: 15px; }
+    .contact-layout { flex-direction: column; }
 }

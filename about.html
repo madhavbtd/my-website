@@ -5,27 +5,48 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>हमारे बारे में - माधव मल्टीप्रिंट</title>
     <link rel="stylesheet" href="css/style.css">
+     <link rel="preconnect" href="https://fonts.googleapis.com">
+     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 <body>
     <header>
-        <nav>
-            <a href="index.html">होम</a>
-            <a href="products.html">उत्पाद</a>
-            <a href="about.html">हमारे बारे में</a>
-            <a href="contact.html">संपर्क</a>
-            <a href="cart.html">कार्ट</a>
-            <a href="/admin/login.html" class="admin-login-link">एडमिन लॉगिन</a>
+        <nav class="container">
+            <div class="logo">
+                <a href="index.html"><img src="https://i.ibb.co/Z6gKD9Rd/1.png" alt="माधव मल्टीप्रिंट लोगो"></a>
+            </div>
+            <div class="nav-links">
+                <a href="index.html">होम</a>
+                <a href="products.html">उत्पाद</a>
+                <a href="about.html" class="active">हमारे बारे में</a>
+                <a href="contact.html">संपर्क</a>
+                <a href="cart.html">कार्ट (<span id="cart-count">0</span>)</a>
+                <a href="/admin/login.html" class="admin-login-link" target="_blank">एडमिन लॉगिन</a>
+            </div>
+            <button class="mobile-menu-toggle" aria-label="Toggle menu">☰</button>
         </nav>
     </header>
 
-    <main>
+    <main class="container info-section">
         <h1>हमारे बारे में</h1>
-        <p>आपके व्यवसाय, अनुभव और टीम के बारे में जानकारी यहाँ लिखी जाएगी...</p>
-    </main>
+        <p>
+            माधव मल्टीप्रिंट में, हम उच्च गुणवत्ता वाली प्रिंटिंग और डिजाइनिंग सेवाएँ प्रदान करने के लिए प्रतिबद्ध हैं। पिछले [संख्या] वर्षों से, हम अपने ग्राहकों को उनकी व्यक्तिगत और व्यावसायिक ज़रूरतों के लिए सर्वोत्तम प्रिंट समाधान प्रदान कर रहे हैं।
+        </p>
+        <p>
+            हमारा लक्ष्य नवीनतम तकनीक और क्रिएटिव डिज़ाइन का उपयोग करके आपके विचारों को वास्तविकता में बदलना है। चाहे वह आकर्षक फ्लेक्स बैनर हों, पेशेवर विज़िटिंग कार्ड हों, या सुन्दर शादी के कार्ड हों, हमारी अनुभवी टीम हर प्रोजेक्ट को सटीकता और देखभाल के साथ पूरा करती है।
+        </p>
+        <h3>हमारी टीम</h3>
+        <p>
+            हमारी टीम में अनुभवी डिज़ाइनर और प्रिंटिंग विशेषज्ञ शामिल हैं जो आपको सर्वोत्तम परिणाम देने के लिए समर्पित हैं।
+        </p>
+        </main>
 
     <footer>
-        <p>&copy; 2025 माधव मल्टीप्रिंट. सर्वाधिकार सुरक्षित।</p>
+         <div class="container">
+            <p>&copy; 2025 माधव मल्टीप्रिंट. सर्वाधिकार सुरक्षित।</p>
+            <p><a href="#">गोपनीयता नीति</a> | <a href="#">नियम और शर्तें</a> | <a href="contact.html">संपर्क</a></p>
+         </div>
     </footer>
 
     <script src="js/firebase-config.js" type="module"></script>

@@ -5,36 +5,80 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>संपर्क - माधव मल्टीप्रिंट</title>
     <link rel="stylesheet" href="css/style.css">
+     <link rel="preconnect" href="https://fonts.googleapis.com">
+     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 <body>
-    <header>
-        <nav>
-            <a href="index.html">होम</a>
-            <a href="products.html">उत्पाद</a>
-            <a href="about.html">हमारे बारे में</a>
-            <a href="contact.html">संपर्क</a>
-            <a href="cart.html">कार्ट</a>
-            <a href="/admin/login.html" class="admin-login-link">एडमिन लॉगिन</a>
+     <header>
+        <nav class="container">
+            <div class="logo">
+                <a href="index.html"><img src="https://i.ibb.co/Z6gKD9Rd/1.png" alt="माधव मल्टीप्रिंट लोगो"></a>
+            </div>
+            <div class="nav-links">
+                <a href="index.html">होम</a>
+                <a href="products.html">उत्पाद</a>
+                <a href="about.html">हमारे बारे में</a>
+                <a href="contact.html" class="active">संपर्क</a>
+                <a href="cart.html">कार्ट (<span id="cart-count">0</span>)</a>
+                <a href="/admin/login.html" class="admin-login-link" target="_blank">एडमिन लॉगिन</a>
+            </div>
+            <button class="mobile-menu-toggle" aria-label="Toggle menu">☰</button>
         </nav>
     </header>
 
-    <main>
+    <main class="container info-section">
         <h1>हमसे संपर्क करें</h1>
-        <form id="contact-form">
+        <p>किसी भी प्रश्न या ऑर्डर के लिए, कृपया नीचे दिए गए फॉर्म का उपयोग करें या हमें सीधे कॉल करें।</p>
+        <div class="contact-layout">
+            <form id="contact-form">
+                <h3>संदेश भेजें</h3>
+                <div class="form-group">
+                    <label for="name">आपका नाम <span class="required">*</span>:</label>
+                    <input type="text" id="name" name="name" required>
+                </div>
+                <div class="form-group">
+                    <label for="email">आपका ईमेल <span class="required">*</span>:</label>
+                    <input type="email" id="email" name="email" required>
+                </div>
+                 <div class="form-group">
+                    <label for="phone">फ़ोन नंबर:</label>
+                    <input type="tel" id="phone" name="phone">
+                </div>
+                <div class="form-group">
+                    <label for="subject">विषय:</label>
+                    <input type="text" id="subject" name="subject">
+                </div>
+                <div class="form-group">
+                    <label for="message">संदेश <span class="required">*</span>:</label>
+                    <textarea id="message" name="message" rows="5" required></textarea>
+                </div>
+                <button type="submit" class="button-primary">संदेश भेजें</button>
+                 <div id="contact-form-status" style="margin-top: 15px;"></div>
             </form>
-        <div class="contact-details">
-            <p>फ़ोन: [आपका फ़ोन नंबर]</p>
-            <p>ईमेल: [आपका ईमेल]</p>
-            <p>पता: [आपका पता]</p>
+            <div class="contact-details">
+                <h3>हमारी जानकारी</h3>
+                <p><i class="fas fa-phone"></i> <a href="tel:[आपका फ़ोन नंबर]">[आपका फ़ोन नंबर]</a></p>
+                <p><i class="fas fa-envelope"></i> <a href="mailto:[आपका ईमेल]">[आपका ईमेल]</a></p>
+                <p><i class="fas fa-map-marker-alt"></i> [आपका पूरा पता यहाँ डालें]</p>
+                <h4>कार्य समय:</h4>
+                <p><i class="fas fa-clock"></i> सोम - शनि: सुबह 10:00 - शाम 7:00</p>
+                <div id="map-placeholder" style="height: 250px; background-color: #eee; margin-top: 20px; border-radius: var(--border-radius); border: 1px solid var(--border-color);">
+                    <p style="text-align: center; padding-top: 100px; color: #999;">नक्शा लोड हो रहा है...</p>
+                    </div>
             </div>
+        </div>
     </main>
 
     <footer>
-        <p>&copy; 2025 माधव मल्टीप्रिंट. सर्वाधिकार सुरक्षित।</p>
+         <div class="container">
+             <p>&copy; 2025 माधव मल्टीप्रिंट. सर्वाधिकार सुरक्षित।</p>
+            <p><a href="#">गोपनीयता नीति</a> | <a href="#">नियम और शर्तें</a> | <a href="contact.html">संपर्क</a></p>
+         </div>
     </footer>
 
     <script src="js/firebase-config.js" type="module"></script>
     <script src="js/main.js" type="module" defer></script>
-</body>
+     </body>
 </html>
