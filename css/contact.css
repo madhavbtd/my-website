@@ -1,4 +1,172 @@
-/* css/contact.css - Styles specific to the Contact Us page */
+/* css/contact.css - Combined Base Styles + Contact Page Specific Styles */
+
+/* --- Placeholder Variables (From index.css - Replace later if needed) --- */
+:root {
+    --primary-color: #0056b3; /* Example Blue */
+    --secondary-color: #007bff; /* Example Lighter Blue */
+    --text-color: #333; /* Dark Grey for text */
+    --text-muted: #6c757d; /* Lighter grey */
+    --white-bg: #ffffff;
+    --light-bg: #f8f9fa; /* Very light grey background */
+    --border-color: #dee2e6; /* Light border color */
+    --font-family: 'Poppins', sans-serif; /* Font from Google Fonts */
+    --border-radius: 4px;
+    --box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+/* --- End Placeholder Variables --- */
+
+
+/* Basic Reset & Body */
+body {
+    margin: 0;
+    font-family: var(--font-family);
+    color: var(--text-color);
+    line-height: 1.6;
+    background-color: var(--white-bg);
+}
+
+h1, h2, h3, h4, h5, h6, p {
+    margin-top: 0;
+    margin-bottom: 1rem;
+}
+
+a {
+    color: var(--primary-color);
+    text-decoration: none;
+}
+a:hover {
+    color: var(--secondary-color);
+    text-decoration: underline;
+}
+
+img {
+    max-width: 100%;
+    height: auto;
+}
+
+/* Container */
+.container {
+    max-width: 1140px; /* Adjust as needed */
+    margin-left: auto;
+    margin-right: auto;
+    padding-left: 15px;
+    padding-right: 15px;
+}
+
+/* Header & Navigation */
+header {
+    background-color: var(--white-bg);
+    box-shadow: var(--box-shadow);
+    padding: 10px 0;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+}
+header nav.container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.logo img {
+    max-height: 50px; /* Adjust logo height */
+}
+.nav-links a {
+    margin-left: 15px;
+    padding: 8px 0;
+    font-weight: 500;
+    color: var(--text-color);
+    text-decoration: none;
+    border-bottom: 2px solid transparent;
+    transition: color 0.2s ease, border-color 0.2s ease;
+}
+.nav-links a:hover,
+.nav-links a.active {
+    color: var(--primary-color);
+    border-bottom-color: var(--primary-color);
+}
+.mobile-menu-toggle {
+    display: none; /* Hide toggle on desktop */
+    background: none;
+    border: none;
+    font-size: 1.5em;
+    cursor: pointer;
+}
+
+/* Buttons */
+.button-primary {
+    display: inline-block;
+    background-color: var(--primary-color);
+    color: var(--white-bg);
+    padding: 12px 25px;
+    border: none;
+    border-radius: var(--border-radius);
+    font-size: 1em;
+    font-weight: 500;
+    text-align: center;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    text-decoration: none;
+}
+.button-primary:hover {
+    background-color: var(--secondary-color);
+    color: var(--white-bg);
+    text-decoration: none;
+}
+
+/* Footer */
+footer {
+    background-color: #333; /* Dark footer background */
+    color: #ccc; /* Light text on dark */
+    padding: 30px 0;
+    margin-top: 50px;
+    text-align: center;
+    font-size: 0.9em;
+}
+footer .container p {
+    margin-bottom: 5px;
+}
+footer a {
+    color: #fff; /* White links in footer */
+    margin: 0 5px;
+}
+footer a:hover {
+    color: var(--primary-color); /* Highlight color on hover */
+}
+
+/* --- Responsive Base Styles (Basic example for mobile menu) --- */
+@media (max-width: 768px) {
+    .nav-links {
+        display: none; /* Hide links by default */
+        flex-direction: column;
+        width: 100%;
+        background-color: var(--white-bg);
+        position: absolute;
+        top: 70px; /* Adjust based on header height */
+        left: 0;
+        box-shadow: var(--box-shadow);
+    }
+    .nav-links.active {
+        display: flex; /* Show when active */
+    }
+    .nav-links a {
+        margin: 0;
+        padding: 15px;
+        text-align: center;
+        border-bottom: 1px solid var(--border-color);
+    }
+    .nav-links a:last-child {
+        border-bottom: none;
+    }
+    .mobile-menu-toggle {
+        display: block; /* Show toggle button */
+    }
+}
+
+
+/* ============================================================== */
+/* == Contact Page Specific Styles (from user's contact.css) == */
+/* ============================================================== */
+
 
 /* Container specific for contact page content */
 .contact-page-container {
@@ -6,31 +174,40 @@
     padding-bottom: 50px; /* Add space above the footer */
 }
 
-/* Contact Page Cover Image Style */
-.page-cover.contact-cover-image {
-    background-image: linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)), url('https://i.ibb.co/HTZML5Lx/1.jpg'); /* Using the LATEST image URL you provided */
+/* General Page Cover Style (Define if not already in base) */
+.page-cover {
+    text-align: center;
+    color: var(--white-bg); /* Default text color for covers */
     background-size: cover;
     background-position: center center;
-    text-align: center;
-    padding: 80px 20px;
-    margin-bottom: 50px; /* Space below cover */
-    color: var(--white-bg); /* Ensure text is white */
-    min-height: 280px;
     display: flex;
     align-items: center;
     justify-content: center;
     flex-direction: column;
-    border-radius: 0;
+    border-radius: 0; /* Ensure full width */
+}
+.page-cover .cover-content { /* Optional inner container for content alignment */
+     max-width: 1140px;
+     margin: 0 auto;
+     padding: 0 15px;
+}
+
+/* Contact Page Cover Image Style */
+.page-cover.contact-cover-image {
+    background-image: linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)), url('https://i.ibb.co/HTZML5Lx/1.jpg'); /* Using the LATEST image URL you provided */
+    padding: 80px 20px;
+    margin-bottom: 50px; /* Space below cover */
+    min-height: 280px;
 }
 .page-cover.contact-cover-image h1 {
-    color: var(--white-bg);
+    color: var(--white-bg); /* Ensure white text over dark image */
     font-size: 2.8em;
     margin-bottom: 15px;
     text-shadow: 1px 1px 4px rgba(0,0,0,0.6);
 }
 .page-cover.contact-cover-image p {
     font-size: 1.2em;
-    color: rgba(255, 255, 255, 0.95);
+    color: rgba(255, 255, 255, 0.95); /* Slightly off-white */
     margin-bottom: 0;
     text-shadow: 1px 1px 3px rgba(0,0,0,0.5);
 }
@@ -49,7 +226,7 @@
     display: flex;
     flex-wrap: wrap; /* Wrap columns on smaller screens */
     gap: 40px; /* Gap between form and details */
-    align-items: stretch; /* Make columns visually the same height */
+    align-items: flex-start; /* Align items to top */
 }
 
 /* Contact Form Specific Styles */
@@ -89,9 +266,9 @@
 #contact-form textarea {
     width: 100%;
     padding: 12px 15px;
-    border: 1px solid #ccc;
+    border: 1px solid #ccc; /* Specific border for inputs */
     border-radius: var(--border-radius);
-    box-sizing: border-box;
+    box-sizing: border-box; /* Include padding in width */
     font-size: 1em;
     font-family: var(--font-family);
     transition: border-color .2s ease, box-shadow .2s ease;
@@ -104,13 +281,13 @@
 #contact-form textarea:focus {
     border-color: var(--primary-color);
     outline: 0;
-    box-shadow: 0 0 0 0.2rem rgba(0, 86, 179, 0.2);
+    box-shadow: 0 0 0 0.2rem rgba(0, 86, 179, 0.2); /* Focus shadow using primary color */
 }
 #contact-form .required {
-    color: #dc3545;
+    color: #dc3545; /* Standard red for required */
     margin-left: 3px;
 }
-#contact-form button.button-primary {
+#contact-form button.button-primary { /* Ensure button uses base style */
     margin-top: 10px; /* Space above button */
     align-self: flex-start; /* Align button left */
 }
@@ -125,7 +302,7 @@
 .contact-details {
     flex: 1 1 35%; /* Takes less space */
     min-width: 300px;
-    background-color: #fdfdff;
+    background-color: var(--light-bg); /* Slightly different background */
     padding: 30px 35px;
     border-radius: var(--border-radius);
     border: 1px solid var(--border-color);
@@ -166,7 +343,7 @@
 }
 .contact-details p.working-hours {
     padding-left: 37px; /* Align with text above (icon width + gap) */
-    margin-top: -10px;
+    margin-top: -10px; /* Adjust vertical position */
 }
 .contact-details a { color: var(--text-color); word-break: break-word; }
 .contact-details a:hover { color: var(--primary-color); text-decoration: underline; }
@@ -191,16 +368,26 @@
 .social-links a[aria-label="Facebook"]:hover { color: #1877F2; }
 .social-links a[aria-label="WhatsApp"]:hover { color: #25D366; }
 
-/* Map and QR Placeholders/Containers */
+/* Map Container */
 .contact-map {
-    background-color: #f0f0f0; margin-top: 15px; border-radius: var(--border-radius);
-    border: 1px solid var(--border-color); display: flex; align-items: center;
-    justify-content: center; min-height: 250px; text-align: center; overflow: hidden;
-    /* Removed margin-bottom here as it was specific to QR */
+    background-color: #e9ecef; /* Lighter placeholder background */
+    margin-top: 15px;
+    border-radius: var(--border-radius);
+    border: 1px solid var(--border-color);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 250px;
+    text-align: center;
+    overflow: hidden;
 }
-.contact-map iframe { width: 100%; height: 100%; min-height: 250px; border: 0; }
+.contact-map iframe {
+    width: 100%;
+    height: 100%;
+    min-height: 250px; /* Ensure map has height */
+    border: 0;
+}
 .contact-map p { color: var(--text-muted); font-style: italic; margin: 0; padding: 10px; }
-/* QR Code section removed from HTML, so no CSS needed */
 
 
 /* Responsive adjustments for Contact Page */
@@ -213,13 +400,14 @@
         flex-basis: auto; /* Reset flex-basis */
         padding: 25px; /* Adjust padding for smaller screens */
     }
-    .page-cover { padding: 60px 15px; min-height: 200px; }
-    .page-cover h1 { font-size: 2em; } .page-cover p { font-size: 1em; }
+    .page-cover.contact-cover-image { padding: 60px 15px; min-height: 200px; }
+    .page-cover.contact-cover-image h1 { font-size: 2.2em; } /* Adjust heading */
+    .page-cover.contact-cover-image p { font-size: 1em; }
 }
 
 @media (max-width: 480px) {
     #contact-form, .contact-details { padding: 20px; }
     .social-links { padding-left: 0; justify-content: center;}
-    .page-cover { padding: 40px 15px; min-height: 180px; }
-    .page-cover h1 { font-size: 1.8em; }
+    .page-cover.contact-cover-image { padding: 40px 15px; min-height: 180px; }
+    .page-cover.contact-cover-image h1 { font-size: 1.8em; }
 }
