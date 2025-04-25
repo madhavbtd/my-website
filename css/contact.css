@@ -1,0 +1,225 @@
+/* css/contact.css - Styles specific to the Contact Us page */
+
+/* Container specific for contact page content */
+.contact-page-container {
+    padding-top: 40px; /* Add space below the cover/header */
+    padding-bottom: 50px; /* Add space above the footer */
+}
+
+/* Contact Page Cover Image Style */
+.page-cover.contact-cover-image {
+    background-image: linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)), url('https://i.ibb.co/HTZML5Lx/1.jpg'); /* Using the LATEST image URL you provided */
+    background-size: cover;
+    background-position: center center;
+    text-align: center;
+    padding: 80px 20px;
+    margin-bottom: 50px; /* Space below cover */
+    color: var(--white-bg); /* Ensure text is white */
+    min-height: 280px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    border-radius: 0;
+}
+.page-cover.contact-cover-image h1 {
+    color: var(--white-bg);
+    font-size: 2.8em;
+    margin-bottom: 15px;
+    text-shadow: 1px 1px 4px rgba(0,0,0,0.6);
+}
+.page-cover.contact-cover-image p {
+    font-size: 1.2em;
+    color: rgba(255, 255, 255, 0.95);
+    margin-bottom: 0;
+    text-shadow: 1px 1px 3px rgba(0,0,0,0.5);
+}
+
+/* Contact Page Intro Text */
+.contact-intro {
+    text-align: center;
+    font-size: 1.1em;
+    color: var(--text-muted);
+    max-width: 700px;
+    margin: 0 auto 50px auto;
+}
+
+/* Contact Layout (Flexbox for side-by-side columns) */
+.contact-layout {
+    display: flex;
+    flex-wrap: wrap; /* Wrap columns on smaller screens */
+    gap: 40px; /* Gap between form and details */
+    align-items: stretch; /* Make columns visually the same height */
+}
+
+/* Contact Form Specific Styles */
+#contact-form {
+    flex: 1 1 55%; /* Form takes more space, minimum 55% */
+    min-width: 300px; /* Minimum width before wrapping */
+    background-color: var(--white-bg);
+    padding: 30px 35px;
+    border-radius: var(--border-radius);
+    border: 1px solid var(--border-color);
+    box-shadow: var(--box-shadow);
+    display: flex;
+    flex-direction: column;
+}
+#contact-form h3 {
+    margin-top: 0;
+    margin-bottom: 30px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid var(--border-color);
+    font-size: 1.5em;
+    color: var(--primary-color);
+    font-weight: 600;
+}
+#contact-form .form-group {
+    margin-bottom: 20px; /* Spacing between form fields */
+}
+#contact-form label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 500;
+    font-size: 0.95em;
+    color: var(--text-color);
+}
+#contact-form input[type="text"],
+#contact-form input[type="email"],
+#contact-form input[type="tel"],
+#contact-form textarea {
+    width: 100%;
+    padding: 12px 15px;
+    border: 1px solid #ccc;
+    border-radius: var(--border-radius);
+    box-sizing: border-box;
+    font-size: 1em;
+    font-family: var(--font-family);
+    transition: border-color .2s ease, box-shadow .2s ease;
+}
+#contact-form textarea {
+    resize: vertical;
+    min-height: 140px;
+}
+#contact-form input:focus,
+#contact-form textarea:focus {
+    border-color: var(--primary-color);
+    outline: 0;
+    box-shadow: 0 0 0 0.2rem rgba(0, 86, 179, 0.2);
+}
+#contact-form .required {
+    color: #dc3545;
+    margin-left: 3px;
+}
+#contact-form button.button-primary {
+    margin-top: 10px; /* Space above button */
+    align-self: flex-start; /* Align button left */
+}
+#contact-form-status { /* Style for success/error messages */
+    margin-top: 20px; font-weight: 500; padding: 12px;
+    border-radius: var(--border-radius); display: none; text-align: center;
+}
+#contact-form-status.success { background-color: #d1e7dd; color: #0f5132; border: 1px solid #badbcc; }
+#contact-form-status.error { background-color: #f8d7da; color: #842029; border: 1px solid #f5c2c7; }
+
+/* Contact Details Section Styling */
+.contact-details {
+    flex: 1 1 35%; /* Takes less space */
+    min-width: 300px;
+    background-color: #fdfdff;
+    padding: 30px 35px;
+    border-radius: var(--border-radius);
+    border: 1px solid var(--border-color);
+    display: flex;
+    flex-direction: column;
+}
+.contact-details h3,
+.contact-details h4 {
+    margin-top: 0;
+    margin-bottom: 20px;
+    color: var(--primary-color);
+    font-weight: 600;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border-color);
+}
+.contact-details h4 {
+    font-size: 1.1em;
+    margin-top: 30px;
+    border-bottom: none;
+    padding-bottom: 5px;
+}
+.contact-details p {
+    margin-bottom: 18px;
+    display: flex;
+    align-items: flex-start; /* Align icon top */
+    gap: 15px;
+    font-size: 1em;
+    color: var(--text-color);
+    line-height: 1.6;
+}
+.contact-details i.fa-fw { /* Font Awesome Fixed Width */
+    color: var(--primary-color);
+    width: 22px; /* Fixed width for alignment */
+    text-align: center;
+    font-size: 1.2em;
+    margin-top: 3px;
+    flex-shrink: 0;
+}
+.contact-details p.working-hours {
+    padding-left: 37px; /* Align with text above (icon width + gap) */
+    margin-top: -10px;
+}
+.contact-details a { color: var(--text-color); word-break: break-word; }
+.contact-details a:hover { color: var(--primary-color); text-decoration: underline; }
+
+/* Social Links Styling */
+.social-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px; /* Increased gap */
+    margin-top: 15px;
+    padding-left: 37px; /* Align with text above */
+}
+.social-links a {
+    color: var(--secondary-color);
+    font-size: 1.9em;
+    transition: color 0.2s ease, transform 0.2s ease;
+    text-decoration: none;
+    line-height: 1;
+}
+.social-links a:hover { transform: scale(1.15); }
+.social-links a[aria-label="Instagram"]:hover { color: #E1306C; }
+.social-links a[aria-label="Facebook"]:hover { color: #1877F2; }
+.social-links a[aria-label="WhatsApp"]:hover { color: #25D366; }
+
+/* Map and QR Placeholders/Containers */
+.contact-map {
+    background-color: #f0f0f0; margin-top: 15px; border-radius: var(--border-radius);
+    border: 1px solid var(--border-color); display: flex; align-items: center;
+    justify-content: center; min-height: 250px; text-align: center; overflow: hidden;
+    /* Removed margin-bottom here as it was specific to QR */
+}
+.contact-map iframe { width: 100%; height: 100%; min-height: 250px; border: 0; }
+.contact-map p { color: var(--text-muted); font-style: italic; margin: 0; padding: 10px; }
+/* QR Code section removed from HTML, so no CSS needed */
+
+
+/* Responsive adjustments for Contact Page */
+@media (max-width: 768px) {
+    .contact-layout {
+        flex-direction: column; /* Stack form and details */
+        gap: 30px;
+    }
+    #contact-form, .contact-details {
+        flex-basis: auto; /* Reset flex-basis */
+        padding: 25px; /* Adjust padding for smaller screens */
+    }
+    .page-cover { padding: 60px 15px; min-height: 200px; }
+    .page-cover h1 { font-size: 2em; } .page-cover p { font-size: 1em; }
+}
+
+@media (max-width: 480px) {
+    #contact-form, .contact-details { padding: 20px; }
+    .social-links { padding-left: 0; justify-content: center;}
+    .page-cover { padding: 40px 15px; min-height: 180px; }
+    .page-cover h1 { font-size: 1.8em; }
+}
