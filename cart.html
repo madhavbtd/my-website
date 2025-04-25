@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>होम - माधव मल्टीप्रिंट</title>
+    <title>कार्ट - माधव मल्टीप्रिंट</title>
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
@@ -15,19 +15,29 @@
             <a href="about.html">हमारे बारे में</a>
             <a href="contact.html">संपर्क</a>
             <a href="cart.html">कार्ट</a>
-            <a href="/admin/login.html" class="admin-login-link">एडमिन लॉगिन</a> </nav>
+            <a href="/admin/login.html" class="admin-login-link">एडमिन लॉगिन</a>
+        </nav>
     </header>
 
     <main>
-        <h1>माधव मल्टीप्रिंट में आपका स्वागत है</h1>
-        <p>मुख्य सेवाएँ और ऑफर्स यहाँ प्रदर्शित होंगे...</p>
-        </main>
+        <h1>आपका कार्ट</h1>
+        <div id="cart-items">
+            <p>आपका कार्ट खाली है।</p>
+        </div>
+        <div id="cart-summary">
+            </div>
+        <form id="order-form">
+            <h2>ग्राहक जानकारी</h2>
+            <h2>डिज़ाइन अपलोड करें</h2>
+            <button type="submit">ऑर्डर सबमिट करें</button>
+        </form>
+    </main>
 
     <footer>
         <p>&copy; 2025 माधव मल्टीप्रिंट. सर्वाधिकार सुरक्षित।</p>
-        </footer>
+    </footer>
 
     <script src="js/firebase-config.js" type="module"></script>
     <script src="js/main.js" type="module" defer></script>
-</body>
+    </body>
 </html>
