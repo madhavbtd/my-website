@@ -1,191 +1,125 @@
-/* css/style.css (Updated for Stage 2) */
+/* css/style.css additions for Stage 4 */
 
-/* बेसिक रीसेट और फॉन्ट */
-:root {
-    --primary-color: #0056b3;
-    --primary-color-dark: #004085;
-    --secondary-color: #6c757d;
-    --light-bg: #f8f9fa;
-    --white-bg: #ffffff;
-    --text-color: #343a40;
-    --text-muted: #6c757d;
-    --border-color: #dee2e6;
-    --font-family: 'Poppins', sans-serif; /* Poppins Font */
-    --border-radius: 6px;
-    --box-shadow: 0 2px 5px rgba(0, 0, 0, 0.08);
-}
-
-body {
-    margin: 0;
-    padding: 0;
-    font-family: var(--font-family);
-    background-color: #f4f7f9;
-    color: var(--text-color);
-    line-height: 1.6;
-    font-size: 15px;
-}
-
-h1, h2, h3 {
-    color: var(--primary-color);
-    font-weight: 600;
-    margin-bottom: 0.8em; /* हेडिंग्स के नीचे थोड़ा गैप */
-}
-h1 { font-size: 2.2em; }
-h2 { font-size: 1.8em; }
-h3 { font-size: 1.3em; color: var(--secondary-color);}
-
-p { margin-bottom: 1em; color: var(--text-muted); }
-
-a { color: var(--primary-color); text-decoration: none; transition: color 0.2s ease; }
-a:hover { text-decoration: none; color: var(--primary-color-dark); }
-
-img { max-width: 100%; height: auto; display: block; }
-
-/* कंटेनर */
-.container {
-    max-width: 1200px;
-    margin-left: auto;
-    margin-right: auto;
-    padding-left: 20px;
-    padding-right: 20px;
-}
-main.container { /* केवल मुख्य सामग्री के लिए अतिरिक्त स्टाइल */
-    padding-top: 30px;
-    padding-bottom: 30px;
-    background-color: var(--white-bg);
-    min-height: calc(100vh - 250px);
-    margin-top: 20px;
-    margin-bottom: 20px;
-    box-shadow: var(--box-shadow);
-    border-radius: var(--border-radius);
-}
-
-
-/* हेडर और नेविगेशन */
-header {
-    background-color: var(--white-bg);
-    border-bottom: 1px solid var(--border-color);
-    padding: 10px 0;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-    position: sticky;
-    top: 0;
-    z-index: 1000;
-}
-header nav.container { /* नेव बार को कंटेनर चौड़ाई में रखें */
+/* Product Detail Page Layout */
+.product-layout {
     display: flex;
-    justify-content: space-between;
-    align-items: center;
+    flex-wrap: wrap;
+    gap: 30px; /* Adjust gap as needed */
+    margin-top: 20px;
 }
-.logo img { max-height: 55px; /* लोगो की ऊंचाई */ }
-.nav-links { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
-.nav-links a {
-    color: #333; padding: 10px 15px; border-radius: var(--border-radius);
-    font-weight: 500; transition: background-color 0.2s ease, color 0.2s ease;
+.product-images {
+    flex: 1 1 45%; /* Image takes slightly less space */
+    min-width: 300px;
+}
+.product-images img {
+    max-width: 100%;
+    height: auto;
+    border-radius: var(--border-radius);
+    border: 1px solid var(--border-color);
+    margin-bottom: 10px; /* Space if multiple images */
+}
+.product-info {
+    flex: 1 1 50%; /* Info takes slightly more space */
+    min-width: 300px;
+}
+.product-info h1 {
+    margin-top: 0;
+    margin-bottom: 15px;
+    font-size: 2em; /* Larger product title */
+}
+.product-info h4 { /* For specifications */
+    margin-top: 20px;
+    margin-bottom: 8px;
+    font-size: 1.1em;
+    color: var(--secondary-color);
+    font-weight: 600;
+}
+
+/* Customization Options Section */
+#customization-options {
+    background-color: var(--light-bg);
+    padding: 20px;
+    border-radius: var(--border-radius);
+    margin: 25px 0;
+    border: 1px solid var(--border-color);
+}
+#customization-options h3 {
+    margin-top: 0;
+    margin-bottom: 20px;
+    font-size: 1.2em;
+    color: var(--primary-color);
+    border-bottom: 1px solid #eee;
+    padding-bottom: 10px;
+}
+#customization-options .form-group {
+    margin-bottom: 15px;
+}
+#customization-options label {
+    display: block;
+    margin-bottom: 6px;
+    font-weight: 500;
+    font-size: 0.9em;
+}
+#customization-options input[type="number"],
+#customization-options select {
+    width: 100%;
+    max-width: 200px; /* Limit width of inputs */
+    padding: 8px 12px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
     font-size: 0.95em;
+    box-sizing: border-box;
 }
-.nav-links a:hover, .nav-links a.active { background-color: var(--primary-color); color: #fff; }
-.admin-login-link {
-    background-color: var(--secondary-color); color: #fff !important; font-size: 0.9em;
-    padding: 8px 15px; margin-left: 15px; /* थोड़ा गैप */
+#customization-options input[type="number"]:read-only,
+.customization-input-display { /* For read-only quantity */
+    background-color: #e9ecef;
+    cursor: not-allowed;
+    font-weight: bold;
 }
-.admin-login-link:hover { background-color: #5a6268; }
-.mobile-menu-toggle { display: none; /* मोबाइल के लिए */ background: none; border: none; font-size: 1.8em; cursor: pointer; }
 
 
-/* हीरो सेक्शन (होमपेज) */
-.hero-section {
-    background: linear-gradient(to right, rgba(0, 86, 179, 0.05), rgba(0, 86, 179, 0.1)), url('images/hero-background.jpg') no-repeat center center/cover; /* एक बैकग्राउंड इमेज जोड़ें (वैकल्पिक) */
-    background-color: #eef5ff; /* फॉलबैक रंग */
-    color: var(--text-color);
-    padding: 100px 20px; /* ज्यादा पैडिंग */
+/* Price Display Section */
+#price-display {
+    margin: 25px 0;
+    padding: 15px;
+    background-color: #e6f0ff; /* Light blue background */
+    border: 1px solid #b6d4fe;
+    border-radius: var(--border-radius);
     text-align: center;
-    /* margin: -20px -20px 30px -20px; हटाएं क्योंकि main.container है */
-    border-radius: 0 0 var(--border-radius) var(--border-radius); /* हेडर के नीचे */
-    margin-bottom: 40px;
 }
-.hero-section h1 { color: var(--primary-color-dark); font-size: 3em; margin-bottom: 20px; font-weight: 700; }
-.hero-section p { font-size: 1.2em; color: var(--secondary-color); margin-bottom: 35px; max-width: 600px; margin-left: auto; margin-right: auto; }
-
-/* बटन स्टाइल */
-.button-primary {
-    background-color: var(--primary-color); color: white; padding: 14px 35px; border: none; border-radius: var(--border-radius);
-    font-size: 1.05em; font-weight: 500; cursor: pointer; transition: background-color 0.2s ease, transform 0.1s ease; display: inline-block;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+#price-display p {
+    margin: 0;
+    font-size: 1.4em;
+    font-weight: 700;
 }
-.button-primary:hover { background-color: var(--primary-color-dark); transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15); }
-.button-primary:active { transform: translateY(0); }
-
-/* सामान्य सेक्शन */
-.info-section { padding: 40px 0; }
-.info-section h2 { text-align: center; margin-bottom: 40px; font-size: 2em; }
-
-/* सेवा ग्रिड */
-.services-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 30px; }
-.service-item {
-    background-color: var(--white-bg); padding: 30px; border-radius: var(--border-radius);
-    text-align: center; border: 1px solid var(--border-color); box-shadow: var(--box-shadow);
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
+#price-display .calculated-price {
+    color: var(--primary-color-dark);
 }
-.service-item:hover { transform: translateY(-5px); box-shadow: 0 6px 15px rgba(0,0,0,0.1); }
-.service-item i { color: var(--primary-color); margin-bottom: 20px; }
-.service-item h3 { margin-top: 0; margin-bottom: 10px; font-size: 1.25em; color: var(--text-color); }
-.service-item p { font-size: 0.95em; color: var(--text-muted); }
-
-/* प्रशंसापत्र */
-.testimonial {
-    background-color: var(--light-bg); padding: 25px; border-left: 5px solid var(--primary-color);
-    margin: 20px auto; font-style: italic; color: #555; border-radius: 0 var(--border-radius) var(--border-radius) 0;
-    max-width: 700px; box-shadow: var(--box-shadow);
+#price-display .price-error {
+    color: var(--danger-color);
+    font-size: 1em;
+    font-weight: 500;
 }
-.testimonial span { display: block; text-align: right; font-weight: 600; margin-top: 15px; font-style: normal; color: var(--text-color); }
-
-/* संपर्क पेज लेआउट */
-.contact-layout { display: flex; flex-wrap: wrap; gap: 40px; margin-top: 30px; }
-#contact-form { flex: 2 1 400px; }
-.contact-details { flex: 1 1 300px; background-color: var(--light-bg); padding: 20px; border-radius: var(--border-radius); border: 1px solid var(--border-color); }
-.contact-details h3 { margin-top: 0; color: var(--primary-color); }
-.contact-details p { margin-bottom: 10px; display: flex; align-items: center; gap: 10px; font-size: 0.95em; }
-.contact-details i { color: var(--primary-color); width: 18px; text-align: center; }
-
-/* फुटर */
-footer {
-    text-align: center; margin-top: 0; padding: 40px 20px; background-color: #343a40; color: #e9ecef; font-size: 0.9em;
+#price-display .fa-spinner { /* Loading spinner style */
+    font-size: 1.2em;
+    color: var(--primary-color);
+    animation: fa-spin 1.5s infinite linear;
 }
-footer p { margin-bottom: 5px; color: #adb5bd;}
-footer a { color: #ced4da; }
-footer a:hover { color: #fff; }
+@keyframes fa-spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-/* बेसिक फॉर्म स्टाइल */
-.form-group { margin-bottom: 20px; }
-.form-group label { display: block; margin-bottom: 8px; font-weight: 500; }
-.form-group input[type="text"],
-.form-group input[type="email"],
-.form-group input[type="tel"],
-.form-group textarea {
-    width: 100%; padding: 12px; border: 1px solid var(--border-color); border-radius: var(--border-radius); box-sizing: border-box;
-    font-size: 1em; font-family: var(--font-family); transition: border-color .2s ease, box-shadow .2s ease;
+
+/* Add to Cart Button */
+#add-to-cart-btn {
+    padding: 12px 30px;
+    font-size: 1.1em;
+    margin-top: 10px;
 }
-.form-group textarea { resize: vertical; min-height: 120px; }
-.form-group input:focus, .form-group textarea:focus {
-    border-color: var(--primary-color); outline: 0; box-shadow: 0 0 0 0.2rem rgba(0, 86, 179, 0.2);
+#add-to-cart-btn:disabled {
+    background-color: #adb5bd;
+    cursor: not-allowed;
+    box-shadow: none;
+    transform: none;
 }
-.form-group .required { color: var(--danger-color); margin-left: 3px; }
-
-
-/* Responsive Adjustments */
-@media (max-width: 768px) {
-    body { font-size: 14px; }
-    h1 { font-size: 1.8em; }
-    h2 { font-size: 1.5em; }
-    .hero-section h1 { font-size: 2.2em; }
-    .hero-section p { font-size: 1em; }
-    .button-primary { padding: 12px 25px; font-size: 0.95em; }
-    header nav.container { padding: 0 15px; }
-    .nav-links { display: none; /* इसे JS से टॉगल करें */ flex-direction: column; width: 100%; background-color: #fff; position: absolute; top: 100%; left: 0; box-shadow: 0 4px 8px rgba(0,0,0,0.1); padding: 10px 0; }
-    .nav-links.active { display: flex; } /* JS टॉगल के लिए */
-    .nav-links a { width: 100%; text-align: left; padding: 10px 20px; border-radius: 0; }
-    .admin-login-link { margin-left: 0; margin-top: 5px; text-align: center; display: block; }
-    .mobile-menu-toggle { display: block; /* मोबाइल पर बटन दिखाएं */ }
-    main.container { padding: 20px 15px; margin-top: 15px; margin-bottom: 15px; }
-    .contact-layout { flex-direction: column; }
+#add-to-cart-btn:disabled:hover {
+     background-color: #adb5bd;
 }
