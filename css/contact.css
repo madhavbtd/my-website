@@ -224,7 +224,7 @@ footer a:hover {
 /* Contact Layout (Flexbox for side-by-side columns) */
 .contact-layout {
     display: flex;
-    flex-wrap: wrap; /* Wrap columns on smaller screens */
+    flex-wrap: wrap; /* Wrap columns on smaller screens IF THEY DON'T FIT*/
     gap: 40px; /* Gap between form and details */
     align-items: flex-start; /* Align items to top */
 }
@@ -393,7 +393,7 @@ footer a:hover {
 /* Responsive adjustments for Contact Page */
 @media (max-width: 768px) {
     .contact-layout {
-        flex-direction: column; /* Stack form and details */
+        /* flex-direction: column; REMOVED to prevent stacking */
         gap: 30px;
     }
     #contact-form, .contact-details {

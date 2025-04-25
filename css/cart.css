@@ -1,0 +1,353 @@
+/* css/cart.css - Combined Base Styles + Cart Page Specific Styles */
+
+/* --- Placeholder Variables (From index.css - Replace later if needed) --- */
+:root {
+    --primary-color: #0056b3; /* Example Blue */
+    --secondary-color: #007bff; /* Example Lighter Blue */
+    --text-color: #333; /* Dark Grey for text */
+    --text-muted: #6c757d; /* Lighter grey */
+    --white-bg: #ffffff;
+    --light-bg: #f8f9fa; /* Very light grey background */
+    --border-color: #dee2e6; /* Light border color */
+    --font-family: 'Poppins', sans-serif; /* Font from Google Fonts */
+    --border-radius: 4px;
+    --box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+/* --- End Placeholder Variables --- */
+
+
+/* Basic Reset & Body */
+body {
+    margin: 0;
+    font-family: var(--font-family);
+    color: var(--text-color);
+    line-height: 1.6;
+    background-color: var(--white-bg);
+}
+
+h1, h2, h3, h4, h5, h6, p {
+    margin-top: 0;
+    margin-bottom: 1rem;
+}
+
+a {
+    color: var(--primary-color);
+    text-decoration: none;
+}
+a:hover {
+    color: var(--secondary-color);
+    text-decoration: underline;
+}
+
+img {
+    max-width: 100%;
+    height: auto;
+}
+
+/* Container */
+.container {
+    max-width: 1140px; /* Adjust as needed */
+    margin-left: auto;
+    margin-right: auto;
+    padding-left: 15px;
+    padding-right: 15px;
+}
+
+/* Header & Navigation */
+header {
+    background-color: var(--white-bg);
+    box-shadow: var(--box-shadow);
+    padding: 10px 0;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+}
+header nav.container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.logo img, .logo a { /* Style both image logo and text logo possibility */
+    max-height: 50px;
+    font-weight: bold;
+    font-size: 1.2em;
+    color: var(--text-color);
+    text-decoration: none;
+}
+.nav-links a {
+    margin-left: 15px;
+    padding: 8px 0;
+    font-weight: 500;
+    color: var(--text-color);
+    text-decoration: none;
+    border-bottom: 2px solid transparent;
+    transition: color 0.2s ease, border-color 0.2s ease;
+}
+.nav-links a:hover,
+.nav-links a.active {
+    color: var(--primary-color);
+    border-bottom-color: var(--primary-color);
+}
+.mobile-menu-toggle {
+    display: none; /* Hide toggle on desktop */
+    background: none;
+    border: none;
+    font-size: 1.5em;
+    cursor: pointer;
+}
+
+/* Buttons */
+.button-primary {
+    display: inline-block;
+    background-color: var(--primary-color);
+    color: var(--white-bg);
+    padding: 12px 25px;
+    border: none;
+    border-radius: var(--border-radius);
+    font-size: 1em;
+    font-weight: 500;
+    text-align: center;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    text-decoration: none;
+}
+.button-primary:hover {
+    background-color: var(--secondary-color);
+    color: var(--white-bg);
+    text-decoration: none;
+}
+
+/* Footer */
+footer {
+    background-color: #333; /* Dark footer background */
+    color: #ccc; /* Light text on dark */
+    padding: 30px 0;
+    margin-top: 50px;
+    text-align: center;
+    font-size: 0.9em;
+}
+footer .container p {
+    margin-bottom: 5px;
+}
+footer a {
+    color: #fff; /* White links in footer */
+    margin: 0 5px;
+}
+footer a:hover {
+    color: var(--primary-color); /* Highlight color on hover */
+}
+
+/* --- Responsive Base Styles (Basic example for mobile menu) --- */
+@media (max-width: 768px) {
+    .nav-links {
+        display: none; /* Hide links by default */
+        flex-direction: column;
+        width: 100%;
+        background-color: var(--white-bg);
+        position: absolute;
+        top: 70px; /* Adjust based on header height */
+        left: 0;
+        box-shadow: var(--box-shadow);
+    }
+    .nav-links.active {
+        display: flex; /* Show when active */
+    }
+    .nav-links a {
+        margin: 0;
+        padding: 15px;
+        text-align: center;
+        border-bottom: 1px solid var(--border-color);
+    }
+    .nav-links a:last-child {
+        border-bottom: none;
+    }
+    .mobile-menu-toggle {
+        display: block; /* Show toggle button */
+    }
+}
+
+
+/* ============================================================== */
+/* == Cart Page Specific Styles & Placeholders                 == */
+/* ============================================================== */
+
+main.container h1 {
+    text-align: center;
+    margin-top: 40px;
+    margin-bottom: 40px;
+    font-size: 2.2em;
+}
+
+.cart-layout {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 40px; /* Gap between cart items and order form */
+    align-items: flex-start;
+}
+
+/* Cart Items Section */
+#cart-items-section {
+    flex: 1 1 50%; /* Takes about half the space */
+    min-width: 300px;
+    background-color: var(--white-bg);
+    padding: 25px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    box-shadow: var(--box-shadow);
+}
+#cart-items-section h2 {
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border-color);
+    font-size: 1.5em;
+    color: var(--primary-color);
+}
+
+#cart-items {
+    margin-bottom: 30px;
+}
+
+/* Placeholder styles for items generated by cart.js */
+.cart-item {
+    display: flex;
+    gap: 15px;
+    align-items: center;
+    padding: 15px 0;
+    border-bottom: 1px solid var(--border-color);
+}
+.cart-item:last-child {
+    border-bottom: none;
+}
+.cart-item img {
+    width: 60px;
+    height: 60px;
+    object-fit: cover;
+    border-radius: var(--border-radius);
+}
+.cart-item .item-details {
+    flex-grow: 1;
+}
+.cart-item h4 { /* Item Name */
+    font-size: 1.1em;
+    margin-bottom: 5px;
+}
+.cart-item .item-options,
+.cart-item .item-price {
+    font-size: 0.9em;
+    color: var(--text-muted);
+    margin-bottom: 3px;
+}
+.cart-item .item-quantity input {
+    width: 50px;
+    padding: 5px;
+    text-align: center;
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    margin: 0 5px;
+}
+.cart-item .remove-item-btn {
+    background: none;
+    border: none;
+    color: #dc3545; /* Red */
+    cursor: pointer;
+    font-size: 1.1em;
+    padding: 5px;
+}
+.cart-item .remove-item-btn:hover {
+    color: #a02430; /* Darker Red */
+}
+/* End cart item placeholders */
+
+#cart-items p { /* Style for "Cart is empty" message */
+    text-align: center;
+    padding: 20px;
+    color: var(--text-muted);
+}
+
+#cart-summary {
+    border-top: 2px solid var(--border-color);
+    padding-top: 20px;
+    font-size: 1.1em;
+    font-weight: bold;
+    text-align: right;
+}
+
+/* Order Form Section */
+#order-form {
+    flex: 1 1 45%; /* Takes slightly less than half */
+    min-width: 300px;
+    background-color: var(--light-bg); /* Light background for form */
+    padding: 25px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+}
+#order-form h2 {
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border-color);
+    font-size: 1.5em;
+    color: var(--primary-color);
+}
+#order-form .form-group {
+    margin-bottom: 18px;
+}
+#order-form label {
+    display: block;
+    margin-bottom: 6px;
+    font-weight: 500;
+    font-size: 0.95em;
+}
+#order-form input[type="text"],
+#order-form input[type="tel"],
+#order-form input[type="file"],
+#order-form textarea {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #ccc;
+    border-radius: var(--border-radius);
+    box-sizing: border-box;
+    font-size: 1em;
+    font-family: var(--font-family);
+}
+#order-form textarea {
+    resize: vertical;
+    min-height: 80px;
+}
+#order-form input:focus,
+#order-form textarea:focus {
+    border-color: var(--primary-color);
+    outline: 0;
+    box-shadow: 0 0 0 0.2rem rgba(0, 86, 179, 0.2);
+}
+#order-form .required {
+    color: #dc3545;
+    margin-left: 3px;
+}
+#order-form small {
+    display: block;
+    margin-top: 5px;
+    font-size: 0.85em;
+    color: var(--text-muted);
+}
+#order-form button.button-primary {
+    width: 100%; /* Make button full width */
+    margin-top: 10px;
+    padding: 15px; /* Larger button */
+    font-size: 1.1em;
+}
+#order-status-message {
+    margin-top: 15px;
+    font-weight: 500;
+    text-align: center;
+}
+
+/* Responsive adjustments for Cart Page */
+@media (max-width: 992px) { /* Adjust breakpoint if needed */
+    .cart-layout {
+        flex-direction: column; /* Stack items and form */
+        gap: 30px;
+    }
+    #cart-items-section, #order-form {
+        flex-basis: auto; /* Reset flex basis */
+    }
+}

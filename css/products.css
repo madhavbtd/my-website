@@ -1,0 +1,244 @@
+/* css/products.css - Combined Base Styles + Products Page Specific Placeholders */
+
+/* --- Placeholder Variables (From index.css - Replace later if needed) --- */
+:root {
+    --primary-color: #0056b3; /* Example Blue */
+    --secondary-color: #007bff; /* Example Lighter Blue */
+    --text-color: #333; /* Dark Grey for text */
+    --text-muted: #6c757d; /* Lighter grey */
+    --white-bg: #ffffff;
+    --light-bg: #f8f9fa; /* Very light grey background */
+    --border-color: #dee2e6; /* Light border color */
+    --font-family: 'Poppins', sans-serif; /* Font from Google Fonts */
+    --border-radius: 4px;
+    --box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+/* --- End Placeholder Variables --- */
+
+
+/* Basic Reset & Body */
+body {
+    margin: 0;
+    font-family: var(--font-family);
+    color: var(--text-color);
+    line-height: 1.6;
+    background-color: var(--white-bg);
+}
+
+h1, h2, h3, h4, h5, h6, p {
+    margin-top: 0;
+    margin-bottom: 1rem;
+}
+
+a {
+    color: var(--primary-color);
+    text-decoration: none;
+}
+a:hover {
+    color: var(--secondary-color);
+    text-decoration: underline;
+}
+
+img {
+    max-width: 100%;
+    height: auto;
+}
+
+/* Container */
+.container {
+    max-width: 1140px; /* Adjust as needed */
+    margin-left: auto;
+    margin-right: auto;
+    padding-left: 15px;
+    padding-right: 15px;
+}
+
+/* Header & Navigation */
+header {
+    background-color: var(--white-bg);
+    box-shadow: var(--box-shadow);
+    padding: 10px 0;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+}
+header nav.container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.logo img, .logo a { /* Style both image logo and text logo possibility */
+    max-height: 50px;
+    font-weight: bold;
+    font-size: 1.2em;
+    color: var(--text-color);
+    text-decoration: none;
+}
+.nav-links a {
+    margin-left: 15px;
+    padding: 8px 0;
+    font-weight: 500;
+    color: var(--text-color);
+    text-decoration: none;
+    border-bottom: 2px solid transparent;
+    transition: color 0.2s ease, border-color 0.2s ease;
+}
+.nav-links a:hover,
+.nav-links a.active {
+    color: var(--primary-color);
+    border-bottom-color: var(--primary-color);
+}
+.mobile-menu-toggle {
+    display: none; /* Hide toggle on desktop */
+    background: none;
+    border: none;
+    font-size: 1.5em;
+    cursor: pointer;
+}
+
+/* Buttons */
+.button-primary {
+    display: inline-block;
+    background-color: var(--primary-color);
+    color: var(--white-bg);
+    padding: 12px 25px;
+    border: none;
+    border-radius: var(--border-radius);
+    font-size: 1em;
+    font-weight: 500;
+    text-align: center;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    text-decoration: none;
+}
+.button-primary:hover {
+    background-color: var(--secondary-color);
+    color: var(--white-bg);
+    text-decoration: none;
+}
+
+/* Footer */
+footer {
+    background-color: #333; /* Dark footer background */
+    color: #ccc; /* Light text on dark */
+    padding: 30px 0;
+    margin-top: 50px;
+    text-align: center;
+    font-size: 0.9em;
+}
+footer .container p {
+    margin-bottom: 5px;
+}
+footer a {
+    color: #fff; /* White links in footer */
+    margin: 0 5px;
+}
+footer a:hover {
+    color: var(--primary-color); /* Highlight color on hover */
+}
+
+/* --- Responsive Base Styles (Basic example for mobile menu) --- */
+@media (max-width: 768px) {
+    .nav-links {
+        display: none; /* Hide links by default */
+        flex-direction: column;
+        width: 100%;
+        background-color: var(--white-bg);
+        position: absolute;
+        top: 70px; /* Adjust based on header height */
+        left: 0;
+        box-shadow: var(--box-shadow);
+    }
+    .nav-links.active {
+        display: flex; /* Show when active */
+    }
+    .nav-links a {
+        margin: 0;
+        padding: 15px;
+        text-align: center;
+        border-bottom: 1px solid var(--border-color);
+    }
+    .nav-links a:last-child {
+        border-bottom: none;
+    }
+    .mobile-menu-toggle {
+        display: block; /* Show toggle button */
+    }
+}
+
+
+/* ============================================================== */
+/* == Products Page Specific Styles & Placeholders             == */
+/* ============================================================== */
+
+main.container h1 {
+    text-align: center;
+    margin-top: 40px;
+    margin-bottom: 40px;
+    font-size: 2.2em;
+}
+
+/* Filters Section Placeholder */
+.filters {
+    background-color: var(--light-bg);
+    padding: 15px;
+    border-radius: var(--border-radius);
+    margin-bottom: 30px;
+    border: 1px solid var(--border-color);
+    text-align: center; /* Basic alignment for placeholder */
+    color: var(--text-muted);
+}
+
+/* Product List Area */
+.product-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); /* Responsive grid for products */
+    gap: 25px; /* Gap between product cards */
+}
+
+/* Placeholder/Basic Style for individual product cards (JS will generate these) */
+.product-card { /* Assume JS creates divs with this class */
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    background-color: var(--white-bg);
+    padding: 15px;
+    text-align: center;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    transition: box-shadow 0.2s ease;
+}
+.product-card:hover {
+    box-shadow: var(--box-shadow);
+}
+.product-card img { /* Style for product image inside card */
+    max-width: 100%;
+    height: 180px; /* Fixed height for consistency */
+    object-fit: contain; /* Scale image nicely */
+    margin-bottom: 15px;
+    background-color: #eee; /* Light background for images */
+    border-radius: var(--border-radius);
+}
+.product-card h3 { /* Product title */
+    font-size: 1.1em;
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: var(--text-color);
+}
+.product-card .price { /* Product price */
+    font-size: 1.1em;
+    font-weight: bold;
+    color: var(--primary-color);
+    margin-bottom: 15px;
+}
+.product-card .button-primary { /* View Details button */
+    padding: 8px 15px; /* Smaller button */
+    font-size: 0.9em;
+}
+
+/* Loading/Empty Message Style */
+.product-list p {
+    grid-column: 1 / -1; /* Span full grid width */
+    text-align: center;
+    padding: 40px 0;
+    color: var(--text-muted);
+    font-size: 1.1em;
+}

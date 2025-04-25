@@ -1,12 +1,10 @@
 <!DOCTYPE html>
-<html lang="hi">
-<head>
+<html lang="en"> <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>कार्ट - माधव मल्टीप्रिंट</title>
-    <link rel="stylesheet" href="css/style.css">
+    <title>Cart - Madhav Multiprint</title> <link rel="stylesheet" href="css/cart.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-     <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
      <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
      <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
@@ -14,70 +12,60 @@
     <header>
         <nav class="container">
             <div class="logo">
-                 <a href="index.html" style="font-weight: bold; font-size: 1.2em;">माधव मल्टीप्रिंट</a>
+                 <a href="index.html" style="font-weight: bold; font-size: 1.2em;">Madhav Multiprint</a>
             </div>
             <div class="nav-links">
-                <a href="index.html">होम</a>
-                <a href="products.html">उत्पाद</a>
-                <a href="about.html">हमारे बारे में</a>
-                <a href="contact.html">संपर्क</a>
-                <a href="cart.html" class="active">कार्ट (<span id="cart-count">0</span>)</a>
-                <a href="/admin/login.html" class="admin-login-link" target="_blank">एडमिन लॉगिन</a>
-            </div>
+                <a href="index.html">Home</a> <a href="products.html">Products</a> <a href="about.html">About Us</a> <a href="contact.html">Contact</a> <a href="cart.html" class="active">Cart (<span id="cart-count">0</span>)</a> <a href="/admin/login.html" class="admin-login-link" target="_blank">Admin Login</a> </div>
             <button class="mobile-menu-toggle" aria-label="Toggle menu">☰</button>
         </nav>
     </header>
 
     <main class="container">
-        <h1>आपका कार्ट और ऑर्डर</h1>
-        <div class="cart-layout">
+        <h1>Your Cart and Order</h1> <div class="cart-layout">
              <div id="cart-items-section">
-                 <h2>कार्ट में आइटम</h2>
-                 <div id="cart-items">
-                     <p>आपका कार्ट खाली है।</p>
-                 </div>
+                 <h2>Items in Cart</h2> <div id="cart-items">
+                     <p>Your cart is empty.</p> </div>
                  <div id="cart-summary">
                      </div>
              </div>
 
             <form id="order-form">
-                <h2>ग्राहक जानकारी</h2>
-                <div class="form-group">
-                    <label for="customer-name">पूरा नाम <span class="required">*</span>:</label>
-                    <input type="text" id="customer-name" name="customerName" required>
+                <h2>Customer Information</h2> <div class="form-group">
+                    <label for="customer-name">Full Name <span class="required">*</span>:</label> <input type="text" id="customer-name" name="customerName" required>
                 </div>
                  <div class="form-group">
-                    <label for="customer-contact">संपर्क/WhatsApp नंबर <span class="required">*</span>:</label>
+                     <label for="customer-contact">Contact/WhatsApp Number <span class="required">*</span>:</label>
                     <input type="tel" id="customer-contact" name="customerContact" required>
                 </div>
                  <div class="form-group">
-                    <label for="customer-address">पूरा पता <span class="required">*</span>:</label>
-                    <textarea id="customer-address" name="customerAddress" rows="3" required></textarea>
+                    <label for="customer-address">Full Address <span class="required">*</span>:</label> <textarea id="customer-address" name="customerAddress" rows="3" required></textarea>
                 </div>
 
-                <hr>
+                <hr style="margin: 25px 0; border-color: var(--border-color);">
 
-                <h2>डिज़ाइन अपलोड (वैकल्पिक)</h2>
-                <div class="form-group">
-                    <label for="design-file-upload">अपनी प्रिंट फ़ाइल (CDR, PDF, JPG) अपलोड करें:</label>
+                <h2>Design Upload (Optional)</h2> <div class="form-group">
+                     <label for="design-file-upload">Upload your print file (CDR, PDF, JPG):</label>
                     <input type="file" id="design-file-upload" name="designFile" accept=".cdr,.pdf,.jpg,.jpeg,.png">
-                    <small>अधिकतम फ़ाइल साइज़: 10MB</small>
-                </div>
+                    <small>Maximum file size: 10MB</small> </div>
                  <div class="form-group">
-                     <label for="special-instructions">विशेष निर्देश/टिप्पणी:</label>
+                     <label for="special-instructions">Special Instructions/Notes:</label>
                      <textarea id="special-instructions" name="specialInstructions" rows="3"></textarea>
                  </div>
-                <button type="submit" class="button-primary">ऑर्डर सबमिट करें</button>
-                <div id="order-status-message"></div>
+                 <button type="submit" class="button-primary">Submit Order</button>
+                <div id="order-status-message">
+                     </div>
             </form>
         </div>
     </main>
 
     <footer>
-        <p>&copy; 2025 माधव मल्टीप्रिंट. सर्वाधिकार सुरक्षित।</p>
+        <div class="container">
+             <p>&copy; 2025 Madhav Multiprint. All Rights Reserved.</p>
+        </div>
     </footer>
 
     <script src="js/firebase-config.js" type="module"></script>
     <script src="js/main.js" type="module" defer></script>
-    <script src="js/cart.js" type="module" defer></script> </body>
+    <script src="js/cart.js" type="module" defer></script>
+</body>
 </html>

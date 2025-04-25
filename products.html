@@ -1,12 +1,10 @@
 <!DOCTYPE html>
-<html lang="hi">
-<head>
+<html lang="en"> <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>उत्पाद - माधव मल्टीप्रिंट</title>
-    <link rel="stylesheet" href="css/style.css">
+    <title>Products - Madhav Multiprint</title> <link rel="stylesheet" href="css/products.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-     <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
      <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
      <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
@@ -14,35 +12,30 @@
     <header>
          <nav class="container">
             <div class="logo">
-                 <a href="index.html" style="font-weight: bold; font-size: 1.2em;">माधव मल्टीप्रिंट</a>
+                 <a href="index.html" style="font-weight: bold; font-size: 1.2em;">Madhav Multiprint</a>
             </div>
             <div class="nav-links">
-                <a href="index.html">होम</a>
-                <a href="products.html" class="active">उत्पाद</a>
-                <a href="about.html">हमारे बारे में</a>
-                <a href="contact.html">संपर्क</a>
-                <a href="cart.html">कार्ट (<span id="cart-count">0</span>)</a>
-                <a href="/admin/login.html" class="admin-login-link" target="_blank">एडमिन लॉगिन</a>
-            </div>
+                 <a href="index.html">Home</a> <a href="products.html" class="active">Products</a> <a href="about.html">About Us</a> <a href="contact.html">Contact</a> <a href="cart.html">Cart (<span id="cart-count">0</span>)</a> <a href="/admin/login.html" class="admin-login-link" target="_blank">Admin Login</a> </div>
             <button class="mobile-menu-toggle" aria-label="Toggle menu">☰</button>
         </nav>
     </header>
 
     <main class="container">
-        <h1>हमारे उत्पाद और सेवाएँ</h1>
-        <div class="filters">
-            <p>फ़िल्टर विकल्प जल्द ही आ रहे हैं...</p>
-        </div>
-        <div class="product-list">
-            <p>उत्पाद लोड हो रहे हैं...</p>
-        </div>
+        <h1>Our Products and Services</h1> <div class="filters">
+             <p>Filter options coming soon...</p> </div>
+        <div class="product-list" id="product-list-container">
+             <p>Loading products...</p> </div>
     </main>
 
     <footer>
-        <p>&copy; 2025 माधव मल्टीप्रिंट. सर्वाधिकार सुरक्षित।</p>
+        <div class="container">
+             <p>&copy; 2025 Madhav Multiprint. All Rights Reserved.</p>
+              <p><a href="#">Privacy Policy</a> | <a href="#">Terms & Conditions</a> | <a href="contact.html">Contact</a></p>
+         </div>
     </footer>
 
     <script src="js/firebase-config.js" type="module"></script>
     <script src="js/main.js" type="module" defer></script>
-    <script src="js/products.js" type="module" defer></script> </body>
+    <script src="js/products.js" type="module" defer></script>
+</body>
 </html>
