@@ -292,8 +292,7 @@ body {
 .search-bar {
     display: flex;
     align-items: center;
-    /* justify-content: flex-end; */ /* हटाया गया था */
-    justify-content: flex-end; /* <<--- यह लाइन जोड़ी गई है */
+    justify-content: flex-end; /* आइटम्स को दाईं ओर अलाइन करता है */
     flex-wrap: wrap;
     gap: 10px;
     background-color: var(--card-bg);
@@ -301,7 +300,7 @@ body {
     border-radius: var(--card-border-radius);
     box-shadow: var(--card-shadow);
     border: 1px solid var(--border-color);
-    position: relative;
+    position: relative; /* Suggestions लिस्ट के लिए आवश्यक */
 }
 .search-bar label {
     margin: 0; color: var(--text-muted); font-size: 0.95em; font-weight: 500;
@@ -314,8 +313,8 @@ body {
     border: 1px solid var(--border-color);
     border-radius: 5px;
     font-size: 0.9em;
-    flex-grow: 0; /* 0 सेट किया गया */
-    width: 350px; /* निश्चित चौड़ाई, !important हटा दिया गया */
+    flex-grow: 0;
+    width: 350px; /* निश्चित चौड़ाई */
     height: 38px;
     box-sizing: border-box;
 }
@@ -338,13 +337,25 @@ body {
     flex-shrink: 0;
 }
 .search-bar button:hover { background-color: #1e7e34; }
+
+/* >>>>>>>>> Suggestion लिस्ट के लिए बदलाव यहाँ है <<<<<<<<< */
 .suggestions-list {
-    display: none; position: absolute; top: calc(100% + 5px); left: 15px;
-    right: 15px;
-    background-color: white; border: 1px solid var(--border-color);
-    border-radius: 5px; box-shadow: 0 5px 10px rgba(0,0,0,0.1);
-    max-height: 200px; overflow-y: auto; z-index: 1050;
+    display: none;
+    position: absolute;
+    top: calc(100% + 5px); /* सर्च बार के ठीक नीचे */
+    /* left: 15px; */  /* हटाया गया */
+    right: 15px;  /* <<--- दाईं ओर से 15px (search-bar के padding के बराबर) */
+    width: 350px; /* <<--- चौड़ाई इनपुट बॉक्स के बराबर */
+    background-color: white;
+    border: 1px solid var(--border-color);
+    border-radius: 5px;
+    box-shadow: 0 5px 10px rgba(0,0,0,0.1);
+    max-height: 200px;
+    overflow-y: auto;
+    z-index: 1050;
 }
+/* >>>>>>>>> बदलाव समाप्त <<<<<<<<< */
+
 .suggestions-list div { padding: 8px 12px; cursor: pointer; border-bottom: 1px solid #eee; font-size: 0.9em; }
 .suggestions-list div:last-child { border-bottom: none; }
 .suggestions-list div:hover { background-color: #f0f0f0; }
@@ -396,20 +407,32 @@ body {
 
     .search-bar {
         flex-direction: column;
-        align-items: stretch; /* मोबाइल पर आइटम स्ट्रेच होंगे */
-        justify-content: flex-start; /* मोबाइल पर justify-content बदल सकते हैं यदि आवश्यक हो */
+        align-items: stretch;
+        justify-content: flex-start;
         gap: 10px;
         padding: 10px;
         position: relative;
     }
     .search-bar input[type="text"] {
-        width: 100%; /* मोबाइल पर चौड़ाई 100% */
+        width: 100%;
         max-width: none;
     }
      .search-bar button {
         width: 100%;
     }
-    .suggestions-list { position: static; width: 100%; max-width: none; margin-top: 5px; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05); border-radius: 5px; right: auto; left: auto; max-height: 150px; border: 1px solid var(--border-color); }
+    /* मोबाइल पर सजेशन लिस्ट */
+    .suggestions-list {
+        position: static; /* <<--- मोबाइल पर स्टैटिक पोजीशन */
+        width: 100%;      /* <<--- मोबाइल पर पूरी चौड़ाई */
+        max-width: none;
+        margin-top: 5px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        border-radius: 5px;
+        right: auto; /* <<--- right हटा दिया */
+        left: auto; /* <<--- left हटा दिया */
+        max-height: 150px;
+        border: 1px solid var(--border-color);
+    }
 
     .kpi-section { gap: 15px; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); }
     .kpi-card { padding: 15px 10px; min-height: 100px; border-left-width: 3px; }
