@@ -1,19 +1,19 @@
 /* css/contact.css - Combined Base Styles + Contact Page Specific Styles */
 
-/* --- Placeholder Variables (From index.css - Replace later if needed) --- */
+/* --- Variables --- */
 :root {
-    --primary-color: #0056b3; /* Example Blue */
-    --secondary-color: #007bff; /* Example Lighter Blue */
-    --text-color: #333; /* Dark Grey for text */
-    --text-muted: #6c757d; /* Lighter grey */
+    --primary-color: #0056b3;
+    --secondary-color: #007bff;
+    --text-color: #333;
+    --text-muted: #6c757d;
     --white-bg: #ffffff;
-    --light-bg: #f8f9fa; /* Very light grey background */
-    --border-color: #dee2e6; /* Light border color */
-    --font-family: 'Poppins', sans-serif; /* Font from Google Fonts */
-    --border-radius: 4px;
-    --box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    --light-bg: #f8f9fa;
+    --border-color: #dee2e6;
+    --font-family: 'Poppins', sans-serif;
+    --border-radius: 5px; /* थोडा बढ़ाया गया */
+    --box-shadow: 0 3px 8px rgba(0, 0, 0, 0.1); /* थोडा बढ़ाया गया */
 }
-/* --- End Placeholder Variables --- */
+/* --- End Variables --- */
 
 
 /* Basic Reset & Body */
@@ -22,17 +22,18 @@ body {
     font-family: var(--font-family);
     color: var(--text-color);
     line-height: 1.6;
-    background-color: var(--white-bg);
+    background-color: var(--white-bg); /* या --light-bg ट्राय करें */
 }
 
 h1, h2, h3, h4, h5, h6, p {
     margin-top: 0;
-    margin-bottom: 1rem;
+    margin-bottom: 1rem; /* Default margin */
 }
 
 a {
     color: var(--primary-color);
     text-decoration: none;
+    transition: color 0.2s ease; /* Added transition */
 }
 a:hover {
     color: var(--secondary-color);
@@ -42,11 +43,12 @@ a:hover {
 img {
     max-width: 100%;
     height: auto;
+    display: block; /* Helps prevent extra space below images */
 }
 
 /* Container */
 .container {
-    max-width: 1140px; /* Adjust as needed */
+    max-width: 1140px;
     margin-left: auto;
     margin-right: auto;
     padding-left: 15px;
@@ -68,11 +70,11 @@ header nav.container {
     align-items: center;
 }
 .logo img {
-    max-height: 50px; /* Adjust logo height */
+    max-height: 50px; /* Adjust as needed */
 }
 .nav-links a {
-    margin-left: 15px;
-    padding: 8px 0;
+    margin-left: 18px; /* Slightly increased spacing */
+    padding: 8px 4px; /* Added horizontal padding */
     font-weight: 500;
     color: var(--text-color);
     text-decoration: none;
@@ -85,11 +87,12 @@ header nav.container {
     border-bottom-color: var(--primary-color);
 }
 .mobile-menu-toggle {
-    display: none; /* Hide toggle on desktop */
+    display: none;
     background: none;
     border: none;
-    font-size: 1.5em;
+    font-size: 1.8em; /* Slightly larger */
     cursor: pointer;
+    color: var(--text-color);
 }
 
 /* Buttons */
@@ -97,46 +100,49 @@ header nav.container {
     display: inline-block;
     background-color: var(--primary-color);
     color: var(--white-bg);
-    padding: 12px 25px;
+    padding: 12px 28px; /* Slightly adjusted padding */
     border: none;
     border-radius: var(--border-radius);
     font-size: 1em;
     font-weight: 500;
     text-align: center;
     cursor: pointer;
-    transition: background-color 0.2s ease;
+    transition: background-color 0.2s ease, transform 0.1s ease; /* Added transform transition */
     text-decoration: none;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Subtle shadow */
 }
 .button-primary:hover {
     background-color: var(--secondary-color);
     color: var(--white-bg);
     text-decoration: none;
+    transform: translateY(-2px); /* Slight lift on hover */
 }
 
 /* Footer */
 footer {
-    background-color: #333; /* Dark footer background */
-    color: #ccc; /* Light text on dark */
+    background-color: #343a40; /* Darker shade */
+    color: #adb5bd; /* Lighter text */
     padding: 30px 0;
-    margin-top: 50px;
+    margin-top: 50px; /* Adjusted margin */
     text-align: center;
     font-size: 0.9em;
 }
 footer .container p {
-    margin-bottom: 5px;
+    margin-bottom: 8px; /* Adjusted spacing */
 }
 footer a {
-    color: #fff; /* White links in footer */
-    margin: 0 5px;
+    color: #f8f9fa; /* White links */
+    margin: 0 8px; /* Adjusted spacing */
 }
 footer a:hover {
-    color: var(--primary-color); /* Highlight color on hover */
+    color: var(--secondary-color); /* Use secondary color for hover */
+    text-decoration: underline;
 }
 
-/* --- Responsive Base Styles (Basic example for mobile menu) --- */
+/* --- Responsive Base Styles (Mobile Menu) --- */
 @media (max-width: 768px) {
     .nav-links {
-        display: none; /* Hide links by default */
+        display: none;
         flex-direction: column;
         width: 100%;
         background-color: var(--white-bg);
@@ -144,9 +150,10 @@ footer a:hover {
         top: 70px; /* Adjust based on header height */
         left: 0;
         box-shadow: var(--box-shadow);
+        border-top: 1px solid var(--border-color);
     }
-    .nav-links.active {
-        display: flex; /* Show when active */
+    .nav-links.active { /* Class added by JS to show menu */
+        display: flex;
     }
     .nav-links a {
         margin: 0;
@@ -154,260 +161,260 @@ footer a:hover {
         text-align: center;
         border-bottom: 1px solid var(--border-color);
     }
-    .nav-links a:last-child {
+     .nav-links a:last-child {
         border-bottom: none;
     }
+    .nav-links a.active {
+        background-color: var(--light-bg); /* Highlight active link in mobile */
+        border-bottom-color: var(--primary-color); /* Keep border consistent */
+    }
     .mobile-menu-toggle {
-        display: block; /* Show toggle button */
+        display: block;
     }
 }
 
 
 /* ============================================================== */
-/* == Contact Page Specific Styles (from user's contact.css) == */
+/* == Contact Page Specific Styles                             == */
 /* ============================================================== */
 
-
-/* Container specific for contact page content */
 .contact-page-container {
-    padding-top: 40px; /* Add space below the cover/header */
-    padding-bottom: 50px; /* Add space above the footer */
+    padding-top: 30px; /* Reduced */
+    padding-bottom: 40px; /* Reduced */
 }
 
-/* General Page Cover Style (Define if not already in base) */
+/* General Page Cover Style */
 .page-cover {
     text-align: center;
-    color: var(--white-bg); /* Default text color for covers */
-    background-size: cover;
+    color: var(--white-bg);
+    background-size: cover; /* Changed to cover */
     background-position: center center;
+    background-repeat: no-repeat; /* Added */
     display: flex;
     align-items: center;
     justify-content: center;
     flex-direction: column;
-    border-radius: 0; /* Ensure full width */
+    border-radius: 0; /* No radius for full width */
 }
-.page-cover .cover-content { /* Optional inner container for content alignment */
+.page-cover .cover-content {
      max-width: 1140px;
      margin: 0 auto;
      padding: 0 15px;
+     position: relative; /* For potential overlay effects */
+     z-index: 2;
 }
 
 /* Contact Page Cover Image Style */
 .page-cover.contact-cover-image {
-    background-image: linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)), url('https://i.ibb.co/HTZML5Lx/1.jpg'); /* Using the LATEST image URL you provided */
-    padding: 80px 20px;
-    margin-bottom: 50px; /* Space below cover */
-    min-height: 280px;
+    /* Gradient overlay + Image */
+    background-image: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url('https://i.ibb.co/HTZML5Lx/1.jpg');
+    height: 180px; /* Increased height */
+    margin-bottom: 40px; /* Adjusted spacing */
+    box-sizing: border-box;
 }
 .page-cover.contact-cover-image h1 {
-    color: var(--white-bg); /* Ensure white text over dark image */
-    font-size: 2.8em;
-    margin-bottom: 15px;
-    text-shadow: 1px 1px 4px rgba(0,0,0,0.6);
+    color: var(--white-bg);
+    font-size: 2.5em; /* Adjusted font size */
+    margin-bottom: 8px; /* Adjusted margin */
+    text-shadow: 1px 1px 4px rgba(0,0,0,0.7);
 }
 .page-cover.contact-cover-image p {
-    font-size: 1.2em;
-    color: rgba(255, 255, 255, 0.95); /* Slightly off-white */
+    font-size: 1.1em; /* Adjusted font size */
+    color: rgba(255, 255, 255, 0.95);
     margin-bottom: 0;
-    text-shadow: 1px 1px 3px rgba(0,0,0,0.5);
+    text-shadow: 1px 1px 3px rgba(0,0,0,0.6);
 }
 
-/* Contact Page Intro Text */
 .contact-intro {
     text-align: center;
     font-size: 1.1em;
     color: var(--text-muted);
-    max-width: 700px;
-    margin: 0 auto 50px auto;
+    max-width: 750px; /* Slightly wider */
+    margin: 0 auto 40px auto; /* Reduced bottom margin */
 }
 
-/* Contact Layout (Flexbox for side-by-side columns) */
+/* Contact Layout */
 .contact-layout {
     display: flex;
-    flex-wrap: wrap; /* Wrap columns on smaller screens IF THEY DON'T FIT*/
-    gap: 40px; /* Gap between form and details */
-    align-items: flex-start; /* Align items to top */
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 40px; /* Reduced gap */
+    align-items: stretch; /* <<< CHANGED: Ensures columns have same height */
+    /* justify-content: center; */ /* Uncomment if needed */
 }
 
-/* Contact Form Specific Styles */
-#contact-form {
-    flex: 1 1 55%; /* Form takes more space, minimum 55% */
+/* Common styling for both columns */
+#contact-form,
+.contact-details {
+    flex: 1; /* Allow flexible growth */
     min-width: 300px; /* Minimum width before wrapping */
-    background-color: var(--white-bg);
+    box-sizing: border-box;
     padding: 30px 35px;
     border-radius: var(--border-radius);
     border: 1px solid var(--border-color);
     box-shadow: var(--box-shadow);
-    display: flex;
-    flex-direction: column;
+    background-color: var(--white-bg);
+    display: flex; /* Use flex for internal alignment */
+    flex-direction: column; /* Stack items vertically */
 }
-#contact-form h3 {
+
+/* Titles (H3) within both columns */
+#contact-form h3,
+.contact-details h3 {
     margin-top: 0;
     margin-bottom: 30px;
     padding-bottom: 15px;
     border-bottom: 1px solid var(--border-color);
-    font-size: 1.5em;
+    font-size: 1.4em; /* Slightly adjusted */
     color: var(--primary-color);
     font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 12px; /* Increased gap */
 }
-#contact-form .form-group {
-    margin-bottom: 20px; /* Spacing between form fields */
+#contact-form h3 i,
+.contact-details h3 i {
+    color: var(--primary-color);
+    font-size: 1em;
+    /* width: 20px; */ /* Uncomment if specific width needed */
+    /* text-align: center; */
 }
-#contact-form label {
-    display: block;
-    margin-bottom: 8px;
-    font-weight: 500;
-    font-size: 0.95em;
-    color: var(--text-color);
-}
+
+/* Form specific inner styles */
+#contact-form .form-group { margin-bottom: 20px; }
+#contact-form label { display: block; margin-bottom: 8px; font-weight: 500; font-size: 0.95em; color: var(--text-color); }
 #contact-form input[type="text"],
 #contact-form input[type="email"],
 #contact-form input[type="tel"],
 #contact-form textarea {
     width: 100%;
     padding: 12px 15px;
-    border: 1px solid #ccc; /* Specific border for inputs */
+    border: 1px solid #ccc;
     border-radius: var(--border-radius);
-    box-sizing: border-box; /* Include padding in width */
+    box-sizing: border-box;
     font-size: 1em;
     font-family: var(--font-family);
     transition: border-color .2s ease, box-shadow .2s ease;
+    background-color: #fdfdfd; /* Very light background for fields */
 }
-#contact-form textarea {
-    resize: vertical;
-    min-height: 140px;
-}
+#contact-form textarea { resize: vertical; min-height: 140px; }
 #contact-form input:focus,
 #contact-form textarea:focus {
     border-color: var(--primary-color);
     outline: 0;
-    box-shadow: 0 0 0 0.2rem rgba(0, 86, 179, 0.2); /* Focus shadow using primary color */
+    box-shadow: 0 0 0 0.2rem rgba(0, 86, 179, 0.25); /* Adjusted shadow */
+    background-color: var(--white-bg);
 }
-#contact-form .required {
-    color: #dc3545; /* Standard red for required */
-    margin-left: 3px;
-}
-#contact-form button.button-primary { /* Ensure button uses base style */
-    margin-top: 10px; /* Space above button */
-    align-self: flex-start; /* Align button left */
-}
-#contact-form-status { /* Style for success/error messages */
-    margin-top: 20px; font-weight: 500; padding: 12px;
-    border-radius: var(--border-radius); display: none; text-align: center;
-}
+#contact-form .required { color: #dc3545; margin-left: 3px; }
+#contact-form button.button-primary { margin-top: 10px; align-self: flex-start; }
+#contact-form-status { margin-top: 20px; font-weight: 500; padding: 12px 15px; border-radius: var(--border-radius); display: none; /* Shown via JS */ text-align: center; }
 #contact-form-status.success { background-color: #d1e7dd; color: #0f5132; border: 1px solid #badbcc; }
 #contact-form-status.error { background-color: #f8d7da; color: #842029; border: 1px solid #f5c2c7; }
 
-/* Contact Details Section Styling */
+/* Contact Details specific inner styles */
 .contact-details {
-    flex: 1 1 35%; /* Takes less space */
-    min-width: 300px;
-    background-color: var(--light-bg); /* Slightly different background */
-    padding: 30px 35px;
-    border-radius: var(--border-radius);
-    border: 1px solid var(--border-color);
-    display: flex;
-    flex-direction: column;
-}
-.contact-details h3,
-.contact-details h4 {
-    margin-top: 0;
-    margin-bottom: 20px;
-    color: var(--primary-color);
-    font-weight: 600;
-    padding-bottom: 12px;
-    border-bottom: 1px solid var(--border-color);
+    flex-grow: 1; /* Ensure it takes available space if form is short */
 }
 .contact-details h4 {
     font-size: 1.1em;
-    margin-top: 30px;
+    margin-top: 25px; /* Adjusted margin */
+    margin-bottom: 15px;
+    color: var(--primary-color);
+    font-weight: 600;
     border-bottom: none;
     padding-bottom: 5px;
+    display: flex;
+    align-items: center;
+    gap: 12px; /* Increased gap */
 }
+.contact-details h4 i { color: var(--primary-color); font-size: 1em; }
 .contact-details p {
     margin-bottom: 18px;
     display: flex;
-    align-items: flex-start; /* Align icon top */
+    align-items: flex-start;
     gap: 15px;
     font-size: 1em;
     color: var(--text-color);
-    line-height: 1.6;
+    line-height: 1.7; /* Slightly increased line height */
 }
-.contact-details i.fa-fw { /* Font Awesome Fixed Width */
+.contact-details p i.fa-fw {
     color: var(--primary-color);
-    width: 22px; /* Fixed width for alignment */
+    width: 22px;
     text-align: center;
     font-size: 1.2em;
-    margin-top: 3px;
+    margin-top: 4px; /* Adjusted alignment */
     flex-shrink: 0;
 }
-.contact-details p.working-hours {
-    padding-left: 37px; /* Align with text above (icon width + gap) */
-    margin-top: -10px; /* Adjust vertical position */
-}
+.contact-details p.working-hours { margin-top: -10px; padding-left: calc(22px + 15px); /* Align with text above */ }
 .contact-details a { color: var(--text-color); word-break: break-word; }
 .contact-details a:hover { color: var(--primary-color); text-decoration: underline; }
 
 /* Social Links Styling */
-.social-links {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 20px; /* Increased gap */
-    margin-top: 15px;
-    padding-left: 37px; /* Align with text above */
-}
-.social-links a {
-    color: var(--secondary-color);
-    font-size: 1.9em;
-    transition: color 0.2s ease, transform 0.2s ease;
-    text-decoration: none;
-    line-height: 1;
-}
-.social-links a:hover { transform: scale(1.15); }
+.social-links { display: flex; flex-wrap: wrap; gap: 20px; margin-top: 5px; padding-left: calc(22px + 15px); /* Align with text above */ }
+.social-links a { color: var(--secondary-color); font-size: 1.9em; transition: color 0.2s ease, transform 0.2s ease; text-decoration: none; line-height: 1; }
+.social-links a:hover { transform: translateY(-3px) scale(1.1); /* Combined effect */ }
 .social-links a[aria-label="Instagram"]:hover { color: #E1306C; }
 .social-links a[aria-label="Facebook"]:hover { color: #1877F2; }
 .social-links a[aria-label="WhatsApp"]:hover { color: #25D366; }
 
 /* Map Container */
 .contact-map {
-    background-color: #e9ecef; /* Lighter placeholder background */
-    margin-top: 15px;
+    background-color: #e9ecef;
+    margin-top: auto; /* Push map to bottom if details column is taller */
     border-radius: var(--border-radius);
     border: 1px solid var(--border-color);
     display: flex;
     align-items: center;
     justify-content: center;
-    min-height: 250px;
+    /* min-height: 250px; */ /* Removed fixed min-height, let iframe control */
+    height: 300px; /* Set a fixed height or adjust as needed */
     text-align: center;
     overflow: hidden;
+    width: 100%; /* Ensure it takes full width of its container */
 }
 .contact-map iframe {
     width: 100%;
-    height: 100%;
-    min-height: 250px; /* Ensure map has height */
+    height: 100%; /* Fill the container height */
     border: 0;
 }
-.contact-map p { color: var(--text-muted); font-style: italic; margin: 0; padding: 10px; }
+/* .contact-map p { color: var(--text-muted); font-style: italic; margin: 0; padding: 10px; } */ /* Not needed if iframe fills container */
 
 
-/* Responsive adjustments for Contact Page */
-@media (max-width: 768px) {
+/* ============================================================== */
+/* == Responsive adjustments for Contact Page                  == */
+/* ============================================================== */
+
+@media (max-width: 991px) {
     .contact-layout {
-        /* flex-direction: column; REMOVED to prevent stacking */
         gap: 30px;
+        /* Removed justify-content: center; let flexbox handle alignment */
     }
     #contact-form, .contact-details {
-        flex-basis: auto; /* Reset flex-basis */
-        padding: 25px; /* Adjust padding for smaller screens */
+        flex-basis: 45%; /* Allow two columns side-by-side for longer */
+        min-width: 320px; /* Adjust minimum width */
     }
-    .page-cover.contact-cover-image { padding: 60px 15px; min-height: 200px; }
-    .page-cover.contact-cover-image h1 { font-size: 2.2em; } /* Adjust heading */
-    .page-cover.contact-cover-image p { font-size: 1em; }
+    .page-cover.contact-cover-image { height: 150px; } /* Adjust height */
+    .page-cover.contact-cover-image h1 { font-size: 2.2em; }
+    .page-cover.contact-cover-image p { font-size: 1.0em; }
+}
+
+@media (max-width: 768px) {
+     #contact-form, .contact-details {
+        flex-basis: 100%; /* Stack columns on smaller tablets/large phones */
+        max-width: 600px; /* Optional: constrain width */
+        margin-left: auto;
+        margin-right: auto;
+    }
+    .contact-map { height: 250px; } /* Adjust map height for smaller screens */
 }
 
 @media (max-width: 480px) {
-    #contact-form, .contact-details { padding: 20px; }
-    .social-links { padding-left: 0; justify-content: center;}
-    .page-cover.contact-cover-image { padding: 40px 15px; min-height: 180px; }
+    #contact-form, .contact-details { padding: 20px 25px; /* Adjusted padding */ }
+    .social-links, .contact-details p.working-hours { padding-left: 0; /* Remove padding */ justify-content: flex-start; /* Align left */ }
+    #contact-form h3, .contact-details h3 { font-size: 1.3em; gap: 10px; }
+    .contact-details h4 { font-size: 1.05em; gap: 10px;}
+    .page-cover.contact-cover-image { height: 120px; } /* Further adjust height */
     .page-cover.contact-cover-image h1 { font-size: 1.8em; }
+    .page-cover.contact-cover-image p { display: none; /* Hide tagline on smallest screens */ }
+    .contact-map { height: 200px; } /* Adjust map height for mobile */
 }
