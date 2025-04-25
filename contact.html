@@ -1,80 +1,102 @@
 <!DOCTYPE html>
-<html lang="hi">
-<head>
+<html lang="en"> <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>संपर्क - माधव मल्टीप्रिंट</title>
-    <link rel="stylesheet" href="css/style.css">
-     <link rel="preconnect" href="https://fonts.googleapis.com">
-     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <title>Contact Us - Madhav Offset</title> <link rel="stylesheet" href="css/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 <body>
-     <header>
+    <header>
         <nav class="container">
             <div class="logo">
-                <a href="index.html"><img src="https://i.ibb.co/Z6gKD9Rd/1.png" alt="माधव मल्टीप्रिंट लोगो"></a>
+                <a href="index.html"><img src="https://i.ibb.co/Z6gKD9Rd/1.png" alt="Madhav Offset Logo"></a>
             </div>
             <div class="nav-links">
-                <a href="index.html">होम</a>
-                <a href="products.html">उत्पाद</a>
-                <a href="about.html">हमारे बारे में</a>
-                <a href="contact.html" class="active">संपर्क</a>
-                <a href="cart.html">कार्ट (<span id="cart-count">0</span>)</a>
-                <a href="/admin/login.html" class="admin-login-link" target="_blank">एडमिन लॉगिन</a>
+                <a href="index.html">Home</a>
+                <a href="products.html">Products</a>
+                <a href="about.html">About Us</a>
+                <a href="contact.html" class="active">Contact</a>
+                <a href="cart.html">Cart (<span id="cart-count">0</span>)</a>
+                <a href="/admin/login.html" class="admin-login-link" target="_blank">Admin Login</a>
             </div>
             <button class="mobile-menu-toggle" aria-label="Toggle menu">☰</button>
         </nav>
     </header>
 
-    <main class="container info-section">
-        <h1>हमसे संपर्क करें</h1>
-        <p>किसी भी प्रश्न या ऑर्डर के लिए, कृपया नीचे दिए गए फॉर्म का उपयोग करें या हमें सीधे कॉल करें।</p>
-        <div class="contact-layout">
-            <form id="contact-form">
-                <h3>संदेश भेजें</h3>
-                <div class="form-group">
-                    <label for="name">आपका नाम <span class="required">*</span>:</label>
-                    <input type="text" id="name" name="name" required>
-                </div>
-                <div class="form-group">
-                    <label for="email">आपका ईमेल <span class="required">*</span>:</label>
-                    <input type="email" id="email" name="email" required>
-                </div>
-                 <div class="form-group">
-                    <label for="phone">फ़ोन नंबर:</label>
-                    <input type="tel" id="phone" name="phone">
-                </div>
-                <div class="form-group">
-                    <label for="subject">विषय:</label>
-                    <input type="text" id="subject" name="subject">
-                </div>
-                <div class="form-group">
-                    <label for="message">संदेश <span class="required">*</span>:</label>
-                    <textarea id="message" name="message" rows="5" required></textarea>
-                </div>
-                <button type="submit" class="button-primary">संदेश भेजें</button>
-                 <div id="contact-form-status" style="margin-top: 15px;"></div>
-            </form>
-            <div class="contact-details">
-                <h3>हमारी जानकारी</h3>
-                <p><i class="fas fa-phone"></i> <a href="tel:[आपका फ़ोन नंबर]">[आपका फ़ोन नंबर]</a></p>
-                <p><i class="fas fa-envelope"></i> <a href="mailto:[आपका ईमेल]">[आपका ईमेल]</a></p>
-                <p><i class="fas fa-map-marker-alt"></i> [आपका पूरा पता यहाँ डालें]</p>
-                <h4>कार्य समय:</h4>
-                <p><i class="fas fa-clock"></i> सोम - शनि: सुबह 10:00 - शाम 7:00</p>
-                <div id="map-placeholder" style="height: 250px; background-color: #eee; margin-top: 20px; border-radius: var(--border-radius); border: 1px solid var(--border-color);">
-                    <p style="text-align: center; padding-top: 100px; color: #999;">नक्शा लोड हो रहा है...</p>
+    <main>
+        <section id="contact-cover-placeholder" class="page-cover">
+            <div class="container">
+                <h1>Get In Touch</h1>
+                <p>We're here to help with all your printing needs.</p>
+            </div>
+        </section>
+
+        <div class="container contact-page-container">
+            <p class="contact-intro">Have a question, need a quote, or ready to place an order? Use the form below or contact us directly.</p>
+
+            <div class="contact-layout">
+                <form id="contact-form">
+                    <h3>Send Us a Message</h3>
+                    <div class="form-group">
+                        <label for="name">Your Name <span class="required">*</span>:</label>
+                        <input type="text" id="name" name="name" required placeholder="Enter your full name">
                     </div>
+                    <div class="form-group">
+                        <label for="email">Your Email <span class="required">*</span>:</label>
+                        <input type="email" id="email" name="email" required placeholder="Enter your email address">
+                    </div>
+                    <div class="form-group">
+                        <label for="phone">Phone Number:</label>
+                        <input type="tel" id="phone" name="phone" placeholder="Enter your phone number (optional)">
+                    </div>
+                    <div class="form-group">
+                        <label for="subject">Subject:</label>
+                        <input type="text" id="subject" name="subject" placeholder="What is your message about?">
+                    </div>
+                    <div class="form-group">
+                        <label for="message">Message <span class="required">*</span>:</label>
+                        <textarea id="message" name="message" rows="6" required placeholder="Enter your message or query here..."></textarea>
+                    </div>
+                    <button type="submit" class="button-primary">Send Message</button>
+                    <div id="contact-form-status" style="margin-top: 15px;"></div>
+                </form>
+
+                <div class="contact-details">
+                    <h3>Our Information</h3>
+                    <p><i class="fas fa-phone fa-fw"></i> <a href="tel:+919549116541">+91 9549116541</a></p>
+                    <p><i class="fab fa-whatsapp fa-fw"></i> <a href="https://wa.me/919549116541" target="_blank">+91 9549116541</a> (WhatsApp)</p> <p><i class="fas fa-envelope fa-fw"></i> <a href="mailto:madhavbtd@gmail.com">madhavbtd@gmail.com</a></p>
+                    <p><i class="fas fa-map-marker-alt fa-fw"></i> Head Office: Moodh Market, Batadu, Barmer (Raj.) 344035</p>
+
+                    <h4><i class="fas fa-clock fa-fw"></i> Working Hours:</h4>
+                    <p style="padding-left: 30px;">Everyday: 10:00 AM - 10:00 PM</p>
+
+                     <h4 style="margin-top: 25px;"><i class="fas fa-hashtag fa-fw"></i> Connect with Us:</h4>
+                     <div class="social-links">
+                        <a href="https://www.instagram.com/devendra_jaani?igsh=aHhwcXVtb2I1Zmp6&utm_source=qr" target="_blank" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+                        <a href="https://www.facebook.com/share/18fEWTnpZ5/?mibextid=wwXIfr" target="_blank" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
+                        </div>
+
+                    <h4 style="margin-top: 25px;"><i class="fas fa-map-marked-alt fa-fw"></i> Location Map:</h4>
+                    <div id="map-placeholder" class="contact-map">
+                         <p>(Embed Google Map Here)</p>
+                         </div>
+
+                    <h4 style="margin-top: 25px;"><i class="fas fa-qrcode fa-fw"></i> Scan for Location:</h4>
+                    <div id="qrcode-placeholder" class="contact-qrcode">
+                        <p>(Location QR Code image required)</p>
+                        </div>
+                </div>
             </div>
         </div>
     </main>
 
     <footer>
          <div class="container">
-             <p>&copy; 2025 माधव मल्टीप्रिंट. सर्वाधिकार सुरक्षित।</p>
-            <p><a href="#">गोपनीयता नीति</a> | <a href="#">नियम और शर्तें</a> | <a href="contact.html">संपर्क</a></p>
+             <p>&copy; 2025 Madhav Offset. All Rights Reserved.</p>
+             <p><a href="#">Privacy Policy</a> | <a href="#">Terms & Conditions</a> | <a href="contact.html">Contact</a></p>
          </div>
     </footer>
 
