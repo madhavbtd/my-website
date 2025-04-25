@@ -309,17 +309,39 @@ body {
     border-radius: var(--card-border-radius); box-shadow: var(--card-shadow);
     border: 1px solid var(--border-color); position: relative;
 }
-.search-bar label { margin: 0; color: var(--text-muted); font-size: 0.95em; font-weight: 500; flex-shrink: 0; margin-right: 8px; }
-.search-bar input[type="text"] {
-    padding: 8px 10px; border: 1px solid var(--border-color); border-radius: 5px;
-    font-size: 0.9em; /* width: 250px; */ flex-grow: 1; /* इनपुट को फैलने दें */
-    height: 38px; box-sizing: border-box;
+.search-bar label {
+    margin: 0; color: var(--text-muted); font-size: 0.95em; font-weight: 500;
+    flex-shrink: 0; /* Label will not shrink */
+    margin-right: 8px;
 }
-.search-bar input[type="text"]:focus { outline: none; border-color: var(--primary-color); box-shadow: 0 0 0 2px rgba(0, 86, 179, 0.2); }
+.search-bar input[type="text"] {
+    padding: 8px 10px;
+    border: 1px solid var(--border-color);
+    border-radius: 5px;
+    font-size: 0.9em;
+    /* flex-grow: 1; */ /* <<--- हटाया गया या 0 किया गया */
+    flex-grow: 0; /* <<--- 0 किया गया */
+    width: 350px; /* <<--- निश्चित चौड़ाई सेट की गई (आवश्यकतानुसार बदलें) */
+    height: 38px;
+    box-sizing: border-box;
+}
+.search-bar input[type="text"]:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 2px rgba(0, 86, 179, 0.2);
+ }
 .search-bar button {
-    background-color: var(--success-color); color: white; border: none; padding: 0 14px; /* पैडिंग एडजस्ट की */
-    cursor: pointer; border-radius: 5px; font-size: 1.1em; /* आइकन थोड़ा बड़ा */ height: 38px;
-    line-height: 38px; /* वर्टीकल अलाइनमेंट */ transition: background-color 0.2s ease; flex-shrink: 0;
+    background-color: var(--success-color);
+    color: white;
+    border: none;
+    padding: 0 14px; /* पैडिंग एडजस्ट की */
+    cursor: pointer;
+    border-radius: 5px;
+    font-size: 1.1em; /* आइकन थोड़ा बड़ा */
+    height: 38px;
+    line-height: 38px; /* वर्टीकल अलाइनमेंट */
+    transition: background-color 0.2s ease;
+    flex-shrink: 0; /* Button will not shrink */
 }
 .search-bar button:hover { background-color: #1e7e34; }
 .suggestions-list {
@@ -379,8 +401,20 @@ body {
     .date-time-container { order: 1; text-align: center; }
     .header-icons { order: 0; align-self: flex-end; }
 
-    .search-bar { flex-direction: column; align-items: stretch; gap: 10px; padding: 10px; position: relative; }
-    .search-bar input[type="text"] { width: 100%; max-width: none; } .search-bar button { width: 100%; }
+    .search-bar {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 10px;
+        padding: 10px;
+        position: relative;
+    }
+    .search-bar input[type="text"] {
+        width: 100%; /* छोटी स्क्रीन पर चौड़ाई 100% रहेगी */
+        max-width: none;
+    }
+    .search-bar button {
+        width: 100%;
+    }
     .suggestions-list { position: static; width: 100%; max-width: none; margin-top: 5px; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05); border-radius: 5px; right: auto; left: auto; max-height: 150px; border: 1px solid var(--border-color); }
 
     .kpi-section { gap: 15px; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); } /* मोबाइल पर KPI गैप */
