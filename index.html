@@ -1,13 +1,13 @@
 <!DOCTYPE html>
-<html lang="en"> <head>
+<html lang="en">
+<head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Home - Madhav Multiprint</title> <link rel="stylesheet" href="css/index.css">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <title>Home - Madhav Multiprint</title>
+    <link rel="stylesheet" href="css/index.css"> <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-</head>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"> </head>
 <body>
     <header>
         <nav class="container">
@@ -15,70 +15,144 @@
                  <a href="index.html"><img src="https://i.ibb.co/Z6gKD9Rd/1.png" alt="Madhav Multiprint Logo"></a>
             </div>
             <div class="nav-links">
-                 <a href="index.html" class="active">Home</a> <a href="products.html">Products</a> <a href="about.html">About Us</a> <a href="contact.html">Contact</a> <a href="cart.html">Cart (<span id="cart-count">0</span>)</a> <a href="/admin/login.html" class="admin-login-link" target="_blank">Admin Login</a> </div>
+                 <a href="index.html" class="active">Home</a>
+                 <a href="products.html">Products</a>
+                 <a href="about.html">About Us</a>
+                 <a href="contact.html">Contact</a>
+                 <a href="cart.html">Cart (<span id="cart-count">0</span>)</a>
+                 <a href="/admin/login.html" class="admin-login-link" target="_blank">Admin Login</a>
+            </div>
             <button class="mobile-menu-toggle" aria-label="Toggle menu">☰</button>
         </nav>
     </header>
 
     <main>
         <section class="hero-section">
-             <h1>High-Quality Printing Services</h1> <p>For Flex Banners, Wedding Cards, Bill Books, Visiting Cards, and all your printing needs.</p>
-             <a href="products.html" class="button-primary">View Our Products</a>
+            <div class="hero-overlay"></div> <div class="container hero-content">
+                 <h1>गुणवत्तापूर्ण प्रिंटिंग सेवाएँ - आपके विचारों को दें जीवंत रूप</h1>
+                 <p>फ्लेक्स बैनर, शादी कार्ड, बिल बुक, विजिटिंग कार्ड, और आपकी सभी प्रिंटिंग आवश्यकताओं के लिए।</p>
+                 <div class="hero-buttons">
+                    <a href="products.html" class="button-primary">हमारे प्रोडक्ट्स देखें</a>
+                    <a href="contact.html" class="button-secondary">कोटेशन प्राप्त करें</a>
+                 </div>
+            </div>
         </section>
 
         <section class="container info-section" id="services">
-            <h2>Our Main Services</h2> <div class="services-grid">
+            <h2>हमारी मुख्य सेवाएँ</h2>
+            <div class="services-grid">
                 <div class="service-item">
-                    <i class="fas fa-print fa-2x"></i>
-                    <h3>Flex & Vinyl Printing</h3> <p>Attractive and durable flex and vinyl banners of any size.</p>
+                    <i class="fas fa-print service-icon"></i>
+                    <h4>फ्लेक्स और विनाइल प्रिंटिंग</h4>
+                    <p>किसी भी आकार के आकर्षक और टिकाऊ फ्लेक्स और विनाइल बैनर।</p>
                 </div>
                 <div class="service-item">
-                     <i class="fas fa-address-card fa-2x"></i>
-                     <h3>Visiting & ID Cards</h3>
-                     <p>Wide range of professional business cards and ID cards.</p>
+                     <i class="fas fa-address-card service-icon"></i>
+                     <h4>विजिटिंग और आईडी कार्ड</h4>
+                     <p>प्रोफेशनल बिजनेस कार्ड और आईडी कार्ड की विस्तृत रेंज।</p>
                 </div>
                  <div class="service-item">
-                     <i class="fas fa-book-open fa-2x"></i>
-                     <h3>Bill Books & Stationery</h3>
-                     <p>Custom bill books, letterheads, envelopes, etc., as per your needs.</p>
+                     <i class="fas fa-book-open service-icon"></i>
+                     <h4>बिल बुक और स्टेशनरी</h4>
+                     <p>आपकी आवश्यकतानुसार कस्टम बिल बुक, लेटरहेड, लिफाफे आदि।</p>
                 </div>
                  <div class="service-item">
-                    <i class="fas fa-envelope-open-text fa-2x"></i>
-                     <h3>Wedding and Invitation Cards</h3>
-                     <p>Unique and beautiful invitation cards for weddings and other occasions.</p>
+                    <i class="fas fa-envelope-open-text service-icon"></i>
+                     <h4>शादी और निमंत्रण कार्ड</h4>
+                     <p>शादियों और अन्य अवसरों के लिए अद्वितीय और सुंदर निमंत्रण कार्ड।</p>
                 </div>
                  <div class="service-item">
-                     <i class="fas fa-stamp fa-2x"></i>
-                     <h3>Stamps & Stickers</h3>
-                     <p>Rubber stamps, pre-ink stamps, and custom stickers.</p>
+                     <i class="fas fa-stamp service-icon"></i>
+                     <h4>स्टाम्प और स्टिकर</h4>
+                     <p>रबर स्टाम्प, प्री-इंक स्टाम्प, और कस्टम स्टिकर।</p>
                 </div>
                  <div class="service-item">
-                    <i class="fas fa-palette fa-2x"></i>
-                    <h3>Graphic Design</h3> <p>Creative designing for logos, brochures, social media posts.</p>
+                    <i class="fas fa-palette service-icon"></i>
+                    <h4>ग्राफिक डिजाइनिंग</h4>
+                    <p>लोगो, ब्रोशर, सोशल मीडिया पोस्ट के लिए क्रिएटिव डिजाइनिंग।</p>
                 </div>
             </div>
         </section>
 
-         <section class="container info-section" id="testimonials">
-             <h2>What Our Customers Say</h2> <div class="testimonial">
-                  <p>"Excellent quality and timely delivery. Madhav Multiprint's work is truly commendable!"</p>
-                 <span>- A Satisfied Customer</span>
+        <section class="info-section section-bg-light" id="process">
+             <div class="container">
+                <h2>हमारी प्रक्रिया (How It Works)</h2>
+                <div class="process-steps">
+                    <div class="step-item">
+                        <div class="step-icon-wrapper"><i class="fas fa-upload step-icon"></i></div>
+                        <h4>1. आवश्यकता बताएं / डिज़ाइन भेजें</h4>
+                        <p>हमें अपनी प्रिंटिंग जरूरतें बताएं या अपना डिज़ाइन अपलोड करें।</p>
+                    </div>
+                    <div class="step-item">
+                        <div class="step-icon-wrapper"><i class="fas fa-calculator step-icon"></i></div>
+                        <h4>2. कोटेशन और पुष्टि</h4>
+                        <p>हम आपको स्पेसिफिकेशन्स के आधार पर कोटेशन भेजेंगे।</p>
+                    </div>
+                    <div class="step-item">
+                        <div class="step-icon-wrapper"><i class="fas fa-print step-icon"></i></div>
+                        <h4>3. प्रिंटिंग</h4>
+                        <p>पुष्टि के बाद, हम उच्च गुणवत्ता वाली प्रिंटिंग शुरू करते हैं।</p>
+                    </div>
+                    <div class="step-item">
+                         <div class="step-icon-wrapper"><i class="fas fa-truck-fast step-icon"></i></div>
+                         <h4>4. डिलीवरी</h4>
+                         <p>तैयार प्रोडक्ट की शीघ्र और सुरक्षित डिलीवरी।</p>
+                    </div>
+                </div>
              </div>
-              <div class="testimonial">
-                  <p>"From design to printing, everything was perfect. Thank you!"</p>
-                  <span>- Another Satisfied Customer</span>
+        </section>
+
+        <section class="container info-section" id="portfolio">
+             <h2>हमारे कुछ काम (Our Work)</h2>
+             <p class="section-subtitle" style="text-align:center;">हमारे द्वारा किए गए कुछ बेहतरीन प्रिंटिंग कार्यों पर एक नज़र डालें।</p>
+             <div class="portfolio-grid">
+                 <div class="portfolio-item">
+                     <img src="https://via.placeholder.com/400x300.png?text=Visiting+Cards" alt="Portfolio Item 1">
+                     {/* <p>प्रोजेक्ट का नाम या प्रकार</p> */}
+                 </div>
+                 <div class="portfolio-item">
+                     <img src="https://via.placeholder.com/400x300.png?text=Brochure" alt="Portfolio Item 2">
+                     {/* <p>प्रोजेक्ट का नाम या प्रकार</p> */}
+                 </div>
+                 <div class="portfolio-item">
+                    <img src="https://via.placeholder.com/400x300.png?text=Flex+Banner" alt="Portfolio Item 3">
+                    {/* <p>प्रोजेक्ट का नाम या प्रकार</p> */}
+                </div>
+                 </div>
+             <div style="text-align: center; margin-top: 30px;">
+                 <a href="products.html" class="button-secondary">और देखें</a>
              </div>
-             </section>
+         </section>
+
+
+         <section class="info-section section-bg-light" id="testimonials">
+            <div class="container">
+                <h2>ग्राहक क्या कहते हैं</h2>
+                <div class="testimonials-container">
+                    <div class="testimonial">
+                        <p>"उत्कृष्ट गुणवत्ता और समय पर डिलीवरी। माधव मल्टीप्रिंट का काम वास्तव में सराहनीय है!"</p>
+                        <span class="testimonial-author">- एक संतुष्ट ग्राहक</span>
+                    </div>
+                    <div class="testimonial">
+                        <p>"डिजाइन से लेकर प्रिंटिंग तक, सब कुछ उत्तम था। धन्यवाद!"</p>
+                        <span class="testimonial-author">- एक अन्य संतुष्ट ग्राहक</span>
+                    </div>
+                     </div>
+            </div>
+         </section>
     </main>
 
     <footer>
          <div class="container">
              <p>&copy; 2025 Madhav Multiprint. All Rights Reserved.</p>
-              <p><a href="#">Privacy Policy</a> | <a href="#">Terms & Conditions</a> | <a href="contact.html">Contact</a></p>
+              <p>
+                 <a href="#">Privacy Policy</a> |
+                 <a href="#">Terms & Conditions</a> |
+                 <a href="contact.html">Contact</a>
+              </p>
          </div>
     </footer>
 
     <script src="js/firebase-config.js" type="module"></script>
-    <script src="js/main.js" type="module" defer></script>
-</body>
+    <script src="js/main.js" type="module" defer></script> </body>
 </html>
