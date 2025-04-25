@@ -1,4 +1,4 @@
-/* css/style.css (Consolidated & Enhanced for Contact Page) */
+/* css/style.css (Consolidated & Enhanced with new Cover Image) */
 
 /* --- Variables and Basic Reset --- */
 :root {
@@ -65,7 +65,7 @@ header nav.container { display: flex; justify-content: space-between; align-item
 
 /* --- Main Content Area --- */
 main { flex-grow: 1; width: 100%; }
-main.container { /* Styles when main has container class (e.g., About page) */
+main.container { /* Styles when main has container class */
     padding-top: 40px; padding-bottom: 40px; background-color: var(--white-bg);
     margin-top: 20px; margin-bottom: 20px; box-shadow: var(--box-shadow);
     border-radius: var(--border-radius);
@@ -81,7 +81,7 @@ footer a { color: #ced4da; }
 footer a:hover { color: #fff; }
 
 /* --- General Section Styling --- */
-.info-section { padding: 50px 0; } /* Use within main.container */
+.info-section { padding: 50px 0; }
 .info-section h2 {
     text-align: center; margin-bottom: 45px; font-size: 2em;
     position: relative; padding-bottom: 10px;
@@ -131,54 +131,50 @@ footer a:hover { color: #fff; }
 /* === Contact Page Specific Styles === */
 /* ================================== */
 
-.contact-page-container {
-    padding-top: 0 !important; /* Remove top padding if cover exists */
-}
+.contact-page-container { padding-top: 0 !important; }
 
 /* Cover Image Section Style */
 .page-cover.contact-cover-image {
-    background-image: linear-gradient(rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.3)), url('https://i.ibb.co/hx6t57pV/1.jpg'); /* Your Image URL */
+    background-image: linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)), url('https://i.ibb.co/HTZML5Lx/1.jpg'); /* UPDATED IMAGE URL */
     background-size: cover;
     background-position: center center;
     text-align: center;
-    padding: 80px 20px; /* Adjust padding */
-    margin-bottom: 50px; /* Space below cover */
-    color: var(--white-bg); /* Text color on image */
-    border-radius: 0; /* Full width */
-    min-height: 250px; /* Ensure some height */
+    padding: 80px 20px; /* Adjusted padding */
+    margin-bottom: 50px;
+    color: var(--white-bg);
+    min-height: 280px; /* Increased height */
     display: flex;
     align-items: center;
     justify-content: center;
     flex-direction: column;
+    border-radius: 0; /* Full width cover */
 }
 .page-cover.contact-cover-image h1 {
     color: var(--white-bg);
-    font-size: 3em; /* Larger heading */
+    font-size: 2.8em; /* Larger heading */
     margin-bottom: 15px;
-    text-shadow: 1px 1px 3px rgba(0,0,0,0.5); /* Text shadow for readability */
+    text-shadow: 1px 1px 4px rgba(0,0,0,0.6); /* Enhanced shadow */
 }
 .page-cover.contact-cover-image p {
     font-size: 1.2em;
-    color: rgba(255, 255, 255, 0.9); /* Slightly transparent white */
+    color: rgba(255, 255, 255, 0.95); /* Less transparent */
     margin-bottom: 0;
-    text-shadow: 1px 1px 2px rgba(0,0,0,0.4);
+    text-shadow: 1px 1px 3px rgba(0,0,0,0.5);
 }
 
 /* Contact Page Intro Text */
 .contact-intro {
     text-align: center; font-size: 1.1em; color: var(--text-muted);
-    max-width: 700px; margin: 0 auto 50px auto; /* More space below */
+    max-width: 700px; margin: 0 auto 50px auto;
 }
 
 /* Contact Layout (Flexbox) */
-.contact-layout {
-    display: flex; flex-wrap: wrap; gap: 50px; /* More gap */ align-items: flex-start;
-}
+.contact-layout { display: flex; flex-wrap: wrap; gap: 50px; align-items: flex-start; }
 
 /* Contact Form Styling */
 #contact-form {
     flex: 1 1 55%; min-width: 300px; background-color: var(--white-bg);
-    padding: 35px; /* More padding */ border-radius: var(--border-radius);
+    padding: 35px; border-radius: var(--border-radius);
     border: 1px solid var(--border-color); box-shadow: var(--box-shadow);
 }
 #contact-form h3 {
@@ -213,41 +209,46 @@ footer a:hover { color: #fff; }
     margin-bottom: 18px; display: flex; align-items: flex-start; gap: 15px;
     font-size: 1em; color: var(--text-color); line-height: 1.6;
 }
-.contact-details i.fa-fw { /* Font Awesome Fixed Width */
+.contact-details i.fa-fw {
     color: var(--primary-color); width: 22px; text-align: center; font-size: 1.2em;
     margin-top: 3px; flex-shrink: 0;
 }
-.contact-details p.working-hours { /* Specific style for hours */
-    padding-left: 37px; /* Align with text above, accounting for icon width + gap */
-    margin-top: -10px; /* Adjust spacing after heading */
-}
+.contact-details p.working-hours { padding-left: 37px; margin-top: -10px; }
 .contact-details a { color: var(--text-color); word-break: break-word; }
 .contact-details a:hover { color: var(--primary-color); text-decoration: underline; }
 
 /* Social Links Styling */
-.social-links { display: flex; flex-wrap: wrap; gap: 20px; margin-top: 15px; padding-left: 37px; /* Align */ }
+.social-links { display: flex; flex-wrap: wrap; gap: 20px; margin-top: 15px; padding-left: 37px; }
 .social-links a {
     color: var(--secondary-color); font-size: 1.9em; /* Larger icons */
     transition: color 0.2s ease, transform 0.2s ease; text-decoration: none; line-height: 1;
 }
-.social-links a:hover { transform: scale(1.15); /* Bigger zoom */ }
+.social-links a:hover { transform: scale(1.15); }
 .social-links a[aria-label="Instagram"]:hover { color: #E1306C; }
 .social-links a[aria-label="Facebook"]:hover { color: #1877F2; }
 .social-links a[aria-label="WhatsApp"]:hover { color: #25D366; }
 
-/* Map and QR Code Placeholders */
+/* Map and QR Code Placeholders/Containers */
 .contact-map, .contact-qrcode {
     background-color: #f0f0f0; margin-top: 15px; border-radius: var(--border-radius);
     border: 1px solid var(--border-color); display: flex; align-items: center;
-    justify-content: center; min-height: 180px; text-align: center;
+    justify-content: center; min-height: 200px; /* Increased height */ text-align: center; overflow: hidden; /* Hide iframe overflow */
 }
-.contact-map p, .contact-qrcode p { color: var(--text-muted); font-style: italic; margin: 0; }
-.contact-qrcode img { max-width: 150px; height: auto; margin: 10px auto; }
+.contact-map p, .contact-qrcode p { color: var(--text-muted); font-style: italic; margin: 0; padding: 10px; }
+.contact-qrcode img { max-width: 160px; height: auto; margin: 10px auto; }
+/* Style for the actual iframe when embedded */
+.contact-map iframe {
+    width: 100%;
+    height: 250px; /* Set a fixed height or use responsive techniques */
+    border: 0;
+}
+
 
 /* Form Status Message Styling */
 #contact-form-status { margin-top: 20px; font-weight: 500; padding: 12px; border-radius: var(--border-radius); display: none; text-align: center; }
 #contact-form-status.success { background-color: #d1e7dd; color: #0f5132; border: 1px solid #badbcc; }
 #contact-form-status.error { background-color: #f8d7da; color: #842029; border: 1px solid #f5c2c7; }
+
 
 /* --- Responsive --- */
 @media (max-width: 768px) {
