@@ -1,44 +1,16 @@
 /* css/style.css */
 
-/* बेसिक रीसेट और फॉन्ट */
-body {
-    margin: 0;
-    padding: 0;
-    font-family: 'Poppins', sans-serif; /* Poppins फॉन्ट */
-    background-color: #f4f7f9; /* हल्का बैकग्राउंड रंग */
-    color: #333;
-    line-height: 1.6;
-}
+/* ... (स्टेज 1 का मौजूदा कोड) ... */
 
-h1, h2, h3 {
-    color: #0056b3; /* प्राथमिक रंग */
-}
-
-a {
-    color: #0056b3;
-    text-decoration: none;
-}
-
-a:hover {
-    text-decoration: underline;
-}
-
-/* कंटेनर */
-.container {
-    max-width: 1200px;
-    margin: 20px auto;
-    padding: 20px;
-    background-color: #fff;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    border-radius: 8px;
-}
-
-/* हेडर और नेविगेशन */
+/* हेडर स्टाइल */
 header {
-    background-color: #f8f9fa; /* हल्का ग्रे हेडर */
-    padding: 10px 0;
-    border-bottom: 1px solid #e0e0e0;
-    margin-bottom: 20px;
+    background-color: #fff; /* सफेद हेडर */
+    border-bottom: 1px solid #eee;
+    padding: 15px 0;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    position: sticky; /* हेडर को ऊपर चिपकाए रखें (वैकल्पिक) */
+    top: 0;
+    z-index: 1000;
 }
 
 header nav {
@@ -46,10 +18,12 @@ header nav {
     margin: 0 auto;
     padding: 0 20px;
     display: flex;
-    justify-content: space-between; /* या flex-start/center आपकी पसंद अनुसार */
+    justify-content: space-between;
     align-items: center;
-    flex-wrap: wrap; /* छोटे स्क्रीन के लिए */
-    gap: 15px; /* लिंक्स के बीच गैप */
+}
+
+.logo img { /* मान लें कि लोगो के लिए एक क्लास है */
+    max-height: 50px; /* लोगो की ऊंचाई सेट करें */
 }
 
 header nav a {
@@ -66,84 +40,55 @@ header nav a:hover, header nav a.active {
     text-decoration: none;
 }
 
-/* एडमिन लॉगिन लिंक का स्टाइल */
 .admin-login-link {
-    background-color: #6c757d; /* सेकेंडरी रंग */
-    color: #fff !important; /* टेक्स्ट का रंग सफेद */
-    margin-left: auto; /* इसे दाईं ओर धकेलता है (यदि flex-start का उपयोग किया जाता है) */
+    background-color: #6c757d;
+    color: #fff !important;
+    margin-left: 20px; /* थोड़ा गैप */
 }
 .admin-login-link:hover {
     background-color: #5a6268;
 }
 
-
-/* मुख्य कंटेंट एरिया */
-main {
-    min-height: calc(100vh - 250px); /* स्क्रीन ऊंचाई के अनुसार न्यूनतम ऊंचाई */
-    padding: 0 20px; /* साइड पैडिंग */
-}
-
-/* फुटर */
-footer {
+/* हीरो सेक्शन (होमपेज) उदाहरण */
+.hero-section {
+    background-color: #e9f5ff; /* हल्का नीला बैकग्राउंड */
+    padding: 60px 20px;
     text-align: center;
-    margin-top: 30px;
-    padding: 20px;
-    background-color: #343a40; /* गहरा फुटर */
-    color: #f8f9fa;
-    font-size: 0.9em;
-    border-top: 1px solid #e0e0e0;
+    margin-bottom: 30px;
+}
+.hero-section h1 {
+    color: #0056b3;
+    font-size: 2.5em;
+    margin-bottom: 15px;
+}
+.hero-section p {
+    font-size: 1.1em;
+    color: #555;
+    margin-bottom: 25px;
 }
 
-/* बेसिक फॉर्म स्टाइल (ज़रूरत पड़ने पर बदलें) */
-form {
-    background-color: #fdfdfd;
-    padding: 20px;
-    border: 1px solid #eee;
-    border-radius: 5px;
-    margin-top: 20px;
-}
-form label {
-    display: block;
-    margin-bottom: 8px;
-    font-weight: 500;
-}
-form input[type="text"],
-form input[type="email"],
-form input[type="tel"],
-form textarea,
-form input[type="file"],
-form input[type="number"] {
-    width: 100%;
-    padding: 10px;
-    margin-bottom: 15px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    box-sizing: border-box;
-    font-family: inherit;
-    font-size: 0.95em;
-}
-form button {
+/* बटन स्टाइल */
+.button-primary {
     background-color: #0056b3;
     color: white;
     padding: 12px 25px;
     border: none;
-    border-radius: 4px;
-    cursor: pointer;
+    border-radius: 5px;
     font-size: 1em;
     font-weight: 500;
+    cursor: pointer;
     transition: background-color 0.2s ease;
 }
-form button:hover {
+.button-primary:hover {
     background-color: #004085;
 }
 
-/* प्लेसहोल्डर सेक्शन स्टाइल */
-.filters, .product-list, #cart-items, #cart-summary, #product-detail-content .images, #product-detail-content .options {
-    border: 1px dashed #ccc;
-    padding: 20px;
-    margin-bottom: 20px;
+/* फुटर स्टाइल */
+footer {
     text-align: center;
-    color: #999;
-    min-height: 50px;
-    background-color: #f9f9f9;
+    margin-top: 40px;
+    padding: 25px;
+    background-color: #343a40;
+    color: #f8f9fa;
+    font-size: 0.9em;
 }
