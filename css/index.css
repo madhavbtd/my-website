@@ -314,17 +314,21 @@ body {
     flex-shrink: 0; /* Label will not shrink */
     margin-right: 8px;
 }
+
+/* >>>>>>>>> बदलाव यहाँ है <<<<<<<<< */
 .search-bar input[type="text"] {
     padding: 8px 10px;
     border: 1px solid var(--border-color);
     border-radius: 5px;
     font-size: 0.9em;
-    /* flex-grow: 1; */ /* <<--- हटाया गया या 0 किया गया */
-    flex-grow: 0; /* <<--- 0 किया गया */
-    width: 350px; /* <<--- निश्चित चौड़ाई सेट की गई (आवश्यकतानुसार बदलें) */
+    /* flex-grow: 1; */ /* हटाया गया */
+    flex-grow: 0; /* 0 सेट किया गया */
+    width: 350px !important; /* <<--- निश्चित चौड़ाई और !important जोड़ा गया */
     height: 38px;
     box-sizing: border-box;
 }
+/* >>>>>>>>> बदलाव समाप्त <<<<<<<<< */
+
 .search-bar input[type="text"]:focus {
     outline: none;
     border-color: var(--primary-color);
@@ -409,10 +413,10 @@ body {
         position: relative;
     }
     .search-bar input[type="text"] {
-        width: 100%; /* छोटी स्क्रीन पर चौड़ाई 100% रहेगी */
+        width: 100% !important; /* <<--- सुनिश्चित करें कि मोबाइल पर चौड़ाई 100% ही रहे, !important के साथ भी */
         max-width: none;
     }
-    .search-bar button {
+     .search-bar button {
         width: 100%;
     }
     .suggestions-list { position: static; width: 100%; max-width: none; margin-top: 5px; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05); border-radius: 5px; right: auto; left: auto; max-height: 150px; border: 1px solid var(--border-color); }
