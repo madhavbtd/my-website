@@ -1,393 +1,167 @@
-/* css/style.css (Consolidated & Enhanced - Cover Image, Layout Fixes) */
+/* css/style.css additions for About Page */
 
-/* --- Variables and Basic Reset --- */
-:root {
-    --primary-color: #0056b3; /* Deep Blue */
-    --primary-color-dark: #004085;
-    --secondary-color: #6c757d; /* Grey */
-    --success-color: #28a745; /* Green */
-    --danger-color: #dc3545;  /* Red */
-    --info-color: #17a2b8;   /* Teal */
-    --warning-color: #ffc107; /* Yellow */
-    --light-bg: #f8f9fa; /* Very Light Grey */
-    --white-bg: #ffffff; /* White */
-    --text-color: #343a40; /* Dark Grey Text */
-    --text-muted: #6c757d; /* Medium Grey Text */
-    --border-color: #dee2e6; /* Light Grey Border */
-    --font-family: 'Poppins', sans-serif; /* Poppins Font */
-    --border-radius: 6px;
-    --box-shadow: 0 2px 5px rgba(0, 0, 0, 0.08);
-    --container-max-width: 1200px; /* Max width for content */
+/* ... (previous CSS code) ... */
+
+/* About Page Cover Image Style */
+.page-cover.about-cover-image {
+    background-image: linear-gradient(rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.3)), url('https://i.ibb.co/HTZML5Lx/1.jpg'); /* Using the image from contact page for now */
+    background-size: cover;
+    background-position: center 30%; /* Adjust vertical position if needed */
+    min-height: 200px; /* Slightly smaller cover */
+    padding: 60px 20px;
+}
+.page-cover.about-cover-image h1 { font-size: 2.5em; }
+.page-cover.about-cover-image p { font-size: 1.1em; }
+
+
+/* About Page Content Container */
+.about-page-content {
+    padding-top: 30px;
+    padding-bottom: 30px;
 }
 
-/* Basic Reset */
-*,
-*::before,
-*::after {
-    box-sizing: border-box;
-    margin: 0;
-    padding: 0;
-}
-
-body {
-    font-family: var(--font-family);
-    background-color: #f4f7f9;
+/* Intro Text Styling */
+.about-intro .intro-text {
+    font-size: 1.2em;
+    font-weight: 500;
     color: var(--text-color);
-    line-height: 1.6;
-    font-size: 15px;
-    display: flex;
-    flex-direction: column;
-    min-height: 100vh; /* Ensure footer sticks to bottom */
-}
-
-/* Headings */
-h1, h2, h3, h4 {
-    font-weight: 600;
-    margin-top: 0;
-    margin-bottom: 0.8em;
-    color: var(--primary-color);
-}
-h1 { font-size: 2.2em; line-height: 1.2; }
-h2 { font-size: 1.8em; line-height: 1.3; }
-h3 { font-size: 1.3em; color: var(--secondary-color); }
-h4 { font-size: 1.1em; }
-
-/* Paragraphs and Links */
-p { margin-top: 0; margin-bottom: 1em; color: var(--text-muted); }
-a { color: var(--primary-color); text-decoration: none; transition: color 0.2s ease; }
-a:hover { text-decoration: none; color: var(--primary-color-dark); }
-img { max-width: 100%; height: auto; display: block; }
-ul, ol { padding-left: 20px; margin-bottom: 1em;}
-
-/* --- Layout Container --- */
-.container {
-    width: 100%;
-    max-width: var(--container-max-width);
+    text-align: center;
+    margin-bottom: 1.5em;
+    max-width: 800px;
     margin-left: auto;
     margin-right: auto;
-    padding-left: 20px;
-    padding-right: 20px;
 }
-
-/* --- Header & Navigation --- */
-header {
-    background-color: var(--white-bg);
-    border-bottom: 1px solid var(--border-color);
-    padding: 10px 0;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-    position: sticky; /* Keep header fixed at top */
-    top: 0;
-    z-index: 1000;
-    width: 100%;
+.about-intro p {
+    text-align: center;
+    max-width: 800px;
+    margin-left: auto;
+    margin-right: auto;
 }
-header nav.container {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-.logo img {
-    max-height: 55px;
-    vertical-align: middle;
-}
-.nav-links {
-    display: flex;
-    gap: 10px; /* Adjust spacing */
-    align-items: center;
-    flex-wrap: wrap;
-    list-style: none;
-    padding: 0;
-    margin: 0;
-}
-.nav-links a {
-    color: #333;
-    padding: 10px 15px;
-    border-radius: var(--border-radius);
+.highlight-inline { /* For highlighting within a paragraph */
+    background-color: rgba(0, 86, 179, 0.1); /* Light primary color background */
+    padding: 0.1em 0.3em;
+    border-radius: 3px;
     font-weight: 500;
-    transition: background-color 0.2s ease, color 0.2s ease;
-    font-size: 0.95em;
-    white-space: nowrap;
+    color: var(--primary-color-dark);
 }
-.nav-links a:hover,
-.nav-links a.active {
-    background-color: var(--primary-color);
-    color: #fff;
-}
-.admin-login-link {
-    background-color: var(--secondary-color);
-    color: #fff !important; /* Important to override other link styles */
-    font-size: 0.9em;
-    padding: 8px 15px;
-    margin-left: 15px;
-    border-radius: var(--border-radius); /* Match other links */
-}
-.admin-login-link:hover {
-    background-color: #5a6268;
-}
-.mobile-menu-toggle { /* Style for hamburger button */
-    display: none; /* Hidden on desktop */
-    background: none;
+
+/* Section Divider */
+hr.section-divider {
     border: none;
-    font-size: 1.8em;
-    cursor: pointer;
-    padding: 5px;
-    line-height: 1;
-    color: var(--text-color);
+    border-top: 1px solid var(--border-color);
+    margin: 50px auto; /* Space around divider */
+    max-width: 80%;
 }
 
-/* --- Main Content Area --- */
-main {
-    flex-grow: 1; /* Allows main to fill space, pushing footer down */
-    width: 100%;
-}
-/* Style for pages where main content IS the container */
-main.container {
-    padding-top: 40px;
-    padding-bottom: 40px;
-    background-color: var(--white-bg);
-    margin-top: 20px;
-    margin-bottom: 20px;
-    box-shadow: var(--box-shadow);
-    border-radius: var(--border-radius);
-}
 
-/* --- Footer --- */
-footer {
-    text-align: center;
-    padding: 30px 20px;
-    background-color: #343a40; /* Dark footer */
-    color: #e9ecef;
-    font-size: 0.9em;
-    margin-top: auto; /* Pushed to bottom by main flex-grow */
-    width: 100%;
-    box-sizing: border-box;
+/* Founder Section Layout */
+.founder-section {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center; /* Vertically center align items */
+    gap: 40px; /* Space between image and text */
 }
-footer p { margin-bottom: 5px; color: #adb5bd; }
-footer a { color: #ced4da; }
-footer a:hover { color: #fff; }
-
-/* --- General Section Styling --- */
-.info-section {
-    padding: 50px 0; /* Vertical padding for sections within main.container */
+.founder-image-container {
+    flex: 1 1 300px; /* Flex basis for image */
+    max-width: 350px; /* Max width */
+    margin: 0 auto; /* Center image container if it wraps */
+    position: relative; /* For decorative element positioning */
+    text-align: center; /* Center the image inside */
 }
-.info-section h2 {
-    text-align: center;
-    margin-bottom: 45px;
-    font-size: 2em;
-    position: relative;
-    padding-bottom: 10px;
+.founder-image {
+    border-radius: 50%; /* Make image circular */
+    border: 5px solid var(--white-bg); /* White border */
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15); /* Shadow */
+    max-width: 80%; /* Control image size relative to container */
+    margin-bottom: 15px; /* Space below image */
 }
-.info-section h2::after { /* Underline effect */
-    content: '';
-    position: absolute;
-    bottom: 0;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 60px;
-    height: 3px;
+.founder-design-element { /* Simple decorative element below image */
+    width: 80px;
+    height: 4px;
     background-color: var(--primary-color);
     border-radius: 2px;
+    margin: 0 auto; /* Center the element */
 }
 
-/* --- Hero Section (Homepage) --- */
-.hero-section {
-    background-color: #eef5ff; /* Light blue background */
-    color: var(--text-color);
-    padding: 80px 20px;
-    text-align: center;
-    margin-bottom: 0; /* Remove bottom margin if main has top margin */
+.founder-details {
+    flex: 2 1 500px; /* Text takes more space */
 }
-.hero-section h1 {
-    color: var(--primary-color-dark);
-    font-size: 2.8em;
-    margin-bottom: 20px;
-    font-weight: 700;
+.founder-details h2 {
+    font-size: 1.8em; /* Heading size */
+    margin-bottom: 15px;
 }
-.hero-section p {
-    font-size: 1.15em;
-    color: var(--secondary-color);
-    margin-bottom: 30px;
-    max-width: 650px;
-    margin-left: auto;
-    margin-right: auto;
+.founder-details p {
+    font-size: 1em; /* Standard text size */
+    color: var(--text-muted);
+    line-height: 1.7; /* Improve readability */
 }
-
-/* --- Button Styles --- */
-.button-primary {
-    background-color: var(--primary-color);
-    color: white;
-    padding: 12px 30px;
-    border: none;
-    border-radius: var(--border-radius);
-    font-size: 1em;
-    font-weight: 500;
-    cursor: pointer;
-    transition: background-color 0.2s ease, transform 0.1s ease;
-    display: inline-block;
-    text-align: center;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-.button-primary:hover {
-    background-color: var(--primary-color-dark);
-    transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
-}
-.button-primary:active { transform: translateY(0); }
-
-/* --- Services Grid (Homepage) --- */
-.services-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: 30px;
-}
-.service-item {
-    background-color: var(--white-bg); padding: 30px 25px; border-radius: var(--border-radius);
-    text-align: center; border: 1px solid var(--border-color); box-shadow: var(--box-shadow);
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-.service-item:hover { transform: translateY(-5px); box-shadow: 0 6px 15px rgba(0,0,0,0.1); }
-.service-item i { color: var(--primary-color); margin-bottom: 20px; font-size: 2.5em; }
-.service-item h3 { margin-top: 0; margin-bottom: 10px; font-size: 1.2em; color: var(--text-color); }
-.service-item p { font-size: 0.95em; color: var(--text-muted); }
-
-/* --- Testimonial Styling (Homepage) --- */
-.testimonial {
-    background-color: var(--light-bg); padding: 25px; border-left: 5px solid var(--primary-color);
-    margin: 20px auto; font-style: italic; color: #555; border-radius: 0 var(--border-radius) var(--border-radius) 0;
-    max-width: 750px; box-shadow: var(--box-shadow);
-}
-.testimonial span { display: block; text-align: right; font-weight: 600; margin-top: 15px; font-style: normal; color: var(--text-color); }
-
-/* --- Basic Form Styling --- */
-.form-group { margin-bottom: 20px; }
-.form-group label { display: block; margin-bottom: 8px; font-weight: 500; font-size: 0.9em;}
-.form-group input[type="text"], .form-group input[type="email"], .form-group input[type="tel"],
-.form-group textarea, .form-group select, .form-group input[type="number"], .form-group input[type="file"] {
-    width: 100%; padding: 12px 15px; border: 1px solid #ccc; border-radius: var(--border-radius); box-sizing: border-box;
-    font-size: 1em; font-family: var(--font-family); transition: border-color .2s ease, box-shadow .2s ease;
-}
-.form-group textarea { resize: vertical; min-height: 100px; }
-.form-group input:focus, .form-group textarea:focus, .form-group select:focus {
-    border-color: var(--primary-color); outline: 0; box-shadow: 0 0 0 0.2rem rgba(0, 86, 179, 0.2);
-}
-.form-group .required { color: #dc3545; margin-left: 3px; }
-.form-group small { font-size: 0.8em; color: #666; display: block; margin-top: 4px; }
-
-/* ================================== */
-/* === Contact Page Specific Styles === */
-/* ================================== */
-
-/* Ensure main container for contact page has space before footer */
-.contact-page-container {
-    padding-top: 0 !important; /* Assuming cover image is used */
-    padding-bottom: 40px; /* Space above the footer inside the container */
-    /* margin-bottom: 40px; /* Space AFTER the container, before the footer */
-}
-
-/* Contact Page Cover Image */
-.page-cover.contact-cover-image {
-    background-image: linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)), url('https://i.ibb.co/HTZML5Lx/1.jpg'); /* UPDATED URL */
-    background-size: cover; background-position: center center; text-align: center;
-    padding: 80px 20px; margin-bottom: 50px; color: var(--white-bg); min-height: 280px;
-    display: flex; align-items: center; justify-content: center; flex-direction: column; border-radius: 0;
-}
-.page-cover.contact-cover-image h1 { color: var(--white-bg); font-size: 2.8em; margin-bottom: 15px; text-shadow: 1px 1px 4px rgba(0,0,0,0.6); }
-.page-cover.contact-cover-image p { font-size: 1.2em; color: rgba(255, 255, 255, 0.95); margin-bottom: 0; text-shadow: 1px 1px 3px rgba(0,0,0,0.5); }
-
-/* Contact Intro Text */
-.contact-intro { text-align: center; font-size: 1.1em; color: var(--text-muted); max-width: 700px; margin: 0 auto 50px auto; }
-
-/* Contact Layout Flexbox */
-.contact-layout {
-    display: flex; flex-wrap: wrap; gap: 40px;
-    align-items: stretch; /* UPDATED: Make columns appear equal height */
-    /* margin-bottom: 50px; /* Added margin below the layout, REMOVED as margin added to container */
-}
-
-/* Contact Form */
-#contact-form {
-    flex: 1 1 55%; min-width: 300px; background-color: var(--white-bg); padding: 30px 35px;
-    border-radius: var(--border-radius); border: 1px solid var(--border-color); box-shadow: var(--box-shadow);
-    display: flex; flex-direction: column;
-}
-#contact-form h3 { margin-top: 0; margin-bottom: 30px; padding-bottom: 15px; border-bottom: 1px solid var(--border-color); font-size: 1.5em; color: var(--primary-color); font-weight: 600; }
-#contact-form .form-group { margin-bottom: 20px; } /* Consistent spacing */
-#contact-form button[type="submit"] { margin-top: 10px; }
-
-/* Contact Details */
-.contact-details {
-    flex: 1 1 35%; min-width: 300px; background-color: #fdfdff; padding: 30px 35px;
-    border-radius: var(--border-radius); border: 1px solid var(--border-color);
-    display: flex; flex-direction: column;
-}
-.contact-details h3, .contact-details h4 { margin-top: 0; margin-bottom: 20px; color: var(--primary-color); font-weight: 600; padding-bottom: 12px; border-bottom: 1px solid var(--border-color); }
-.contact-details h4 { font-size: 1.1em; margin-top: 30px; border-bottom: none; padding-bottom: 5px; }
-.contact-details p { margin-bottom: 18px; display: flex; align-items: flex-start; gap: 15px; font-size: 1em; color: var(--text-color); line-height: 1.6; }
-.contact-details i.fa-fw { color: var(--primary-color); width: 22px; text-align: center; font-size: 1.2em; margin-top: 3px; flex-shrink: 0; }
-.contact-details p.working-hours { padding-left: 37px; margin-top: -10px; }
-.contact-details a { color: var(--text-color); word-break: break-word; }
-.contact-details a:hover { color: var(--primary-color); text-decoration: underline; }
-
-/* Social Links */
-.social-links { display: flex; flex-wrap: wrap; gap: 20px; margin-top: 15px; padding-left: 37px; }
-.social-links a { color: var(--secondary-color); font-size: 1.9em; transition: color 0.2s ease, transform 0.2s ease; text-decoration: none; line-height: 1; }
-.social-links a:hover { transform: scale(1.15); }
-.social-links a[aria-label="Instagram"]:hover { color: #E1306C; }
-.social-links a[aria-label="Facebook"]:hover { color: #1877F2; }
-.social-links a[aria-label="WhatsApp"]:hover { color: #25D366; }
-
-/* Map and QR Placeholders/Containers */
-.contact-map {
-    background-color: #f0f0f0; margin-top: 15px; border-radius: var(--border-radius);
-    border: 1px solid var(--border-color); display: flex; align-items: center;
-    justify-content: center; min-height: 250px; text-align: center; overflow: hidden;
-    margin-bottom: 20px; /* Added margin below map */
-}
-.contact-map iframe { width: 100%; height: 100%; min-height: 250px; border: 0; }
-.contact-map p { color: var(--text-muted); font-style: italic; margin: 0; padding: 10px; }
-/* QR Code section removed */
-
-/* Form Status Message Styling */
-#contact-form-status { margin-top: 20px; font-weight: 500; padding: 12px; border-radius: var(--border-radius); display: none; text-align: center; }
-#contact-form-status.success { background-color: #d1e7dd; color: #0f5132; border: 1px solid #badbcc; }
-#contact-form-status.error { background-color: #f8d7da; color: #842029; border: 1px solid #f5c2c7; }
-
-
-/* --- Responsive --- */
-@media (max-width: 768px) {
-    body { font-size: 14px; }
-    h1 { font-size: 1.8em; } h2 { font-size: 1.5em; }
-    .container { padding-left: 15px; padding-right: 15px; }
-    main.container { padding: 25px 15px; margin-top: 15px; margin-bottom: 15px; }
-    .nav-links { display: none; position: absolute; top: 100%; left: 0; width: 100%; background-color: var(--white-bg); flex-direction: column; align-items: stretch; padding: 10px 0; box-shadow: 0 4px 8px rgba(0,0,0,0.1); border-top: 1px solid var(--border-color); }
-    .nav-links.active { display: flex; }
-    .nav-links a { text-align: center; padding: 12px 20px; border-bottom: 1px solid #f0f0f0; border-radius: 0; }
-    .nav-links a:last-child { border-bottom: none; }
-    .admin-login-link { margin-left: 0; margin-top: 5px; text-align: center; display: block; padding: 10px 20px;}
-    .mobile-menu-toggle { display: block; margin-left: auto; }
-    header nav.container { flex-wrap: nowrap; }
-    .hero-section { padding: 50px 15px; }
-    .hero-section h1 { font-size: 2em; } .hero-section p { font-size: 1em; }
-    .button-primary { padding: 12px 25px; font-size: 0.95em; }
-    .contact-layout { flex-direction: column; gap: 30px; }
-    #contact-form, .contact-details { flex-basis: auto; padding: 25px; }
-    .page-cover { padding: 60px 15px; min-height: 200px; }
-    .page-cover h1 { font-size: 2em; } .page-cover p { font-size: 1em; }
-}
-
-@media (max-width: 480px) {
-     .hero-section h1 { font-size: 1.8em; } .hero-section p { font-size: 0.95em; }
-     .info-section h2 { font-size: 1.6em; }
-     .services-grid { grid-template-columns: 1fr; }
-     #contact-form, .contact-details { padding: 20px; }
-     .form-group input, .form-group textarea { font-size: 0.95em; padding: 10px; }
-     .social-links { padding-left: 0; justify-content: center;}
-     .page-cover { padding: 40px 15px; min-height: 180px; }
-     .page-cover h1 { font-size: 1.8em; }
-}
-
-
-/* Product List/Detail & Cart Styles (Placeholder - Add in later stages) */
-.product-grid, .product-card, .product-layout, #cart-items, #cart-summary {
-    /* Add styles for these in Stages 3 & 5 */
+.founder-slogan {
+    font-size: 1.1em;
+    font-weight: 600;
+    color: var(--primary-color);
     margin-top: 20px;
+    text-align: left; /* Or center */
+    font-style: italic;
+    padding-left: 10px;
+    border-left: 3px solid var(--primary-color);
+}
+
+
+/* Services Overview Section */
+.services-overview h2 { text-align: center; }
+.services-overview p { max-width: 800px; margin-left: auto; margin-right: auto; text-align: center; font-size: 1.05em; }
+
+/* Our Promise Section */
+.our-promise h2 { text-align: center; }
+.our-promise p { text-align: center; max-width: 800px; margin-left: auto; margin-right: auto;}
+.highlight-block { /* Highlight for the promise paragraph */
+    background-color: var(--light-bg);
+    border: 1px solid var(--border-color);
+    padding: 20px;
+    border-radius: var(--border-radius);
+    margin-top: 25px;
+    margin-bottom: 25px;
+    font-size: 1.1em;
+    color: var(--text-color);
+}
+.highlight-block strong {
+    color: var(--primary-color);
+}
+.tagline.highlight-border { /* Highlight for the tagline */
+    display: inline-block; /* Allows border-bottom to fit text */
+    padding-bottom: 5px; /* Space for border */
+    border-bottom: 2px solid var(--primary-color); /* Light border below */
+    font-size: 1.2em;
+    color: var(--secondary-color);
+    margin-top: 10px;
+    font-style: normal; /* Remove italic if needed */
+}
+.tagline.highlight-border strong { font-weight: 700; }
+
+
+/* General Adjustments for better spacing/readability */
+.about-page-content p {
+    line-height: 1.75; /* Increase line height for text blocks */
+    margin-bottom: 1.3em;
+}
+
+/* Responsive adjustments for About Page */
+@media (max-width: 768px) {
+    .founder-section {
+        flex-direction: column; /* Stack image and text */
+        text-align: center; /* Center text below image */
+    }
+    .founder-details {
+        text-align: center;
+    }
+     .founder-slogan {
+        text-align: center;
+        border-left: none;
+        padding-left: 0;
+        border-bottom: 2px solid var(--primary-color); /* Change border on mobile */
+        display: inline-block;
+    }
+     hr.section-divider { margin: 40px auto; }
+     .about-page-content p { line-height: 1.7; }
+     .page-cover.about-cover-image h1 { font-size: 2.2em; }
 }
