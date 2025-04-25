@@ -1,19 +1,19 @@
-/* css/style.css (Consolidated & Enhanced with new Cover Image) */
+/* css/style.css (Consolidated & Enhanced - Cover Image, Layout Adjustments) */
 
 /* --- Variables and Basic Reset --- */
 :root {
-    --primary-color: #0056b3; /* Deep Blue */
+    --primary-color: #0056b3;
     --primary-color-dark: #004085;
-    --secondary-color: #6c757d; /* Grey */
-    --light-bg: #f8f9fa; /* Very Light Grey */
-    --white-bg: #ffffff; /* White */
-    --text-color: #343a40; /* Dark Grey Text */
-    --text-muted: #6c757d; /* Medium Grey Text */
-    --border-color: #dee2e6; /* Light Grey Border */
-    --font-family: 'Poppins', sans-serif; /* Poppins Font */
+    --secondary-color: #6c757d;
+    --light-bg: #f8f9fa;
+    --white-bg: #ffffff;
+    --text-color: #343a40;
+    --text-muted: #6c757d;
+    --border-color: #dee2e6;
+    --font-family: 'Poppins', sans-serif;
     --border-radius: 6px;
     --box-shadow: 0 2px 5px rgba(0, 0, 0, 0.08);
-    --container-max-width: 1200px; /* Max width for content */
+    --container-max-width: 1200px;
 }
 
 *, *::before, *::after { box-sizing: border-box; }
@@ -65,7 +65,7 @@ header nav.container { display: flex; justify-content: space-between; align-item
 
 /* --- Main Content Area --- */
 main { flex-grow: 1; width: 100%; }
-main.container { /* Styles when main has container class */
+main.container {
     padding-top: 40px; padding-bottom: 40px; background-color: var(--white-bg);
     margin-top: 20px; margin-bottom: 20px; box-shadow: var(--box-shadow);
     border-radius: var(--border-radius);
@@ -135,30 +135,21 @@ footer a:hover { color: #fff; }
 
 /* Cover Image Section Style */
 .page-cover.contact-cover-image {
-    background-image: linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)), url('https://i.ibb.co/HTZML5Lx/1.jpg'); /* UPDATED IMAGE URL */
+    /* Updated background image URL */
+    background-image: linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)), url('https://i.ibb.co/HTZML5Lx/1.jpg');
     background-size: cover;
     background-position: center center;
-    text-align: center;
-    padding: 80px 20px; /* Adjusted padding */
-    margin-bottom: 50px;
-    color: var(--white-bg);
-    min-height: 280px; /* Increased height */
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-direction: column;
-    border-radius: 0; /* Full width cover */
+    text-align: center; padding: 80px 20px; margin-bottom: 50px;
+    color: var(--white-bg); min-height: 280px;
+    display: flex; align-items: center; justify-content: center; flex-direction: column;
+    border-radius: 0;
 }
 .page-cover.contact-cover-image h1 {
-    color: var(--white-bg);
-    font-size: 2.8em; /* Larger heading */
-    margin-bottom: 15px;
-    text-shadow: 1px 1px 4px rgba(0,0,0,0.6); /* Enhanced shadow */
+    color: var(--white-bg); font-size: 2.8em; margin-bottom: 15px;
+    text-shadow: 1px 1px 4px rgba(0,0,0,0.6);
 }
 .page-cover.contact-cover-image p {
-    font-size: 1.2em;
-    color: rgba(255, 255, 255, 0.95); /* Less transparent */
-    margin-bottom: 0;
+    font-size: 1.2em; color: rgba(255, 255, 255, 0.95); margin-bottom: 0;
     text-shadow: 1px 1px 3px rgba(0,0,0,0.5);
 }
 
@@ -168,20 +159,27 @@ footer a:hover { color: #fff; }
     max-width: 700px; margin: 0 auto 50px auto;
 }
 
-/* Contact Layout (Flexbox) */
-.contact-layout { display: flex; flex-wrap: wrap; gap: 50px; align-items: flex-start; }
+/* Contact Layout (Flexbox with stretch for equal height appearance) */
+.contact-layout {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 40px; /* Reduced gap slightly */
+    align-items: stretch; /* Make columns visually same height */
+}
 
 /* Contact Form Styling */
 #contact-form {
     flex: 1 1 55%; min-width: 300px; background-color: var(--white-bg);
-    padding: 35px; border-radius: var(--border-radius);
+    padding: 30px 35px; /* More padding */ border-radius: var(--border-radius);
     border: 1px solid var(--border-color); box-shadow: var(--box-shadow);
+    display: flex; /* Added for potential inner alignment */
+    flex-direction: column; /* Stack elements vertically */
 }
 #contact-form h3 {
     margin-top: 0; margin-bottom: 30px; padding-bottom: 15px; border-bottom: 1px solid var(--border-color);
     font-size: 1.5em; color: var(--primary-color); font-weight: 600;
 }
-.form-group { margin-bottom: 25px; }
+.form-group { margin-bottom: 20px; /* Consistent spacing */ }
 .form-group label { display: block; margin-bottom: 8px; font-weight: 500; font-size: 0.95em; color: var(--text-color); }
 .form-group input[type="text"], .form-group input[type="email"], .form-group input[type="tel"],
 .form-group textarea, .form-group select {
@@ -194,11 +192,14 @@ footer a:hover { color: #fff; }
 }
 .form-group .required { color: #dc3545; margin-left: 3px; }
 .form-group small { font-size: 0.8em; color: #666; display: block; margin-top: 4px; }
+#contact-form button[type="submit"] { margin-top: 10px; /* Space above button */ }
 
 /* Contact Details Section Styling */
 .contact-details {
-    flex: 1 1 35%; min-width: 300px; background-color: #fdfdff; padding: 35px;
+    flex: 1 1 35%; min-width: 300px; background-color: #fdfdff; padding: 30px 35px;
     border-radius: var(--border-radius); border: 1px solid var(--border-color);
+    display: flex; /* Added for potential inner alignment */
+    flex-direction: column; /* Stack elements vertically */
 }
 .contact-details h3, .contact-details h4 {
     margin-top: 0; margin-bottom: 20px; color: var(--primary-color); font-weight: 600;
@@ -220,8 +221,8 @@ footer a:hover { color: #fff; }
 /* Social Links Styling */
 .social-links { display: flex; flex-wrap: wrap; gap: 20px; margin-top: 15px; padding-left: 37px; }
 .social-links a {
-    color: var(--secondary-color); font-size: 1.9em; /* Larger icons */
-    transition: color 0.2s ease, transform 0.2s ease; text-decoration: none; line-height: 1;
+    color: var(--secondary-color); font-size: 1.9em; transition: color 0.2s ease, transform 0.2s ease;
+    text-decoration: none; line-height: 1;
 }
 .social-links a:hover { transform: scale(1.15); }
 .social-links a[aria-label="Instagram"]:hover { color: #E1306C; }
@@ -229,19 +230,15 @@ footer a:hover { color: #fff; }
 .social-links a[aria-label="WhatsApp"]:hover { color: #25D366; }
 
 /* Map and QR Code Placeholders/Containers */
-.contact-map, .contact-qrcode {
+.contact-map { /* Takes full width of its container */
     background-color: #f0f0f0; margin-top: 15px; border-radius: var(--border-radius);
     border: 1px solid var(--border-color); display: flex; align-items: center;
-    justify-content: center; min-height: 200px; /* Increased height */ text-align: center; overflow: hidden; /* Hide iframe overflow */
+    justify-content: center; min-height: 250px; /* Increased height */ text-align: center; overflow: hidden;
 }
-.contact-map p, .contact-qrcode p { color: var(--text-muted); font-style: italic; margin: 0; padding: 10px; }
-.contact-qrcode img { max-width: 160px; height: auto; margin: 10px auto; }
-/* Style for the actual iframe when embedded */
-.contact-map iframe {
-    width: 100%;
-    height: 250px; /* Set a fixed height or use responsive techniques */
-    border: 0;
-}
+.contact-map iframe { width: 100%; height: 100%; min-height: 250px; border: 0; }
+.contact-map p { color: var(--text-muted); font-style: italic; margin: 0; padding: 10px; }
+/* QR Code section is removed from HTML, so no style needed */
+/* #qrcode-placeholder { ... } */
 
 
 /* Form Status Message Styling */
