@@ -3,116 +3,300 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Manage Online Products</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <link rel="stylesheet" href="manage-online-products.css">
+    <title>Online Product Management</title> <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/customer_management.css">
+    <link rel="stylesheet" href="css/order_history.css">
+    <link rel="stylesheet" href="css/product_management.css"> <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
+    <script type="module">
+        // Firebase Core and Services
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js"; // Check SDK version
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+        import { getFirestore, collection, doc, addDoc, updateDoc, deleteDoc, onSnapshot, query, orderBy, serverTimestamp, Timestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+        // Import Storage functions
+        import { getStorage, ref, uploadBytesResumable, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
+
+
+        const firebaseConfig = { /* --- Aapki Firebase Configuration --- */ apiKey: "AIzaSyBQj5rQmE77kKKGYixP8y3Hcimz8tiAqzQ", authDomain: "madhav-multyprint.firebaseapp.com", projectId: "madhav-multyprint", storageBucket: "madhav-multyprint.appspot.com", messagingSenderId: "104988349637", appId: "1:104988349637:web:faf045b77c6786a4e70cac" };
+
+        let app; let auth; let db; let storage; // Add storage
+        try {
+            // Initialize Firebase only once
+            if (!window.firebaseAppInitialized) {
+                app = initializeApp(firebaseConfig);
+                window.firebaseAppInitialized = true;
+                window.firebaseApp = app;
+                console.log("Firebase initialized (product_management - Online V3).");
+            } else {
+                app = window.firebaseApp;
+                console.log("Firebase already initialized (product_management - Online V3).");
+            }
+            // Get services
+            auth = getAuth(app);
+            db = getFirestore(app);
+            storage = getStorage(app); // Initialize Storage
+
+            // Make core services global (as per original file's pattern)
+            window.db = db; window.auth = auth; window.storage = storage;
+            window.collection = collection; window.doc = doc; window.addDoc = addDoc;
+            window.updateDoc = updateDoc; window.deleteDoc = deleteDoc; window.onSnapshot = onSnapshot;
+            window.query = query; window.orderBy = orderBy; window.serverTimestamp = serverTimestamp;
+            window.Timestamp = Timestamp;
+
+            // Make storage functions global
+            window.storageRef = ref; window.uploadBytesResumable = uploadBytesResumable;
+            window.getDownloadURL = getDownloadURL; window.deleteObject = deleteObject;
+
+            // Authentication Check
+            onAuthStateChanged(auth, (user) => {
+                const page = window.location.pathname.split('/').pop() || 'index.html';
+                 if (!user && !page.toLowerCase().includes('login.html')) { // Redirect if not logged in and not on login page
+                    window.location.replace('login.html'); // Adjust path if login is outside admin
+                } else if (user) {
+                    console.log(`User logged in on ${page}. Initializing Online Product Management.`);
+                    // Dispatch event AFTER the main script (product_management.js) has likely loaded
+                    // Use a small delay or ensure product_management.js is loaded before dispatching
+                    setTimeout(() => {
+                         window.dispatchEvent(new CustomEvent('productManagementScriptLoaded'));
+                         console.log("Dispatched productManagementScriptLoaded event.");
+                    }, 100); // Small delay
+                }
+            });
+        } catch(e) {
+            console.error("Firebase setup error:", e);
+            alert("App Initialization Error. Check console.");
+        }
+    </script>
 </head>
 <body>
-    <header class="admin-header">
-        <h1>Admin Panel - Manage Online Products</h1>
-        <nav>
-            <a href="view-online-orders.html">View Online Orders</a>
-            <a href="/">View Website</a>
-        </nav>
-    </header>
+    <div class="container">
+        <div class="header">
+            <i class="fas fa-store header-icon"></i> <h1>Online Product Management</h1> </div>
 
-    <main class="admin-container">
-        <h2>Add/Edit Online Product</h2>
-        <form id="product-form">
-            <input type="hidden" id="edit-product-id"> <div class="form-group">
-                <label for="productName">Product Name:</label>
-                <input type="text" id="productName" required>
+        <div class="breadcrumb-container">
+          <a href="index.html">Home</a> / <span>Online Product Management</span> </div>
+
+        <div class="filter-bar">
+              <div class="filter-group">
+                 <button id="addNewProductBtn" class="button add-new-button">
+                    <i class="fas fa-plus"></i> Add New Online Product
+                </button>
             </div>
-
-            <div class="form-group">
-                <label for="productDesc">Description:</label>
-                <textarea id="productDesc" rows="3"></textarea>
+             <div class="filter-group">
+                 <label for="filterSearch"><i class="fas fa-search"></i> Search:</label>
+                <input type="text" id="filterSearch" placeholder="Name, Category..."> </div>
+             <div class="filter-group filter-sort">
+                <label for="sort-products"><i class="fas fa-sort"></i> Sort by:</label>
+                <select id="sort-products">
+                     <option value="createdAt_desc">Newest First</option>
+                    <option value="createdAt_asc">Oldest First</option>
+                    <option value="productName_asc">Name (A-Z)</option> <option value="productName_desc">Name (Z-A)</option>
+                     <option value="pricing.rate_asc">Rate (Low-High)</option>
+                    <option value="pricing.rate_desc">Rate (High-Low)</option>
+                 </select>
             </div>
-
-            <div class="form-group">
-                <label for="productCategory">Category:</label>
-                <input type="text" id="productCategory" placeholder="e.g., Flex Banner, Wedding Card, Stamp" required>
-                </div>
-
-            <div class="form-group">
-                <label for="imageUrl">Image URL:</label>
-                <input type="url" id="imageUrl" placeholder="https://example.com/image.jpg">
-                </div>
-
-            <div class="form-group">
-                <label for="unitType">Unit Type:</label>
-                <select id="unitType" required>
-                    <option value="Qty">Quantity (Qty)</option>
-                    <option value="Sq Feet">Square Feet (Sq Feet)</option>
-                </select>
+            <div class="filter-group">
+                 <button id="clearFiltersBtn" class="button clear-filters-button" title="Clear search and reset sort">
+                     <i class="fas fa-times"></i> Clear
+                 </button>
             </div>
+        </div>
 
-            <fieldset id="pricing-section">
-                <legend>Pricing</legend>
-                <div class="form-group">
-                    <label for="productRate">Rate (per Unit or per Sq Ft):</label>
-                    <input type="number" id="productRate" step="0.01" required>
-                </div>
-                <div class="form-group sq-feet-only" style="display: none;">
-                    <label for="minOrderValue">Minimum Order Value (₹):</label>
-                    <input type="number" id="minOrderValue" step="0.01" placeholder="e.g., 300">
-                </div>
-                 <div class="form-group wedding-card-only" style="display: none;">
-                    <label for="designCharge">Design Charge (₹):</label>
-                    <input type="number" id="designCharge" step="0.01">
-                    <label for="printingCharge">Printing Charge (e.g., per 100):</label>
-                    <input type="number" id="printingCharge" step="0.01">
-                    <label for="transportCharge">Transport Charge (₹):</label>
-                    <input type="number" id="transportCharge" step="0.01">
-                    <small>Note: Wedding card final price calculation needs specific logic based on these.</small>
-                 </div>
-
-            </fieldset>
-
-            <div class="form-group">
-                <label for="productOptions">Options (Size, Paper etc. - JSON format):</label>
-                <textarea id="productOptions" rows="3" placeholder='e.g., [{"name": "Size", "values": ["Small", "Medium"]}, {"name": "Color"}]'></textarea>
-                <small>Enter options as JSON array or leave blank.</small>
-            </div>
-
-
-            <div class="form-group">
-                <label for="isEnabled">
-                    <input type="checkbox" id="isEnabled" checked>
-                    Show on Website (Enabled)
-                </label>
-            </div>
-
-            <div class="form-actions">
-                <button type="submit" class="btn btn-primary">Save Product</button>
-                <button type="button" id="cancel-edit-btn" class="btn btn-secondary" style="display: none;">Cancel Edit</button>
-            </div>
-            <p id="form-message" class="message"></p>
-        </form>
-
-        <hr>
-
-        <h2>Existing Online Products</h2>
         <div class="table-container">
-            <table id="products-table">
+            <table id="productTable">
                 <thead>
-                    <tr>
+                     <tr>
                         <th>Name</th>
-                        <th>Category</th>
-                        <th>Unit Type</th>
-                        <th>Rate</th>
-                        <th>Enabled</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody id="products-tbody">
-                    <tr><td colspan="6">Loading products...</td></tr>
-                </tbody>
+                        <th>Category</th> <th>Rate</th>
+                        <th>Unit</th>
+                        <th>Enabled</th> <th>Actions</th> </tr>
+                 </thead>
+                <tbody id="productTableBody">
+                    <tr>
+                        <td colspan="6" id="loadingMessage">Loading products...</td> </tr>
+                 </tbody>
             </table>
         </div>
-    </main>
+    </div>
 
-    <script src="../js/firebase-config.js" type="module"></script>
-    <script src="js/manage-online-products.js" type="module"></script>
+    <div id="productModal" class="modal">
+        <div class="modal-content large-modal">
+            <span class="close-btn" id="closeProductModal" title="Close">&times;</span>
+            <h2 id="modalTitle"><i class="fas fa-box-open info-icon"></i> Add New Online Product</h2>
+            <form id="productForm">
+                <input type="hidden" id="editProductId">
+                <input type="hidden" id="existingImageUrls" value="[]"> <div class="product-form-grid">
+                    <div class="form-column">
+                         <h3><i class="fas fa-info-circle"></i> Basic Details</h3>
+                         <div class="form-group">
+                            <label for="productName">Product Name <span class="required">*</span>:</label>
+                            <input type="text" id="productName" required placeholder="Name shown on website">
+                        </div>
+                         <div class="form-group">
+                            <label for="productCategory">Category/Group <span class="required">*</span>:</label>
+                            <input type="text" id="productCategory" required placeholder="e.g., Wedding Card, Flex Banner">
+                        </div>
+                         <div class="form-group">
+                            <label for="productUnit">Unit <span class="required">*</span>:</label>
+                            <select id="productUnit" required>
+                                <option value="">-- Select Unit --</option>
+                                <option value="Qty">Qty</option>
+                                <option value="Sq Feet">Sq Feet</option>
+                                <option value="Nos">Nos</option>
+                                </select>
+                        </div>
+                         <div class="form-group">
+                            <label for="productDescription">Description:</label>
+                            <textarea id="productDescription" rows="4" placeholder="Product details shown to customer"></textarea>
+                        </div>
+                         <div class="form-group">
+                            <label for="isEnabled">
+                               <input type="checkbox" id="isEnabled" checked> Show on Website (Enabled)
+                           </label>
+                       </div>
+                    </div>
+
+                    <div class="form-column">
+                        <h3><i class="fas fa-dollar-sign"></i> Price Details</h3>
+                         <div class="form-group price-group"> <label for="productSalePrice">Base Sale Price <span class="required">*</span>:</label>
+                            <input type="number" id="productSalePrice" required placeholder="0.00" step="0.01" min="0">
+                             <small>Price per Unit or per Sq Ft</small>
+                        </div>
+
+                         <div class="form-group sq-feet-only price-group" style="display: none;">
+                             <label for="productMinOrderValue">Min. Order Value (Sq Ft Only):</label>
+                             <input type="number" id="productMinOrderValue" placeholder="e.g., 300" step="0.01" min="0">
+                         </div>
+
+                        <fieldset id="wedding-card-fields" style="display: none;">
+                             <legend>Wedding Card Charges</legend>
+                             <div class="form-group price-group">
+                                 <label for="designCharge">Design Charge:</label>
+                                 <input type="number" id="designCharge" placeholder="0.00" step="0.01" min="0">
+                             </div>
+                              <div class="form-group price-group">
+                                 <label for="printingCharge">Printing Charge (Base):</label>
+                                 <input type="number" id="printingCharge" placeholder="e.g., 700 per 100" step="0.01" min="0">
+                             </div>
+                              <div class="form-group price-group">
+                                 <label for="transportCharge">Transport Charge:</label>
+                                 <input type="number" id="transportCharge" placeholder="0.00" step="0.01" min="0">
+                             </div>
+                             <div class="form-group">
+                                  <label for="extraMarginPercent">Extra Margin (%):</label>
+                                  <input type="number" id="extraMarginPercent" placeholder="e.g., 10" step="0.01" min="0">
+                              </div>
+                        </fieldset>
+
+                         <h3 style="margin-top: 20px;"><i class="fas fa-money-bill-wave"></i> Optional Costing</h3>
+                         <div class="form-group price-group">
+                            <label for="productPurchasePrice">Purchase Price:</label>
+                            <input type="number" id="productPurchasePrice" placeholder="0.00" step="0.01" min="0">
+                        </div>
+                         <div class="form-group price-group">
+                            <label for="productMrp">M.R.P.:</label>
+                            <input type="number" id="productMrp" placeholder="0.00" step="0.01" min="0">
+                        </div>
+                         <div class="form-group">
+                            <label for="productGstRate">GST Rate (%):</label>
+                            <input type="number" id="productGstRate" placeholder="e.g., 18" step="0.01" min="0" max="100">
+                        </div>
+
+                    </div>
+
+                    <div class="form-column">
+                         <div id="image-upload-section">
+                             <h3><i class="fas fa-images"></i> Product Images</h3>
+                             <div class="form-group">
+                                 <label for="productImages">Select Images (Max 4):</label>
+                                 <input type="file" id="productImages" multiple accept="image/png, image/jpeg, image/webp">
+                                 <small>Select new images to add or replace existing ones.</small>
+                             </div>
+                             <label>Image Previews:</label>
+                             <div id="image-preview-area">
+                                 </div>
+                             <div id="upload-progress-info" style="font-size: 0.9em; margin-top: 10px;"></div>
+                         </div>
+
+                         <h3 style="margin-top: 20px;"><i class="fas fa-plus-circle"></i> Extra Options</h3>
+                          <div class="form-group">
+                               <label for="hasExtraCharges">
+                                   <input type="checkbox" id="hasExtraCharges"> Enable Additional Charge Option
+                               </label>
+                           </div>
+                           <div id="extra-charges-section" style="display: none;">
+                               <div class="form-group">
+                                   <label for="extraChargeName">Charge Name:</label>
+                                   <input type="text" id="extraChargeName" placeholder="e.g., Lamination">
+                               </div>
+                               <div class="form-group price-group">
+                                   <label for="extraChargeAmount">Charge Amount:</label>
+                                   <input type="number" id="extraChargeAmount" step="0.01" min="0">
+                               </div>
+                           </div>
+
+                           <div class="form-group">
+                                <label for="productOptions">Other Selectable Options (JSON):</label>
+                                <textarea id="productOptions" rows="3" placeholder='[{"name":"Size","values":["A4","A5"]},{"name":"Paper","values":["Glossy","Matt"]}]'></textarea>
+                                <small>Format: [{"name":"Option Name", "values":["Val1", "Val2"]}]</small>
+                           </div>
+                    </div>
+                </div> <h3 style="margin-top: 20px;">Offline/Internal Details (Optional)</h3>
+                  <div class="product-form-grid">
+                      <div class="form-group">
+                          <label for="productBrand">Brand:</label>
+                          <input type="text" id="productBrand">
+                      </div>
+                      <div class="form-group">
+                          <label for="productItemCode">Item Code:</label>
+                          <input type="text" id="productItemCode">
+                      </div>
+                      <div class="form-group">
+                          <label for="productHsnSacCode">HSN / SAC Code:</label>
+                          <input type="text" id="productHsnSacCode">
+                      </div>
+                      </div>
+
+                 <div class="modal-actions">
+                    <button type="button" id="deleteProductBtn" class="button delete-button-modal" style="display: none;">
+                        <i class="fas fa-trash-alt"></i> Delete Product
+                    </button>
+                    <div class="modal-actions-right">
+                        <button type="button" id="cancelProductBtn" class="button cancel-button">
+                           Cancel
+                        </button>
+                        <button type="submit" id="saveProductBtn" class="button save-button">
+                           <i class="fas fa-spinner fa-spin" style="display: none;"></i> <i class="fas fa-save"></i> <span>Save Product</span>
+                        </button>
+                   </div>
+                 </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="deleteConfirmModal" class="modal confirmation-modal">
+         <div class="modal-content small-modal">
+            <span class="close-btn" id="closeDeleteConfirmModal" title="Close">&times;</span>
+            <h2><i class="fas fa-exclamation-triangle warning-icon"></i> Confirm Deletion</h2>
+            <p id="deleteWarningMessage">Are you sure you want to delete this product? This action cannot be undone.</p>
+            <div class="confirmation-checkbox-area">
+                 <input type="checkbox" id="deleteConfirmCheckbox">
+                 <label for="deleteConfirmCheckbox">Yes, I understand and want to delete this product.</label>
+            </div>
+            <div class="modal-actions">
+                 <button type="button" id="cancelDeleteFinalBtn" class="button cancel-button">
+                    Cancel
+                </button>
+                <button type="button" id="confirmDeleteFinalBtn" class="button delete-confirm-button" disabled>
+                    <i class="fas fa-trash-alt"></i> Confirm Delete
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/product_management.js" type="module" defer></script>
+
 </body>
 </html>
