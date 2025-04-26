@@ -3,10 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Online Product Management</title> <link rel="preconnect" href="https://fonts.googleapis.com">
+    <title>Online Product Management</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="css/customer_management.css"> <link rel="stylesheet" href="css/order_history.css"> <link rel="stylesheet" href="css/product_management.css"> <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="css/customer_management.css"> <link rel="stylesheet" href="css/order_history.css"> <link rel="stylesheet" href="css/manage-online-products.css"> <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 
     <script type="module">
         // Firebase Core and Services
@@ -26,10 +27,10 @@
                 app = initializeApp(firebaseConfig);
                 window.firebaseAppInitialized = true;
                 window.firebaseApp = app;
-                console.log("Firebase initialized (product_management - Online V3).");
+                console.log("Firebase initialized (manage-online-products)."); // Updated log message
             } else {
                 app = window.firebaseApp;
-                console.log("Firebase already initialized (product_management - Online V3).");
+                console.log("Firebase already initialized (manage-online-products)."); // Updated log message
             }
             // Get services
             auth = getAuth(app);
@@ -54,16 +55,20 @@
                     window.location.replace('login.html'); // Adjust path if login is outside admin
                 } else if (user) {
                     console.log(`User logged in on ${page}. Initializing Online Product Management.`);
-                    // Dispatch event AFTER the main script (product_management.js) has likely loaded
-                    // Use a small delay or ensure product_management.js is loaded before dispatching
+                    // Dispatch event AFTER the main script (manage-online-products.js) has likely loaded
+                    // Use a small delay or ensure manage-online-products.js is loaded before dispatching
                     setTimeout(() => {
                          // Check if the function exists before dispatching/calling
+                         // ** Important: Ensure initializeOnlineProductManagement function exists in manage-online-products.js **
                          if (typeof initializeOnlineProductManagement === 'function') {
                              initializeOnlineProductManagement();
                              console.log("Called initializeOnlineProductManagement directly.");
                          } else {
-                              window.dispatchEvent(new CustomEvent('productManagementScriptLoaded'));
-                              console.log("Dispatched productManagementScriptLoaded event (fallback).");
+                              // Fallback or error handling if function not found
+                              console.error("initializeOnlineProductManagement function not found in manage-online-products.js!");
+                              // You might dispatch an event as a fallback if needed, but ensure the JS file defines the function.
+                              // window.dispatchEvent(new CustomEvent('productManagementScriptLoaded'));
+                              // console.log("Dispatched productManagementScriptLoaded event (fallback).");
                          }
                     }, 150); // Slightly increased delay
                 }
@@ -298,7 +303,6 @@
         </div>
     </div>
 
-    <script src="js/product_management.js" type="module" defer></script>
-
-</body>
+    <script src="js/manage-online-products.js" type="module" defer></script>
+    </body>
 </html>
