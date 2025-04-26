@@ -1,4 +1,4 @@
-// js/product_management.js (Online Version - Based on V2.5 + New Features)
+// js/product_management.js (Online Version - Based on V2.5 + New Features V3)
 
 // --- Ensure Firebase Functions are available globally via HTML script block ---
 // We expect db, auth, storage, collection, onSnapshot, query, orderBy, doc,
@@ -8,7 +8,7 @@
 
 // --- DOM Elements ---
 const productTableBody = document.getElementById('productTableBody');
-const loadingRow = document.getElementById('loadingMessage'); // Check if this ID exists in your HTML
+const loadingRow = document.getElementById('loadingMessage');
 const sortSelect = document.getElementById('sort-products');
 const filterSearchInput = document.getElementById('filterSearch');
 const clearFiltersBtn = document.getElementById('clearFiltersBtn');
@@ -21,15 +21,15 @@ const productForm = document.getElementById('productForm');
 const closeProductModalBtn = document.getElementById('closeProductModal');
 const cancelProductBtn = document.getElementById('cancelProductBtn');
 const saveProductBtn = document.getElementById('saveProductBtn');
-const saveSpinner = saveProductBtn ? saveProductBtn.querySelector('.fa-spinner') : null;
-const saveIcon = saveProductBtn ? saveProductBtn.querySelector('.fa-save') : null;
-const saveText = saveProductBtn ? saveProductBtn.querySelector('span') : null;
+const saveSpinner = saveProductBtn?.querySelector('.fa-spinner'); // Optional chaining
+const saveIcon = saveProductBtn?.querySelector('.fa-save');
+const saveText = saveProductBtn?.querySelector('span');
 const editProductIdInput = document.getElementById('editProductId');
 const deleteProductBtn = document.getElementById('deleteProductBtn');
 
-// New Modal Form Field References
+// Modal Form Field References
 const productNameInput = document.getElementById('productName');
-const productCategoryInput = document.getElementById('productCategory');
+const productCategoryInput = document.getElementById('productCategory'); // Changed from productGroup
 const productUnitSelect = document.getElementById('productUnit');
 const productDescInput = document.getElementById('productDescription');
 const isEnabledCheckbox = document.getElementById('isEnabled');
@@ -39,8 +39,8 @@ const imagePreviewArea = document.getElementById('image-preview-area');
 const uploadProgressInfo = document.getElementById('upload-progress-info');
 const existingImageUrlsInput = document.getElementById('existingImageUrls'); // Hidden input
 // Pricing
-const productSalePriceInput = document.getElementById('productSalePrice');
-const productMinOrderValueInput = document.getElementById('productMinOrderValue');
+const productSalePriceInput = document.getElementById('productSalePrice'); // Base Sale Price
+const productMinOrderValueInput = document.getElementById('productMinOrderValue'); // For Sq Ft
 const productPurchasePriceInput = document.getElementById('productPurchasePrice'); // Optional Costing
 const productMrpInput = document.getElementById('productMrp'); // Optional Costing
 const productGstRateInput = document.getElementById('productGstRate'); // Optional Costing
@@ -62,7 +62,6 @@ const productBrandInput = document.getElementById('productBrand');
 const productItemCodeInput = document.getElementById('productItemCode');
 const productHsnSacCodeInput = document.getElementById('productHsnSacCode');
 
-
 // Delete Confirmation Modal Elements
 const deleteConfirmModal = document.getElementById('deleteConfirmModal');
 const closeDeleteConfirmModalBtn = document.getElementById('closeDeleteConfirmModal');
@@ -79,34 +78,55 @@ let allProductsCache = []; // Cache for filtering/sorting
 let searchDebounceTimer;
 let productToDeleteId = null;
 let productToDeleteName = null;
-let selectedFiles = []; // Stores files selected for upload
-let existingImageUrls = []; // Stores existing image URLs during edit
-let imagesToDelete = []; // Stores existing image URLs marked for deletion
+let selectedFiles = []; // Stores NEW File objects selected for upload
+let imagesToDelete = []; // Stores existing image URLs marked for deletion during EDIT
 
 // --- Helper Functions ---
 function formatCurrency(amount) { const num = Number(amount); return isNaN(num) || num === null || num === undefined ? '-' : `₹ ${num.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`; }
 function escapeHtml(unsafe) { if (typeof unsafe !== 'string') { unsafe = String(unsafe || ''); } return unsafe.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;"); }
-function parseNumericInput(value, allowZero = true) { const trimmedValue = String(value).trim(); if (trimmedValue === '') return null; const num = parseFloat(trimmedValue); if (isNaN(num) || (!allowZero && num <= 0) || (allowZero && num < 0)) { return NaN; } return num; }
+function parseNumericInput(value, allowZero = true) { if (value === undefined || value === null) return null; const trimmedValue = String(value).trim(); if (trimmedValue === '') return null; const num = parseFloat(trimmedValue); if (isNaN(num) || (!allowZero && num <= 0) || (allowZero && num < 0)) { return NaN; } return num; }
+
+// --- Toast Notification ---
+function showToast(message, duration = 3500) {
+    const existingToast = document.querySelector('.toast-notification');
+    if (existingToast) { existingToast.remove(); } // Remove previous toast immediately
+
+    const toast = document.createElement('div');
+    toast.className = 'toast-notification'; // Use class defined in product_management.css
+    toast.textContent = message;
+    document.body.appendChild(toast);
+
+    // Trigger fade in
+    setTimeout(() => toast.classList.add('show'), 10);
+
+    // Set timeout to remove the toast
+    setTimeout(() => {
+        toast.classList.remove('show');
+        // Remove the element after the transition is complete
+        setTimeout(() => {
+            if (toast.parentNode) {
+                toast.parentNode.removeChild(toast);
+            }
+        }, 400); // Match CSS transition duration
+    }, duration);
+    console.log("Toast:", message);
+}
 
 // --- Initialization ---
-// Changed function name and added event listener trigger
+// Renamed function to be specific
 window.initializeOnlineProductManagement = () => {
-    console.log("Online Product Management Initializing...");
-    // Ensure Firebase services are ready (relying on window object assignment in HTML)
+    console.log("Online Product Management Initializing (V3)...");
+    // Ensure Firebase services are ready
     if (!window.db || !window.auth || !window.storage) {
         console.error("Firebase services (db, auth, storage) not available on window object.");
-        alert("Error initializing page. Firebase services missing.");
+        alert("Error initializing page. Firebase services missing. Check HTML initialization script.");
         return;
     }
-    console.log("Firebase services confirmed. Setting up listeners.");
-    listenForOnlineProducts(); // Changed function name
+    console.log("Firebase services confirmed. Setting up listeners (V3).");
+    listenForOnlineProducts();
     setupEventListeners();
-    console.log("Online Product Management Initialized.");
+    console.log("Online Product Management Initialized (V3).");
 };
-// Dispatch event at the end of the script to signal loading completion
-window.dispatchEvent(new CustomEvent('productManagementScriptLoaded'));
-console.log("product_management.js (Online Version) script loaded.");
-
 
 // --- Setup Event Listeners ---
 function setupEventListeners() {
@@ -133,7 +153,7 @@ function setupEventListeners() {
     if (productCategoryInput) productCategoryInput.addEventListener('input', toggleWeddingFields); // Show/hide based on category
     if (productUnitSelect) productUnitSelect.addEventListener('input', toggleSqFtFields); // Show/hide based on unit
 
-    console.log("Online Product Management event listeners set up.");
+    console.log("Online Product Management event listeners set up (V3).");
 }
 
 // --- Show/Hide Conditional Fields ---
@@ -145,9 +165,13 @@ function toggleWeddingFields() {
 function toggleSqFtFields() {
      if(!productUnitSelect) return;
      const unitType = productUnitSelect.value;
-     document.querySelectorAll('.sq-feet-only').forEach(el => {
-          el.style.display = unitType === 'Sq Feet' ? 'block' : 'none';
-     });
+     // Assuming only productMinOrderValueInput needs toggling based on Sq Feet
+     if(productMinOrderValueInput) {
+         const parentGroup = productMinOrderValueInput.closest('.sq-feet-only');
+         if(parentGroup) {
+             parentGroup.style.display = unitType === 'Sq Feet' ? 'block' : 'none';
+         }
+     }
 }
 function toggleExtraCharges() {
     if (!extraChargesSection || !hasExtraChargesCheckbox) return;
@@ -171,25 +195,23 @@ function clearFilters() { if(filterSearchInput) filterSearchInput.value = ''; if
 // --- Firestore Listener for ONLINE Products ---
 function listenForOnlineProducts() {
     if (unsubscribeProducts) { unsubscribeProducts(); unsubscribeProducts = null; }
-    // Ensure dependencies are available
-    if (!window.db || !window.collection || !window.query || !window.orderBy || !window.onSnapshot) {
+    if (!window.db || !window.collection || !window.query || !window.onSnapshot) {
         console.error("Firestore functions unavailable!");
         if (productTableBody) productTableBody.innerHTML = `<tr><td colspan="6" style="color: red; text-align: center;">Error: DB Connection Failed.</td></tr>`;
         return;
     }
-
     if (productTableBody) productTableBody.innerHTML = `<tr><td colspan="6" id="loadingMessage" style="text-align: center;">Loading online products...</td></tr>`;
 
     try {
         console.log(`Setting up Firestore listener for 'onlineProducts'...`);
-        // *** TARGET COLLECTION CHANGED TO onlineProducts ***
+        // *** TARGET COLLECTION IS onlineProducts ***
         const productsRef = window.collection(window.db, "onlineProducts");
-        const q = window.query(productsRef); // Removed default sort here, apply in render
+        const q = window.query(productsRef); // Apply sorting later
 
         unsubscribeProducts = window.onSnapshot(q, (snapshot) => {
             console.log(`Received ${snapshot.docs.length} online products.`);
             allProductsCache = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-            applyFiltersAndRender(); // Render the fetched products
+            applyFiltersAndRender();
         }, (error) => {
             console.error("Error fetching online products snapshot:", error);
             if (productTableBody) productTableBody.innerHTML = `<tr><td colspan="6" style="color: red; text-align: center;">Error loading products. Check connection/permissions.</td></tr>`;
@@ -207,14 +229,12 @@ function applyFiltersAndRender() {
     const filterSearchValue = filterSearchInput ? filterSearchInput.value.trim().toLowerCase() : '';
 
     let filteredProducts = allProductsCache.filter(product => {
-        if (!product) return false;
-        // Basic check for required fields
-        if (!product.productName) return false;
+        if (!product || !product.productName) return false; // Basic check
 
         if (filterSearchValue) {
             const name = (product.productName || '').toLowerCase();
             const category = (product.category || '').toLowerCase();
-            // Add other fields to search if needed
+            // Add other fields if needed for search
             if (!(name.includes(filterSearchValue) || category.includes(filterSearchValue))) {
                 return false;
             }
@@ -222,19 +242,28 @@ function applyFiltersAndRender() {
         return true;
     });
 
-    // Sorting logic - needs careful handling of nested pricing object
+    // Sorting
     filteredProducts.sort((a, b) => {
-        let valA = a[currentSortField];
-        let valB = b[currentSortField];
+        let valA, valB;
 
-        // Handle nested pricing fields
+        // Handle nested pricing fields or direct fields
         if (currentSortField.startsWith('pricing.')) {
              const priceField = currentSortField.split('.')[1];
-             valA = a.pricing ? a.pricing[priceField] : null;
-             valB = b.pricing ? b.pricing[priceField] : null;
+             valA = a.pricing?.[priceField]; // Use optional chaining
+             valB = b.pricing?.[priceField];
+        } else if (currentSortField === 'productName') {
+             // Use lowercase for consistent sorting if needed, ensure field exists
+             valA = (a.productName_lowercase || a.productName || '').toLowerCase();
+             valB = (b.productName_lowercase || b.productName || '').toLowerCase();
         }
+         else {
+             valA = a[currentSortField];
+             valB = b[currentSortField];
+        }
+
+
         // Handle timestamp sorting
-        else if (valA && typeof valA.toDate === 'function') valA = valA.toDate().getTime();
+        if (valA && typeof valA.toDate === 'function') valA = valA.toDate().getTime();
         if (valB && typeof valB.toDate === 'function') valB = valB.toDate().getTime();
 
         // Convert potential numeric fields to numbers for comparison
@@ -242,10 +271,14 @@ function applyFiltersAndRender() {
              valA = Number(valA) || 0;
              valB = Number(valB) || 0;
         }
-        // Convert potential string fields to lowercase for comparison
-        else if (['productName', 'category', 'unit'].includes(currentSortField)) {
-             valA = (valA || '').toLowerCase();
-             valB = (valB || '').toLowerCase();
+        // Convert potential string fields to lowercase if not already done
+        else if (typeof valA === 'string' && typeof valB === 'string' && !currentSortField.endsWith('_lowercase')) {
+             valA = valA.toLowerCase();
+             valB = valB.toLowerCase();
+        } else if (valA === undefined || valA === null) { // Handle undefined/null values
+             valA = currentSortDirection === 'asc' ? Infinity : -Infinity;
+        } else if (valB === undefined || valB === null) {
+             valB = currentSortDirection === 'asc' ? Infinity : -Infinity;
         }
 
 
@@ -256,31 +289,32 @@ function applyFiltersAndRender() {
         return currentSortDirection === 'desc' ? (comparison * -1) : comparison;
     });
 
-    renderProductTable(filteredProducts); // Call render function
+    renderProductTable(filteredProducts);
     console.log("Online product rendering complete.");
 }
 
-// --- Display Table Row ---
+// --- Display Table Row (Updated Columns) ---
 function renderProductTable(products) {
     if (!productTableBody) return;
-    productTableBody.innerHTML = ''; // Clear previous rows
+    productTableBody.innerHTML = '';
 
     if (products.length === 0) {
-        productTableBody.innerHTML = `<tr><td colspan="6" id="noProductsMessage" style="text-align: center;">No online products found matching your criteria.</td></tr>`;
+        productTableBody.innerHTML = `<tr><td colspan="6" id="noProductsMessage" style="text-align: center;">No online products found matching criteria.</td></tr>`;
     } else {
         products.forEach(product => {
             const firestoreId = product.id;
-            const data = product; // Data includes ID already from cache prep
+            const data = product;
             const tableRow = productTableBody.insertRow();
             tableRow.setAttribute('data-id', firestoreId);
-            tableRow.classList.add('clickable-row');
+            // tableRow.classList.add('clickable-row'); // Optional: Keep row clickable?
 
             const name = data.productName || 'N/A';
             const category = data.category || '-';
-            const rate = data.pricing?.rate !== undefined ? formatCurrency(data.pricing.rate) : '-'; // Access nested rate
+            const rate = data.pricing?.rate !== undefined ? formatCurrency(data.pricing.rate) : '-';
             const unit = data.unit || '-';
             const enabled = data.isEnabled ? 'Yes' : 'No';
 
+            // Updated table structure based on new thead
             tableRow.innerHTML = `
                 <td>${escapeHtml(name)}</td>
                 <td>${escapeHtml(category)}</td>
@@ -288,28 +322,40 @@ function renderProductTable(products) {
                 <td style="text-align: center;">${escapeHtml(unit)}</td>
                 <td style="text-align: center;">${enabled}</td>
                 <td style="text-align: center;">
-                     <button class="button edit-product-btn" style="background-color: var(--info-color); color: white; padding: 5px 8px; font-size: 0.8em;" title="Edit">
+                     <button class="button edit-product-btn" style="background-color: var(--info-color); color: white; padding: 5px 8px; font-size: 0.8em; margin: 2px;" title="Edit Online Product">
                          <i class="fas fa-edit"></i> Edit
+                     </button>
+                     <button class="button delete-product-btn" style="background-color: var(--danger-color); color: white; padding: 5px 8px; font-size: 0.8em; margin: 2px;" title="Delete Online Product">
+                          <i class="fas fa-trash"></i> Delete
                      </button>
                 </td>
             `;
 
-            // Add click listener for editing
+            // Add event listener for the EDIT button
              const editBtn = tableRow.querySelector('.edit-product-btn');
              if (editBtn) {
                  editBtn.addEventListener('click', (e) => {
-                     e.stopPropagation(); // Prevent row click listener if button is clicked
-                     console.log(`Edit button clicked for: ${firestoreId}`);
-                     openEditModal(firestoreId, data);
+                     e.stopPropagation();
+                     console.log(`Edit button clicked for online product: ${firestoreId}`);
+                     openEditModal(firestoreId, data); // Call existing function
                  });
              }
-              // Add row click listener (optional, could be confusing with button)
-             /*
-             tableRow.addEventListener('click', () => {
-                 console.log(`Row clicked, opening edit modal for: ${firestoreId}`);
-                 openEditModal(firestoreId, data);
-             });
-             */
+             // Add event listener for the DELETE button
+             const delBtn = tableRow.querySelector('.delete-product-btn');
+              if (delBtn) {
+                  delBtn.addEventListener('click', (e) => {
+                      e.stopPropagation();
+                      // Set global vars needed by confirmation modal
+                      productToDeleteId = firestoreId;
+                      productToDeleteName = data.productName || 'this online product';
+                       console.log(`Delete button clicked for online product ${productToDeleteName} (${productToDeleteId}). Opening confirmation modal.`);
+                       if(deleteWarningMessage) deleteWarningMessage.innerHTML = `Are you sure you want to delete the online product "<strong>${escapeHtml(productToDeleteName)}</strong>"? <br>This will also delete its images from storage. This action cannot be undone.`;
+                       if(deleteConfirmCheckbox) deleteConfirmCheckbox.checked = false;
+                       if(confirmDeleteFinalBtn) confirmDeleteFinalBtn.disabled = true;
+                       if(deleteConfirmModal) deleteConfirmModal.classList.add('active');
+                  });
+              }
+
         });
     }
 }
@@ -319,8 +365,8 @@ function renderProductTable(products) {
 function openAddModal() {
     if (!productModal || !productForm) return;
     console.log("Opening modal to add new ONLINE product.");
-    modalTitle.innerHTML = '<i class="fas fa-plus-circle success-icon"></i> Add New Online Product';
-    editProductIdInput.value = '';
+    if(modalTitle) modalTitle.innerHTML = '<i class="fas fa-plus-circle success-icon"></i> Add New Online Product';
+    if(editProductIdInput) editProductIdInput.value = '';
     productForm.reset();
     // Reset specific fields and states
     if(isEnabledCheckbox) isEnabledCheckbox.checked = true;
@@ -329,12 +375,15 @@ function openAddModal() {
     selectedFiles = []; // Clear selected files
     imagesToDelete = []; // Clear deletion queue
     if(imagePreviewArea) imagePreviewArea.innerHTML = ''; // Clear previews
-    if(uploadProgressInfo) uploadProgressInfo.innerHTML = ''; // Clear progress
+    if(uploadProgressInfo) uploadProgressInfo.textContent = ''; // Clear progress
+    if(existingImageUrlsInput) existingImageUrlsInput.value = '[]'; // Reset hidden input
+
     if(saveProductBtn) saveProductBtn.disabled = false;
     if(saveSpinner) saveSpinner.style.display = 'none';
     if(saveIcon) saveIcon.style.display = '';
     if(saveText) saveText.textContent = 'Save Product';
-    if (deleteProductBtn) deleteProductBtn.style.display = 'none';
+    if (deleteProductBtn) deleteProductBtn.style.display = 'none'; // Hide delete btn on Add
+
     toggleWeddingFields(); // Update visibility
     toggleSqFtFields();
     toggleExtraCharges();
@@ -344,42 +393,42 @@ function openAddModal() {
 async function openEditModal(firestoreId, data) {
     if (!productModal || !productForm || !data) return;
     console.log("Opening modal to edit ONLINE product:", firestoreId);
-    modalTitle.innerHTML = '<i class="fas fa-edit info-icon"></i> Edit Online Product';
-    productForm.reset(); // Reset form first
+    if(modalTitle) modalTitle.innerHTML = '<i class="fas fa-edit info-icon"></i> Edit Online Product';
+    productForm.reset();
 
     // Populate basic fields
-    editProductIdInput.value = firestoreId;
-    productNameInput.value = data.productName || '';
-    productCategoryInput.value = data.category || ''; // Populate Category
-    productUnitSelect.value = data.unit || 'Qty';
-    productDescInput.value = data.description || '';
-    isEnabledCheckbox.checked = data.isEnabled !== undefined ? data.isEnabled : true;
+    if(editProductIdInput) editProductIdInput.value = firestoreId;
+    if(productNameInput) productNameInput.value = data.productName || '';
+    if(productCategoryInput) productCategoryInput.value = data.category || '';
+    if(productUnitSelect) productUnitSelect.value = data.unit || 'Qty';
+    if(productDescInput) productDescInput.value = data.description || '';
+    if(isEnabledCheckbox) isEnabledCheckbox.checked = data.isEnabled !== undefined ? data.isEnabled : true;
 
     // Populate Pricing
     const pricing = data.pricing || {};
-    productSalePriceInput.value = pricing.rate ?? '';
-    productMinOrderValueInput.value = pricing.minimumOrderValue ?? '';
-    productPurchasePriceInput.value = pricing.purchasePrice ?? ''; // Optional
-    productMrpInput.value = pricing.mrp ?? ''; // Optional
-    productGstRateInput.value = pricing.gstRate ?? ''; // Optional
+    if(productSalePriceInput) productSalePriceInput.value = pricing.rate ?? '';
+    if(productMinOrderValueInput) productMinOrderValueInput.value = pricing.minimumOrderValue ?? '';
+    if(productPurchasePriceInput) productPurchasePriceInput.value = pricing.purchasePrice ?? '';
+    if(productMrpInput) productMrpInput.value = pricing.mrp ?? '';
+    if(productGstRateInput) productGstRateInput.value = pricing.gstRate ?? '';
 
     // Populate Wedding Card Fields
-    designChargeInput.value = pricing.designCharge ?? '';
-    printingChargeInput.value = pricing.printingChargeBase ?? '';
-    transportChargeInput.value = pricing.transportCharge ?? '';
-    extraMarginPercentInput.value = pricing.extraMarginPercent ?? '';
+    if(designChargeInput) designChargeInput.value = pricing.designCharge ?? '';
+    if(printingChargeInput) printingChargeInput.value = pricing.printingChargeBase ?? '';
+    if(transportChargeInput) transportChargeInput.value = pricing.transportCharge ?? '';
+    if(extraMarginPercentInput) extraMarginPercentInput.value = pricing.extraMarginPercent ?? '';
 
     // Populate Extra Charges
-    hasExtraChargesCheckbox.checked = pricing.hasExtraCharges || false;
-    extraChargeNameInput.value = pricing.extraCharge?.name || '';
-    extraChargeAmountInput.value = pricing.extraCharge?.amount ?? '';
+    if(hasExtraChargesCheckbox) hasExtraChargesCheckbox.checked = pricing.hasExtraCharges || false;
+    if(extraChargeNameInput) extraChargeNameInput.value = pricing.extraCharge?.name || '';
+    if(extraChargeAmountInput) extraChargeAmountInput.value = pricing.extraCharge?.amount ?? '';
 
     // Populate Options JSON
     if (productOptionsInput) {
-        if (data.options) {
-             try { productOptionsInput.value = typeof data.options === 'string' ? data.options : JSON.stringify(data.options, null, 2); }
-             catch { productOptionsInput.value = ''; }
-        } else { productOptionsInput.value = ''; }
+        if (data.options && Array.isArray(data.options)) { // Check if it's an array
+             try { productOptionsInput.value = JSON.stringify(data.options, null, 2); }
+             catch { productOptionsInput.value = ''; } // Clear if error stringifying
+        } else { productOptionsInput.value = ''; } // Clear if not array or doesn't exist
     }
 
      // Populate Optional Offline Fields
@@ -391,21 +440,22 @@ async function openEditModal(firestoreId, data) {
     // Handle Images
     selectedFiles = []; // Clear any previously selected files for upload
     imagesToDelete = []; // Clear deletion queue
-    imagePreviewArea.innerHTML = ''; // Clear previous previews
+    if(imagePreviewArea) imagePreviewArea.innerHTML = ''; // Clear previous previews
     existingImageUrls = data.imageUrls || []; // Store existing URLs
-    existingImageUrlsInput.value = JSON.stringify(existingImageUrls); // Store in hidden input
+    if(existingImageUrlsInput) existingImageUrlsInput.value = JSON.stringify(existingImageUrls);
 
     // Display existing images
     existingImageUrls.forEach(url => displayImagePreview(null, url));
+    if(uploadProgressInfo) uploadProgressInfo.textContent = ''; // Clear progress
 
     // Set button states
     if(saveProductBtn) saveProductBtn.disabled = false;
     if(saveSpinner) saveSpinner.style.display = 'none';
     if(saveIcon) saveIcon.style.display = '';
     if(saveText) saveText.textContent = 'Update Product';
-    if(deleteProductBtn) deleteProductBtn.style.display = 'inline-flex';
+    if(deleteProductBtn) deleteProductBtn.style.display = 'inline-flex'; // Show delete btn
     productToDeleteId = firestoreId; // Set ID for potential deletion
-    productToDeleteName = data.productName || 'this product';
+    productToDeleteName = data.productName || 'this online product';
 
     toggleWeddingFields(); // Update conditional field visibility
     toggleSqFtFields();
@@ -419,8 +469,9 @@ function closeProductModal() {
         productModal.classList.remove('active');
         productToDeleteId = null;
         productToDeleteName = null;
-        // Clear file input value if needed, though it often resets automatically
-        if (productImagesInput) productImagesInput.value = null;
+        if (productImagesInput) productImagesInput.value = null; // Clear file input
+        selectedFiles = []; // Clear staged files
+        imagesToDelete = []; // Clear deletion queue
     }
 }
 
@@ -428,135 +479,142 @@ function closeProductModal() {
 // --- Image Handling ---
 function handleFileSelection(event) {
     if (!imagePreviewArea || !productImagesInput) return;
-    const files = Array.from(event.target.files); // Get selected files as array
+    const files = Array.from(event.target.files);
+    const existingPreviews = imagePreviewArea.querySelectorAll('.image-preview-item');
 
-    // Combine newly selected files with files already staged (if any)
-    const currentFilesCount = selectedFiles.length + imagePreviewArea.querySelectorAll('.image-preview-item').length - imagesToDelete.length;
-    const availableSlots = 4 - currentFilesCount;
+    // Calculate current images (existing shown - marked for deletion + new staged)
+    let currentImageCount = 0;
+    existingImageUrls = JSON.parse(existingImageUrlsInput.value || '[]'); // Get current state
+    currentImageCount = existingImageUrls.filter(url => !imagesToDelete.includes(url)).length + selectedFiles.length;
+
+
+    const availableSlots = 4 - currentImageCount;
 
     if (files.length > availableSlots) {
-        alert(`You can only upload a maximum of 4 images. You have ${currentFilesCount} existing/staged images and tried to add ${files.length}. Please select fewer files.`);
+        alert(`You can upload a maximum of 4 images. You have ${currentImageCount} and tried to add ${files.length}.`);
         productImagesInput.value = null; // Clear selection
         return;
     }
 
-    // Store selected files for later upload
-    selectedFiles = selectedFiles.concat(files);
-
-    // Display previews for newly selected files
+    // Add newly selected files to the staging array and display previews
     files.forEach(file => {
         if (file.type.startsWith('image/')) {
-            displayImagePreview(file, null); // Display preview for new file
+            if (selectedFiles.length + existingImageUrls.filter(url => !imagesToDelete.includes(url)).length < 4) {
+                selectedFiles.push(file); // Add to files to be uploaded
+                displayImagePreview(file, null); // Display preview for new file
+            }
         }
     });
 
-     // Clear the file input value so the same file can be selected again if removed and re-added
+     // Clear the file input value
      productImagesInput.value = null;
 }
 
 function displayImagePreview(fileObject, existingUrl = null) {
     if (!imagePreviewArea) return;
 
-    const previewId = existingUrl || `new-${Date.now()}-${Math.random()}`; // Unique ID for the preview element
+    const previewId = existingUrl || `new-${fileObject.name}-${Date.now()}`; // Unique ID
     const previewWrapper = document.createElement('div');
     previewWrapper.className = 'image-preview-item';
     previewWrapper.setAttribute('data-preview-id', previewId);
 
     const img = document.createElement('img');
     const removeBtn = document.createElement('button');
+    removeBtn.type = 'button'; // Prevent form submission
     removeBtn.className = 'remove-image-btn';
-    removeBtn.innerHTML = '&times;'; // Close icon
+    removeBtn.innerHTML = '&times;';
     removeBtn.title = 'Remove image';
 
-    // For progress bar
     const progressBar = document.createElement('div');
     progressBar.className = 'upload-progress-bar';
     const progressFill = document.createElement('div');
     progressBar.appendChild(progressFill);
-    progressBar.style.display = 'none'; // Hide initially
+    progressBar.style.display = 'none';
 
     if (existingUrl) {
-        // Display existing image from URL
         img.src = existingUrl;
+        img.onerror = () => { img.src = 'images/placeholder.png'; } // Fallback image
+        // Store the URL with the element
+        previewWrapper.imageUrl = existingUrl;
         removeBtn.onclick = () => {
-            // Mark this existing URL for deletion on save
-            imagesToDelete.push(existingUrl);
-            previewWrapper.remove();
+            // Mark this existing URL for deletion
+            if (!imagesToDelete.includes(existingUrl)) {
+                 imagesToDelete.push(existingUrl);
+            }
+            // Visually remove, but don't remove from existingImageUrls array yet
+            previewWrapper.style.display = 'none'; // Hide instead of remove to track deletion
             console.log("Marked for deletion:", existingUrl);
+            console.log("Images to delete:", imagesToDelete);
         };
     } else if (fileObject) {
-        // Display preview for new file using FileReader
         const reader = new FileReader();
-        reader.onload = (e) => {
-            img.src = e.target.result;
-        }
+        reader.onload = (e) => { img.src = e.target.result; }
         reader.readAsDataURL(fileObject);
-        // Store file object reference with the element for upload later
-        previewWrapper.fileData = fileObject;
-
+        previewWrapper.fileData = fileObject; // Store file object
         removeBtn.onclick = () => {
-            // Remove this new file from the selectedFiles array
-            selectedFiles = selectedFiles.filter(f => f !== fileObject);
-            previewWrapper.remove();
+            selectedFiles = selectedFiles.filter(f => f !== fileObject); // Remove from staging array
+            previewWrapper.remove(); // Remove preview element completely
             console.log("Removed new file from selection:", fileObject.name);
+             console.log("Selected files now:", selectedFiles);
         };
     }
 
     previewWrapper.appendChild(img);
     previewWrapper.appendChild(removeBtn);
-    previewWrapper.appendChild(progressBar); // Add progress bar element
+    previewWrapper.appendChild(progressBar);
     imagePreviewArea.appendChild(previewWrapper);
 }
 
 
 // --- Upload Image Function ---
 async function uploadImage(file, productId, index) {
-    // Ensure storage and related functions are available
     if (!window.storage || !window.storageRef || !window.uploadBytesResumable || !window.getDownloadURL) {
         throw new Error("Firebase Storage functions not available.");
     }
+     // Find the preview element associated with this specific file object
+     const previewWrapper = [...imagePreviewArea.querySelectorAll('.image-preview-item')].find(el => el.fileData === file);
+     const progressBar = previewWrapper?.querySelector('.upload-progress-bar');
+     const progressFill = progressBar?.querySelector('div');
 
-    // Find the corresponding preview element to show progress
-    const previewElement = imagePreviewArea.querySelector(`[data-preview-id="new-${file.lastModified}-${file.name}"]`) || // Heuristic match for new files
-                           [...imagePreviewArea.querySelectorAll('.image-preview-item')].find(el => el.fileData === file); // Match by file object if possible
-    const progressBar = previewElement?.querySelector('.upload-progress-bar');
-    const progressFill = progressBar?.querySelector('div');
-
-    // Create a unique path
     const timestamp = Date.now();
-    const filePath = `onlineProductImages/${productId}/${timestamp}-image${index}-${file.name}`;
+    // Use more robust unique naming
+    const uniqueFileName = `${timestamp}-image${index}-${file.name.replace(/[^a-zA-Z0-9.]/g, '_')}`;
+    const filePath = `onlineProductImages/${productId}/${uniqueFileName}`;
     const fileRef = window.storageRef(window.storage, filePath);
 
     console.log(`Uploading ${file.name} to ${filePath}`);
-    if (progressBar) progressBar.style.display = 'block'; // Show progress bar
+    if (progressBar) progressBar.style.display = 'block';
+    if (progressFill) progressFill.style.width = '0%'; // Reset progress
 
     const uploadTask = window.uploadBytesResumable(fileRef, file);
 
     return new Promise((resolve, reject) => {
         uploadTask.on('state_changed',
             (snapshot) => {
-                // Progress monitoring
                 const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-                console.log(`${file.name} Upload is ${progress}% done`);
+                console.log(`${file.name} Upload is ${progress.toFixed(0)}% done`);
                 if (progressFill) progressFill.style.width = `${progress}%`;
+                if (uploadProgressInfo) uploadProgressInfo.textContent = `Uploading ${file.name}: ${progress.toFixed(0)}%`;
             },
             (error) => {
-                // Handle unsuccessful uploads
                 console.error(`Upload failed for ${file.name}:`, error);
-                if (progressBar) progressBar.style.backgroundColor = 'red'; // Indicate error
+                if (progressBar) progressBar.style.backgroundColor = 'red';
+                if (uploadProgressInfo) uploadProgressInfo.textContent = `Upload failed for ${file.name}.`;
                 reject(error);
             },
             async () => {
-                // Handle successful uploads on complete
                 console.log(`${file.name} uploaded successfully.`);
-                if (progressBar) progressBar.style.backgroundColor = 'var(--success-color)'; // Indicate success
+                 if (progressBar) progressBar.style.backgroundColor = 'var(--success-color)';
+                 if (uploadProgressInfo) uploadProgressInfo.textContent = `Upload complete for ${file.name}. Getting URL...`;
                 try {
                     const downloadURL = await window.getDownloadURL(uploadTask.snapshot.ref);
                     console.log('File available at', downloadURL);
-                    resolve(downloadURL); // Resolve the promise with the download URL
+                    resolve(downloadURL);
                 } catch (error) {
                     console.error(`Failed to get download URL for ${file.name}:`, error);
-                    reject(error); // Reject if URL retrieval fails
+                    if (progressBar) progressBar.style.backgroundColor = 'red'; // Mark error getting URL
+                     if (uploadProgressInfo) uploadProgressInfo.textContent = `Failed to get URL for ${file.name}.`;
+                    reject(error);
                 }
             }
         );
@@ -565,27 +623,26 @@ async function uploadImage(file, productId, index) {
 
 // --- Delete Stored Image Function ---
 async function deleteStoredImage(imageUrl) {
-    // Ensure storage and related functions are available
     if (!window.storage || !window.storageRef || !window.deleteObject) {
          console.error("Firebase Storage delete functions not available.");
-         return; // Or throw error
+         return; // Don't throw error, just log and return
     }
-     if (!imageUrl || !imageUrl.startsWith('https://firebasestorage.googleapis.com/')) {
+     if (!imageUrl || !(imageUrl.startsWith('https://firebasestorage.googleapis.com/') || imageUrl.startsWith('gs://'))) {
          console.warn("Invalid or non-Firebase Storage URL provided for deletion:", imageUrl);
-         return; // Don't try to delete non-storage URLs
+         return;
      }
 
      try {
+         console.log("Attempting to delete image from Storage:", imageUrl);
          const imageRef = window.storageRef(window.storage, imageUrl); // Get reference from URL
          await window.deleteObject(imageRef);
          console.log("Successfully deleted image from Storage:", imageUrl);
      } catch (error) {
-         // Handle errors, e.g., file not found (might have been deleted already)
          if (error.code === 'storage/object-not-found') {
              console.warn("Image not found in Storage (may have been deleted already):", imageUrl);
          } else {
              console.error("Error deleting image from Storage:", imageUrl, error);
-             // Optionally re-throw or alert user
+             // Consider whether to inform the user or just log
          }
      }
 }
@@ -594,8 +651,7 @@ async function deleteStoredImage(imageUrl) {
 // --- Save/Update Online Product Handler (UPDATED) ---
 async function handleSaveProduct(event) {
     event.preventDefault();
-     // Ensure dependencies are available
-     if (!window.db || !window.collection || !window.addDoc || !window.doc || !window.updateDoc || !window.serverTimestamp ) {
+    if (!window.db || !window.collection || !window.addDoc || !window.doc || !window.updateDoc || !window.serverTimestamp ) {
          alert("Database functions are unavailable. Cannot save.");
          return;
      }
@@ -605,30 +661,30 @@ async function handleSaveProduct(event) {
     if (saveSpinner) saveSpinner.style.display = 'inline-block';
     if (saveIcon) saveIcon.style.display = 'none';
     if (saveText) saveText.textContent = 'Saving...';
-    if (uploadProgressInfo) uploadProgressInfo.textContent = 'Starting save process...';
+    if (uploadProgressInfo) uploadProgressInfo.textContent = 'Preparing data...';
 
-    const productId = editProductIdInput.value;
+    const productId = editProductIdInput?.value;
     const isEditing = !!productId;
-    let finalProductId = productId; // Will hold the ID used for uploads
+    let finalProductId = productId; // ID used for uploads and final save
 
-    // --- Validation ---
+    // --- Basic Validation ---
     const productName = productNameInput?.value.trim();
     const category = productCategoryInput?.value.trim();
     const unit = productUnitSelect?.value || null;
     const salePrice = parseNumericInput(productSalePriceInput?.value);
 
-    if (!productName || !category || !unit || isNaN(salePrice)) {
-         alert("Product Name, Category, Unit, and Base Sale Price are required fields.");
-         if (saveProductBtn) saveProductBtn.disabled = false;
-         if (saveSpinner) saveSpinner.style.display = 'none';
-         if (saveIcon) saveIcon.style.display = '';
-         if (saveText) saveText.textContent = isEditing ? 'Update Product' : 'Save Product';
-         if (uploadProgressInfo) uploadProgressInfo.textContent = '';
-         return;
+    if (!productName || !category || !unit || salePrice === null || isNaN(salePrice)) {
+         alert("Product Name, Category, Unit, and Base Sale Price are required fields and must be valid.");
+         // Re-enable button
+          if (saveProductBtn) saveProductBtn.disabled = false;
+          if (saveSpinner) saveSpinner.style.display = 'none';
+          if (saveIcon) saveIcon.style.display = '';
+          if (saveText) saveText.textContent = isEditing ? 'Update Product' : 'Save Product';
+          if (uploadProgressInfo) uploadProgressInfo.textContent = '';
+          return;
     }
-    // Further validation for numeric inputs
+    // Further validation for numeric inputs (allow null for optional fields)
     const purchasePrice = parseNumericInput(productPurchasePriceInput?.value);
-    const minSalePrice = null; // Not currently in the online form, remove reference
     const mrp = parseNumericInput(productMrpInput?.value);
     const gstRate = parseNumericInput(productGstRateInput?.value);
     const minOrderValue = parseNumericInput(productMinOrderValueInput?.value);
@@ -638,8 +694,9 @@ async function handleSaveProduct(event) {
     const extraMarginPercent = parseNumericInput(extraMarginPercentInput?.value);
     const extraChargeAmount = parseNumericInput(extraChargeAmountInput?.value);
 
-     if ([purchasePrice, mrp, gstRate, minOrderValue, designCharge, printingCharge, transportCharge, extraMarginPercent, extraChargeAmount].some(isNaN)) {
-         alert("Please enter valid numbers (or leave blank) for optional prices/charges. Invalid characters are not allowed.");
+    if ([purchasePrice, mrp, gstRate, minOrderValue, designCharge, printingCharge, transportCharge, extraMarginPercent, extraChargeAmount].some(isNaN)) {
+         alert("Please enter valid numbers (or leave blank) for optional prices/charges.");
+         // Re-enable button
           if (saveProductBtn) saveProductBtn.disabled = false;
           if (saveSpinner) saveSpinner.style.display = 'none';
           if (saveIcon) saveIcon.style.display = '';
@@ -650,10 +707,10 @@ async function handleSaveProduct(event) {
     // --- End Validation ---
 
 
-    // --- Prepare Base Data (without images first) ---
+    // --- Prepare Base Data (without images yet) ---
      const productData = {
         productName: productName,
-        productName_lowercase: productName.toLowerCase(), // For case-insensitive search/sort
+        productName_lowercase: productName.toLowerCase(),
         category: category,
         category_lowercase: category.toLowerCase(),
         unit: unit,
@@ -664,38 +721,31 @@ async function handleSaveProduct(event) {
         brand: productBrandInput?.value.trim() || null,
         itemCode: productItemCodeInput?.value.trim() || null,
         hsnSacCode: productHsnSacCodeInput?.value.trim() || null,
-        // Timestamp will be added later
      };
 
      // --- Prepare Pricing Object ---
-     const pricing = {
-         rate: salePrice, // Base Sale Price
-         purchasePrice: purchasePrice, // Optional
-         mrp: mrp, // Optional
-         gstRate: gstRate, // Optional
-     };
-     if (productData.unit === 'Sq Feet' && minOrderValue !== null) {
-         pricing.minimumOrderValue = minOrderValue;
-     }
-     // Add wedding card pricing fields if category matches
+     const pricing = { rate: salePrice }; // Base Sale Price
+     if (purchasePrice !== null) pricing.purchasePrice = purchasePrice;
+     if (mrp !== null) pricing.mrp = mrp;
+     if (gstRate !== null) pricing.gstRate = gstRate;
+     if (unit === 'Sq Feet' && minOrderValue !== null) pricing.minimumOrderValue = minOrderValue;
+     // Wedding Card specific
      if (category.toLowerCase().includes('wedding card')) {
           if (designCharge !== null) pricing.designCharge = designCharge;
           if (printingCharge !== null) pricing.printingChargeBase = printingCharge;
           if (transportCharge !== null) pricing.transportCharge = transportCharge;
           if (extraMarginPercent !== null) pricing.extraMarginPercent = extraMarginPercent;
      }
-     // Add extra charges
+     // Extra Charges
      pricing.hasExtraCharges = hasExtraChargesCheckbox?.checked ?? false;
      if (pricing.hasExtraCharges) {
           pricing.extraCharge = {
               name: extraChargeNameInput?.value.trim() || 'Additional Charge',
               amount: extraChargeAmount ?? 0
           };
-     } else {
-         // Optionally remove the extraCharge field if unchecked
-         // delete pricing.extraCharge; // Or set to null
-     }
-     productData.pricing = pricing; // Add pricing object
+     } // No need for else, field won't exist if not checked
+
+     productData.pricing = pricing;
 
      // --- Prepare Options ---
       const optionsString = productOptionsInput?.value.trim();
@@ -703,87 +753,163 @@ async function handleSaveProduct(event) {
           try {
               productData.options = JSON.parse(optionsString);
               if (!Array.isArray(productData.options)) throw new Error("Options must be an array.");
-              // Basic validation for options structure could be added here
+               // Further validation can be added here to check if each item has 'name' and 'values' array
           } catch (err) {
-              showMessage('Error: Invalid JSON format in Options field. Must be an array like [{"name":"N", "values":["V1"]}].', true);
-              if (saveProductBtn) saveProductBtn.disabled = false; // Re-enable button
-              if (saveSpinner) saveSpinner.style.display = 'none';
-              if (saveIcon) saveIcon.style.display = '';
-              if (saveText) saveText.textContent = isEditing ? 'Update Product' : 'Save Product';
-              if (uploadProgressInfo) uploadProgressInfo.textContent = '';
-              return; // Stop saving
+              showMessage('Error: Invalid JSON format in Options field. Fix or clear it.', true);
+               if (saveProductBtn) saveProductBtn.disabled = false; // Re-enable button
+               if (saveSpinner) saveSpinner.style.display = 'none';
+               if (saveIcon) saveIcon.style.display = '';
+               if (saveText) saveText.textContent = isEditing ? 'Update Product' : 'Save Product';
+               if (uploadProgressInfo) uploadProgressInfo.textContent = '';
+               return;
           }
       }
 
+      // --- Timestamps ---
+      productData.updatedAt = window.serverTimestamp();
+      if (!isEditing) {
+          productData.createdAt = window.serverTimestamp();
+          productData.imageUrls = []; // Ensure imageUrls exists for new doc before potential upload
+      }
 
-    // --- Save/Update Firestore (Part 1 - Get ID if adding) and Handle Images ---
+    // --- Save/Update Firestore (Part 1 - To get ID if adding) and Handle Images ---
     let uploadedImageUrls = [];
     let finalImageUrls = [];
+    // Get existing URLs from hidden input (safer than relying on global var)
+    let currentExistingUrls = [];
+     try {
+         currentExistingUrls = JSON.parse(existingImageUrlsInput?.value || '[]');
+     } catch {
+         console.error("Could not parse existing image URLs from hidden input.");
+     }
+
 
     try {
-        // If ADDING NEW product, save basic data first to get an ID
+        // Step 1: Save/Update text data to get ID if needed
         if (!isEditing) {
-             productData.createdAt = window.serverTimestamp();
-             productData.updatedAt = window.serverTimestamp();
-             productData.imageUrls = []; // Initialize empty array
+             if (uploadProgressInfo) uploadProgressInfo.textContent = 'Saving product info...';
              const docRef = await window.addDoc(window.collection(window.db, "onlineProducts"), productData);
-             finalProductId = docRef.id; // Get the new ID
-             console.log("Initial product data saved with ID:", finalProductId);
-             if (uploadProgressInfo) uploadProgressInfo.textContent = 'Product info saved, starting image uploads...';
+             finalProductId = docRef.id;
+             console.log("Initial online product data saved with ID:", finalProductId);
         } else {
-             // Use existing product ID for editing
-             finalProductId = productId;
-             if (uploadProgressInfo) uploadProgressInfo.textContent = 'Starting image uploads...';
+             finalProductId = productId; // Use existing ID
+             // Optionally update text data here if you want it saved before image uploads start
+             // await window.updateDoc(window.doc(window.db, "onlineProducts", finalProductId), productData);
+             // console.log("Text data updated before image processing for:", finalProductId);
         }
 
-        // --- Now handle image uploads using finalProductId ---
-        if (selectedFiles.length > 0) {
-            const uploadPromises = selectedFiles.map((file, index) =>
-                uploadImage(file, finalProductId, index) // Pass index for potential naming uniqueness
-            );
-            // Wait for all uploads to complete
-            uploadedImageUrls = await Promise.all(uploadPromises);
-            if (uploadProgressInfo) uploadProgressInfo.textContent = 'Images uploaded successfully!';
-        } else {
-             if (uploadProgressInfo) uploadProgressInfo.textContent = 'No new images selected for upload.';
-        }
-
-        // --- Handle image deletions for EDITING mode ---
+        // Step 2: Handle image deletions from Storage (only in edit mode)
         if (isEditing && imagesToDelete.length > 0) {
              console.log("Deleting images from Storage:", imagesToDelete);
-             if (uploadProgressInfo) uploadProgressInfo.textContent += ' Deleting removed images...';
+             if (uploadProgressInfo) uploadProgressInfo.textContent = 'Deleting removed images...';
              const deletePromises = imagesToDelete.map(url => deleteStoredImage(url));
-             await Promise.allSettled(deletePromises); // Use allSettled to continue even if one delete fails
+             await Promise.allSettled(deletePromises); // Wait for deletions to attempt
              console.log("Finished attempting image deletions.");
+              // Update the list of current URLs after deletion
+             currentExistingUrls = currentExistingUrls.filter(url => !imagesToDelete.includes(url));
         }
 
-        // Combine existing (kept) URLs with newly uploaded URLs
-        const keptExistingUrls = isEditing ? existingImageUrls.filter(url => !imagesToDelete.includes(url)) : [];
-        finalImageUrls = [...keptExistingUrls, ...uploadedImageUrls];
+        // Step 3: Handle image uploads
+        if (selectedFiles.length > 0) {
+             console.log(`Starting upload for ${selectedFiles.length} new images...`);
+             if (uploadProgressInfo) uploadProgressInfo.textContent = `Uploading ${selectedFiles.length} images... (0%)`; // Initial progress
 
-        // --- Final Update/Set to Firestore ---
-        productData.imageUrls = finalImageUrls; // Add final URLs array
-        productData.updatedAt = window.serverTimestamp(); // Ensure updatedAt is set
+            // We need to handle progress reporting better for multiple files
+            let totalBytes = selectedFiles.reduce((acc, file) => acc + file.size, 0);
+            let totalBytesTransferred = 0;
+            let completedUploads = 0;
 
+             const uploadPromises = selectedFiles.map(async (file, index) => {
+                if (!window.storage || !window.storageRef || !window.uploadBytesResumable || !window.getDownloadURL) { throw new Error("Storage functions missing."); }
+                 const timestamp = Date.now();
+                 const uniqueFileName = `${timestamp}-image${index}-${file.name.replace(/[^a-zA-Z0-9.]/g, '_')}`;
+                 const filePath = `onlineProductImages/${finalProductId}/${uniqueFileName}`;
+                 const fileRef = window.storageRef(window.storage, filePath);
+                 const uploadTask = window.uploadBytesResumable(fileRef, file);
+
+                 // Find preview element more reliably
+                 const previewWrapper = [...imagePreviewArea.querySelectorAll('.image-preview-item')].find(el => el.fileData === file);
+                 const progressBar = previewWrapper?.querySelector('.upload-progress-bar');
+                 const progressFill = progressBar?.querySelector('div');
+                 if(progressBar) progressBar.style.display = 'block';
+                 if(progressFill) progressFill.style.width = '0%';
+
+
+                 return new Promise((resolve, reject) => {
+                     uploadTask.on('state_changed',
+                         (snapshot) => {
+                             // Note: This progress is per file, calculating aggregate is complex here
+                             const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+                              if (progressFill) progressFill.style.width = `${progress}%`;
+                              // Update aggregate progress (approximate)
+                              // Need a more robust way if detailed aggregate progress is needed
+                              if(uploadProgressInfo) uploadProgressInfo.textContent = `Uploading image ${index+1}/${selectedFiles.length}: ${progress.toFixed(0)}%`;
+
+                         },
+                         (error) => reject(error), // Let outer catch handle logging
+                         async () => {
+                            if(progressBar) progressBar.style.backgroundColor = 'var(--success-color)';
+                            if(uploadProgressInfo) uploadProgressInfo.textContent = `Getting URL for image ${index+1}...`;
+                             try {
+                                 const downloadURL = await window.getDownloadURL(uploadTask.snapshot.ref);
+                                 resolve(downloadURL);
+                             } catch (getUrlError) {
+                                 reject(getUrlError); // Reject if URL fails
+                             }
+                         }
+                     );
+                 });
+             });
+
+            // Wait for all uploads to complete
+            uploadedImageUrls = await Promise.all(uploadPromises);
+            if (uploadProgressInfo) uploadProgressInfo.textContent = 'All images uploaded!';
+        } else {
+             if (uploadProgressInfo && !isEditing) uploadProgressInfo.textContent = 'Product info saved. No new images selected.';
+             else if (uploadProgressInfo) uploadProgressInfo.textContent = ''; // Clear progress if editing and no new uploads
+        }
+
+
+        // Step 4: Combine URLs and Final Firestore Update
+        finalImageUrls = [...currentExistingUrls, ...uploadedImageUrls]; // Combine kept old URLs and new URLs
+        productData.imageUrls = finalImageUrls; // Add final URLs array to product data
+
+        console.log("Final product data being sent:", productData);
+
+        // Final update to Firestore doc with image URLs included
         const finalProductRef = window.doc(window.db, "onlineProducts", finalProductId);
-        // Use updateDoc if editing (even if no images changed, other fields might have)
-        // Use updateDoc if adding and images were uploaded (to add URLs)
-        await window.updateDoc(finalProductRef, productData); // Use updateDoc for both cases after initial add
+        await window.updateDoc(finalProductRef, {
+            imageUrls: productData.imageUrls,
+            updatedAt: window.serverTimestamp(),
+            // Update other fields as well, in case they changed while images uploaded
+            productName: productData.productName,
+            productName_lowercase: productData.productName_lowercase,
+            category: productData.category,
+            category_lowercase: productData.category_lowercase,
+            unit: productData.unit,
+            description: productData.description,
+            isEnabled: productData.isEnabled,
+            options: productData.options,
+            pricing: productData.pricing,
+            brand: productData.brand,
+            itemCode: productData.itemCode,
+            hsnSacCode: productData.hsnSacCode
+        });
 
         showMessage(isEditing ? 'Online Product updated successfully!' : 'Online Product added successfully!', false);
         closeProductModal();
-        // No need to call loadProducts() here, listener will catch the update/add
+        // Firestore listener will handle table refresh
 
     } catch (error) {
         console.error("Error during save/upload process:", error);
-        showMessage('Error saving product or uploading images. Check console.', true);
+        showMessage(`Error saving product or uploading images: ${error.message || 'Unknown error'}. Check console.`, true);
     } finally {
         // Restore button state
         if(saveProductBtn) saveProductBtn.disabled = false;
         if(saveSpinner) saveSpinner.style.display = 'none';
         if(saveIcon) saveIcon.style.display = '';
         if(saveText) saveText.textContent = isEditing ? 'Update Product' : 'Save Product';
-        if(uploadProgressInfo) setTimeout(() => { if(uploadProgressInfo) uploadProgressInfo.textContent = ''; }, 3000); // Clear progress message
+        if(uploadProgressInfo) setTimeout(() => { if(uploadProgressInfo) uploadProgressInfo.textContent = ''; }, 3000);
     }
 }
 
@@ -796,25 +922,26 @@ function handleDeleteButtonClick(event) {
         console.error("Product ID or Name for deletion is not set.");
         return;
     }
-    console.log(`Delete button clicked for ${productToDeleteName} (${productToDeleteId}). Opening confirmation modal.`);
+    console.log(`Delete button clicked for online product ${productToDeleteName} (${productToDeleteId}). Opening confirmation modal.`);
     if (deleteWarningMessage) deleteWarningMessage.innerHTML = `Are you sure you want to delete the online product "<strong>${escapeHtml(productToDeleteName)}</strong>"? <br>This will also delete its images from storage. This action cannot be undone.`;
     if(deleteConfirmCheckbox) deleteConfirmCheckbox.checked = false;
     if(confirmDeleteFinalBtn) confirmDeleteFinalBtn.disabled = true;
     if(deleteConfirmModal) deleteConfirmModal.classList.add('active');
 }
 
-function closeDeleteConfirmModal() { /* ... unchanged ... */ }
-function handleConfirmCheckboxChange() { /* ... unchanged ... */ }
+function closeDeleteConfirmModal() { if (deleteConfirmModal) { deleteConfirmModal.classList.remove('active'); } }
+function handleConfirmCheckboxChange() { if (deleteConfirmCheckbox && confirmDeleteFinalBtn) { confirmDeleteFinalBtn.disabled = !deleteConfirmCheckbox.checked; } }
 
 async function handleFinalDelete() {
     if (!deleteConfirmCheckbox?.checked || !productToDeleteId) {
         console.error("Confirmation checkbox not checked or product ID missing.");
         return;
     }
-    if (!window.db || !window.doc || !window.getDoc || !window.deleteDoc) {
-         alert("Database functions unavailable. Cannot delete.");
+    // Ensure core functions are available
+     if (!window.db || !window.doc || !window.getDoc || !window.deleteDoc || !window.storage || !window.storageRef || !window.deleteObject) {
+         alert("Core Firebase functions unavailable. Cannot delete.");
          return;
-    }
+     }
 
     console.log(`Proceeding with deletion of online product ID: ${productToDeleteId}`);
     if(confirmDeleteFinalBtn) {
@@ -822,43 +949,43 @@ async function handleFinalDelete() {
         confirmDeleteFinalBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Deleting...';
     }
 
+    const productRef = window.doc(window.db, "onlineProducts", productToDeleteId); // Target onlineProducts
+
     try {
-        const productRef = window.doc(window.db, "onlineProducts", productToDeleteId);
+        // 1. Get the document to find associated images
         const productSnap = await window.getDoc(productRef);
 
         if (productSnap.exists()) {
             const productData = productSnap.data();
-            // Delete images from Storage first
-            if (productData.imageUrls && Array.isArray(productData.imageUrls)) {
+            // 2. Delete images from Storage first
+            if (productData.imageUrls && Array.isArray(productData.imageUrls) && productData.imageUrls.length > 0) {
                  console.log("Deleting associated images from Storage...");
-                 const deletePromises = productData.imageUrls.map(url => deleteStoredImage(url));
+                 const deletePromises = productData.imageUrls.map(url => deleteStoredImage(url)); // Use helper
                  await Promise.allSettled(deletePromises); // Wait for deletions attempt
                  console.log("Finished attempting image deletions.");
+            } else {
+                 console.log("No associated images found in Firestore document.");
             }
         } else {
              console.warn("Product document not found in Firestore, cannot delete images.");
         }
 
-        // Now delete the Firestore document
+        // 3. Now delete the Firestore document
         await window.deleteDoc(productRef);
 
         console.log(`Successfully deleted online product: ${productToDeleteId}`);
-        showToast(`Product "${productToDeleteName}" deleted successfully!`);
+        showToast(`Product "${productToDeleteName || ''}" deleted successfully!`);
         closeDeleteConfirmModal();
         closeProductModal(); // Close the edit modal too if open
-         // Listener will refresh the table automatically
+        // Listener will refresh the table automatically
+
     } catch (error) {
         console.error(`Error deleting online product ${productToDeleteId}:`, error);
         alert(`Failed to delete product: ${error.message}`);
     } finally {
          if(confirmDeleteFinalBtn) {
-             confirmDeleteFinalBtn.disabled = !deleteConfirmCheckbox?.checked; // Re-enable based on checkbox
+             confirmDeleteFinalBtn.disabled = !deleteConfirmCheckbox?.checked;
              confirmDeleteFinalBtn.innerHTML = '<i class="fas fa-trash-alt"></i> Confirm Delete';
          }
     }
 }
-
-
-// --- Toast Notification ---
-function showToast(message, duration = 3000) { /* ... unchanged ... */ }
-// (Ensure Toast CSS is included, either here or in product_management.css)

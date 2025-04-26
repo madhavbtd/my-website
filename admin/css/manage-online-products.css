@@ -1,126 +1,143 @@
-/* === ADD THESE STYLES TO YOUR EXISTING product_management.css === */
+/* ============================================================== */
+/* == STYLES TO ADD for Online Product Management Features     == */
+/* ============================================================== */
 
-/* Image Upload Section */
+/* Image Upload Section Styles */
 #image-upload-section {
-    margin-top: 20px;
+    margin-top: 25px; /* More space above */
     padding-top: 20px;
-    border-top: 1px solid #eee;
+    border-top: 1px solid #eee; /* Separator line */
 }
-#image-upload-section h3 {
+#image-upload-section h3 { /* Consistent heading style */
     font-size: 1.1em;
     color: var(--primary-color);
-    margin-bottom: 15px;
+    margin-bottom: 18px; /* More space */
+    padding-bottom: 8px;
+    border-bottom: 1px solid #eee;
     font-weight: 600;
 }
-#productImages { /* Style the file input if needed */
+#productImages { /* File input */
     display: block;
+    width: 100%;
+    padding: 8px; /* Some padding */
     margin-bottom: 15px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-sm);
+    font-size: 0.9em;
+    cursor: pointer;
 }
 #image-preview-area {
     display: flex;
     flex-wrap: wrap;
-    gap: 15px;
-    margin-top: 15px;
-    padding: 10px;
-    background-color: #f8f9fa;
+    gap: 12px; /* Gap between previews */
+    margin-top: 10px;
+    padding: 15px; /* Padding inside */
+    background-color: #f8f9fa; /* Light background */
     border: 1px dashed var(--border-color);
     border-radius: var(--border-radius-md);
-    min-height: 80px;
+    min-height: 90px; /* Minimum height */
 }
 .image-preview-item {
     position: relative;
-    width: 100px;
-    height: 100px;
+    width: 90px; /* Slightly smaller previews */
+    height: 90px;
     border: 1px solid var(--border-color);
     border-radius: var(--border-radius-sm);
     overflow: hidden;
-    background-color: #eee;
+    background-color: #e9ecef; /* Placeholder bg */
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 .image-preview-item img {
     display: block;
     width: 100%;
     height: 100%;
-    object-fit: cover;
+    object-fit: cover; /* Cover the area */
 }
 .remove-image-btn {
     position: absolute;
-    top: 3px;
-    right: 3px;
-    background-color: rgba(220, 53, 69, 0.8); /* Danger color with transparency */
+    top: 2px; /* Adjust position */
+    right: 2px;
+    background-color: rgba(220, 53, 69, 0.75); /* Danger color */
     color: white;
     border: none;
     border-radius: 50%;
-    width: 22px;
-    height: 22px;
-    font-size: 12px;
-    line-height: 22px;
+    width: 20px; /* Slightly smaller */
+    height: 20px;
+    font-size: 11px; /* Adjust font size */
+    line-height: 20px;
     text-align: center;
     cursor: pointer;
     padding: 0;
     transition: background-color 0.2s ease;
+    font-weight: bold;
 }
 .remove-image-btn:hover {
-    background-color: var(--danger-color); /* Solid color on hover */
+    background-color: var(--danger-color);
 }
-.upload-progress-bar {
+.upload-progress-bar { /* Progress bar for upload */
     position: absolute;
     bottom: 0;
     left: 0;
     width: 100%;
-    height: 5px;
-    background-color: rgba(0, 0, 0, 0.2);
+    height: 6px;
+    background-color: rgba(200, 200, 200, 0.5); /* Light bg */
     overflow: hidden;
 }
-.upload-progress-bar div {
+.upload-progress-bar div { /* The fill part */
     height: 100%;
-    width: 0%; /* Starts at 0% */
-    background-color: var(--success-color);
+    width: 0%; /* Initial width */
+    background-color: var(--success-color); /* Green for progress */
     transition: width 0.1s linear;
 }
 
-
-/* Wedding Card & Extra Charges Sections */
+/* Wedding Card & Extra Charges Sections Styling */
 #wedding-card-fields,
 #extra-charges-section {
-    margin-top: 20px;
-    padding: 15px;
-    border: 1px dashed var(--secondary-color);
+    margin-top: 15px;
+    padding: 20px; /* More padding */
+    border: 1px solid #e9ecef; /* Lighter border */
+    border-left: 4px solid var(--primary-color); /* Accent border */
     border-radius: var(--border-radius-md);
-    background-color: #fdfdfd;
+    background-color: #fcfdff; /* Very light blueish */
 }
 #wedding-card-fields legend,
-#extra-charges-section h4 {
+#extra-charges-section h4 { /* Title for sections */
     font-weight: 600;
-    color: var(--secondary-color-dark);
-    font-size: 1em;
+    color: var(--primary-color); /* Match accent */
+    font-size: 1.05em; /* Slightly larger */
+    margin-bottom: 18px;
+    padding-bottom: 5px;
+}
+
+#extra-charges-section .form-group { /* Spacing in extra charges */
     margin-bottom: 15px;
-    padding: 0 5px;
-}
-#wedding-card-fields .form-columns-3, /* Use same columns as main form */
-#extra-charges-section .form-columns-3 {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); /* Adjust columns */
-    gap: 0 20px;
 }
 
-/* Category Input - Ensure consistent styling */
-#productCategory {
-     width: 100%; padding: 10px 14px; border: 1px solid var(--border-color); border-radius: var(--border-radius-sm); font-size: 0.95em; box-sizing: border-box; background-color: #fff;
+
+/* Ensure 3-column layout works within new fieldsets if needed */
+#wedding-card-fields .product-form-grid { /* Re-apply grid if needed */
+     display: grid;
+     grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+     gap: 0 20px;
 }
-#productCategory:focus {
-     border-color: var(--input-border-focus); box-shadow: 0 0 0 0.2rem var(--focus-shadow-color); outline: none;
+#extra-charges-section .product-form-grid {
+     display: grid;
+     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+     gap: 0 20px;
 }
 
-/* Ensure Price Group styling applies correctly */
-.price-group { position: relative; }
-.price-group input[type="number"] { padding-left: 35px !important; }
-.price-group::before { content: '₹'; position: absolute; left: 12px; top: calc(50% + 9px); transform: translateY(-50%); color: var(--text-color-light); font-size: 1em; z-index: 2; pointer-events: none; }
-
-/* Table Actions Column Width */
+/* Adjustments for table actions column */
 #productTable th:last-child,
 #productTable td:last-child {
-    width: 150px; /* Adjust width for Edit/Delete buttons */
+    width: 100px; /* Adjust if needed */
     text-align: center;
+}
+
+/* Spinner icon in save button */
+#saveProductBtn .fa-spinner {
+    margin-right: 5px;
 }
 
 /* === END OF ADDITIONAL STYLES === */
