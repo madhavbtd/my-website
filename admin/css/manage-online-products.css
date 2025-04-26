@@ -1,9 +1,9 @@
 /* ============================================================== */
 /* == manage-online-products.css                           == */
-/* == Final Version with Professional Styling & Fixes        == */
+/* == UPDATED Version with Font & Layout Improvements        == */
 /* ============================================================== */
 
-/* --- CSS Variables (Borrowed for consistency) --- */
+/* --- CSS Variables (Unchanged) --- */
 :root {
     --primary-color: #6f42c1; /* Product Purple */
     --primary-color-dark: #5a32a3;
@@ -23,9 +23,9 @@
     --header-text: #ffffff;
     --filter-bg: #ffffff;
     --filter-border: #e9ecef;
-    --table-header-bg: #eef2f7;
+    --table-header-bg: #f1f3f7; /* Slightly lighter header */
     --table-border-color: #dee2e6;
-    --table-row-even-bg: #f8f9fa;
+    --table-row-even-bg: #f9fafb; /* Slightly different even row */
     --table-row-hover-bg: #e9ecef;
     --modal-overlay-bg: rgba(0, 0, 0, 0.6);
 
@@ -34,10 +34,11 @@
     --text-color-light: #6c757d;
     --border-color: #ced4da;
     --input-border-focus: var(--primary-color);
-    --focus-shadow-color: rgba(111, 66, 193, 0.15); /* Adjusted alpha */
+    --focus-shadow-color: rgba(111, 66, 193, 0.15);
 
     --base-font-family: 'Poppins', "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
-    --base-font-size: 14px; /* Slightly smaller base for finer control */
+    /* --- UPDATED FONT SIZE --- */
+    --base-font-size: 15px; /* Increased from 14px */
     --border-radius-sm: 4px;
     --border-radius-md: 6px;
     --border-radius-lg: 8px;
@@ -47,405 +48,345 @@
 
 /* --- Base Body Styles --- */
 body {
-    font-family: var(--base-font-family, 'Poppins', sans-serif); /* Use variable with fallback */
-    font-size: var(--base-font-size, 14px);
+    font-family: var(--base-font-family);
+    font-size: var(--base-font-size); /* Using updated variable */
     line-height: 1.6;
-    background-color: var(--body-bg, #f8f9fa);
-    color: var(--text-color-dark, #333);
+    background-color: var(--body-bg);
+    color: var(--text-color-dark);
     margin: 0;
-    padding: 20px; /* Add padding to body */
+    padding: 20px;
 }
 
-/* --- Container, Header, Filter Bar (Assuming from shared CSS or basic) --- */
-/* Add basic styles if shared CSS (customer_management.css) is missing */
+/* --- Container, Header, Filter Bar --- */
 .container {
-    background-color: var(--container-bg, #ffffff);
+    background-color: var(--container-bg);
     padding: 30px 35px;
-    border-radius: var(--border-radius-lg, 8px);
-    box-shadow: var(--box-shadow-medium, 0 4px 12px rgba(0,0,0,0.1));
-    max-width: 1200px; /* Adjust as needed */
+    border-radius: var(--border-radius-lg);
+    box-shadow: var(--box-shadow-medium);
+    max-width: 1200px;
     margin: 30px auto;
     box-sizing: border-box;
 }
 .header {
-    /* Basic header styles */
-    background-color: var(--header-bg, #6f42c1);
-    color: var(--header-text, #ffffff);
-    padding: 18px 25px;
-    border-radius: var(--border-radius-lg, 8px) var(--border-radius-lg, 8px) 0 0;
+    background-color: var(--header-bg);
+    color: var(--header-text);
+    padding: 20px 25px; /* Slightly more padding */
+    border-radius: var(--border-radius-lg) var(--border-radius-lg) 0 0;
     margin: -30px -35px 30px -35px;
-    font-size: 1.3em;
-    font-weight: 600;
     text-align: center;
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 12px;
 }
+/* --- UPDATED HEADER FONT SIZE --- */
+.header h1 {
+    margin: 0;
+    font-size: 1.4em; /* Increased size */
+    font-weight: 600;
+}
 .header-icon { font-size: 1.1em; }
-h1 { margin: 0; font-size: 1.15em; }
 
 .breadcrumb-container {
-    font-size: 0.9em; color: var(--text-color-light); margin-bottom: 30px; padding: 5px 0;
+    font-size: 0.95em; /* Slightly larger */
+    color: var(--text-color-light);
+    margin-bottom: 30px;
+    padding: 5px 0;
 }
 .breadcrumb-container a { color: var(--primary-color); text-decoration: none; font-weight: 500; }
 .breadcrumb-container a:hover { text-decoration: underline; color: var(--primary-color-dark); }
 .breadcrumb-container span::before { content: "/"; margin: 0 8px; color: #aaa; }
 
 .filter-bar {
-    display: flex; flex-wrap: wrap; gap: 20px 25px; padding: 20px 25px; background-color: var(--filter-bg, #ffffff); border: 1px solid var(--filter-border, #e9ecef); border-radius: var(--border-radius-md, 6px); margin-bottom: 30px; align-items: flex-end; box-shadow: var(--box-shadow-light, 0 2px 8px rgba(0,0,0,0.08));
+    display: flex; flex-wrap: wrap; gap: 20px 25px; padding: 20px 25px; background-color: var(--filter-bg); border: 1px solid var(--filter-border); border-radius: var(--border-radius-md); margin-bottom: 30px; align-items: flex-end; box-shadow: var(--box-shadow-light);
 }
 .filter-group { display: flex; flex-direction: column; gap: 8px; flex-grow: 1; min-width: 180px; }
 .filter-group.filter-sort { min-width: 220px; }
-.filter-group label { font-size: 0.85em; font-weight: 600; color: var(--text-color-medium, #495057); text-transform: uppercase; letter-spacing: 0.5px; }
-.filter-group label i { margin-right: 6px; color: var(--primary-color, #6f42c1); }
-.filter-group input[type="text"], .filter-group select { padding: 9px 14px; border: 1px solid var(--border-color, #ced4da); border-radius: var(--border-radius-sm, 4px); font-size: 0.9em; height: 40px; background-color: #fff; box-sizing: border-box; width: 100%; transition: border-color 0.2s ease, box-shadow 0.2s ease; }
-.filter-group input:focus, .filter-group select:focus { border-color: var(--input-border-focus, #6f42c1); outline: 0; box-shadow: 0 0 0 3px var(--focus-shadow-color, rgba(111, 66, 193, 0.15)); }
+.filter-group label { font-size: 0.9em; font-weight: 600; color: var(--text-color-medium); text-transform: uppercase; letter-spacing: 0.5px; }
+.filter-group label i { margin-right: 6px; color: var(--primary-color); }
+.filter-group input[type="text"], .filter-group select { padding: 10px 15px; border: 1px solid var(--border-color); border-radius: var(--border-radius-sm); font-size: 1em; /* Larger inputs */ height: 42px; background-color: #fff; box-sizing: border-box; width: 100%; transition: border-color 0.2s ease, box-shadow 0.2s ease; }
+.filter-group input:focus, .filter-group select:focus { border-color: var(--input-border-focus); outline: 0; box-shadow: 0 0 0 3px var(--focus-shadow-color); }
 
 
 /* --- Table Styles --- */
 .table-container {
     width: 100%;
-    overflow-x: auto; /* Horizontal scroll if needed */
-    border: 1px solid var(--table-border-color, #dee2e6);
-    border-radius: var(--border-radius-md, 6px);
-    background-color: var(--container-bg, #ffffff);
+    overflow-x: auto;
+    border: 1px solid var(--table-border-color);
+    border-radius: var(--border-radius-md);
+    background-color: var(--container-bg);
     margin-bottom: 30px;
-    box-shadow: var(--box-shadow-light, 0 2px 8px rgba(0,0,0,0.08));
+    box-shadow: var(--box-shadow-light);
 }
 
+/* --- UPDATED TABLE FONT SIZE & PADDING --- */
 #productTable {
     width: 100%;
     border-collapse: collapse;
-    font-size: 0.9em;
-    table-layout: fixed; /* Use fixed layout based on th widths */
+    font-size: 1em; /* Increased from 0.9em */
+    table-layout: fixed;
     word-wrap: break-word;
 }
 
 #productTable thead th {
-    background-color: var(--table-header-bg, #eef2f7);
-    padding: 14px 12px; /* थोड़ी ज़्यादा पैडिंग */
-    text-align: left; /* डिफ़ॉल्ट लेफ्ट */
+    background-color: var(--table-header-bg);
+    padding: 16px 14px; /* Increased padding */
+    text-align: left;
     font-weight: 600;
-    color: var(--text-color-dark, #343a40);
-    border-bottom: 2px solid var(--table-border-color, #dee2e6);
-    white-space: nowrap; /* हैडर टेक्स्ट को एक लाइन में रखें */
+    color: var(--text-color-dark);
+    border-bottom: 2px solid var(--table-border-color);
+    white-space: nowrap;
     text-transform: uppercase;
-    font-size: 0.85em;
-    letter-spacing: 0.5px;
+    font-size: 0.9em; /* Adjusted relative to base */
+    letter-spacing: 0.6px;
 }
-/* Apply widths from HTML th style attribute or define here if needed */
 
 #productTable tbody tr {
     border-bottom: 1px solid #f1f3f5;
     transition: background-color 0.15s ease;
 }
-#productTable tbody tr:last-child {
-    border-bottom: none;
-}
-#productTable tbody tr:nth-child(even) {
-    background-color: var(--table-row-even-bg, #f8f9fa);
-}
-#productTable tbody tr:hover {
-    background-color: var(--table-row-hover-bg, #e9ecef); /* Hover इफेक्ट */
-}
+#productTable tbody tr:last-child { border-bottom: none; }
+#productTable tbody tr:nth-child(even) { background-color: var(--table-row-even-bg); }
+#productTable tbody tr:hover { background-color: var(--table-row-hover-bg); }
 
 #productTable td {
-    padding: 12px 12px; /* सेल पैडिंग */
+    padding: 15px 14px; /* Increased padding */
     vertical-align: middle;
-    color: var(--text-color-medium, #495057);
-    line-height: 1.5;
+    color: var(--text-color-medium);
+    line-height: 1.6; /* Improved line height */
 }
 
-/* Column specific alignments (redundant if set in HTML th style, but good fallback) */
+/* Column specific alignments (Keep as is or adjust if new columns added) */
 #productTable th:nth-child(4), #productTable td:nth-child(4) { text-align: right; } /* Rate */
-#productTable th:nth-child(5), #productTable td:nth-child(5) { text-align: center; } /* Unit */
-#productTable th:nth-child(6), #productTable td:nth-child(6) { text-align: center; } /* Enabled */
-#productTable th:nth-child(7), #productTable td:nth-child(7) { text-align: center; } /* Date Added */
-#productTable th:nth-child(8), #productTable td:nth-child(8) { text-align: center; } /* Actions */
+#productTable th:nth-child(5), #productTable td:nth-child(5) { text-align: right; } /* MRP (If Added) */
+#productTable th:nth-child(6), #productTable td:nth-child(6) { text-align: center; } /* Unit */
+#productTable th:nth-child(7), #productTable td:nth-child(7) { text-align: center; } /* Enabled */
+#productTable th:nth-child(8), #productTable td:nth-child(8) { text-align: center; } /* Date Added */
+#productTable th:last-child, #productTable td:last-child { text-align: center; } /* Actions */
 
 
 #loadingMessage, #noProductsMessage {
-    text-align: center; color: var(--text-color-light); font-style: italic; padding: 35px !important;
+    text-align: center; color: var(--text-color-light); font-style: italic; padding: 40px !important; font-size: 1.1em;
 }
-/* Action button styling in table */
+
+/* --- UPDATED Action button styling in table --- */
+#productTable td:last-child {
+    white-space: nowrap; /* Prevent buttons wrapping to next line */
+    text-align: center;
+}
 #productTable td:last-child .button {
-    margin: 0 2px; /* थोड़ा गैप */
-    padding: 4px 7px; /* थोड़ा छोटा बटन */
-    font-size: 0.85em;
+    margin: 0 4px; /* Adjust spacing between buttons */
+    padding: 6px 12px; /* Slightly larger buttons */
+    font-size: 0.9em; /* Maintain relative size */
+    vertical-align: middle; /* Align buttons nicely */
 }
+
 
 /* --- Modal Styles (Includes Scroll Fix & Professional Styling) --- */
 .modal {
-    display: none; position: fixed; z-index: 1050; left: 0; top: 0; width: 100%; height: 100%; background-color: var(--modal-overlay-bg, rgba(0, 0, 0, 0.6)); align-items: center; justify-content: center; padding: 20px; box-sizing: border-box;
+    display: none; position: fixed; z-index: 1050; left: 0; top: 0; width: 100%; height: 100%; background-color: var(--modal-overlay-bg); align-items: center; justify-content: center; padding: 20px; box-sizing: border-box;
 }
 .modal.active { display: flex; animation: fadeIn 0.3s ease; }
 @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
-/* Modal Content Box */
 .modal-content {
-    background-color: var(--container-bg, #ffffff);
-    border-radius: var(--border-radius-lg, 8px);
-    box-shadow: var(--box-shadow-medium, 0 5px 15px rgba(0,0,0,0.15));
-    padding: 0; /* Padding moved to inner elements */
-    max-height: 90vh; /* Limit height */
+    background-color: var(--container-bg);
+    border-radius: var(--border-radius-lg);
+    box-shadow: var(--box-shadow-medium);
+    padding: 0;
+    max-height: 90vh;
     display: flex;
     flex-direction: column;
     width: 95%;
-    overflow: hidden; /* <<< बाहरी ओवरफ्लो छिपाएं */
+    overflow: hidden;
 }
-.modal-content.large-modal {
-    max-width: 1100px; /* Wider modal for 3 columns */
-}
-.modal-content.small-modal { /* For confirmation modal */
-    max-width: 480px;
-    padding: 30px 35px; /* Restore padding for small modal */
-    overflow: visible; /* No flex/scroll needed */
-    display: block; /* Override flex */
-}
+.modal-content.large-modal { max-width: 1150px; /* Slightly wider */ }
+.modal-content.small-modal { max-width: 480px; padding: 30px 35px; overflow: visible; display: block; }
 
-
-/* Modal Title (Header) */
 .modal-content h2 {
     font-weight: 600;
-    font-size: 1.4em;
+    font-size: 1.5em; /* Larger modal title */
     padding: 20px 30px;
     border-bottom: 1px solid #eee;
-    color: var(--text-color-dark, #333);
+    color: var(--text-color-dark);
     text-align: left;
     display: flex;
     align-items: center;
-    flex-shrink: 0; /* Prevent shrinking */
+    flex-shrink: 0;
     margin: 0;
-    background-color: var(--container-bg, #ffffff); /* Ensure background */
+    background-color: var(--container-bg);
 }
-.modal-content h2 i {
-    margin-right: 12px;
-    color: var(--primary-color, #6f42c1);
-    font-size: 1.1em;
-}
-.modal-content h2 .warning-icon { color: var(--danger-color); } /* Icon color for delete confirm */
+.modal-content h2 i { margin-right: 12px; color: var(--primary-color); font-size: 1.1em; }
+.modal-content h2 .warning-icon { color: var(--danger-color); }
 
-/* Modal Close Button */
 .close-btn {
-    color: #aaa; position: absolute; top: 15px; right: 25px; font-size: 28px; font-weight: bold; cursor: pointer; line-height: 1; background: none; border: none; padding: 0; transition: color 0.2s ease; z-index: 10; /* Ensure above header */
+    color: #aaa; position: absolute; top: 15px; right: 25px; font-size: 30px; /* Slightly larger */ font-weight: bold; cursor: pointer; line-height: 1; background: none; border: none; padding: 0; transition: color 0.2s ease; z-index: 10;
 }
 .close-btn:hover, .close-btn:focus { color: #333; }
 
-/* Form Area (Scrollable) */
-#productForm {
-    padding: 25px 30px;
-    overflow-y: auto; /* Enable vertical scroll only for the form */
-    flex-grow: 1; /* Allow form to take available space */
-}
+#productForm { padding: 25px 30px; overflow-y: auto; flex-grow: 1; }
 
-/* Form Grid Layout */
-.product-form-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr); /* Default 3 Columns */
-    gap: 25px 35px;
-}
+.product-form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); /* Responsive columns */ gap: 25px 35px; }
 
-/* Form Groups */
-#productForm .form-group {
-    margin-bottom: 20px;
-}
+#productForm .form-group { margin-bottom: 22px; /* Slightly more space */ }
 
-/* Form Labels */
 #productForm label {
-    display: block;
-    font-weight: 500;
-    margin-bottom: 8px;
-    font-size: 0.9em;
-    color: var(--text-color-medium, #555);
+    display: block; font-weight: 500; margin-bottom: 8px; font-size: 0.95em; /* Slightly larger label */ color: var(--text-color-medium);
 }
-#productForm label input[type="checkbox"] { /* Style for checkbox within label */
-     margin-right: 10px;
-     width: 16px;
-     height: 16px;
-     accent-color: var(--primary-color, #6f42c1);
-     cursor: pointer;
-     vertical-align: middle;
-}
+#productForm label input[type="checkbox"] { margin-right: 10px; width: 16px; height: 16px; accent-color: var(--primary-color); cursor: pointer; vertical-align: middle; }
 
-
-/* Form Inputs, Selects, Textarea */
 #productForm input[type="text"],
 #productForm input[type="number"],
 #productForm input[type="file"],
 #productForm select,
 #productForm textarea {
-    width: 100%;
-    padding: 11px 15px;
-    border: 1px solid var(--border-color, #ced4da);
-    border-radius: var(--border-radius-md, 6px);
-    font-size: 0.95em;
-    font-family: var(--base-font-family, 'Poppins', sans-serif);
-    background-color: #fff;
-    transition: border-color 0.2s ease, box-shadow 0.2s ease;
-    box-sizing: border-box;
-    color: var(--text-color-dark);
+    width: 100%; padding: 12px 16px; /* Larger padding */ border: 1px solid var(--border-color); border-radius: var(--border-radius-md); font-size: 1em; /* Base size for inputs */ font-family: var(--base-font-family); background-color: #fff; transition: border-color 0.2s ease, box-shadow 0.2s ease; box-sizing: border-box; color: var(--text-color-dark);
 }
 #productForm ::placeholder { color: #aaa; opacity: 1; }
 #productForm input:focus,
 #productForm select:focus,
 #productForm textarea:focus {
-    border-color: var(--primary-color, #6f42c1);
-    box-shadow: 0 0 0 3px var(--focus-shadow-color, rgba(111, 66, 193, 0.15));
-    outline: none;
+    border-color: var(--primary-color); box-shadow: 0 0 0 3px var(--focus-shadow-color); outline: none;
 }
-#productForm textarea { min-height: 90px; resize: vertical; }
-#productForm .required { color: var(--danger-color, #dc3545); margin-left: 4px; font-weight: bold; }
+#productForm textarea { min-height: 100px; resize: vertical; }
+#productForm .required { color: var(--danger-color); margin-left: 4px; font-weight: bold; }
 
-/* File Input Button */
-#productForm input[type="file"] { padding: 9px 12px; background-color: var(--body-bg, #f8f9fa); cursor: pointer; }
-#productForm input[type="file"]::file-selector-button { padding: 8px 15px; border: none; background-color: var(--secondary-color, #6c757d); color: white; border-radius: var(--border-radius-sm, 4px); cursor: pointer; margin-right: 12px; font-family: var(--base-font-family, 'Poppins', sans-serif); font-weight: 500; transition: background-color 0.2s ease; }
-#productForm input[type="file"]::file-selector-button:hover { background-color: var(--secondary-color-dark, #5a6268); }
+#productForm input[type="file"] { padding: 10px 12px; background-color: var(--body-bg); cursor: pointer; }
+#productForm input[type="file"]::file-selector-button { padding: 9px 16px; border: none; background-color: var(--secondary-color); color: white; border-radius: var(--border-radius-sm); cursor: pointer; margin-right: 12px; font-family: var(--base-font-family); font-weight: 500; transition: background-color 0.2s ease; }
+#productForm input[type="file"]::file-selector-button:hover { background-color: var(--secondary-color-dark); }
 
-/* Price Input Group Styling (Rupee Symbol) */
 .price-group { position: relative; }
-.price-group input[type="number"] { padding-left: 30px !important; /* Space for symbol */ }
-.price-group::before { content: '₹'; position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text-color-light); font-size: 0.95em; z-index: 2; pointer-events: none; }
-/* Specific adjustment if label exists */
-#productForm .form-group label + input[type="number"]::before {
-    top: calc(50% + 12px); /* Approximate adjustment - might need tweaking */
-}
+.price-group input[type="number"] { padding-left: 32px !important; }
+.price-group::before { content: '₹'; position: absolute; left: 13px; top: 50%; transform: translateY(-50%); color: var(--text-color-light); font-size: 1em; z-index: 2; pointer-events: none; }
+#productForm .form-group label + input[type="number"]::before { top: calc(50% + 12px); /* May need fine tuning */ }
 
-
-/* Form Section Headings (h3) - Applied within Fieldset Legend Now */
-/* H3 specific styles can be removed if only used inside legend */
-
-
-/* Fieldset Styling */
 #productForm fieldset {
-    border: 1px solid #e0e0e0;
-    border-radius: var(--border-radius-md, 6px);
-    padding: 20px 25px 25px 25px;
-    margin-top: 15px; /* Space above fieldset */
-    margin-bottom: 15px; /* Space below fieldset */
-    background-color: #fdfdff; /* Light background for fieldset */
+    border: 1px solid #e0e0e0; border-radius: var(--border-radius-md); padding: 25px 30px 30px 30px; margin-top: 20px; margin-bottom: 20px; background-color: #fdfdff;
 }
-#productForm fieldset:first-of-type {
-    margin-top: 0; /* No top margin for first fieldset */
-}
+#productForm fieldset:first-of-type { margin-top: 0; }
 
-#productForm legend { /* Style the legend which now contains the icon and text */
-    font-weight: 600;
-    color: var(--primary-color, #6f42c1);
-    padding: 0 10px;
-    font-size: 1.15em; /* Size similar to old H3 */
-    margin-left: 5px;
-    display: inline-flex; /* Align icon and text */
-    align-items: center;
-    gap: 10px;
+#productForm legend {
+    font-weight: 600; color: var(--primary-color); padding: 0 10px; font-size: 1.2em; /* Larger legend */ margin-left: 5px; display: inline-flex; align-items: center; gap: 10px;
 }
-#productForm legend i {
-    font-size: 0.9em; /* Adjust icon size */
-}
+#productForm legend i { font-size: 0.9em; }
 
+#productForm small { display: block; margin-top: 6px; font-size: 0.85em; color: var(--text-color-light); }
 
-/* Small helper text */
-#productForm small { display: block; margin-top: 5px; font-size: 0.8em; color: var(--text-color-light, #6c757d); }
-
-/* Image Upload Section */
-#image-upload-section { margin-top: 25px; padding-top: 0; border-top: none; /* Remove top border if inside fieldset */ }
-#image-upload-section h3 { /* Style the H3 if it remains outside fieldset */
-     font-size: 1.15em; font-weight: 600; color: var(--primary-color, #6f42c1); margin-top: 25px; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 2px solid var(--primary-color, #6f42c1); display: flex; align-items: center; gap: 10px;
-}
+#image-upload-section { margin-top: 25px; padding-top: 0; border-top: none; }
+#image-upload-section h3 { font-size: 1.2em; font-weight: 600; color: var(--primary-color); margin-top: 25px; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 2px solid var(--primary-color); display: flex; align-items: center; gap: 10px; }
 #image-upload-section h3 i { font-size: 0.9em; }
 
 #image-preview-area {
-    display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 15px; margin-top: 15px; padding: 20px; background-color: #f0f2f5; border: 1px dashed #ced4da; border-radius: var(--border-radius-md, 6px); min-height: 130px;
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); /* Slightly larger previews */ gap: 15px; margin-top: 15px; padding: 20px; background-color: #f0f2f5; border: 1px dashed #ced4da; border-radius: var(--border-radius-md); min-height: 140px;
 }
 .image-preview-item {
-    position: relative; width: 100px; height: 100px; border: 1px solid #ddd; border-radius: var(--border-radius-md, 6px); overflow: hidden; background-color: #fff; box-shadow: 0 2px 5px rgba(0,0,0,0.08); display: flex; align-items: center; justify-content: center;
+    position: relative; width: 110px; height: 110px; border: 1px solid #ddd; border-radius: var(--border-radius-md); overflow: hidden; background-color: #fff; box-shadow: 0 2px 5px rgba(0,0,0,0.08); display: flex; align-items: center; justify-content: center;
 }
 .image-preview-item img { display: block; width: 100%; height: 100%; object-fit: cover; }
-.remove-image-btn { position: absolute; top: 2px; right: 2px; background-color: rgba(220, 53, 69, 0.75); color: white; border: none; border-radius: 50%; width: 20px; height: 20px; font-size: 11px; line-height: 20px; text-align: center; cursor: pointer; padding: 0; transition: background-color 0.2s ease; font-weight: bold; }
+.remove-image-btn { position: absolute; top: 3px; right: 3px; background-color: rgba(220, 53, 69, 0.8); color: white; border: none; border-radius: 50%; width: 22px; height: 22px; font-size: 12px; line-height: 22px; text-align: center; cursor: pointer; padding: 0; transition: background-color 0.2s ease; font-weight: bold; }
 .remove-image-btn:hover { background-color: var(--danger-color); }
 .upload-progress-bar { position: absolute; bottom: 0; left: 0; width: 100%; height: 6px; background-color: rgba(200, 200, 200, 0.5); overflow: hidden; }
 .upload-progress-bar div { height: 100%; width: 0%; background-color: var(--success-color); transition: width 0.1s linear; }
 
 
-/* Modal Actions (Footer) */
 .modal-actions {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: space-between; /* Space delete and save/cancel */
-    gap: 15px;
-    padding: 20px 30px;
-    border-top: 1px solid #eee;
-    flex-shrink: 0; /* Prevent shrinking */
-    background-color: var(--container-bg, #ffffff); /* Ensure background */
-    border-radius: 0 0 var(--border-radius-lg, 8px) var(--border-radius-lg, 8px);
+    display: flex; flex-wrap: wrap; justify-content: space-between; gap: 15px; padding: 25px 30px; border-top: 1px solid #eee; flex-shrink: 0; background-color: var(--container-bg); border-radius: 0 0 var(--border-radius-lg) var(--border-radius-lg);
 }
 .modal-actions-right { display: flex; gap: 15px; }
 
-/* Buttons */
-.button { padding: 11px 28px; font-size: 0.95em; border: none; border-radius: var(--border-radius-md, 6px); cursor: pointer; font-weight: 500; font-family: var(--base-font-family, 'Poppins', sans-serif); display: inline-flex; align-items: center; justify-content: center; gap: 8px; transition: background-color 0.2s ease, transform 0.1s ease, box-shadow 0.2s ease; line-height: 1.5; box-shadow: 0 1px 3px rgba(0,0,0,0.1); text-decoration: none; white-space: nowrap; }
+/* --- UPDATED BUTTON STYLING --- */
+.button {
+    padding: 12px 30px; /* Slightly larger buttons */
+    font-size: 1em; /* Base font size */
+    border: none;
+    border-radius: var(--border-radius-md);
+    cursor: pointer;
+    font-weight: 500;
+    font-family: var(--base-font-family);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: background-color 0.2s ease, transform 0.1s ease, box-shadow 0.2s ease;
+    line-height: 1.5;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    text-decoration: none;
+    white-space: nowrap;
+}
 .button:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
 .button:active:not(:disabled) { transform: translateY(0px); box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
 .button:disabled { opacity: 0.6; cursor: not-allowed; background-color: #adb5bd !important; transform: none; box-shadow: none; }
-.button i { margin-right: 6px; }
+.button i { margin-right: 8px; /* More space for icon */ }
 
-.save-button { background-color: var(--success-color, #28a745); color: white; }
-.save-button:hover:not(:disabled) { background-color: var(--success-color-dark, #218838); }
-.cancel-button { background-color: var(--secondary-color, #6c757d); color: white; box-shadow: none; }
-.cancel-button:hover:not(:disabled) { background-color: var(--secondary-color-dark, #5a6268); transform: none; box-shadow: none; }
-.delete-button-modal { background-color: transparent; color: var(--danger-color, #dc3545); border: 1px solid var(--danger-color, #dc3545); box-shadow: none; padding: 10px 25px; }
-.delete-button-modal:hover:not(:disabled) { background-color: var(--danger-color, #dc3545); color: white; transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+.save-button { background-color: var(--success-color); color: white; }
+.save-button:hover:not(:disabled) { background-color: var(--success-color-dark); }
+.cancel-button { background-color: var(--secondary-color); color: white; box-shadow: none; }
+.cancel-button:hover:not(:disabled) { background-color: var(--secondary-color-dark); transform: none; box-shadow: none; }
+.delete-button-modal { background-color: transparent; color: var(--danger-color); border: 1px solid var(--danger-color); box-shadow: none; padding: 11px 28px; }
+.delete-button-modal:hover:not(:disabled) { background-color: var(--danger-color); color: white; transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
 #saveProductBtn .fa-spinner { margin-right: 8px; }
+
+/* Add New / Clear Filter Button Specific Styles */
+.add-new-button { background-color: var(--primary-color); color: white; padding: 10px 20px; font-size: 0.95em;}
+.add-new-button:hover:not(:disabled) { background-color: var(--primary-color-dark); }
+.clear-filters-button { background-color: var(--secondary-color); color: white; padding: 10px 20px; font-size: 0.95em;}
+.clear-filters-button:hover:not(:disabled) { background-color: var(--secondary-color-dark); }
+
 
 /* Delete Confirmation Modal */
 .confirmation-modal .modal-content { padding: 30px 35px; }
-.confirmation-modal h2 { margin-bottom: 20px; font-size: 1.25em; }
-.confirmation-modal p { font-size: 1em; color: var(--text-color-medium); margin-bottom: 25px; text-align: center; line-height: 1.6; }
+.confirmation-modal h2 { margin-bottom: 20px; font-size: 1.3em; }
+.confirmation-modal p { font-size: 1.05em; color: var(--text-color-medium); margin-bottom: 25px; text-align: center; line-height: 1.6; }
 .confirmation-checkbox-area { display: flex; align-items: center; gap: 12px; margin-bottom: 30px; padding: 18px; background-color: var(--warning-bg); border: 1px solid var(--warning-border); border-radius: var(--border-radius-md); }
 .confirmation-checkbox-area input[type="checkbox"] { width: 18px; height: 18px; flex-shrink: 0; accent-color: var(--danger-color); cursor: pointer; }
-.confirmation-checkbox-area label { font-size: 0.9em; color: var(--text-color-dark); margin: 0; cursor: pointer; font-weight: 500; }
-.delete-confirm-button { background-color: var(--danger-color); color: white; padding: 10px 22px; }
+.confirmation-checkbox-area label { font-size: 0.95em; color: var(--text-color-dark); margin: 0; cursor: pointer; font-weight: 500; }
+.delete-confirm-button { background-color: var(--danger-color); color: white; padding: 11px 25px; }
 .delete-confirm-button:hover:not(:disabled) { background-color: var(--danger-color-dark); }
 
 /* Toast Notification Styles */
-.toast-notification { position: fixed; bottom: -100px; left: 50%; transform: translateX(-50%); background-color: rgba(52, 58, 64, 0.9); color: white; padding: 12px 25px; border-radius: 25px; z-index: 1100; font-size: 0.95em; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2); opacity: 0; transition: opacity 0.4s ease, bottom 0.4s ease; white-space: nowrap; }
+.toast-notification { position: fixed; bottom: -100px; left: 50%; transform: translateX(-50%); background-color: rgba(52, 58, 64, 0.9); color: white; padding: 14px 28px; border-radius: 25px; z-index: 1100; font-size: 1em; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2); opacity: 0; transition: opacity 0.4s ease, bottom 0.4s ease; white-space: nowrap; }
 .toast-notification.show { opacity: 1; bottom: 30px; }
 
 /* --- Responsive Adjustments --- */
-@media (max-width: 1150px) {
+/* Minor adjustments to breakpoints if needed */
+@media (max-width: 1200px) { /* Adjusted breakpoint */
     .modal-content.large-modal { max-width: 95%; }
-     .product-form-grid { grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); }
+     /* Keep form grid flexible */
 }
 
 @media (max-width: 992px) { /* Tablet */
-    .product-form-grid { grid-template-columns: repeat(2, 1fr); }
+    .product-form-grid { grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); } /* Allow more flexibility */
 }
 
 @media (max-width: 767px) { /* Mobile */
-    body { font-size: 14px; }
+    body { font-size: 14px; /* Keep mobile slightly smaller */ }
     .container { padding: 20px 15px; margin: 15px 0; }
-    .header { padding: 15px; margin: -20px -15px 25px -15px; font-size: 1.2em; }
+    .header { padding: 15px; margin: -20px -15px 25px -15px; font-size: 1.3em; } /* Slightly larger header */
+    .header h1 { font-size: 1.1em; /* Adjust relative h1 size */}
     .filter-bar { flex-direction: column; align-items: stretch; padding: 15px; gap: 15px; margin-bottom: 25px; }
     .filter-group { min-width: 100%; }
     .filter-group .button { align-self: stretch; }
 
-    #productTable { font-size: 0.88em; table-layout: auto; }
-    #productTable th, #productTable td { padding: 10px 8px; }
+    #productTable { font-size: 0.9em; table-layout: auto; } /* Adjust table font */
+    #productTable th, #productTable td { padding: 12px 10px; } /* Adjust padding */
+    #productTable td:last-child { white-space: normal; } /* Allow buttons to wrap on mobile */
+    #productTable td:last-child .button { margin-bottom: 5px; display: flex; width: auto; /* Let button size itself */ } /* Stack buttons vertically */
 
     .modal-content { width: 96%; max-height: 95vh; }
     .modal-content.large-modal { max-width: 96%; }
 
     #productForm { padding: 20px; }
-    .modal-content h2 { padding: 15px 20px; font-size: 1.3em; }
+    .modal-content h2 { padding: 15px 20px; font-size: 1.4em; } /* Larger modal title */
     .modal-actions { padding: 15px 20px; flex-direction: column-reverse; align-items: stretch; }
     .modal-actions-right { flex-direction: column-reverse; width: 100%;}
     .delete-button-modal { margin-right: 0; margin-bottom: 10px; width: 100%; }
-    .modal-actions .button { width: 100%; }
+    .modal-actions .button { width: 100%; padding: 12px 20px; } /* Adjust button padding */
 
     .product-form-grid { grid-template-columns: 1fr; gap: 15px 0; }
-    #productForm fieldset { padding: 15px; }
-    #productForm legend { font-size: 1em; }
+    #productForm fieldset { padding: 20px; }
+    #productForm legend { font-size: 1.1em; }
 }
 
 /* ============================================================== */
-/* == END: Final CSS                                       == */
+/* == END: UPDATED CSS                                       == */
 /* ============================================================== */
