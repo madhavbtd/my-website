@@ -1,4 +1,4 @@
-// js/product_management.js (Online Version - Based on V2.5 + New Features V3)
+// js/manage-online-products.js (Online Version - Based on V2.5 + New Features V3)
 
 // --- Ensure Firebase Functions are available globally via HTML script block ---
 // We expect db, auth, storage, collection, onSnapshot, query, orderBy, doc,
@@ -80,6 +80,7 @@ let productToDeleteId = null;
 let productToDeleteName = null;
 let selectedFiles = []; // Stores NEW File objects selected for upload
 let imagesToDelete = []; // Stores existing image URLs marked for deletion during EDIT
+let existingImageUrls = []; // <<< यह लाइन जोड़ी गई >>>
 
 // --- Helper Functions ---
 function formatCurrency(amount) { const num = Number(amount); return isNaN(num) || num === null || num === undefined ? '-' : `₹ ${num.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`; }
@@ -214,7 +215,12 @@ function listenForOnlineProducts() {
             applyFiltersAndRender();
         }, (error) => {
             console.error("Error fetching online products snapshot:", error);
-            if (productTableBody) productTableBody.innerHTML = `<tr><td colspan="6" style="color: red; text-align: center;">Error loading products. Check connection/permissions.</td></tr>`;
+            // Check if error is permission denied
+             if (error.code === 'permission-denied') {
+                if (productTableBody) productTableBody.innerHTML = `<tr><td colspan="6" style="color: red; text-align: center;">Error loading products: Insufficient permissions. Check Firestore rules.</td></tr>`;
+             } else {
+                if (productTableBody) productTableBody.innerHTML = `<tr><td colspan="6" style="color: red; text-align: center;">Error loading products. Check connection/console.</td></tr>`;
+             }
         });
     } catch (error) {
         console.error("Error setting up online product listener:", error);
@@ -371,9 +377,14 @@ function openAddModal() {
     // Reset specific fields and states
     if(isEnabledCheckbox) isEnabledCheckbox.checked = true;
     if(hasExtraChargesCheckbox) hasExtraChargesCheckbox.checked = false;
-    existingImageUrls = []; // Clear existing images tracker
-    selectedFiles = []; // Clear selected files
-    imagesToDelete = []; // Clear deletion queue
+
+    // ***** Critical Reset Section *****
+    // These lines rely on the global variables being declared correctly at the top
+    existingImageUrls = []; // Reset existing images tracker (Relies on global 'existingImageUrls')
+    selectedFiles = []; // Clear selected files (Relies on global 'selectedFiles')
+    imagesToDelete = []; // Clear deletion queue (Relies on global 'imagesToDelete')
+    // ***** End Critical Reset Section *****
+
     if(imagePreviewArea) imagePreviewArea.innerHTML = ''; // Clear previews
     if(uploadProgressInfo) uploadProgressInfo.textContent = ''; // Clear progress
     if(existingImageUrlsInput) existingImageUrlsInput.value = '[]'; // Reset hidden input
@@ -438,10 +449,10 @@ async function openEditModal(firestoreId, data) {
 
 
     // Handle Images
-    selectedFiles = []; // Clear any previously selected files for upload
-    imagesToDelete = []; // Clear deletion queue
+    selectedFiles = []; // Clear any previously selected files for upload (Relies on global 'selectedFiles')
+    imagesToDelete = []; // Clear deletion queue (Relies on global 'imagesToDelete')
     if(imagePreviewArea) imagePreviewArea.innerHTML = ''; // Clear previous previews
-    existingImageUrls = data.imageUrls || []; // Store existing URLs
+    existingImageUrls = data.imageUrls || []; // Store existing URLs (Relies on global 'existingImageUrls')
     if(existingImageUrlsInput) existingImageUrlsInput.value = JSON.stringify(existingImageUrls);
 
     // Display existing images
@@ -470,8 +481,8 @@ function closeProductModal() {
         productToDeleteId = null;
         productToDeleteName = null;
         if (productImagesInput) productImagesInput.value = null; // Clear file input
-        selectedFiles = []; // Clear staged files
-        imagesToDelete = []; // Clear deletion queue
+        selectedFiles = []; // Clear staged files (Relies on global 'selectedFiles')
+        imagesToDelete = []; // Clear deletion queue (Relies on global 'imagesToDelete')
     }
 }
 
@@ -484,7 +495,9 @@ function handleFileSelection(event) {
 
     // Calculate current images (existing shown - marked for deletion + new staged)
     let currentImageCount = 0;
-    existingImageUrls = JSON.parse(existingImageUrlsInput.value || '[]'); // Get current state
+    // ***** Ensure existingImageUrls is accessible here *****
+    // existingImageUrls = JSON.parse(existingImageUrlsInput.value || '[]'); // Get current state (safer?)
+    // Let's rely on the global variable for now, assuming it's correctly declared and updated
     currentImageCount = existingImageUrls.filter(url => !imagesToDelete.includes(url)).length + selectedFiles.length;
 
 
@@ -499,6 +512,7 @@ function handleFileSelection(event) {
     // Add newly selected files to the staging array and display previews
     files.forEach(file => {
         if (file.type.startsWith('image/')) {
+            // ***** Ensure selectedFiles and existingImageUrls are accessible *****
             if (selectedFiles.length + existingImageUrls.filter(url => !imagesToDelete.includes(url)).length < 4) {
                 selectedFiles.push(file); // Add to files to be uploaded
                 displayImagePreview(file, null); // Display preview for new file
@@ -538,6 +552,7 @@ function displayImagePreview(fileObject, existingUrl = null) {
         previewWrapper.imageUrl = existingUrl;
         removeBtn.onclick = () => {
             // Mark this existing URL for deletion
+            // ***** Ensure imagesToDelete is accessible *****
             if (!imagesToDelete.includes(existingUrl)) {
                  imagesToDelete.push(existingUrl);
             }
@@ -552,6 +567,7 @@ function displayImagePreview(fileObject, existingUrl = null) {
         reader.readAsDataURL(fileObject);
         previewWrapper.fileData = fileObject; // Store file object
         removeBtn.onclick = () => {
+            // ***** Ensure selectedFiles is accessible *****
             selectedFiles = selectedFiles.filter(f => f !== fileObject); // Remove from staging array
             previewWrapper.remove(); // Remove preview element completely
             console.log("Removed new file from selection:", fileObject.name);
@@ -755,8 +771,10 @@ async function handleSaveProduct(event) {
               if (!Array.isArray(productData.options)) throw new Error("Options must be an array.");
                // Further validation can be added here to check if each item has 'name' and 'values' array
           } catch (err) {
-              showMessage('Error: Invalid JSON format in Options field. Fix or clear it.', true);
-               if (saveProductBtn) saveProductBtn.disabled = false; // Re-enable button
+              // Use showToast for non-blocking error message
+              showToast('Error: Invalid JSON format in Options field. Fix or clear it.', 5000);
+              // Re-enable button
+               if (saveProductBtn) saveProductBtn.disabled = false;
                if (saveSpinner) saveSpinner.style.display = 'none';
                if (saveIcon) saveIcon.style.display = '';
                if (saveText) saveText.textContent = isEditing ? 'Update Product' : 'Save Product';
@@ -778,6 +796,7 @@ async function handleSaveProduct(event) {
     // Get existing URLs from hidden input (safer than relying on global var)
     let currentExistingUrls = [];
      try {
+         // ***** Ensure existingImageUrlsInput is accessible *****
          currentExistingUrls = JSON.parse(existingImageUrlsInput?.value || '[]');
      } catch {
          console.error("Could not parse existing image URLs from hidden input.");
@@ -799,6 +818,7 @@ async function handleSaveProduct(event) {
         }
 
         // Step 2: Handle image deletions from Storage (only in edit mode)
+        // ***** Ensure imagesToDelete is accessible *****
         if (isEditing && imagesToDelete.length > 0) {
              console.log("Deleting images from Storage:", imagesToDelete);
              if (uploadProgressInfo) uploadProgressInfo.textContent = 'Deleting removed images...';
@@ -810,6 +830,7 @@ async function handleSaveProduct(event) {
         }
 
         // Step 3: Handle image uploads
+        // ***** Ensure selectedFiles is accessible *****
         if (selectedFiles.length > 0) {
              console.log(`Starting upload for ${selectedFiles.length} new images...`);
              if (uploadProgressInfo) uploadProgressInfo.textContent = `Uploading ${selectedFiles.length} images... (0%)`; // Initial progress
@@ -879,9 +900,10 @@ async function handleSaveProduct(event) {
         // Final update to Firestore doc with image URLs included
         const finalProductRef = window.doc(window.db, "onlineProducts", finalProductId);
         await window.updateDoc(finalProductRef, {
+            // Only update fields that might change or need final state
             imageUrls: productData.imageUrls,
             updatedAt: window.serverTimestamp(),
-            // Update other fields as well, in case they changed while images uploaded
+            // Re-include other fields to ensure consistency if needed
             productName: productData.productName,
             productName_lowercase: productData.productName_lowercase,
             category: productData.category,
@@ -896,13 +918,16 @@ async function handleSaveProduct(event) {
             hsnSacCode: productData.hsnSacCode
         });
 
-        showMessage(isEditing ? 'Online Product updated successfully!' : 'Online Product added successfully!', false);
+
+        showToast(isEditing ? 'Online Product updated successfully!' : 'Online Product added successfully!', 3000); // Use showToast
         closeProductModal();
         // Firestore listener will handle table refresh
 
     } catch (error) {
         console.error("Error during save/upload process:", error);
-        showMessage(`Error saving product or uploading images: ${error.message || 'Unknown error'}. Check console.`, true);
+        // Use showToast for non-blocking error message
+        showToast(`Error saving product or uploading images: ${error.message || 'Unknown error'}. Check console.`, 5000);
+
     } finally {
         // Restore button state
         if(saveProductBtn) saveProductBtn.disabled = false;
@@ -939,9 +964,11 @@ async function handleFinalDelete() {
     }
     // Ensure core functions are available
      if (!window.db || !window.doc || !window.getDoc || !window.deleteDoc || !window.storage || !window.storageRef || !window.deleteObject) {
-         alert("Core Firebase functions unavailable. Cannot delete.");
+         // Use showToast instead of alert
+         showToast("Core Firebase functions unavailable. Cannot delete.", 5000);
          return;
      }
+
 
     console.log(`Proceeding with deletion of online product ID: ${productToDeleteId}`);
     if(confirmDeleteFinalBtn) {
@@ -981,7 +1008,8 @@ async function handleFinalDelete() {
 
     } catch (error) {
         console.error(`Error deleting online product ${productToDeleteId}:`, error);
-        alert(`Failed to delete product: ${error.message}`);
+        // Use showToast instead of alert
+         showToast(`Failed to delete product: ${error.message}`, 5000);
     } finally {
          if(confirmDeleteFinalBtn) {
              confirmDeleteFinalBtn.disabled = !deleteConfirmCheckbox?.checked;
