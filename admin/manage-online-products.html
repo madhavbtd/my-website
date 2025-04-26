@@ -13,7 +13,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 
     <script type="module">
-        // Firebase Core and Services (No changes here)
+        // Firebase Core and Services
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
         import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
         import { getFirestore, collection, doc, addDoc, updateDoc, deleteDoc, onSnapshot, query, orderBy, serverTimestamp, Timestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
@@ -23,7 +23,8 @@
             apiKey: "AIzaSyBQj5rQmE77kKKGYixP8y3Hcimz8tiAqzQ", // आपका apiKey
             authDomain: "madhav-multyprint.firebaseapp.com",
             projectId: "madhav-multyprint",
-            storageBucket: "madhav-multyprint.firebaseapp.com", // <<< सुनिश्चित करें कि यह सही नाम है
+            // !!! --- UPDATED storageBucket --- !!!
+            storageBucket: "madhav-multyprint.firebasestorage.app",
             messagingSenderId: "104988349637",
             appId: "1:104988349637:web:faf045b77c6786a4e70cac"
         };
@@ -77,10 +78,12 @@
 <body>
     <div class="container">
         <div class="header">
-            <i class="fas fa-store header-icon"></i> <h1>Online Product Management</h1> </div>
+            <i class="fas fa-store header-icon"></i> <h1>Online Product Management</h1>
+        </div>
 
         <div class="breadcrumb-container">
-          <a href="index.html">Home</a> / <span>Online Product Management</span> </div>
+          <a href="index.html">Home</a> / <span>Online Product Management</span>
+        </div>
 
         <div class="filter-bar">
               <div class="filter-group">
@@ -90,14 +93,18 @@
             </div>
              <div class="filter-group">
                  <label for="filterSearch"><i class="fas fa-search"></i> Search:</label>
-                <input type="text" id="filterSearch" placeholder="Name, Category..."> </div>
+                <input type="text" id="filterSearch" placeholder="Name, Category...">
+             </div>
              <div class="filter-group filter-sort">
                 <label for="sort-products"><i class="fas fa-sort"></i> Sort by:</label>
                 <select id="sort-products">
                      <option value="createdAt_desc">Newest First</option>
                     <option value="createdAt_asc">Oldest First</option>
-                    <option value="productName_asc">Name (A-Z)</option> <option value="productName_desc">Name (Z-A)</option>
-                     <option value="pricing.rate_asc">Rate (Low-High)</option> <option value="pricing.rate_desc">Rate (High-Low)</option> </select>
+                    <option value="productName_asc">Name (A-Z)</option>
+                    <option value="productName_desc">Name (Z-A)</option>
+                     <option value="pricing.rate_asc">Rate (Low-High)</option>
+                     <option value="pricing.rate_desc">Rate (High-Low)</option>
+                </select>
             </div>
             <div class="filter-group">
                  <button id="clearFiltersBtn" class="button clear-filters-button" title="Clear search and reset sort">
@@ -122,7 +129,8 @@
                  </thead>
                 <tbody id="productTableBody">
                     <tr>
-                        <td colspan="8" id="loadingMessage">Loading online products...</td> </tr>
+                        <td colspan="8" id="loadingMessage">Loading online products...</td>
+                    </tr>
                  </tbody>
             </table>
         </div>
@@ -276,7 +284,9 @@
                              </div>
                          </fieldset>
                     </div>
-                </div> </form> <div class="modal-actions">
+                </div>
+            </form>
+            <div class="modal-actions">
                 <button type="button" id="deleteProductBtn" class="button delete-button-modal" style="display: none;">
                     <i class="fas fa-trash-alt"></i> Delete Product
                 </button>
@@ -288,7 +298,11 @@
                            <i class="fas fa-spinner fa-spin" style="display: none;"></i> <i class="fas fa-save"></i> <span>Save Product</span>
                      </button>
                </div>
-             </div> </div> </div> <div id="deleteConfirmModal" class="modal confirmation-modal">
+             </div>
+        </div>
+    </div>
+
+    <div id="deleteConfirmModal" class="modal confirmation-modal">
         <div class="modal-content small-modal">
             <span class="close-btn" id="closeDeleteConfirmModal" title="Close">&times;</span>
             <h2><i class="fas fa-exclamation-triangle warning-icon"></i> Confirm Deletion</h2>
