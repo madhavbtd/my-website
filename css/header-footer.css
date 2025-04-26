@@ -1,126 +1,121 @@
-/* css/header-footer.css - Shared Header and Footer Styles (Based on about.css) */
+/* css/header-footer.css - Shared Header and Footer Styles (UPDATED for Mobile Menu Fix) */
 
 /* --- Variables (Consistent with about.css) --- */
 :root {
-    --primary-color: #0056b3; /* */
-    --secondary-color: #007bff; /* */
-    --text-color: #333; /* */
-    --text-muted: #6c757d; /* */
-    --white-bg: #ffffff; /* */
-    --light-bg: #f8f9fa; /* */
-    --border-color: #dee2e6; /* */
-    --font-family: 'Poppins', sans-serif; /* */
-    --border-radius: 6px; /* */
-    --box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08); /* */
-    /* --box-shadow-md from products.css seems more appropriate for sticky header */
-    --box-shadow-md: 0 5px 15px rgba(0, 0, 0, 0.08); /* Adapted from */
-    --transition-speed: 0.3s; /* */
-    --base-font-size: 16px; /* Ensure consistency, size from */
+    --primary-color: #0056b3;
+    --secondary-color: #007bff;
+    --text-color: #333;
+    --text-muted: #6c757d;
+    --white-bg: #ffffff;
+    --light-bg: #f8f9fa;
+    --border-color: #dee2e6;
+    --font-family: 'Poppins', sans-serif;
+    --border-radius: 6px;
+    --box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    /* Use medium shadow for sticky header */
+    --box-shadow-md: 0 5px 15px rgba(0, 0, 0, 0.08);
+    --transition-speed: 0.3s;
+    --base-font-size: 16px;
 }
 
-/* --- Basic Reset & Body (Minimal for header/footer) --- */
+/* --- Basic Reset & Body --- */
 * {
     margin: 0;
     padding: 0;
-    box-sizing: border-box; /* */
+    box-sizing: border-box;
 }
 
 body {
-    font-family: var(--font-family); /* */
+    font-family: var(--font-family);
     font-size: var(--base-font-size);
-    color: var(--text-color); /* */
-    line-height: 1.65; /* */
-    /* Background color is set by individual page CSS */
+    color: var(--text-color);
+    line-height: 1.65;
 }
 
 a {
-    color: var(--primary-color); /* */
-    text-decoration: none; /* */
-    transition: color var(--transition-speed) ease; /* */
+    color: var(--primary-color);
+    text-decoration: none;
+    transition: color var(--transition-speed) ease;
 }
 a:hover {
-    color: var(--secondary-color); /* */
-    text-decoration: none; /* */
+    color: var(--secondary-color);
+    text-decoration: none;
 }
 
 img {
     max-width: 100%;
     height: auto;
-    display: block; /* */
+    display: block;
 }
 
 .container {
-    max-width: 1200px; /* */
-    margin-left: auto; /* */
-    margin-right: auto; /* */
-    padding-left: 15px; /* */
-    padding-right: 15px; /* */
+    max-width: 1200px;
+    margin-left: auto;
+    margin-right: auto;
+    padding-left: 15px;
+    padding-right: 15px;
 }
 
-/* --- Header & Navigation Styles (from about.css / products.css) --- */
+/* --- Header & Navigation Styles --- */
 header {
-    background-color: var(--white-bg); /* */
-    box-shadow: var(--box-shadow-md); /* Use medium shadow from */
-    padding: 10px 0; /* */
-    position: sticky; /* */
-    top: 0; /* */
-    z-index: 1000; /* */
-    border-bottom: 1px solid var(--border-color); /* Added for definition, similar to */
+    background-color: var(--white-bg);
+    box-shadow: var(--box-shadow-md);
+    padding: 10px 0;
+    position: sticky; /* Makes header stay at top */
+    top: 0;
+    z-index: 1000; /* Ensures header is above other content */
+    border-bottom: 1px solid var(--border-color);
 }
 
 header nav.container {
-    display: flex; /* */
-    justify-content: space-between; /* */
-    align-items: center; /* */
-    min-height: 50px; /* Ensure consistent header height */
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    min-height: 50px;
 }
 
 .logo img {
-    max-height: 50px; /* - Adjusted from 45px in products.css for consistency with about.css */
+    max-height: 50px;
 }
-/* Style for potential text logo (seen in cart.html) */
-.logo a {
+.logo a { /* Style for potential text logo */
     font-weight: bold;
     font-size: 1.2em;
     color: var(--text-color);
     text-decoration: none;
 }
 
-
 .nav-links {
-    display: flex; /* Seen in all headers */
-    /* gap: 28px; */ /* Use gap from products.css instead of margin */
-    align-items: center; /* */
+    display: flex;
+    align-items: center;
 }
 
 .nav-links a {
-    /* margin-left: 18px; */ /* Removed margin from, using gap */
-    margin-left: 15px; /* Use margin from cart.css as gap wasn't used there */
-    padding: 8px 4px; /* */
-    font-weight: 500; /* */
-    color: var(--text-color); /* */
-    text-decoration: none; /* */
-    border-bottom: 2px solid transparent; /* */
-    transition: color var(--transition-speed) ease, border-color var(--transition-speed) ease; /* */
-    font-size: 1em; /* Ensure consistent font size */
+    margin-left: 15px; /* Consistent spacing */
+    padding: 8px 4px;
+    font-weight: 500;
+    color: var(--text-color);
+    text-decoration: none;
+    border-bottom: 2px solid transparent;
+    transition: color var(--transition-speed) ease, border-color var(--transition-speed) ease;
+    font-size: 1em;
 }
 .nav-links a:hover,
 .nav-links a.active {
-    color: var(--primary-color); /* */
-    border-bottom-color: var(--primary-color); /* */
+    color: var(--primary-color);
+    border-bottom-color: var(--primary-color);
 }
 
-/* Cart link specific style (from products.html) */
+/* Cart link specific style */
 .nav-links a i.fa-shopping-cart { margin-right: 4px; }
 
-/* Admin login link style (from products.css, seems consistent) */
+/* Admin login link style */
 .nav-links .admin-login-link {
     font-size: 0.9em;
     color: var(--text-muted);
     border: 1px solid var(--border-color);
     padding: 6px 12px;
     border-radius: var(--border-radius);
-    margin-left: 20px; /* Space before admin link */
+    margin-left: 20px;
 }
 .nav-links .admin-login-link:hover {
      background-color: var(--light-bg);
@@ -130,62 +125,107 @@ header nav.container {
 }
 
 .mobile-menu-toggle {
-    display: none; /* */
-    background: none; /* */
-    border: none; /* */
-    font-size: 1.8em; /* */
-    cursor: pointer; /* */
-    color: var(--text-color); /* */
+    display: none; /* Hidden on desktop */
+    background: none;
+    border: none;
+    font-size: 1.8em;
+    cursor: pointer;
+    color: var(--text-color);
 }
 
-/* --- Footer Styles (from about.css) --- */
+/* --- Footer Styles --- */
 footer {
-    background-color: #343a40; /* */
-    color: #adb5bd; /* */
-    padding: 35px 0; /* */
-    margin-top: 50px; /* - This might need adjustment per page */
-    border-top: 1px solid #495057; /* Added for consistency, similar to */
-    font-size: 0.9em; /* */
-    text-align: center; /* */
+    background-color: #343a40;
+    color: #adb5bd;
+    padding: 35px 0;
+    margin-top: 50px; /* Adjust as needed per page */
+    border-top: 1px solid #495057;
+    font-size: 0.9em;
+    text-align: center;
 }
-footer .container p { margin-bottom: 8px; /* */ }
+footer .container p { margin-bottom: 8px; }
 footer a {
-    color: #f8f9fa; /* */
-    margin: 0 8px; /* */
-    text-decoration: none; /* Ensure no default underline */
+    color: #f8f9fa;
+    margin: 0 8px;
+    text-decoration: none;
 }
 footer a:hover {
-    color: var(--secondary-color); /* */
-    text-decoration: underline; /* Add underline on hover */
+    color: var(--secondary-color);
+    text-decoration: underline;
 }
-/* Footer link combination from products.html / contact.html / about.html */
-footer p:last-of-type a { /* Select links in the last paragraph */
-     margin: 0 5px; /* Consistent horizontal spacing */
+footer p:last-of-type a { /* Links in the last paragraph */
+     margin: 0 5px;
 }
 
 
-/* --- Responsive Adjustments for Header/Footer (from about.css) --- */
+/* --- Responsive Adjustments for Header/Footer --- */
 @media (max-width: 768px) {
-    .nav-links {
-         display: none; /* */
-         /* Mobile menu display needs JS */
-         /* Example styles if .active class is added by JS: */
-         /* flex-direction: column; */
-         /* width: 100%; */
-         /* background-color: var(--white-bg); */
-         /* position: absolute; */
-         /* top: 100%; /* Below header */
-         /* left: 0; */
-         /* box-shadow: var(--box-shadow); */
-         /* border-top: 1px solid var(--border-color); */
-    }
-    /* Example styles for links inside active mobile menu */
-    /* .nav-links.active { display: flex; } */
-    /* .nav-links.active a { margin: 0; padding: 15px; text-align: center; border-bottom: 1px solid var(--border-color); width: 100%; } */
-    /* .nav-links.active a:last-child { border-bottom: none; } */
-    /* .nav-links.active a.active { background-color: var(--light-bg); } */
 
-    .mobile-menu-toggle { display: block; /* */ }
+    .nav-links {
+         /* Hide on mobile initially */
+         display: none;
+
+         /* Styles for when menu is opened by JS adding .active class */
+         /* These were previously commented out or missing */
+         flex-direction: column; /* Stack links vertically */
+         width: 100%;            /* Take full width */
+         background-color: var(--white-bg); /* White background */
+         position: absolute;     /* Position absolutely */
+         top: 100%;             /* Start right below the header */
+         left: 0;               /* Align to the left */
+         box-shadow: var(--box-shadow-md); /* Add shadow */
+         border-top: 1px solid var(--border-color); /* Add top border */
+         z-index: 999;          /* Ensure it's above content below */
+    }
+
+    /* === THIS IS THE KEY RULE === */
+    /* Show the menu when .active class is present */
+    .nav-links.active {
+        display: flex; /* Change display from none to flex (or block) */
+    }
+    /* === END KEY RULE === */
+
+
+    /* Styles for links inside the active mobile menu */
+    .nav-links.active a {
+       margin: 0; /* Reset desktop margin */
+       padding: 15px; /* Add padding */
+       text-align: center; /* Center text */
+       border-bottom: 1px solid var(--border-color); /* Separator line */
+       width: 100%; /* Full width link */
+       color: var(--text-color); /* Reset color */
+       border-bottom-color: var(--border-color); /* Use border color for separator */
+    }
+     /* Remove desktop active style underline */
+    .nav-links.active a:hover,
+    .nav-links.active a.active {
+        color: var(--primary-color);
+        background-color: var(--light-bg); /* Highlight background */
+        border-bottom-color: var(--border-color); /* Keep separator */
+    }
+    .nav-links.active a:last-child {
+        border-bottom: none; /* Remove border from last item */
+    }
+
+    /* Style for admin link inside mobile menu */
+     .nav-links.active .admin-login-link {
+         border: none; /* Remove border */
+         padding: 15px;
+         margin-left: 0;
+         background-color: transparent;
+         font-size: 1em;
+         color: var(--text-muted);
+         border-bottom: 1px solid var(--border-color); /* Add separator like other links */
+     }
+      .nav-links.active .admin-login-link:hover {
+         background-color: var(--light-bg);
+         color: var(--primary-color);
+      }
+
+
+    .mobile-menu-toggle {
+        display: block; /* Show the toggle button on mobile */
+    }
 }
 
 /* Further adjustments for very small screens if needed */
