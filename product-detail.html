@@ -10,7 +10,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
 
     <link rel="stylesheet" href="css/header-footer.css">
-
     <link rel="stylesheet" href="css/product-detail.css">
 
 </head>
@@ -37,7 +36,7 @@
             <ol>
                 <li><a href="index.html">Home</a></li>
                 <li><a href="products.html">Products</a></li>
-                <li><span id="breadcrumb-product-name" aria-current="page">Product Name</span></li>
+                <li><span id="breadcrumb-product-name" aria-current="page">Loading...</span></li>
             </ol>
         </nav>
 
@@ -46,7 +45,38 @@
                 <p>Loading product details...</p>
                 <i class="fas fa-spinner fa-spin fa-2x"></i>
             </div>
+
+            <div class="product-content" style="display: none;"> <div class="product-image-gallery">
+                    <div class="main-image">
+                        <img id="main-product-image" src="images/placeholder.png" alt="Product Image">
+                    </div>
+                    <div class="thumbnail-images" id="thumbnail-images">
+                        </div>
+                </div>
+                <div class="product-info-details">
+                    <h1 id="product-name">Product Name</h1>
+                    <div id="product-price" class="price">Contact for Price</div>
+                    <div class="product-description-short">
+                        <p id="product-description">Loading description...</p>
+                    </div>
+                    <div class="product-options">
+                       </div>
+                    <div class="product-actions">
+                         <label for="quantity">Quantity:</label>
+                         <input type="number" id="quantity" name="quantity" value="1" min="1" class="quantity-input">
+                         <button id="add-to-cart-btn" class="button-primary">Add to Cart</button>
+                         <p id="cart-feedback" class="cart-feedback-message" aria-live="polite"></p>
+                    </div>
+                     <div class="product-specifications">
+                        <h2>Specifications</h2>
+                        <ul id="product-specs">
+                            <li>Loading specifications...</li>
+                        </ul>
+                    </div>
+                </div>
             </div>
+             <div id="error-message-container" class="message-box error" style="display: none;"></div>
+        </div>
     </main>
 
     <footer>
@@ -57,8 +87,5 @@
     </footer>
 
     <script src="js/firebase-config.js" type="module"></script>
-    <script src="js/main.js" type="module" defer></script>
-    <script src="js/cart.js" type="module" defer></script>
-    <script src="js/product-detail.js" type="module" defer></script>
-</body>
+    <script src="js/main.js" type="module" defer></script> <script src="js/cart.js" type="module" defer></script> <script src="js/product-detail.js" type="module" defer></script> </body>
 </html>
