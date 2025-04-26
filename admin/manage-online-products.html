@@ -19,7 +19,15 @@
         import { getFirestore, collection, doc, addDoc, updateDoc, deleteDoc, onSnapshot, query, orderBy, serverTimestamp, Timestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
         import { getStorage, ref, uploadBytesResumable, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
 
-        const firebaseConfig = { /* --- Aapki Firebase Configuration --- */ apiKey: "AIzaSyBQj5rQmE77kKKGYixP8y3Hcimz8tiAqzQ", authDomain: "madhav-multyprint.firebaseapp.com", projectId: "madhav-multyprint", storageBucket: "madhav-multyprint.appspot.com", messagingSenderId: "104988349637", appId: "1:104988349637:web:faf045b77c6786a4e70cac" };
+        const firebaseConfig = {
+            apiKey: "AIzaSyBQj5rQmE77kKKGYixP8y3Hcimz8tiAqzQ", // आपका apiKey
+            authDomain: "madhav-multyprint.firebaseapp.com",
+            projectId: "madhav-multyprint",
+            storageBucket: "madhav-multyprint.firebaseapp.com", // <<< सुनिश्चित करें कि यह सही नाम है
+            messagingSenderId: "104988349637",
+            appId: "1:104988349637:web:faf045b77c6786a4e70cac"
+        };
+
 
         let app; let auth; let db; let storage;
         try {
@@ -121,7 +129,8 @@
     </div>
 
     <div id="productModal" class="modal">
-        <div class="modal-content large-modal"> <span class="close-btn" id="closeProductModal" title="Close">&times;</span>
+        <div class="modal-content large-modal">
+            <span class="close-btn" id="closeProductModal" title="Close">&times;</span>
             <h2 id="modalTitle"><i class="fas fa-box-open info-icon"></i> Add New Online Product</h2>
 
             <form id="productForm">
@@ -176,7 +185,7 @@
                     </div>
 
                     <div class="form-column">
-                         <fieldset>
+                        <fieldset>
                             <legend><i class="fas fa-dollar-sign"></i> Price Details</legend>
                             <div class="form-group price-group">
                                <label for="productSalePrice">Base Sale Price <span class="required">*</span>:</label>
