@@ -3,8 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Product Details - Madhav Multiprint</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <title>Product Details - Madhav Multiprint</title> <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -41,43 +40,85 @@
         </nav>
 
         <div id="product-detail-container" class="product-detail-layout">
-            <div class="loading-indicator">
-                <p>Loading product details...</p>
+            <div class="loading-indicator" style="display: flex;"> <p>Loading product details...</p>
                 <i class="fas fa-spinner fa-spin fa-2x"></i>
             </div>
 
-            <div class="product-content" style="display: none;"> <div class="product-image-gallery">
+            <div class="product-content" style="display: none;">
+                <div class="product-image-gallery">
                     <div class="main-image">
                         <img id="main-product-image" src="images/placeholder.png" alt="Product Image">
                     </div>
                     <div class="thumbnail-images" id="thumbnail-images">
                         </div>
                 </div>
+
                 <div class="product-info-details">
                     <h1 id="product-name">Product Name</h1>
-                    <div id="product-price" class="price">Contact for Price</div>
+                    <div id="product-price" class="price">Loading Price...</div>
                     <div class="product-description-short">
                         <p id="product-description">Loading description...</p>
                     </div>
-                    <div class="product-options">
-                       </div>
+
+                    <div id="flex-inputs-container" style="display: none;" class="product-options flex-options">
+                         <h4>Enter Dimensions & Quantity:</h4>
+                         <div class="form-group-inline">
+                             <label for="banner-width">Width:</label>
+                             <input type="number" id="banner-width" name="banner_width" placeholder="e.g., 4" min="0" step="any">
+                         </div>
+                         <div class="form-group-inline">
+                             <label for="banner-height">Height:</label>
+                             <input type="number" id="banner-height" name="banner_height" placeholder="e.g., 2" min="0" step="any">
+                         </div>
+                         <div class="form-group-inline">
+                              <label for="banner-unit">Unit:</label>
+                              <select id="banner-unit" name="banner_unit">
+                                  <option value="feet" selected>Feet</option>
+                                  <option value="inches">Inches</option>
+                              </select>
+                         </div>
+                         <div class="form-group-inline">
+                             <label for="banner-quantity">Quantity:</label>
+                             <input type="number" id="banner-quantity" name="banner_quantity" value="1" min="1" class="quantity-input">
+                         </div>
+                    </div>
+
+                    <div id="wedding-quantity-container" style="display: none;" class="product-options wedding-options">
+                        </div>
+
+                    <div id="standard-quantity-container" style="display: none;" class="product-options standard-options">
+                        <label for="quantity">Quantity:</label>
+                        <input type="number" id="quantity" name="quantity" value="1" min="1" class="quantity-input">
+                    </div>
+
                     <div class="product-actions">
-                         <label for="quantity">Quantity:</label>
-                         <input type="number" id="quantity" name="quantity" value="1" min="1" class="quantity-input">
                          <button id="add-to-cart-btn" class="button-primary">Add to Cart</button>
                          <p id="cart-feedback" class="cart-feedback-message" aria-live="polite"></p>
                     </div>
-                     <div class="product-specifications">
+
+                    <div class="product-specifications">
                         <h2>Specifications</h2>
                         <ul id="product-specs">
                             <li>Loading specifications...</li>
                         </ul>
                     </div>
                 </div>
-            </div>
-             <div id="error-message-container" class="message-box error" style="display: none;"></div>
-        </div>
-    </main>
+            </div> <div id="error-message-container" class="message-box error" style="display: none;"></div>
+        </div> <section id="related-products-section" class="related-products" style="margin-top: 50px; display: none;"> <h2 class="section-title"><i class="fas fa-tags"></i> Related Products</h2>
+             <div id="related-products-grid" class="product-list">
+                 <p>Loading related products...</p>
+             </div>
+        </section>
+
+         <section id="customer-reviews-section" class="customer-reviews" style="margin-top: 50px; display: none;"> <h2 class="section-title"><i class="fas fa-comments"></i> Customer Reviews</h2>
+             <div id="reviews-list">
+                 <p>No reviews yet.</p>
+             </div>
+             <div id="add-review-form-container" style="margin-top: 30px;">
+                 </div>
+         </section>
+
+         </main>
 
     <footer>
         <div class="container">
@@ -87,5 +128,8 @@
     </footer>
 
     <script src="js/firebase-config.js" type="module"></script>
-    <script src="js/main.js" type="module" defer></script> <script src="js/cart.js" type="module" defer></script> <script src="js/product-detail.js" type="module" defer></script> </body>
+    <script src="js/main.js" type="module" defer></script>
+    <script src="js/cart.js" type="module" defer></script>
+    <script src="js/product-detail.js" type="module" defer></script>
+</body>
 </html>
