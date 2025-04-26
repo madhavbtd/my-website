@@ -3,8 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Products - Madhav Multiprint</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <title>Our Products - Madhav Multiprint</title> <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -34,6 +33,19 @@
     <main class="container">
         <h1>Our Products</h1>
 
+        <section class="featured-products">
+            <h2>Featured Products</h2>
+            <div class="featured-grid">
+                <div class="featured-item">
+                    <a href="#"> <img src="https://via.placeholder.com/400x300.png?text=Flex+Banner" alt="Flex Banner"> <h4>Flex Banner</h4>
+                    </a>
+                </div>
+                <div class="featured-item">
+                    <a href="#"> <img src="https://via.placeholder.com/400x300.png?text=Wedding+Card" alt="Wedding Card"> <h4>Wedding Card</h4>
+                    </a>
+                </div>
+            </div>
+        </section>
         <section class="filters" aria-labelledby="filter-heading">
             <h2 id="filter-heading" class="sr-only">Product Filters</h2>
             <div class="filter-group">
@@ -50,7 +62,7 @@
                     <i class="fas fa-spinner fa-spin fa-3x"></i>
                     <p>Loading products...</p>
                 </div>
-             </div>
+                </div>
             <p id="no-products-message" class="message-box info" style="display: none;">No products found matching your criteria.</p>
         </section>
     </main>
