@@ -1,84 +1,8 @@
-/* css/index.css - Enhanced Homepage Styles */
+/* css/index.css - Homepage Specific Styles ONLY */
 
-/* --- Variables (Consistent with other pages) --- */
-:root {
-    --primary-color: #0056b3;
-    --secondary-color: #007bff;
-    --text-color: #333;
-    --text-muted: #6c757d;
-    --white-bg: #ffffff;
-    --light-bg: #f8f9fa;
-    --border-color: #dee2e6;
-    --font-family: 'Poppins', sans-serif;
-    --border-radius: 6px;
-    --box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-    --transition-speed: 0.3s;
-}
-/* --- End Variables --- */
+/* --- Variables (Optional: Keep if needed for page-specific styles) --- */
+/* :root { ... } */ /* Remove if not needed */
 
-/* Basic Reset & Body */
-*, *::before, *::after { box-sizing: border-box; }
-body {
-    margin: 0;
-    font-family: var(--font-family);
-    color: var(--text-color);
-    line-height: 1.65;
-    background-color: var(--white-bg);
-    overflow-x: hidden;
-}
-
-h1, h2, h3, h4, h5, h6 { margin-top: 0; margin-bottom: 0.75rem; font-weight: 600; line-height: 1.3; }
-h1 { font-size: 2.6em; font-weight: 700; }
-h2 { font-size: 2em; margin-bottom: 1.5rem; text-align: center; position: relative; padding-bottom: 15px;}
-h3 { font-size: 1.4em; margin-bottom: 1rem; }
-h4 { font-size: 1.15em; margin-bottom: 0.6rem; font-weight: 600;}
-
-p { margin-top: 0; margin-bottom: 1.1rem; }
-p:last-child { margin-bottom: 0; }
-
-a { color: var(--primary-color); text-decoration: none; transition: color var(--transition-speed) ease; }
-a:hover { color: var(--secondary-color); text-decoration: none; }
-
-img { max-width: 100%; height: auto; display: block; }
-
-/* Container */
-.container {
-    max-width: 1200px;
-    margin-left: auto;
-    margin-right: auto;
-    padding-left: 15px;
-    padding-right: 15px;
-}
-
-/* Header & Navigation (Keep consistent) */
-header { background-color: var(--white-bg); box-shadow: var(--box-shadow); padding: 10px 0; position: sticky; top: 0; z-index: 1000; }
-header nav.container { display: flex; justify-content: space-between; align-items: center; }
-.logo img { max-height: 50px; }
-.nav-links a { margin-left: 18px; padding: 8px 4px; font-weight: 500; color: var(--text-color); text-decoration: none; border-bottom: 2px solid transparent; transition: color var(--transition-speed) ease, border-color var(--transition-speed) ease; }
-.nav-links a:hover, .nav-links a.active { color: var(--primary-color); border-bottom-color: var(--primary-color); }
-.mobile-menu-toggle { display: none; background: none; border: none; font-size: 1.8em; cursor: pointer; color: var(--text-color); }
-
-/* Buttons (Keep consistent) */
-.button-primary { display: inline-block; background-color: var(--primary-color); color: var(--white-bg); padding: 14px 35px; /* Slightly larger */ border: none; border-radius: var(--border-radius); font-size: 1.05em; font-weight: 500; text-align: center; cursor: pointer; transition: background-color var(--transition-speed) ease, transform var(--transition-speed) ease; text-decoration: none; box-shadow: 0 2px 5px rgba(0, 86, 179, 0.3); margin: 5px; }
-.button-primary:hover { background-color: var(--secondary-color); color: var(--white-bg); transform: translateY(-3px); box-shadow: 0 4px 8px rgba(0, 86, 179, 0.3); }
-.button-secondary { display: inline-block; background-color: transparent; color: var(--primary-color); padding: 12px 30px; border: 2px solid var(--primary-color); border-radius: var(--border-radius); font-size: 1.05em; font-weight: 500; text-align: center; cursor: pointer; transition: background-color var(--transition-speed) ease, color var(--transition-speed) ease, transform var(--transition-speed) ease; text-decoration: none; margin: 5px; }
-.button-secondary:hover { background-color: var(--primary-color); color: var(--white-bg); transform: translateY(-3px); }
-
-/* Footer (Keep consistent) */
-footer { background-color: #343a40; color: #adb5bd; padding: 35px 0; margin-top: 50px; text-align: center; font-size: 0.9em; }
-footer .container p { margin-bottom: 8px; }
-footer a { color: #f8f9fa; margin: 0 8px; }
-footer a:hover { color: var(--secondary-color); }
-
-/* Responsive Base Styles (Mobile Menu - Keep consistent) */
-@media (max-width: 768px) {
-    .nav-links { display: none; flex-direction: column; width: 100%; background-color: var(--white-bg); position: absolute; top: 70px; /* Adjust */ left: 0; box-shadow: var(--box-shadow); border-top: 1px solid var(--border-color); }
-    .nav-links.active { display: flex; }
-    .nav-links a { margin: 0; padding: 15px; text-align: center; border-bottom: 1px solid var(--border-color); }
-    .nav-links a:last-child { border-bottom: none; }
-    .nav-links a.active { background-color: var(--light-bg); }
-    .mobile-menu-toggle { display: block; }
-}
 
 /* ============================================================== */
 /* == Homepage Specific Styles                                 == */
@@ -88,13 +12,13 @@ footer a:hover { color: var(--secondary-color); }
 .hero-section {
     position: relative; /* For overlay positioning */
     background-color: #cccccc; /* Fallback background */
-    /* <<< यहाँ अपनी बैकग्राउंड इमेज का URL डालें */
-    /* background-image: url('path/to/your/hero-image.jpg'); */
+    /* <<< अपनी बैकग्राउंड इमेज का URL यहाँ डालें >>> */
+     background-image: url('https://via.placeholder.com/1920x600.png?text=Hero+Background'); /* Placeholder */
     background-size: cover;
     background-position: center center;
     padding: 100px 0; /* Increased padding */
     text-align: center;
-    color: var(--white-bg); /* Text color for hero */
+    color: var(--white-bg); /* Text color for hero (uses variable from header-footer.css) */
     overflow: hidden;
 }
 .hero-overlay {
@@ -129,7 +53,12 @@ footer a:hover { color: var(--secondary-color); }
     gap: 15px;
     flex-wrap: wrap;
 }
-.hero-buttons .button-secondary { /* Specific style for secondary button in hero */
+/* Button styles now come from header-footer.css */
+/* .button-primary { ... } */
+/* .button-secondary { ... } */
+
+/* Specific style for secondary button in hero */
+.hero-buttons .button-secondary {
     background-color: rgba(255, 255, 255, 0.15);
     border-color: var(--white-bg);
     color: var(--white-bg);
@@ -144,18 +73,25 @@ footer a:hover { color: var(--secondary-color); }
 .info-section {
     padding: 70px 0; /* Consistent padding */
 }
+.info-section h2 {
+    font-size: 2em; /* Consistent size */
+    margin-bottom: 1.5rem;
+    text-align: center;
+    position: relative; /* For underline */
+    padding-bottom: 15px;
+}
 .info-section h2::after { /* Section heading underline */
     content: '';
     display: block;
-    width: 70px; /* Slightly wider underline */
+    width: 70px;
     height: 4px;
-    background-color: var(--primary-color);
+    background-color: var(--primary-color); /* Use shared variable */
     margin: 10px auto 0;
     border-radius: 2px;
 }
 .section-subtitle { /* Used in portfolio and process */
     font-size: 1.1em;
-    color: var(--text-muted);
+    color: var(--text-muted); /* Use shared variable */
     max-width: 750px;
     margin-left: auto;
     margin-right: auto;
@@ -165,9 +101,9 @@ footer a:hover { color: var(--secondary-color); }
 
 /* Alternating Background */
 .section-bg-light {
-    background-color: var(--light-bg);
-    border-top: 1px solid var(--border-color);
-    border-bottom: 1px solid var(--border-color);
+    background-color: var(--light-bg); /* Use shared variable */
+    border-top: 1px solid var(--border-color); /* Use shared variable */
+    border-bottom: 1px solid var(--border-color); /* Use shared variable */
 }
 
 /* Services Grid (Refined Style) */
@@ -178,34 +114,34 @@ footer a:hover { color: var(--secondary-color); }
     margin-top: 50px;
 }
 .service-item {
-    background-color: var(--white-bg);
+    background-color: var(--white-bg); /* Use shared variable */
     padding: 35px 30px; /* Increased padding */
-    border-radius: var(--border-radius);
-    box-shadow: var(--box-shadow);
+    border-radius: var(--border-radius); /* Use shared variable */
+    box-shadow: var(--box-shadow); /* Use shared variable */
     text-align: center;
     border: 1px solid transparent; /* Start with transparent border */
-    transition: transform var(--transition-speed) ease, box-shadow var(--transition-speed) ease, border-color var(--transition-speed) ease;
+    transition: transform var(--transition-speed) ease, box-shadow var(--transition-speed) ease, border-color var(--transition-speed) ease; /* Use shared variable */
 }
 .service-item:hover {
     transform: translateY(-8px); /* More lift */
-    box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.1); /* Custom hover shadow */
     border-color: var(--primary-color); /* Highlight border on hover */
 }
 .service-icon { /* Shared class for icons in grid items */
     font-size: 2.8em; /* Larger icons */
-    color: var(--primary-color);
+    color: var(--primary-color); /* Use shared variable */
     margin-bottom: 20px;
     line-height: 1;
     display: inline-block; /* Ensure margin bottom works */
 }
-.service-item h4 { /* Use H4 for services for better hierarchy */
+.service-item h4 {
     font-size: 1.2em;
-    color: var(--primary-color);
+    color: var(--primary-color); /* Use shared variable */
     margin-bottom: 10px;
 }
 .service-item p {
     font-size: 0.95em;
-    color: var(--text-muted);
+    color: var(--text-muted); /* Use shared variable */
     line-height: 1.6;
 }
 
@@ -225,14 +161,14 @@ footer a:hover { color: var(--secondary-color); }
     width: 80px;
     height: 80px;
     border-radius: 50%;
-    background-color: var(--primary-color);
-    color: var(--white-bg);
+    background-color: var(--primary-color); /* Use shared variable */
+    color: var(--white-bg); /* Use shared variable */
     display: inline-flex; /* Use flex to center icon */
     align-items: center;
     justify-content: center;
     margin-bottom: 20px;
-    box-shadow: 0 4px 8px rgba(0, 86, 179, 0.3);
-    transition: transform var(--transition-speed) ease;
+    box-shadow: 0 4px 8px rgba(0, 86, 179, 0.3); /* Custom shadow */
+    transition: transform var(--transition-speed) ease; /* Use shared variable */
 }
 .step-item:hover .step-icon-wrapper {
     transform: scale(1.1);
@@ -243,12 +179,12 @@ footer a:hover { color: var(--secondary-color); }
 }
 .step-item h4 {
     font-size: 1.1em;
-    color: var(--text-color);
+    color: var(--text-color); /* Use shared variable */
     margin-bottom: 8px;
 }
 .step-item p {
     font-size: 0.9em;
-    color: var(--text-muted);
+    color: var(--text-muted); /* Use shared variable */
 }
 
 /* Portfolio Section */
@@ -259,11 +195,11 @@ footer a:hover { color: var(--secondary-color); }
     margin-top: 10px; /* Reduced margin */
 }
 .portfolio-item {
-    border-radius: var(--border-radius);
+    border-radius: var(--border-radius); /* Use shared variable */
     overflow: hidden; /* Clip image to border radius */
     position: relative;
-    box-shadow: var(--box-shadow);
-    transition: transform var(--transition-speed) ease;
+    box-shadow: var(--box-shadow); /* Use shared variable */
+    transition: transform var(--transition-speed) ease; /* Use shared variable */
 }
 .portfolio-item img {
     display: block; /* Remove extra space below image */
@@ -274,7 +210,8 @@ footer a:hover { color: var(--secondary-color); }
 .portfolio-item:hover img {
     transform: scale(1.05); /* Zoom effect on hover */
 }
-.portfolio-item p { /* Optional caption */
+/* Optional caption style */
+.portfolio-item p {
    position: absolute;
    bottom: 0;
    left: 0;
@@ -286,7 +223,7 @@ footer a:hover { color: var(--secondary-color); }
    font-size: 0.9em;
    text-align: center;
    opacity: 0;
-   transition: opacity var(--transition-speed) ease;
+   transition: opacity var(--transition-speed) ease; /* Use shared variable */
 }
 .portfolio-item:hover p {
     opacity: 1;
@@ -302,25 +239,25 @@ footer a:hover { color: var(--secondary-color); }
     margin-top: 30px;
 }
 .testimonial {
-    background-color: var(--white-bg);
+    background-color: var(--white-bg); /* Use shared variable */
     padding: 30px; /* Increased padding */
-    border-radius: var(--border-radius);
-    box-shadow: var(--box-shadow);
-    border-left: 5px solid var(--primary-color);
+    border-radius: var(--border-radius); /* Use shared variable */
+    box-shadow: var(--box-shadow); /* Use shared variable */
+    border-left: 5px solid var(--primary-color); /* Accent border */
     flex: 1 1 400px; /* Allow items to grow and wrap */
     max-width: 550px; /* Max width for readability */
     margin-bottom: 0; /* Removed default bottom margin */
 }
 .testimonial p {
     font-style: italic;
-    color: var(--text-muted);
+    color: var(--text-muted); /* Use shared variable */
     margin-bottom: 15px; /* Increased space */
     font-size: 1.05em; /* Slightly larger quote text */
 }
 .testimonial p::before { /* Add quote marks */
     content: '\\201C'; /* Left double quote */
     font-size: 1.5em;
-    color: var(--primary-color);
+    color: var(--primary-color); /* Use shared variable */
     opacity: 0.6;
     margin-right: 5px;
     line-height: 0;
@@ -329,14 +266,14 @@ footer a:hover { color: var(--secondary-color); }
     display: block;
     text-align: right;
     font-weight: 600; /* Bolder author */
-    color: var(--text-color);
+    color: var(--text-color); /* Use shared variable */
     font-size: 0.95em; /* Slightly larger */
     margin-top: 10px;
 }
 
-/* Responsive Adjustments */
+/* Responsive Adjustments for Homepage Specific Styles */
 @media (max-width: 991px) {
-    .container { max-width: 720px; }
+    /* Adjust container if needed, else handled by header-footer.css */
     h1 { font-size: 2.4em; }
     h2 { font-size: 1.8em; }
     .hero-section { padding: 80px 0; }
@@ -346,7 +283,7 @@ footer a:hover { color: var(--secondary-color); }
 }
 
 @media (max-width: 768px) {
-    .container { max-width: 540px; }
+    /* Adjust container if needed, else handled by header-footer.css */
     h1 { font-size: 2.1em; }
     .hero-section p { font-size: 1.1em; }
     .info-section { padding: 50px 0; }
@@ -359,7 +296,7 @@ footer a:hover { color: var(--secondary-color); }
 }
 
 @media (max-width: 576px) {
-    .container { max-width: 100%; padding-left: 20px; padding-right: 20px; }
+    /* Adjust container if needed, else handled by header-footer.css */
     h1 { font-size: 1.9em; }
     h2 { font-size: 1.6em; }
     .hero-section { padding: 60px 0; }

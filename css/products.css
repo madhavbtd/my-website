@@ -1,171 +1,39 @@
+/* css/products.css - Products Page Specific Styles ONLY */
+
+/* --- Variables (Optional: Keep if needed for page-specific styles) --- */
+/* :root { ... } */ /* Remove if not needed */
+
+
 /* ============================================================== */
-/* == products.css - COMPLETE STYLES (Header/Footer from About) == */
+/* == Products Page Specific Styles                            == */
 /* ============================================================== */
-
-/* --- Base Variables (Derived from about.css) --- */
-:root {
-    --primary-color: #0056b3; /* Blue from about.css */
-    --secondary-color: #007bff; /* Blue from about.css */
-    --primary-color-dark: #004085; /* Darker blue for hover */
-    --text-color: #333;
-    --text-muted: #6c757d;
-    --white-bg: #ffffff;
-    --light-bg: #f8f9fa;
-    --border-color: #dee2e6;
-    --font-family: 'Poppins', sans-serif;
-    --border-radius: 6px; /* Keep consistent radius */
-    --box-shadow-sm: 0 2px 5px rgba(0, 0, 0, 0.06);
-    --box-shadow-md: 0 5px 15px rgba(0, 0, 0, 0.08);
-    --transition-speed: 0.3s;
-    --base-font-size: 16px;
-}
-
-/* --- Basic Reset & Body --- */
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
-
-body {
-    font-family: var(--font-family);
-    font-size: var(--base-font-size);
-    line-height: 1.7;
-    background-color: var(--white-bg); /* White background like about.css */
-    color: var(--text-color);
-    overflow-x: hidden; /* Prevent horizontal scroll where possible */
-}
-
-h1, h2, h3, h4, h5, h6 { margin-top: 0; margin-bottom: 0.75rem; font-weight: 600; line-height: 1.3; }
-h1 { font-size: 2.4em; }
-h2 { font-size: 2em; margin-bottom: 1.5rem; }
-h3 { font-size: 1.4em; margin-bottom: 1rem; }
-h4 { font-size: 1.1em; margin-bottom: 0.5rem; font-weight: 600;}
-
-p { margin-top: 0; margin-bottom: 1.1rem; }
-p:last-child { margin-bottom: 0; }
-
-a {
-    color: var(--primary-color);
-    text-decoration: none;
-    transition: color var(--transition-speed) ease;
-}
-a:hover {
-    color: var(--secondary-color); /* Use secondary blue for link hover */
-    text-decoration: none;
-}
-
-img {
-    max-width: 100%;
-    height: auto;
-    display: block;
-}
-
-.container {
-    max-width: 1200px;
-    margin-left: auto;
-    margin-right: auto;
-    padding-left: 15px;
-    padding-right: 15px;
-}
-
-/* --- Header & Navigation Styles (from about.css) --- */
-header {
-    background-color: var(--white-bg);
-    box-shadow: var(--box-shadow-md); /* Use medium shadow */
-    padding: 10px 0;
-    position: sticky;
-    top: 0;
-    z-index: 1000;
-    border-bottom: 1px solid var(--border-color); /* Add subtle border */
-}
-
-header nav.container {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    min-height: 50px; /* Ensure consistent header height */
-}
-
-.logo img {
-    max-height: 45px; /* Adjust logo height if needed */
-}
-
-.nav-links {
-    display: flex;
-    gap: 28px; /* Adjust space */
-    align-items: center;
-}
-
-.nav-links a {
-    margin-left: 0; /* Remove margin, use gap */
-    padding: 8px 4px;
-    font-weight: 500;
-    color: var(--text-color);
-    text-decoration: none;
-    border-bottom: 2px solid transparent;
-    transition: color var(--transition-speed) ease, border-color var(--transition-speed) ease;
-    font-size: 1em; /* Ensure consistent font size */
-}
-.nav-links a:hover,
-.nav-links a.active {
-    color: var(--primary-color);
-    border-bottom-color: var(--primary-color);
-    text-decoration: none;
-}
-
-/* Specific link styles from products.html */
-.nav-links a i.fa-shopping-cart { margin-right: 4px; }
-
-.nav-links .admin-login-link {
-    font-size: 0.9em;
-    color: var(--text-muted);
-    border: 1px solid var(--border-color);
-    padding: 6px 12px; /* Adjust padding */
-    border-radius: var(--border-radius);
-    margin-left: 20px; /* Space before admin link */
-}
-.nav-links .admin-login-link:hover {
-     background-color: var(--light-bg);
-     color: var(--text-color);
-     text-decoration: none;
-     border-color: #adb5bd;
-}
-
-.mobile-menu-toggle {
-    display: none;
-    background: none;
-    border: none;
-    font-size: 1.8em;
-    cursor: pointer;
-    color: var(--text-color);
-}
 
 /* --- Main Content Area --- */
 main.container {
-    padding-top: 40px;
-    padding-bottom: 60px;
+    padding-top: 40px; /* Space below header */
+    padding-bottom: 60px; /* Space above footer */
 }
 
 main.container h1 {
     text-align: center;
-    margin-top: 10px;
+    margin-top: 10px; /* Adjust as needed */
     margin-bottom: 45px;
     font-weight: 600;
-    color: var(--text-color); /* Use standard text color */
+    font-size: 2.4em; /* Consistent with original */
+    color: var(--text-color); /* Use shared variable */
 }
 
 /* --- Filters Section --- */
 .filters {
-    background-color: var(--white-bg);
+    background-color: var(--white-bg); /* Use shared variable */
     padding: 25px 30px;
-    border-radius: var(--border-radius);
+    border-radius: var(--border-radius); /* Use shared variable */
     margin-bottom: 50px;
-    border: 1px solid #e9ecef;
+    border: 1px solid #e9ecef; /* Slightly different border? Use var(--border-color) for consistency? */
     display: flex;
     gap: 30px;
     flex-wrap: wrap;
-    box-shadow: var(--box-shadow-sm);
+    box-shadow: var(--box-shadow-sm); /* Use shared variable */
     align-items: center;
 }
 
@@ -177,34 +45,34 @@ main.container h1 {
 
 .filter-group label {
     font-weight: 500;
-    color: var(--text-muted);
+    color: var(--text-muted); /* Use shared variable */
     font-size: 0.95em;
 }
 
 .filter-group select,
-.filter-group input[type="text"] {
+.filter-group input[type="text"] { /* Style for potential text filters */
     padding: 10px 15px;
-    border: 1px solid #ced4da;
-    border-radius: var(--border-radius);
-    font-family: var(--font-family);
+    border: 1px solid #ced4da; /* Slightly different border? Use var(--border-color) for consistency? */
+    border-radius: var(--border-radius); /* Use shared variable */
+    font-family: var(--font-family); /* Use shared variable */
     min-width: 200px;
     font-size: 0.95em;
     transition: border-color 0.2s ease, box-shadow 0.2s ease;
-    background-color: #fff;
-    height: 44px;
+    background-color: #fff; /* Explicit white background */
+    height: 44px; /* Fixed height for alignment */
     box-sizing: border-box;
 }
 .filter-group select:focus,
 .filter-group input[type="text"]:focus {
-    border-color: var(--primary-color);
+    border-color: var(--primary-color); /* Use shared variable */
     box-shadow: 0 0 0 3px rgba(0, 86, 179, 0.15); /* Adjusted shadow color */
     outline: none;
 }
 
 /* --- Product List Area --- */
 .product-list-section {
-    min-height: 300px;
-    position: relative;
+    min-height: 300px; /* Ensure space even when loading */
+    position: relative; /* For absolute positioning of messages/spinner */
 }
 
 .product-list {
@@ -215,11 +83,11 @@ main.container h1 {
 
 /* --- Product Card Styling --- */
 .product-card {
-    border: 1px solid var(--border-color);
-    border-radius: var(--border-radius);
-    background-color: var(--white-bg);
-    text-align: left;
-    box-shadow: var(--box-shadow-md);
+    border: 1px solid var(--border-color); /* Use shared variable */
+    border-radius: var(--border-radius); /* Use shared variable */
+    background-color: var(--white-bg); /* Use shared variable */
+    text-align: left; /* Override potential center alignment */
+    box-shadow: var(--box-shadow-md); /* Use shared variable */
     overflow: hidden;
     display: flex;
     flex-direction: column;
@@ -228,151 +96,153 @@ main.container h1 {
 
 .product-card:hover {
     transform: translateY(-8px);
-    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
-    border-color: var(--primary-color);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1); /* Enhanced shadow on hover */
+    border-color: var(--primary-color); /* Use shared variable */
 }
 
 .product-card .product-image-container {
     width: 100%;
-    height: 240px;
-    background-color: #ffffff;
+    height: 240px; /* Fixed height for image area */
+    background-color: #ffffff; /* Ensure white background for images */
     display: flex;
     align-items: center;
     justify-content: center;
     overflow: hidden;
-    position: relative;
+    position: relative; /* For potential overlays or badges */
 }
 
 .product-card img {
     display: block;
     max-width: 100%;
     max-height: 100%;
-    object-fit: contain;
+    object-fit: contain; /* Use contain to show whole image */
     transition: transform 0.35s ease;
 }
 .product-card:hover img {
-     transform: scale(1.05);
+     transform: scale(1.05); /* Subtle zoom on hover */
 }
 
 .product-card .product-info {
     padding: 25px;
-    flex-grow: 1;
+    flex-grow: 1; /* Allow info section to grow */
     display: flex;
-    flex-direction: column;
+    flex-direction: column; /* Stack title, price, button */
 }
 
 .product-card h3 { /* Product title */
-    font-size: 1.15em; /* Adjusted size */
+    font-size: 1.15em;
     margin-top: 0;
     margin-bottom: 10px;
     font-weight: 600;
     line-height: 1.45;
-    color: var(--text-color);
+    color: var(--text-color); /* Use shared variable */
+     /* Ellipsis for long titles */
      display: -webkit-box;
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
-    min-height: calc(1.15em * 1.45 * 2); /* Adjust min height */
+    min-height: calc(1.15em * 1.45 * 2); /* Reserve space for two lines */
 }
 
 .product-card .price { /* Product price */
-    font-size: 1.2em; /* Adjusted size */
+    font-size: 1.2em;
     font-weight: 700;
-    color: var(--primary-color); /* Use new primary color */
-    margin-bottom: 25px;
-    margin-top: auto;
+    color: var(--primary-color); /* Use shared variable */
+    margin-bottom: 25px; /* Space above button */
+    margin-top: auto; /* Push price down */
 }
 
 /* --- Product Card Button --- */
-.product-card .button-primary { /* Use button-primary class from about.css */
+.product-card .button-primary {
+    /* Use shared button styles from header-footer.css */
     padding: 10px 20px;
     font-size: 0.95em;
     font-weight: 500;
-    margin-top: 10px;
-    align-self: flex-start;
-    background-color: var(--primary-color); /* Use new primary color */
-    color: var(--white-bg);
-    border-radius: var(--border-radius);
-    text-decoration: none;
-    display: inline-block;
-    transition: background-color var(--transition-speed) ease, box-shadow var(--transition-speed) ease, transform var(--transition-speed) ease;
-    border: none;
-    cursor: pointer;
-    box-shadow: 0 2px 5px rgba(0, 86, 179, 0.2); /* Adjusted shadow color */
+    margin-top: 10px; /* Space below price */
+    align-self: flex-start; /* Align button left */
+    /* Additional specific styles if needed */
 }
-.product-card .button-primary:hover {
-    background-color: var(--secondary-color); /* Use secondary blue for hover */
-    box-shadow: 0 4px 8px rgba(0, 86, 179, 0.3);
-    transform: translateY(-2px); /* Slightly less lift */
-}
+/* Hover styles are inherited from header-footer.css */
 
 
 /* --- Loading Spinner & Messages --- */
 .loading-spinner {
-    display: flex;
+    display: flex; /* Hidden/shown by JS */
     flex-direction: column;
     align-items: center;
     justify-content: center;
     padding: 80px 40px;
     text-align: center;
-    color: var(--text-muted);
+    color: var(--text-muted); /* Use shared variable */
     width: 100%;
-    grid-column: 1 / -1;
-    min-height: 400px;
+    /* Position in center if needed */
+    /* position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); */
+    /* Or just let it be part of the grid flow */
+     grid-column: 1 / -1; /* Span full width if grid is active */
+     min-height: 400px; /* Ensure it takes up space */
 }
-.loading-spinner i { color: var(--primary-color); margin-bottom: 25px; font-size: 3.5em; }
+.loading-spinner i {
+    color: var(--primary-color); /* Use shared variable */
+    margin-bottom: 25px;
+    font-size: 3.5em; /* Larger spinner */
+}
 .loading-spinner p { font-size: 1.2em; }
 
 .message-box {
-    padding: 25px; margin: 40px 0; border: 1px solid var(--border-color); border-radius: var(--border-radius); text-align: center; grid-column: 1 / -1; background-color: var(--white-bg); font-size: 1.15em; color: var(--text-muted); box-shadow: var(--box-shadow-sm);
-}
-.message-box.info { border-left: 5px solid #17a2b8; background-color: #e2f7fa; color: #0c5460; }
-.message-box.error { border-left: 5px solid #dc3545; background-color: #f8d7da; color: #721c24; }
-
-
-/* --- Footer Styles (from about.css) --- */
-footer {
-    background-color: #343a40; /* Dark background */
-    color: #adb5bd; /* Light grey text */
-    padding: 35px 0;
-    margin-top: 60px;
-    border-top: 1px solid #495057; /* Slightly darker top border */
-    font-size: 0.95em; /* Slightly larger footer text */
+    padding: 25px;
+    margin: 40px 0;
+    border: 1px solid var(--border-color); /* Use shared variable */
+    border-radius: var(--border-radius); /* Use shared variable */
     text-align: center;
+    grid-column: 1 / -1; /* Span full width if grid is active */
+    background-color: var(--white-bg); /* Use shared variable */
+    font-size: 1.15em;
+    color: var(--text-muted); /* Use shared variable */
+    box-shadow: var(--box-shadow-sm); /* Use shared variable */
+    /* display: none; */ /* Controlled by JS */
 }
-footer .container p { margin-bottom: 10px; }
-footer a { color: #f8f9fa; /* White links */ margin: 0 10px; text-decoration: underline; }
-footer a:hover { color: var(--secondary-color); /* Blue hover */ }
-
-
-/* --- Responsive Adjustments --- */
-@media (max-width: 992px) {
-     /* Adjust nav links or rely on JS toggle */
-     .nav-links { display: none; } /* Hide for JS toggle */
-     .mobile-menu-toggle { display: block; }
-     /* Styles for active mobile menu if using JS */
-     /* .nav-links.active { ... } */
+.message-box.info {
+    border-left: 5px solid #17a2b8; /* Info color */
+    background-color: #e2f7fa;
+    color: #0c5460;
+}
+.message-box.error { /* Style for potential error messages */
+    border-left: 5px solid #dc3545; /* Error color */
+    background-color: #f8d7da;
+    color: #721c24;
 }
 
-@media (max-width: 768px) {
-    /* Inherit mobile menu toggle from above */
-    .nav-links a { /* If mobile menu is flex column */
-        margin: 0; padding: 15px; text-align: center; border-bottom: 1px solid var(--border-color);
-    }
-    .nav-links a:last-child { border-bottom: none; }
-    .nav-links a.active { background-color: var(--light-bg); }
 
-}
+/* --- Responsive Adjustments for Products Page --- */
+/* Inherit header/footer responsive from header-footer.css */
 
 @media (max-width: 600px) {
-    .product-list { grid-template-columns: 1fr; gap: 30px; }
-     main.container h1 { font-size: 2em; }
-     .filters { flex-direction: column; align-items: stretch; padding: 20px; }
-     .filter-group select { width: 100%; }
-     .product-card .product-image-container { height: 200px; }
+    .product-list {
+        grid-template-columns: 1fr; /* Stack products */
+        gap: 30px;
+    }
+     main.container h1 { font-size: 2em; } /* Smaller title */
+     .filters {
+         flex-direction: column; /* Stack filters */
+         align-items: stretch;
+         padding: 20px;
+     }
+     .filter-group select { width: 100%; } /* Full width select */
+     .product-card .product-image-container { height: 200px; } /* Smaller image height */
      .product-card .product-info { padding: 20px; }
-     footer { font-size: 0.9em; }
 }
 
-/* Sr-only class (Unchanged) */
-.sr-only{border:0!important;clip:rect(1px,1px,1px,1px)!important;-webkit-clip-path:inset(50%)!important;clip-path:inset(50%)!important;height:1px!important;margin:-1px!important;overflow:hidden!important;padding:0!important;position:absolute!important;width:1px!important;white-space:nowrap!important}
+/* Sr-only class (Utility) */
+.sr-only {
+    border: 0 !important;
+    clip: rect(1px,1px,1px,1px) !important;
+    -webkit-clip-path: inset(50%) !important;
+    clip-path: inset(50%) !important;
+    height: 1px !important;
+    margin: -1px !important;
+    overflow: hidden !important;
+    padding: 0 !important;
+    position: absolute !important;
+    width: 1px !important;
+    white-space: nowrap !important;
+}

@@ -1,177 +1,7 @@
-/* css/contact.css - Combined Base Styles + Contact Page Specific Styles */
+/* css/contact.css - Contact Page Specific Styles ONLY */
 
-/* --- Variables --- */
-:root {
-    --primary-color: #0056b3;
-    --secondary-color: #007bff;
-    --text-color: #333;
-    --text-muted: #6c757d;
-    --white-bg: #ffffff;
-    --light-bg: #f8f9fa;
-    --border-color: #dee2e6;
-    --font-family: 'Poppins', sans-serif;
-    --border-radius: 5px; /* थोडा बढ़ाया गया */
-    --box-shadow: 0 3px 8px rgba(0, 0, 0, 0.1); /* थोडा बढ़ाया गया */
-}
-/* --- End Variables --- */
-
-
-/* Basic Reset & Body */
-body {
-    margin: 0;
-    font-family: var(--font-family);
-    color: var(--text-color);
-    line-height: 1.6;
-    background-color: var(--white-bg); /* या --light-bg ट्राय करें */
-}
-
-h1, h2, h3, h4, h5, h6, p {
-    margin-top: 0;
-    margin-bottom: 1rem; /* Default margin */
-}
-
-a {
-    color: var(--primary-color);
-    text-decoration: none;
-    transition: color 0.2s ease; /* Added transition */
-}
-a:hover {
-    color: var(--secondary-color);
-    text-decoration: underline;
-}
-
-img {
-    max-width: 100%;
-    height: auto;
-    display: block; /* Helps prevent extra space below images */
-}
-
-/* Container */
-.container {
-    max-width: 1140px;
-    margin-left: auto;
-    margin-right: auto;
-    padding-left: 15px;
-    padding-right: 15px;
-}
-
-/* Header & Navigation */
-header {
-    background-color: var(--white-bg);
-    box-shadow: var(--box-shadow);
-    padding: 10px 0;
-    position: sticky;
-    top: 0;
-    z-index: 1000;
-}
-header nav.container {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-.logo img {
-    max-height: 50px; /* Adjust as needed */
-}
-.nav-links a {
-    margin-left: 18px; /* Slightly increased spacing */
-    padding: 8px 4px; /* Added horizontal padding */
-    font-weight: 500;
-    color: var(--text-color);
-    text-decoration: none;
-    border-bottom: 2px solid transparent;
-    transition: color 0.2s ease, border-color 0.2s ease;
-}
-.nav-links a:hover,
-.nav-links a.active {
-    color: var(--primary-color);
-    border-bottom-color: var(--primary-color);
-}
-.mobile-menu-toggle {
-    display: none;
-    background: none;
-    border: none;
-    font-size: 1.8em; /* Slightly larger */
-    cursor: pointer;
-    color: var(--text-color);
-}
-
-/* Buttons */
-.button-primary {
-    display: inline-block;
-    background-color: var(--primary-color);
-    color: var(--white-bg);
-    padding: 12px 28px; /* Slightly adjusted padding */
-    border: none;
-    border-radius: var(--border-radius);
-    font-size: 1em;
-    font-weight: 500;
-    text-align: center;
-    cursor: pointer;
-    transition: background-color 0.2s ease, transform 0.1s ease; /* Added transform transition */
-    text-decoration: none;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Subtle shadow */
-}
-.button-primary:hover {
-    background-color: var(--secondary-color);
-    color: var(--white-bg);
-    text-decoration: none;
-    transform: translateY(-2px); /* Slight lift on hover */
-}
-
-/* Footer */
-footer {
-    background-color: #343a40; /* Darker shade */
-    color: #adb5bd; /* Lighter text */
-    padding: 30px 0;
-    margin-top: 50px; /* Adjusted margin */
-    text-align: center;
-    font-size: 0.9em;
-}
-footer .container p {
-    margin-bottom: 8px; /* Adjusted spacing */
-}
-footer a {
-    color: #f8f9fa; /* White links */
-    margin: 0 8px; /* Adjusted spacing */
-}
-footer a:hover {
-    color: var(--secondary-color); /* Use secondary color for hover */
-    text-decoration: underline;
-}
-
-/* --- Responsive Base Styles (Mobile Menu) --- */
-@media (max-width: 768px) {
-    .nav-links {
-        display: none;
-        flex-direction: column;
-        width: 100%;
-        background-color: var(--white-bg);
-        position: absolute;
-        top: 70px; /* Adjust based on header height */
-        left: 0;
-        box-shadow: var(--box-shadow);
-        border-top: 1px solid var(--border-color);
-    }
-    .nav-links.active { /* Class added by JS to show menu */
-        display: flex;
-    }
-    .nav-links a {
-        margin: 0;
-        padding: 15px;
-        text-align: center;
-        border-bottom: 1px solid var(--border-color);
-    }
-     .nav-links a:last-child {
-        border-bottom: none;
-    }
-    .nav-links a.active {
-        background-color: var(--light-bg); /* Highlight active link in mobile */
-        border-bottom-color: var(--primary-color); /* Keep border consistent */
-    }
-    .mobile-menu-toggle {
-        display: block;
-    }
-}
+/* --- Variables (Optional: Keep if needed for page-specific styles) --- */
+/* :root { ... } */ /* Remove if not needed here */
 
 
 /* ============================================================== */
@@ -179,47 +9,47 @@ footer a:hover {
 /* ============================================================== */
 
 .contact-page-container {
-    padding-top: 30px; /* Reduced */
-    padding-bottom: 40px; /* Reduced */
+    padding-top: 30px;
+    padding-bottom: 40px;
 }
 
 /* General Page Cover Style */
 .page-cover {
     text-align: center;
     color: var(--white-bg);
-    background-size: cover; /* Changed to cover */
+    background-size: cover;
     background-position: center center;
-    background-repeat: no-repeat; /* Added */
+    background-repeat: no-repeat;
     display: flex;
     align-items: center;
     justify-content: center;
     flex-direction: column;
-    border-radius: 0; /* No radius for full width */
+    border-radius: 0;
 }
 .page-cover .cover-content {
      max-width: 1140px;
      margin: 0 auto;
      padding: 0 15px;
-     position: relative; /* For potential overlay effects */
+     position: relative;
      z-index: 2;
 }
 
 /* Contact Page Cover Image Style */
 .page-cover.contact-cover-image {
     /* Gradient overlay + Image */
-    background-image: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url('https://i.ibb.co/HTZML5Lx/1.jpg');
-    height: 180px; /* Increased height */
-    margin-bottom: 40px; /* Adjusted spacing */
+    background-image: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url('https://i.ibb.co/HTZML5Lx/1.jpg'); /* इमेज URL जांचें */
+    height: 180px;
+    margin-bottom: 40px;
     box-sizing: border-box;
 }
 .page-cover.contact-cover-image h1 {
     color: var(--white-bg);
-    font-size: 2.5em; /* Adjusted font size */
-    margin-bottom: 8px; /* Adjusted margin */
+    font-size: 2.5em;
+    margin-bottom: 8px;
     text-shadow: 1px 1px 4px rgba(0,0,0,0.7);
 }
 .page-cover.contact-cover-image p {
-    font-size: 1.1em; /* Adjusted font size */
+    font-size: 1.1em;
     color: rgba(255, 255, 255, 0.95);
     margin-bottom: 0;
     text-shadow: 1px 1px 3px rgba(0,0,0,0.6);
@@ -229,8 +59,8 @@ footer a:hover {
     text-align: center;
     font-size: 1.1em;
     color: var(--text-muted);
-    max-width: 750px; /* Slightly wider */
-    margin: 0 auto 40px auto; /* Reduced bottom margin */
+    max-width: 750px;
+    margin: 0 auto 40px auto;
 }
 
 /* Contact Layout */
@@ -238,9 +68,8 @@ footer a:hover {
     display: flex;
     flex-direction: row;
     flex-wrap: wrap;
-    gap: 40px; /* Reduced gap */
-    align-items: stretch; /* <<< CHANGED: Ensures columns have same height */
-    /* justify-content: center; */ /* Uncomment if needed */
+    gap: 40px;
+    align-items: stretch; /* Ensures columns have same potential height */
 }
 
 /* Common styling for both columns */
@@ -252,10 +81,10 @@ footer a:hover {
     padding: 30px 35px;
     border-radius: var(--border-radius);
     border: 1px solid var(--border-color);
-    box-shadow: var(--box-shadow);
+    box-shadow: var(--box-shadow); /* Use shared variable */
     background-color: var(--white-bg);
-    display: flex; /* Use flex for internal alignment */
-    flex-direction: column; /* Stack items vertically */
+    display: flex;
+    flex-direction: column;
 }
 
 /* Titles (H3) within both columns */
@@ -265,19 +94,17 @@ footer a:hover {
     margin-bottom: 30px;
     padding-bottom: 15px;
     border-bottom: 1px solid var(--border-color);
-    font-size: 1.4em; /* Slightly adjusted */
+    font-size: 1.4em;
     color: var(--primary-color);
     font-weight: 600;
     display: flex;
     align-items: center;
-    gap: 12px; /* Increased gap */
+    gap: 12px;
 }
 #contact-form h3 i,
 .contact-details h3 i {
     color: var(--primary-color);
     font-size: 1em;
-    /* width: 20px; */ /* Uncomment if specific width needed */
-    /* text-align: center; */
 }
 
 /* Form specific inner styles */
@@ -289,35 +116,41 @@ footer a:hover {
 #contact-form textarea {
     width: 100%;
     padding: 12px 15px;
-    border: 1px solid #ccc;
+    border: 1px solid #ccc; /* Changed from var(--border-color) for slightly darker field border */
     border-radius: var(--border-radius);
     box-sizing: border-box;
     font-size: 1em;
     font-family: var(--font-family);
     transition: border-color .2s ease, box-shadow .2s ease;
-    background-color: #fdfdfd; /* Very light background for fields */
+    background-color: #fdfdfd;
 }
 #contact-form textarea { resize: vertical; min-height: 140px; }
 #contact-form input:focus,
 #contact-form textarea:focus {
     border-color: var(--primary-color);
     outline: 0;
-    box-shadow: 0 0 0 0.2rem rgba(0, 86, 179, 0.25); /* Adjusted shadow */
+    box-shadow: 0 0 0 0.2rem rgba(0, 86, 179, 0.25);
     background-color: var(--white-bg);
 }
 #contact-form .required { color: #dc3545; margin-left: 3px; }
-#contact-form button.button-primary { margin-top: 10px; align-self: flex-start; }
+#contact-form button.button-primary {
+    /* Use shared button styles from header-footer.css */
+    margin-top: 10px;
+    align-self: flex-start; /* Keep button aligned left */
+    padding: 12px 28px; /* Specific padding if needed */
+    font-size: 1em;
+}
 #contact-form-status { margin-top: 20px; font-weight: 500; padding: 12px 15px; border-radius: var(--border-radius); display: none; /* Shown via JS */ text-align: center; }
 #contact-form-status.success { background-color: #d1e7dd; color: #0f5132; border: 1px solid #badbcc; }
 #contact-form-status.error { background-color: #f8d7da; color: #842029; border: 1px solid #f5c2c7; }
 
 /* Contact Details specific inner styles */
 .contact-details {
-    flex-grow: 1; /* Ensure it takes available space if form is short */
+    flex-grow: 1;
 }
 .contact-details h4 {
     font-size: 1.1em;
-    margin-top: 25px; /* Adjusted margin */
+    margin-top: 25px;
     margin-bottom: 15px;
     color: var(--primary-color);
     font-weight: 600;
@@ -325,7 +158,7 @@ footer a:hover {
     padding-bottom: 5px;
     display: flex;
     align-items: center;
-    gap: 12px; /* Increased gap */
+    gap: 12px;
 }
 .contact-details h4 i { color: var(--primary-color); font-size: 1em; }
 .contact-details p {
@@ -334,87 +167,84 @@ footer a:hover {
     align-items: flex-start;
     gap: 15px;
     font-size: 1em;
-    color: var(--text-color);
-    line-height: 1.7; /* Slightly increased line height */
+    color: var(--text-color); /* Use text-color, not muted */
+    line-height: 1.7;
 }
 .contact-details p i.fa-fw {
     color: var(--primary-color);
     width: 22px;
     text-align: center;
     font-size: 1.2em;
-    margin-top: 4px; /* Adjusted alignment */
+    margin-top: 4px;
     flex-shrink: 0;
 }
-.contact-details p.working-hours { margin-top: -10px; padding-left: calc(22px + 15px); /* Align with text above */ }
-.contact-details a { color: var(--text-color); word-break: break-word; }
-.contact-details a:hover { color: var(--primary-color); text-decoration: underline; }
+.contact-details p.working-hours { margin-top: -10px; padding-left: calc(22px + 15px); }
+/* Links within details should use standard link colors */
+.contact-details p a { color: var(--primary-color); word-break: break-word; }
+.contact-details p a:hover { color: var(--secondary-color); text-decoration: underline; }
 
 /* Social Links Styling */
-.social-links { display: flex; flex-wrap: wrap; gap: 20px; margin-top: 5px; padding-left: calc(22px + 15px); /* Align with text above */ }
+.social-links { display: flex; flex-wrap: wrap; gap: 20px; margin-top: 5px; padding-left: calc(22px + 15px); }
 .social-links a { color: var(--secondary-color); font-size: 1.9em; transition: color 0.2s ease, transform 0.2s ease; text-decoration: none; line-height: 1; }
-.social-links a:hover { transform: translateY(-3px) scale(1.1); /* Combined effect */ }
+.social-links a:hover { transform: translateY(-3px) scale(1.1); }
 .social-links a[aria-label="Instagram"]:hover { color: #E1306C; }
 .social-links a[aria-label="Facebook"]:hover { color: #1877F2; }
 .social-links a[aria-label="WhatsApp"]:hover { color: #25D366; }
 
 /* Map Container */
 .contact-map {
-    background-color: #e9ecef;
-    margin-top: auto; /* Push map to bottom if details column is taller */
+    background-color: #e9ecef; /* Light placeholder bg */
+    margin-top: auto; /* Push map to bottom */
     border-radius: var(--border-radius);
     border: 1px solid var(--border-color);
     display: flex;
     align-items: center;
     justify-content: center;
-    /* min-height: 250px; */ /* Removed fixed min-height, let iframe control */
-    height: 300px; /* Set a fixed height or adjust as needed */
-    text-align: center;
+    height: 300px;
     overflow: hidden;
-    width: 100%; /* Ensure it takes full width of its container */
+    width: 100%;
 }
 .contact-map iframe {
     width: 100%;
-    height: 100%; /* Fill the container height */
+    height: 100%;
     border: 0;
 }
-/* .contact-map p { color: var(--text-muted); font-style: italic; margin: 0; padding: 10px; } */ /* Not needed if iframe fills container */
 
 
 /* ============================================================== */
-/* == Responsive adjustments for Contact Page                  == */
+/* == Responsive adjustments for Contact Page Specific Styles  == */
 /* ============================================================== */
 
 @media (max-width: 991px) {
     .contact-layout {
         gap: 30px;
-        /* Removed justify-content: center; let flexbox handle alignment */
     }
     #contact-form, .contact-details {
-        flex-basis: 45%; /* Allow two columns side-by-side for longer */
-        min-width: 320px; /* Adjust minimum width */
+        flex-basis: 45%;
+        min-width: 320px;
     }
-    .page-cover.contact-cover-image { height: 150px; } /* Adjust height */
+    .page-cover.contact-cover-image { height: 150px; }
     .page-cover.contact-cover-image h1 { font-size: 2.2em; }
     .page-cover.contact-cover-image p { font-size: 1.0em; }
 }
 
 @media (max-width: 768px) {
      #contact-form, .contact-details {
-        flex-basis: 100%; /* Stack columns on smaller tablets/large phones */
-        max-width: 600px; /* Optional: constrain width */
+        flex-basis: 100%; /* Stack columns */
+        max-width: 600px;
         margin-left: auto;
         margin-right: auto;
     }
-    .contact-map { height: 250px; } /* Adjust map height for smaller screens */
+    .contact-map { height: 250px; }
 }
 
 @media (max-width: 480px) {
-    #contact-form, .contact-details { padding: 20px 25px; /* Adjusted padding */ }
-    .social-links, .contact-details p.working-hours { padding-left: 0; /* Remove padding */ justify-content: flex-start; /* Align left */ }
+    #contact-form, .contact-details { padding: 20px 25px; }
+    .social-links, .contact-details p.working-hours { padding-left: 0; justify-content: flex-start; }
     #contact-form h3, .contact-details h3 { font-size: 1.3em; gap: 10px; }
     .contact-details h4 { font-size: 1.05em; gap: 10px;}
-    .page-cover.contact-cover-image { height: 120px; } /* Further adjust height */
+    .page-cover.contact-cover-image { height: 120px; }
     .page-cover.contact-cover-image h1 { font-size: 1.8em; }
-    .page-cover.contact-cover-image p { display: none; /* Hide tagline on smallest screens */ }
-    .contact-map { height: 200px; } /* Adjust map height for mobile */
+    .page-cover.contact-cover-image p { display: none; }
+    .contact-map { height: 200px; }
 }

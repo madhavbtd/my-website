@@ -1,0 +1,192 @@
+/* css/header-footer.css - Shared Header and Footer Styles (Based on about.css) */
+
+/* --- Variables (Consistent with about.css) --- */
+:root {
+    --primary-color: #0056b3; /* */
+    --secondary-color: #007bff; /* */
+    --text-color: #333; /* */
+    --text-muted: #6c757d; /* */
+    --white-bg: #ffffff; /* */
+    --light-bg: #f8f9fa; /* */
+    --border-color: #dee2e6; /* */
+    --font-family: 'Poppins', sans-serif; /* */
+    --border-radius: 6px; /* */
+    --box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08); /* */
+    /* --box-shadow-md from products.css seems more appropriate for sticky header */
+    --box-shadow-md: 0 5px 15px rgba(0, 0, 0, 0.08); /* Adapted from */
+    --transition-speed: 0.3s; /* */
+    --base-font-size: 16px; /* Ensure consistency, size from */
+}
+
+/* --- Basic Reset & Body (Minimal for header/footer) --- */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box; /* */
+}
+
+body {
+    font-family: var(--font-family); /* */
+    font-size: var(--base-font-size);
+    color: var(--text-color); /* */
+    line-height: 1.65; /* */
+    /* Background color is set by individual page CSS */
+}
+
+a {
+    color: var(--primary-color); /* */
+    text-decoration: none; /* */
+    transition: color var(--transition-speed) ease; /* */
+}
+a:hover {
+    color: var(--secondary-color); /* */
+    text-decoration: none; /* */
+}
+
+img {
+    max-width: 100%;
+    height: auto;
+    display: block; /* */
+}
+
+.container {
+    max-width: 1200px; /* */
+    margin-left: auto; /* */
+    margin-right: auto; /* */
+    padding-left: 15px; /* */
+    padding-right: 15px; /* */
+}
+
+/* --- Header & Navigation Styles (from about.css / products.css) --- */
+header {
+    background-color: var(--white-bg); /* */
+    box-shadow: var(--box-shadow-md); /* Use medium shadow from */
+    padding: 10px 0; /* */
+    position: sticky; /* */
+    top: 0; /* */
+    z-index: 1000; /* */
+    border-bottom: 1px solid var(--border-color); /* Added for definition, similar to */
+}
+
+header nav.container {
+    display: flex; /* */
+    justify-content: space-between; /* */
+    align-items: center; /* */
+    min-height: 50px; /* Ensure consistent header height */
+}
+
+.logo img {
+    max-height: 50px; /* - Adjusted from 45px in products.css for consistency with about.css */
+}
+/* Style for potential text logo (seen in cart.html) */
+.logo a {
+    font-weight: bold;
+    font-size: 1.2em;
+    color: var(--text-color);
+    text-decoration: none;
+}
+
+
+.nav-links {
+    display: flex; /* Seen in all headers */
+    /* gap: 28px; */ /* Use gap from products.css instead of margin */
+    align-items: center; /* */
+}
+
+.nav-links a {
+    /* margin-left: 18px; */ /* Removed margin from, using gap */
+    margin-left: 15px; /* Use margin from cart.css as gap wasn't used there */
+    padding: 8px 4px; /* */
+    font-weight: 500; /* */
+    color: var(--text-color); /* */
+    text-decoration: none; /* */
+    border-bottom: 2px solid transparent; /* */
+    transition: color var(--transition-speed) ease, border-color var(--transition-speed) ease; /* */
+    font-size: 1em; /* Ensure consistent font size */
+}
+.nav-links a:hover,
+.nav-links a.active {
+    color: var(--primary-color); /* */
+    border-bottom-color: var(--primary-color); /* */
+}
+
+/* Cart link specific style (from products.html) */
+.nav-links a i.fa-shopping-cart { margin-right: 4px; }
+
+/* Admin login link style (from products.css, seems consistent) */
+.nav-links .admin-login-link {
+    font-size: 0.9em;
+    color: var(--text-muted);
+    border: 1px solid var(--border-color);
+    padding: 6px 12px;
+    border-radius: var(--border-radius);
+    margin-left: 20px; /* Space before admin link */
+}
+.nav-links .admin-login-link:hover {
+     background-color: var(--light-bg);
+     color: var(--text-color);
+     text-decoration: none;
+     border-color: #adb5bd;
+}
+
+.mobile-menu-toggle {
+    display: none; /* */
+    background: none; /* */
+    border: none; /* */
+    font-size: 1.8em; /* */
+    cursor: pointer; /* */
+    color: var(--text-color); /* */
+}
+
+/* --- Footer Styles (from about.css) --- */
+footer {
+    background-color: #343a40; /* */
+    color: #adb5bd; /* */
+    padding: 35px 0; /* */
+    margin-top: 50px; /* - This might need adjustment per page */
+    border-top: 1px solid #495057; /* Added for consistency, similar to */
+    font-size: 0.9em; /* */
+    text-align: center; /* */
+}
+footer .container p { margin-bottom: 8px; /* */ }
+footer a {
+    color: #f8f9fa; /* */
+    margin: 0 8px; /* */
+    text-decoration: none; /* Ensure no default underline */
+}
+footer a:hover {
+    color: var(--secondary-color); /* */
+    text-decoration: underline; /* Add underline on hover */
+}
+/* Footer link combination from products.html / contact.html / about.html */
+footer p:last-of-type a { /* Select links in the last paragraph */
+     margin: 0 5px; /* Consistent horizontal spacing */
+}
+
+
+/* --- Responsive Adjustments for Header/Footer (from about.css) --- */
+@media (max-width: 768px) {
+    .nav-links {
+         display: none; /* */
+         /* Mobile menu display needs JS */
+         /* Example styles if .active class is added by JS: */
+         /* flex-direction: column; */
+         /* width: 100%; */
+         /* background-color: var(--white-bg); */
+         /* position: absolute; */
+         /* top: 100%; /* Below header */
+         /* left: 0; */
+         /* box-shadow: var(--box-shadow); */
+         /* border-top: 1px solid var(--border-color); */
+    }
+    /* Example styles for links inside active mobile menu */
+    /* .nav-links.active { display: flex; } */
+    /* .nav-links.active a { margin: 0; padding: 15px; text-align: center; border-bottom: 1px solid var(--border-color); width: 100%; } */
+    /* .nav-links.active a:last-child { border-bottom: none; } */
+    /* .nav-links.active a.active { background-color: var(--light-bg); } */
+
+    .mobile-menu-toggle { display: block; /* */ }
+}
+
+/* Further adjustments for very small screens if needed */
+/* @media (max-width: 576px) { ... } */

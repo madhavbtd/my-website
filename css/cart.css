@@ -1,170 +1,7 @@
-/* css/cart.css - Combined Base Styles + Cart Page Specific Styles */
+/* css/cart.css - Cart Page Specific Styles ONLY */
 
-/* --- Placeholder Variables (From index.css - Replace later if needed) --- */
-:root {
-    --primary-color: #0056b3; /* Example Blue */
-    --secondary-color: #007bff; /* Example Lighter Blue */
-    --text-color: #333; /* Dark Grey for text */
-    --text-muted: #6c757d; /* Lighter grey */
-    --white-bg: #ffffff;
-    --light-bg: #f8f9fa; /* Very light grey background */
-    --border-color: #dee2e6; /* Light border color */
-    --font-family: 'Poppins', sans-serif; /* Font from Google Fonts */
-    --border-radius: 4px;
-    --box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-}
-/* --- End Placeholder Variables --- */
-
-
-/* Basic Reset & Body */
-body {
-    margin: 0;
-    font-family: var(--font-family);
-    color: var(--text-color);
-    line-height: 1.6;
-    background-color: var(--white-bg);
-}
-
-h1, h2, h3, h4, h5, h6, p {
-    margin-top: 0;
-    margin-bottom: 1rem;
-}
-
-a {
-    color: var(--primary-color);
-    text-decoration: none;
-}
-a:hover {
-    color: var(--secondary-color);
-    text-decoration: underline;
-}
-
-img {
-    max-width: 100%;
-    height: auto;
-}
-
-/* Container */
-.container {
-    max-width: 1140px; /* Adjust as needed */
-    margin-left: auto;
-    margin-right: auto;
-    padding-left: 15px;
-    padding-right: 15px;
-}
-
-/* Header & Navigation */
-header {
-    background-color: var(--white-bg);
-    box-shadow: var(--box-shadow);
-    padding: 10px 0;
-    position: sticky;
-    top: 0;
-    z-index: 1000;
-}
-header nav.container {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-.logo img, .logo a { /* Style both image logo and text logo possibility */
-    max-height: 50px;
-    font-weight: bold;
-    font-size: 1.2em;
-    color: var(--text-color);
-    text-decoration: none;
-}
-.nav-links a {
-    margin-left: 15px;
-    padding: 8px 0;
-    font-weight: 500;
-    color: var(--text-color);
-    text-decoration: none;
-    border-bottom: 2px solid transparent;
-    transition: color 0.2s ease, border-color 0.2s ease;
-}
-.nav-links a:hover,
-.nav-links a.active {
-    color: var(--primary-color);
-    border-bottom-color: var(--primary-color);
-}
-.mobile-menu-toggle {
-    display: none; /* Hide toggle on desktop */
-    background: none;
-    border: none;
-    font-size: 1.5em;
-    cursor: pointer;
-}
-
-/* Buttons */
-.button-primary {
-    display: inline-block;
-    background-color: var(--primary-color);
-    color: var(--white-bg);
-    padding: 12px 25px;
-    border: none;
-    border-radius: var(--border-radius);
-    font-size: 1em;
-    font-weight: 500;
-    text-align: center;
-    cursor: pointer;
-    transition: background-color 0.2s ease;
-    text-decoration: none;
-}
-.button-primary:hover {
-    background-color: var(--secondary-color);
-    color: var(--white-bg);
-    text-decoration: none;
-}
-
-/* Footer */
-footer {
-    background-color: #333; /* Dark footer background */
-    color: #ccc; /* Light text on dark */
-    padding: 30px 0;
-    margin-top: 50px;
-    text-align: center;
-    font-size: 0.9em;
-}
-footer .container p {
-    margin-bottom: 5px;
-}
-footer a {
-    color: #fff; /* White links in footer */
-    margin: 0 5px;
-}
-footer a:hover {
-    color: var(--primary-color); /* Highlight color on hover */
-}
-
-/* --- Responsive Base Styles (Basic example for mobile menu) --- */
-@media (max-width: 768px) {
-    .nav-links {
-        display: none; /* Hide links by default */
-        flex-direction: column;
-        width: 100%;
-        background-color: var(--white-bg);
-        position: absolute;
-        top: 70px; /* Adjust based on header height */
-        left: 0;
-        box-shadow: var(--box-shadow);
-    }
-    .nav-links.active {
-        display: flex; /* Show when active */
-    }
-    .nav-links a {
-        margin: 0;
-        padding: 15px;
-        text-align: center;
-        border-bottom: 1px solid var(--border-color);
-    }
-    .nav-links a:last-child {
-        border-bottom: none;
-    }
-    .mobile-menu-toggle {
-        display: block; /* Show toggle button */
-    }
-}
+/* --- Variables (Optional: Keep if needed for page-specific styles) --- */
+/* :root { ... } */ /* Remove if not needed */
 
 
 /* ============================================================== */
@@ -182,76 +19,80 @@ main.container h1 {
     display: flex;
     flex-wrap: wrap;
     gap: 40px; /* Gap between cart items and order form */
-    align-items: flex-start;
+    align-items: flex-start; /* Align tops of columns */
 }
 
 /* Cart Items Section */
 #cart-items-section {
-    flex: 1 1 50%; /* Takes about half the space */
-    min-width: 300px;
-    background-color: var(--white-bg);
+    flex: 1 1 50%; /* Takes about half the space, can grow */
+    min-width: 300px; /* Minimum width before wrapping */
+    background-color: var(--white-bg); /* Use shared variable */
     padding: 25px;
-    border: 1px solid var(--border-color);
-    border-radius: var(--border-radius);
-    box-shadow: var(--box-shadow);
+    border: 1px solid var(--border-color); /* Use shared variable */
+    border-radius: var(--border-radius); /* Use shared variable */
+    box-shadow: var(--box-shadow); /* Use shared variable */
 }
 #cart-items-section h2 {
     margin-bottom: 20px;
     padding-bottom: 10px;
-    border-bottom: 1px solid var(--border-color);
+    border-bottom: 1px solid var(--border-color); /* Use shared variable */
     font-size: 1.5em;
-    color: var(--primary-color);
+    color: var(--primary-color); /* Use shared variable */
 }
 
 #cart-items {
-    margin-bottom: 30px;
+    margin-bottom: 30px; /* Space before summary */
 }
 
-/* Placeholder styles for items generated by cart.js */
+/* Styles for items generated by cart.js */
 .cart-item {
     display: flex;
     gap: 15px;
     align-items: center;
     padding: 15px 0;
-    border-bottom: 1px solid var(--border-color);
+    border-bottom: 1px solid var(--border-color); /* Use shared variable */
 }
 .cart-item:last-child {
-    border-bottom: none;
+    border-bottom: none; /* No border for the last item */
 }
-.cart-item img {
+.cart-item img { /* Placeholder for item image */
     width: 60px;
     height: 60px;
     object-fit: cover;
-    border-radius: var(--border-radius);
+    border-radius: var(--border-radius); /* Use shared variable */
+    border: 1px solid var(--border-color); /* Light border around image */
 }
 .cart-item .item-details {
-    flex-grow: 1;
+    flex-grow: 1; /* Take remaining space */
 }
 .cart-item h4 { /* Item Name */
     font-size: 1.1em;
     margin-bottom: 5px;
+    font-weight: 600; /* Slightly bolder */
 }
 .cart-item .item-options,
 .cart-item .item-price {
     font-size: 0.9em;
-    color: var(--text-muted);
+    color: var(--text-muted); /* Use shared variable */
     margin-bottom: 3px;
 }
-.cart-item .item-quantity input {
+.cart-item .item-quantity input { /* Style for quantity input if added by JS */
     width: 50px;
-    padding: 5px;
+    padding: 5px 8px;
     text-align: center;
-    border: 1px solid var(--border-color);
-    border-radius: var(--border-radius);
+    border: 1px solid var(--border-color); /* Use shared variable */
+    border-radius: var(--border-radius); /* Use shared variable */
     margin: 0 5px;
+    font-size: 0.95em;
 }
-.cart-item .remove-item-btn {
+.cart-item .remove-item-btn { /* Style for remove button if added by JS */
     background: none;
     border: none;
-    color: #dc3545; /* Red */
+    color: #dc3545; /* Red color for remove */
     cursor: pointer;
     font-size: 1.1em;
     padding: 5px;
+    margin-left: auto; /* Push button to the right */
 }
 .cart-item .remove-item-btn:hover {
     color: #a02430; /* Darker Red */
@@ -261,32 +102,35 @@ main.container h1 {
 #cart-items p { /* Style for "Cart is empty" message */
     text-align: center;
     padding: 20px;
-    color: var(--text-muted);
+    color: var(--text-muted); /* Use shared variable */
+    font-style: italic;
 }
 
 #cart-summary {
-    border-top: 2px solid var(--border-color);
+    border-top: 2px solid var(--border-color); /* Use shared variable */
     padding-top: 20px;
     font-size: 1.1em;
     font-weight: bold;
     text-align: right;
+    margin-top: 20px; /* Ensure space above summary if items exist */
+    color: var(--primary-color); /* Make total stand out */
 }
 
 /* Order Form Section */
 #order-form {
-    flex: 1 1 45%; /* Takes slightly less than half */
-    min-width: 300px;
-    background-color: var(--light-bg); /* Light background for form */
+    flex: 1 1 45%; /* Takes slightly less than half, can grow */
+    min-width: 300px; /* Minimum width before wrapping */
+    background-color: var(--light-bg); /* Light background for form (Use shared variable) */
     padding: 25px;
-    border: 1px solid var(--border-color);
-    border-radius: var(--border-radius);
+    border: 1px solid var(--border-color); /* Use shared variable */
+    border-radius: var(--border-radius); /* Use shared variable */
 }
 #order-form h2 {
     margin-bottom: 20px;
     padding-bottom: 10px;
-    border-bottom: 1px solid var(--border-color);
+    border-bottom: 1px solid var(--border-color); /* Use shared variable */
     font-size: 1.5em;
-    color: var(--primary-color);
+    color: var(--primary-color); /* Use shared variable */
 }
 #order-form .form-group {
     margin-bottom: 18px;
@@ -303,11 +147,11 @@ main.container h1 {
 #order-form textarea {
     width: 100%;
     padding: 10px 12px;
-    border: 1px solid #ccc;
-    border-radius: var(--border-radius);
+    border: 1px solid #ccc; /* Consistent field border */
+    border-radius: var(--border-radius); /* Use shared variable */
     box-sizing: border-box;
     font-size: 1em;
-    font-family: var(--font-family);
+    font-family: var(--font-family); /* Use shared variable */
 }
 #order-form textarea {
     resize: vertical;
@@ -315,33 +159,44 @@ main.container h1 {
 }
 #order-form input:focus,
 #order-form textarea:focus {
-    border-color: var(--primary-color);
+    border-color: var(--primary-color); /* Use shared variable */
     outline: 0;
-    box-shadow: 0 0 0 0.2rem rgba(0, 86, 179, 0.2);
+    box-shadow: 0 0 0 0.2rem rgba(0, 86, 179, 0.2); /* Focus shadow */
 }
 #order-form .required {
-    color: #dc3545;
+    color: #dc3545; /* Red asterisk */
     margin-left: 3px;
 }
-#order-form small {
+#order-form small { /* Help text for file upload */
     display: block;
     margin-top: 5px;
     font-size: 0.85em;
-    color: var(--text-muted);
+    color: var(--text-muted); /* Use shared variable */
 }
 #order-form button.button-primary {
+    /* Inherit base styles from header-footer.css */
     width: 100%; /* Make button full width */
     margin-top: 10px;
     padding: 15px; /* Larger button */
     font-size: 1.1em;
 }
-#order-status-message {
+#order-status-message { /* For JS feedback */
     margin-top: 15px;
     font-weight: 500;
     text-align: center;
+    padding: 10px;
+    border-radius: var(--border-radius);
+    display: none; /* Hidden initially */
+}
+/* Example status styles (add success/error classes via JS) */
+#order-status-message.success {
+    background-color: #d1e7dd; color: #0f5132; border: 1px solid #badbcc;
+}
+#order-status-message.error {
+    background-color: #f8d7da; color: #842029; border: 1px solid #f5c2c7;
 }
 
-/* Responsive adjustments for Cart Page */
+/* Responsive adjustments for Cart Page Specific Styles */
 @media (max-width: 992px) { /* Adjust breakpoint if needed */
     .cart-layout {
         flex-direction: column; /* Stack items and form */
@@ -349,5 +204,6 @@ main.container h1 {
     }
     #cart-items-section, #order-form {
         flex-basis: auto; /* Reset flex basis */
+        width: 100%; /* Take full width when stacked */
     }
 }

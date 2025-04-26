@@ -1,52 +1,68 @@
 <!DOCTYPE html>
-<html lang="en"> <head>
+<html lang="en">
+<head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cart - Madhav Multiprint</title> <link rel="stylesheet" href="css/cart.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <title>Cart - Madhav Multiprint</title> <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
      <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
      <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="css/header-footer.css">
+
+    <link rel="stylesheet" href="css/cart.css">
 </head>
 <body>
     <header>
         <nav class="container">
             <div class="logo">
-                 <a href="index.html" style="font-weight: bold; font-size: 1.2em;">Madhav Multiprint</a>
+                <a href="index.html"><img src="https://i.ibb.co/Z6gKD9Rd/1.png" alt="Madhav Multiprint Logo"></a>
             </div>
             <div class="nav-links">
-                <a href="index.html">Home</a> <a href="products.html">Products</a> <a href="about.html">About Us</a> <a href="contact.html">Contact</a> <a href="cart.html" class="active">Cart (<span id="cart-count">0</span>)</a> <a href="/admin/login.html" class="admin-login-link" target="_blank">Admin Login</a> </div>
-            <button class="mobile-menu-toggle" aria-label="Toggle menu">☰</button>
+                <a href="index.html">Home</a>
+                <a href="products.html">Products</a>
+                <a href="about.html">About Us</a>
+                <a href="contact.html">Contact</a>
+                 <a href="cart.html" class="active"><i class="fas fa-shopping-cart"></i> Cart (<span id="cart-count">0</span>)</a>
+                <a href="/admin/login.html" class="admin-login-link" target="_blank">Admin Login</a>
+            </div>
+             <button class="mobile-menu-toggle" aria-label="Toggle menu"><i class="fas fa-bars"></i></button>
         </nav>
     </header>
 
     <main class="container">
-        <h1>Your Cart and Order</h1> <div class="cart-layout">
+        <h1>Your Cart and Order</h1>
+        <div class="cart-layout">
              <div id="cart-items-section">
-                 <h2>Items in Cart</h2> <div id="cart-items">
-                     <p>Your cart is empty.</p> </div>
+                 <h2>Items in Cart</h2>
+                 <div id="cart-items">
+                     <p>Your cart is empty.</p>
+                 </div>
                  <div id="cart-summary">
                      </div>
              </div>
 
             <form id="order-form">
-                <h2>Customer Information</h2> <div class="form-group">
-                    <label for="customer-name">Full Name <span class="required">*</span>:</label> <input type="text" id="customer-name" name="customerName" required>
+                <h2>Customer Information</h2>
+                <div class="form-group">
+                    <label for="customer-name">Full Name <span class="required">*</span>:</label>
+                    <input type="text" id="customer-name" name="customerName" required>
                 </div>
                  <div class="form-group">
                      <label for="customer-contact">Contact/WhatsApp Number <span class="required">*</span>:</label>
                     <input type="tel" id="customer-contact" name="customerContact" required>
                 </div>
                  <div class="form-group">
-                    <label for="customer-address">Full Address <span class="required">*</span>:</label> <textarea id="customer-address" name="customerAddress" rows="3" required></textarea>
+                    <label for="customer-address">Full Address <span class="required">*</span>:</label>
+                    <textarea id="customer-address" name="customerAddress" rows="3" required></textarea>
                 </div>
 
-                <hr style="margin: 25px 0; border-color: var(--border-color);">
-
-                <h2>Design Upload (Optional)</h2> <div class="form-group">
+                <hr style="margin: 25px 0; border-color: var(--border-color);"> <h2>Design Upload (Optional)</h2>
+                <div class="form-group">
                      <label for="design-file-upload">Upload your print file (CDR, PDF, JPG):</label>
                     <input type="file" id="design-file-upload" name="designFile" accept=".cdr,.pdf,.jpg,.jpeg,.png">
-                    <small>Maximum file size: 10MB</small> </div>
+                    <small>Maximum file size: 10MB</small>
+                </div>
                  <div class="form-group">
                      <label for="special-instructions">Special Instructions/Notes:</label>
                      <textarea id="special-instructions" name="specialInstructions" rows="3"></textarea>
@@ -61,7 +77,8 @@
     <footer>
         <div class="container">
              <p>&copy; 2025 Madhav Multiprint. All Rights Reserved.</p>
-        </div>
+             <p><a href="#">Privacy Policy</a> | <a href="#">Terms & Conditions</a> | <a href="contact.html">Contact</a></p>
+         </div>
     </footer>
 
     <script src="js/firebase-config.js" type="module"></script>

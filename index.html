@@ -4,31 +4,37 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Home - Madhav Multiprint</title>
-    <link rel="stylesheet" href="css/index.css"> <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"> </head>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
+    <link rel="stylesheet" href="css/header-footer.css">
+
+    <link rel="stylesheet" href="css/index.css">
+</head>
 <body>
     <header>
         <nav class="container">
             <div class="logo">
-                 <a href="index.html"><img src="https://i.ibb.co/Z6gKD9Rd/1.png" alt="Madhav Multiprint Logo"></a>
+                <a href="index.html"><img src="https://i.ibb.co/Z6gKD9Rd/1.png" alt="Madhav Multiprint Logo"></a>
             </div>
             <div class="nav-links">
-                 <a href="index.html" class="active">Home</a>
-                 <a href="products.html">Products</a>
-                 <a href="about.html">About Us</a>
-                 <a href="contact.html">Contact</a>
-                 <a href="cart.html">Cart (<span id="cart-count">0</span>)</a>
-                 <a href="/admin/login.html" class="admin-login-link" target="_blank">Admin Login</a>
+                <a href="index.html" class="active">Home</a>
+                <a href="products.html">Products</a>
+                <a href="about.html">About Us</a>
+                <a href="contact.html">Contact</a>
+                <a href="cart.html"><i class="fas fa-shopping-cart"></i> Cart (<span id="cart-count">0</span>)</a>
+                <a href="/admin/login.html" class="admin-login-link" target="_blank">Admin Login</a>
             </div>
-            <button class="mobile-menu-toggle" aria-label="Toggle menu">☰</button>
+             <button class="mobile-menu-toggle" aria-label="Toggle menu"><i class="fas fa-bars"></i></button>
         </nav>
     </header>
 
     <main>
         <section class="hero-section">
-            <div class="hero-overlay"></div> <div class="container hero-content">
+            <div class="hero-overlay"></div>
+            <div class="container hero-content">
                  <h1>गुणवत्तापूर्ण प्रिंटिंग सेवाएँ - आपके विचारों को दें जीवंत रूप</h1>
                  <p>फ्लेक्स बैनर, शादी कार्ड, बिल बुक, विजिटिंग कार्ड, और आपकी सभी प्रिंटिंग आवश्यकताओं के लिए।</p>
                  <div class="hero-buttons">
@@ -39,7 +45,7 @@
         </section>
 
         <section class="container info-section" id="services">
-            <h2>हमारी मुख्य सेवाएँ</h2>
+            <h2> हमारी मुख्य सेवाएँ </h2>
             <div class="services-grid">
                 <div class="service-item">
                     <i class="fas fa-print service-icon"></i>
@@ -108,17 +114,14 @@
              <div class="portfolio-grid">
                  <div class="portfolio-item">
                      <img src="https://via.placeholder.com/400x300.png?text=Visiting+Cards" alt="Portfolio Item 1">
-                     {/* <p>प्रोजेक्ट का नाम या प्रकार</p> */}
                  </div>
                  <div class="portfolio-item">
-                     <img src="https://via.placeholder.com/400x300.png?text=Brochure" alt="Portfolio Item 2">
-                     {/* <p>प्रोजेक्ट का नाम या प्रकार</p> */}
+                    <img src="https://via.placeholder.com/400x300.png?text=Brochure" alt="Portfolio Item 2">
                  </div>
                  <div class="portfolio-item">
                     <img src="https://via.placeholder.com/400x300.png?text=Flex+Banner" alt="Portfolio Item 3">
-                    {/* <p>प्रोजेक्ट का नाम या प्रकार</p> */}
                 </div>
-                 </div>
+             </div>
              <div style="text-align: center; margin-top: 30px;">
                  <a href="products.html" class="button-secondary">और देखें</a>
              </div>
@@ -154,5 +157,6 @@
     </footer>
 
     <script src="js/firebase-config.js" type="module"></script>
-    <script src="js/main.js" type="module" defer></script> </body>
+    <script src="js/main.js" type="module" defer></script>
+</body>
 </html>
