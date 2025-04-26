@@ -1,10 +1,15 @@
 // js/products.js
-// UPDATED Version: Added sorting, featured item filtering, layout changes
+// UPDATED Version: Fixed import statements
 
+// Import db instance from firebase-config.js
+import { db } from './firebase-config.js';
+
+// Import Firestore functions directly from the Firebase SDK
 import {
-    db, collection, getDocs, query, where, orderBy, startAfter, limit
-} from './firebase-config.js';
-// Note: Depending on your sorting/filtering needs, you might need more Firestore functions like startAfter, limit for pagination.
+    collection, getDocs, query, where, orderBy, startAfter, limit
+    // Add any other specific Firestore functions you use here
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js"; // Use the correct SDK path
+
 
 document.addEventListener('DOMContentLoaded', () => {
     const productListContainer = document.getElementById('product-list-container');
@@ -20,7 +25,8 @@ document.addEventListener('DOMContentLoaded', () => {
         return isNaN(num) || num === null ? 'N/A' : `₹ ${num.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
     };
 
-    // --- renderProducts Function (Adjusted for new card style potentially) ---
+    // --- renderProducts Function ---
+    // ...(बाकी का कोड जैसा पिछले उत्तर में था वैसा ही रहेगा)...
     const renderProducts = (products) => {
         // Clear previous content/spinner (ensure spinner is removed)
         productListContainer.innerHTML = '';
@@ -82,7 +88,8 @@ document.addEventListener('DOMContentLoaded', () => {
     };
     // --- END of renderProducts Function ---
 
-    // --- fetchProducts Function (MODIFIED for Sorting) ---
+
+     // --- fetchProducts Function (MODIFIED for Sorting) ---
     const fetchProducts = async () => {
         if (!productListContainer) {
             console.error("Product list container not found on fetch.");
@@ -160,7 +167,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    // --- populateCategoryFilter Function (Unchanged) ---
+     // --- populateCategoryFilter Function (Unchanged) ---
     const populateCategoryFilter = async () => {
        // ... (same as previous version) ...
         if (!categoryFilter || !db) {
@@ -227,7 +234,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // --- Featured Product Slider Logic (Unchanged from previous version) ---
+     // --- Featured Product Slider Logic (Unchanged from previous version) ---
     const featuredSlidersData = {
         'slider-flex-banner': [
             'https://i.ibb.co/ZRwV0sx5/2.jpg',
@@ -273,6 +280,7 @@ document.addEventListener('DOMContentLoaded', () => {
         initializeSlider(sliderId, featuredSlidersData[sliderId]);
     }
     // --- END of Featured Product Slider Logic ---
+
 
     // --- Initial Setup ---
     populateCategoryFilter(); // Populate filter dropdown first
