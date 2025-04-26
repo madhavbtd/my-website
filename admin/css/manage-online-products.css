@@ -1,0 +1,104 @@
+/* admin/manage-online-products.css */
+
+/* ============================================== */
+/* == COMMON ADMIN STYLES (Duplicate Section) == */
+/* ============================================== */
+:root {
+    --admin-primary: #4CAF50; /* Green theme for admin */
+    --admin-secondary: #8BC34A;
+    --admin-text: #333;
+    --admin-bg-light: #f4f4f4;
+    --admin-bg-white: #ffffff;
+    --admin-border: #ddd;
+    --admin-error: #f44336;
+    --admin-success: #4CAF50;
+    --admin-font: Arial, sans-serif;
+    --admin-radius: 4px;
+}
+
+body {
+    font-family: var(--admin-font);
+    background-color: var(--admin-bg-light);
+    margin: 0;
+    color: var(--admin-text);
+}
+
+.admin-header {
+    background-color: var(--admin-primary);
+    color: var(--admin-bg-white);
+    padding: 15px 30px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+.admin-header h1 { margin: 0; font-size: 1.5em; }
+.admin-header nav a { color: var(--admin-bg-white); text-decoration: none; margin-left: 20px; font-weight: bold; }
+.admin-header nav a:hover { text-decoration: underline; }
+
+.admin-container {
+    max-width: 1200px;
+    margin: 30px auto;
+    padding: 30px;
+    background-color: var(--admin-bg-white);
+    border-radius: var(--admin-radius);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+h2 {
+    color: var(--admin-primary);
+    border-bottom: 2px solid var(--admin-border);
+    padding-bottom: 10px;
+    margin-bottom: 20px;
+}
+
+/* Basic Button Styles */
+.btn { padding: 10px 15px; border: none; border-radius: var(--admin-radius); cursor: pointer; font-size: 1em; margin-right: 10px; text-decoration: none; display: inline-block; text-align: center; vertical-align: middle; }
+.btn-primary { background-color: var(--admin-primary); color: white; }
+.btn-primary:hover { background-color: var(--admin-secondary); }
+.btn-secondary { background-color: #ccc; color: #333; }
+.btn-secondary:hover { background-color: #bbb; }
+.btn-sm { padding: 5px 10px; font-size: 0.9em; }
+.btn i { margin-right: 5px; } /* Icon spacing */
+
+/* Messages */
+.message { padding: 10px; margin-top: 15px; border-radius: var(--admin-radius); font-weight: bold; }
+.message.success { background-color: #dff0d8; color: #3c763d; border: 1px solid #d6e9c6; }
+.message.error { background-color: #f2dede; color: #a94442; border: 1px solid #ebccd1; }
+.message.small { padding: 5px; margin-top: 5px; font-size: 0.9em; }
+
+/* ================================================== */
+/* == PRODUCT MANAGEMENT SPECIFIC STYLES           == */
+/* ================================================== */
+
+/* Forms */
+#product-form { margin-bottom: 30px; }
+.form-group { margin-bottom: 20px; }
+.form-group label { display: block; margin-bottom: 5px; font-weight: bold; }
+.form-group input[type="text"],
+.form-group input[type="url"],
+.form-group input[type="number"],
+.form-group select,
+.form-group textarea { width: 100%; padding: 10px; border: 1px solid var(--admin-border); border-radius: var(--admin-radius); box-sizing: border-box; font-size: 1em; }
+.form-group textarea { resize: vertical; min-height: 80px; }
+.form-group input[type="checkbox"] { width: auto; margin-right: 8px; vertical-align: middle; }
+.form-group small { display: block; margin-top: 5px; color: #777; font-size: 0.9em; }
+
+fieldset { border: 1px solid var(--admin-border); padding: 15px; margin-bottom: 20px; border-radius: var(--admin-radius); }
+legend { font-weight: bold; padding: 0 10px; color: var(--admin-primary); }
+.form-actions { margin-top: 20px; }
+
+/* Specific Admin Buttons */
+.btn-delete { background-color: var(--admin-error); color: white; }
+.btn-delete:hover { background-color: #d32f2f; }
+.btn-edit { background-color: #ff9800; color: white; }
+.btn-edit:hover { background-color: #fb8c00; }
+
+/* Products Table */
+.table-container { overflow-x: auto; }
+#products-table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+#products-table th, #products-table td { border: 1px solid var(--admin-border); padding: 12px; text-align: left; vertical-align: middle; }
+#products-table thead { background-color: var(--admin-bg-light); }
+#products-table th { font-weight: bold; }
+#products-table tbody tr:nth-child(even) { background-color: var(--admin-bg-light); }
+#products-table td .btn { margin-right: 5px; margin-bottom: 5px; } /* Button spacing in table */

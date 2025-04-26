@@ -1,36 +1,58 @@
 <!DOCTYPE html>
-<html lang="en"> <head>
+<html lang="en">
+<head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Products - Madhav Multiprint</title> <link rel="stylesheet" href="css/products.css">
+    <title>Products - Madhav Multiprint</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
-     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
-</head>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css"> <link rel="stylesheet" href="css/products.css"> </head>
 <body>
     <header>
-         <nav class="container">
+        <nav class="container">
             <div class="logo">
-                 <a href="index.html" style="font-weight: bold; font-size: 1.2em;">Madhav Multiprint</a>
+                <a href="index.html" style="font-weight: bold; font-size: 1.2em;">Madhav Multiprint</a>
             </div>
             <div class="nav-links">
-                 <a href="index.html">Home</a> <a href="products.html" class="active">Products</a> <a href="about.html">About Us</a> <a href="contact.html">Contact</a> <a href="cart.html">Cart (<span id="cart-count">0</span>)</a> <a href="/admin/login.html" class="admin-login-link" target="_blank">Admin Login</a> </div>
-            <button class="mobile-menu-toggle" aria-label="Toggle menu">☰</button>
+                <a href="index.html">Home</a>
+                <a href="products.html" class="active">Products</a>
+                <a href="about.html">About Us</a>
+                <a href="contact.html">Contact</a>
+                <a href="cart.html"><i class="fas fa-shopping-cart"></i> Cart (<span id="cart-count">0</span>)</a>
+                <a href="/admin/login.html" class="admin-login-link" target="_blank">Admin Login</a>
+            </div>
+            <button class="mobile-menu-toggle" aria-label="Toggle menu"><i class="fas fa-bars"></i></button>
         </nav>
     </header>
 
     <main class="container">
-        <h1>Our Products and Services</h1> <div class="filters">
-             <p>Filter options coming soon...</p> </div>
-        <div class="product-list" id="product-list-container">
-             <p>Loading products...</p> </div>
+        <h1>Our Products</h1>
+
+        <section class="filters" aria-labelledby="filter-heading">
+            <h2 id="filter-heading" class="sr-only">Product Filters</h2> <div class="filter-group">
+                <label for="category-filter">Category:</label>
+                <select id="category-filter" name="category">
+                    <option value="all">All Categories</option>
+                    </select>
+            </div>
+            </section>
+
+        <section class="product-list-section" aria-live="polite"> <div class="product-list" id="product-list-container">
+                <div class="loading-spinner">
+                    <i class="fas fa-spinner fa-spin fa-3x"></i>
+                    <p>Loading products...</p>
+                </div>
+                 </div>
+            <p id="no-products-message" class="message-box info" style="display: none;">No products found matching your criteria.</p>
+        </section>
     </main>
 
     <footer>
         <div class="container">
              <p>&copy; 2025 Madhav Multiprint. All Rights Reserved.</p>
-              <p><a href="#">Privacy Policy</a> | <a href="#">Terms & Conditions</a> | <a href="contact.html">Contact</a></p>
+             <p><a href="#">Privacy Policy</a> | <a href="#">Terms & Conditions</a> | <a href="contact.html">Contact</a></p>
          </div>
     </footer>
 

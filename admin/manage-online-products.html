@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Online Products</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="manage-online-products.css">
+</head>
+<body>
+    <header class="admin-header">
+        <h1>Admin Panel - Manage Online Products</h1>
+        <nav>
+            <a href="view-online-orders.html">View Online Orders</a>
+            <a href="/">View Website</a>
+        </nav>
+    </header>
+
+    <main class="admin-container">
+        <h2>Add/Edit Online Product</h2>
+        <form id="product-form">
+            <input type="hidden" id="edit-product-id"> <div class="form-group">
+                <label for="productName">Product Name:</label>
+                <input type="text" id="productName" required>
+            </div>
+
+            <div class="form-group">
+                <label for="productDesc">Description:</label>
+                <textarea id="productDesc" rows="3"></textarea>
+            </div>
+
+            <div class="form-group">
+                <label for="productCategory">Category:</label>
+                <input type="text" id="productCategory" placeholder="e.g., Flex Banner, Wedding Card, Stamp" required>
+                </div>
+
+            <div class="form-group">
+                <label for="imageUrl">Image URL:</label>
+                <input type="url" id="imageUrl" placeholder="https://example.com/image.jpg">
+                </div>
+
+            <div class="form-group">
+                <label for="unitType">Unit Type:</label>
+                <select id="unitType" required>
+                    <option value="Qty">Quantity (Qty)</option>
+                    <option value="Sq Feet">Square Feet (Sq Feet)</option>
+                </select>
+            </div>
+
+            <fieldset id="pricing-section">
+                <legend>Pricing</legend>
+                <div class="form-group">
+                    <label for="productRate">Rate (per Unit or per Sq Ft):</label>
+                    <input type="number" id="productRate" step="0.01" required>
+                </div>
+                <div class="form-group sq-feet-only" style="display: none;">
+                    <label for="minOrderValue">Minimum Order Value (₹):</label>
+                    <input type="number" id="minOrderValue" step="0.01" placeholder="e.g., 300">
+                </div>
+                 <div class="form-group wedding-card-only" style="display: none;">
+                    <label for="designCharge">Design Charge (₹):</label>
+                    <input type="number" id="designCharge" step="0.01">
+                    <label for="printingCharge">Printing Charge (e.g., per 100):</label>
+                    <input type="number" id="printingCharge" step="0.01">
+                    <label for="transportCharge">Transport Charge (₹):</label>
+                    <input type="number" id="transportCharge" step="0.01">
+                    <small>Note: Wedding card final price calculation needs specific logic based on these.</small>
+                 </div>
+
+            </fieldset>
+
+            <div class="form-group">
+                <label for="productOptions">Options (Size, Paper etc. - JSON format):</label>
+                <textarea id="productOptions" rows="3" placeholder='e.g., [{"name": "Size", "values": ["Small", "Medium"]}, {"name": "Color"}]'></textarea>
+                <small>Enter options as JSON array or leave blank.</small>
+            </div>
+
+
+            <div class="form-group">
+                <label for="isEnabled">
+                    <input type="checkbox" id="isEnabled" checked>
+                    Show on Website (Enabled)
+                </label>
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary">Save Product</button>
+                <button type="button" id="cancel-edit-btn" class="btn btn-secondary" style="display: none;">Cancel Edit</button>
+            </div>
+            <p id="form-message" class="message"></p>
+        </form>
+
+        <hr>
+
+        <h2>Existing Online Products</h2>
+        <div class="table-container">
+            <table id="products-table">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Category</th>
+                        <th>Unit Type</th>
+                        <th>Rate</th>
+                        <th>Enabled</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="products-tbody">
+                    <tr><td colspan="6">Loading products...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </main>
+
+    <script src="../js/firebase-config.js" type="module"></script>
+    <script src="js/manage-online-products.js" type="module"></script>
+</body>
+</html>
