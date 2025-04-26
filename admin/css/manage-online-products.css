@@ -1,9 +1,9 @@
 /* ============================================================== */
-/* == STYLES for Online Product Management Features     == */
-/* Updated with professional form styling                  == */
+/* == manage-online-products.css                           == */
+/* == Final Version with Professional Styling & Fixes        == */
 /* ============================================================== */
 
-/* --- CSS Variables (Borrowed from product_management.css for consistency) --- */
+/* --- CSS Variables (Borrowed for consistency) --- */
 :root {
     --primary-color: #6f42c1; /* Product Purple */
     --primary-color-dark: #5a32a3;
@@ -34,10 +34,10 @@
     --text-color-light: #6c757d;
     --border-color: #ced4da;
     --input-border-focus: var(--primary-color);
-    --focus-shadow-color: rgba(111, 66, 193, 0.25);
+    --focus-shadow-color: rgba(111, 66, 193, 0.15); /* Adjusted alpha */
 
     --base-font-family: 'Poppins', "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
-    --base-font-size: 14px; /* Slightly smaller base for finer control */
+    --base-font-size: 14px;
     --border-radius-sm: 4px;
     --border-radius-md: 6px;
     --border-radius-lg: 8px;
@@ -45,188 +45,208 @@
     --box-shadow-medium: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
-/* --- Existing Styles from manage-online-products.css --- */
-
-/* Image Upload Section Styles */
-#image-upload-section {
-    margin-top: 25px; /* More space above */
-    padding-top: 20px;
-    border-top: 1px solid #eee; /* Separator line */
-}
-#image-upload-section h3 { /* Consistent heading style - Will be overridden by new H3 style below */
-    font-size: 1.1em;
-    color: var(--primary-color);
-    margin-bottom: 18px;
-    padding-bottom: 8px;
-    border-bottom: 1px solid #eee;
-    font-weight: 600;
-}
-#productImages { /* File input - Styling will be enhanced by new input styles below */
-    display: block;
-    width: 100%;
-    padding: 8px;
-    margin-bottom: 15px;
-    border: 1px solid var(--border-color);
-    border-radius: var(--border-radius-sm);
-    font-size: 0.9em;
-    cursor: pointer;
-}
-#image-preview-area { /* Styling enhanced below */
-    display: flex;
-    flex-wrap: wrap;
-    gap: 12px;
-    margin-top: 10px;
-    padding: 15px;
-    background-color: #f8f9fa;
-    border: 1px dashed var(--border-color);
-    border-radius: var(--border-radius-md);
-    min-height: 90px;
-}
-.image-preview-item { /* Styling enhanced below */
-    position: relative;
-    width: 90px;
-    height: 90px;
-    border: 1px solid var(--border-color);
-    border-radius: var(--border-radius-sm);
-    overflow: hidden;
-    background-color: #e9ecef;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-.image-preview-item img {
-    display: block;
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-}
-.remove-image-btn {
-    position: absolute;
-    top: 2px;
-    right: 2px;
-    background-color: rgba(220, 53, 69, 0.75);
-    color: white;
-    border: none;
-    border-radius: 50%;
-    width: 20px;
-    height: 20px;
-    font-size: 11px;
-    line-height: 20px;
-    text-align: center;
-    cursor: pointer;
-    padding: 0;
-    transition: background-color 0.2s ease;
-    font-weight: bold;
-}
-.remove-image-btn:hover {
-    background-color: var(--danger-color);
-}
-.upload-progress-bar {
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    width: 100%;
-    height: 6px;
-    background-color: rgba(200, 200, 200, 0.5);
-    overflow: hidden;
-}
-.upload-progress-bar div {
-    height: 100%;
-    width: 0%;
-    background-color: var(--success-color);
-    transition: width 0.1s linear;
-}
-
-/* Wedding Card & Extra Charges Sections Styling */
-#wedding-card-fields,
-#extra-charges-outer fieldset, /* Target outer fieldset as well */
-#extra-charges-section { /* Style the inner div if needed */
-    margin-top: 20px; /* Consistent margin */
-    padding: 20px 25px; /* More padding */
-    border: 1px solid #e9ecef; /* Lighter border */
-    border-left: 4px solid var(--primary-color); /* Accent border */
-    border-radius: var(--border-radius-md);
-    background-color: #fcfdff; /* Very light blueish */
-}
-#wedding-card-fields legend,
-#extra-charges-outer legend { /* Target legend for styling */
-    font-weight: 600;
-    color: var(--primary-color); /* Match accent */
-    font-size: 1.05em; /* Slightly larger */
-    padding: 0 10px; /* Padding for legend text */
-    margin-left: 10px; /* Indent legend slightly */
-}
-#extra-charges-section .form-group {
-    margin-bottom: 18px; /* Consistent spacing */
-}
-
-/* Ensure layout works within new fieldsets if needed */
-/* Using the main .product-form-grid for overall layout now */
-
-
-/* Spinner icon in save button */
-#saveProductBtn .fa-spinner {
-    margin-right: 8px; /* More space */
-}
-
-/* === END OF EXISTING STYLES === */
-
-
-/* ============================================================== */
-/* == START: NEW Professional Form Styles                  == */
-/* ============================================================== */
-
-/* सुनिश्चित करें कि Poppins फॉन्ट लागू हो */
+/* --- Base Body Styles --- */
 body {
-    font-family: var(--base-font-family, 'Poppins', sans-serif); /* Use variable with fallback */
+    font-family: var(--base-font-family, 'Poppins', sans-serif);
     font-size: var(--base-font-size, 14px);
     line-height: 1.6;
     background-color: var(--body-bg, #f8f9fa);
     color: var(--text-color-dark, #333);
+    margin: 0;
+    padding: 20px; /* Add padding to body */
 }
 
-/* Modal का बेस स्टाइल सुधारें */
+/* --- Container, Header, Filter Bar (Assuming from shared CSS or basic) --- */
+/* Add basic styles if shared CSS (customer_management.css) is missing */
+.container {
+    background-color: var(--container-bg, #ffffff);
+    padding: 30px 35px;
+    border-radius: var(--border-radius-lg, 8px);
+    box-shadow: var(--box-shadow-medium, 0 4px 12px rgba(0,0,0,0.1));
+    max-width: 1200px; /* Adjust as needed */
+    margin: 30px auto;
+    box-sizing: border-box;
+}
+.header {
+    /* Basic header styles */
+    background-color: var(--header-bg, #6f42c1);
+    color: var(--header-text, #ffffff);
+    padding: 18px 25px;
+    border-radius: var(--border-radius-lg, 8px) var(--border-radius-lg, 8px) 0 0;
+    margin: -30px -35px 30px -35px;
+    font-size: 1.3em;
+    font-weight: 600;
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+}
+.header-icon { font-size: 1.1em; }
+h1 { margin: 0; font-size: 1.15em; }
+
+.breadcrumb-container {
+    font-size: 0.9em; color: var(--text-color-light); margin-bottom: 30px; padding: 5px 0;
+}
+.breadcrumb-container a { color: var(--primary-color); text-decoration: none; font-weight: 500; }
+.breadcrumb-container a:hover { text-decoration: underline; color: var(--primary-color-dark); }
+.breadcrumb-container span::before { content: "/"; margin: 0 8px; color: #aaa; }
+
+.filter-bar {
+    display: flex; flex-wrap: wrap; gap: 20px 25px; padding: 20px 25px; background-color: var(--filter-bg, #ffffff); border: 1px solid var(--filter-border, #e9ecef); border-radius: var(--border-radius-md, 6px); margin-bottom: 30px; align-items: flex-end; box-shadow: var(--box-shadow-light, 0 2px 8px rgba(0,0,0,0.08));
+}
+.filter-group { display: flex; flex-direction: column; gap: 8px; flex-grow: 1; min-width: 180px; }
+.filter-group.filter-sort { min-width: 220px; }
+.filter-group label { font-size: 0.85em; font-weight: 600; color: var(--text-color-medium, #495057); text-transform: uppercase; letter-spacing: 0.5px; }
+.filter-group label i { margin-right: 6px; color: var(--primary-color, #6f42c1); }
+.filter-group input[type="text"], .filter-group select { padding: 9px 14px; border: 1px solid var(--border-color, #ced4da); border-radius: var(--border-radius-sm, 4px); font-size: 0.9em; height: 40px; background-color: #fff; box-sizing: border-box; width: 100%; transition: border-color 0.2s ease, box-shadow 0.2s ease; }
+.filter-group input:focus, .filter-group select:focus { border-color: var(--input-border-focus, #6f42c1); outline: 0; box-shadow: 0 0 0 3px var(--focus-shadow-color, rgba(111, 66, 193, 0.15)); }
+
+
+/* --- Table Styles --- */
+.table-container {
+    width: 100%;
+    overflow-x: auto; /* Horizontal scroll if needed */
+    border: 1px solid var(--table-border-color, #dee2e6);
+    border-radius: var(--border-radius-md, 6px);
+    background-color: var(--container-bg, #ffffff);
+    margin-bottom: 30px;
+    box-shadow: var(--box-shadow-light, 0 2px 8px rgba(0,0,0,0.08));
+}
+
+#productTable {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9em;
+    table-layout: fixed; /* Use fixed layout based on th widths */
+    word-wrap: break-word;
+}
+
+#productTable thead th {
+    background-color: var(--table-header-bg, #eef2f7);
+    padding: 14px 12px;
+    text-align: left; /* Default alignment */
+    font-weight: 600;
+    color: var(--text-color-dark, #343a40);
+    border-bottom: 2px solid var(--table-border-color, #dee2e6);
+    white-space: nowrap;
+    text-transform: uppercase;
+    font-size: 0.85em;
+    letter-spacing: 0.5px;
+}
+/* Apply widths from HTML th style attribute or define here */
+/* Example: #productTable th:nth-child(1) { width: 25%; } */
+
+#productTable tbody tr {
+    border-bottom: 1px solid #f1f3f5;
+    transition: background-color 0.15s ease;
+}
+#productTable tbody tr:last-child {
+    border-bottom: none;
+}
+#productTable tbody tr:nth-child(even) {
+    background-color: var(--table-row-even-bg, #f8f9fa);
+}
+#productTable tbody tr:hover {
+    background-color: var(--table-row-hover-bg, #e9ecef);
+}
+
+#productTable td {
+    padding: 12px 12px;
+    vertical-align: middle;
+    color: var(--text-color-medium, #495057);
+    line-height: 1.5;
+}
+
+/* Column specific alignments (redundant if set in HTML th style, but good fallback) */
+#productTable th:nth-child(4), #productTable td:nth-child(4) { text-align: right; } /* Rate */
+#productTable th:nth-child(5), #productTable td:nth-child(5) { text-align: center; } /* Unit */
+#productTable th:nth-child(6), #productTable td:nth-child(6) { text-align: center; } /* Enabled */
+#productTable th:nth-child(7), #productTable td:nth-child(7) { text-align: center; } /* Date Added */
+#productTable th:nth-child(8), #productTable td:nth-child(8) { text-align: center; } /* Actions */
+
+
+#loadingMessage, #noProductsMessage {
+    text-align: center; color: var(--text-color-light); font-style: italic; padding: 35px !important;
+}
+
+/* --- Modal Styles (Includes Scroll Fix & Professional Styling) --- */
+.modal {
+    display: none; position: fixed; z-index: 1050; left: 0; top: 0; width: 100%; height: 100%; background-color: var(--modal-overlay-bg, rgba(0, 0, 0, 0.6)); align-items: center; justify-content: center; padding: 20px; box-sizing: border-box;
+}
+.modal.active { display: flex; animation: fadeIn 0.3s ease; }
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+/* Modal Content Box */
 .modal-content {
     background-color: var(--container-bg, #ffffff);
     border-radius: var(--border-radius-lg, 8px);
     box-shadow: var(--box-shadow-medium, 0 5px 15px rgba(0,0,0,0.15));
-    padding: 30px 35px;
-    max-height: 88vh; /* Limit height */
-    overflow-y: auto; /* Enable scroll if needed */
+    padding: 0; /* Padding moved to inner elements */
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+    width: 95%;
+    overflow: hidden; /* Hide overflow here */
+}
+.modal-content.large-modal {
+    max-width: 1100px; /* Wider modal */
+}
+.modal-content.small-modal {
+    max-width: 480px;
+    padding: 30px 35px; /* Restore padding for small modal */
+    overflow: visible; /* No flex/scroll needed */
+    display: block; /* Override flex */
 }
 
-/* Modal का टाइटल */
+
+/* Modal Title (Header) */
 .modal-content h2 {
     font-weight: 600;
-    font-size: 1.5em;
-    margin-bottom: 25px;
-    padding-bottom: 15px;
+    font-size: 1.4em;
+    padding: 20px 30px;
     border-bottom: 1px solid #eee;
     color: var(--text-color-dark, #333);
-    text-align: left; /* Left align title */
-    display: flex; /* Align icon and text */
+    text-align: left;
+    display: flex;
     align-items: center;
+    flex-shrink: 0;
+    margin: 0;
+    background-color: var(--container-bg, #ffffff); /* Ensure background */
 }
 .modal-content h2 i {
-    margin-right: 12px; /* Space after icon */
+    margin-right: 12px;
     color: var(--primary-color, #6f42c1);
-    font-size: 1.1em; /* Adjust icon size if needed */
+    font-size: 1.1em;
+}
+.modal-content h2 .warning-icon { color: var(--danger-color); }
+
+/* Modal Close Button */
+.close-btn {
+    color: #aaa; position: absolute; top: 15px; right: 25px; font-size: 28px; font-weight: bold; cursor: pointer; line-height: 1; background: none; border: none; padding: 0; transition: color 0.2s ease; z-index: 10; /* Ensure above header */
+}
+.close-btn:hover, .close-btn:focus { color: #333; }
+
+/* Form Area (Scrollable) */
+#productForm {
+    padding: 25px 30px;
+    overflow-y: auto;
+    flex-grow: 1;
 }
 
-/* फॉर्म के लिए Grid लेआउट */
+/* Form Grid Layout */
 .product-form-grid {
     display: grid;
-    /* Default to 2 columns, adjust as needed */
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); /* Responsive columns */
-    gap: 25px 35px; /* Row and column gap */
+    grid-template-columns: repeat(3, 1fr); /* 3 Columns */
+    gap: 25px 35px;
 }
 
-/* हर फॉर्म ग्रुप में स्पेसिंग */
+/* Form Groups */
 #productForm .form-group {
-    margin-bottom: 20px; /* Increased vertical space */
+    margin-bottom: 20px;
 }
 
-/* फॉर्म लेबल्स */
+/* Form Labels */
 #productForm label {
     display: block;
     font-weight: 500;
@@ -234,17 +254,26 @@ body {
     font-size: 0.9em;
     color: var(--text-color-medium, #555);
 }
+#productForm label input[type="checkbox"] { /* Style for checkbox within label */
+     margin-right: 10px;
+     width: 16px;
+     height: 16px;
+     accent-color: var(--primary-color, #6f42c1);
+     cursor: pointer;
+     vertical-align: middle;
+}
 
-/* सभी इनपुट, सेलेक्ट, टेक्स्टएरिया */
+
+/* Form Inputs, Selects, Textarea */
 #productForm input[type="text"],
 #productForm input[type="number"],
 #productForm input[type="file"],
 #productForm select,
 #productForm textarea {
     width: 100%;
-    padding: 11px 15px; /* Increased padding */
+    padding: 11px 15px;
     border: 1px solid var(--border-color, #ced4da);
-    border-radius: var(--border-radius-md, 6px); /* Consistent radius */
+    border-radius: var(--border-radius-md, 6px);
     font-size: 0.95em;
     font-family: var(--base-font-family, 'Poppins', sans-serif);
     background-color: #fff;
@@ -252,13 +281,7 @@ body {
     box-sizing: border-box;
     color: var(--text-color-dark);
 }
-/* Placeholder text style */
-#productForm ::placeholder {
-    color: #aaa;
-    opacity: 1; /* Firefox */
-}
-
-/* फोकस (जब क्लिक किया जाए) पर स्टाइल */
+#productForm ::placeholder { color: #aaa; opacity: 1; }
 #productForm input:focus,
 #productForm select:focus,
 #productForm textarea:focus {
@@ -266,226 +289,166 @@ body {
     box-shadow: 0 0 0 3px var(--focus-shadow-color, rgba(111, 66, 193, 0.15));
     outline: none;
 }
+#productForm textarea { min-height: 90px; resize: vertical; }
+#productForm .required { color: var(--danger-color, #dc3545); margin-left: 4px; font-weight: bold; }
 
-/* टेक्स्टएरिया को थोड़ा बड़ा करें */
-#productForm textarea {
-    min-height: 90px; /* Increased height */
-    resize: vertical;
-}
+/* File Input Button */
+#productForm input[type="file"] { padding: 9px 12px; background-color: var(--body-bg, #f8f9fa); cursor: pointer; }
+#productForm input[type="file"]::file-selector-button { padding: 8px 15px; border: none; background-color: var(--secondary-color, #6c757d); color: white; border-radius: var(--border-radius-sm, 4px); cursor: pointer; margin-right: 12px; font-family: var(--base-font-family, 'Poppins', sans-serif); font-weight: 500; transition: background-color 0.2s ease; }
+#productForm input[type="file"]::file-selector-button:hover { background-color: var(--secondary-color-dark, #5a6268); }
 
-/* Required निशान */
-#productForm .required {
-    color: var(--danger-color, #dc3545);
-    margin-left: 4px;
-    font-weight: bold;
-}
-
-/* फाइल इनपुट को थोड़ा बेहतर दिखाएं */
-#productForm input[type="file"] {
-    padding: 9px 12px; /* Adjust padding */
-    background-color: var(--body-bg, #f8f9fa);
-    cursor: pointer;
-}
-#productForm input[type="file"]::file-selector-button {
-    padding: 8px 15px; /* Adjust button padding */
-    border: none;
-    background-color: var(--secondary-color, #6c757d);
-    color: white;
-    border-radius: var(--border-radius-sm, 4px);
-    cursor: pointer;
-    margin-right: 12px;
-    font-family: var(--base-font-family, 'Poppins', sans-serif);
-    font-weight: 500;
-    transition: background-color 0.2s ease;
-}
-#productForm input[type="file"]::file-selector-button:hover {
-    background-color: var(--secondary-color-dark, #5a6268);
+/* Price Input Group Styling (Rupee Symbol) */
+.price-group { position: relative; }
+.price-group input[type="number"] { padding-left: 30px !important; /* Space for symbol */ }
+.price-group::before { content: '₹'; position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text-color-light); font-size: 0.95em; z-index: 2; pointer-events: none; }
+/* Adjust vertical position if label is included in calculation */
+.price-group label + input[type="number"] + ::before { /* Might need different selector */
+     /* top: calc(50% + offset); */
 }
 
-/* सेक्शन हेडिंग्स (h3) */
+
+/* Form Section Headings (h3) */
 #productForm h3 {
-    font-size: 1.2em; /* Increased size */
+    font-size: 1.2em;
     font-weight: 600;
     color: var(--primary-color, #6f42c1);
-    margin-top: 30px; /* More space above */
+    margin-top: 10px; /* Reduced top margin as fieldset adds space */
     margin-bottom: 20px;
     padding-bottom: 10px;
     border-bottom: 2px solid var(--primary-color, #6f42c1);
     display: flex;
     align-items: center;
-    gap: 10px; /* Space between icon and text */
+    gap: 10px;
 }
-#productForm h3:first-of-type {
-     margin-top: 10px; /* Less margin for the very first heading */
+ #productForm h3:first-of-type {
+     margin-top: 0px; /* No top margin for first heading within form */
  }
-#productForm h3 i {
-    font-size: 0.9em; /* Adjust icon size relative to text */
-}
+#productForm h3 i { font-size: 0.9em; }
 
-/* फील्डसेट का स्टाइल बेहतर करें */
+
+/* Fieldset Styling */
 #productForm fieldset {
     border: 1px solid #e0e0e0;
     border-radius: var(--border-radius-md, 6px);
-    padding: 20px 25px 25px 25px; /* Adjust padding */
-    margin-top: 15px;
-    background-color: #fdfdff; /* Light background for fieldset */
+    padding: 20px 25px 25px 25px;
+    margin-top: 15px; /* Space above fieldset */
+    margin-bottom: 15px; /* Space below fieldset */
+    background-color: #fdfdff;
 }
+#productForm fieldset:first-of-type {
+    margin-top: 0; /* No top margin for first fieldset */
+}
+
 #productForm legend {
     font-weight: 600;
     color: var(--primary-color, #6f42c1);
     padding: 0 10px;
-    font-size: 1.05em; /* Slightly larger legend */
-    margin-left: 5px; /* Adjust indent */
+    font-size: 1.05em;
+    margin-left: 5px;
 }
 
-/* इमेज प्रीव्यू सेक्शन को बेहतर बनाना */
+/* Small helper text */
+#productForm small { display: block; margin-top: 5px; font-size: 0.8em; color: var(--text-color-light, #6c757d); }
+
+/* Image Upload Section */
+#image-upload-section { margin-top: 25px; padding-top: 0; border-top: none; /* Remove top border if inside fieldset */ }
+#image-upload-section h3 { margin-top: 0; } /* Remove extra margin if h3 used here */
+
 #image-preview-area {
-    display: grid; /* Use grid for consistent spacing */
-    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); /* Responsive grid items */
-    gap: 15px;
-    margin-top: 15px;
-    padding: 20px;
-    background-color: #f0f2f5; /* Slightly different background */
-    border: 1px dashed #ced4da;
-    border-radius: var(--border-radius-md, 6px);
-    min-height: 130px; /* Ensure min height */
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 15px; margin-top: 15px; padding: 20px; background-color: #f0f2f5; border: 1px dashed #ced4da; border-radius: var(--border-radius-md, 6px); min-height: 130px;
 }
-
 .image-preview-item {
-    position: relative;
-    width: 100px; /* Fixed size for grid item */
-    height: 100px;
-    border: 1px solid #ddd;
-    border-radius: var(--border-radius-md, 6px);
-    overflow: hidden;
-    background-color: #fff;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.08); /* Subtle shadow */
-    display: flex; /* Center potential placeholder */
-    align-items: center;
-    justify-content: center;
+    position: relative; width: 100px; height: 100px; border: 1px solid #ddd; border-radius: var(--border-radius-md, 6px); overflow: hidden; background-color: #fff; box-shadow: 0 2px 5px rgba(0,0,0,0.08); display: flex; align-items: center; justify-content: center;
 }
-/* Remove button styling remains the same */
-
-/* Checkbox styling */
-#productForm input[type="checkbox"] {
-    width: 16px;
-    height: 16px;
-    margin-right: 8px;
-    accent-color: var(--primary-color, #6f42c1);
-    cursor: pointer;
-    vertical-align: middle; /* Align better with label text */
-}
-#productForm label input[type="checkbox"] { /* More specific selector if needed */
-     margin-right: 10px;
-}
-
-/* Small text helper */
-#productForm small {
-    display: block;
-    margin-top: 5px;
-    font-size: 0.8em;
-    color: var(--text-color-light, #6c757d);
-}
+.image-preview-item img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.remove-image-btn { position: absolute; top: 2px; right: 2px; background-color: rgba(220, 53, 69, 0.75); color: white; border: none; border-radius: 50%; width: 20px; height: 20px; font-size: 11px; line-height: 20px; text-align: center; cursor: pointer; padding: 0; transition: background-color 0.2s ease; font-weight: bold; }
+.remove-image-btn:hover { background-color: var(--danger-color); }
+.upload-progress-bar { position: absolute; bottom: 0; left: 0; width: 100%; height: 6px; background-color: rgba(200, 200, 200, 0.5); overflow: hidden; }
+.upload-progress-bar div { height: 100%; width: 0%; background-color: var(--success-color); transition: width 0.1s linear; }
 
 
-/* एक्शन बटन्स (Cancel, Save) को स्टाइल करना */
+/* Modal Actions (Footer) */
 .modal-actions {
     display: flex;
-    flex-wrap: wrap; /* Allow wrapping on small screens */
-    justify-content: space-between; /* Space delete and save/cancel */
+    flex-wrap: wrap;
+    justify-content: space-between;
     gap: 15px;
-    margin-top: 35px; /* More space above buttons */
-    padding-top: 25px;
+    padding: 20px 30px;
     border-top: 1px solid #eee;
-    align-items: center;
+    flex-shrink: 0;
+    background-color: var(--container-bg, #ffffff);
+    border-radius: 0 0 var(--border-radius-lg, 8px) var(--border-radius-lg, 8px);
 }
-.modal-actions-right {
-    display: flex;
-    gap: 15px; /* Gap between cancel and save */
+.modal-actions-right { display: flex; gap: 15px; }
+
+/* Buttons */
+.button { padding: 11px 28px; font-size: 0.95em; border: none; border-radius: var(--border-radius-md, 6px); cursor: pointer; font-weight: 500; font-family: var(--base-font-family, 'Poppins', sans-serif); display: inline-flex; align-items: center; justify-content: center; gap: 8px; transition: background-color 0.2s ease, transform 0.1s ease, box-shadow 0.2s ease; line-height: 1.5; box-shadow: 0 1px 3px rgba(0,0,0,0.1); text-decoration: none; white-space: nowrap; }
+.button:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+.button:active:not(:disabled) { transform: translateY(0px); box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+.button:disabled { opacity: 0.6; cursor: not-allowed; background-color: #adb5bd !important; transform: none; box-shadow: none; }
+.button i { margin-right: 6px; } /* Space between icon and text */
+
+.save-button { background-color: var(--success-color, #28a745); color: white; }
+.save-button:hover:not(:disabled) { background-color: var(--success-color-dark, #218838); }
+.cancel-button { background-color: var(--secondary-color, #6c757d); color: white; box-shadow: none; }
+.cancel-button:hover:not(:disabled) { background-color: var(--secondary-color-dark, #5a6268); transform: none; box-shadow: none; }
+.delete-button-modal { background-color: transparent; color: var(--danger-color, #dc3545); border: 1px solid var(--danger-color, #dc3545); box-shadow: none; padding: 10px 25px; }
+.delete-button-modal:hover:not(:disabled) { background-color: var(--danger-color, #dc3545); color: white; transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+#saveProductBtn .fa-spinner { margin-right: 8px; }
+
+/* Delete Confirmation Modal */
+.confirmation-modal .modal-content { padding: 30px 35px; }
+.confirmation-modal h2 { margin-bottom: 20px; font-size: 1.25em; }
+.confirmation-modal p { font-size: 1em; color: var(--text-color-medium); margin-bottom: 25px; text-align: center; line-height: 1.6; }
+.confirmation-checkbox-area { display: flex; align-items: center; gap: 12px; margin-bottom: 30px; padding: 18px; background-color: var(--warning-bg); border: 1px solid var(--warning-border); border-radius: var(--border-radius-md); }
+.confirmation-checkbox-area input[type="checkbox"] { width: 18px; height: 18px; flex-shrink: 0; accent-color: var(--danger-color); cursor: pointer; }
+.confirmation-checkbox-area label { font-size: 0.9em; color: var(--text-color-dark); margin: 0; cursor: pointer; font-weight: 500; }
+.delete-confirm-button { background-color: var(--danger-color); color: white; padding: 10px 22px; }
+.delete-confirm-button:hover:not(:disabled) { background-color: var(--danger-color-dark); }
+
+/* Toast Notification Styles */
+.toast-notification { position: fixed; bottom: -100px; /* Start hidden */ left: 50%; transform: translateX(-50%); background-color: rgba(52, 58, 64, 0.9); /* Dark background */ color: white; padding: 12px 25px; border-radius: 25px; z-index: 1100; font-size: 0.95em; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2); opacity: 0; transition: opacity 0.4s ease, bottom 0.4s ease; white-space: nowrap; }
+.toast-notification.show { opacity: 1; bottom: 30px; /* Slide in */ }
+
+/* --- Responsive Adjustments --- */
+@media (max-width: 1150px) { /* Adjust breakpoint for 3 columns */
+    .modal-content.large-modal {
+        max-width: 95%; /* Use percentage */
+    }
+     .product-form-grid {
+        /* Still try 3 columns if possible */
+         grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); /* Adjust minmax */
+    }
 }
 
-/* सामान्य बटन स्टाइल */
-.button {
-    padding: 11px 28px; /* Larger padding */
-    font-size: 0.95em; /* Standard button text size */
-    border: none;
-    border-radius: var(--border-radius-md, 6px);
-    cursor: pointer;
-    font-weight: 500;
-    font-family: var(--base-font-family, 'Poppins', sans-serif);
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    transition: background-color 0.2s ease, transform 0.1s ease, box-shadow 0.2s ease;
-    line-height: 1.5; /* Ensure consistent line height */
-    box-shadow: 0 1px 3px rgba(0,0,0,0.1); /* Subtle shadow */
-}
-.button:hover {
-    transform: translateY(-2px); /* More noticeable hover effect */
-    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-}
-.button:active {
-    transform: translateY(0px);
-    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-}
-
-/* स्पेसिफिक बटन */
-.save-button {
-    background-color: var(--success-color, #28a745);
-    color: white;
-}
-.save-button:hover {
-    background-color: var(--success-color-dark, #218838);
-}
-.cancel-button {
-    background-color: var(--secondary-color, #6c757d);
-    color: white;
-    box-shadow: none; /* Maybe less emphasis on cancel */
-}
-.cancel-button:hover {
-    background-color: var(--secondary-color-dark, #5a6268);
-    transform: none; /* No lift on hover for cancel */
-    box-shadow: none;
-}
-.delete-button-modal {
-    background-color: transparent; /* Make delete less prominent initially */
-    color: var(--danger-color, #dc3545);
-    border: 1px solid var(--danger-color, #dc3545);
-    box-shadow: none;
-    padding: 10px 25px; /* Slightly different padding if needed */
-}
-.delete-button-modal:hover {
-    background-color: var(--danger-color, #dc3545);
-    color: white;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-}
-
-/* Responsive adjustments for the new layout */
-@media (max-width: 768px) {
+@media (max-width: 992px) { /* Tablet */
     .product-form-grid {
-        grid-template-columns: 1fr; /* Single column on smaller screens */
-        gap: 15px 0; /* Only row gap needed */
+        grid-template-columns: repeat(2, 1fr); /* Force 2 columns */
     }
-    .modal-actions {
-        flex-direction: column-reverse; /* Stack buttons */
-        align-items: stretch;
-    }
-     .modal-actions-right {
-         flex-direction: column-reverse; /* Stack save/cancel */
-         width: 100%;
-     }
-     .delete-button-modal {
-         margin-right: 0; /* Remove auto margin */
-         margin-bottom: 10px; /* Add space below delete */
-         width: 100%; /* Full width */
-     }
-     .modal-actions .button {
-         width: 100%; /* Make all buttons full width */
-     }
 }
 
-/* ============================================================== */
-/* == END: NEW Professional Form Styles                    == */
-/* ============================================================== */
+@media (max-width: 767px) { /* Mobile */
+    body { font-size: 14px; }
+    .container { padding: 20px 15px; margin: 15px 0; }
+    .header { padding: 15px; margin: -20px -15px 25px -15px; font-size: 1.2em; }
+    .filter-bar { flex-direction: column; align-items: stretch; padding: 15px; gap: 15px; margin-bottom: 25px; }
+    .filter-group { min-width: 100%; }
+    .filter-group .button { align-self: stretch; }
+
+    #productTable { font-size: 0.88em; table-layout: auto; } /* Allow table to adapt */
+    #productTable th, #productTable td { padding: 10px 8px; } /* Less padding */
+
+    .modal-content { width: 96%; /* Adjust width */ max-height: 95vh; }
+    .modal-content.large-modal { max-width: 96%; }
+
+    #productForm { padding: 20px; }
+    .modal-content h2 { padding: 15px 20px; font-size: 1.3em; }
+    .modal-actions { padding: 15px 20px; flex-direction: column-reverse; align-items: stretch; }
+    .modal-actions-right { flex-direction: column-reverse; width: 100%;}
+    .delete-button-modal { margin-right: 0; margin-bottom: 10px; width: 100%; }
+    .modal-actions .button { width: 100%; }
+
+    .product-form-grid { grid-template-columns: 1fr; gap: 15px 0; } /* Single column */
+    #productForm fieldset { padding: 15px; }
+    #productForm legend { font-size: 1em; }
+}
