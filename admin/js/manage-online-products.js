@@ -190,7 +190,7 @@ function handleSortChange() {
         if (field === currentSortField && direction === currentSortDirection) return;
         currentSortField = field;
         currentSortDirection = direction;
-        applyFiltersAndRender();
+        applyFiltersAndRender(); // Trigger re-render with new sort
     }
  }
 function handleSearchInput() { clearTimeout(searchDebounceTimer); searchDebounceTimer = setTimeout(applyFiltersAndRender, 300); }
@@ -199,43 +199,44 @@ function clearFilters() { if(filterSearchInput) filterSearchInput.value = ''; if
 // --- Firestore Listener for ONLINE Products ---
 function listenForOnlineProducts() {
     if (unsubscribeProducts) { unsubscribeProducts(); unsubscribeProducts = null; }
-    if (!window.db || !window.collection || !window.query || !window.onSnapshot || !window.orderBy) { // Added orderBy check
+    if (!window.db || !window.collection || !window.query || !window.onSnapshot || !window.orderBy) {
         console.error("Firestore functions unavailable!");
-        if (productTableBody) productTableBody.innerHTML = `<tr><td colspan="8" style="color: red; text-align: center;">Error: DB Connection Failed.</td></tr>`; // Colspan=8
+        if (productTableBody) productTableBody.innerHTML = `<tr><td colspan="8" style="color: red; text-align: center;">Error: DB Connection Failed.</td></tr>`;
         return;
     }
-    if (productTableBody) productTableBody.innerHTML = `<tr><td colspan="8" id="loadingMessage" style="text-align: center;">Loading online products...</td></tr>`; // Colspan=8
+    if (productTableBody) productTableBody.innerHTML = `<tr><td colspan="8" id="loadingMessage" style="text-align: center;">Loading online products...</td></tr>`;
 
     try {
-        console.log(`Setting up Firestore listener for 'onlineProducts'...`);
+        console.log(`Setting up Firestore listener for 'onlineProducts' with sort: ${currentSortField}_${currentSortDirection}`);
         const productsRef = window.collection(window.db, "onlineProducts");
-        const [initialSortField, initialSortDir] = sortSelect ? sortSelect.value.split('_') : ['createdAt', 'desc']; // Handle if sortSelect not ready
-        const q = window.query(productsRef, window.orderBy(initialSortField || 'createdAt', initialSortDir || 'desc'));
+        // Use the current sort state for the query
+        const q = window.query(productsRef, window.orderBy(currentSortField || 'createdAt', currentSortDirection || 'desc'));
 
         unsubscribeProducts = window.onSnapshot(q, (snapshot) => {
             console.log(`Received ${snapshot.docs.length} online products.`);
             allProductsCache = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-            applyFiltersAndRender();
+            applyFiltersAndRender(); // Apply filters, but sorting is now done by Firestore query
         }, (error) => {
             console.error("Error fetching online products snapshot:", error);
              if (error.code === 'permission-denied') {
-                if (productTableBody) productTableBody.innerHTML = `<tr><td colspan="8" style="color: red; text-align: center;">Error loading products: Insufficient permissions. Check Firestore rules.</td></tr>`; // Colspan=8
+                if (productTableBody) productTableBody.innerHTML = `<tr><td colspan="8" style="color: red; text-align: center;">Error loading products: Insufficient permissions. Check Firestore rules.</td></tr>`;
              } else {
-                if (productTableBody) productTableBody.innerHTML = `<tr><td colspan="8" style="color: red; text-align: center;">Error loading products. Check connection/console.</td></tr>`; // Colspan=8
+                if (productTableBody) productTableBody.innerHTML = `<tr><td colspan="8" style="color: red; text-align: center;">Error loading products. Check connection/console.</td></tr>`;
              }
         });
     } catch (error) {
         console.error("Error setting up online product listener:", error);
-         if (productTableBody) productTableBody.innerHTML = `<tr><td colspan="8" style="color: red; text-align: center;">Error setting up listener.</td></tr>`; // Colspan=8
+         if (productTableBody) productTableBody.innerHTML = `<tr><td colspan="8" style="color: red; text-align: center;">Error setting up listener.</td></tr>`;
     }
 }
 
 // --- Filter, Sort, Render ---
 function applyFiltersAndRender() {
-    if (!allProductsCache) return;
-    console.log("Applying online product filters and rendering...");
+    if (!allProductsCache) return; // Use the cache populated by the listener
+    console.log("Applying filters (sorting done by Firestore listener)...");
     const filterSearchValue = filterSearchInput ? filterSearchInput.value.trim().toLowerCase() : '';
 
+    // Filter based on search input
     let filteredProducts = allProductsCache.filter(product => {
         if (!product || !product.productName) return false;
         if (filterSearchValue) {
@@ -249,39 +250,11 @@ function applyFiltersAndRender() {
         return true;
     });
 
-    // Sorting (uses global currentSortField, currentSortDirection)
-    filteredProducts.sort((a, b) => {
-        let valA, valB;
-        if (currentSortField.startsWith('pricing.')) {
-             const priceField = currentSortField.split('.')[1];
-             valA = a.pricing?.[priceField];
-             valB = b.pricing?.[priceField];
-        } else {
-             valA = a[currentSortField];
-             valB = b[currentSortField];
-        }
-        if (currentSortField === 'createdAt' || currentSortField === 'updatedAt') {
-            valA = valA?.toDate ? valA.toDate().getTime() : 0;
-            valB = valB?.toDate ? valB.toDate().getTime() : 0;
-        }
-        else if (['pricing.rate', 'pricing.purchasePrice', 'pricing.gstRate', 'pricing.mrp'].includes(currentSortField)) {
-             valA = Number(valA) || 0;
-             valB = Number(valB) || 0;
-        }
-        else if (typeof valA === 'string' && typeof valB === 'string') {
-             valA = valA.toLowerCase();
-             valB = valB.toLowerCase();
-        } else {
-             valA = valA === undefined || valA === null ? (currentSortDirection === 'asc' ? Infinity : -Infinity) : valA;
-             valB = valB === undefined || valB === null ? (currentSortDirection === 'asc' ? Infinity : -Infinity) : valB;
-        }
-        let comparison = 0;
-        if (valA > valB) comparison = 1; else if (valA < valB) comparison = -1;
-        return currentSortDirection === 'desc' ? (comparison * -1) : comparison;
-    });
+    // *** REMOVED Client-side sorting - Firestore query handles it now ***
+    // filteredProducts.sort((a, b) => { ... });
 
-    renderProductTable(filteredProducts);
-    console.log("Online product rendering complete.");
+    renderProductTable(filteredProducts); // Render the filtered (and already sorted by Firestore) products
+    console.log("Online product rendering complete (filtered).");
 }
 
 
@@ -289,7 +262,7 @@ function applyFiltersAndRender() {
 function renderProductTable(products) {
     if (!productTableBody) return;
     productTableBody.innerHTML = '';
-    const expectedColumns = 8;
+    const expectedColumns = 8; // Number of columns in the thead
 
     if (products.length === 0) {
         productTableBody.innerHTML = `<tr><td colspan="${expectedColumns}" id="noProductsMessage" style="text-align: center;">No online products found matching criteria.</td></tr>`;
@@ -302,21 +275,20 @@ function renderProductTable(products) {
 
             const name = data.productName || 'N/A';
             const category = data.category || '-';
-            const brand = data.brand || '-';
+            const brand = data.brand || '-'; // Get brand data
             const rate = data.pricing?.rate !== undefined ? formatCurrency(data.pricing.rate) : '-';
             const unit = data.unit || '-';
             const enabled = data.isEnabled ? 'Yes' : 'No';
-            const dateAdded = formatFirestoreTimestamp(data.createdAt); // Use helper
+            const dateAdded = formatFirestoreTimestamp(data.createdAt); // Get formatted date
 
+            // Ensure cells match the order in the updated thead
             tableRow.innerHTML = `
                 <td>${escapeHtml(name)}</td>
                 <td>${escapeHtml(category)}</td>
-                <td>${escapeHtml(brand)}</td>
-                <td style="text-align: right;">${rate}</td>
+                <td>${escapeHtml(brand)}</td> <td style="text-align: right;">${rate}</td>
                 <td style="text-align: center;">${escapeHtml(unit)}</td>
                 <td style="text-align: center;">${enabled}</td>
-                <td style="text-align: center;">${dateAdded}</td>
-                <td style="text-align: center;">
+                <td style="text-align: center;">${dateAdded}</td> <td style="text-align: center;">
                      <button class="button edit-product-btn" style="background-color: var(--info-color); color: white; padding: 5px 8px; font-size: 0.8em; margin: 2px;" title="Edit Online Product">
                          <i class="fas fa-edit"></i> Edit
                      </button>
@@ -350,6 +322,7 @@ function renderProductTable(products) {
     }
 }
 
+
 // --- Modal Handling (Add/Edit) ---
 function openAddModal() {
     if (!productModal || !productForm) return;
@@ -359,9 +332,9 @@ function openAddModal() {
     productForm.reset();
     if(isEnabledCheckbox) isEnabledCheckbox.checked = true;
     if(hasExtraChargesCheckbox) hasExtraChargesCheckbox.checked = false;
-    existingImageUrls = []; // Reset global state
-    selectedFiles = [];   // Reset global state
-    imagesToDelete = [];  // Reset global state
+    existingImageUrls = [];
+    selectedFiles = [];
+    imagesToDelete = [];
     if(imagePreviewArea) imagePreviewArea.innerHTML = '';
     if(uploadProgressInfo) uploadProgressInfo.textContent = '';
     if(existingImageUrlsInput) existingImageUrlsInput.value = '[]';
@@ -370,9 +343,7 @@ function openAddModal() {
     if(saveIcon) saveIcon.style.display = '';
     if(saveText) saveText.textContent = 'Save Product';
     if (deleteProductBtn) deleteProductBtn.style.display = 'none';
-    toggleWeddingFields();
-    toggleSqFtFields();
-    toggleExtraCharges();
+    toggleWeddingFields(); toggleSqFtFields(); toggleExtraCharges();
     productModal.classList.add('active');
 }
 
@@ -381,7 +352,6 @@ async function openEditModal(firestoreId, data) {
     console.log("Opening modal to edit ONLINE product:", firestoreId);
     if(modalTitle) modalTitle.innerHTML = '<i class="fas fa-edit info-icon"></i> Edit Online Product';
     productForm.reset();
-    // Populate fields... (same as before)
     if(editProductIdInput) editProductIdInput.value = firestoreId;
     if(productNameInput) productNameInput.value = data.productName || '';
     if(productCategoryInput) productCategoryInput.value = data.category || '';
@@ -401,68 +371,36 @@ async function openEditModal(firestoreId, data) {
     if(hasExtraChargesCheckbox) hasExtraChargesCheckbox.checked = pricing.hasExtraCharges || false;
     if(extraChargeNameInput) extraChargeNameInput.value = pricing.extraCharge?.name || '';
     if(extraChargeAmountInput) extraChargeAmountInput.value = pricing.extraCharge?.amount ?? '';
-    if (productOptionsInput) {
-        try { productOptionsInput.value = (data.options && Array.isArray(data.options)) ? JSON.stringify(data.options, null, 2) : ''; }
-        catch { productOptionsInput.value = ''; }
-    }
-     if(productBrandInput) productBrandInput.value = data.brand || '';
-     if(productItemCodeInput) productItemCodeInput.value = data.itemCode || '';
-     if(productHsnSacCodeInput) productHsnSacCodeInput.value = data.hsnSacCode || '';
-    // Image handling... (same as before)
-    selectedFiles = [];
-    imagesToDelete = [];
+    if (productOptionsInput) { try { productOptionsInput.value = (data.options && Array.isArray(data.options)) ? JSON.stringify(data.options, null, 2) : ''; } catch { productOptionsInput.value = ''; } }
+    if(productBrandInput) productBrandInput.value = data.brand || '';
+    if(productItemCodeInput) productItemCodeInput.value = data.itemCode || '';
+    if(productHsnSacCodeInput) productHsnSacCodeInput.value = data.hsnSacCode || '';
+    selectedFiles = []; imagesToDelete = [];
     if(imagePreviewArea) imagePreviewArea.innerHTML = '';
     existingImageUrls = data.imageUrls || [];
     if(existingImageUrlsInput) existingImageUrlsInput.value = JSON.stringify(existingImageUrls);
     existingImageUrls.forEach(url => displayImagePreview(null, url));
     if(uploadProgressInfo) uploadProgressInfo.textContent = '';
-    // Button states... (same as before)
-    if(saveProductBtn) saveProductBtn.disabled = false;
-    if(saveSpinner) saveSpinner.style.display = 'none';
-    if(saveIcon) saveIcon.style.display = '';
-    if(saveText) saveText.textContent = 'Update Product';
-    if(deleteProductBtn) deleteProductBtn.style.display = 'inline-flex';
-    productToDeleteId = firestoreId;
-    productToDeleteName = data.productName || 'this online product';
-    // Toggle fields and show modal... (same as before)
-    toggleWeddingFields();
-    toggleSqFtFields();
-    toggleExtraCharges();
+    if(saveProductBtn) saveProductBtn.disabled = false; if(saveSpinner) saveSpinner.style.display = 'none'; if(saveIcon) saveIcon.style.display = ''; if(saveText) saveText.textContent = 'Update Product'; if(deleteProductBtn) deleteProductBtn.style.display = 'inline-flex';
+    productToDeleteId = firestoreId; productToDeleteName = data.productName || 'this online product';
+    toggleWeddingFields(); toggleSqFtFields(); toggleExtraCharges();
     productModal.classList.add('active');
 }
 
 function closeProductModal() {
-    if (productModal) {
-        productModal.classList.remove('active');
-        productToDeleteId = null;
-        productToDeleteName = null;
-        if (productImagesInput) productImagesInput.value = null;
-        selectedFiles = [];
-        imagesToDelete = [];
-    }
+    if (productModal) { productModal.classList.remove('active'); productToDeleteId = null; productToDeleteName = null; if (productImagesInput) productImagesInput.value = null; selectedFiles = []; imagesToDelete = []; }
 }
 
 // --- Image Handling ---
 // (handleFileSelection, displayImagePreview, uploadImage, deleteStoredImage functions remain the same)
 function handleFileSelection(event) {
     if (!imagePreviewArea || !productImagesInput) return;
-    const files = Array.from(event.target.files);
-    let currentImageCount = existingImageUrls.filter(url => !imagesToDelete.includes(url)).length + selectedFiles.length;
+    const files = Array.from(event.target.files); let currentImageCount = existingImageUrls.filter(url => !imagesToDelete.includes(url)).length + selectedFiles.length;
     const availableSlots = 4 - currentImageCount;
-    if (files.length > availableSlots) {
-        alert(`You can upload a maximum of 4 images. You have ${currentImageCount} and tried to add ${files.length}.`);
-        productImagesInput.value = null; return;
-    }
-    files.forEach(file => {
-        if (file.type.startsWith('image/')) {
-             if (selectedFiles.length + existingImageUrls.filter(url => !imagesToDelete.includes(url)).length < 4) {
-                selectedFiles.push(file); displayImagePreview(file, null);
-            }
-        }
-    });
+    if (files.length > availableSlots) { alert(`Max 4 images allowed. You have ${currentImageCount}, tried to add ${files.length}.`); productImagesInput.value = null; return; }
+    files.forEach(file => { if (file.type.startsWith('image/')) { if (selectedFiles.length + existingImageUrls.filter(url => !imagesToDelete.includes(url)).length < 4) { selectedFiles.push(file); displayImagePreview(file, null); } } });
     productImagesInput.value = null;
 }
-
 function displayImagePreview(fileObject, existingUrl = null) {
     if (!imagePreviewArea) return;
     const previewId = existingUrl || `new-${fileObject.name}-${Date.now()}`;
@@ -470,200 +408,68 @@ function displayImagePreview(fileObject, existingUrl = null) {
     const img = document.createElement('img');
     const removeBtn = document.createElement('button'); removeBtn.type = 'button'; removeBtn.className = 'remove-image-btn'; removeBtn.innerHTML = '&times;'; removeBtn.title = 'Remove image';
     const progressBar = document.createElement('div'); progressBar.className = 'upload-progress-bar'; const progressFill = document.createElement('div'); progressBar.appendChild(progressFill); progressBar.style.display = 'none';
-    if (existingUrl) {
-        img.src = existingUrl; img.onerror = () => { img.src = 'images/placeholder.png'; }
-        previewWrapper.imageUrl = existingUrl;
-        removeBtn.onclick = () => { if (!imagesToDelete.includes(existingUrl)) imagesToDelete.push(existingUrl); previewWrapper.style.display = 'none'; console.log("Marked for deletion:", existingUrl); };
-    } else if (fileObject) {
-        const reader = new FileReader(); reader.onload = (e) => { img.src = e.target.result; } reader.readAsDataURL(fileObject);
-        previewWrapper.fileData = fileObject;
-        removeBtn.onclick = () => { selectedFiles = selectedFiles.filter(f => f !== fileObject); previewWrapper.remove(); console.log("Removed new file:", fileObject.name); };
-    }
+    if (existingUrl) { img.src = existingUrl; img.onerror = () => { img.src = 'images/placeholder.png'; }; previewWrapper.imageUrl = existingUrl; removeBtn.onclick = () => { if (!imagesToDelete.includes(existingUrl)) imagesToDelete.push(existingUrl); previewWrapper.style.display = 'none'; console.log("Marked for deletion:", existingUrl); }; }
+    else if (fileObject) { const reader = new FileReader(); reader.onload = (e) => { img.src = e.target.result; }; reader.readAsDataURL(fileObject); previewWrapper.fileData = fileObject; removeBtn.onclick = () => { selectedFiles = selectedFiles.filter(f => f !== fileObject); previewWrapper.remove(); console.log("Removed new file:", fileObject.name); }; }
     previewWrapper.appendChild(img); previewWrapper.appendChild(removeBtn); previewWrapper.appendChild(progressBar); imagePreviewArea.appendChild(previewWrapper);
 }
-
 async function uploadImage(file, productId, index) {
     if (!window.storage || !window.storageRef || !window.uploadBytesResumable || !window.getDownloadURL) throw new Error("Storage functions missing.");
-    const previewWrapper = [...imagePreviewArea.querySelectorAll('.image-preview-item')].find(el => el.fileData === file);
-    const progressBar = previewWrapper?.querySelector('.upload-progress-bar'); const progressFill = progressBar?.querySelector('div');
-    const timestamp = Date.now(); const uniqueFileName = `${timestamp}-image${index}-${file.name.replace(/[^a-zA-Z0-9.]/g, '_')}`;
-    const filePath = `onlineProductImages/${productId}/${uniqueFileName}`; const fileRef = window.storageRef(window.storage, filePath);
+    const previewWrapper = [...imagePreviewArea.querySelectorAll('.image-preview-item')].find(el => el.fileData === file); const progressBar = previewWrapper?.querySelector('.upload-progress-bar'); const progressFill = progressBar?.querySelector('div');
+    const timestamp = Date.now(); const uniqueFileName = `${timestamp}-image${index}-${file.name.replace(/[^a-zA-Z0-9.]/g, '_')}`; const filePath = `onlineProductImages/${productId}/${uniqueFileName}`; const fileRef = window.storageRef(window.storage, filePath);
     if (progressBar) progressBar.style.display = 'block'; if (progressFill) progressFill.style.width = '0%';
     const uploadTask = window.uploadBytesResumable(fileRef, file);
     return new Promise((resolve, reject) => {
-        uploadTask.on('state_changed', (snapshot) => {
-            const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-            if (progressFill) progressFill.style.width = `${progress}%`;
-            if (uploadProgressInfo) uploadProgressInfo.textContent = `Uploading ${file.name}: ${progress.toFixed(0)}%`;
-        }, (error) => {
-            console.error(`Upload failed for ${file.name}:`, error); if (progressBar) progressBar.style.backgroundColor = 'red'; if (uploadProgressInfo) uploadProgressInfo.textContent = `Upload failed: ${file.name}.`; reject(error);
-        }, async () => {
-            if (progressBar) progressBar.style.backgroundColor = 'var(--success-color)'; if (uploadProgressInfo) uploadProgressInfo.textContent = `Getting URL...`;
-            try { const downloadURL = await window.getDownloadURL(uploadTask.snapshot.ref); resolve(downloadURL); }
-            catch (error) { if (progressBar) progressBar.style.backgroundColor = 'red'; if (uploadProgressInfo) uploadProgressInfo.textContent = `Failed to get URL.`; reject(error); }
-        });
+        uploadTask.on('state_changed', (snapshot) => { const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100; if (progressFill) progressFill.style.width = `${progress}%`; if (uploadProgressInfo) uploadProgressInfo.textContent = `Uploading ${file.name}: ${progress.toFixed(0)}%`; },
+        (error) => { console.error(`Upload failed:`, error); if (progressBar) progressBar.style.backgroundColor = 'red'; if (uploadProgressInfo) uploadProgressInfo.textContent = `Upload failed: ${file.name}.`; reject(error); },
+        async () => { if (progressBar) progressBar.style.backgroundColor = 'var(--success-color)'; if (uploadProgressInfo) uploadProgressInfo.textContent = `Getting URL...`; try { const downloadURL = await window.getDownloadURL(uploadTask.snapshot.ref); resolve(downloadURL); } catch (error) { if (progressBar) progressBar.style.backgroundColor = 'red'; if (uploadProgressInfo) uploadProgressInfo.textContent = `Failed to get URL.`; reject(error); } });
     });
 }
-
 async function deleteStoredImage(imageUrl) {
      if (!window.storage || !window.storageRef || !window.deleteObject) return; if (!imageUrl || !(imageUrl.startsWith('https://firebasestorage.googleapis.com/') || imageUrl.startsWith('gs://'))) return;
-     try { const imageRef = window.storageRef(window.storage, imageUrl); await window.deleteObject(imageRef); console.log("Deleted image from Storage:", imageUrl); }
-     catch (error) { if (error.code === 'storage/object-not-found') console.warn("Image not found:", imageUrl); else console.error("Error deleting image:", imageUrl, error); }
+     try { const imageRef = window.storageRef(window.storage, imageUrl); await window.deleteObject(imageRef); console.log("Deleted image from Storage:", imageUrl); } catch (error) { if (error.code === 'storage/object-not-found') console.warn("Image not found:", imageUrl); else console.error("Error deleting image:", imageUrl, error); }
 }
 
 // <<< UPDATED: handleSaveProduct Function >>>
 // --- Save/Update Online Product Handler (RESTRUCTURED LOGIC) ---
 async function handleSaveProduct(event) {
     event.preventDefault();
-    if (!window.db || !window.collection || !window.addDoc || !window.doc || !window.updateDoc || !window.serverTimestamp || !window.storage) {
-         showToast("Core Firebase functions unavailable. Cannot save.", 5000);
-         return;
-     }
+    if (!window.db || !window.collection || !window.addDoc || !window.doc || !window.updateDoc || !window.serverTimestamp || !window.storage) { showToast("Core Firebase functions unavailable.", 5000); return; }
+    if (saveProductBtn) saveProductBtn.disabled = true; if (saveSpinner) saveSpinner.style.display = 'inline-block'; if (saveIcon) saveIcon.style.display = 'none'; if (saveText) saveText.textContent = 'Saving...'; if (uploadProgressInfo) uploadProgressInfo.textContent = 'Preparing data...';
+    const editingProductId = editProductIdInput?.value; const isEditing = !!editingProductId; let finalProductId = editingProductId;
+    // Validation... (Same as before)
+    const productName = productNameInput?.value.trim(); const category = productCategoryInput?.value.trim(); const unit = productUnitSelect?.value || null; const salePrice = parseNumericInput(productSalePriceInput?.value);
+    if (!productName || !category || !unit || salePrice === null || isNaN(salePrice)) { showToast("Product Name, Category, Unit, and Base Sale Price are required.", 5000); if (saveProductBtn) saveProductBtn.disabled = false; if (saveSpinner) saveSpinner.style.display = 'none'; if (saveIcon) saveIcon.style.display = ''; if (saveText) saveText.textContent = isEditing ? 'Update Product' : 'Save Product'; if (uploadProgressInfo) uploadProgressInfo.textContent = ''; return; }
+    const purchasePrice = parseNumericInput(productPurchasePriceInput?.value); const mrp = parseNumericInput(productMrpInput?.value); const gstRate = parseNumericInput(productGstRateInput?.value); const minOrderValue = parseNumericInput(productMinOrderValueInput?.value); const designCharge = parseNumericInput(designChargeInput?.value); const printingCharge = parseNumericInput(printingChargeInput?.value); const transportCharge = parseNumericInput(transportChargeInput?.value); const extraMarginPercent = parseNumericInput(extraMarginPercentInput?.value); const extraChargeAmount = parseNumericInput(extraChargeAmountInput?.value);
+    if ([purchasePrice, mrp, gstRate, minOrderValue, designCharge, printingCharge, transportCharge, extraMarginPercent, extraChargeAmount].some(isNaN)) { showToast("Please enter valid numbers for optional prices/charges.", 5000); if (saveProductBtn) saveProductBtn.disabled = false; if (saveSpinner) saveSpinner.style.display = 'none'; if (saveIcon) saveIcon.style.display = ''; if (saveText) saveText.textContent = isEditing ? 'Update Product' : 'Save Product'; if (uploadProgressInfo) uploadProgressInfo.textContent = ''; return; }
+    // Prepare Data... (Same as before)
+    const productData = { productName: productName, productName_lowercase: productName.toLowerCase(), category: category, category_lowercase: category.toLowerCase(), unit: unit, description: productDescInput?.value.trim() || '', isEnabled: isEnabledCheckbox?.checked ?? true, options: [], brand: productBrandInput?.value.trim() || null, itemCode: productItemCodeInput?.value.trim() || null, hsnSacCode: productHsnSacCodeInput?.value.trim() || null, pricing: { rate: salePrice } };
+    if (purchasePrice !== null) productData.pricing.purchasePrice = purchasePrice; if (mrp !== null) productData.pricing.mrp = mrp; if (gstRate !== null) productData.pricing.gstRate = gstRate; if (unit === 'Sq Feet' && minOrderValue !== null) productData.pricing.minimumOrderValue = minOrderValue;
+    if (category.toLowerCase().includes('wedding card')) { if (designCharge !== null) productData.pricing.designCharge = designCharge; if (printingCharge !== null) productData.pricing.printingChargeBase = printingCharge; if (transportCharge !== null) productData.pricing.transportCharge = transportCharge; if (extraMarginPercent !== null) productData.pricing.extraMarginPercent = extraMarginPercent; }
+    productData.pricing.hasExtraCharges = hasExtraChargesCheckbox?.checked ?? false; if (productData.pricing.hasExtraCharges) { productData.pricing.extraCharge = { name: extraChargeNameInput?.value.trim() || 'Additional Charge', amount: extraChargeAmount ?? 0 }; }
+    const optionsString = productOptionsInput?.value.trim(); if (optionsString) { try { productData.options = JSON.parse(optionsString); if (!Array.isArray(productData.options)) throw new Error("Options must be an array."); } catch (err) { showToast('Error: Invalid JSON in Options field.', 5000); if (saveProductBtn) saveProductBtn.disabled = false; if (saveSpinner) saveSpinner.style.display = 'none'; if (saveIcon) saveIcon.style.display = ''; if (saveText) saveText.textContent = isEditing ? 'Update Product' : 'Save Product'; if (uploadProgressInfo) uploadProgressInfo.textContent = ''; return; } }
+    productData.updatedAt = window.serverTimestamp(); if (!isEditing) { productData.createdAt = window.serverTimestamp(); productData.imageUrls = []; }
 
-    // Disable button, show spinner
-    if (saveProductBtn) saveProductBtn.disabled = true;
-    if (saveSpinner) saveSpinner.style.display = 'inline-block';
-    if (saveIcon) saveIcon.style.display = 'none';
-    if (saveText) saveText.textContent = 'Saving...';
-    if (uploadProgressInfo) uploadProgressInfo.textContent = 'Preparing data...';
-
-    const editingProductId = editProductIdInput?.value;
-    const isEditing = !!editingProductId;
-    let finalProductId = editingProductId;
-
-    // --- Validation --- (Same as before)
-    const productName = productNameInput?.value.trim();
-    const category = productCategoryInput?.value.trim();
-    const unit = productUnitSelect?.value || null;
-    const salePrice = parseNumericInput(productSalePriceInput?.value);
-    if (!productName || !category || !unit || salePrice === null || isNaN(salePrice)) {
-        showToast("Product Name, Category, Unit, and Base Sale Price are required.", 5000);
-        if (saveProductBtn) saveProductBtn.disabled = false; if (saveSpinner) saveSpinner.style.display = 'none'; if (saveIcon) saveIcon.style.display = ''; if (saveText) saveText.textContent = isEditing ? 'Update Product' : 'Save Product'; if (uploadProgressInfo) uploadProgressInfo.textContent = '';
-        return;
-    }
-    const purchasePrice = parseNumericInput(productPurchasePriceInput?.value);
-    const mrp = parseNumericInput(productMrpInput?.value);
-    const gstRate = parseNumericInput(productGstRateInput?.value);
-    const minOrderValue = parseNumericInput(productMinOrderValueInput?.value);
-    const designCharge = parseNumericInput(designChargeInput?.value);
-    const printingCharge = parseNumericInput(printingChargeInput?.value);
-    const transportCharge = parseNumericInput(transportChargeInput?.value);
-    const extraMarginPercent = parseNumericInput(extraMarginPercentInput?.value);
-    const extraChargeAmount = parseNumericInput(extraChargeAmountInput?.value);
-    if ([purchasePrice, mrp, gstRate, minOrderValue, designCharge, printingCharge, transportCharge, extraMarginPercent, extraChargeAmount].some(isNaN)) {
-        showToast("Please enter valid numbers (or leave blank) for optional prices/charges.", 5000);
-        if (saveProductBtn) saveProductBtn.disabled = false; if (saveSpinner) saveSpinner.style.display = 'none'; if (saveIcon) saveIcon.style.display = ''; if (saveText) saveText.textContent = isEditing ? 'Update Product' : 'Save Product'; if (uploadProgressInfo) uploadProgressInfo.textContent = '';
-        return;
-     }
-
-    // --- Prepare Product Data Object --- (Same as before)
-    const productData = {
-        productName: productName, productName_lowercase: productName.toLowerCase(),
-        category: category, category_lowercase: category.toLowerCase(),
-        unit: unit, description: productDescInput?.value.trim() || '',
-        isEnabled: isEnabledCheckbox?.checked ?? true, options: [],
-        brand: productBrandInput?.value.trim() || null, itemCode: productItemCodeInput?.value.trim() || null, hsnSacCode: productHsnSacCodeInput?.value.trim() || null,
-        pricing: { rate: salePrice }
-     };
-     if (purchasePrice !== null) productData.pricing.purchasePrice = purchasePrice;
-     if (mrp !== null) productData.pricing.mrp = mrp;
-     if (gstRate !== null) productData.pricing.gstRate = gstRate;
-     if (unit === 'Sq Feet' && minOrderValue !== null) productData.pricing.minimumOrderValue = minOrderValue;
-     if (category.toLowerCase().includes('wedding card')) {
-          if (designCharge !== null) productData.pricing.designCharge = designCharge;
-          if (printingCharge !== null) productData.pricing.printingChargeBase = printingCharge;
-          if (transportCharge !== null) productData.pricing.transportCharge = transportCharge;
-          if (extraMarginPercent !== null) productData.pricing.extraMarginPercent = extraMarginPercent;
-     }
-     productData.pricing.hasExtraCharges = hasExtraChargesCheckbox?.checked ?? false;
-     if (productData.pricing.hasExtraCharges) {
-          productData.pricing.extraCharge = { name: extraChargeNameInput?.value.trim() || 'Additional Charge', amount: extraChargeAmount ?? 0 };
-     }
-     const optionsString = productOptionsInput?.value.trim();
-      if (optionsString) { try { productData.options = JSON.parse(optionsString); if (!Array.isArray(productData.options)) throw new Error("Options must be an array."); } catch (err) { showToast('Error: Invalid JSON format in Options field.', 5000); if (saveProductBtn) saveProductBtn.disabled = false; if (saveSpinner) saveSpinner.style.display = 'none'; if (saveIcon) saveIcon.style.display = ''; if (saveText) saveText.textContent = isEditing ? 'Update Product' : 'Save Product'; if (uploadProgressInfo) uploadProgressInfo.textContent = ''; return; } }
-      productData.updatedAt = window.serverTimestamp();
-      if (!isEditing) { productData.createdAt = window.serverTimestamp(); productData.imageUrls = []; }
-
-
-    // --- Start Save/Upload Process ---
+    // Start Save/Upload Process
     try {
-        // === Step 1: Create/Update Firestore Doc (to get ID if new) ===
-        if (isEditing) {
-            if (uploadProgressInfo) uploadProgressInfo.textContent = 'Updating product info...';
-            const productRef = window.doc(window.db, "onlineProducts", finalProductId);
-            await window.updateDoc(productRef, productData);
-            console.log("Product info updated for ID:", finalProductId);
-        } else {
-            if (uploadProgressInfo) uploadProgressInfo.textContent = 'Creating product entry...';
-            const docRef = await window.addDoc(window.collection(window.db, "onlineProducts"), productData);
-            finalProductId = docRef.id; // Get the new ID
-            console.log("New product entry created with ID:", finalProductId);
-        }
+        // === Step 1: Create/Update Firestore Doc (Get ID if new) ===
+        if (isEditing) { if (uploadProgressInfo) uploadProgressInfo.textContent = 'Updating product info...'; const productRef = window.doc(window.db, "onlineProducts", finalProductId); await window.updateDoc(productRef, productData); console.log("Product info updated:", finalProductId); }
+        else { if (uploadProgressInfo) uploadProgressInfo.textContent = 'Creating product entry...'; const docRef = await window.addDoc(window.collection(window.db, "onlineProducts"), productData); finalProductId = docRef.id; console.log("New product created:", finalProductId); }
 
-        // === Step 2: Handle Image Operations (Now finalProductId is set) ===
-        let uploadedImageUrls = [];
-        let currentExistingUrls = [];
-        try {
-             if(isEditing && existingImageUrlsInput) { currentExistingUrls = JSON.parse(existingImageUrlsInput.value || '[]'); }
-             else { currentExistingUrls = productData.imageUrls || []; } // Use initialized array if new
-        } catch { console.error("Could not parse existing image URLs."); }
-
-        // --- Handle Deletions ---
-        if (isEditing && imagesToDelete.length > 0) {
-             if (uploadProgressInfo) uploadProgressInfo.textContent = 'Deleting removed images...';
-             const deletePromises = imagesToDelete.map(url => deleteStoredImage(url));
-             await Promise.allSettled(deletePromises);
-             currentExistingUrls = currentExistingUrls.filter(url => !imagesToDelete.includes(url));
-        }
-
-        // --- Handle Uploads ---
-        if (selectedFiles.length > 0) {
-            if (uploadProgressInfo) uploadProgressInfo.textContent = `Uploading ${selectedFiles.length} images...`;
-            const uploadPromises = selectedFiles.map((file, index) => {
-                if (!finalProductId) throw new Error("Product ID is missing for upload.");
-                return uploadImage(file, finalProductId, index);
-            });
-            const uploadResults = await Promise.allSettled(uploadPromises);
-            uploadedImageUrls = []; let uploadErrorOccurred = false;
-            uploadResults.forEach((result, index) => {
-                if (result.status === 'fulfilled') { uploadedImageUrls.push(result.value); }
-                else { console.error(`Upload failed for file ${selectedFiles[index]?.name || index}:`, result.reason); uploadErrorOccurred = true; }
-            });
-            if (uploadErrorOccurred) { showToast("Some images failed to upload. Check console.", 5000); }
-            else { if (uploadProgressInfo) uploadProgressInfo.textContent = 'All images uploaded!'; }
-        } else {
-             console.log("No new images selected."); if (uploadProgressInfo) uploadProgressInfo.textContent = 'Processing...';
-        }
+        // === Step 2: Handle Image Operations ===
+        let uploadedImageUrls = []; let currentExistingUrls = [];
+        try { if(isEditing && existingImageUrlsInput) { currentExistingUrls = JSON.parse(existingImageUrlsInput.value || '[]'); } else { currentExistingUrls = productData.imageUrls || []; } } catch { console.error("Could not parse existing URLs."); }
+        if (isEditing && imagesToDelete.length > 0) { if (uploadProgressInfo) uploadProgressInfo.textContent = 'Deleting images...'; const deletePromises = imagesToDelete.map(url => deleteStoredImage(url)); await Promise.allSettled(deletePromises); currentExistingUrls = currentExistingUrls.filter(url => !imagesToDelete.includes(url)); }
+        if (selectedFiles.length > 0) { if (uploadProgressInfo) uploadProgressInfo.textContent = `Uploading ${selectedFiles.length} images...`; if (!finalProductId) throw new Error("Product ID missing for upload."); const uploadPromises = selectedFiles.map((file, index) => uploadImage(file, finalProductId, index)); const uploadResults = await Promise.allSettled(uploadPromises); uploadedImageUrls = []; let uploadErrorOccurred = false; uploadResults.forEach((result, index) => { if (result.status === 'fulfilled') { uploadedImageUrls.push(result.value); } else { console.error(`Upload failed:`, result.reason); uploadErrorOccurred = true; } }); if (uploadErrorOccurred) { showToast("Some images failed upload.", 5000); } else { if (uploadProgressInfo) uploadProgressInfo.textContent = 'Images uploaded!'; } }
+        else { console.log("No new images selected."); if (uploadProgressInfo) uploadProgressInfo.textContent = 'Processing...'; }
 
         // === Step 3: Final Firestore Update with Image URLs ===
-        const finalImageUrls = [...currentExistingUrls, ...uploadedImageUrls];
-        let needsUrlUpdate = true;
-         if(isEditing) {
-            const originalUrls = JSON.parse(existingImageUrlsInput?.value || '[]');
-            if(JSON.stringify(originalUrls.sort()) === JSON.stringify(finalImageUrls.sort())) { needsUrlUpdate = false; }
-         }
-        if(needsUrlUpdate) { // Update only if URLs changed or it's a new product
-            if (uploadProgressInfo) uploadProgressInfo.textContent = 'Finalizing save...';
-            const finalProductRef = window.doc(window.db, "onlineProducts", finalProductId);
-            await window.updateDoc(finalProductRef, { imageUrls: finalImageUrls, updatedAt: window.serverTimestamp() });
-        } else {
-             if (uploadProgressInfo) uploadProgressInfo.textContent = 'Finishing...';
-        }
-
-        showToast(isEditing ? 'Online Product updated!' : 'Online Product added!', 3000);
-        closeProductModal();
-
-    } catch (error) {
-        console.error("Error during save/upload process:", error);
-        showToast(`Error: ${error.message || 'Unknown error'}. Check console.`, 5000);
-    } finally {
-        // Restore button state
-        if(saveProductBtn) saveProductBtn.disabled = false;
-        if(saveSpinner) saveSpinner.style.display = 'none';
-        if(saveIcon) saveIcon.style.display = '';
-        if(saveText) saveText.textContent = isEditing ? 'Update Product' : 'Save Product';
-        if(uploadProgressInfo) setTimeout(() => { if(uploadProgressInfo) uploadProgressInfo.textContent = ''; }, 3000);
-    }
+        const finalImageUrls = [...currentExistingUrls, ...uploadedImageUrls]; let needsUrlUpdate = true;
+        if(isEditing) { const originalUrls = JSON.parse(existingImageUrlsInput?.value || '[]'); if(JSON.stringify(originalUrls.sort()) === JSON.stringify(finalImageUrls.sort())) { needsUrlUpdate = false; } }
+        if(needsUrlUpdate) { if (uploadProgressInfo) uploadProgressInfo.textContent = 'Finalizing...'; const finalProductRef = window.doc(window.db, "onlineProducts", finalProductId); await window.updateDoc(finalProductRef, { imageUrls: finalImageUrls, updatedAt: window.serverTimestamp() }); }
+        else { if (uploadProgressInfo) uploadProgressInfo.textContent = 'Finishing...'; }
+        showToast(isEditing ? 'Product updated!' : 'Product added!', 3000); closeProductModal();
+    } catch (error) { console.error("Save/upload error:", error); showToast(`Error: ${error.message || 'Unknown error'}.`, 5000);
+    } finally { if(saveProductBtn) saveProductBtn.disabled = false; if(saveSpinner) saveSpinner.style.display = 'none'; if(saveIcon) saveIcon.style.display = ''; if(saveText) saveText.textContent = isEditing ? 'Update Product' : 'Save Product'; if(uploadProgressInfo) setTimeout(() => { if(uploadProgressInfo) uploadProgressInfo.textContent = ''; }, 3000); }
 }
 
 
@@ -683,15 +489,9 @@ async function handleFinalDelete() {
     const productRef = window.doc(window.db, "onlineProducts", productToDeleteId);
     try {
         const productSnap = await window.getDoc(productRef);
-        if (productSnap.exists()) {
-            const productData = productSnap.data();
-            if (productData.imageUrls && Array.isArray(productData.imageUrls) && productData.imageUrls.length > 0) {
-                 const deletePromises = productData.imageUrls.map(url => deleteStoredImage(url)); await Promise.allSettled(deletePromises);
-            }
-        }
-        await window.deleteDoc(productRef);
-        showToast(`Product "${productToDeleteName || ''}" deleted!`); closeDeleteConfirmModal(); closeProductModal();
-    } catch (error) { console.error(`Error deleting ${productToDeleteId}:`, error); showToast(`Failed to delete product: ${error.message}`, 5000);
+        if (productSnap.exists()) { const productData = productSnap.data(); if (productData.imageUrls && Array.isArray(productData.imageUrls) && productData.imageUrls.length > 0) { const deletePromises = productData.imageUrls.map(url => deleteStoredImage(url)); await Promise.allSettled(deletePromises); } }
+        await window.deleteDoc(productRef); showToast(`Product "${productToDeleteName || ''}" deleted!`); closeDeleteConfirmModal(); closeProductModal();
+    } catch (error) { console.error(`Error deleting ${productToDeleteId}:`, error); showToast(`Failed to delete: ${error.message}`, 5000);
     } finally { if(confirmDeleteFinalBtn) { confirmDeleteFinalBtn.disabled = !deleteConfirmCheckbox?.checked; confirmDeleteFinalBtn.innerHTML = '<i class="fas fa-trash-alt"></i> Confirm Delete'; } }
 }
 
