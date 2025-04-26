@@ -8,10 +8,8 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
-
     <link rel="stylesheet" href="css/header-footer.css">
     <link rel="stylesheet" href="css/products.css">
-
 </head>
 <body>
     <header>
@@ -32,76 +30,74 @@
     </header>
 
     <main class="container">
-
         <h1 class="page-title"><i class="fas fa-box-open"></i> Our Products</h1>
 
         <section class="featured-products">
-            <h2><i class="fas fa-star"></i> Featured Products</h2>
-            <div class="featured-grid">
-                <div class="featured-item clickable-featured" data-category="Flex Banner Printing">
-                    <div class="featured-slider" id="slider-flex-banner">
-                        </div>
-                    <h4>Flex Banner Printing</h4>
-                    <span class="featured-item-link">View Products <i class="fas fa-arrow-right"></i></span>
-                </div>
-                <div class="featured-item clickable-featured" data-category="Wedding Invitation Cards">
-                     <div class="featured-slider" id="slider-wedding-card">
-                        </div>
-                    <h4>Wedding Invitation Cards</h4>
-                    <span class="featured-item-link">View Products <i class="fas fa-arrow-right"></i></span>
-                </div>
-                </div>
-        </section>
-
-        <section class="filters horizontal-filters" aria-labelledby="filter-heading">
-             <h2 id="filter-heading" class="sr-only">Product Filters</h2>
-             <div class="filter-controls">
-                 <div class="filter-group search-group">
-                     <label for="search-input" class="sr-only"><i class="fas fa-search"></i> Search:</label>
-                     <input type="search" id="search-input" name="search" placeholder="Search products...">
-                     <button id="search-button" class="button-secondary" aria-label="Search"><i class="fas fa-search"></i></button>
+             <h2><i class="fas fa-star"></i> Featured Products</h2>
+             <div class="featured-grid">
+                 <div class="featured-item clickable-featured" data-category="Flex Banner Printing">
+                     <div class="featured-slider" id="slider-flex-banner"></div>
+                     <h4>Flex Banner Printing</h4>
+                     <span class="featured-item-link">View Products <i class="fas fa-arrow-right"></i></span>
                  </div>
-                 <div class="filter-group">
-                     <label for="category-filter"><i class="fas fa-tags"></i> Category:</label>
-                     <select id="category-filter" name="category">
-                         <option value="all">All Categories</option>
-                         </select>
-                 </div>
-                 <div class="filter-group">
-                     <label for="sort-filter"><i class="fas fa-sort-amount-down"></i> Sort by:</label>
-                     <select id="sort-filter" name="sort">
-                         <option value="name_asc">Name (A-Z)</option>
-                         <option value="price_asc">Price: Low to High</option>
-                         <option value="price_desc">Price: High to Low</option>
-                         </select>
+                 <div class="featured-item clickable-featured" data-category="Wedding Invitation Cards">
+                      <div class="featured-slider" id="slider-wedding-card"></div>
+                     <h4>Wedding Invitation Cards</h4>
+                     <span class="featured-item-link">View Products <i class="fas fa-arrow-right"></i></span>
                  </div>
              </div>
-        </section>
+         </section>
+
+        <section class="filters horizontal-filters" aria-labelledby="filter-heading">
+              <h2 id="filter-heading" class="sr-only">Product Filters</h2>
+              <div class="filter-controls">
+                  <div class="filter-group search-group">
+                      <label for="search-input" class="sr-only"><i class="fas fa-search"></i> Search:</label>
+                      <input type="search" id="search-input" name="search" placeholder="Search products...">
+                      <button id="search-button" class="button-secondary" aria-label="Search"><i class="fas fa-search"></i></button>
+                  </div>
+                  <div class="filter-group">
+                      <label for="category-filter"><i class="fas fa-tags"></i> Category:</label>
+                      <select id="category-filter" name="category">
+                          <option value="all">All Categories</option>
+                      </select>
+                  </div>
+                  <div class="filter-group">
+                      <label for="sort-filter"><i class="fas fa-sort-amount-down"></i> Sort by:</label>
+                      <select id="sort-filter" name="sort">
+                          <option value="name_asc">Name (A-Z)</option>
+                          <option value="price_asc">Price: Low to High</option>
+                          <option value="price_desc">Price: High to Low</option>
+                      </select>
+                  </div>
+              </div>
+         </section>
 
         <section class="product-list-section" aria-live="polite">
-            <div class="product-list" id="product-list-container">
-                <div class="loading-spinner" id="loading">
-                    <i class="fas fa-spinner fa-spin fa-3x"></i>
-                    <p>Loading products...</p>
-                </div>
-                </div>
-            <p id="no-products-message" class="message-box info" style="display: none;">No products found matching your criteria.</p>
-
-            <div class="pagination-controls" style="text-align: center; margin-top: 30px; display: none;" id="pagination-container">
-                <button id="load-more-button" class="button-primary">Load More Products</button>
-            </div>
-        </section>
+             <div class="product-list" id="product-list-container">
+                 <div class="loading-spinner" id="loading">
+                     <i class="fas fa-spinner fa-spin fa-3x"></i>
+                     <p>Loading products...</p>
+                 </div>
+             </div>
+             <p id="no-products-message" class="message-box info" style="display: none;">No products found matching your criteria.</p>
+             <div class="pagination-controls" style="text-align: center; margin-top: 30px; display: none;" id="pagination-container">
+                 <button id="load-more-button" class="button-primary">Load More Products</button>
+             </div>
+         </section>
 
         <section class="testimonials-section">
             <h2 class="section-title"><i class="fas fa-comments"></i> What Our Customers Say</h2>
             <div class="testimonial-grid">
                 <div class="testimonial-card">
+                    <img src="https://i.ibb.co/jd62Ks4/1.jpg" alt="ROOPA RAM CHOUDHAY" class="testimonial-photo">
                     <p class="testimonial-text">"Excellent quality printing and fast turnaround time. Highly recommended!"</p>
-                    <p class="testimonial-author">- Satisfied Customer</p>
+                    <p class="testimonial-author">- ROOPA RAM CHOUDHAY</p>
                 </div>
                 <div class="testimonial-card">
+                     <img src="https://i.ibb.co/jPqDbNTz/1.jpg" alt="HIMTHARAM CHOUDHARY" class="testimonial-photo">
                     <p class="testimonial-text">"Madhav Multiprint provided great service for our wedding invitations. Beautiful designs!"</p>
-                    <p class="testimonial-author">- Another Happy Client</p>
+                    <p class="testimonial-author">- HIMTHARAM CHOUDHARY</p>
                 </div>
                 </div>
         </section>
@@ -110,9 +106,9 @@
 
     <footer>
         <div class="container">
-             <p>&copy; 2025 Madhav Multiprint. All Rights Reserved.</p>
-             <p><a href="#">Privacy Policy</a> | <a href="#">Terms & Conditions</a> | <a href="contact.html">Contact</a></p>
-         </div>
+              <p>&copy; 2025 Madhav Multiprint. All Rights Reserved.</p>
+              <p><a href="#">Privacy Policy</a> | <a href="#">Terms & Conditions</a> | <a href="contact.html">Contact</a></p>
+          </div>
     </footer>
 
     <script src="js/firebase-config.js" type="module"></script>
