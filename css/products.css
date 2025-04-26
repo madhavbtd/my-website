@@ -1,161 +1,260 @@
 /* ============================================================== */
-/* == Products Page Specific Styles - UPDATED & ENHANCED        == */
+/* == Products Page Specific Styles - UPDATED & ENHANCED v2     == */
 /* ============================================================== */
 
-/* Main container adjustments for products page */
-main.container h1 {
-    /* text-align: center; -- Optional: Keep if you like centered heading */
-    margin-top: 30px; /* Adjust spacing */
-    margin-bottom: 30px;
-    font-size: 2em; /* Adjust size */
-    color: var(--primary-color); /* Use variable */
+/* Use variables defined in your main style.css if available */
+:root {
+    /* Assuming these are defined in style.css or elsewhere */
+    --primary-color: #6f42c1; /* Fallback if not defined */
+    --text-color: #343a40;    /* Fallback */
+    --text-muted: #6c757d;   /* Fallback */
+    --light-bg: #f8f9fa;     /* Fallback */
+    --white-bg: #ffffff;     /* Fallback */
+    --border-color: #dee2e6; /* Fallback */
+    --border-radius: 6px;    /* Fallback */
+    --box-shadow: 0 2px 5px rgba(0,0,0,0.08); /* Fallback */
+    --font-family: 'Poppins', sans-serif; /* Fallback */
 }
 
-/* Filters Section - Modern look */
+
+/* Main container adjustments */
+main.container {
+    padding-top: 30px; /* Add padding at the top */
+    padding-bottom: 50px; /* Add padding at the bottom */
+}
+
+main.container h1 {
+    text-align: center; /* Center the main heading */
+    margin-top: 10px;
+    margin-bottom: 40px; /* More space below heading */
+    font-size: 2.2em; /* Slightly larger heading */
+    font-weight: 600;
+    color: var(--primary-color);
+}
+
+/* Filters Section - Cleaner look */
 .filters {
-    background-color: var(--light-bg);
-    padding: 20px;
+    background-color: var(--white-bg); /* White background */
+    padding: 20px 25px; /* Adjust padding */
     border-radius: var(--border-radius);
-    margin-bottom: 40px;
+    margin-bottom: 45px; /* More space below filters */
     border: 1px solid var(--border-color);
-    display: flex; /* Use flexbox for layout */
-    gap: 20px; /* Space between filter groups */
-    flex-wrap: wrap; /* Allow filters to wrap on smaller screens */
-    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    display: flex;
+    gap: 25px; /* Adjust gap */
+    flex-wrap: wrap;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06); /* Slightly stronger shadow */
+    align-items: center; /* Align items vertically */
 }
 
 .filter-group {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 10px; /* Adjust gap */
 }
 
 .filter-group label {
     font-weight: 500;
     color: var(--text-muted);
+    font-size: 0.95em; /* Adjust size */
 }
 
 .filter-group select,
 .filter-group input[type="text"] {
-    padding: 8px 12px;
-    border: 1px solid var(--border-color);
+    padding: 9px 14px; /* Adjust padding */
+    border: 1px solid #ccc; /* Slightly darker border */
     border-radius: var(--border-radius);
     font-family: var(--font-family);
-    min-width: 150px; /* Minimum width for select */
+    min-width: 180px; /* Adjust width */
+    font-size: 0.95em;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.filter-group select:focus,
+.filter-group input[type="text"]:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(111, 66, 193, 0.15);
+    outline: none;
 }
 
 /* Product List Area */
 .product-list-section {
-    min-height: 300px; /* Avoid layout shifts while loading */
-    position: relative; /* For loading spinner positioning */
+    min-height: 300px;
+    position: relative;
 }
 
 .product-list {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); /* Responsive grid for products */
-    gap: 30px; /* Gap between product cards */
+    /* Adjust minmax for card size preference */
+    grid-template-columns: repeat(auto-fit, minmax(270px, 1fr));
+    gap: 35px; /* Increased gap between product cards */
 }
 
 /* Enhanced Product Card Style */
 .product-card {
-    border: 1px solid var(--border-color);
+    border: 1px solid #e9ecef; /* Lighter border */
     border-radius: var(--border-radius);
     background-color: var(--white-bg);
-    padding: 0; /* Remove padding, control internally */
-    text-align: center;
-    box-shadow: var(--box-shadow); /* Use defined shadow */
-    overflow: hidden; /* Ensure content stays within rounded corners */
+    text-align: left; /* Left align text */
+    box-shadow: 0 3px 10px rgba(0,0,0,0.07); /* Softer shadow */
+    overflow: hidden;
     display: flex;
-    flex-direction: column; /* Stack elements vertically */
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    flex-direction: column;
+    transition: transform 0.25s ease, box-shadow 0.25s ease; /* Smoother transition */
 }
 
 .product-card:hover {
-    transform: translateY(-5px); /* Slight lift effect */
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15); /* Enhanced shadow on hover */
+    transform: translateY(-6px); /* More lift */
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12); /* Enhanced shadow */
+    border-color: #ced4da; /* Slightly darken border on hover */
 }
 
 .product-card .product-image-container {
     width: 100%;
-    height: 200px; /* Consistent height */
-    background-color: #f0f0f0; /* Placeholder background */
+    height: 220px; /* Slightly taller image area */
+    background-color: #f8f9fa; /* Light background */
     display: flex;
     align-items: center;
     justify-content: center;
     overflow: hidden;
+    border-bottom: 1px solid #f1f3f5; /* Subtle separator */
 }
 
 .product-card img {
     display: block;
     max-width: 100%;
     max-height: 100%;
-    object-fit: contain; /* Ensure whole product is visible */
+    object-fit: contain; /* Keeps image aspect ratio */
+    transition: transform 0.3s ease; /* Add subtle zoom effect on hover */
+}
+.product-card:hover img {
+     transform: scale(1.03); /* Slight zoom on hover */
 }
 
 .product-card .product-info {
-    padding: 20px;
-    flex-grow: 1; /* Allow info to take remaining space */
+    padding: 18px 22px 22px 22px; /* Adjusted padding */
+    flex-grow: 1;
     display: flex;
     flex-direction: column;
-    justify-content: space-between; /* Push button to bottom */
-    min-height: 150px; /* Ensure minimum height for info area */
+    justify-content: space-between;
+    /* Removed min-height, let content define height */
 }
 
 .product-card h3 { /* Product title */
-    font-size: 1.15em; /* Slightly adjusted size */
-    margin-bottom: 10px;
+    font-size: 1.1em; /* Adjust size */
+    margin-top: 0; /* Remove default top margin */
+    margin-bottom: 8px; /* Adjust spacing */
     font-weight: 600;
+    line-height: 1.4; /* Improve readability */
     color: var(--text-color);
-    /* Limit title lines if needed */
+    /* Limit title lines */
      display: -webkit-box;
-    -webkit-line-clamp: 2; /* Limit to 2 lines */
+    -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
-    min-height: 2.5em; /* Ensure space for 2 lines */
+    min-height: calc(1.1em * 1.4 * 2); /* Approx height for 2 lines */
 }
 
 .product-card .price { /* Product price */
-    font-size: 1.2em; /* Slightly adjusted size */
-    font-weight: bold;
+    font-size: 1.15em; /* Adjust size */
+    font-weight: 600; /* Medium bold */
     color: var(--primary-color);
-    margin-bottom: 15px; /* Adjusted margin */
+    margin-bottom: 18px; /* More space before button */
 }
 
+/* Button styling assumed from style.css, ensure .button-primary exists */
 .product-card .button-primary { /* View Details button */
-    padding: 10px 20px; /* Adjusted padding */
-    font-size: 0.95em; /* Adjusted font size */
+    padding: 9px 18px; /* Adjust padding */
+    font-size: 0.9em; /* Adjust font size */
     margin-top: auto; /* Push button to bottom */
+    align-self: flex-start; /* Align button to left */
+    /* Ensure button styling matches overall theme */
+    /* background-color: var(--primary-color); */
+    /* color: white; */
+    /* border-radius: var(--border-radius); */
+    /* text-decoration: none; */
+    /* display: inline-block; */
+    /* transition: background-color 0.2s ease; */
 }
+/* .product-card .button-primary:hover { */
+    /* background-color: var(--primary-color-dark); */ /* Define dark primary if needed */
+/* } */
 
-/* Loading Spinner (Copied from previous suggestion, ensure it's placed correctly) */
-/* This might need adjustment based on where the spinner HTML is placed */
+
+/* Loading Spinner */
 .loading-spinner {
-    /* Removed absolute positioning to let it flow in the grid/flex container */
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    padding: 40px;
+    padding: 60px 40px; /* More padding */
     text-align: center;
     color: var(--text-muted);
     width: 100%;
-    grid-column: 1 / -1; /* Span full grid width */
+    grid-column: 1 / -1;
+    min-height: 300px; /* Ensure it takes space */
 }
 
 .loading-spinner i {
     color: var(--primary-color);
-    margin-bottom: 15px;
-    font-size: 2.5em; /* Spinner size */
+    margin-bottom: 20px; /* More space */
+    font-size: 3em; /* Larger spinner */
+}
+.loading-spinner p {
+    font-size: 1.1em;
 }
 
 
-/* Message Box styles (ensure these are needed/placed correctly) */
+/* Message Box styles */
 .message-box {
-    padding: 15px;
+    padding: 20px;
     margin: 20px 0;
-    border: 1px solid transparent;
+    border: 1px solid var(--border-color);
     border-radius: var(--border-radius);
     text-align: center;
-    grid-column: 1 / -1; /* Span full grid width */
+    grid-column: 1 / -1;
+    background-color: var(--light-bg);
+    font-size: 1.1em;
+    color: var(--text-muted);
 }
-/* ... (info and error message box styles remain same) ... */
+.message-box.info { /* Style for info messages like 'no products found' */
+    border-color: #bee5eb; /* Example color */
+    background-color: #d1ecf1; /* Example color */
+    color: #0c5460; /* Example color */
+}
+.message-box.error { /* Style for error messages */
+     border-color: #f5c6cb; /* Example color */
+    background-color: #f8d7da; /* Example color */
+    color: #721c24; /* Example color */
+}
+
+/* Sr-only class for accessibility (hiding filter heading visually) */
+.sr-only {
+	border: 0 !important;
+	clip: rect(1px, 1px, 1px, 1px) !important; /* 1 */
+	-webkit-clip-path: inset(50%) !important;
+		clip-path: inset(50%) !important; /* 2 */
+	height: 1px !important;
+	margin: -1px !important;
+	overflow: hidden !important;
+	padding: 0 !important;
+	position: absolute !important;
+	width: 1px !important;
+	white-space: nowrap !important; /* 3 */
+}
+
+/* Responsive adjustments (if needed beyond grid) */
+@media (max-width: 600px) {
+    .product-list {
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); /* Adjust for smaller screens */
+        gap: 25px;
+    }
+     main.container h1 {
+        font-size: 1.8em;
+     }
+     .filters {
+        flex-direction: column;
+        align-items: stretch;
+     }
+     .filter-group select {
+        width: 100%; /* Make select full width on mobile */
+     }
+}
