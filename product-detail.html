@@ -1,57 +1,57 @@
 <!DOCTYPE html>
-<html lang="en"> <head>
+<html lang="en">
+<head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Product Details - Madhav Offset</title> <link rel="stylesheet" href="css/style.css">
+    <title>Product Details - Madhav Multiprint</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
+    <link rel="stylesheet" href="css/header-footer.css">
+
+    <link rel="stylesheet" href="css/product-detail.css">
+
 </head>
 <body>
     <header>
         <nav class="container">
             <div class="logo">
-                <a href="index.html"><img src="https://i.ibb.co/Z6gKD9Rd/1.png" alt="Madhav Offset Logo"></a>
+                <a href="index.html"><img src="https://i.ibb.co/Z6gKD9Rd/1.png" alt="Madhav Multiprint Logo"></a>
             </div>
             <div class="nav-links">
                 <a href="index.html">Home</a>
                 <a href="products.html">Products</a>
                 <a href="about.html">About Us</a>
                 <a href="contact.html">Contact</a>
-                <a href="cart.html">Cart (<span id="cart-count">0</span>)</a>
+                <a href="cart.html"><i class="fas fa-shopping-cart"></i> Cart (<span id="cart-count">0</span>)</a>
                 <a href="/admin/login.html" class="admin-login-link" target="_blank">Admin Login</a>
             </div>
-            <button class="mobile-menu-toggle" aria-label="Toggle menu">☰</button>
+            <button class="mobile-menu-toggle" aria-label="Toggle menu"><i class="fas fa-bars"></i></button>
         </nav>
     </header>
 
-    <main id="product-detail-content" class="container">
-        <p>Loading product details...</p>
+    <main class="container product-detail-page">
+        <nav aria-label="breadcrumb" class="breadcrumbs">
+            <ol>
+                <li><a href="index.html">Home</a></li>
+                <li><a href="products.html">Products</a></li>
+                <li><span id="breadcrumb-product-name" aria-current="page">Product Name</span></li>
+            </ol>
+        </nav>
 
-        </div>
-                <div class="product-info">
-                    <p>Product description loaded here.</p>
-
-                    <h4>Specifications:</h4>
-                    <div id="specs">
-                        </div>
-
-                    <div id="customization-options">
-                        </div>
-
-                    <div id="price-display">
-                        </div>
-
-                    <button id="add-to-cart-btn" class="button-primary" data-product-id="PRODUCT_ID_HERE" disabled>Add to Cart</button>
-                </div>
+        <div id="product-detail-container" class="product-detail-layout">
+            <div class="loading-indicator">
+                <p>Loading product details...</p>
+                <i class="fas fa-spinner fa-spin fa-2x"></i>
             </div>
-        -->
+            </div>
     </main>
 
     <footer>
         <div class="container">
-            <p>&copy; 2025 Madhav Offset. All Rights Reserved.</p>
+            <p>&copy; 2025 Madhav Multiprint. All Rights Reserved.</p>
             <p><a href="#">Privacy Policy</a> | <a href="#">Terms & Conditions</a> | <a href="contact.html">Contact</a></p>
         </div>
     </footer>

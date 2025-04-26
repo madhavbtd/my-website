@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cart - Madhav Multiprint</title> <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <title>Your Shopping Cart - Madhav Multiprint</title> <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
      <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
      <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -23,55 +23,82 @@
                 <a href="products.html">Products</a>
                 <a href="about.html">About Us</a>
                 <a href="contact.html">Contact</a>
-                 <a href="cart.html" class="active"><i class="fas fa-shopping-cart"></i> Cart (<span id="cart-count">0</span>)</a>
+                <a href="cart.html" class="active"><i class="fas fa-shopping-cart"></i> Cart (<span id="cart-count">0</span>)</a>
                 <a href="/admin/login.html" class="admin-login-link" target="_blank">Admin Login</a>
             </div>
              <button class="mobile-menu-toggle" aria-label="Toggle menu"><i class="fas fa-bars"></i></button>
         </nav>
     </header>
 
-    <main class="container">
-        <h1>Your Cart and Order</h1>
-        <div class="cart-layout">
-             <div id="cart-items-section">
-                 <h2>Items in Cart</h2>
+    <main class="container cart-page"> <h1>Shopping Cart</h1> <div class="cart-layout">
+             <div id="cart-items-section" class="cart-column">
+                 <h2>Items in Your Cart</h2>
                  <div id="cart-items">
-                     <p>Your cart is empty.</p>
+                     <p class="empty-cart-message">Your cart is currently empty. <a href="products.html">Continue Shopping</a></p>
                  </div>
-                 <div id="cart-summary">
+                 </div>
+
+            <form id="order-form" class="cart-column">
+                <h2>Your Information & Order</h2>
+                <div class="form-section"> <h3 class="form-section-title">Contact Information</h3>
+                    <div class="form-group">
+                        <label for="customer-name">Full Name <span class="required">*</span></label>
+                        <input type="text" id="customer-name" name="customerName" required placeholder="Enter your full name">
+                    </div>
+                    <div class="form-group">
+                        <label for="customer-contact">Contact/WhatsApp Number <span class="required">*</span></label>
+                        <input type="tel" id="customer-contact" name="customerContact" required placeholder="Enter your phone or WhatsApp number">
+                    </div>
+                    <div class="form-group">
+                        <label for="customer-address">Full Delivery Address <span class="required">*</span></label>
+                        <textarea id="customer-address" name="customerAddress" rows="4" required placeholder="Enter your complete delivery address"></textarea>
+                    </div>
+                </div>
+
+                <div class="form-section"> <h3 class="form-section-title">Design & Instructions</h3>
+                    <div class="form-group">
+                         <label for="design-file-upload">Upload Design File (Optional)</label>
+                         <div class="custom-file-upload">
+                             <input type="file" id="design-file-upload" name="designFile" accept=".cdr,.pdf,.jpg,.jpeg,.png" style="display: none;">
+                             <button type="button" class="button-secondary upload-button" onclick="document.getElementById('design-file-upload').click();">
+                                 <i class="fas fa-upload"></i> Choose File
+                             </button>
+                             <span class="file-name">No file chosen</span>
+                         </div>
+                        <small>Accepted formats: CDR, PDF, JPG, PNG (Max 10MB)</small>
+                    </div>
+                    <div class="form-group">
+                         <label for="special-instructions">Special Instructions/Notes</label>
+                         <textarea id="special-instructions" name="specialInstructions" rows="3" placeholder="Any specific instructions for your order?"></textarea>
+                    </div>
+                </div>
+
+                 <div id="cart-summary" class="form-section cart-summary-box">
+                     <h3 class="form-section-title">Order Summary</h3>
+                     <div class="summary-line">
+                         <span>Subtotal:</span>
+                         <span id="summary-subtotal">₹0.00</span>
                      </div>
-             </div>
-
-            <form id="order-form">
-                <h2>Customer Information</h2>
-                <div class="form-group">
-                    <label for="customer-name">Full Name <span class="required">*</span>:</label>
-                    <input type="text" id="customer-name" name="customerName" required>
-                </div>
-                 <div class="form-group">
-                     <label for="customer-contact">Contact/WhatsApp Number <span class="required">*</span>:</label>
-                    <input type="tel" id="customer-contact" name="customerContact" required>
-                </div>
-                 <div class="form-group">
-                    <label for="customer-address">Full Address <span class="required">*</span>:</label>
-                    <textarea id="customer-address" name="customerAddress" rows="3" required></textarea>
-                </div>
-
-                <hr style="margin: 25px 0; border-color: var(--border-color);"> <h2>Design Upload (Optional)</h2>
-                <div class="form-group">
-                     <label for="design-file-upload">Upload your print file (CDR, PDF, JPG):</label>
-                    <input type="file" id="design-file-upload" name="designFile" accept=".cdr,.pdf,.jpg,.jpeg,.png">
-                    <small>Maximum file size: 10MB</small>
-                </div>
-                 <div class="form-group">
-                     <label for="special-instructions">Special Instructions/Notes:</label>
-                     <textarea id="special-instructions" name="specialInstructions" rows="3"></textarea>
+                     <div class="summary-line total">
+                         <span>Total Amount:</span>
+                         <span id="summary-total">₹0.00</span>
+                     </div>
                  </div>
-                 <button type="submit" class="button-primary">Submit Order</button>
-                <div id="order-status-message">
+
+                 <button type="submit" id="submit-order-btn" class="button-primary submit-order-button">
+                     <i class="fas fa-check-circle"></i> Place Order
+                 </button>
+                <div id="order-status-message" style="display: none;">
                      </div>
             </form>
         </div>
+
+        <div class="cart-suggestions" style="display: none;">
+            <h3>Explore Our Products</h3>
+            <p>Your cart is empty, but you can find great products here:</p>
+            <a href="products.html" class="button-primary">View All Products</a>
+        </div>
+
     </main>
 
     <footer>
@@ -84,5 +111,19 @@
     <script src="js/firebase-config.js" type="module"></script>
     <script src="js/main.js" type="module" defer></script>
     <script src="js/cart.js" type="module" defer></script>
+    <script>
+        // फ़ाइल अपलोड बटन के लिए नाम दिखाने हेतु छोटा स्क्रिप्ट
+        const fileInput = document.getElementById('design-file-upload');
+        const fileNameSpan = document.querySelector('.file-name');
+        if (fileInput && fileNameSpan) {
+            fileInput.addEventListener('change', function() {
+                if (this.files && this.files.length > 0) {
+                    fileNameSpan.textContent = this.files[0].name;
+                } else {
+                    fileNameSpan.textContent = 'No file chosen';
+                }
+            });
+        }
+    </script>
 </body>
 </html>
