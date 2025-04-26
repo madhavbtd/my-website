@@ -31,51 +31,62 @@
         </nav>
     </header>
 
-    <main class="container">
-        <h1>Our Products</h1>
+    <div class="container page-layout">
 
-        <section class="featured-products">
-            <h2>Featured Products</h2>
-            <div class="featured-grid">
-                <div class="featured-item">
-                    <div class="featured-slider" id="slider-flex-banner">
-                        </div>
-                    <a href="#">
-                       <h4>Flex Banner Printing</h4>
-                    </a>
-                </div>
-                <div class="featured-item">
-                    <div class="featured-slider" id="slider-wedding-card">
-                        </div>
-                     <a href="#">
-                        <h4>Wedding Invitation Cards</h4>
-                     </a>
-                </div>
-            </div>
-        </section>
+        <aside class="sidebar filters" aria-labelledby="filter-heading">
+            <h2 id="filter-heading"><i class="fas fa-filter"></i> Filters</h2>
 
-        <section class="filters" aria-labelledby="filter-heading">
-            <h2 id="filter-heading" class="sr-only">Product Filters</h2>
             <div class="filter-group">
                 <label for="category-filter">Category:</label>
                 <select id="category-filter" name="category">
                     <option value="all">All Categories</option>
                     </select>
             </div>
+
+            <div class="filter-group">
+                <label for="sort-filter">Sort by:</label>
+                <select id="sort-filter" name="sort">
+                    <option value="name_asc">Name (A-Z)</option>
+                    <option value="price_asc">Price: Low to High</option>
+                    <option value="price_desc">Price: High to Low</option>
+                    </select>
+            </div>
+
+            </aside>
+
+        <main class="main-content">
+            <h1 class="page-title"><i class="fas fa-box-open"></i> Our Products</h1>
+
+            <section class="featured-products">
+                <h2><i class="fas fa-star"></i> Featured Products</h2>
+                <div class="featured-grid">
+                    <div class="featured-item clickable-featured" data-category="Flex Banner Printing">
+                        <div class="featured-slider" id="slider-flex-banner">
+                            </div>
+                        <h4>Flex Banner Printing</h4>
+                        <span class="featured-item-link">View Products <i class="fas fa-arrow-right"></i></span>
+                    </div>
+                    <div class="featured-item clickable-featured" data-category="Wedding Invitation Cards">
+                         <div class="featured-slider" id="slider-wedding-card">
+                            </div>
+                        <h4>Wedding Invitation Cards</h4>
+                        <span class="featured-item-link">View Products <i class="fas fa-arrow-right"></i></span>
+                    </div>
+                </div>
             </section>
 
-        <section class="product-list-section" aria-live="polite">
-             <div class="product-list" id="product-list-container">
-                <div class="loading-spinner" id="loading">
-                    <i class="fas fa-spinner fa-spin fa-3x"></i>
-                    <p>Loading products...</p>
-                </div>
-                </div>
-             <p id="no-products-message" class="message-box info" style="display: none;">No products found matching your criteria.</p>
-        </section>
-    </main>
+            <section class="product-list-section" aria-live="polite">
+                <div class="product-list" id="product-list-container">
+                    <div class="loading-spinner" id="loading">
+                        <i class="fas fa-spinner fa-spin fa-3x"></i>
+                        <p>Loading products...</p>
+                    </div>
+                    </div>
+                <p id="no-products-message" class="message-box info" style="display: none;">No products found matching your criteria.</p>
+            </section>
+        </main>
 
-    <footer>
+    </div> <footer>
         <div class="container">
              <p>&copy; 2025 Madhav Multiprint. All Rights Reserved.</p>
              <p><a href="#">Privacy Policy</a> | <a href="#">Terms & Conditions</a> | <a href="contact.html">Contact</a></p>

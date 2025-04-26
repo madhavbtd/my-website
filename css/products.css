@@ -1,78 +1,198 @@
 /* css/products.css - Products Page Specific Styles (Revised) */
 
-/* --- 기본 Variables (Ensure these are defined globally or in header-footer.css) --- */
-/* :root {
-    --primary-color: #0056b3;
-    --text-color: #333;
-    --text-muted: #6c757d;
-    --border-color: #ddd;
-    --white-bg: #fff;
-    --border-radius: 6px;
-    --box-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.1);
-    --box-shadow-md: 0 4px 10px rgba(0, 0, 0, 0.1);
-    --font-family: 'Poppins', sans-serif;
-} */
+/* --- Variables (Assumed) --- */
+/* :root { ... } */
 
-/* --- Main Content Area --- */
-main.container {
-    padding-top: 40px;
+/* --- General Page Layout --- */
+.container {
+    max-width: 1200px; /* Adjust max-width as needed */
+    margin: 0 auto;
+    padding: 0 15px;
+}
+
+.page-layout {
+    display: grid;
+    grid-template-columns: 250px 1fr; /* Sidebar width and main content */
+    gap: 30px;
+    padding-top: 30px;
     padding-bottom: 60px;
 }
-main.container > h1 {
-    text-align: center;
-    margin-top: 10px; /* Reduced margin */
-    margin-bottom: 50px; /* Increased margin */
-    font-weight: 700;
-    font-size: 2.5em; /* Slightly smaller */
+
+/* --- Sidebar (Filters) --- */
+.sidebar.filters {
+    background-color: var(--white-bg, #fff);
+    padding: 20px;
+    border-radius: var(--border-radius, 6px);
+    border: 1px solid var(--border-color, #e0e0e0);
+    box-shadow: var(--box-shadow-sm);
+    height: fit-content; /* Sidebar height adjusts to content */
+    position: sticky; /* Make sidebar sticky */
+    top: 20px; /* Adjust top offset as needed */
+}
+
+.sidebar h2 {
+    font-size: 1.3em;
+    font-weight: 600;
+    color: var(--primary-color, #0056b3);
+    margin-top: 0;
+    margin-bottom: 25px;
+    border-bottom: 1px solid var(--border-color, #eee);
+    padding-bottom: 10px;
+}
+.sidebar h2 i {
+    margin-right: 8px;
+}
+
+.sidebar .filter-group {
+    margin-bottom: 20px;
+    display: flex;
+    flex-direction: column; /* Stack label and select */
+    align-items: flex-start;
+}
+
+.sidebar .filter-group label {
+    font-weight: 500;
+    color: var(--text-color, #333);
+    font-size: 0.9em;
+    margin-bottom: 8px; /* Space below label */
+}
+
+.sidebar .filter-group select {
+    width: 100%; /* Make select full width of sidebar */
+    padding: 8px 25px 8px 10px; /* Adjust padding */
+    border: 1px solid var(--border-color, #ccc);
+    border-radius: 4px; /* Slightly smaller radius */
+    font-family: var(--font-family);
+    font-size: 0.9em;
+    height: 40px;
+    background-color: var(--white-bg, #fff);
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    box-sizing: border-box;
+    cursor: pointer;
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23333'%3E%3Cpath fill-rule='evenodd' d='M4.22 6.03a.75.75 0 0 1 1.06 0L8 8.74l2.72-2.71a.75.75 0 1 1 1.06 1.06l-3.25 3.25a.75.75 0 0 1-1.06 0L4.22 7.09a.75.75 0 0 1 0-1.06Z' clip-rule='evenodd' /%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 8px center;
+    background-size: 16px 16px;
+}
+
+.sidebar .filter-group select:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 2px rgba(0, 86, 179, 0.15);
+    outline: none;
+}
+
+/* --- Main Content Area --- */
+.main-content {
+    /* Takes remaining space */
+}
+
+.page-title { /* Was main.container > h1 */
+    text-align: left; /* Align to left */
+    margin-top: 0; /* Remove top margin */
+    margin-bottom: 30px; /* Adjust spacing */
+    font-weight: 600; /* Slightly less bold */
+    font-size: 1.8em; /* Reduced size */
     color: var(--text-color);
 }
+.page-title i {
+    margin-right: 10px;
+    color: var(--primary-color, #0056b3); /* Icon color */
+}
+
 
 /* ========== Featured Products Section Styles ========== */
 .featured-products {
-    margin-bottom: 50px; /* Increased spacing */
-    padding: 30px 0;
-    text-align: center;
-    background-color: #f8f9fa; /* Light background for distinction */
+    margin-bottom: 40px;
+    padding: 25px; /* Add padding */
+    text-align: left; /* Align heading left */
+    background-color: #f8f9fa;
     border-radius: var(--border-radius);
+    border: 1px solid var(--border-color, #eee); /* Add subtle border */
 }
 .featured-products h2 {
-    font-size: 1.9em; /* Slightly larger */
-    margin-bottom: 35px; /* Increased spacing */
+    font-size: 1.5em; /* Reduced size */
+    margin-top: 0;
+    margin-bottom: 25px;
     color: var(--primary-color);
     font-weight: 600;
-    border-bottom: 2px solid var(--primary-color);
-    display: inline-block;
-    padding-bottom: 8px;
+    border-bottom: none; /* Remove bottom border */
+    display: inline-flex; /* Use inline-flex for icon alignment */
+    align-items: center;
+    padding-bottom: 0;
 }
+.featured-products h2 i {
+    margin-right: 10px;
+}
+
 .featured-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); /* Slightly larger min size */
-    gap: 35px; /* Increased gap */
-    max-width: 900px; /* Increased max width */
-    margin: 0 auto;
-    text-align: left;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); /* Adjust min size */
+    gap: 25px; /* Adjust gap */
+    max-width: none; /* Allow full width within content area */
+    margin: 0;
 }
+
 .featured-item {
+    /* Styles from previous version kept, adding border and link styling */
     background-color: var(--white-bg);
     border-radius: var(--border-radius);
     overflow: hidden;
-    box-shadow: var(--box-shadow-sm); /* Use subtle shadow */
+    box-shadow: var(--box-shadow-sm);
     transition: transform 0.3s ease, box-shadow 0.3s ease;
-    display: flex; /* Use flexbox for better control */
+    display: flex;
     flex-direction: column;
+    border: 1px solid var(--border-color, #e0e0e0); /* Added border */
+    cursor: pointer; /* Indicate clickable */
 }
 .featured-item:hover {
-    transform: translateY(-5px); /* Keep subtle lift */
-    box-shadow: var(--box-shadow-md); /* Slightly stronger shadow on hover */
+    transform: translateY(-5px);
+    box-shadow: var(--box-shadow-md);
+    border-color: var(--primary-color, #0056b3); /* Highlight border on hover */
 }
 
-/* --- Featured Product Slider --- */
+/* --- Featured Item Clickable Styling --- */
+.featured-item h4 {
+    padding: 12px 15px; /* Adjust padding */
+    margin: 0;
+    font-size: 1.05em;
+    font-weight: 600;
+    color: var(--text-color);
+    text-align: center;
+    background-color: transparent; /* Remove background */
+    margin-top: auto; /* Push text down */
+}
+.featured-item-link {
+    display: block;
+    text-align: center;
+    padding: 10px 15px;
+    font-size: 0.9em;
+    font-weight: 500;
+    color: var(--primary-color, #0056b3);
+    text-decoration: none;
+    background-color: #e9ecef; /* Light background for link area */
+    transition: background-color 0.2s ease;
+}
+.featured-item:hover .featured-item-link {
+    background-color: #dee2e6; /* Darker background on hover */
+}
+.featured-item-link i {
+    margin-left: 5px;
+    transition: transform 0.2s ease;
+}
+.featured-item:hover .featured-item-link i {
+    transform: translateX(3px); /* Arrow animation */
+}
+
+/* Featured Slider (styles from previous version) */
 .featured-slider {
     width: 100%;
-    aspect-ratio: 16 / 10; /* Maintain aspect ratio */
+    aspect-ratio: 16 / 10;
     position: relative;
     overflow: hidden;
-    background-color: #eee; /* Background while images load */
+    background-color: #eee;
 }
 .featured-slider img {
     position: absolute;
@@ -82,7 +202,7 @@ main.container > h1 {
     height: 100%;
     object-fit: cover;
     opacity: 0;
-    transition: opacity 0.8s ease-in-out; /* Smooth fade transition */
+    transition: opacity 0.8s ease-in-out;
     z-index: 1;
 }
 .featured-slider img.active {
@@ -90,131 +210,42 @@ main.container > h1 {
     z-index: 2;
 }
 
-/* Optional: Slider Dots Styling */
-/* .slider-dots {
-    text-align: center;
-    padding: 8px 0;
-} */
-/* .slider-dots .dot {
-    display: inline-block;
-    width: 10px;
-    height: 10px;
-    background-color: #ccc;
-    border-radius: 50%;
-    margin: 0 4px;
-    cursor: pointer;
-    transition: background-color 0.3s ease;
-} */
-/* .slider-dots .dot.active {
-    background-color: var(--primary-color);
-} */
-
-/* --- Featured Item Text --- */
-.featured-item a {
-    text-decoration: none;
-    color: inherit;
-    display: block; /* Make link block level if needed */
-    margin-top: auto; /* Push text to bottom if slider takes full height */
-}
-
-.featured-item h4 {
-    padding: 15px; /* Consistent padding */
-    margin: 0;
-    font-size: 1.1em; /* Slightly larger */
-    font-weight: 600;
-    color: var(--text-color);
-    text-align: center;
-    background-color: rgba(255, 255, 255, 0.9); /* Optional semi-transparent bg */
-}
-
-
-/* --- Filters Section - IMPROVED STYLING --- */
-.filters {
-    background-color: #f1f3f5; /* Slightly different background */
-    padding: 20px 25px; /* More padding */
-    border-radius: var(--border-radius);
-    margin-bottom: 50px; /* More space below */
-    border: none; /* Remove default border */
-    display: flex;
-    gap: 25px; /* More gap */
-    flex-wrap: wrap;
-    box-shadow: none;
-    align-items: center;
-    justify-content: center; /* Center filter items */
-    border: 1px solid var(--border-color, #e0e0e0); /* Subtle border */
-}
-.filter-group {
-    display: flex;
-    align-items: center;
-    gap: 10px; /* Increased gap */
-}
-.filter-group label {
-    font-weight: 500;
-    color: var(--text-color); /* Darker label text */
-    font-size: 0.95em;
-}
-.filter-group select {
-    padding: 10px 30px 10px 15px; /* More padding, space for arrow */
-    border: 1px solid var(--border-color, #ccc);
-    border-radius: var(--border-radius, 6px);
-    font-family: var(--font-family);
-    min-width: 220px; /* Slightly wider */
-    font-size: 0.95em;
-    height: 44px; /* Consistent height */
-    background-color: var(--white-bg, #fff);
-    transition: border-color 0.2s ease, box-shadow 0.2s ease;
-    box-sizing: border-box;
-    cursor: pointer;
-    appearance: none; /* Remove default arrow */
-    -webkit-appearance: none;
-    -moz-appearance: none;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23333'%3E%3Cpath fill-rule='evenodd' d='M4.22 6.03a.75.75 0 0 1 1.06 0L8 8.74l2.72-2.71a.75.75 0 1 1 1.06 1.06l-3.25 3.25a.75.75 0 0 1-1.06 0L4.22 7.09a.75.75 0 0 1 0-1.06Z' clip-rule='evenodd' /%3E%3C/svg%3E"); /* Custom arrow */
-    background-repeat: no-repeat;
-    background-position: right 10px center;
-    background-size: 16px 16px;
-}
-.filter-group select:focus {
-    border-color: var(--primary-color);
-    box-shadow: 0 0 0 3px rgba(0, 86, 179, 0.15);
-    outline: none;
-}
-
-/* --- Product List Area --- */
+/* --- Product List Section --- */
 .product-list-section {
     min-height: 300px;
     position: relative;
+    margin-top: 30px; /* Add space above product list */
 }
 .product-list {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); /* Responsive columns */
-    gap: 35px; /* Increased gap */
+    /* MODIFIED: Adjust minmax for potentially smaller cards */
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 25px; /* Adjust gap */
 }
 
-/* --- Product Card Styling --- */
+/* --- Product Card Styling - SMALLER & COMPACT --- */
 .product-card {
-    border: 1px solid var(--border-color, #e0e0e0); /* Slightly lighter border */
-    border-radius: var(--border-radius);
+    border: 1px solid var(--border-color, #e0e0e0);
+    border-radius: var(--border-radius, 4px); /* Slightly smaller radius */
     background-color: var(--white-bg);
-    text-align: left;
     box-shadow: var(--box-shadow-sm);
     overflow: hidden;
     display: flex;
     flex-direction: column;
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    transition: transform 0.2s ease, box-shadow 0.2s ease; /* Faster transition */
 }
 .product-card:hover {
-    transform: translateY(-6px);
+    transform: translateY(-4px); /* Less lift */
     box-shadow: var(--box-shadow-md);
 }
 .product-card .product-image-container {
     width: 100%;
-    /* MODIFIED: Changed aspect ratio for slightly less height */
-    aspect-ratio: 4 / 3;
-    background-color: #f0f0f0;
+    aspect-ratio: 4 / 3; /* Keep this aspect ratio */
+    background-color: #f8f9fa; /* Lighter background */
     display: flex;
     align-items: center;
     justify-content: center;
-    overflow: hidden; /* Ensure scaled image doesn't overflow */
+    overflow: hidden;
     position: relative;
 }
 .product-card .product-image-container img {
@@ -222,163 +253,120 @@ main.container > h1 {
     max-width: 100%;
     max-height: 100%;
     object-fit: contain;
-    transition: transform 0.35s ease;
+    transition: transform 0.3s ease;
 }
 .product-card:hover .product-image-container img {
-    /* MODIFIED: Increased scale factor slightly */
-    transform: scale(1.08);
+    transform: scale(1.06); /* Slightly less zoom */
 }
-
-/* Optional: Remove link from image container if details link is below */
-/* .product-card .product-image-container a { ... } */
-
 .product-card .product-info {
-    padding: 20px; /* More padding */
+    padding: 15px; /* Reduced padding */
     flex-grow: 1;
     display: flex;
     flex-direction: column;
+    background-color: #fdfdfd; /* Very light background for info */
 }
 .product-card h3 {
-    font-size: 1.1em; /* Slightly larger */
-    margin: 0 0 10px 0; /* More bottom margin */
+    font-size: 1em; /* Reduced font size */
+    margin: 0 0 8px 0; /* Reduced margin */
     font-weight: 600;
-    line-height: 1.4;
+    line-height: 1.3; /* Tighter line height */
     color: var(--text-color);
-    /* Limit to 2 lines */
     display: -webkit-box;
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
-    min-height: calc(1.1em * 1.4 * 2); /* Adjust min-height */
+    min-height: calc(1em * 1.3 * 2); /* Adjust min-height */
 }
-.product-card h3 a { /* If name is a link */
-    text-decoration: none;
-    color: inherit;
-}
-.product-card h3 a:hover {
-    color: var(--primary-color);
-}
+
 .product-card .price {
-    margin-bottom: 15px;
-    margin-top: auto; /* Pushes price down */
-    font-size: 1.05em; /* Slightly larger price */
-    font-weight: 500; /* Make price slightly bolder */
+    margin-bottom: 12px; /* Reduced margin */
+    margin-top: auto;
+    font-size: 0.95em; /* Reduced font size */
+    font-weight: 500;
     color: var(--text-color);
 }
-.product-card .current-price { /* Example if you have separate price parts */
-    font-size: 1.15em;
-    font-weight: 700;
-    color: var(--primary-color);
-    margin-right: 8px;
-}
-/* .product-card .original-price { ... } */
 
-.product-card .button-primary { /* Use general button styles */
-    padding: 10px 15px; /* Adjust padding */
-    font-size: 0.95em;
+.product-card .button-primary {
+    padding: 8px 12px; /* Reduced padding */
+    font-size: 0.9em; /* Reduced font size */
     font-weight: 500;
-    margin-top: 15px; /* More space above button */
-    align-self: stretch; /* Make button full width */
+    margin-top: 10px; /* Reduced margin */
+    align-self: stretch;
     text-align: center;
     width: 100%;
-    /* Inherit from global button styles or define here */
-    /* background-color: var(--primary-color); */
-    /* color: white; */
-    /* border: none; */
-    /* border-radius: var(--border-radius); */
-    /* cursor: pointer; */
-    /* transition: background-color 0.2s ease; */
+    /* Add colorful accent using primary color */
+    background-color: var(--primary-color, #0056b3);
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.2s ease, box-shadow 0.2s ease;
 }
-/* .product-card .button-primary:hover { ... } */
+.product-card .button-primary:hover {
+     background-color: #004a99; /* Darken primary color */
+     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
 
-/* --- Loading Spinner & Messages --- */
-.loading-spinner {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 80px 40px;
-    text-align: center;
-    color: var(--text-muted);
-    width: 100%;
-    grid-column: 1 / -1; /* Ensure it spans grid */
-    min-height: 350px;
-}
-.loading-spinner i {
-    color: var(--primary-color);
-    margin-bottom: 25px;
-    font-size: 3.5em;
-}
-.loading-spinner p {
-    font-size: 1.2em;
-    font-weight: 500;
-}
-.message-box {
-    padding: 20px;
-    margin: 30px 0;
-    border: 1px solid var(--border-color);
-    border-radius: var(--border-radius);
-    text-align: center;
-    grid-column: 1 / -1; /* Span grid */
-    background-color: var(--white-bg);
-    font-size: 1.1em;
-    color: var(--text-muted);
-    box-shadow: var(--box-shadow-sm);
-}
-.message-box.info {
-    border-left: 4px solid #17a2b8;
-    background-color: #e2f7fa;
-    color: #0c5460;
-}
-.message-box.error {
-    border-left: 4px solid #dc3545;
-    background-color: #f8d7da;
-    color: #721c24;
-}
+/* Loading/Message Boxes (styles from previous versions) */
+.loading-spinner { /* ... */ }
+.message-box { /* ... */ }
+.message-box.info { /* ... */ }
+.message-box.error { /* ... */ }
 
 /* --- Responsive Adjustments --- */
 @media (max-width: 992px) {
-    .product-list {
-        grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); /* Adjust breakpoint */
-        gap: 25px;
-    }
-    .featured-grid {
-        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-        gap: 25px; /* Adjust gap */
-    }
-    main.container > h1 { font-size: 2.3em; }
-}
-@media (max-width: 768px) {
-    .product-list {
-        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); /* Smaller cards on tablet */
+    .page-layout {
+        grid-template-columns: 200px 1fr; /* Narrower sidebar */
         gap: 20px;
     }
-    .featured-grid { gap: 20px; }
-    main.container > h1 { font-size: 2.1em; }
-    .filters {
-        padding: 15px 20px;
-        justify-content: center; /* Center filters */
-        gap: 15px;
-    }
-     .filter-group select { min-width: 180px; }
-    .product-card .product-info { padding: 15px; }
-    .product-card h3 { font-size: 1em; min-height: calc(1em * 1.4 * 2); }
-}
-@media (max-width: 480px) {
-    main.container > h1 { font-size: 1.8em; }
     .product-list {
-        grid-template-columns: 1fr; /* Single column */
-        gap: 25px; /* More gap in single column */
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 20px;
     }
-     .featured-grid { grid-template-columns: 1fr; }
-    .filters {
-        flex-direction: column;
+}
+
+@media (max-width: 768px) {
+    .page-layout {
+        grid-template-columns: 1fr; /* Stack sidebar above content */
+    }
+    .sidebar.filters {
+        position: static; /* Remove sticky positioning */
+        margin-bottom: 30px;
+        /* Arrange filters horizontally */
+        display: flex;
+        flex-direction: row;
+        flex-wrap: wrap;
+        justify-content: space-around;
+        align-items: center;
+    }
+     .sidebar h2 { display: none; } /* Hide "Filters" heading */
+     .sidebar .filter-group { margin-bottom: 10px; flex-direction: row; } /* Filters side-by-side */
+     .sidebar .filter-group label { margin-bottom: 0; margin-right: 5px; }
+     .sidebar .filter-group select { width: auto; min-width: 160px; } /* Allow selects to shrink */
+
+     .product-list { grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
+}
+
+@media (max-width: 480px) {
+    .sidebar.filters {
+        flex-direction: column; /* Stack filters again */
         align-items: stretch;
     }
-    .filter-group { justify-content: center; }
-    .filter-group label { margin-bottom: 5px; text-align: center;}
-    .filter-group select { width: 100%; min-width: auto; }
+    .sidebar .filter-group {
+        flex-direction: column; /* Stack label/select */
+        align-items: flex-start;
+         margin-bottom: 15px;
+    }
+    .sidebar .filter-group label { margin-bottom: 5px; }
+    .sidebar .filter-group select { width: 100%; }
+
+     .product-list { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; } /* Even smaller cards for mobile */
+     .product-card .product-info { padding: 10px; }
+     .product-card h3 { font-size: 0.9em; min-height: calc(0.9em * 1.3 * 2); }
+     .product-card .price { font-size: 0.9em; }
+     .product-card .button-primary { padding: 6px 10px; font-size: 0.85em; }
 }
+
 
 /* Sr-only class */
 .sr-only{border:0!important;clip:rect(1px,1px,1px,1px)!important;-webkit-clip-path:inset(50%)!important;clip-path:inset(50%)!important;height:1px!important;margin:-1px!important;overflow:hidden!important;padding:0!important;position:absolute!important;width:1px!important;white-space:nowrap!important}

@@ -1,85 +1,72 @@
 // js/products.js
-// UPDATED Version: Handles imageUrls array, correct price logic, currency formatting, and uses updated firebase-config exports.
+// UPDATED Version: Added sorting, featured item filtering, layout changes
 
-// Import necessary functions and db instance from firebase-config.js
 import {
-    db, collection, getDocs, query, where, orderBy
+    db, collection, getDocs, query, where, orderBy, startAfter, limit
 } from './firebase-config.js';
-
-// Assuming updateCartCount might be needed (from main.js or cart.js)
-// Try importing from main.js as potentially done in product-detail.js
-// import { updateCartCount } from './main.js';
-
+// Note: Depending on your sorting/filtering needs, you might need more Firestore functions like startAfter, limit for pagination.
 
 document.addEventListener('DOMContentLoaded', () => {
     const productListContainer = document.getElementById('product-list-container');
     const noProductsMessage = document.getElementById('no-products-message');
-    const categoryFilter = document.getElementById('category-filter'); // Filter element
-    const loadingSpinner = document.getElementById('loading'); // Get spinner element
+    const categoryFilter = document.getElementById('category-filter');
+    const sortFilter = document.getElementById('sort-filter'); // New sort filter
+    const loadingSpinner = document.getElementById('loading');
+    const featuredItems = document.querySelectorAll('.clickable-featured'); // Select clickable featured items
 
     // Helper function for Indian Rupee currency formatting
     const formatIndianCurrency = (amount) => {
-         const num = Number(amount);
-         // Returns 'N/A' if amount is not a valid number, otherwise formats it.
-         return isNaN(num) || num === null ? 'N/A' : `₹ ${num.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+        const num = Number(amount);
+        return isNaN(num) || num === null ? 'N/A' : `₹ ${num.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
     };
 
-    // --- renderProducts Function (Largely Unchanged, ensure it uses new CSS classes if needed) ---
+    // --- renderProducts Function (Adjusted for new card style potentially) ---
     const renderProducts = (products) => {
-        if (!productListContainer) {
-            console.error("Error: Product list container not found!");
-            if(loadingSpinner) loadingSpinner.style.display = 'none'; // Hide spinner on error too
-            return;
-        }
-        productListContainer.innerHTML = ''; // Clear previous content/spinner
+        // Clear previous content/spinner (ensure spinner is removed)
+        productListContainer.innerHTML = '';
 
         if (!products || products.length === 0) {
-            if(noProductsMessage) noProductsMessage.style.display = 'block';
-            // Ensure spinner is hidden if no products message is shown
-             // Already cleared above, no need to hide spinner again here
+            if (noProductsMessage) noProductsMessage.style.display = 'block';
             return;
         }
 
-        if(noProductsMessage) noProductsMessage.style.display = 'none';
+        if (noProductsMessage) noProductsMessage.style.display = 'none';
 
         products.forEach(product => {
             if (!product || !product.id) {
                 console.warn("Skipping invalid product data:", product);
-                return; // Skip rendering if product data is invalid
+                return;
             }
 
             const card = document.createElement('div');
-            card.className = 'product-card'; // Use updated CSS class name
-            card.dataset.productId = product.id; // Store product ID
+            card.className = 'product-card'; // Use updated class name
+            card.dataset.productId = product.id;
 
-            // --- Image URL Access ---
-            let imageUrl = 'images/placeholder.png'; // Default placeholder
+            let imageUrl = 'images/placeholder.png';
             if (product.imageUrls && Array.isArray(product.imageUrls) && product.imageUrls.length > 0 && product.imageUrls[0]) {
-                imageUrl = product.imageUrls[0]; // Use the first image URL
+                imageUrl = product.imageUrls[0];
             }
 
-            // --- Price Display Logic ---
             let priceDisplay = 'Contact for Price';
-             if (product.pricing && typeof product.pricing.rate !== 'undefined' && product.pricing.rate !== null) {
+            if (product.pricing && typeof product.pricing.rate !== 'undefined' && product.pricing.rate !== null) {
                  const rate = product.pricing.rate;
                  if (product.unit && typeof product.unit === 'string') {
-                    if (product.unit.toLowerCase() === 'sq feet') { // Case-insensitive check
-                        priceDisplay = `From ${formatIndianCurrency(rate)} / sq ft`;
-                        if (typeof product.pricing.minimumOrderValue === 'number' && product.pricing.minimumOrderValue > 0) {
-                            priceDisplay += ` (Min. ${formatIndianCurrency(product.pricing.minimumOrderValue)})`;
-                        }
-                    } else { // For Qty, Nos, etc.
-                        priceDisplay = `${formatIndianCurrency(rate)} / ${product.unit}`;
-                    }
-                 } else { // Fallback if unit is missing but rate exists
+                     if (product.unit.toLowerCase() === 'sq feet') {
+                         priceDisplay = `From ${formatIndianCurrency(rate)} / sq ft`;
+                         if (typeof product.pricing.minimumOrderValue === 'number' && product.pricing.minimumOrderValue > 0) {
+                             priceDisplay += ` (Min. ${formatIndianCurrency(product.pricing.minimumOrderValue)})`;
+                         }
+                     } else {
+                         priceDisplay = `${formatIndianCurrency(rate)} / ${product.unit}`;
+                     }
+                 } else {
                      priceDisplay = formatIndianCurrency(rate);
                  }
             }
 
-            // --- Sanitize Product Name ---
-            const productName = product.productName || 'Unnamed Product'; // Fallback name
+            const productName = product.productName || 'Unnamed Product';
 
-            // HTML Structure for Product Card (Matches new CSS potentially)
+            // Updated Card Structure (matches new CSS)
             card.innerHTML = `
                 <div class="product-image-container">
                     <img src="${imageUrl}" alt="${productName}" loading="lazy" onerror="this.onerror=null; this.src='images/placeholder.png';">
@@ -95,57 +82,87 @@ document.addEventListener('DOMContentLoaded', () => {
     };
     // --- END of renderProducts Function ---
 
-    // --- fetchProducts Function (Show/Hide Spinner added) ---
-    const fetchProducts = async (category = 'all') => {
+    // --- fetchProducts Function (MODIFIED for Sorting) ---
+    const fetchProducts = async () => {
         if (!productListContainer) {
-             console.error("Product list container not found on fetch.");
-             return;
+            console.error("Product list container not found on fetch.");
+            return;
         }
-        // Show spinner and hide messages/content
-         if(loadingSpinner) loadingSpinner.style.display = 'flex';
-         productListContainer.innerHTML = ''; // Clear previous products immediately
-         productListContainer.appendChild(loadingSpinner); // Re-append spinner to cleared container
-         if(noProductsMessage) noProductsMessage.style.display = 'none';
+
+        // Get current filter values
+        const selectedCategory = categoryFilter ? categoryFilter.value : 'all';
+        const selectedSort = sortFilter ? sortFilter.value : 'name_asc';
+
+        // Show spinner
+        if (loadingSpinner) loadingSpinner.style.display = 'flex';
+        productListContainer.innerHTML = ''; // Clear previous products
+        productListContainer.appendChild(loadingSpinner); // Add spinner back
+        if (noProductsMessage) noProductsMessage.style.display = 'none';
 
         try {
             if (!db) {
                 throw new Error("Firestore database instance is not available.");
             }
-            let productQuery;
+
             const productsRef = collection(db, "onlineProducts");
-            const constraints = [where("isEnabled", "==", true)];
+            let constraints = [where("isEnabled", "==", true)];
 
-            if (category !== 'all' && category) {
-                 constraints.push(where("category", "==", category));
+            // Add category filter constraint
+            if (selectedCategory !== 'all' && selectedCategory) {
+                constraints.push(where("category", "==", selectedCategory));
             }
-            constraints.push(orderBy("productName"));
 
-            productQuery = query(productsRef, ...constraints);
+            // Add sorting constraint
+            // IMPORTANT: Firestore requires composite indexes for queries filtering on one field
+            // and ordering by another. You might need to create these indexes in your Firebase console.
+            // Example index: Collection=onlineProducts, Fields: isEnabled ASC, category ASC, pricing.rate ASC
+            // Example index: Collection=onlineProducts, Fields: isEnabled ASC, category ASC, pricing.rate DESC
+            // Example index: Collection=onlineProducts, Fields: isEnabled ASC, category ASC, productName ASC
+            switch (selectedSort) {
+                case 'price_asc':
+                    // Assuming price is stored in product.pricing.rate
+                    constraints.push(orderBy("pricing.rate", "asc"));
+                    break;
+                case 'price_desc':
+                    constraints.push(orderBy("pricing.rate", "desc"));
+                    break;
+                case 'name_asc':
+                default:
+                    constraints.push(orderBy("productName", "asc"));
+                    break;
+            }
+
+            const productQuery = query(productsRef, ...constraints);
 
             const querySnapshot = await getDocs(productQuery);
             const products = [];
             querySnapshot.forEach((doc) => {
                 if (doc.exists() && doc.data().productName) {
-                     products.push({ id: doc.id, ...doc.data() });
+                    products.push({ id: doc.id, ...doc.data() });
                 } else {
                     console.warn(`Document ${doc.id} skipped due to missing data or name.`);
                 }
             });
 
-             if(loadingSpinner) loadingSpinner.style.display = 'none'; // Hide spinner BEFORE rendering
-             renderProducts(products); // Render fetched products
+            if (loadingSpinner) loadingSpinner.style.display = 'none'; // Hide spinner BEFORE rendering
+            renderProducts(products); // Render fetched products
 
         } catch (error) {
-            console.error("Error fetching products: ", error);
-             if(loadingSpinner) loadingSpinner.style.display = 'none'; // Hide spinner on error
-             // Display error message within the container
-             productListContainer.innerHTML = `<div class="message-box error" style="grid-column: 1 / -1;"><p>Failed to load products. Please check your connection or try again later. Error: ${error.message}</p></div>`;
-            if(noProductsMessage) noProductsMessage.style.display = 'none';
+            console.error("Error fetching/sorting products: ", error);
+            if (loadingSpinner) loadingSpinner.style.display = 'none';
+             // Display specific error message if it's likely an index issue
+             let errorMsg = `Failed to load products. ${error.message}`;
+             if (error.code === 'failed-precondition' && selectedSort !== 'name_asc' && selectedCategory !== 'all') {
+                errorMsg = "Failed to load products. Sorting by price with a category filter might require a composite index in Firestore. Please check the developer console and Firebase settings.";
+             }
+             productListContainer.innerHTML = `<div class="message-box error" style="grid-column: 1 / -1;"><p>${errorMsg}</p></div>`;
+            if (noProductsMessage) noProductsMessage.style.display = 'none';
         }
     };
 
-     // --- populateCategoryFilter Function (Unchanged) ---
-     const populateCategoryFilter = async () => {
+    // --- populateCategoryFilter Function (Unchanged) ---
+    const populateCategoryFilter = async () => {
+       // ... (same as previous version) ...
         if (!categoryFilter || !db) {
             console.log("Category filter element or DB not available.");
             return;
@@ -164,8 +181,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const sortedCategories = Array.from(uniqueCategories).sort();
 
-            // Add sorted categories to the dropdown (start from index 1 to keep 'All Categories')
-            categoryFilter.options.length = 1; // Keep only the first option
+            // Keep "All Categories" and add the rest
+            categoryFilter.options.length = 1;
             sortedCategories.forEach(category => {
                 const option = document.createElement('option');
                 option.value = category;
@@ -176,18 +193,41 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch (error) {
             console.error("Error fetching categories:", error);
         }
-     };
+    };
 
-    // --- Event listener for category filter change (Unchanged) ---
+    // --- Event Listeners for Filters ---
     if (categoryFilter) {
-        categoryFilter.addEventListener('change', (event) => {
-            fetchProducts(event.target.value); // Fetch products for selected category
-        });
-    } else {
-        console.log("Category filter element not found.");
+        categoryFilter.addEventListener('change', fetchProducts); // Call fetchProducts on change
+    }
+    if (sortFilter) {
+        sortFilter.addEventListener('change', fetchProducts); // Call fetchProducts on change
     }
 
-    // --- NEW: Featured Product Slider Logic ---
+    // --- Event Listener for Featured Items ---
+    featuredItems.forEach(item => {
+        item.addEventListener('click', () => {
+            const category = item.dataset.category; // Get category from data attribute
+            if (category && categoryFilter) {
+                // Find if the category exists in the dropdown
+                const categoryExists = Array.from(categoryFilter.options).some(opt => opt.value === category);
+
+                if(categoryExists) {
+                    console.log(`Filtering by featured category: ${category}`);
+                    categoryFilter.value = category; // Set dropdown value
+                    fetchProducts(); // Fetch products for this category (uses current sort setting)
+                    // Optionally scroll to the product list
+                    // document.getElementById('product-list-container').scrollIntoView({ behavior: 'smooth' });
+                } else {
+                    console.warn(`Category "${category}" from featured item not found in filter dropdown.`);
+                    // Optionally, show all products or an error message
+                    categoryFilter.value = 'all';
+                    fetchProducts();
+                }
+            }
+        });
+    });
+
+    // --- Featured Product Slider Logic (Unchanged from previous version) ---
     const featuredSlidersData = {
         'slider-flex-banner': [
             'https://i.ibb.co/ZRwV0sx5/2.jpg',
@@ -199,60 +239,42 @@ document.addEventListener('DOMContentLoaded', () => {
             'https://i.ibb.co/dwkTVrht/2.jpg',
             'https://i.ibb.co/xtNQ1wTr/1.jpg'
         ]
-        // Add more sliders here if needed
-        // 'slider-id': ['img1.jpg', 'img2.jpg']
     };
-
     function initializeSlider(sliderId, images) {
-        const sliderElement = document.getElementById(sliderId);
-        if (!sliderElement || images.length === 0) {
-            console.warn(`Slider element #${sliderId} not found or no images provided.`);
+        // ... (same slider initialization code as previous version) ...
+         const sliderElement = document.getElementById(sliderId);
+        if (!sliderElement || !images || images.length === 0) {
+            // console.warn(`Slider element #${sliderId} not found or no images provided.`);
             return;
         }
-
-        // Add images to the slider
+        sliderElement.innerHTML = ''; // Clear any previous content
         images.forEach((imgUrl, index) => {
             const img = document.createElement('img');
             img.src = imgUrl;
             img.alt = `${sliderId.replace('slider-', '')} image ${index + 1}`;
-             // Add 'active' class to the first image
-            if (index === 0) {
-                img.classList.add('active');
-            }
+            if (index === 0) img.classList.add('active');
             sliderElement.appendChild(img);
         });
-
         let currentSlide = 0;
         const slides = sliderElement.querySelectorAll('img');
-        const slideInterval = 3000; // Time in ms (3 seconds)
-
+        const slideInterval = 3000;
         function nextSlide() {
-            slides[currentSlide].classList.remove('active');
-            currentSlide = (currentSlide + 1) % slides.length;
-            slides[currentSlide].classList.add('active');
+            if (slides.length > 1) {
+                slides[currentSlide].classList.remove('active');
+                currentSlide = (currentSlide + 1) % slides.length;
+                slides[currentSlide].classList.add('active');
+            }
         }
-
-        // Start auto-sliding only if there's more than one image
         if (slides.length > 1) {
            setInterval(nextSlide, slideInterval);
         }
     }
-
-    // Initialize all sliders defined in featuredSlidersData
     for (const sliderId in featuredSlidersData) {
         initializeSlider(sliderId, featuredSlidersData[sliderId]);
     }
     // --- END of Featured Product Slider Logic ---
 
-
     // --- Initial Setup ---
-    // Update cart count on initial load (assuming function is available)
-    // if (typeof updateCartCount === 'function') {
-    //     updateCartCount();
-    // } else {
-    //     console.warn("updateCartCount function not found for initial load.");
-    // }
-
-    populateCategoryFilter(); // Populate filter dropdown
-    fetchProducts(); // Fetch all products initially
+    populateCategoryFilter(); // Populate filter dropdown first
+    fetchProducts(); // Fetch products based on initial filter/sort values
 });
