@@ -50,12 +50,17 @@
                     <h4>Wedding Invitation Cards</h4>
                     <span class="featured-item-link">View Products <i class="fas fa-arrow-right"></i></span>
                 </div>
-            </div>
+                </div>
         </section>
 
         <section class="filters horizontal-filters" aria-labelledby="filter-heading">
-             <h2 id="filter-heading" class="sr-only">Product Filters</h2> 
+             <h2 id="filter-heading" class="sr-only">Product Filters</h2>
              <div class="filter-controls">
+                 <div class="filter-group search-group">
+                     <label for="search-input" class="sr-only"><i class="fas fa-search"></i> Search:</label>
+                     <input type="search" id="search-input" name="search" placeholder="Search products...">
+                     <button id="search-button" class="button-secondary" aria-label="Search"><i class="fas fa-search"></i></button>
+                 </div>
                  <div class="filter-group">
                      <label for="category-filter"><i class="fas fa-tags"></i> Category:</label>
                      <select id="category-filter" name="category">
@@ -68,11 +73,10 @@
                          <option value="name_asc">Name (A-Z)</option>
                          <option value="price_asc">Price: Low to High</option>
                          <option value="price_desc">Price: High to Low</option>
-                     </select>
+                         </select>
                  </div>
-                 </div>
+             </div>
         </section>
-
 
         <section class="product-list-section" aria-live="polite">
             <div class="product-list" id="product-list-container">
@@ -82,9 +86,29 @@
                 </div>
                 </div>
             <p id="no-products-message" class="message-box info" style="display: none;">No products found matching your criteria.</p>
+
+            <div class="pagination-controls" style="text-align: center; margin-top: 30px; display: none;" id="pagination-container">
+                <button id="load-more-button" class="button-primary">Load More Products</button>
+            </div>
         </section>
 
-    </main> <footer>
+        <section class="testimonials-section">
+            <h2 class="section-title"><i class="fas fa-comments"></i> What Our Customers Say</h2>
+            <div class="testimonial-grid">
+                <div class="testimonial-card">
+                    <p class="testimonial-text">"Excellent quality printing and fast turnaround time. Highly recommended!"</p>
+                    <p class="testimonial-author">- Satisfied Customer</p>
+                </div>
+                <div class="testimonial-card">
+                    <p class="testimonial-text">"Madhav Multiprint provided great service for our wedding invitations. Beautiful designs!"</p>
+                    <p class="testimonial-author">- Another Happy Client</p>
+                </div>
+                </div>
+        </section>
+
+    </main>
+
+    <footer>
         <div class="container">
              <p>&copy; 2025 Madhav Multiprint. All Rights Reserved.</p>
              <p><a href="#">Privacy Policy</a> | <a href="#">Terms & Conditions</a> | <a href="contact.html">Contact</a></p>
