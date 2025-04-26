@@ -6,15 +6,16 @@ import {
     db, collection, getDocs, query, where, orderBy
 } from './firebase-config.js';
 
-// Assuming updateCartCount is available globally or in main.js
-// If main.js is also a module, you might need: import { updateCartCount } from './main.js';
-// For now, we'll assume it's globally available or handled elsewhere.
-// declare function updateCartCount(): void; // Placeholder if using TypeScript or for clarity
+// Assuming updateCartCount might be needed (from main.js or cart.js)
+// Try importing from main.js as potentially done in product-detail.js
+// import { updateCartCount } from './main.js';
+
 
 document.addEventListener('DOMContentLoaded', () => {
     const productListContainer = document.getElementById('product-list-container');
     const noProductsMessage = document.getElementById('no-products-message');
     const categoryFilter = document.getElementById('category-filter'); // Filter element
+    const loadingSpinner = document.getElementById('loading'); // Get spinner element
 
     // Helper function for Indian Rupee currency formatting
     const formatIndianCurrency = (amount) => {
@@ -23,10 +24,11 @@ document.addEventListener('DOMContentLoaded', () => {
          return isNaN(num) || num === null ? 'N/A' : `₹ ${num.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
     };
 
-    // --- UPDATED renderProducts Function ---
+    // --- renderProducts Function (Largely Unchanged, ensure it uses new CSS classes if needed) ---
     const renderProducts = (products) => {
         if (!productListContainer) {
             console.error("Error: Product list container not found!");
+            if(loadingSpinner) loadingSpinner.style.display = 'none'; // Hide spinner on error too
             return;
         }
         productListContainer.innerHTML = ''; // Clear previous content/spinner
@@ -34,10 +36,10 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!products || products.length === 0) {
             if(noProductsMessage) noProductsMessage.style.display = 'block';
             // Ensure spinner is hidden if no products message is shown
-            const spinner = productListContainer.querySelector('.loading-spinner');
-            if (spinner) spinner.style.display = 'none';
+             // Already cleared above, no need to hide spinner again here
             return;
         }
+
         if(noProductsMessage) noProductsMessage.style.display = 'none';
 
         products.forEach(product => {
@@ -47,26 +49,22 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             const card = document.createElement('div');
-            card.className = 'product-card';
+            card.className = 'product-card'; // Use updated CSS class name
             card.dataset.productId = product.id; // Store product ID
 
-            // --- Correct Image URL Access ---
+            // --- Image URL Access ---
             let imageUrl = 'images/placeholder.png'; // Default placeholder
-            // Check if imageUrls exists, is an array, and has at least one item
             if (product.imageUrls && Array.isArray(product.imageUrls) && product.imageUrls.length > 0 && product.imageUrls[0]) {
                 imageUrl = product.imageUrls[0]; // Use the first image URL
             }
 
-            // --- Correct Price Display Logic ---
-            let priceDisplay = 'Contact for Price'; // Default text, especially if pricing is complex or missing
-            // Check if pricing object and rate exist
-            if (product.pricing && typeof product.pricing.rate !== 'undefined' && product.pricing.rate !== null) {
+            // --- Price Display Logic ---
+            let priceDisplay = 'Contact for Price';
+             if (product.pricing && typeof product.pricing.rate !== 'undefined' && product.pricing.rate !== null) {
                  const rate = product.pricing.rate;
-                 // Check product.unit (exists and is a string)
                  if (product.unit && typeof product.unit === 'string') {
                     if (product.unit.toLowerCase() === 'sq feet') { // Case-insensitive check
                         priceDisplay = `From ${formatIndianCurrency(rate)} / sq ft`;
-                        // Add minimum order value note if applicable and valid
                         if (typeof product.pricing.minimumOrderValue === 'number' && product.pricing.minimumOrderValue > 0) {
                             priceDisplay += ` (Min. ${formatIndianCurrency(product.pricing.minimumOrderValue)})`;
                         }
@@ -77,11 +75,11 @@ document.addEventListener('DOMContentLoaded', () => {
                      priceDisplay = formatIndianCurrency(rate);
                  }
             }
-            // No need for the explicit 'Wedding Card' check here anymore unless specific logic is needed beyond 'Contact for Price'
 
             // --- Sanitize Product Name ---
             const productName = product.productName || 'Unnamed Product'; // Fallback name
 
+            // HTML Structure for Product Card (Matches new CSS potentially)
             card.innerHTML = `
                 <div class="product-image-container">
                     <img src="${imageUrl}" alt="${productName}" loading="lazy" onerror="this.onerror=null; this.src='images/placeholder.png';">
@@ -95,42 +93,38 @@ document.addEventListener('DOMContentLoaded', () => {
             productListContainer.appendChild(card);
         });
     };
-    // --- END of UPDATED renderProducts Function ---
+    // --- END of renderProducts Function ---
 
-    // Function to fetch products from Firestore (Mostly Unchanged)
+    // --- fetchProducts Function (Show/Hide Spinner added) ---
     const fetchProducts = async (category = 'all') => {
         if (!productListContainer) {
              console.error("Product list container not found on fetch.");
              return;
         }
-        // Show spinner and hide messages
-        productListContainer.innerHTML = `
-            <div class="loading-spinner">
-                <i class="fas fa-spinner fa-spin fa-3x"></i>
-                <p>Loading products...</p>
-            </div>`;
-        if(noProductsMessage) noProductsMessage.style.display = 'none';
+        // Show spinner and hide messages/content
+         if(loadingSpinner) loadingSpinner.style.display = 'flex';
+         productListContainer.innerHTML = ''; // Clear previous products immediately
+         productListContainer.appendChild(loadingSpinner); // Re-append spinner to cleared container
+         if(noProductsMessage) noProductsMessage.style.display = 'none';
 
         try {
             if (!db) {
                 throw new Error("Firestore database instance is not available.");
             }
-            // Query 'onlineProducts' collection
             let productQuery;
             const productsRef = collection(db, "onlineProducts");
-            const constraints = [where("isEnabled", "==", true)]; // Base constraint
+            const constraints = [where("isEnabled", "==", true)];
 
             if (category !== 'all' && category) {
-                 constraints.push(where("category", "==", category)); // Add category constraint if selected
+                 constraints.push(where("category", "==", category));
             }
-            constraints.push(orderBy("productName")); // Always order by name
+            constraints.push(orderBy("productName"));
 
-            productQuery = query(productsRef, ...constraints); // Build the query
+            productQuery = query(productsRef, ...constraints);
 
             const querySnapshot = await getDocs(productQuery);
             const products = [];
             querySnapshot.forEach((doc) => {
-                // Basic validation before pushing
                 if (doc.exists() && doc.data().productName) {
                      products.push({ id: doc.id, ...doc.data() });
                 } else {
@@ -138,42 +132,40 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             });
 
-            renderProducts(products); // Pass fetched products to the updated render function
+             if(loadingSpinner) loadingSpinner.style.display = 'none'; // Hide spinner BEFORE rendering
+             renderProducts(products); // Render fetched products
 
         } catch (error) {
             console.error("Error fetching products: ", error);
-            productListContainer.innerHTML = `<div class="message-box error" style="grid-column: 1 / -1;"><p>Failed to load products. Please check your connection or try again later. Error: ${error.message}</p></div>`;
-            if(noProductsMessage) noProductsMessage.style.display = 'none'; // Hide 'no products' message if error occurs
+             if(loadingSpinner) loadingSpinner.style.display = 'none'; // Hide spinner on error
+             // Display error message within the container
+             productListContainer.innerHTML = `<div class="message-box error" style="grid-column: 1 / -1;"><p>Failed to load products. Please check your connection or try again later. Error: ${error.message}</p></div>`;
+            if(noProductsMessage) noProductsMessage.style.display = 'none';
         }
     };
 
-     // Fetch and populate categories for the filter (Mostly Unchanged)
+     // --- populateCategoryFilter Function (Unchanged) ---
      const populateCategoryFilter = async () => {
         if (!categoryFilter || !db) {
             console.log("Category filter element or DB not available.");
-            return; // Exit if filter dropdown or db doesn't exist
+            return;
         }
         try {
             const categoriesRef = collection(db, "onlineProducts");
-            // Query only enabled products to get relevant categories
             const q = query(categoriesRef, where("isEnabled", "==", true));
             const snapshot = await getDocs(q);
             const uniqueCategories = new Set();
             snapshot.forEach(doc => {
                 const category = doc.data().category;
-                // Add category only if it's a non-empty string
                 if (category && typeof category === 'string' && category.trim() !== '') {
                     uniqueCategories.add(category.trim());
                 }
             });
 
-            // Sort categories alphabetically before adding
             const sortedCategories = Array.from(uniqueCategories).sort();
 
-            // Clear existing options except the first 'All Categories' one
-            // categoryFilter.innerHTML = '<option value="all">All Categories</option>'; // Alternative way to clear
-
-            // Add sorted categories to the dropdown
+            // Add sorted categories to the dropdown (start from index 1 to keep 'All Categories')
+            categoryFilter.options.length = 1; // Keep only the first option
             sortedCategories.forEach(category => {
                 const option = document.createElement('option');
                 option.value = category;
@@ -183,12 +175,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
         } catch (error) {
             console.error("Error fetching categories:", error);
-            // Optionally disable the filter or show a message
-            // categoryFilter.disabled = true;
         }
      };
 
-    // Event listener for category filter change (Unchanged)
+    // --- Event listener for category filter change (Unchanged) ---
     if (categoryFilter) {
         categoryFilter.addEventListener('change', (event) => {
             fetchProducts(event.target.value); // Fetch products for selected category
@@ -197,10 +187,72 @@ document.addEventListener('DOMContentLoaded', () => {
         console.log("Category filter element not found.");
     }
 
-    // Initial setup
-    if (typeof updateCartCount === 'function') {
-        updateCartCount(); // Update cart count if function exists
+    // --- NEW: Featured Product Slider Logic ---
+    const featuredSlidersData = {
+        'slider-flex-banner': [
+            'https://i.ibb.co/ZRwV0sx5/2.jpg',
+            'https://i.ibb.co/1Gxw1pVv/1.jpg',
+            'https://i.ibb.co/4GYgD4t/3.jpg'
+        ],
+        'slider-wedding-card': [
+            'https://i.ibb.co/XZDSGBQH/3.jpg',
+            'https://i.ibb.co/dwkTVrht/2.jpg',
+            'https://i.ibb.co/xtNQ1wTr/1.jpg'
+        ]
+        // Add more sliders here if needed
+        // 'slider-id': ['img1.jpg', 'img2.jpg']
+    };
+
+    function initializeSlider(sliderId, images) {
+        const sliderElement = document.getElementById(sliderId);
+        if (!sliderElement || images.length === 0) {
+            console.warn(`Slider element #${sliderId} not found or no images provided.`);
+            return;
+        }
+
+        // Add images to the slider
+        images.forEach((imgUrl, index) => {
+            const img = document.createElement('img');
+            img.src = imgUrl;
+            img.alt = `${sliderId.replace('slider-', '')} image ${index + 1}`;
+             // Add 'active' class to the first image
+            if (index === 0) {
+                img.classList.add('active');
+            }
+            sliderElement.appendChild(img);
+        });
+
+        let currentSlide = 0;
+        const slides = sliderElement.querySelectorAll('img');
+        const slideInterval = 3000; // Time in ms (3 seconds)
+
+        function nextSlide() {
+            slides[currentSlide].classList.remove('active');
+            currentSlide = (currentSlide + 1) % slides.length;
+            slides[currentSlide].classList.add('active');
+        }
+
+        // Start auto-sliding only if there's more than one image
+        if (slides.length > 1) {
+           setInterval(nextSlide, slideInterval);
+        }
     }
+
+    // Initialize all sliders defined in featuredSlidersData
+    for (const sliderId in featuredSlidersData) {
+        initializeSlider(sliderId, featuredSlidersData[sliderId]);
+    }
+    // --- END of Featured Product Slider Logic ---
+
+
+    // --- Initial Setup ---
+    // Update cart count on initial load (assuming function is available)
+    // if (typeof updateCartCount === 'function') {
+    //     updateCartCount();
+    // } else {
+    //     console.warn("updateCartCount function not found for initial load.");
+    // }
+
     populateCategoryFilter(); // Populate filter dropdown
     fetchProducts(); // Fetch all products initially
 });

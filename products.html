@@ -10,7 +10,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
 
     <link rel="stylesheet" href="css/header-footer.css">
-
     <link rel="stylesheet" href="css/products.css">
 
 </head>
@@ -39,12 +38,18 @@
             <h2>Featured Products</h2>
             <div class="featured-grid">
                 <div class="featured-item">
-                    <a href="#"> <img src="https://via.placeholder.com/400x300.png?text=Flex+Banner+Print" alt="Flex Banner"> <h4>Flex Banner Printing</h4>
+                    <div class="featured-slider" id="slider-flex-banner">
+                        </div>
+                    <a href="#">
+                       <h4>Flex Banner Printing</h4>
                     </a>
                 </div>
                 <div class="featured-item">
-                    <a href="#"> <img src="https://via.placeholder.com/400x300.png?text=Wedding+Invitation+Card" alt="Wedding Card"> <h4>Wedding Invitation Cards</h4>
-                    </a>
+                    <div class="featured-slider" id="slider-wedding-card">
+                        </div>
+                     <a href="#">
+                        <h4>Wedding Invitation Cards</h4>
+                     </a>
                 </div>
             </div>
         </section>
@@ -57,11 +62,12 @@
                     <option value="all">All Categories</option>
                     </select>
             </div>
-        </section>
+            </section>
 
         <section class="product-list-section" aria-live="polite">
              <div class="product-list" id="product-list-container">
-                <div class="loading-spinner" id="loading"> <i class="fas fa-spinner fa-spin fa-3x"></i>
+                <div class="loading-spinner" id="loading">
+                    <i class="fas fa-spinner fa-spin fa-3x"></i>
                     <p>Loading products...</p>
                 </div>
                 </div>
@@ -78,6 +84,7 @@
 
     <script src="js/firebase-config.js" type="module"></script>
     <script src="js/main.js" type="module" defer></script>
+    <script src="js/cart.js" type="module" defer></script>
     <script src="js/products.js" type="module" defer></script>
 </body>
 </html>
