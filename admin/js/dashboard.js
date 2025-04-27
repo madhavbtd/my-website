@@ -1,4 +1,4 @@
-// js/dashboard.js (Revised Import & Structure + Updates)
+// js/dashboard.js (Revised Import & Structure + Updates + Online Pending Orders KPI)
 
 // Import initialized db and auth from firebase-init.js
 import { db, auth } from './firebase-init.js';
@@ -29,7 +29,8 @@ const kpiTotalCustomers = document.getElementById('kpi-total-customers');
 const kpiTotalSuppliers = document.getElementById('kpi-total-suppliers');
 const kpiPendingPayments = document.getElementById('kpi-pending-payments');
 const kpiOrdersToday = document.getElementById('kpi-orders-today');
-const kpiPendingPOs = document.getElementById('kpi-pending-pos'); // <<< नया KPI एलिमेंट
+const kpiPendingPOs = document.getElementById('kpi-pending-pos');
+const kpiOnlinePendingOrders = document.getElementById('kpi-online-pending-orders'); // <<< नया KPI एलिमेंट जोड़ा गया
 // Other List Elements
 const recentActivityList = document.getElementById('recent-activity-list');
 const licReminderList = document.getElementById('lic-reminder-list');
@@ -137,6 +138,7 @@ function clearDashboardDataDisplay() {
     if(kpiOrdersToday) showLoading(kpiOrdersToday);
     if(kpiPendingPayments) showLoading(kpiPendingPayments);
     if(kpiPendingPOs) showLoading(kpiPendingPOs);
+    if(kpiOnlinePendingOrders) showLoading(kpiOnlinePendingOrders); // <<< नए KPI को भी क्लियर करें
     if(recentActivityList) showLoading(recentActivityList, 'list');
     if(licReminderList) showLoading(licReminderList, 'list');
     if(upcomingTaskList) showLoading(upcomingTaskList, 'list');
@@ -154,7 +156,8 @@ function clearDashboardDataDisplay() {
 function initializeDashboardDataFetching() {
     console.log("[DEBUG] Initializing data fetching...");
     listenForOrderCounts();
-    loadDashboardKPIs();
+    loadDashboardKPIs(); // स्टैटिक KPIs के लिए
+    listenForOnlineOrderCount(); // <<< ऑनलाइन ऑर्डर काउंट के लिए लिस्नर कॉल करें
     loadRecentActivity();
     loadRemindersAndTasks();
 }
@@ -238,10 +241,40 @@ function listenForOrderCounts() {
     }
 }
 
+// === नया फंक्शन: ऑनलाइन पेंडिंग ऑर्डर काउंट के लिए लिस्नर ===
+function listenForOnlineOrderCount() {
+    const element = kpiOnlinePendingOrders; // उपयोग करने वाला एलिमेंट
+    if (!element) {
+        console.warn("KPI element for online pending orders not found.");
+        return;
+    }
+    showLoading(element); // लोडिंग दिखाएं
 
-// --- Load KPIs (Updated) ---
+    try {
+        const onlineOrdersRef = collection(db, "online_orders");
+        const q = query(onlineOrdersRef); // online_orders कलेक्शन को क्वेरी करें
+
+        onSnapshot(q, (snapshot) => {
+            const count = snapshot.size; // डॉक्यूमेंट्स की संख्या ही काउंट है
+            element.textContent = count.toString(); // टेक्स्ट के रूप में सेट करें
+            console.log(`[DEBUG] Online Pending Orders Count Updated: ${count}`);
+        }, (error) => {
+            console.error("[DEBUG] Error listening to online order counts:", error);
+            if(element) element.textContent = 'Err';
+        });
+    } catch (e) {
+        console.error("Error setting up online orders count listener:", e);
+        if(element) element.textContent = 'Err';
+    }
+}
+// === नया फंक्शन समाप्त ===
+
+// --- Load KPIs (Updated - Online orders count is now handled by listener) ---
 async function loadDashboardKPIs() {
+    // शो लोडिंग केवल उन KPIs के लिए जो यहाँ लोड हो रहे हैं
     showLoading(kpiTotalCustomers); showLoading(kpiTotalSuppliers); showLoading(kpiOrdersToday); showLoading(kpiPendingPayments); showLoading(kpiPendingPOs);
+    // Note: kpiOnlinePendingOrders is handled by its own listener, so no showLoading here for it
+
     try { const custSnapshot = await getDocs(collection(db, "customers")); if (kpiTotalCustomers) kpiTotalCustomers.textContent = custSnapshot.size; } catch (e) { console.error("KPI Error (Cust):", e); if(kpiTotalCustomers) kpiTotalCustomers.textContent = 'Err'; }
     try { const suppSnapshot = await getDocs(collection(db, "suppliers")); if (kpiTotalSuppliers) kpiTotalSuppliers.textContent = suppSnapshot.size; } catch (e) { console.error("KPI Error (Supp):", e); if(kpiTotalSuppliers) kpiTotalSuppliers.textContent = 'Err'; }
     try { const todayStart = new Date(); todayStart.setHours(0, 0, 0, 0); const todayEnd = new Date(); todayEnd.setHours(23, 59, 59, 999); const q = query(collection(db, "orders"), where('createdAt', '>=', Timestamp.fromDate(todayStart)), where('createdAt', '<=', Timestamp.fromDate(todayEnd))); const todaySnapshot = await getDocs(q); if(kpiOrdersToday) kpiOrdersToday.textContent = todaySnapshot.size; } catch (e) { console.error("KPI Error (Orders Today):", e); if(kpiOrdersToday) kpiOrdersToday.textContent = 'Err'; }
@@ -253,6 +286,7 @@ async function loadDashboardKPIs() {
         if (kpiPendingPayments) { kpiPendingPayments.textContent = `₹ ${totalPendingAmount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`; } console.log(`[DEBUG] Total Pending Payments Calculated: ₹ ${totalPendingAmount}`);
     } catch (e) { console.error("KPI Error (Pending Payments):", e); if(kpiPendingPayments) kpiPendingPayments.textContent = '₹ Err'; }
     try { const poQuery = query(collection(db, "purchaseOrders"), where('status', '==', 'Pending')); const poSnapshot = await getDocs(poQuery); const pendingPoCount = poSnapshot.size; if (kpiPendingPOs) { kpiPendingPOs.textContent = pendingPoCount; } console.log(`[DEBUG] Pending POs Count: ${pendingPoCount}`); } catch (e) { console.error("KPI Error (Pending POs):", e); if(kpiPendingPOs) kpiPendingPOs.textContent = 'Err'; }
+    // <<< ऑनलाइन ऑर्डर काउंट अब यहाँ से लोड नहीं होगा, लिस्नर करेगा >>>
 }
 
 // --- Load Recent Activity ---
@@ -577,4 +611,4 @@ function formatTimeAgo(date) {
   return years + "y ago";
 }
 
-console.log("dashboard.js (with firebase-init import and updates) script loaded.");
+console.log("dashboard.js (with firebase-init import and updates + online orders listener) script loaded."); // Log message updated

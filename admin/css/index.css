@@ -1,4 +1,4 @@
-/* css/index.css - Updates for Professional Look & New Features */
+/* css/index.css - Updates for Professional Look & New Features (with fixes) */
 
 /* --- Base Variables (Keep existing, maybe refine colors) --- */
 :root {
@@ -113,11 +113,12 @@ body {
 .card-layout ul li strong { color: var(--text-color); }
 .card-layout .loading-placeholder { color: #aaa; font-style: italic; }
 
-/* --- KPI Section Improvements (Updated) --- */
+/* === KPI Section Improvements (Updated for new column) === */
 .kpi-section {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-    gap: 20px;
+    /* कॉलम की न्यूनतम चौड़ाई कम की गई और गैप कम किया गया */
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 15px; /* गैप 20px से 15px किया गया */
     margin-bottom: 25px;
 }
 
@@ -165,6 +166,10 @@ body {
 .kpi-card:nth-child(4) .kpi-icon { color: var(--warning-color); } /* Orders Today */
 .kpi-card:nth-child(5) { border-left-color: var(--purple-color); }
 .kpi-card:nth-child(5) .kpi-icon { color: var(--purple-color); } /* Pending POs */
+/* नया ऑनलाइन ऑर्डर कार्ड के लिए (6ठा कार्ड) */
+.kpi-card:nth-child(6) { border-left-color: var(--secondary-color); }
+.kpi-card:nth-child(6) .kpi-icon { color: var(--secondary-color); } /* Online Pending Orders */
+/* === KPI Section समाप्त === */
 
 /* --- Order Control Panel Improvements (Updated) --- */
 .order-control-panel {
@@ -364,7 +369,7 @@ body {
 
 /* --- Responsive --- */
 @media (max-width: 1200px) {
-     .kpi-section { grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); }
+     .kpi-section { grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); } /* Already updated */
      .order-control-panel { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
      .dashboard-grid { grid-template-columns: 1fr; }
 }
@@ -387,11 +392,28 @@ body {
     .container { flex-direction: column; }
     .sidebar { width: 100%; min-height: auto; height: auto; flex-direction: row; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.1); position: static; overflow: visible; padding-top: 0; z-index: 1000; }
     .sidebar:hover { width: 100%; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-    .sidebar h2 { padding: 5px 15px; flex-shrink: 0; border-bottom: none; }
+    .sidebar h2 {
+        padding: 5px 15px; flex-shrink: 0; border-bottom: none;
+        /* === मोबाइल साइडबार फिक्स: z-index और मार्जिन === */
+        position: relative;
+        z-index: 1;
+        margin-right: 10px; /* लिंक्स से थोड़ी दूरी */
+    }
     .sidebar h2 img { max-width: 120px; }
-    .sidebar ul { display: flex; overflow-x: auto; flex-grow: 1; padding: 0 5px; justify-content: flex-start; border-top: none; position: relative; z-index: 1; }
+    .sidebar ul {
+        display: flex; overflow-x: auto; flex-grow: 1; padding: 0 5px; justify-content: flex-start; border-top: none;
+        /* === मोबाइल साइडबार फिक्स: z-index === */
+        position: relative; /* z-index के लिए आवश्यक */
+        z-index: 2; /* लोगो के ऊपर लाने के लिए */
+    }
     .sidebar ul li { flex-shrink: 0; margin-top: 0; } .sidebar ul li:last-child { margin-top: 0; }
-    .sidebar ul li a { padding: 12px 10px; border-left: none; border-bottom: 3px solid transparent; white-space: nowrap; justify-content: center; pointer-events: auto !important; z-index: 2 !important; position: relative; }
+    .sidebar ul li a {
+        padding: 12px 10px; border-left: none; border-bottom: 3px solid transparent; white-space: nowrap; justify-content: center;
+        /* === मोबाइल साइडबार फिक्स: pointer-events और z-index हटाया गया === */
+        /* pointer-events: auto !important; */
+        /* z-index: 2 !important; */
+        position: relative; /* क्लिक के लिए आवश्यक हो सकता है, लेकिन z-index ul पर है */
+    }
     .sidebar ul li a i { margin-right: 5px; } .sidebar ul li a span { display: inline; }
     .sidebar ul li a:hover { padding-left: 10px; background-color: var(--sidebar-hover); }
     .sidebar ul li a.active { border-left: none; border-bottom-color: var(--sidebar-active-border); background-color: transparent; color: var(--sidebar-active-border); font-weight: 600; }
@@ -434,7 +456,10 @@ body {
         border: 1px solid var(--border-color);
     }
 
-    .kpi-section { gap: 15px; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); }
+    .kpi-section {
+        gap: 15px; /* यहाँ पहले से ही 15px था, ठीक है */
+        grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); /* छोटे स्क्रीन पर कॉलम थोड़े और छोटे */
+    }
     .kpi-card { padding: 15px 10px; min-height: 100px; border-left-width: 3px; }
     .kpi-icon { font-size: 1.6em; margin-bottom: 8px; }
     .kpi-value { font-size: 1.5em; }
@@ -452,7 +477,7 @@ body {
      body { font-size: 14px; } .main-content { padding: 10px; gap: 15px;}
      .header-buttons { flex-direction: column; align-items: stretch;} .button-base { justify-content: center; }
 
-     .kpi-section { grid-template-columns: 1fr 1fr; }
+     .kpi-section { grid-template-columns: 1fr 1fr; } /* सबसे छोटी स्क्रीन पर 2 कॉलम */
      .order-control-panel { grid-template-columns: 1fr 1fr; }
 
      .panel-item { min-height: 120px; padding: 12px 8px;}
