@@ -116,7 +116,7 @@ const loadOrders = async () => {
                 <td>${formatTimestamp(order.createdAt)}</td>
                 <td>${escapeHtml(customerName)}</td>
                 <td>${escapeHtml(customerContact)}</td>
-                <td>${formatCurrency(order.subtotal)}</td>
+                <td>${formatCurrency(order.totalAmount)}</td>
                 <td>${itemsSummary}</td>
                 <td>
                     <button class="btn btn-sm btn-view" data-id="${orderId}" title="View Details"><i class="fas fa-eye"></i></button>
