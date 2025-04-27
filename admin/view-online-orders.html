@@ -3,66 +3,110 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>View Online Orders</title>
+    <title>View Online Orders - Admin</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <link rel="stylesheet" href="view-online-orders.css">
+    <link rel="stylesheet" href="css/view-online-orders.css">
+     <link rel="preconnect" href="https://fonts.googleapis.com">
+     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+     <script type="module">
+         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+         import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+         import { getFirestore, collection, doc, getDoc, deleteDoc, updateDoc, onSnapshot, query, orderBy, where, Timestamp, arrayUnion, writeBatch, serverTimestamp, limit, addDoc, getDocs, runTransaction } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+         const firebaseConfig = {
+           apiKey: "AIzaSyBQj5rQmE77kKKGYixP8y3Hcimz8tiAqzQ", // आपकी Key डालें
+           authDomain: "madhav-multyprint.firebaseapp.com",
+           projectId: "madhav-multyprint",
+           storageBucket: "madhav-multyprint.appspot.com",
+           messagingSenderId: "104988349637",
+           appId: "1:104988349637:web:faf045b77c6786a4e70cac"
+         };
+
+         let app, auth, db;
+         try {
+             if (!window.firebaseAppInitialized) {
+                 app = initializeApp(firebaseConfig);
+                 window.firebaseAppInitialized = true;
+                 window.firebaseApp = app;
+                 console.log("Firebase initialized on view-online-orders.html.");
+             } else {
+                 app = window.firebaseApp;
+                 console.log("Firebase already initialized on view-online-orders.html.");
+             }
+             auth = getAuth(app);
+             db = getFirestore(app);
+
+             // Make services globally available
+             window.db = db; window.auth = auth; window.collection = collection;
+             window.doc = doc; window.getDoc = getDoc; window.deleteDoc = deleteDoc;
+             window.updateDoc = updateDoc; window.onSnapshot = onSnapshot; window.query = query;
+             window.orderBy = orderBy; window.where = where; window.Timestamp = Timestamp;
+             window.arrayUnion = arrayUnion; window.writeBatch = writeBatch; window.serverTimestamp = serverTimestamp;
+             window.limit = limit; window.addDoc = addDoc; window.getDocs = getDocs; window.runTransaction = runTransaction; // <-- Transaction जोड़ा गया
+
+             onAuthStateChanged(auth, (user) => {
+                 if (!user && !window.location.pathname.endsWith('login.html')) {
+                     console.log("User not logged in, redirecting...");
+                     window.location.replace('login.html'); // एडमिन फोल्डर से बाहर जाने के लिए ../ लगाएं
+                 }
+             });
+             window.getCurrentUser = () => auth.currentUser;
+         } catch(e) { console.error("Firebase setup error:", e); alert("Error loading application."); }
+     </script>
+
 </head>
 <body>
     <header class="admin-header">
-        <h1>Admin Panel - View Online Orders</h1>
-        <nav>
-            <a href="manage-online-products.html">Manage Online Products</a>
-             <a href="/">View Website</a>
-        </nav>
+        <h1><i class="fas fa-cloud-download-alt"></i> Online Orders</h1>
+         <nav>
+             <a href="index.html"><i class="fas fa-home"></i> Dashboard</a>
+             <a href="order_history.html"><i class="fas fa-history"></i> Order History</a>
+             <a href="customer_management.html"><i class="fas fa-users"></i> Customers</a>
+             </nav>
     </header>
 
     <main class="admin-container">
-        <h2>Incoming Online Orders</h2>
+        <h2><i class="fas fa-inbox"></i> Incoming Online Orders</h2>
+        <p class="page-description">Review new orders from the website here. Click 'Process' to move them to the main Order History and create customer records if needed.</p>
+
         <div class="table-container">
             <table id="orders-table">
                 <thead>
                     <tr>
-                        <th>Order ID</th>
+                        <th>Order ID (Online)</th>
                         <th>Date</th>
                         <th>Customer Name</th>
+                        <th>WhatsApp</th>
                         <th>Total (₹)</th>
-                        <th>Status</th>
-                        <th>Payment</th>
+                        <th>Items</th>
+                        {/* Status अपडेट अब प्रोसेस के बाद होगा */}
                         <th>Actions</th>
                     </tr>
                 </thead>
                 <tbody id="orders-tbody">
-                    <tr><td colspan="7">Loading orders...</td></tr>
+                    <tr><td colspan="7" id="loading-message">Loading orders...</td></tr>
                 </tbody>
             </table>
         </div>
 
-        <div id="order-detail-modal" class="modal" style="display: none;">
+        <div id="order-detail-modal" class="modal">
             <div class="modal-content">
-                <span class="close-modal-btn">&times;</span>
-                <h2>Order Details</h2>
+                <span class="close-modal-btn" title="Close">&times;</span>
+                <h2>Online Order Details</h2>
                 <div id="order-detail-content">
                     <p>Loading details...</p>
                 </div>
-                 <div class="form-group">
-                    <label for="order-status-update">Update Status:</label>
-                    <select id="order-status-update">
-                         <option value="New">New</option>
-                         <option value="Processing">Processing</option>
-                         <option value="Printing">Printing</option>
-                         <option value="Shipped">Shipped</option>
-                         <option value="Delivered">Delivered</option>
-                         <option value="Cancelled">Cancelled</option>
-                    </select>
-                    <button id="update-status-btn" class="btn btn-primary btn-sm">Update</button>
-                    <p id="status-update-message" class="message small"></p>
+                 <div class="modal-actions">
+                    <button type="button" class="button cancel-button close-modal-bottom-btn">Close</button>
                  </div>
             </div>
         </div>
 
     </main>
 
-    <script src="../js/firebase-config.js" type="module"></script>
     <script src="js/view-online-orders.js" type="module"></script>
+
 </body>
 </html>
