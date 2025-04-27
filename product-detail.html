@@ -3,14 +3,43 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Product Details - Madhav Multiprint</title> <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <title>Product Details - Madhav Multiprint</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
 
-    <link rel="stylesheet" href="css/header-footer.css">
-    <link rel="stylesheet" href="css/product-detail.css">
+    <link rel="stylesheet" href="https://unpkg.com/swiper/swiper-bundle.min.css" />
 
+    <link rel="stylesheet" href="css/header-footer.css">
+    <link rel="stylesheet" href="css/product-detail.css"> <script type="application/ld+json" id="product-schema">
+    {
+      "@context": "https://schema.org/",
+      "@type": "Product",
+      "name": "Loading...",
+      "image": [],
+      "description": "Loading...",
+      "sku": "Loading...", // Optional: Add SKU if available
+      "brand": { // Optional: Add Brand
+        "@type": "Brand",
+        "name": "Madhav Multiprint"
+      },
+      "offers": {
+        "@type": "Offer",
+        "url": "", // URL of the product page
+        "priceCurrency": "INR",
+        "price": "0", // Needs to be updated dynamically
+        "availability": "https://schema.org/InStock", // Default, update if needed (e.g., OutOfStock) - Suggestion #11 was excluded, but schema needs it.
+        "itemCondition": "https://schema.org/NewCondition"
+      },
+      "aggregateRating": { // Populate dynamically from reviews
+        "@type": "AggregateRating",
+        "ratingValue": "0",
+        "reviewCount": "0"
+      },
+      "review": [] // Populate dynamically with reviews
+    }
+    </script>
 </head>
 <body>
     <header>
@@ -40,13 +69,14 @@
         </nav>
 
         <div id="product-detail-container" class="product-detail-layout">
-            <div class="loading-indicator" style="display: flex;"> <p>Loading product details...</p>
+            <div class="loading-indicator" style="display: flex;">
+                <p>Loading product details...</p>
                 <i class="fas fa-spinner fa-spin fa-2x"></i>
-            </div>
+                </div>
 
             <div class="product-content" style="display: none;">
                 <div class="product-image-gallery">
-                    <div class="main-image">
+                     <div class="main-image">
                         <img id="main-product-image" src="images/placeholder.png" alt="Product Image">
                     </div>
                     <div class="thumbnail-images" id="thumbnail-images">
@@ -56,8 +86,9 @@
                 <div class="product-info-details">
                     <h1 id="product-name">Product Name</h1>
                     <div id="product-price" class="price">Loading Price...</div>
+
                     <div class="product-description-short">
-                        <p id="product-description">Loading description...</p>
+                        <p id="product-description-short">Loading short description...</p>
                     </div>
 
                     <div id="flex-inputs-container" style="display: none;" class="product-options flex-options">
@@ -77,18 +108,26 @@
                                   <option value="inches">Inches</option>
                               </select>
                          </div>
-                         <div class="form-group-inline">
+                         <div class="form-group-inline quantity-control-group">
                              <label for="banner-quantity">Quantity:</label>
-                             <input type="number" id="banner-quantity" name="banner_quantity" value="1" min="1" class="quantity-input">
+                             <div class="quantity-input-wrapper">
+                                <button type="button" class="quantity-btn quantity-decrease" aria-label="Decrease quantity">-</button>
+                                <input type="number" id="banner-quantity" name="banner_quantity" value="1" min="1" class="quantity-input">
+                                <button type="button" class="quantity-btn quantity-increase" aria-label="Increase quantity">+</button>
+                             </div>
                          </div>
                     </div>
 
                     <div id="wedding-quantity-container" style="display: none;" class="product-options wedding-options">
-                        </div>
+                         </div>
 
                     <div id="standard-quantity-container" style="display: none;" class="product-options standard-options">
                         <label for="quantity">Quantity:</label>
-                        <input type="number" id="quantity" name="quantity" value="1" min="1" class="quantity-input">
+                         <div class="quantity-input-wrapper">
+                            <button type="button" class="quantity-btn quantity-decrease" aria-label="Decrease quantity">-</button>
+                            <input type="number" id="quantity" name="quantity" value="1" min="1" class="quantity-input">
+                            <button type="button" class="quantity-btn quantity-increase" aria-label="Increase quantity">+</button>
+                         </div>
                     </div>
 
                     <div class="product-actions">
@@ -96,29 +135,102 @@
                          <p id="cart-feedback" class="cart-feedback-message" aria-live="polite"></p>
                     </div>
 
-                    <div class="product-specifications">
-                        <h2>Specifications</h2>
-                        <ul id="product-specs">
-                            <li>Loading specifications...</li>
-                        </ul>
-                    </div>
+                     <div class="social-sharing">
+                         <span>Share:</span>
+                         <a href="#" class="social-icon" aria-label="Share on Facebook"><i class="fab fa-facebook-f"></i></a>
+                         <a href="#" class="social-icon" aria-label="Share on Twitter"><i class="fab fa-twitter"></i></a>
+                         <a href="#" class="social-icon" aria-label="Share on WhatsApp"><i class="fab fa-whatsapp"></i></a>
+                         </div>
                 </div>
-            </div> <div id="error-message-container" class="message-box error" style="display: none;"></div>
-        </div> <section id="related-products-section" class="related-products" style="margin-top: 50px; display: none;"> <h2 class="section-title"><i class="fas fa-tags"></i> Related Products</h2>
-             <div id="related-products-grid" class="product-list">
-                 <p>Loading related products...</p>
-             </div>
-        </section>
+            </div>
 
-         <section id="customer-reviews-section" class="customer-reviews" style="margin-top: 50px; display: none;"> <h2 class="section-title"><i class="fas fa-comments"></i> Customer Reviews</h2>
-             <div id="reviews-list">
-                 <p>No reviews yet.</p>
-             </div>
-             <div id="add-review-form-container" style="margin-top: 30px;">
+            <div id="error-message-container" class="message-box error" style="display: none;"></div>
+
+            <div class="product-details-tabs" style="margin-top: 40px;">
+                 <ul class="tabs-nav">
+                     <li><a href="#tab-description" class="active">Description</a></li>
+                     <li><a href="#tab-specifications">Specifications</a></li>
+                     <li><a href="#tab-reviews">Reviews (<span id="review-count">0</span>)</a></li>
+                     <li><a href="#tab-usage">Usage & Care</a></li>
+                     <li><a href="#tab-faq">FAQs</a></li>
+                 </ul>
+
+                 <div class="tabs-content">
+                     <div id="tab-description" class="tab-pane active">
+                         <h2>Product Description</h2>
+                         <p id="product-description-full">Loading full description...</p>
+                     </div>
+
+                     <div id="tab-specifications" class="tab-pane">
+                         <h2>Specifications</h2>
+                          <ul id="product-specs">
+                             <li>Loading specifications...</li>
+                         </ul>
+                     </div>
+
+                     <div id="tab-reviews" class="tab-pane">
+                         <h2>Customer Reviews</h2>
+                         <div class="reviews-summary" style="margin-bottom: 20px;">
+                            Average Rating: <span id="average-rating">N/A</span>
+                         </div>
+                         <div id="reviews-list">
+                             <p>No reviews yet. Be the first!</p>
+                             </div>
+                         <div id="add-review-form-container" style="margin-top: 30px;">
+                             <h3>Write a Review</h3>
+                             <form id="review-form">
+                                 <div class="form-group">
+                                     <label for="reviewer-name">Name:</label>
+                                     <input type="text" id="reviewer-name" name="reviewer_name" required>
+                                 </div>
+                                 <div class="form-group">
+                                     <label>Rating:</label>
+                                     <div class="star-rating">
+                                        <input type="radio" id="star5" name="rating" value="5" /><label for="star5" title="5 stars"></label>
+                                        <input type="radio" id="star4" name="rating" value="4" /><label for="star4" title="4 stars"></label>
+                                        <input type="radio" id="star3" name="rating" value="3" /><label for="star3" title="3 stars"></label>
+                                        <input type="radio" id="star2" name="rating" value="2" /><label for="star2" title="2 stars"></label>
+                                        <input type="radio" id="star1" name="rating" value="1" /><label for="star1" title="1 star"></label>
+                                     </div>
+                                 </div>
+                                  <div class="form-group">
+                                     <label for="review-comment">Comment:</label>
+                                     <textarea id="review-comment" name="review_comment" rows="4" required></textarea>
+                                 </div>
+                                 <button type="submit" class="button-secondary">Submit Review</button>
+                                 <p id="review-feedback" style="margin-top: 10px; display: none;"></p>
+                             </form>
+                         </div>
+                     </div>
+
+                      <div id="tab-usage" class="tab-pane">
+                         <h2>Usage & Care Instructions</h2>
+                         <p id="usage-care-info">Loading usage and care information...</p>
+                          </div>
+
+                     <div id="tab-faq" class="tab-pane">
+                         <h2>Frequently Asked Questions</h2>
+                         <div id="faq-list">
+                            <p>Loading FAQs...</p>
+                            </div>
+                     </div>
+
                  </div>
+            </div>
+
+        </div> <section id="related-products-section" class="related-products container" style="margin-top: 50px; display: none;">
+             <h2 class="section-title"><i class="fas fa-tags"></i> Related Products</h2>
+             <div class="swiper related-products-swiper">
+                 <div class="swiper-wrapper" id="related-products-container">
+                     <div class="swiper-slide"><p>Loading related products...</p></div>
+                 </div>
+                 <div class="swiper-pagination"></div>
+                 <div class="swiper-button-next"></div>
+                 <div class="swiper-button-prev"></div>
+             </div>
          </section>
 
-         </main>
+    </main>
 
     <footer>
         <div class="container">
@@ -127,9 +239,8 @@
         </div>
     </footer>
 
+    <script src="https://unpkg.com/swiper/swiper-bundle.min.js"></script>
+
     <script src="js/firebase-config.js" type="module"></script>
-    <script src="js/main.js" type="module" defer></script>
-    <script src="js/cart.js" type="module" defer></script>
-    <script src="js/product-detail.js" type="module" defer></script>
-</body>
+    <script src="js/main.js" type="module" defer></script> <script src="js/cart.js" type="module" defer></script> <script src="js/product-detail.js" type="module" defer></script> </body>
 </html>
