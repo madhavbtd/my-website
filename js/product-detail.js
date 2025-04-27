@@ -155,12 +155,12 @@ function updateProductSchema(productData, reviewsData = { average: 0, count: 0, 
     // **Error Check 1: Make sure the script tag exists**
     if (!productSchemaScript) {
         console.error("Schema update failed: Script tag with id 'product-schema' not found in HTML.");
-        return;
+        return; // Exit if script tag not found
     }
      // **Error Check 2: Make sure product data is valid**
     if (!productData || !productData.productName) {
-         console.error("Schema update failed: Invalid product data provided.");
-         return;
+         console.warn("Schema update skipped: Invalid product data provided."); // Use warn instead of error maybe
+         return; // Exit if product data invalid
     }
 
     // Define the base schema structure
@@ -174,7 +174,7 @@ function updateProductSchema(productData, reviewsData = { average: 0, count: 0, 
         "brand": { "@type": "Brand", "name": "Madhav Multiprint" },
         "offers": { // Define offers object
             "@type": "Offer",
-            "url": window.location.href, // Set URL here
+            // url will be set below after checking 'offers'
             "priceCurrency": "INR",
             "price": productData.pricing?.rate ?? "0", // Default price
             "availability": productData.isEnabled ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
@@ -194,24 +194,26 @@ function updateProductSchema(productData, reviewsData = { average: 0, count: 0, 
         }))
     };
 
-    // Adjust offer price based on product type (Example)
+    // Adjust offer price based on product type and set URL
     const category = productData.category?.toLowerCase() || '';
-    if (schema.offers) { // Check if offers exists before modifying
+    if (schema.offers) { // **Error Check 3: Ensure schema.offers exists**
+        // Set URL now that we know schema.offers is defined
+        schema.offers.url = window.location.href;
+
+        // Adjust price
         if (category.includes('flex') && productData.pricing?.minimumOrderValue) {
             schema.offers.price = productData.pricing.minimumOrderValue;
         } else if (category.includes('wedding')) {
             schema.offers.price = productData.pricing?.rate; // Base rate example
-            // Optionally add priceSpecification for complex pricing
         }
     } else {
-        console.error("Schema offers object is unexpectedly undefined during price adjustment!");
+        // This case should ideally not happen based on schema definition above, but good to log if it does.
+        console.error("Schema offers object is unexpectedly undefined when trying to set URL/price!");
     }
-
 
     // Update the script tag content
     try {
         productSchemaScript.textContent = JSON.stringify(schema, null, 2);
-        // console.log("DEBUG: Schema script updated successfully."); // Optional success log
     } catch (e) {
         console.error("Error updating schema script content:", e);
     }
@@ -265,10 +267,10 @@ async function loadProductDetails(productId) {
                     updateFlexPrice();
                 }
             } else if (category.includes('wedding')) {
-                if (weddingQuantityContainer && currentProductData.options?.find(opt => opt.name?.toLowerCase() === 'quantity')?.values) {
-                    const quantityOption = currentProductData.options.find(opt => opt.name.toLowerCase() === 'quantity');
+                const quantityOptionData = currentProductData.options?.find(opt => opt.name?.toLowerCase() === 'quantity');
+                if (weddingQuantityContainer && quantityOptionData?.values) { // Check if container and data exist
                     const select = document.createElement('select'); select.id = 'wedding-quantity-select'; select.name = 'wedding_quantity'; select.innerHTML = `<option value="">-- Select Quantity --</option>`;
-                    quantityOption.values.forEach(val => { select.innerHTML += `<option value="${val}">${val}</option>`; });
+                    quantityOptionData.values.forEach(val => { select.innerHTML += `<option value="${val}">${val}</option>`; });
                     const label = document.createElement('label'); label.htmlFor = 'wedding-quantity-select'; label.textContent = 'Select Quantity:';
                     weddingQuantityContainer.innerHTML = ''; // Clear previous
                     weddingQuantityContainer.appendChild(label); weddingQuantityContainer.appendChild(select);
@@ -299,16 +301,16 @@ async function loadProductDetails(productId) {
             loadingIndicator.style.display = 'none';
 
             // --- Load Reviews & Related Products ---
-            // Wrap async calls that depend on each other if needed, or use Promise.all
             let reviewsData = { average: 0, count: 0, reviews: [] }; // Default value
             try {
-                reviewsData = await loadReviews(productId); // Load reviews
+                // Attempt to load reviews, but catch errors locally
+                reviewsData = await loadReviews(productId);
             } catch (reviewError) {
-                 console.error("Error caught during loadReviews call:", reviewError);
-                 // Use default reviewsData if loading fails, schema update will proceed
+                 console.error("Error loading reviews (caught in loadProductDetails):", reviewError);
+                 // Use default reviewsData, error message shown by loadReviews itself
             }
 
-            // Update schema only AFTER product data is confirmed and reviews attempted
+            // Update schema using potentially updated reviewsData
             updateProductSchema(currentProductData, reviewsData);
 
             // Load related products
@@ -323,10 +325,9 @@ async function loadProductDetails(productId) {
             showError("Product not found.");
         }
     } catch (error) {
-        // Catch errors during the main product loading phase
-        console.error("Error loading product details in main block: ", error);
-        // Pass the specific error message part if available
+        console.error("Error in loadProductDetails main block: ", error);
         const specificError = error.message ? `: ${error.message}` : '';
+        // Use the generic function to display the error
         showError(`Failed to load product details${specificError}`);
     }
 }
@@ -346,17 +347,12 @@ async function loadRelatedProducts(currentProductId, category) {
                  let imageUrl = product.imageUrls?.[0] || 'images/placeholder.png';
                  let priceHTML = 'Contact for Price';
                  const hasPrice = product.pricing && typeof product.pricing.rate !== 'undefined' && product.pricing.rate !== null;
-                 if (hasPrice) {
-                     const rate = product.pricing.rate; const unit = product.unit || 'Qty';
-                     if (unit.toLowerCase() === 'sq feet') { priceHTML = `From ${formatIndianCurrency(rate)} / sq ft`; }
-                     else { priceHTML = `${formatIndianCurrency(rate)} / ${unit}`; }
-                 }
+                 if (hasPrice) { const rate = product.pricing.rate; const unit = product.unit || 'Qty'; if (unit.toLowerCase() === 'sq feet') { priceHTML = `From ${formatIndianCurrency(rate)} / sq ft`; } else { priceHTML = `${formatIndianCurrency(rate)} / ${unit}`; } }
                  slide.innerHTML = `
                     <div class="product-card">
                         <div class="product-image-container"><a href="product-detail.html?id=${product.id}"><img src="${imageUrl}" alt="${product.productName || 'Product'}" loading="lazy"></a></div>
                         <div class="product-info">
-                             <h3><a href="product-detail.html?id=${product.id}">${product.productName || 'Unnamed'}</a></h3>
-                             <div class="price">${priceHTML}</div>
+                             <h3><a href="product-detail.html?id=${product.id}">${product.productName || 'Unnamed'}</a></h3> <div class="price">${priceHTML}</div>
                             <a href="product-detail.html?id=${product.id}" class="button-primary view-details-btn">View Details</a>
                         </div>
                     </div>`;
@@ -367,9 +363,7 @@ async function loadRelatedProducts(currentProductId, category) {
              if (typeof Swiper !== 'undefined') {
                  relatedProductsSwiper = new Swiper('.related-products-swiper', {
                     loop: relatedProducts.length > 5, slidesPerView: 2, spaceBetween: 15,
-                    autoplay: { delay: 4000, disableOnInteraction: false, },
-                    pagination: { el: '.swiper-pagination', clickable: true, },
-                    navigation: { nextEl: '.swiper-button-next', prevEl: '.swiper-button-prev', },
+                    autoplay: { delay: 4000, disableOnInteraction: false, }, pagination: { el: '.swiper-pagination', clickable: true, }, navigation: { nextEl: '.swiper-button-next', prevEl: '.swiper-button-prev', },
                     breakpoints: { 640: { slidesPerView: 3, spaceBetween: 20 }, 768: { slidesPerView: 4, spaceBetween: 25 }, 1024: { slidesPerView: 5, spaceBetween: 30 } }
                  });
              } else { console.error("Swiper is not defined. Make sure Swiper library is loaded BEFORE this script."); }
@@ -386,7 +380,7 @@ async function loadReviews(productId) {
          const q = query(reviewsRef, orderBy("createdAt", "desc"));
          const querySnapshot = await getDocs(q);
          if (!querySnapshot.empty) {
-             reviewsListEl.innerHTML = ''; // Clear loading
+             reviewsListEl.innerHTML = '';
              querySnapshot.forEach((doc) => {
                  const review = { id: doc.id, ...doc.data() }; fetchedReviews.push(review);
                  const reviewItem = document.createElement('div'); reviewItem.className = 'review-item';
@@ -397,20 +391,15 @@ async function loadReviews(productId) {
              });
              const averageRating = reviewCount > 0 ? totalRating / reviewCount : 0;
              averageRatingEl.textContent = `${averageRating.toFixed(1)} / 5`; reviewCountEl.textContent = reviewCount;
-             return { average: averageRating, count: reviewCount, reviews: fetchedReviews };
+             return { average: averageRating, count: reviewCount, reviews: fetchedReviews }; // Return fetched data
          } else { reviewsListEl.innerHTML = '<p>No reviews yet. Be the first!</p>'; averageRatingEl.textContent = 'N/A'; reviewCountEl.textContent = '0'; return { average: 0, count: 0, reviews: [] }; }
      } catch (error) {
-         console.error("Error loading reviews:", error); // Log the specific error
-         // **Display permission error message specifically**
-         if (error.code === 'permission-denied' || error.message.includes('permission')) {
-              reviewsListEl.innerHTML = '<p>Could not load reviews due to permission issues. Please check Firestore rules.</p>';
-         } else {
-              reviewsListEl.innerHTML = '<p>Could not load reviews.</p>';
-         }
+         console.error("Error loading reviews:", error);
+         if (error.code === 'permission-denied' || error.message.includes('permission')) { reviewsListEl.innerHTML = '<p>Could not load reviews due to permission issues. Please check Firestore rules.</p>'; }
+         else { reviewsListEl.innerHTML = '<p>Could not load reviews.</p>'; }
          averageRatingEl.textContent = 'Error'; reviewCountEl.textContent = '0';
-         // Rethrow or handle as needed, but return default for schema function
-         // throw error; // Or rethrow if needed elsewhere
-          return { average: 0, count: 0, reviews: [] }; // Return default on error
+         // Do not rethrow here, let loadProductDetails continue with default review data
+         return { average: 0, count: 0, reviews: [] }; // Return default on error
      }
 }
 
@@ -425,7 +414,8 @@ async function submitReview(event) {
          const reviewsRef = collection(db, "onlineProducts", currentProductId, "reviews");
          await addDoc(reviewsRef, { reviewerName, comment, rating, createdAt: serverTimestamp() });
          showFeedback(reviewFeedbackEl, "Review submitted successfully!", false); reviewForm.reset();
-         const reviewsData = await loadReviews(currentProductId); updateProductSchema(currentProductData, reviewsData);
+         const reviewsData = await loadReviews(currentProductId); // Reload reviews
+         updateProductSchema(currentProductData, reviewsData); // Update schema with new review data
      } catch (error) { console.error("Error submitting review:", error); showFeedback(reviewFeedbackEl, `Failed to submit review. ${error.message}`, true);
      } finally { submitButton.disabled = false; }
 }
@@ -446,7 +436,6 @@ function handleAddToCart() {
          else if (category.includes('wedding')) {
              const quantityDropdown = document.getElementById('wedding-quantity-select'); if (!quantityDropdown || !quantityDropdown.value) { showFeedback(cartFeedbackEl, "Please select a quantity.", true); return; }
              const selectedQuantity = parseInt(quantityDropdown.value, 10);
-             // Recalculate price (ensure logic matches updateWeddingPrice)
              const baseRate = parseFloat(currentProductData.pricing?.rate || 0); const designCharge = parseFloat(currentProductData.pricing?.designCharge || 0); const printingChargeBase = parseFloat(currentProductData.pricing?.printingChargeBase || 0); const transportCharge = parseFloat(currentProductData.pricing?.transportCharge || 0); const extraMarginPercent = parseFloat(currentProductData.pricing?.extraMarginPercent || 0);
              const subTotal = (baseRate * selectedQuantity) + designCharge + printingChargeBase + transportCharge; const finalAmount = subTotal * (1 + (extraMarginPercent / 100));
              itemToAdd.quantity = selectedQuantity; cartOptions = { type: 'Wedding Card', price: finalAmount };
@@ -487,9 +476,15 @@ function setupEventListeners() {
 
 // --- Initialize Page ---
 document.addEventListener('DOMContentLoaded', () => {
+    console.log("DOM fully loaded and parsed."); // Add a log here
     const urlParams = new URLSearchParams(window.location.search);
     const productId = urlParams.get('id');
-    if (!productId) { showError("Product ID not found in URL."); return; }
+    if (!productId) {
+        showError("Product ID not found in URL.");
+        console.error("Initialization failed: No product ID in URL."); // Log error
+        return;
+    }
+    console.log(`Product ID found: ${productId}. Initializing page...`); // Log success
     loadProductDetails(productId);
     setupEventListeners();
 });
