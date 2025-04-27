@@ -11,49 +11,14 @@
      <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
 
      <script type="module">
+         // --- आपका मौजूदा Firebase Initialize कोड यहाँ ---
+         // (इसमें कोई बदलाव नहीं)
          import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
          import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
          import { getFirestore, collection, doc, getDoc, deleteDoc, updateDoc, onSnapshot, query, orderBy, where, Timestamp, arrayUnion, writeBatch, serverTimestamp, limit, addDoc, getDocs, runTransaction } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-
-         const firebaseConfig = {
-           apiKey: "AIzaSyBQj5rQmE77kKKGYixP8y3Hcimz8tiAqzQ", // आपकी Key डालें
-           authDomain: "madhav-multyprint.firebaseapp.com",
-           projectId: "madhav-multyprint",
-           storageBucket: "madhav-multyprint.appspot.com",
-           messagingSenderId: "104988349637",
-           appId: "1:104988349637:web:faf045b77c6786a4e70cac"
-         };
-
+         const firebaseConfig = { apiKey: "AIzaSyBQj5rQmE77kKKGYixP8y3Hcimz8tiAqzQ", authDomain: "madhav-multyprint.firebaseapp.com", projectId: "madhav-multyprint", storageBucket: "madhav-multyprint.appspot.com", messagingSenderId: "104988349637", appId: "1:104988349637:web:faf045b77c6786a4e70cac" };
          let app, auth, db;
-         try {
-             if (!window.firebaseAppInitialized) {
-                 app = initializeApp(firebaseConfig);
-                 window.firebaseAppInitialized = true;
-                 window.firebaseApp = app;
-                 console.log("Firebase initialized on view-online-orders.html.");
-             } else {
-                 app = window.firebaseApp;
-                 console.log("Firebase already initialized on view-online-orders.html.");
-             }
-             auth = getAuth(app);
-             db = getFirestore(app);
-
-             // Make services globally available
-             window.db = db; window.auth = auth; window.collection = collection;
-             window.doc = doc; window.getDoc = getDoc; window.deleteDoc = deleteDoc;
-             window.updateDoc = updateDoc; window.onSnapshot = onSnapshot; window.query = query;
-             window.orderBy = orderBy; window.where = where; window.Timestamp = Timestamp;
-             window.arrayUnion = arrayUnion; window.writeBatch = writeBatch; window.serverTimestamp = serverTimestamp;
-             window.limit = limit; window.addDoc = addDoc; window.getDocs = getDocs; window.runTransaction = runTransaction; // <-- Transaction जोड़ा गया
-
-             onAuthStateChanged(auth, (user) => {
-                 if (!user && !window.location.pathname.endsWith('login.html')) {
-                     console.log("User not logged in, redirecting...");
-                     window.location.replace('login.html'); // एडमिन फोल्डर से बाहर जाने के लिए ../ लगाएं
-                 }
-             });
-             window.getCurrentUser = () => auth.currentUser;
-         } catch(e) { console.error("Firebase setup error:", e); alert("Error loading application."); }
+         try { if (!window.firebaseAppInitialized) { app = initializeApp(firebaseConfig); window.firebaseAppInitialized = true; window.firebaseApp = app; } else { app = window.firebaseApp; } auth = getAuth(app); db = getFirestore(app); window.db = db; window.auth = auth; window.collection = collection; window.doc = doc; window.getDoc = getDoc; window.deleteDoc = deleteDoc; window.updateDoc = updateDoc; window.onSnapshot = onSnapshot; window.query = query; window.orderBy = orderBy; window.where = where; window.Timestamp = Timestamp; window.arrayUnion = arrayUnion; window.writeBatch = writeBatch; window.serverTimestamp = serverTimestamp; window.limit = limit; window.addDoc = addDoc; window.getDocs = getDocs; window.runTransaction = runTransaction; onAuthStateChanged(auth, (user) => { if (!user && !window.location.pathname.endsWith('login.html')) { window.location.replace('login.html'); } }); window.getCurrentUser = () => auth.currentUser; } catch(e) { console.error("Firebase setup error:", e); alert("Error loading application."); }
      </script>
 
 </head>
@@ -64,7 +29,7 @@
              <a href="index.html"><i class="fas fa-home"></i> Dashboard</a>
              <a href="order_history.html"><i class="fas fa-history"></i> Order History</a>
              <a href="customer_management.html"><i class="fas fa-users"></i> Customers</a>
-             </nav>
+         </nav>
     </header>
 
     <main class="admin-container">
@@ -78,15 +43,16 @@
                         <th>Order ID (Online)</th>
                         <th>Date</th>
                         <th>Customer Name</th>
-                        <th>WhatsApp</th>
+                        <th>Contact/WhatsApp</th> {/* <- हैडर बदला */}
                         <th>Total (₹)</th>
                         <th>Items</th>
-                        {/* Status अपडेट अब प्रोसेस के बाद होगा */}
                         <th>Actions</th>
                     </tr>
                 </thead>
                 <tbody id="orders-tbody">
-                    <tr><td colspan="7" id="loading-message">Loading orders...</td></tr>
+                    <tr id="loading-message-row"> {/* <- ID बदला */}
+                        <td colspan="7" id="loading-message">Loading orders...</td>
+                    </tr>
                 </tbody>
             </table>
         </div>
@@ -107,6 +73,5 @@
     </main>
 
     <script src="js/view-online-orders.js" type="module"></script>
-
-</body>
+    <script src="../../js/utils.js" type="module"></script> </body>
 </html>
