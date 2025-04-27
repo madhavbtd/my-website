@@ -1,4 +1,4 @@
-/* css/index.css - Updates for Professional Look & New Features (with fixes) */
+/* css/index.css - Updates for Professional Look & New Features (with fixes v2) */
 
 /* --- Base Variables (Keep existing, maybe refine colors) --- */
 :root {
@@ -53,7 +53,7 @@ body {
     z-index: 1000;
 }
 .sidebar h2 { text-align: center; background-color: white; padding: 15px 10px; margin: 0; border-bottom: 1px solid var(--border-color); }
-.sidebar h2 img { max-width: 90%; height: auto; vertical-align: middle; }
+.sidebar h2 img { max-width: 90%; height: auto; vertical-align: middle; display: block; margin: 0 auto;} /* Added display:block and margin auto */
 .sidebar ul { list-style-type: none; padding: 10px 0; margin: 0; flex-grow: 1; overflow-y: auto; }
 .sidebar ul li a {
     padding: 12px 20px; text-decoration: none; color: var(--sidebar-text); display: flex; align-items: center; border-left: 4px solid transparent;
@@ -222,6 +222,7 @@ body {
 .panel-item a.button-link:active { transform: scale(0.98); }
 
 /* Panel Colors & Specific Status Styles (Updated) */
+/* ... (यह सेक्शन अपरिवर्तित है) ... */
 .panel-item.light-blue { border-top-color: var(--info-color); background-color: #e1f5fe; }
 .panel-item.light-blue .panel-count, .panel-item.light-blue .panel-icon { color: var(--info-color); }
 .panel-item.light-blue a.button-link { background-color: var(--info-color); }
@@ -294,6 +295,7 @@ body {
 .chart-section .chart-container { position: relative; height: 250px; width: 100%; }
 
 /* --- Search Bar & Suggestions (Updated) --- */
+/* ... (यह सेक्शन अपरिवर्तित है) ... */
 .search-bar {
     display: flex;
     align-items: center;
@@ -343,14 +345,13 @@ body {
 }
 .search-bar button:hover { background-color: #1e7e34; }
 
-/* >>>>>>>>> Suggestion लिस्ट के लिए बदलाव यहाँ है <<<<<<<<< */
+/* Suggestion लिस्ट */
 .suggestions-list {
     display: none;
     position: absolute;
-    top: calc(100% + 5px); /* सर्च बार के ठीक नीचे */
-    /* left: 15px; */  /* हटाया गया */
-    right: 15px;  /* <<--- दाईं ओर से 15px (search-bar के padding के बराबर) */
-    width: 350px; /* <<--- चौड़ाई इनपुट बॉक्स के बराबर */
+    top: calc(100% + 5px);
+    right: 15px;
+    width: 350px;
     background-color: white;
     border: 1px solid var(--border-color);
     border-radius: 5px;
@@ -359,8 +360,6 @@ body {
     overflow-y: auto;
     z-index: 1050;
 }
-/* >>>>>>>>> बदलाव समाप्त <<<<<<<<< */
-
 .suggestions-list div { padding: 8px 12px; cursor: pointer; border-bottom: 1px solid #eee; font-size: 0.9em; }
 .suggestions-list div:last-child { border-bottom: none; }
 .suggestions-list div:hover { background-color: #f0f0f0; }
@@ -374,8 +373,8 @@ body {
      .dashboard-grid { grid-template-columns: 1fr; }
 }
 @media (max-width: 992px) {
-    /* Sidebar styles */
-    .sidebar { width: 60px; overflow: hidden; position: absolute; left: 0; top: 0; height: 100%; }
+    /* ... (डेस्कटॉप से छोटे व्यू के लिए स्टाइल अपरिवर्तित) ... */
+     .sidebar { width: 60px; overflow: hidden; position: absolute; left: 0; top: 0; height: 100%; }
     .sidebar:hover { width: 220px; box-shadow: 4px 0 10px rgba(0,0,0,0.2); }
     .sidebar h2 { padding: 10px 5px; } .sidebar h2 img { max-width: 40px; transition: max-width 0.3s ease; }
     .sidebar:hover h2 img { max-width: 90%; }
@@ -387,38 +386,64 @@ body {
      .header-actions { gap: 10px; }
      .button-base { padding: 7px 12px; font-size: 0.85em; }
 }
+/* === Mobile Sidebar Fixes v2 === */
 @media (max-width: 768px) {
     /* Sidebar styles for mobile */
     .container { flex-direction: column; }
     .sidebar { width: 100%; min-height: auto; height: auto; flex-direction: row; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.1); position: static; overflow: visible; padding-top: 0; z-index: 1000; }
     .sidebar:hover { width: 100%; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
     .sidebar h2 {
-        padding: 5px 15px; flex-shrink: 0; border-bottom: none;
-        /* === मोबाइल साइडबार फिक्स: z-index और मार्जिन === */
-        position: relative;
-        z-index: 1;
+        padding: 5px 15px; /* पैडिंग ठीक */
+        flex-shrink: 0;
+        border-bottom: none;
+        position: relative; /* z-index और overflow के लिए */
+        z-index: 1;         /* लिंक्स के पीछे */
         margin-right: 10px; /* लिंक्स से थोड़ी दूरी */
+        overflow: hidden;   /* <<< यह जोड़ा गया: ताकि अंदर की इमेज बड़ी होकर बाहर न जाए */
+        max-height: 50px;   /* <<< हाइट लिमिट करें (वैकल्पिक, लोगो के अनुसार एडजस्ट करें) */
     }
-    .sidebar h2 img { max-width: 120px; }
+    .sidebar h2 img {
+        max-width: 100%; /* h2 के अंदर फिट करें */
+        height: auto;    /* आस्पेक्ट रेशियो बनाए रखें */
+        max-height: 40px; /* लोगो की ऊंचाई लिमिट करें (वैकल्पिक) */
+        display: block;  /* सुनिश्चित करें कि इमेज ब्लॉक है */
+    }
     .sidebar ul {
-        display: flex; overflow-x: auto; flex-grow: 1; padding: 0 5px; justify-content: flex-start; border-top: none;
-        /* === मोबाइल साइडबार फिक्स: z-index === */
+        display: flex;
+        overflow-x: auto;   /* स्क्रॉलिंग सक्षम */
+        overflow-y: hidden; /* वर्टीकल स्क्रॉल रोकें */
+        flex-grow: 1;
+        padding: 0 5px;
+        justify-content: flex-start;
+        border-top: none;
         position: relative; /* z-index के लिए आवश्यक */
-        z-index: 2; /* लोगो के ऊपर लाने के लिए */
+        z-index: 2;         /* लोगो के ऊपर लाने के लिए */
+        -webkit-overflow-scrolling: touch; /* स्मूथ स्क्रॉलिंग iOS पर */
+        scrollbar-width: none; /* Firefox में स्क्रॉलबार छिपाएं */
     }
-    .sidebar ul li { flex-shrink: 0; margin-top: 0; } .sidebar ul li:last-child { margin-top: 0; }
+    .sidebar ul::-webkit-scrollbar { display: none; } /* Chrome/Safari में स्क्रॉलबार छिपाएं */
+
+    .sidebar ul li { flex-shrink: 0; margin-top: 0; }
+    .sidebar ul li:last-child { margin-top: 0; }
+
     .sidebar ul li a {
-        padding: 12px 10px; border-left: none; border-bottom: 3px solid transparent; white-space: nowrap; justify-content: center;
-        /* === मोबाइल साइडबार फिक्स: pointer-events और z-index हटाया गया === */
-        /* pointer-events: auto !important; */
-        /* z-index: 2 !important; */
-        position: relative; /* क्लिक के लिए आवश्यक हो सकता है, लेकिन z-index ul पर है */
+        padding: 12px 15px; /* थोड़ी हॉरिजॉन्टल पैडिंग बढ़ाई */
+        border-left: none;
+        border-bottom: 3px solid transparent;
+        white-space: nowrap;
+        justify-content: center;
+        position: relative;
+        display: flex; /* फ्लेक्स सुनिश्चित करें */
+        align-items: center; /* वर्टिकली सेंटर */
+        /* pointer-events और z-index हटा दिए गए थे, सही है */
     }
-    .sidebar ul li a i { margin-right: 5px; } .sidebar ul li a span { display: inline; }
-    .sidebar ul li a:hover { padding-left: 10px; background-color: var(--sidebar-hover); }
+    .sidebar ul li a i { margin-right: 5px; }
+    .sidebar ul li a span { display: inline; }
+    .sidebar ul li a:hover { padding-left: 15px; background-color: var(--sidebar-hover); }
     .sidebar ul li a.active { border-left: none; border-bottom-color: var(--sidebar-active-border); background-color: transparent; color: var(--sidebar-active-border); font-weight: 600; }
 
     /* Other mobile styles */
+    /* ... (यह सेक्शन अपरिवर्तित है) ... */
     .main-content { padding: 15px; height: auto; min-height: calc(100vh - 60px); padding-left: 15px; gap: 20px; }
     .header.updated-header { flex-direction: column; gap: 10px; align-items: stretch; padding: 10px 15px; }
     .welcome-text { text-align: center; order: -1; width: 100%; margin-bottom: 10px; }
@@ -444,21 +469,21 @@ body {
     }
     /* मोबाइल पर सजेशन लिस्ट */
     .suggestions-list {
-        position: static; /* <<--- मोबाइल पर स्टैटिक पोजीशन */
-        width: 100%;      /* <<--- मोबाइल पर पूरी चौड़ाई */
+        position: static;
+        width: 100%;
         max-width: none;
         margin-top: 5px;
         box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
         border-radius: 5px;
-        right: auto; /* <<--- right हटा दिया */
-        left: auto; /* <<--- left हटा दिया */
+        right: auto;
+        left: auto;
         max-height: 150px;
         border: 1px solid var(--border-color);
     }
 
     .kpi-section {
-        gap: 15px; /* यहाँ पहले से ही 15px था, ठीक है */
-        grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); /* छोटे स्क्रीन पर कॉलम थोड़े और छोटे */
+        gap: 15px;
+        grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
     }
     .kpi-card { padding: 15px 10px; min-height: 100px; border-left-width: 3px; }
     .kpi-icon { font-size: 1.6em; margin-bottom: 8px; }
@@ -474,6 +499,7 @@ body {
     .dashboard-grid { gap: 20px; } .card-layout { padding: 15px; } .card-layout h3 { font-size: 1em; margin-bottom: 10px;} .card-layout ul { font-size: 0.85em; }
 }
 @media (max-width: 480px) {
+    /* ... (सबसे छोटे स्क्रीन के लिए स्टाइल अपरिवर्तित) ... */
      body { font-size: 14px; } .main-content { padding: 10px; gap: 15px;}
      .header-buttons { flex-direction: column; align-items: stretch;} .button-base { justify-content: center; }
 
