@@ -3,14 +3,53 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Your Shopping Cart - Madhav Multiprint</title> <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <title>Your Shopping Cart - Madhav Multiprint</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
-     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
-
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/header-footer.css">
-
     <link rel="stylesheet" href="css/cart.css">
+    <style>
+        .button-whatsapp {
+            display: inline-flex; align-items: center; justify-content: center; gap: 10px;
+            padding: 10px 20px; background-color: #25D366; color: white;
+            text-decoration: none; border-radius: 6px; /* Use var(--border-radius) if defined */
+            font-weight: 600; font-size: 1em; margin-top: 15px; border: none; cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+        .button-whatsapp:hover { background-color: #1DAE50; }
+        .button-whatsapp i { font-size: 1.2em; }
+
+        #order-status-message.success {
+            text-align: center; padding: 25px; margin-top: 20px;
+            background-color: #d1e7dd; color: #0f5132; border: 1px solid #badbcc; /* Default success style */
+            border-radius: 6px; /* Use var(--border-radius) */
+        }
+         #order-status-message.success h4 { margin-top: 0; margin-bottom: 15px; font-size: 1.4em; color: #0f5132; }
+         #order-status-message.success p { margin-bottom: 10px; line-height: 1.6; }
+
+         #order-status-message.error {
+             text-align: center; padding: 15px; margin-top: 20px;
+             background-color: #f8d7da; color: #842029; border: 1px solid #f5c2c7; /* Default error style */
+              border-radius: 6px; /* Use var(--border-radius) */
+         }
+         /* Style for cart item structure */
+         .cart-item { display: flex; gap: 20px; align-items: flex-start; padding: 20px 0; border-bottom: 1px solid #eee; }
+         .cart-item:last-child { border-bottom: none; }
+         .cart-item img { width: 85px; height: 85px; object-fit: cover; border-radius: 4px; flex-shrink: 0; }
+         .cart-item .item-details { flex-grow: 1; display: flex; flex-direction: column; gap: 4px; }
+         .cart-item h4 { font-size: 1.1em; font-weight: 600; margin: 0; }
+         .cart-item .item-options { font-size: 0.85em; color: #666; } /* For dimensions, type etc. */
+         .cart-item .item-price { font-size: 1em; font-weight: 600; color: var(--primary-color); margin: 4px 0; }
+         .cart-item .item-quantity { display: flex; align-items: center; gap: 8px; margin-top: 10px; }
+         .cart-item .item-quantity input[type="number"] { width: 50px; padding: 6px 8px; text-align: center; border: 1px solid #ccc; border-radius: 4px; font-size: 0.95em; }
+         .cart-item .item-quantity .quantity-btn { /* Style similar to product detail page */ }
+         .cart-item .remove-item-btn { background: none; border: none; color: #666; cursor: pointer; font-size: 1.1em; padding: 5px; margin-left: auto; }
+         .cart-item .remove-item-btn:hover { color: #dc3545; }
+         .cart-item .item-subtotal { font-size: 1.05em; font-weight: 700; margin-top: 8px; text-align: right; }
+
+    </style>
 </head>
 <body>
     <header>
@@ -30,17 +69,27 @@
         </nav>
     </header>
 
-    <main class="container cart-page"> <h1>Shopping Cart</h1> <div class="cart-layout">
-             <div id="cart-items-section" class="cart-column">
-                 <h2>Items in Your Cart</h2>
-                 <div id="cart-items">
-                     <p class="empty-cart-message">Your cart is currently empty. <a href="products.html">Continue Shopping</a></p>
+    <main class="container cart-page">
+        <h1>Shopping Cart</h1>
+
+        <div id="order-status-message" style="display: none;">
+            </div>
+
+        <div class="cart-layout">
+            <div id="cart-items-section" class="cart-column">
+                <h2>Items in Your Cart</h2>
+                <div id="cart-items">
+                    <p class="empty-cart-message" style="display: none;">Your cart is currently empty. <a href="products.html">Continue Shopping</a></p>
+                </div>
+                <div style="text-align: center; margin-top: 20px;">
+                     <a href="products.html" class="button-secondary"><i class="fas fa-arrow-left"></i> Continue Shopping</a>
                  </div>
-                 </div>
+            </div>
 
             <form id="order-form" class="cart-column">
                 <h2>Your Information & Order</h2>
-                <div class="form-section"> <h3 class="form-section-title">Contact Information</h3>
+                <div class="form-section">
+                    <h3 class="form-section-title">Contact Information</h3>
                     <div class="form-group">
                         <label for="customer-name">Full Name <span class="required">*</span></label>
                         <input type="text" id="customer-name" name="customerName" required placeholder="Enter your full name">
@@ -55,7 +104,8 @@
                     </div>
                 </div>
 
-                <div class="form-section"> <h3 class="form-section-title">Design & Instructions</h3>
+                <div class="form-section">
+                    <h3 class="form-section-title">Design & Instructions</h3>
                     <div class="form-group">
                          <label for="design-file-upload">Upload Design File (Optional)</label>
                          <div class="custom-file-upload">
@@ -88,8 +138,7 @@
                  <button type="submit" id="submit-order-btn" class="button-primary submit-order-button">
                      <i class="fas fa-check-circle"></i> Place Order
                  </button>
-                <div id="order-status-message" style="display: none;">
-                     </div>
+
             </form>
         </div>
 
@@ -110,9 +159,8 @@
 
     <script src="js/firebase-config.js" type="module"></script>
     <script src="js/main.js" type="module" defer></script>
-    <script src="js/cart.js" type="module" defer></script>
-    <script>
-        // फ़ाइल अपलोड बटन के लिए नाम दिखाने हेतु छोटा स्क्रिप्ट
+    <script src="js/cart-page-logic.js" type="module" defer></script> <script>
+        // File upload name display script (keep as is)
         const fileInput = document.getElementById('design-file-upload');
         const fileNameSpan = document.querySelector('.file-name');
         if (fileInput && fileNameSpan) {
