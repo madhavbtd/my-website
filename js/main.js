@@ -1,38 +1,29 @@
-// js/main.js - Combined Mobile Menu Toggle Script + Cart Functions
+// js/main.js - Combined Mobile Menu Toggle Script + Updated Cart Count Logic
 
 // ==============================================
-// Cart Functions (Using Local Storage)
+// Cart Functions Import
 // ==============================================
+// cart.js से getCart इम्पोर्ट करें ताकि सही localStorage key का उपयोग हो
+import { getCart } from './cart.js'; // <<<--- यह लाइन जोड़ी गई है
 
-/**
- * Retrieves the shopping cart from local storage.
- * @returns {Array} An array of cart items or an empty array if cart is empty/not found.
- */
-export function getCart() {
-    const cartJson = localStorage.getItem('shoppingCart');
-    // Agar cart null/undefined hai toh empty array return karein
-    return cartJson ? JSON.parse(cartJson) : [];
-}
-
-/**
- * Saves the shopping cart to local storage and updates the header count.
- * @param {Array} cart - The array of cart items to save.
- */
-export function saveCart(cart) {
-    localStorage.setItem('shoppingCart', JSON.stringify(cart));
-    updateCartCount(); // Cart save hone par header count update karein
-}
+// ==============================================
+// Cart Count Update Function
+// ==============================================
 
 /**
  * Updates the cart item count displayed in the website header.
+ * Uses getCart imported from cart.js to ensure correct localStorage key is used.
  */
 export function updateCartCount() {
     const cartCountSpan = document.getElementById('cart-count');
     if (cartCountSpan) {
-        const cart = getCart();
+        const cart = getCart(); // यह अब cart.js से इम्पोर्टेड फंक्शन है
         // Sabhi items ki quantity ko jodkar total count nikalein
         const totalItems = cart.reduce((sum, item) => sum + (item.quantity || 0), 0);
         cartCountSpan.textContent = totalItems;
+        console.log("Header cart count updated using cart.js getCart:", totalItems);
+    } else {
+        console.warn("Cart count span element (#cart-count) not found in header.");
     }
 }
 
@@ -41,8 +32,9 @@ export function updateCartCount() {
 // ==============================================
 
 document.addEventListener('DOMContentLoaded', () => {
+    console.log("main.js: DOMContentLoaded event fired.");
 
-    // --- Mobile Menu Toggle Logic (from your original file) ---
+    // --- Mobile Menu Toggle Logic ---
     const mobileMenuToggle = document.querySelector('.mobile-menu-toggle');
     const navLinks = document.querySelector('.nav-links');
 
@@ -78,6 +70,15 @@ document.addEventListener('DOMContentLoaded', () => {
     updateCartCount();
     // --- End Cart Count Init ---
 
+
+    // --- Optional: Add listener for 'cartUpdated' event ---
+    // This ensures count updates whenever cart.js functions modify the cart
+    document.addEventListener('cartUpdated', () => {
+        console.log('main.js received cartUpdated event.');
+        updateCartCount(); // Update header count when cart changes
+    });
+
+
     // --- Optional: Close mobile menu when a link is clicked ---
     /*
     if (navLinks) {
@@ -98,3 +99,5 @@ document.addEventListener('DOMContentLoaded', () => {
     */
 
 }); // End DOMContentLoaded
+
+console.log("main.js loaded.");
