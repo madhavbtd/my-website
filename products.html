@@ -1,5 +1,4 @@
-<!DOCTYPE html>
-<html lang="en">
+<!DOCTYPE html> <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -9,8 +8,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/header-footer.css">
-    <link rel="stylesheet" href="css/products.css">
-</head>
+    <link rel="stylesheet" href="css/products.css"> </head>
 <body>
     <header>
         <nav class="container">
@@ -36,16 +34,18 @@
              <h2><i class="fas fa-star"></i> Featured Products</h2>
              <div class="featured-grid">
                  <div class="featured-item clickable-featured" data-category="Flex Banner Printing">
-                     <div class="featured-slider" id="slider-flex-banner"></div>
+                     <div class="featured-slider" id="slider-flex-banner">
+                         </div>
                      <h4>Flex Banner Printing</h4>
                      <span class="featured-item-link">View Products <i class="fas fa-arrow-right"></i></span>
                  </div>
                  <div class="featured-item clickable-featured" data-category="Wedding Invitation Cards">
-                      <div class="featured-slider" id="slider-wedding-card"></div>
+                      <div class="featured-slider" id="slider-wedding-card">
+                           </div>
                      <h4>Wedding Invitation Cards</h4>
                      <span class="featured-item-link">View Products <i class="fas fa-arrow-right"></i></span>
                  </div>
-             </div>
+                 </div>
          </section>
 
         <section class="filters horizontal-filters" aria-labelledby="filter-heading">
@@ -53,14 +53,13 @@
               <div class="filter-controls">
                   <div class="filter-group search-group">
                       <label for="search-input" class="sr-only"><i class="fas fa-search"></i> Search:</label>
-                      <input type="search" id="search-input" name="search" placeholder="Search products...">
-                      <button id="search-button" class="button-secondary" aria-label="Search"><i class="fas fa-search"></i></button>
+                      <input type="search" id="search-input" name="search" placeholder="Search products by keyword..."> <button id="search-button" class="button-secondary" aria-label="Search"><i class="fas fa-search"></i></button>
                   </div>
                   <div class="filter-group">
                       <label for="category-filter"><i class="fas fa-tags"></i> Category:</label>
                       <select id="category-filter" name="category">
                           <option value="all">All Categories</option>
-                      </select>
+                          </select>
                   </div>
                   <div class="filter-group">
                       <label for="sort-filter"><i class="fas fa-sort-amount-down"></i> Sort by:</label>
@@ -68,15 +67,14 @@
                           <option value="name_asc">Name (A-Z)</option>
                           <option value="price_asc">Price: Low to High</option>
                           <option value="price_desc">Price: High to Low</option>
-                      </select>
+                          </select>
                   </div>
-              </div>
+                  </div>
          </section>
 
         <section class="product-list-section" aria-live="polite">
              <div class="product-list" id="product-list-container">
-                 <div class="loading-spinner" id="loading">
-                     <i class="fas fa-spinner fa-spin fa-3x"></i>
+                 <div class="loading-spinner" id="loading" style="display: flex;"> <i class="fas fa-spinner fa-spin fa-3x"></i>
                      <p>Loading products...</p>
                  </div>
              </div>
@@ -112,8 +110,5 @@
     </footer>
 
     <script src="js/firebase-config.js" type="module"></script>
-    <script src="js/main.js" type="module" defer></script>
-    <script src="js/cart.js" type="module" defer></script>
-    <script src="js/products.js" type="module" defer></script>
-</body>
+    <script src="js/main.js" type="module" defer></script> <script src="js/cart.js" type="module" defer></script> <script src="js/products.js" type="module" defer></script> </body>
 </html>

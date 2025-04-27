@@ -1,4 +1,4 @@
-/* css/products.css - Products Page Specific Styles (Revised with Search, Testimonials, Pagination, Title adjustment, Testimonial Photos) */
+/* css/products.css - Products Page Specific Styles (FINAL UPDATED Version) */
 
 /* --- Variables --- */
 :root {
@@ -21,25 +21,14 @@ body { font-family: var(--font-family); color: var(--text-color); line-height: 1
 .container { max-width: 1200px; margin: 0 auto; padding: 0 15px; }
 main.container { padding-top: 30px; padding-bottom: 60px; }
 
-/* --- Page Title (UPDATED) --- */
+/* --- Page Title --- */
 .page-title {
-    text-align: center;
-    margin-top: 10px;
-    margin-bottom: 30px; /* Adjusted margin */
-    padding-bottom: 15px; /* Added padding */
-    font-weight: 600;
-    font-size: 1.8em; /* Reduced font size */
-    color: var(--text-color);
-    border-bottom: 1px solid var(--border-color); /* Added subtle border */
-    display: inline-block; /* To make border only as wide as text */
-    position: relative; /* Needed for centering with inline-block */
-    left: 50%; /* Center trick */
-    transform: translateX(-50%); /* Center trick */
+    text-align: center; margin-top: 10px; margin-bottom: 30px; padding-bottom: 15px;
+    font-weight: 600; font-size: 1.8em; color: var(--text-color);
+    border-bottom: 1px solid var(--border-color); display: inline-block;
+    position: relative; left: 50%; transform: translateX(-50%);
 }
-.page-title i {
-    margin-right: 10px;
-    color: var(--primary-color);
-}
+.page-title i { margin-right: 10px; color: var(--primary-color); }
 
 
 /* --- Featured Products Section --- */
@@ -80,10 +69,20 @@ main.container { padding-top: 30px; padding-bottom: 60px; }
 
 /* --- Product List Section --- */
 .product-list-section { min-height: 300px; position: relative; }
-.product-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 25px; }
+.product-list {
+    display: grid;
+    /* UPDATED: Use auto-fill to prevent single items stretching */
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 25px;
+}
 
 /* --- Product Card Styling --- */
-.product-card { border: 1px solid var(--border-color); border-radius: var(--border-radius); background-color: var(--white-bg); box-shadow: var(--box-shadow-sm); overflow: hidden; display: flex; flex-direction: column; transition: transform 0.2s ease, box-shadow 0.2s ease; }
+.product-card {
+    border: 1px solid var(--border-color); border-radius: var(--border-radius); background-color: var(--white-bg); box-shadow: var(--box-shadow-sm);
+    overflow: hidden; display: flex; flex-direction: column; transition: transform 0.2s ease, box-shadow 0.2s ease;
+    /* Optional: Add max-width if auto-fill alone isn't enough */
+    /* max-width: 300px; margin-left: auto; margin-right: auto; */
+}
 .product-card:hover { transform: translateY(-4px); box-shadow: var(--box-shadow-md); }
 .product-card .product-image-container { width: 100%; aspect-ratio: 4 / 3; background-color: #f8f9fa; display: flex; align-items: center; justify-content: center; overflow: hidden; position: relative; }
 .product-card .product-image-container img { display: block; max-width: 100%; max-height: 100%; object-fit: contain; transition: transform 0.3s ease; }
@@ -115,41 +114,19 @@ main.container { padding-top: 30px; padding-bottom: 60px; }
 #load-more-button:disabled { background-color: #ccc; cursor: not-allowed; box-shadow: none; }
 
 
-/* --- Testimonials Section (UPDATED Styles) --- */
+/* --- Testimonials Section --- */
 .testimonials-section { margin-top: 60px; padding-top: 40px; border-top: 1px solid var(--border-color); background-color: var(--light-bg); padding: 40px 15px; margin-left: -15px; margin-right: -15px; }
 .testimonials-section .container { max-width: 1200px; margin: 0 auto; padding: 0 15px; }
-.section-title { text-align: center; font-size: 1.6em; font-weight: 600; color: var(--primary-color); margin-bottom: 40px; /* Increased margin */ display: flex; align-items: center; justify-content: center; }
+.section-title { text-align: center; font-size: 1.6em; font-weight: 600; color: var(--primary-color); margin-bottom: 40px; display: flex; align-items: center; justify-content: center; }
 .section-title i { margin-right: 10px; }
-.testimonial-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 30px; /* Increased gap */ }
-.testimonial-card {
-    background-color: var(--white-bg);
-    padding: 30px 25px; /* Increased padding */
-    border-radius: var(--border-radius);
-    border: 1px solid var(--border-color);
-    box-shadow: var(--box-shadow-sm);
-    text-align: center;
-    display: flex;
-    flex-direction: column;
-    align-items: center; /* Center items */
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-.testimonial-card:hover {
-    transform: translateY(-5px);
-    box-shadow: var(--box-shadow-md);
-}
-.testimonial-photo {
-    width: 80px; /* Photo size */
-    height: 80px;
-    border-radius: 50%; /* Make it circular */
-    object-fit: cover; /* Ensure image covers the area */
-    margin-bottom: 20px; /* Space below photo */
-    border: 3px solid var(--border-color); /* Optional border */
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1); /* Subtle shadow */
-}
+.testimonial-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 30px; }
+.testimonial-card { background-color: var(--white-bg); padding: 30px 25px; border-radius: var(--border-radius); border: 1px solid var(--border-color); box-shadow: var(--box-shadow-sm); text-align: center; display: flex; flex-direction: column; align-items: center; transition: transform 0.2s ease, box-shadow 0.2s ease; }
+.testimonial-card:hover { transform: translateY(-5px); box-shadow: var(--box-shadow-md); }
+.testimonial-photo { width: 80px; height: 80px; border-radius: 50%; object-fit: cover; margin-bottom: 20px; border: 3px solid var(--border-color); box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
 .testimonial-text { font-style: italic; color: var(--text-muted); margin-bottom: 15px; line-height: 1.5; position: relative; padding: 0 10px; }
-.testimonial-text::before { content: '“'; font-size: 2em; /* Larger quotes */ color: var(--primary-color); position: absolute; left: -5px; top: -5px; line-height: 1; }
+.testimonial-text::before { content: '“'; font-size: 2em; color: var(--primary-color); position: absolute; left: -5px; top: -5px; line-height: 1; }
 .testimonial-text::after { content: '”'; font-size: 2em; color: var(--primary-color); position: absolute; right: -5px; bottom: -10px; line-height: 1; }
-.testimonial-author { font-weight: 600; color: var(--text-color); margin-top: auto; padding-top: 10px; /* Space above author */ }
+.testimonial-author { font-weight: 600; color: var(--text-color); margin-top: auto; padding-top: 10px; }
 
 
 /* --- Responsive Adjustments --- */
@@ -158,17 +135,16 @@ main.container { padding-top: 30px; padding-bottom: 60px; }
      .horizontal-filters .search-group { max-width: none; width: 100%; order: -1; margin-bottom: 15px; }
     .horizontal-filters .filter-group { flex-grow: 1; min-width: 180px; }
     .horizontal-filters .filter-group select { width: 100%; }
-    /* Center page title properly on smaller screens */
     .page-title { width: auto; display: block; transform: none; left: auto; border-bottom: none; padding-bottom: 0; margin-bottom: 30px; }
 }
 @media (max-width: 768px) {
-    .page-title { font-size: 1.7em; } /* Slightly adjust size */
+    .page-title { font-size: 1.7em; }
     .featured-grid { grid-template-columns: 1fr; }
     .filter-controls { flex-direction: column; align-items: stretch; gap: 15px; }
      .horizontal-filters .search-group { margin-bottom: 15px; }
     .horizontal-filters .filter-group { justify-content: space-between; min-width: 0; }
      .horizontal-filters .filter-group select { flex-grow: 1; }
-    .product-list { grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px;}
+    .product-list { grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px;} /* Changed auto-fill back to auto-fit as auto-fill might create unwanted empty columns visually */
     .testimonial-grid { grid-template-columns: 1fr; }
 }
 @media (max-width: 480px) {
@@ -177,7 +153,7 @@ main.container { padding-top: 30px; padding-bottom: 60px; }
      .horizontal-filters .filter-group { flex-direction: column; align-items: stretch; }
      .horizontal-filters .filter-group label { margin-bottom: 5px; text-align: left; }
      .horizontal-filters .filter-group select { width: 100%; }
-     .product-list { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; }
+     .product-list { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; } /* Using auto-fit for smaller screens often looks better */
      .product-card .product-info { padding: 10px; }
      .product-card h3 { font-size: 0.9em; min-height: calc(0.9em * 1.3 * 2); }
      .product-card .price { font-size: 0.9em; }
