@@ -16,15 +16,24 @@
         // Firebase Core and Services
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
         import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-        import { getFirestore, collection, doc, addDoc, updateDoc, deleteDoc, onSnapshot, query, orderBy, serverTimestamp, Timestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-        import { getStorage, ref, uploadBytesResumable, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
+        // --- Firestore Imports ---
+        // (getDoc को इम्पोर्ट लिस्ट में पहले से शामिल होना चाहिए, यदि नहीं है तो जोड़ें)
+        import {
+            getFirestore, collection, doc, addDoc, updateDoc, deleteDoc,
+            onSnapshot, query, orderBy, serverTimestamp, Timestamp, getDoc // <-- getDoc यहाँ इम्पोर्टेड है
+             // अन्य आवश्यक इम्पोर्ट्स (where, limit, getDocs, runTransaction आदि) यदि इस पेज पर JS द्वारा उपयोग किए जाते हैं
+        } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+        // --- Storage Imports ---
+        import {
+            getStorage, ref, uploadBytesResumable, getDownloadURL, deleteObject
+        } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyBQj5rQmE77kKKGYixP8y3Hcimz8tiAqzQ", // आपका apiKey
             authDomain: "madhav-multyprint.firebaseapp.com",
             projectId: "madhav-multyprint",
-            // --- Correct storageBucket ---
-            storageBucket: "madhav-multyprint.firebasestorage.app",
+            // --- *** CORRECTED storageBucket *** ---
+            storageBucket: "madhav-multyprint.appspot.com", // '.appspot.com' वाला उपयोग करें
             messagingSenderId: "104988349637",
             appId: "1:104988349637:web:faf045b77c6786a4e70cac"
         };
@@ -36,7 +45,7 @@
                 app = initializeApp(firebaseConfig);
                 window.firebaseAppInitialized = true;
                 window.firebaseApp = app;
-                console.log("Firebase initialized (manage-online-products).");
+                console.log("Firebase initialized (manage-online-products - Corrected).");
             } else {
                 app = window.firebaseApp;
                 console.log("Firebase already initialized (manage-online-products).");
@@ -47,34 +56,42 @@
 
             // Make Firebase services globally available
             window.db = db; window.auth = auth; window.storage = storage;
+            // Firestore functions
             window.collection = collection; window.doc = doc; window.addDoc = addDoc;
             window.updateDoc = updateDoc; window.deleteDoc = deleteDoc; window.onSnapshot = onSnapshot;
             window.query = query; window.orderBy = orderBy; window.serverTimestamp = serverTimestamp;
             window.Timestamp = Timestamp;
+            window.getDoc = getDoc; // <-- *** यह असाइनमेंट जोड़ा गया ***
+            // Storage functions
             window.storageRef = ref; window.uploadBytesResumable = uploadBytesResumable;
             window.getDownloadURL = getDownloadURL; window.deleteObject = deleteObject;
+            // अन्य आवश्यक ग्लोबल असाइनमेंट यहाँ जोड़ें यदि JS को उनकी आवश्यकता हो
+            // window.where = where;
+            // window.limit = limit;
+            // window.getDocs = getDocs;
+            // window.runTransaction = runTransaction;
+
+            console.log("Firebase services made globally available (manage-online-products).");
 
             onAuthStateChanged(auth, (user) => {
                 const page = window.location.pathname.split('/').pop() || 'index.html';
                  if (!user && !page.toLowerCase().includes('login.html')) {
-                    // Redirect to login if not logged in and not on login page
                     window.location.replace('login.html');
                 } else if (user) {
-                    // If logged in, initialize the product management script
                     console.log(`User logged in on ${page}. Initializing Online Product Management.`);
-                    // Delay slightly to ensure JS file is loaded
+                    // थोड़ा विलंब यह सुनिश्चित करने के लिए कि JS फ़ाइल लोड हो गई है
                     setTimeout(() => {
                          if (typeof initializeOnlineProductManagement === 'function') {
                              initializeOnlineProductManagement();
-                             console.log("Called initializeOnlineProductManagement directly.");
+                             console.log("Called initializeOnlineProductManagement.");
                          } else {
                               console.error("initializeOnlineProductManagement function not found in manage-online-products.js!");
                          }
-                    }, 150);
+                    }, 150); // 150ms का विलंब
                 }
             });
         } catch(e) {
-            console.error("Firebase setup error:", e);
+            console.error("Firebase setup error in HTML:", e);
             alert("App Initialization Error. Check console.");
         }
     </script>
@@ -121,7 +138,6 @@
             <table id="productTable">
                 <thead>
                      <tr>
-                      
                         <th style="width: 20%;">Name</th>
                         <th style="width: 14%;">Category</th>
                         <th style="width: 13%;">Brand</th>
@@ -151,7 +167,6 @@
                 <input type="hidden" id="existingImageUrls" value="[]">
 
                 <div class="product-form-grid">
-
                     <div class="form-column">
                         <fieldset>
                             <legend><i class="fas fa-info-circle"></i> Basic Details</legend>
@@ -290,6 +305,7 @@
                          </fieldset>
                     </div>
                 </div> </form>
+
             <div class="modal-actions">
                 <button type="button" id="deleteProductBtn" class="button delete-button-modal" style="display: none;">
                     <i class="fas fa-trash-alt"></i> Delete Product
@@ -299,10 +315,16 @@
                        Cancel
                     </button>
                     <button type="submit" form="productForm" id="saveProductBtn" class="button save-button">
-                           <i class="fas fa-spinner fa-spin" style="display: none;"></i> <i class="fas fa-save"></i> <span>Save Product</span>
+                           <i class="fas fa-spinner fa-spin" style="display: none;"></i>
+                           <i class="fas fa-save"></i>
+                           <span>Save Product</span>
                      </button>
                </div>
-             </div> </div> </div> <div id="deleteConfirmModal" class="modal confirmation-modal">
+             </div>
+        </div>
+    </div>
+
+    <div id="deleteConfirmModal" class="modal confirmation-modal">
         <div class="modal-content small-modal">
             <span class="close-btn" id="closeDeleteConfirmModal" title="Close">&times;</span>
             <h2><i class="fas fa-exclamation-triangle warning-icon"></i> Confirm Deletion</h2>
