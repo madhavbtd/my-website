@@ -1,15 +1,15 @@
-/* css/product-detail.css - Product Detail Page Styles (UPDATED with Tabs, Quantity Buttons, New Price Layout, etc.) */
+/* css/product-detail.css - Product Detail Page Styles (FINAL UPDATED Version) */
 
 /* --- Variables (Adjust colors for classic look if desired) --- */
 :root {
-    --primary-color: #0056b3; /* Consider #004a99 or #2a528a */
-    --secondary-color: #6c757d; /* Consider a warmer gray */
+    --primary-color: #0056b3; /* नीला रंग कार्ट बटन के लिए */
+    --secondary-color: #6c757d;
     --text-color: #333;
-    --text-muted: #666; /* Slightly lighter than secondary */
-    --border-color: #e0e0e0; /* Lighter border */
+    --text-muted: #666;
+    --border-color: #e0e0e0;
     --white-bg: #fff;
-    --light-bg: #f8f9fa; /* Standard light background */
-    --lighter-bg: #f1f3f5; /* Even lighter background for elements */
+    --light-bg: #f8f9fa;
+    --lighter-bg: #f1f3f5;
     --border-radius: 6px;
     --font-family: 'Poppins', sans-serif;
     --box-shadow-sm: 0 1px 3px rgba(0,0,0,0.08);
@@ -44,40 +44,35 @@ body {
 /* --- Main Layout Grid --- */
 .product-detail-layout {
     position: relative;
-    min-height: 400px; /* Minimum height for loading state */
+    min-height: 400px;
 }
 .product-content {
     display: grid;
-    grid-template-columns: 1fr 1fr; /* Default: 2 columns */
+    grid-template-columns: 1fr 1fr;
     gap: 40px;
     align-items: start;
-    margin-bottom: 40px; /* Add space before tabs */
+    margin-bottom: 40px;
 }
 
 /* --- Loading & Error States --- */
 .loading-indicator {
-    display: none; /* Hidden by default, shown by JS */
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 80px 40px;
-    text-align: center;
-    color: var(--text-muted);
-    width: 100%;
-    min-height: 350px;
+    display: none;
+    flex-direction: column; align-items: center; justify-content: center;
+    padding: 80px 40px; text-align: center; color: var(--text-muted);
+    width: 100%; min-height: 350px;
 }
 .loading-indicator i { color: var(--primary-color); margin-top: 15px; font-size: 2.5em; animation: fa-spin 1.5s infinite linear; }
 .loading-indicator p { font-size: 1.2em; font-weight: 500; }
 
-.message-box { /* Shared style */
+.message-box {
     padding: 20px; margin: 30px 0; border: 1px solid var(--border-color); border-radius: var(--border-radius); text-align: center; background-color: var(--white-bg); font-size: 1.1em;
 }
 .message-box.error { border-left: 4px solid #dc3545; background-color: #f8d7da; color: #721c24; }
 
 /* --- Image Gallery --- */
-.product-image-gallery { display: flex; flex-direction: column; gap: 15px; position: relative; } /* Added position relative for potential zoom */
+.product-image-gallery { display: flex; flex-direction: column; gap: 15px; position: relative; }
 .main-image { border: 1px solid var(--border-color); border-radius: var(--border-radius); overflow: hidden; background-color: var(--light-bg); aspect-ratio: 1 / 1; display: flex; align-items: center; justify-content: center; }
-.main-image img { display: block; max-width: 100%; max-height: 100%; object-fit: contain; transition: transform 0.3s ease; cursor: zoom-in; /* Hint for zoom */ }
+.main-image img { display: block; max-width: 100%; max-height: 100%; object-fit: contain; transition: transform 0.3s ease; cursor: zoom-in; }
 .thumbnail-images { display: grid; grid-template-columns: repeat(auto-fill, minmax(60px, 1fr)); gap: 10px; }
 .thumbnail-images img { width: 100%; height: auto; aspect-ratio: 1 / 1; object-fit: cover; border: 2px solid transparent; border-radius: 4px; cursor: pointer; transition: border-color 0.2s ease, box-shadow 0.2s ease; background-color: #eee; }
 .thumbnail-images img:hover { border-color: #ccc; }
@@ -86,54 +81,59 @@ body {
 /* --- Product Info Details --- */
 .product-info-details { display: flex; flex-direction: column; }
 .product-info-details h1 { font-size: 2em; font-weight: 600; color: var(--text-color); margin-top: 0; margin-bottom: 15px; line-height: 1.3; }
-/* Price is now styled within .product-actions */
 .product-description-short { font-size: 1em; color: var(--text-muted); line-height: 1.6; margin-bottom: 25px; }
 
-/* --- Product Options & Actions --- */
+/* --- Product Options (Grey box removed) --- */
 .product-options {
     margin-bottom: 25px;
-    padding: 15px;
-    background-color: var(--lighter-bg); /* Lighter background */
-    border: 1px solid var(--border-color);
-    border-radius: var(--border-radius);
+    /* Removed background, border, padding */
+    background-color: transparent;
+    border: none;
+    padding: 0;
 }
-.product-options h4 { margin-top: 0; margin-bottom: 15px; font-size: 1.1em; font-weight: 600; color: var(--text-color); }
-
-/* Flex Banner Inputs */
-.flex-options { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 15px; align-items: end; }
+/* Specific styles for flex options container if needed */
+.flex-options {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 15px;
+    align-items: end;
+    /* Now it doesn't need separate padding/border */
+}
 .flex-options .form-group-inline { display: flex; flex-direction: column; gap: 5px; }
 .flex-options label { font-size: 0.9em; font-weight: 500; color: var(--text-muted); }
 .flex-options input[type="number"],
 .flex-options select {
-    font-family: var(--font-family), sans-serif; /* Ensure Poppins */
+    font-family: var(--font-family), sans-serif;
     width: 100%; padding: 8px 10px; border: 1px solid var(--border-color); border-radius: 4px; font-size: 1em; box-sizing: border-box; height: 40px;
 }
 
 /* Wedding Card Dropdown */
-.wedding-options { display: flex; flex-direction: column; gap: 8px; max-width: 300px; margin-bottom: 25px; }
+.wedding-options {
+    display: flex; flex-direction: column; gap: 8px; max-width: 300px;
+    /* Removed parent background/border/padding */
+    margin-bottom: 25px;
+}
 .wedding-options label { font-size: 0.9em; font-weight: 500; color: var(--text-muted); margin-bottom: 0; }
 .wedding-options select {
-    font-family: var(--font-family), sans-serif; /* Ensure Poppins */
-    width: 100%; padding: 8px 10px; border: 1px solid var(--border-color); border-radius: 4px; font-size: 0.95em; box-sizing: border-box; height: 40px;
+    font-family: var(--font-family), sans-serif; width: 100%; padding: 8px 10px; border: 1px solid var(--border-color); border-radius: 4px; font-size: 0.95em; box-sizing: border-box; height: 40px;
     appearance: none; -webkit-appearance: none; -moz-appearance: none;
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23333'%3E%3Cpath fill-rule='evenodd' d='M4.22 6.03a.75.75 0 0 1 1.06 0L8 8.74l2.72-2.71a.75.75 0 1 1 1.06 1.06l-3.25 3.25a.75.75 0 0 1-1.06 0L4.22 7.09a.75.75 0 0 1 0-1.06Z' clip-rule='evenodd' /%3E%3C/svg%3E");
     background-repeat: no-repeat; background-position: right 8px center; background-size: 16px 16px; padding-right: 30px;
 }
-.wedding-options select option { font-family: var(--font-family), sans-serif; } /* Ensure Poppins */
+.wedding-options select option { font-family: var(--font-family), sans-serif; }
 
-
-/* Standard Quantity & Quantity Button Styles */
-.standard-options { display: flex; flex-direction: column; gap: 5px; /* Keep options styling separate unless moving qty to actions */ }
+/* Standard Quantity Container */
+.standard-options {
+    display: flex; flex-direction: column; gap: 5px;
+     /* Removed parent background/border/padding */
+     margin-bottom: 25px;
+}
 .standard-options label { font-size: 0.9em; font-weight: 500; color: var(--text-muted); }
 
-.quantity-control-group { /* Container for label + buttons/input for flex banner */
-     display: flex; flex-direction: column; gap: 5px;
-}
-.quantity-input-wrapper { display: flex; align-items: center; border: 1px solid var(--border-color); border-radius: 4px; background-color: var(--white-bg); overflow: hidden; width: 120px; /* Adjust width */ }
-.quantity-input {
-    font-family: var(--font-family), sans-serif; /* Ensure Poppins */
-    width: 100%; padding: 8px 5px; border: none; font-size: 1em; text-align: center; height: 38px; box-sizing: border-box; appearance: textfield; -moz-appearance: textfield;
-}
+/* Quantity Button Styles */
+.quantity-control-group { display: flex; flex-direction: column; gap: 5px; }
+.quantity-input-wrapper { display: flex; align-items: center; border: 1px solid var(--border-color); border-radius: 4px; background-color: var(--white-bg); overflow: hidden; width: 120px; }
+.quantity-input { font-family: var(--font-family), sans-serif; width: 100%; padding: 8px 5px; border: none; font-size: 1em; text-align: center; height: 38px; box-sizing: border-box; appearance: textfield; -moz-appearance: textfield; }
 .quantity-input::-webkit-outer-spin-button,
 .quantity-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
 .quantity-btn { background-color: var(--lighter-bg); border: none; color: var(--text-muted); cursor: pointer; padding: 0 10px; font-size: 1.2em; font-weight: 600; height: 38px; line-height: 38px; transition: background-color 0.2s ease, color 0.2s ease; }
@@ -143,67 +143,32 @@ body {
 
 /* Product Actions Area Style (New Price/Button Layout) */
 .product-actions {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 15px 20px;
-    margin-top: 25px;
-    margin-bottom: 20px;
+    display: flex; flex-wrap: wrap; align-items: center; gap: 15px 20px;
+    margin-top: 25px; margin-bottom: 20px;
 }
+.price-display-area { order: 1; width: 100%; margin-bottom: 10px; text-align: left; }
+#product-price.price { font-size: 2.2em; font-weight: 700; color: var(--primary-color); margin-right: 10px; line-height: 1.2; display: inline-block; }
+.original-price { font-size: 1.2em; color: var(--text-muted); text-decoration: line-through; display: inline-block; }
 
-.price-display-area {
-    order: 1;
-    width: 100%;
-    margin-bottom: 10px;
-    text-align: left;
-}
-
-#product-price.price {
-    font-size: 2.2em;
-    font-weight: 700;
-    color: var(--primary-color);
-    margin-right: 10px;
-    line-height: 1.2;
-    display: inline-block;
-}
-
-.original-price {
-    font-size: 1.2em;
-    color: var(--text-muted);
-    text-decoration: line-through;
-    display: inline-block;
-}
-
+/* Add to Cart Button Style (Updated) */
 #add-to-cart-btn.button-primary {
-    order: 3;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    padding: 12px 25px;
-    font-size: 1.1em;
-    font-weight: 600;
-    flex-grow: 0; /* Don't grow by default */
-    /* max-width: 250px; /* Remove or adjust max-width */
-    /* width: auto; /* Let content determine width */
+    order: 3; display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    padding: 12px 25px; font-size: 1.1em; font-weight: 600; flex-grow: 0; width: auto;
+    /* --- User requested style --- */
+    background-color: var(--primary-color); /* नीला बैकग्राउंड */
+    color: white; /* सफेद टेक्स्ट */
+    border: none; /* कोई बॉर्डर नहीं */
+    /* --- End user requested style --- */
+    border-radius: var(--border-radius, 6px); cursor: pointer; transition: background-color 0.2s ease, box-shadow 0.2s ease;
+    text-align: center; line-height: 1.4; box-shadow: var(--box-shadow-sm);
 }
-#add-to-cart-btn i {
-    font-size: 1em;
-}
+#add-to-cart-btn.button-primary:hover { background-color: #004a99; box-shadow: var(--box-shadow-md); }
+#add-to-cart-btn i { font-size: 1em; }
 
-.product-actions .quantity-input-wrapper { /* Style if quantity moved here */
-     order: 2;
-     margin-bottom: 0;
-}
+.product-actions .quantity-input-wrapper { order: 2; margin-bottom: 0; }
 
 /* Cart Feedback Message */
-.cart-feedback-message {
-    order: 4;
-    width: 100%;
-    text-align: center;
-    margin-top: 10px;
-    font-size: 0.9em; padding: 8px 12px; border-radius: 4px; display: none; box-sizing: border-box;
-}
+.cart-feedback-message { order: 4; width: 100%; text-align: center; margin-top: 10px; font-size: 0.9em; padding: 8px 12px; border-radius: 4px; display: none; box-sizing: border-box; }
 .cart-feedback-message.success { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
 .cart-feedback-message.error { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
 
@@ -215,10 +180,10 @@ body {
 .social-icon i { line-height: 1; }
 
 /* --- Product Details Tabs --- */
-.product-details-tabs { margin-top: 50px; border-top: 1px solid var(--border-color); padding-top: 30px; display: none; /* Shown by JS */ }
+.product-details-tabs { margin-top: 50px; border-top: 1px solid var(--border-color); padding-top: 30px; display: none; }
 .tabs-nav { list-style: none; padding: 0; margin: 0 0 25px 0; display: flex; flex-wrap: wrap; border-bottom: 2px solid var(--border-color); }
 .tabs-nav li { margin: 0; }
-.tabs-nav a { display: block; padding: 12px 20px; color: var(--text-muted); text-decoration: none; font-weight: 500; font-size: 1em; border-bottom: 3px solid transparent; transition: color 0.2s ease, border-color 0.2s ease; margin-bottom: -2px; /* Overlap border */ }
+.tabs-nav a { display: block; padding: 12px 20px; color: var(--text-muted); text-decoration: none; font-weight: 500; font-size: 1em; border-bottom: 3px solid transparent; transition: color 0.2s ease, border-color 0.2s ease; margin-bottom: -2px; }
 .tabs-nav a:hover { color: var(--primary-color); }
 .tabs-nav a.active { color: var(--primary-color); border-bottom-color: var(--primary-color); font-weight: 600; }
 .tabs-content { padding-top: 20px; }
@@ -240,7 +205,7 @@ body {
 #reviews-list .review-item:last-child { border-bottom: none; }
 #reviews-list .review-meta { font-size: 0.9em; color: var(--text-muted); margin-bottom: 5px; }
 #reviews-list .review-meta strong { color: var(--text-color); font-weight: 500; }
-#reviews-list .review-rating { color: #f0ad4e; /* Star color */ margin-bottom: 8px; font-size: 0.9em; }
+#reviews-list .review-rating { color: #f0ad4e; margin-bottom: 8px; font-size: 0.9em; }
 #reviews-list .review-comment { line-height: 1.5; color: var(--text-color);}
 
 /* Review Form Styling */
@@ -249,19 +214,16 @@ body {
 #review-form .form-group { margin-bottom: 15px; }
 #review-form label { display: block; margin-bottom: 5px; font-weight: 500; font-size: 0.9em; color: var(--text-muted); }
 #review-form input[type="text"],
-#review-form textarea {
-    font-family: var(--font-family), sans-serif; /* Ensure Poppins */
-    width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: 4px; font-size: 1em; box-sizing: border-box;
-}
+#review-form textarea { font-family: var(--font-family), sans-serif; width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: 4px; font-size: 1em; box-sizing: border-box; }
 #review-form textarea { min-height: 80px; resize: vertical; }
-#review-form .button-secondary { padding: 10px 20px; font-size: 1em; cursor: pointer; background-color: var(--secondary-color); color: white; border: none; }
+#review-form .button-secondary { padding: 10px 20px; font-size: 1em; cursor: pointer; background-color: var(--secondary-color); color: white; border: none; border-radius: var(--border-radius, 6px); }
 #review-form .button-secondary:hover { background-color: #5a6268; }
 
 /* Basic Star Rating Styles */
 .star-rating { display: inline-block; direction: rtl; font-size: 1.5em; line-height: 1; }
 .star-rating input[type="radio"] { display: none; }
 .star-rating label { color: #ccc; cursor: pointer; padding: 0 2px; transition: color 0.2s ease; display: inline-block; }
-.star-rating label:before { content: '\f005'; font-family: 'Font Awesome 6 Free'; font-weight: 900; } /* Use Font Awesome solid star */
+.star-rating label:before { content: '\f005'; font-family: 'Font Awesome 6 Free'; font-weight: 900; }
 .star-rating input:checked ~ label,
 .star-rating:not(:checked) > label:hover,
 .star-rating:not(:checked) > label:hover ~ label { color: #f0ad4e; }
@@ -279,12 +241,8 @@ body {
 .faq-item h4 { font-size: 1.1em; font-weight: 600; margin-bottom: 8px; color: var(--primary-color); }
 
 /* --- Related Products Section --- */
-#related-products-section {
-    padding: 40px 0; background-color: var(--lighter-bg); margin-top: 60px; overflow: hidden; border-top: 1px solid var(--border-color);
-}
-#related-products-section .section-title {
-    text-align: center; font-size: 1.6em; font-weight: 600; color: var(--primary-color); margin-bottom: 30px; padding-bottom: 10px; border-bottom: 1px solid var(--border-color); display: flex; align-items: center; justify-content: center; gap: 10px;
-}
+#related-products-section { padding: 40px 0; background-color: var(--lighter-bg); margin-top: 60px; overflow: hidden; border-top: 1px solid var(--border-color); }
+#related-products-section .section-title { text-align: center; font-size: 1.6em; font-weight: 600; color: var(--primary-color); margin-bottom: 30px; padding-bottom: 10px; border-bottom: 1px solid var(--border-color); display: flex; align-items: center; justify-content: center; gap: 10px; }
 .related-products-swiper { width: 100%; padding: 10px 0 40px 0; position: relative; }
 #related-products-container .swiper-slide { height: auto; display: flex; justify-content: center; align-items: stretch; padding: 5px; box-sizing: border-box; }
 #related-products-container .product-card { border: 1px solid var(--border-color); border-radius: var(--border-radius); background-color: var(--white-bg); box-shadow: var(--box-shadow-sm); overflow: hidden; display: flex; flex-direction: column; transition: transform 0.2s ease, box-shadow 0.2s ease; width: 100%; height: 100%; margin-bottom: 0; }
@@ -322,8 +280,9 @@ body {
 
     .product-actions { flex-direction: column; align-items: stretch; }
      .price-display-area { text-align: center; margin-bottom: 15px; }
-     .product-actions .quantity-input-wrapper { margin: 0 auto 15px auto; width: 150px; }
-     #add-to-cart-btn.button-primary { width: 100%; max-width: none; }
+     .product-actions .quantity-input-wrapper { margin: 0 auto 15px auto; width: 150px; order: 2;} /* Ensure order if needed */
+     #add-to-cart-btn.button-primary { width: 100%; max-width: none; order: 3; }
+     .cart-feedback-message { order: 4; }
      .social-sharing { justify-content: center; }
 
      .tabs-nav { justify-content: center; }
