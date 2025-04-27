@@ -1,8 +1,8 @@
 // js/customer_management.js
-// Version 1.0 (Customer Detail Page Linking Added)
+// Version 1.1 (Added Balance Calculation and Display)
 
 // --- Ensure Firestore functions are available globally ---
-const { db, collection, onSnapshot, query, orderBy, doc, addDoc, updateDoc, deleteDoc, serverTimestamp, runTransaction, getDoc } = window;
+const { db, collection, onSnapshot, query, orderBy, doc, addDoc, updateDoc, deleteDoc, serverTimestamp, runTransaction, getDoc, where, getDocs } = window;
 
 // --- DOM Elements ---
 const customerTableBody = document.getElementById('customerTableBody');
@@ -40,7 +40,7 @@ let searchDebounceTimer;
 
 // --- Initialization ---
 document.addEventListener('DOMContentLoaded', () => {
-    console.log("Customer Management DOM Loaded (V1.0 - Detail Linking).");
+    console.log("Customer Management DOM Loaded (V1.1 - Balance Display).");
     waitForDbConnection(() => {
         console.log("DB connection confirmed. Initializing listener.");
         listenForCustomers();
@@ -63,12 +63,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // --- DB Connection Wait ---
 function waitForDbConnection(callback) {
-    if (window.db) { callback(); } else {
+    if (window.db && window.getDocs) { // Ensure getDocs is available
+        callback();
+    } else {
         let attempts = 0; const maxAttempts = 20;
         const intervalId = setInterval(() => {
             attempts++;
-            if (window.db) { clearInterval(intervalId); callback(); }
-            else if (attempts >= maxAttempts) { clearInterval(intervalId); console.error("DB timeout"); alert("DB Error"); }
+            if (window.db && window.getDocs) { // Check again
+                clearInterval(intervalId); callback();
+            } else if (attempts >= maxAttempts) {
+                clearInterval(intervalId); console.error("DB timeout or function missing (getDocs)"); alert("DB Error");
+            }
         }, 250);
     }
 }
@@ -100,7 +105,6 @@ function handleSearchInput() {
 function clearFilters() {
     console.log("Clearing customer filters.");
     if(filterSearchInput) filterSearchInput.value = '';
-    // Reset sort to default when clearing filters?
     if(sortSelect) sortSelect.value = 'createdAt_desc';
     currentSortField = 'createdAt';
     currentSortDirection = 'desc';
@@ -113,18 +117,18 @@ function listenForCustomers() {
     if (unsubscribeCustomers) { unsubscribeCustomers(); unsubscribeCustomers = null; }
     if (!db || !collection || !query || !orderBy || !onSnapshot) { console.error("Firestore functions not available!"); return; }
 
-    customerTableBody.innerHTML = `<tr><td colspan="6" id="loadingMessage" style="text-align: center; color: #666;">Loading customers...</td></tr>`; // Updated colspan
+    // colspan is now 7 including balance and actions
+    customerTableBody.innerHTML = `<tr><td colspan="7" id="loadingMessage" style="text-align: center; color: #666;">Loading customers...</td></tr>`;
 
     try {
         console.log("Setting up Firestore listener for 'customers'...");
         const customersRef = collection(db, "customers");
-        // Use a default query for the listener; sorting/filtering is client-side
-        const q = query(customersRef); // Fetch all
+        const q = query(customersRef);
 
         unsubscribeCustomers = onSnapshot(q, (snapshot) => {
             console.log(`Received ${snapshot.docs.length} total customers from Firestore.`);
             allCustomersCache = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-            applyFiltersAndRender(); // Apply filters/sort to the new full list
+            applyFiltersAndRender();
 
         }, (error) => { console.error("Error fetching customers snapshot:", error); /* Error handling */ });
     } catch (error) { console.error("Error setting up customer listener:", error); /* Error handling */ }
@@ -136,17 +140,15 @@ function applyFiltersAndRender() {
     if (!allCustomersCache) return;
     console.log("Applying customer filters and rendering...");
 
-    // 1. Get filter values
     const filterSearchValue = filterSearchInput ? filterSearchInput.value.trim().toLowerCase() : '';
 
-    // 2. Filter cached data
     let filteredCustomers = allCustomersCache.filter(customer => {
         if (filterSearchValue) {
             const customId = (customer.customCustomerId || '').toString().toLowerCase();
             const name = (customer.fullName || '').toLowerCase();
             const whatsapp = (customer.whatsappNo || '').toLowerCase();
             const contact = (customer.contactNo || '').toLowerCase();
-            const id = (customer.id || '').toLowerCase(); // Firestore ID
+            const id = (customer.id || '').toLowerCase();
 
             if (!(customId.includes(filterSearchValue) ||
                   name.includes(filterSearchValue) ||
@@ -160,65 +162,161 @@ function applyFiltersAndRender() {
     });
     console.log(`Filtered down to ${filteredCustomers.length} customers.`);
 
-    // 3. Sort filtered data
     filteredCustomers.sort((a, b) => {
         let valA = a[currentSortField];
         let valB = b[currentSortField];
 
-        // Handle different data types for sorting
-        if (valA && typeof valA.toDate === 'function') valA = valA.toDate(); // Firestore Timestamps
+        if (valA && typeof valA.toDate === 'function') valA = valA.toDate();
         if (valB && typeof valB.toDate === 'function') valB = valB.toDate();
-        if (currentSortField === 'customCustomerId') { // Numeric sort for ID
+        if (currentSortField === 'customCustomerId') {
             valA = Number(valA) || 0;
             valB = Number(valB) || 0;
         }
-        if (currentSortField === 'fullName') { // Case-insensitive string sort for name
+        if (currentSortField === 'fullName') {
             valA = (valA || '').toLowerCase();
             valB = (valB || '').toLowerCase();
         }
 
-        // Perform comparison
         let comparison = 0;
-        if (valA > valB) {
-            comparison = 1;
-        } else if (valA < valB) {
-            comparison = -1;
-        }
+        if (valA > valB) comparison = 1;
+        else if (valA < valB) comparison = -1;
         return currentSortDirection === 'desc' ? (comparison * -1) : comparison;
     });
     console.log(`Sorted ${filteredCustomers.length} customers.`);
 
-    // 4. Render table
-    customerTableBody.innerHTML = ''; // Clear previous rows
+    customerTableBody.innerHTML = '';
     if (filteredCustomers.length === 0) {
-        customerTableBody.innerHTML = `<tr><td colspan="6" id="noCustomersMessage" style="text-align: center; color: #666;">No customers found matching filters.</td></tr>`; // Updated colspan
+        customerTableBody.innerHTML = `<tr><td colspan="7" id="noCustomersMessage" style="text-align: center; color: #666;">No customers found matching filters.</td></tr>`; // Updated colspan
     } else {
+        // Render rows without balance first
         filteredCustomers.forEach(customer => {
-            // Pass the Firestore ID (customer.id) along with the data
-            displayCustomerRow(customer.id, customer);
+             displayCustomerRow(customer.id, customer); // This now adds placeholders
+        });
+        // Then fetch and update balances asynchronously
+        updateBalancesForDisplayedCustomers(filteredCustomers);
+    }
+     console.log("Customer rendering initiated.");
+}
+
+// --- Helper: Fetch and Update Balances for Visible Rows ---
+async function updateBalancesForDisplayedCustomers(customers) {
+    console.log(`Fetching balances for ${customers.length} customers...`);
+    const balancePromises = customers.map(customer => getCustomerBalance(customer.id));
+
+    try {
+        const balances = await Promise.all(balancePromises);
+        customers.forEach((customer, index) => {
+            const balance = balances[index];
+            const row = customerTableBody.querySelector(`tr[data-id="${customer.id}"]`);
+            if (row) {
+                const balanceCell = row.querySelector('.balance-cell'); // Find the specific cell
+                if (balanceCell) {
+                    updateBalanceCell(balanceCell, balance);
+                }
+            }
+        });
+        console.log("Balances updated for displayed customers.");
+    } catch (error) {
+        console.error("Error fetching balances for multiple customers:", error);
+        // Optionally update cells to show error
+        customers.forEach(customer => {
+             const row = customerTableBody.querySelector(`tr[data-id="${customer.id}"]`);
+            if (row) {
+                const balanceCell = row.querySelector('.balance-cell');
+                if (balanceCell) { balanceCell.textContent = 'Error'; balanceCell.classList.add('balance-due'); }
+            }
         });
     }
-     console.log("Customer rendering complete.");
 }
 
 
-// --- Display Single Customer Row ---
+// --- Helper: Get Balance for ONE Customer ---
+async function getCustomerBalance(customerId) {
+    if (!db || !collection || !query || !where || !getDocs) {
+        console.error("DB functions missing for balance calculation.");
+        return null; // Indicate error or inability to calculate
+    }
+    try {
+        let totalOrderValue = 0;
+        let totalPaidAmount = 0;
+
+        // Fetch Orders Total
+        const ordersRef = collection(db, "orders");
+        const orderQuery = query(ordersRef, where("customerId", "==", customerId));
+        const orderSnapshot = await getDocs(orderQuery);
+        orderSnapshot.forEach(doc => {
+            totalOrderValue += Number(doc.data().totalAmount || 0);
+        });
+
+        // Fetch Payments Total
+        const paymentsRef = collection(db, "payments");
+        const paymentQuery = query(paymentsRef, where("customerId", "==", customerId));
+        const paymentSnapshot = await getDocs(paymentQuery);
+        paymentSnapshot.forEach(doc => {
+            totalPaidAmount += Number(doc.data().amountPaid || 0);
+        });
+
+        return totalOrderValue - totalPaidAmount;
+
+    } catch (error) {
+        console.error(`Error calculating balance for customer ${customerId}:`, error);
+        return null; // Indicate error
+    }
+}
+
+// --- Helper: Format Currency ---
+function formatCurrency(amount) {
+    const num = Number(amount);
+    if (isNaN(num)) return 'N/A';
+    // Use Indian numbering system format
+    return num.toLocaleString('en-IN', {
+        style: 'currency',
+        currency: 'INR',
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+    });
+}
+
+// --- Helper: Update Balance Cell Appearance ---
+function updateBalanceCell(cellElement, balance) {
+    if (balance === null || typeof balance === 'undefined') {
+        cellElement.innerHTML = `<span class="balance-value balance-loading">Error</span>`; // Show error if balance is null/undefined
+        return;
+    }
+
+    const formattedBalance = formatCurrency(balance);
+    let balanceClass = 'balance-zero';
+    if (balance > 0) {
+        balanceClass = 'balance-due'; // Customer owes (Due) - Shown in Red
+    } else if (balance < 0) {
+        balanceClass = 'balance-credit'; // Customer has credit - Shown in Green
+        // Optionally show negative balance as positive with (Cr.) notation
+        // formattedBalance = formatCurrency(Math.abs(balance)) + ' (Cr.)';
+    }
+
+    cellElement.innerHTML = `<span class="balance-value ${balanceClass}">${formattedBalance}</span>`;
+}
+
+
+// --- Display Single Customer Row (Modified) ---
 function displayCustomerRow(firestoreId, data) {
     const tableRow = document.createElement('tr');
-    tableRow.setAttribute('data-id', firestoreId); // Store Firestore ID on the row
+    tableRow.setAttribute('data-id', firestoreId);
 
     const customId = data.customCustomerId || '-';
     const name = data.fullName || 'N/A';
     const whatsapp = data.whatsappNo || '-';
     const contact = data.contactNo || '-';
-    const address = data.billingAddress || data.address || '-'; // Prefer billingAddress
+    const address = data.billingAddress || data.address || '-';
 
+    // Added balance cell with a specific class and initial loading state
     tableRow.innerHTML = `
         <td>${customId}</td>
         <td>${name}</td>
         <td>${whatsapp}</td>
         <td>${contact}</td>
         <td>${address}</td>
+        <td class="balance-cell"><span class="balance-value balance-loading">...</span></td>
         <td>
             <button type="button" class="action-button edit-button" title="Edit Customer">
                 <i class="fas fa-edit"></i>
@@ -229,45 +327,47 @@ function displayCustomerRow(firestoreId, data) {
         </td>
     `;
 
-    // --- >>> यहाँ बदलाव किया गया है (लिंकिंग के लिए) <<< ---
-    tableRow.style.cursor = 'pointer'; // माउस ले जाने पर हाथ का निशान दिखाता है
-    tableRow.addEventListener('click', () => {
-        // customer_account_detail.html पर रीडायरेक्ट करें और Firestore ID पास करें
+    // Row click listener (no change needed here)
+    tableRow.style.cursor = 'pointer';
+    tableRow.addEventListener('click', (e) => {
+        // Prevent row navigation if a button inside was clicked
+        if (e.target.closest('button.action-button')) {
+            return;
+        }
         window.location.href = `customer_account_detail.html?id=${firestoreId}`;
     });
-    // --- >>> बदलाव समाप्त <<< ---
 
-
-    // Attach event listeners AFTER setting innerHTML and AFTER adding the main row listener
+    // Attach button event listeners AFTER setting innerHTML
     const editButton = tableRow.querySelector('.edit-button');
     if (editButton) {
         editButton.addEventListener('click', (e) => {
-            e.stopPropagation(); // Prevent row click when clicking button
+            e.stopPropagation();
             openEditModal(firestoreId, data);
         });
     }
     const deleteButton = tableRow.querySelector('.delete-button');
     if (deleteButton) {
         deleteButton.addEventListener('click', (e) => {
-            e.stopPropagation(); // Prevent row click when clicking button
+            e.stopPropagation();
             handleDeleteCustomer(firestoreId, name);
         });
     }
 
-    customerTableBody.appendChild(tableRow); // Add the row to the table body
+    customerTableBody.appendChild(tableRow);
+    // Balance is now fetched and updated later by updateBalancesForDisplayedCustomers
 }
 
 
-// --- Modal Handling (Add/Edit) ---
+// --- Modal Handling (Add/Edit) --- (No changes needed here)
 function openAddModal() {
     console.log("Opening modal to add new customer.");
     if (!customerModal || !customerForm) return;
     modalTitle.textContent = "Add New Customer";
-    editCustomerIdInput.value = ''; // Clear Firestore ID for Add mode
-    customerForm.reset(); // Clear form fields
-    if(customIdDisplayArea) customIdDisplayArea.style.display = 'none'; // Hide custom ID field
-    if(saveCustomerBtnText) saveCustomerBtnText.textContent = 'Save Customer'; // Reset button text
-    saveCustomerBtn.disabled = false; // Ensure button is enabled
+    editCustomerIdInput.value = '';
+    customerForm.reset();
+    if(customIdDisplayArea) customIdDisplayArea.style.display = 'none';
+    if(saveCustomerBtnText) saveCustomerBtnText.textContent = 'Save Customer';
+    saveCustomerBtn.disabled = false;
     customerModal.classList.add('active');
 }
 
@@ -275,17 +375,15 @@ function openEditModal(firestoreId, data) {
      console.log("Opening modal to edit customer:", firestoreId);
      if (!customerModal || !customerForm) return;
      modalTitle.textContent = "Edit Customer";
-     editCustomerIdInput.value = firestoreId; // Set Firestore ID for Edit mode
-     if(saveCustomerBtnText) saveCustomerBtnText.textContent = 'Update Customer'; // Change button text
-     saveCustomerBtn.disabled = false; // Ensure button is enabled
+     editCustomerIdInput.value = firestoreId;
+     if(saveCustomerBtnText) saveCustomerBtnText.textContent = 'Update Customer';
+     saveCustomerBtn.disabled = false;
 
-     // Fill form with existing data
      customerFullNameInput.value = data.fullName || '';
      customerWhatsAppInput.value = data.whatsappNo || '';
      customerContactInput.value = data.contactNo || '';
-     customerAddressInput.value = data.billingAddress || data.address || ''; // Prefer billingAddress
+     customerAddressInput.value = data.billingAddress || data.address || '';
 
-     // Display existing custom ID (read-only)
      if (data.customCustomerId && generatedCustomIdInput && customIdDisplayArea) {
          generatedCustomIdInput.value = data.customCustomerId;
          customIdDisplayArea.style.display = 'block';
@@ -299,87 +397,73 @@ function closeCustomerModal() {
      if (customerModal) { customerModal.classList.remove('active'); }
 }
 
-// --- Save/Update Customer Handler (WITH TRANSACTION for Add) ---
+// --- Save/Update Customer Handler (WITH TRANSACTION for Add) --- (No change needed here)
 async function handleSaveCustomer(event) {
     event.preventDefault();
-    // Ensure necessary Firestore functions are available
     if (!db || !collection || !addDoc || !doc || !updateDoc || !serverTimestamp || !runTransaction || !getDoc) {
          console.error("Database functions unavailable.");
          alert("Database functions unavailable. Cannot save.");
          return;
     }
 
-    const customerId = editCustomerIdInput.value; // Firestore document ID (empty if adding)
+    const customerId = editCustomerIdInput.value;
     const isEditing = !!customerId;
 
-    // Get form values
     const fullName = customerFullNameInput.value.trim();
     const whatsappNo = customerWhatsAppInput.value.trim();
-    const contactNo = customerContactInput.value.trim() || null; // Store as null if empty
-    const address = customerAddressInput.value.trim() || null; // Store as null if empty
+    const contactNo = customerContactInput.value.trim() || null;
+    const address = customerAddressInput.value.trim() || null;
 
-    // Basic validation
     if (!fullName || !whatsappNo) {
         alert("Full Name and WhatsApp Number are required.");
         return;
     }
 
-    // Disable button and show loading state
     saveCustomerBtn.disabled = true;
-    const originalButtonHTML = saveCustomerBtn.innerHTML; // Store original HTML
+    const originalButtonHTML = saveCustomerBtn.innerHTML;
     saveCustomerBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
 
-    // Prepare data payload
     const customerDataPayload = {
         fullName: fullName,
         whatsappNo: whatsappNo,
         contactNo: contactNo,
-        billingAddress: address, // Using billingAddress field now
-        // 'address' field can potentially be removed if only billingAddress is needed
+        billingAddress: address,
         updatedAt: serverTimestamp()
+        // NOTE: Balance is NOT saved here. It should ideally be updated
+        // via Cloud Functions or when orders/payments are made.
     };
 
     try {
         if (isEditing) {
-            // --- UPDATE existing customer ---
              console.log(`Updating customer ${customerId}...`);
              const customerRef = doc(db, "customers", customerId);
-             // Don't update createdAt or customCustomerId on edit
              await updateDoc(customerRef, customerDataPayload);
              console.log("Customer updated successfully.");
              alert("Customer updated successfully!");
              closeCustomerModal();
         } else {
-            // --- ADD new customer using Transaction to generate custom ID ---
             console.log("Adding new customer via transaction...");
-            const counterRef = doc(db, "counters", "customerCounter"); // Reference to the counter document
-            const newCustomerColRef = collection(db, "customers"); // Reference to the customers collection
+            const counterRef = doc(db, "counters", "customerCounter");
+            const newCustomerColRef = collection(db, "customers");
 
             await runTransaction(db, async (transaction) => {
                 const counterDoc = await transaction.get(counterRef);
-                let nextId = 101; // Default starting ID if counter doesn't exist
+                let nextId = 101;
                 if (counterDoc.exists() && counterDoc.data().lastId) {
-                    nextId = counterDoc.data().lastId + 1; // Increment the last ID
+                    nextId = counterDoc.data().lastId + 1;
                 } else {
                      console.log("Counter document 'customerCounter' or field 'lastId' not found, starting ID at 101.");
-                     // The transaction will create/set it later.
                 }
 
-                // Add custom ID and createdAt timestamp to the payload for the new customer
-                customerDataPayload.customCustomerId = nextId; // Assign the calculated ID
-                customerDataPayload.createdAt = serverTimestamp(); // Add creation timestamp
-                customerDataPayload.status = 'active'; // Default status for new customer
+                customerDataPayload.customCustomerId = nextId;
+                customerDataPayload.createdAt = serverTimestamp();
+                customerDataPayload.status = 'active';
 
-                // Create a reference *for the new document* within the collection
                 const newDocRef = doc(newCustomerColRef);
-                // Set the data for the new customer document using the transaction
                 transaction.set(newDocRef, customerDataPayload);
-
-                // Update (or create if it doesn't exist) the counter document
-                transaction.set(counterRef, { lastId: nextId }, { merge: true }); // Use merge:true to avoid overwriting other fields if they exist
-
+                transaction.set(counterRef, { lastId: nextId }, { merge: true });
                 console.log(`Transaction prepared: Set customer ${newDocRef.id} with customId ${nextId}, update counter to ${nextId}.`);
-            }); // Transaction automatically commits here if no errors occurred
+            });
 
             console.log("Transaction successful. New customer added.");
             alert("New customer added successfully!");
@@ -389,14 +473,13 @@ async function handleSaveCustomer(event) {
         console.error("Error saving customer:", error);
         alert(`Error saving customer: ${error.message}`);
     } finally {
-        // Re-enable button and restore original text/icon
         saveCustomerBtn.disabled = false;
         saveCustomerBtn.innerHTML = originalButtonHTML;
     }
 }
 
 
-// --- Delete Customer Handler ---
+// --- Delete Customer Handler --- (No change needed here)
 async function handleDeleteCustomer(firestoreId, customerName) {
     console.log(`handleDeleteCustomer called for ID: ${firestoreId}, Name: ${customerName}`);
     if (!db || !doc || !deleteDoc) {
@@ -404,8 +487,6 @@ async function handleDeleteCustomer(firestoreId, customerName) {
         alert("Error: Delete function not available.");
         return;
     }
-
-    // Confirmation dialog
     if (confirm(`Are you sure you want to delete customer "${customerName}"? This action cannot be undone.`)) {
         console.log(`User confirmed deletion for ${firestoreId}. Proceeding...`);
         try {
@@ -413,7 +494,7 @@ async function handleDeleteCustomer(firestoreId, customerName) {
             await deleteDoc(customerRef);
             console.log(`Customer deleted successfully from Firestore: ${firestoreId}`);
             alert(`Customer "${customerName}" deleted.`);
-            // The UI should update automatically because of the onSnapshot listener.
+            // UI updates via listener
         } catch (error) {
             console.error(`Error deleting customer ${firestoreId}:`, error);
             alert(`Failed to delete customer: ${error.message}`);
@@ -424,4 +505,4 @@ async function handleDeleteCustomer(firestoreId, customerName) {
 }
 
 // --- Final Log ---
-console.log("customer_management.js (V1.0 - Detail Linking) script fully loaded.");
+console.log("customer_management.js (V1.1 - Balance Display) script fully loaded.");

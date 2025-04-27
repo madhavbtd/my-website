@@ -245,3 +245,42 @@ h1 { margin: 0; font-size: 1.2em; }
     .modal-actions { flex-direction: column; }
     .modal-actions .button { width: 100%; justify-content: center; }
 }
+/* === Customer List Balance Column Styles === */
+
+/* बैलेंस कॉलम हैडर और सेल के लिए स्टाइल */
+#customerTable th:nth-child(6), /* Balance Header */
+#customerTable td:nth-child(6)  /* Balance Cell */
+{
+    text-align: right; /* बैलेंस को दाईं ओर अलाइन करें */
+    white-space: nowrap; /* बैलेंस को एक लाइन में रखें */
+    width: 120px; /* कॉलम की चौड़ाई निर्धारित करें (ज़रूरत अनुसार बदलें) */
+    font-weight: bold; /* बैलेंस को थोड़ा मोटा दिखाएं */
+}
+
+/* बैलेंस के लिए कलर क्लास */
+#customerTable td .balance-value {
+    padding: 3px 6px;
+    border-radius: 4px;
+    font-size: 0.95em;
+}
+
+#customerTable td .balance-due { /* ग्राहक पर बकाया (लाल) */
+    color: #dc3545; /* Red color */
+    /* background-color: #f8d7da; */ /* Optional light red background */
+}
+
+#customerTable td .balance-credit { /* ग्राहक के पास क्रेडिट (हरा) */
+    color: #28a745; /* Green color */
+     /* background-color: #d4edda; */ /* Optional light green background */
+}
+
+#customerTable td .balance-zero { /* शून्य बैलेंस (ग्रे) */
+    color: #6c757d; /* Grey color */
+    font-weight: normal; /* शून्य बैलेंस के लिए बोल्ड नहीं */
+}
+
+#customerTable td .balance-loading { /* लोडिंग के दौरान */
+    color: #adb5bd;
+    font-style: italic;
+    font-weight: normal;
+}
