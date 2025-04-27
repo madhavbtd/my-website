@@ -1,11 +1,12 @@
 /* admin/css/view-online-orders.css */
 
-/* --- 기본 스타일 (अन्य एडमिन CSS से कॉपी करें या लिंक करें) --- */
+/* --- Global Styles (Keep as is or match your admin theme) --- */
 :root {
     --primary-color: #0056b3;
     --secondary-color: #6c757d;
     --success-color: #28a745;
     --info-color: #17a2b8;
+    --warning-color: #ffc107; /* Added for Edit button */
     --danger-color: #dc3545;
     --light-bg: #f8f9fa;
     --white-bg: #ffffff;
@@ -26,54 +27,19 @@ body {
     line-height: 1.5;
 }
 
-/* --- Admin Header --- */
-.admin-header {
-    background-color: var(--primary-color);
-    color: var(--white-bg);
-    padding: 15px 30px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-}
+/* --- Admin Header (Keep as is) --- */
+.admin-header { background-color: var(--primary-color); color: var(--white-bg); padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
 .admin-header h1 { margin: 0; font-size: 1.4em; display: flex; align-items: center; gap: 10px; }
 .admin-header h1 i { font-size: 0.9em; }
 .admin-header nav { display: flex; gap: 15px; }
 .admin-header nav a { color: var(--white-bg); text-decoration: none; font-weight: 500; font-size: 0.9em; display: flex; align-items: center; gap: 5px; transition: color 0.2s ease; }
 .admin-header nav a:hover { color: #d4e4ff; }
 
-/* --- Main Container --- */
-.admin-container {
-    max-width: 1300px;
-    margin: 25px auto;
-    padding: 25px 30px;
-    background-color: var(--white-bg);
-    border-radius: var(--border-radius);
-    box-shadow: var(--box-shadow-lg);
-}
-
-.admin-container h2 {
-    font-size: 1.3em;
-    color: var(--primary-color);
-    margin-top: 0;
-    margin-bottom: 10px;
-    padding-bottom: 10px;
-    border-bottom: 1px solid var(--border-color);
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
+/* --- Main Container (Keep as is) --- */
+.admin-container { max-width: 1300px; margin: 25px auto; padding: 25px 30px; background-color: var(--white-bg); border-radius: var(--border-radius); box-shadow: var(--box-shadow-lg); }
+.admin-container h2 { font-size: 1.3em; color: var(--primary-color); margin-top: 0; margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px solid var(--border-color); display: flex; align-items: center; gap: 8px; }
 .admin-container h2 i { font-size: 0.9em; }
-.page-description {
-    font-size: 0.9em;
-    color: var(--text-muted);
-    margin-bottom: 20px;
-    background-color: var(--light-bg);
-    padding: 10px 15px;
-    border-radius: var(--border-radius);
-    border: 1px solid var(--border-color);
-}
-
+.page-description { font-size: 0.9em; color: var(--text-muted); margin-bottom: 20px; background-color: var(--light-bg); padding: 10px 15px; border-radius: var(--border-radius); border: 1px solid var(--border-color); }
 
 /* --- Table Styles --- */
 .table-container { overflow-x: auto; border: 1px solid var(--border-color); border-radius: var(--border-radius); margin-top: 20px; background: var(--white-bg); }
@@ -84,13 +50,21 @@ body {
 #orders-table tbody tr:hover { background-color: #f1f8ff; }
 #orders-table td { color: var(--text-muted); }
 #orders-table td:nth-child(3) { font-weight: 500; color: var(--text-color); } /* Customer Name */
-#orders-table td:nth-child(1) { font-family: monospace; font-size: 0.85em; } /* Order ID */
+
+/* --- *** UPDATED: Order ID Column Style *** --- */
+#orders-table td:first-child {
+    font-family: monospace, 'Courier New', Courier; /* Monospace font */
+    font-size: 0.95em; /* Slightly larger font size */
+    font-weight: 500; /* Make it slightly bolder */
+    color: #333; /* Darker color */
+}
+/* --- *** End of Update *** --- */
 
 /* Actions Column */
-#orders-table td:last-child { white-space: nowrap; width: 1%; } /* Prevent wrapping */
+#orders-table td:last-child { white-space: nowrap; width: 1%; min-width: 180px; /* Ensure enough space for buttons */ }
 #orders-table .btn {
-    padding: 4px 9px; /* Smaller padding */
-    font-size: 0.85em; /* Smaller font */
+    padding: 4px 9px;
+    font-size: 0.85em;
     border: none;
     border-radius: var(--border-radius);
     cursor: pointer;
@@ -100,22 +74,43 @@ body {
     align-items: center;
     gap: 4px;
     vertical-align: middle;
-    transition: background-color 0.2s ease;
+    transition: background-color 0.2s ease, opacity 0.2s ease;
 }
 #orders-table .btn:last-child { margin-right: 0; }
-#orders-table .btn i { font-size: 0.9em; }
+#orders-table .btn i { font-size: 0.95em; /* Icon size slightly adjusted */ } /* Adjusted icon size */
 
 /* Button Specific Styles */
 .btn-view { background-color: var(--info-color); color: white; }
 .btn-view:hover { background-color: #117a8b; }
+
 .btn-process { background-color: var(--success-color); color: white; }
 .btn-process:hover { background-color: #1e7e34; }
 .btn-process:disabled { background-color: #adb5bd !important; cursor: not-allowed; opacity: 0.7; }
-.btn-process .fa-spinner { animation: fa-spin 1s infinite linear; }
+
+/* --- *** NEW: Styles for Edit, Delete, Cancel Buttons *** --- */
+.btn-edit { background-color: var(--warning-color); color: #333; }
+.btn-edit:hover { background-color: #e0a800; }
+
+.btn-delete { background-color: var(--danger-color); color: white; }
+.btn-delete:hover { background-color: #bd2130; }
+
+.btn-cancel { background-color: var(--secondary-color); color: white; } /* Using secondary color for cancel */
+.btn-cancel:hover { background-color: #5a6268; }
+
+.btn-delete:disabled,
+.btn-cancel:disabled,
+.btn-edit:disabled { /* General disabled style */
+    background-color: #adb5bd !important;
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+/* --- *** End of New Styles *** --- */
+
+/* Spinner Animation */
+.fa-spinner { animation: fa-spin 1s infinite linear; }
 @keyframes fa-spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-
-/* --- Modal Styles --- */
+/* --- Modal Styles (Keep as is) --- */
 .modal { display: none; position: fixed; z-index: 1050; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.5); align-items: center; justify-content: center; padding: 15px; box-sizing: border-box; }
 .modal.active { display: flex; }
 .modal-content { background-color: var(--white-bg); margin: auto; padding: 0; border: none; width: 90%; max-width: 800px; border-radius: var(--border-radius); position: relative; box-shadow: 0 5px 15px rgba(0,0,0,0.2); display: flex; flex-direction: column; max-height: 85vh; }
@@ -149,4 +144,5 @@ body {
     #orders-table { font-size: 0.85em; }
     #orders-table th, #orders-table td { padding: 8px; }
     .modal-content { width: 95%; }
+    #orders-table .btn { margin-bottom: 3px; } /* Stack buttons slightly on small screens if needed */
 }
