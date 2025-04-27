@@ -1,308 +1,130 @@
-/* css/index.css - Homepage Specific Styles ONLY */
-
-/* --- Variables (Optional: Keep if needed for page-specific styles) --- */
-/* :root { ... } */ /* Remove if not needed */
-
+/* css/index.css - Homepage Specific Styles ONLY (English Language, Sliders, Improved Testimonials, Fixed Overlay) */
 
 /* ============================================================== */
 /* == Homepage Specific Styles                                 == */
 /* ============================================================== */
 
-/* Hero Section */
-.hero-section {
-    position: relative; /* For overlay positioning */
-    background-color: #cccccc; /* Fallback background */
-    /* <<< अपनी बैकग्राउंड इमेज का URL यहाँ डालें >>> */
-     background-image: url('https://via.placeholder.com/1920x600.png?text=Hero+Background'); /* Placeholder */
-    background-size: cover;
-    background-position: center center;
-    padding: 100px 0; /* Increased padding */
-    text-align: center;
-    color: var(--white-bg); /* Text color for hero (uses variable from header-footer.css) */
-    overflow: hidden;
-}
-.hero-overlay {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 40, 85, 0.6); /* Dark blue overlay */
-    z-index: 1;
-}
-.hero-content {
-    position: relative; /* Place content above overlay */
-    z-index: 2;
-}
-.hero-section h1 {
-    color: var(--white-bg);
-    font-size: 3em; /* Larger heading */
-    margin-bottom: 20px;
-    text-shadow: 1px 1px 3px rgba(0,0,0,0.5);
-}
-.hero-section p {
-    color: rgba(255, 255, 255, 0.9); /* Slightly transparent white */
-    font-size: 1.25em;
-    max-width: 750px;
-    margin: 0 auto 35px auto; /* Adjusted margin */
-    text-shadow: 1px 1px 2px rgba(0,0,0,0.4);
-}
-.hero-buttons {
-    display: flex;
-    justify-content: center;
-    gap: 15px;
-    flex-wrap: wrap;
-}
-/* Button styles now come from header-footer.css */
-/* .button-primary { ... } */
-/* .button-secondary { ... } */
+/* --- Hero Section Slider --- */
+.hero-section-slider { width: 100%; height: 60vh; min-height: 400px; position: relative; overflow: hidden; background-color: #ccc; }
+.hero-swiper { width: 100%; height: 100%; }
+.hero-swiper .swiper-slide { background-size: cover; background-position: center center; position: relative; display: flex; align-items: center; justify-content: center; text-align: center; }
+.hero-swiper .hero-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.65); /* <<< गहरा ओवरले पठनीयता के लिए >>> */ z-index: 1; }
+.hero-swiper .hero-content { position: relative; z-index: 2; color: var(--white-bg); }
+.hero-swiper .hero-content h1 { color: var(--white-bg); font-size: 3em; margin-bottom: 20px; text-shadow: 1px 1px 4px rgba(0,0,0,0.7); /* गहरा शैडो */ }
+.hero-swiper .hero-content p { color: rgba(255, 255, 255, 0.95); font-size: 1.25em; max-width: 750px; margin: 0 auto 35px auto; text-shadow: 1px 1px 3px rgba(0,0,0,0.6); /* गहरा शैडो */ }
+.hero-swiper .hero-buttons { display: flex; justify-content: center; gap: 15px; flex-wrap: wrap; }
+/* --- General Button Styles --- */
+.button-primary, .button-secondary { display: inline-block; padding: 10px 20px; font-size: 1em; font-weight: 500; text-align: center; border-radius: var(--border-radius); cursor: pointer; transition: background-color 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease, color 0.2s ease; text-decoration: none; line-height: 1.4; }
+.button-primary { background-color: var(--primary-color); color: white; border: 1px solid var(--primary-color); box-shadow: var(--box-shadow-sm); }
+.button-primary:hover { background-color: #004a99; border-color: #004a99; box-shadow: var(--box-shadow-md); }
+.button-secondary { background-color: transparent; color: var(--primary-color); border: 1px solid var(--primary-color); }
+.button-secondary:hover { background-color: var(--primary-color); color: white; }
+/* --- End General Button Styles --- */
+.hero-swiper .hero-buttons .button-secondary { background-color: rgba(255, 255, 255, 0.15); border-color: var(--white-bg); color: var(--white-bg); }
+.hero-swiper .hero-buttons .button-secondary:hover { background-color: var(--white-bg); color: var(--primary-color); }
 
-/* Specific style for secondary button in hero */
-.hero-buttons .button-secondary {
-    background-color: rgba(255, 255, 255, 0.15);
-    border-color: var(--white-bg);
-    color: var(--white-bg);
-}
-.hero-buttons .button-secondary:hover {
-    background-color: var(--white-bg);
-    color: var(--primary-color);
-}
+/* Hero Slider Pagination/Navigation */
+.hero-pagination .swiper-pagination-bullet { background: rgba(255, 255, 255, 0.7); opacity: 1; width: 10px; height: 10px; }
+.hero-pagination .swiper-pagination-bullet-active { background: var(--white-bg); }
+.hero-nav-button { color: rgba(255, 255, 255, 0.8); width: 45px; height: 45px; transition: color 0.2s ease; }
+.hero-nav-button:hover { color: white; }
+.hero-nav-button::after { font-size: 24px; font-weight: bold; }
 
+/* --- Info Section General --- */
+.info-section { padding: 60px 0; }
+.info-section h2 { font-size: 2em; margin-bottom: 1.5rem; text-align: center; position: relative; padding-bottom: 15px; color: var(--text-color); font-weight: 600; }
+.info-section h2::after { content: ''; display: block; width: 70px; height: 4px; background-color: var(--primary-color); margin: 10px auto 0; border-radius: 2px; }
+.section-subtitle { font-size: 1.1em; color: var(--text-muted); max-width: 750px; margin-left: auto; margin-right: auto; margin-top: -1rem; margin-bottom: 3rem; text-align: center; }
+.section-bg-light { background-color: var(--light-bg); border-top: 1px solid var(--border-color); border-bottom: 1px solid var(--border-color); }
 
-/* Info Section General */
-.info-section {
-    padding: 70px 0; /* Consistent padding */
-}
-.info-section h2 {
-    font-size: 2em; /* Consistent size */
-    margin-bottom: 1.5rem;
-    text-align: center;
-    position: relative; /* For underline */
-    padding-bottom: 15px;
-}
-.info-section h2::after { /* Section heading underline */
-    content: '';
-    display: block;
-    width: 70px;
-    height: 4px;
-    background-color: var(--primary-color); /* Use shared variable */
-    margin: 10px auto 0;
-    border-radius: 2px;
-}
-.section-subtitle { /* Used in portfolio and process */
-    font-size: 1.1em;
-    color: var(--text-muted); /* Use shared variable */
-    max-width: 750px;
-    margin-left: auto;
-    margin-right: auto;
-    margin-top: -1rem; /* Pull up slightly */
-    margin-bottom: 3rem; /* Space after subtitle */
-}
+/* --- Featured Products Section --- */
+#featured-products { padding-top: 40px; }
+#featured-products h2 { margin-bottom: 1rem; }
+.featured-products-swiper { width: 100%; padding: 10px 0 40px 0; position: relative; }
+.featured-products-swiper .swiper-slide { height: auto; display: flex; justify-content: center; align-items: stretch; padding: 5px; box-sizing: border-box; }
+/* Product Card Styling */
+.featured-products-swiper .product-card { border: 1px solid var(--border-color); border-radius: var(--border-radius); background-color: var(--white-bg); box-shadow: var(--box-shadow-sm); overflow: hidden; display: flex; flex-direction: column; transition: transform 0.2s ease, box-shadow 0.2s ease; width: 100%; height: 100%; margin-bottom: 0; }
+.featured-products-swiper .product-card:hover { transform: translateY(-4px); box-shadow: var(--box-shadow-md); }
+.featured-products-swiper .product-card .product-image-container { width: 100%; aspect-ratio: 4 / 3; background-color: #f8f9fa; display: flex; align-items: center; justify-content: center; overflow: hidden; position: relative; }
+.featured-products-swiper .product-card .product-image-container img { display: block; max-width: 100%; max-height: 100%; object-fit: contain; transition: transform 0.3s ease; }
+.featured-products-swiper .product-card:hover .product-image-container img { transform: scale(1.06); }
+.featured-products-swiper .product-card .product-info { padding: 15px; flex-grow: 1; display: flex; flex-direction: column; background-color: #fdfdfd; text-align: center; }
+.featured-products-swiper .product-card h3 { font-size: 1em; margin: 0 0 8px 0; font-weight: 600; line-height: 1.3; color: var(--text-color); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; min-height: calc(1em * 1.3 * 2); }
+.featured-products-swiper .product-card h3 a { text-decoration: none; color: inherit; }
+.featured-products-swiper .product-card .price { margin-bottom: 12px; font-size: 0.95em; font-weight: 500; color: var(--text-color); min-height: 1.5em; display: flex; align-items: center; justify-content: center; }
+.featured-products-swiper .product-card .view-details-btn { margin-top: auto; width: auto; align-self: center; }
 
-/* Alternating Background */
-.section-bg-light {
-    background-color: var(--light-bg); /* Use shared variable */
-    border-top: 1px solid var(--border-color); /* Use shared variable */
-    border-bottom: 1px solid var(--border-color); /* Use shared variable */
-}
-
-/* Services Grid (Refined Style) */
-.services-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: 35px; /* Increased gap */
-    margin-top: 50px;
-}
-.service-item {
-    background-color: var(--white-bg); /* Use shared variable */
-    padding: 35px 30px; /* Increased padding */
-    border-radius: var(--border-radius); /* Use shared variable */
-    box-shadow: var(--box-shadow); /* Use shared variable */
-    text-align: center;
-    border: 1px solid transparent; /* Start with transparent border */
-    transition: transform var(--transition-speed) ease, box-shadow var(--transition-speed) ease, border-color var(--transition-speed) ease; /* Use shared variable */
-}
-.service-item:hover {
-    transform: translateY(-8px); /* More lift */
-    box-shadow: 0 10px 20px rgba(0,0,0,0.1); /* Custom hover shadow */
-    border-color: var(--primary-color); /* Highlight border on hover */
-}
-.service-icon { /* Shared class for icons in grid items */
-    font-size: 2.8em; /* Larger icons */
-    color: var(--primary-color); /* Use shared variable */
-    margin-bottom: 20px;
-    line-height: 1;
-    display: inline-block; /* Ensure margin bottom works */
-}
-.service-item h4 {
-    font-size: 1.2em;
-    color: var(--primary-color); /* Use shared variable */
-    margin-bottom: 10px;
-}
-.service-item p {
-    font-size: 0.95em;
-    color: var(--text-muted); /* Use shared variable */
-    line-height: 1.6;
-}
-
+/* Featured Products Slider Navigation/Pagination */
+.featured-pagination .swiper-pagination-bullet { background-color: var(--primary-color); opacity: 0.7; }
+.featured-pagination .swiper-pagination-bullet-active { opacity: 1; }
+.featured-nav-button { color: var(--primary-color); background-color: rgba(255, 255, 255, 0.7); border-radius: 50%; width: 35px; height: 35px; transition: background-color 0.2s ease; top: 50%; transform: translateY(-50%); }
+.featured-nav-button:hover { background-color: rgba(255, 255, 255, 0.9); }
+.featured-nav-button::after { font-size: 16px; font-weight: bold; }
 
 /* Process Steps Section */
-.process-steps {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-    gap: 30px;
-    margin-top: 50px;
-    text-align: center;
-}
-.step-item {
-    /* No background needed as section has bg */
-}
-.step-icon-wrapper {
-    width: 80px;
-    height: 80px;
-    border-radius: 50%;
-    background-color: var(--primary-color); /* Use shared variable */
-    color: var(--white-bg); /* Use shared variable */
-    display: inline-flex; /* Use flex to center icon */
-    align-items: center;
-    justify-content: center;
-    margin-bottom: 20px;
-    box-shadow: 0 4px 8px rgba(0, 86, 179, 0.3); /* Custom shadow */
-    transition: transform var(--transition-speed) ease; /* Use shared variable */
-}
-.step-item:hover .step-icon-wrapper {
-    transform: scale(1.1);
-}
-.step-icon {
-    font-size: 2.2em;
-    line-height: 1;
-}
-.step-item h4 {
-    font-size: 1.1em;
-    color: var(--text-color); /* Use shared variable */
-    margin-bottom: 8px;
-}
-.step-item p {
-    font-size: 0.9em;
-    color: var(--text-muted); /* Use shared variable */
-}
+.process-steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 30px; margin-top: 50px; text-align: center; }
+.step-icon-wrapper { width: 80px; height: 80px; border-radius: 50%; background-color: var(--primary-color); color: var(--white-bg); display: inline-flex; align-items: center; justify-content: center; margin-bottom: 20px; box-shadow: 0 4px 8px rgba(0, 86, 179, 0.3); transition: transform var(--transition-speed) ease; }
+.step-item:hover .step-icon-wrapper { transform: scale(1.1); }
+.step-icon { font-size: 2.2em; line-height: 1; }
+.step-item h4 { font-size: 1.1em; color: var(--text-color); margin-bottom: 8px; font-weight: 600; }
+.step-item p { font-size: 0.9em; color: var(--text-muted); }
 
-/* Portfolio Section */
-.portfolio-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: 20px;
-    margin-top: 10px; /* Reduced margin */
-}
-.portfolio-item {
-    border-radius: var(--border-radius); /* Use shared variable */
-    overflow: hidden; /* Clip image to border radius */
-    position: relative;
-    box-shadow: var(--box-shadow); /* Use shared variable */
-    transition: transform var(--transition-speed) ease; /* Use shared variable */
-}
-.portfolio-item img {
-    display: block; /* Remove extra space below image */
-    width: 100%;
-    height: auto;
-    transition: transform 0.4s ease;
-}
-.portfolio-item:hover img {
-    transform: scale(1.05); /* Zoom effect on hover */
-}
-/* Optional caption style */
-.portfolio-item p {
-   position: absolute;
-   bottom: 0;
-   left: 0;
-   width: 100%;
-   background: rgba(0, 0, 0, 0.6);
-   color: white;
-   padding: 10px;
-   margin: 0;
-   font-size: 0.9em;
-   text-align: center;
-   opacity: 0;
-   transition: opacity var(--transition-speed) ease; /* Use shared variable */
-}
-.portfolio-item:hover p {
-    opacity: 1;
-}
+/* Portfolio Section (Slider Styles) */
+#portfolio .portfolio-item { border-radius: var(--border-radius); overflow: hidden; position: relative; box-shadow: var(--box-shadow); transition: transform var(--transition-speed) ease; height: 100%; display: block; }
+#portfolio .portfolio-item img { display: block; width: 100%; height: 100%; object-fit: cover; transition: transform 0.4s ease; }
+#portfolio .portfolio-item:hover img { transform: scale(1.05); }
+#portfolio .portfolio-swiper { width: 100%; padding: 10px 0 40px 0; position: relative; }
+#portfolio .swiper-slide { display: flex; justify-content: center; align-items: stretch; height: auto; }
+#portfolio .portfolio-pagination .swiper-pagination-bullet { background-color: var(--primary-color); opacity: 0.7; }
+#portfolio .portfolio-pagination .swiper-pagination-bullet-active { opacity: 1; }
+#portfolio .portfolio-nav-button { color: var(--primary-color); background-color: rgba(255, 255, 255, 0.7); border-radius: 50%; width: 35px; height: 35px; transition: background-color 0.2s ease; top: 50%; transform: translateY(-50%); }
+#portfolio .portfolio-nav-button:hover { background-color: rgba(255, 255, 255, 0.9); }
+#portfolio .portfolio-nav-button::after { font-size: 16px; font-weight: bold; }
 
 
-/* Testimonials Section */
-.testimonials-container {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 30px; /* Gap between testimonials */
-    justify-content: center; /* Center items if they don't fill the row */
-    margin-top: 30px;
-}
-.testimonial {
-    background-color: var(--white-bg); /* Use shared variable */
-    padding: 30px; /* Increased padding */
-    border-radius: var(--border-radius); /* Use shared variable */
-    box-shadow: var(--box-shadow); /* Use shared variable */
-    border-left: 5px solid var(--primary-color); /* Accent border */
-    flex: 1 1 400px; /* Allow items to grow and wrap */
-    max-width: 550px; /* Max width for readability */
-    margin-bottom: 0; /* Removed default bottom margin */
-}
-.testimonial p {
-    font-style: italic;
-    color: var(--text-muted); /* Use shared variable */
-    margin-bottom: 15px; /* Increased space */
-    font-size: 1.05em; /* Slightly larger quote text */
-}
-.testimonial p::before { /* Add quote marks */
-    content: '\\201C'; /* Left double quote */
-    font-size: 1.5em;
-    color: var(--primary-color); /* Use shared variable */
-    opacity: 0.6;
-    margin-right: 5px;
-    line-height: 0;
-}
-.testimonial-author { /* Renamed class */
-    display: block;
-    text-align: right;
-    font-weight: 600; /* Bolder author */
-    color: var(--text-color); /* Use shared variable */
-    font-size: 0.95em; /* Slightly larger */
-    margin-top: 10px;
-}
+/* Testimonials Section (Improved Design) */
+#testimonials h2 { margin-bottom: 2.5rem; }
+.testimonials-container { display: flex; flex-wrap: wrap; gap: 30px; justify-content: center; margin-top: 0; }
+.testimonial { background-color: var(--white-bg); padding: 30px 35px; border-radius: var(--border-radius); box-shadow: 0 5px 15px rgba(0,0,0,0.07); border: 1px solid var(--border-color); border-top: 4px solid var(--primary-color); flex: 1 1 400px; max-width: 550px; margin-bottom: 0; display: flex; flex-direction: column; align-items: center; text-align: center; transition: transform 0.2s ease, box-shadow 0.2s ease; }
+.testimonial:hover { transform: translateY(-5px); box-shadow: 0 8px 25px rgba(0,0,0,0.09); }
+.testimonial-photo { width: 85px; height: 85px; border-radius: 50%; object-fit: cover; margin-bottom: 20px; border: 4px solid var(--white-bg); box-shadow: 0 3px 8px rgba(0,0,0,0.15); flex-shrink: 0; margin-top: -55px; z-index: 2; position: relative; background-color: var(--white-bg); }
+.testimonial p { font-style: normal; color: var(--text-muted); margin-bottom: 20px; font-size: 1em; line-height: 1.7; position: relative; padding: 10px 0 0 0; flex-grow: 1; }
+.testimonial p::before { content: '“'; /* <<< सीधा कोटेशन मार्क >>> */ font-family: Georgia, serif; font-size: 3.5em; color: var(--primary-color); opacity: 0.15; position: absolute; top: -5px; left: 50%; transform: translateX(-50%); line-height: 1; z-index: 1; /* Ensure quote is behind text if needed */ }
+.testimonial-author { display: block; font-weight: 600; color: var(--text-color); font-size: 1em; margin-top: auto; padding-top: 15px; border-top: 1px dashed #eee; width: 100%; text-align: center; }
 
-/* Responsive Adjustments for Homepage Specific Styles */
+
+/* Responsive Adjustments */
 @media (max-width: 991px) {
-    /* Adjust container if needed, else handled by header-footer.css */
-    h1 { font-size: 2.4em; }
+    .hero-swiper .hero-content h1 { font-size: 2.4em; }
     h2 { font-size: 1.8em; }
-    .hero-section { padding: 80px 0; }
-    .services-grid { grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); }
+    .info-section { padding: 60px 0; }
     .process-steps { grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
-    .portfolio-grid { grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); }
+    .testimonial { max-width: 48%; }
 }
-
 @media (max-width: 768px) {
-    /* Adjust container if needed, else handled by header-footer.css */
-    h1 { font-size: 2.1em; }
-    .hero-section p { font-size: 1.1em; }
+    .hero-swiper .hero-content h1 { font-size: 2.1em; }
+    .hero-swiper .hero-content p { font-size: 1.1em; }
+    .hero-section-slider { height: 50vh; min-height: 350px; }
+    .hero-nav-button { display: none; }
+
     .info-section { padding: 50px 0; }
     h2 { font-size: 1.7em; }
-    .services-grid { grid-template-columns: 1fr; /* Stack services */ }
-    .process-steps { grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); } /* Allow 2 columns longer */
-    .portfolio-grid { grid-template-columns: 1fr; /* Stack portfolio */ }
-    .testimonials-container { flex-direction: column; align-items: center; } /* Stack testimonials */
-    .testimonial { max-width: 100%; }
+    .process-steps { grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
+    .testimonials-container { flex-direction: column; align-items: center; }
+    .testimonial { max-width: 90%; }
 }
-
+@media (max-width: 600px) {
+    .portfolio-nav-button, .featured-nav-button { display: none; }
+}
 @media (max-width: 576px) {
-    /* Adjust container if needed, else handled by header-footer.css */
-    h1 { font-size: 1.9em; }
+    .hero-swiper .hero-content h1 { font-size: 1.9em; }
     h2 { font-size: 1.6em; }
-    .hero-section { padding: 60px 0; }
+    .hero-section-slider { height: 45vh; min-height: 300px; }
     .hero-buttons { flex-direction: column; gap: 10px; align-items: center; }
-    .hero-buttons a { width: 80%; max-width: 300px; } /* Stack buttons */
+    .hero-buttons a { width: 80%; max-width: 300px; }
     .info-section { padding: 40px 0; }
-    .process-steps { grid-template-columns: 1fr; } /* Stack process steps */
-    .service-item, .testimonial { padding: 25px 20px; }
+    .process-steps { grid-template-columns: 1fr; }
+    .testimonial { padding: 25px 20px; max-width: 100%; }
+    .testimonial-photo { width: 75px; height: 75px; margin-top: -45px; }
+    .testimonial p::before { font-size: 3em; }
 }

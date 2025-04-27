@@ -1,6 +1,6 @@
-/* css/header-footer.css - Shared Header and Footer Styles (UPDATED for Mobile Menu Fix) */
+/* css/header-footer.css - Shared Header and Footer Styles (UPDATED for Mobile Cart Icon) */
 
-/* --- Variables (Consistent with about.css) --- */
+/* --- Variables --- */
 :root {
     --primary-color: #0056b3;
     --secondary-color: #007bff;
@@ -12,221 +12,132 @@
     --font-family: 'Poppins', sans-serif;
     --border-radius: 6px;
     --box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-    /* Use medium shadow for sticky header */
-    --box-shadow-md: 0 5px 15px rgba(0, 0, 0, 0.08);
+    --box-shadow-md: 0 5px 15px rgba(0, 0, 0, 0.1); /* Increased shadow slightly */
     --transition-speed: 0.3s;
     --base-font-size: 16px;
+    --cart-badge-bg: #dc3545; /* Red for cart badge */
 }
 
 /* --- Basic Reset & Body --- */
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
-
-body {
-    font-family: var(--font-family);
-    font-size: var(--base-font-size);
-    color: var(--text-color);
-    line-height: 1.65;
-}
-
-a {
-    color: var(--primary-color);
-    text-decoration: none;
-    transition: color var(--transition-speed) ease;
-}
-a:hover {
-    color: var(--secondary-color);
-    text-decoration: none;
-}
-
-img {
-    max-width: 100%;
-    height: auto;
-    display: block;
-}
-
-.container {
-    max-width: 1200px;
-    margin-left: auto;
-    margin-right: auto;
-    padding-left: 15px;
-    padding-right: 15px;
-}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: var(--font-family); font-size: var(--base-font-size); color: var(--text-color); line-height: 1.65; }
+a { color: var(--primary-color); text-decoration: none; transition: color var(--transition-speed) ease; }
+a:hover { color: var(--secondary-color); text-decoration: none; }
+img { max-width: 100%; height: auto; display: block; }
+.container { max-width: 1200px; margin-left: auto; margin-right: auto; padding-left: 15px; padding-right: 15px; }
 
 /* --- Header & Navigation Styles --- */
-header {
-    background-color: var(--white-bg);
-    box-shadow: var(--box-shadow-md);
-    padding: 10px 0;
-    position: sticky; /* Makes header stay at top */
-    top: 0;
-    z-index: 1000; /* Ensures header is above other content */
-    border-bottom: 1px solid var(--border-color);
-}
+header { background-color: var(--white-bg); box-shadow: var(--box-shadow-md); padding: 10px 0; position: sticky; top: 0; z-index: 1000; border-bottom: 1px solid var(--border-color); }
+header nav.container { display: flex; justify-content: space-between; align-items: center; min-height: 50px; position: relative; }
+.logo img { max-height: 50px; }
 
-header nav.container {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    min-height: 50px;
-}
+/* Desktop Navigation Links */
+.nav-links { display: flex; align-items: center; }
+.nav-links a { margin-left: 15px; padding: 8px 4px; font-weight: 500; color: var(--text-color); text-decoration: none; border-bottom: 2px solid transparent; transition: color var(--transition-speed) ease, border-color var(--transition-speed) ease; font-size: 1em; }
+.nav-links a:hover, .nav-links a.active { color: var(--primary-color); border-bottom-color: var(--primary-color); }
+.nav-links a.desktop-cart-link i.fa-shopping-cart { margin-right: 4px; } /* Only for desktop cart */
+.nav-links .admin-login-link { font-size: 0.9em; color: var(--text-muted); border: 1px solid var(--border-color); padding: 6px 12px; border-radius: var(--border-radius); margin-left: 20px; }
+.nav-links .admin-login-link:hover { background-color: var(--light-bg); color: var(--text-color); text-decoration: none; border-color: #adb5bd; }
 
-.logo img {
-    max-height: 50px;
-}
-.logo a { /* Style for potential text logo */
-    font-weight: bold;
-    font-size: 1.2em;
-    color: var(--text-color);
-    text-decoration: none;
-}
+/* Mobile Menu Toggle Button */
+.mobile-menu-toggle { display: none; background: none; border: none; font-size: 1.8em; cursor: pointer; color: var(--text-color); order: 1; }
 
-.nav-links {
-    display: flex;
-    align-items: center;
-}
-
-.nav-links a {
-    margin-left: 15px; /* Consistent spacing */
-    padding: 8px 4px;
-    font-weight: 500;
-    color: var(--text-color);
-    text-decoration: none;
-    border-bottom: 2px solid transparent;
-    transition: color var(--transition-speed) ease, border-color var(--transition-speed) ease;
-    font-size: 1em;
-}
-.nav-links a:hover,
-.nav-links a.active {
-    color: var(--primary-color);
-    border-bottom-color: var(--primary-color);
-}
-
-/* Cart link specific style */
-.nav-links a i.fa-shopping-cart { margin-right: 4px; }
-
-/* Admin login link style */
-.nav-links .admin-login-link {
-    font-size: 0.9em;
-    color: var(--text-muted);
-    border: 1px solid var(--border-color);
-    padding: 6px 12px;
-    border-radius: var(--border-radius);
-    margin-left: 20px;
-}
-.nav-links .admin-login-link:hover {
-     background-color: var(--light-bg);
-     color: var(--text-color);
-     text-decoration: none;
-     border-color: #adb5bd;
-}
-
-.mobile-menu-toggle {
+/* --- Mobile Cart Icon Styles START --- */
+.mobile-cart-link {
     display: none; /* Hidden on desktop */
-    background: none;
-    border: none;
-    font-size: 1.8em;
-    cursor: pointer;
+    position: relative; /* For badge positioning */
     color: var(--text-color);
+    font-size: 1.6em; /* Icon size */
+    padding: 5px;
+    margin-left: auto; /* Push to the right */
+    order: 3; /* Ensure it's on the right */
 }
+.cart-count-badge {
+    position: absolute;
+    top: -2px; /* Adjust position */
+    right: -5px; /* Adjust position */
+    background-color: var(--cart-badge-bg);
+    color: white;
+    border-radius: 50%;
+    width: 18px; /* Badge size */
+    height: 18px; /* Badge size */
+    font-size: 10px; /* Font size inside badge */
+    font-weight: bold;
+    display: none; /* Hidden initially, shown by JS */
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+    border: 1px solid white; /* Optional border */
+    box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+}
+/* --- Mobile Cart Icon Styles END --- */
 
 /* --- Footer Styles --- */
-footer {
-    background-color: #343a40;
-    color: #adb5bd;
-    padding: 35px 0;
-    margin-top: 50px; /* Adjust as needed per page */
-    border-top: 1px solid #495057;
-    font-size: 0.9em;
-    text-align: center;
-}
+footer { background-color: #343a40; color: #adb5bd; padding: 35px 0; margin-top: 50px; border-top: 1px solid #495057; font-size: 0.9em; text-align: center; }
 footer .container p { margin-bottom: 8px; }
-footer a {
-    color: #f8f9fa;
-    margin: 0 8px;
-    text-decoration: none;
-}
-footer a:hover {
-    color: var(--secondary-color);
-    text-decoration: underline;
-}
-footer p:last-of-type a { /* Links in the last paragraph */
-     margin: 0 5px;
-}
+footer a { color: #f8f9fa; margin: 0 8px; text-decoration: none; }
+footer a:hover { color: var(--secondary-color); text-decoration: underline; }
+footer p:last-of-type a { margin: 0 5px; }
 
-
-/* --- Responsive Adjustments for Header/Footer --- */
+/* --- Responsive Adjustments --- */
 @media (max-width: 768px) {
-
-    .nav-links {
-         /* Hide on mobile initially */
-         display: none;
-
-         /* Styles for when menu is opened by JS adding .active class */
-         /* These were previously commented out or missing */
-         flex-direction: column; /* Stack links vertically */
-         width: 100%;            /* Take full width */
-         background-color: var(--white-bg); /* White background */
-         position: absolute;     /* Position absolutely */
-         top: 100%;             /* Start right below the header */
-         left: 0;               /* Align to the left */
-         box-shadow: var(--box-shadow-md); /* Add shadow */
-         border-top: 1px solid var(--border-color); /* Add top border */
-         z-index: 999;          /* Ensure it's above content below */
+    header nav.container {
+         /* justify-content: space-between; (already there) */
     }
-
-    /* === THIS IS THE KEY RULE === */
-    /* Show the menu when .active class is present */
-    .nav-links.active {
-        display: flex; /* Change display from none to flex (or block) */
-    }
-    /* === END KEY RULE === */
-
-
-    /* Styles for links inside the active mobile menu */
-    .nav-links.active a {
-       margin: 0; /* Reset desktop margin */
-       padding: 15px; /* Add padding */
-       text-align: center; /* Center text */
-       border-bottom: 1px solid var(--border-color); /* Separator line */
-       width: 100%; /* Full width link */
-       color: var(--text-color); /* Reset color */
-       border-bottom-color: var(--border-color); /* Use border color for separator */
-    }
-     /* Remove desktop active style underline */
-    .nav-links.active a:hover,
-    .nav-links.active a.active {
-        color: var(--primary-color);
-        background-color: var(--light-bg); /* Highlight background */
-        border-bottom-color: var(--border-color); /* Keep separator */
-    }
-    .nav-links.active a:last-child {
-        border-bottom: none; /* Remove border from last item */
-    }
-
-    /* Style for admin link inside mobile menu */
-     .nav-links.active .admin-login-link {
-         border: none; /* Remove border */
-         padding: 15px;
-         margin-left: 0;
-         background-color: transparent;
-         font-size: 1em;
-         color: var(--text-muted);
-         border-bottom: 1px solid var(--border-color); /* Add separator like other links */
-     }
-      .nav-links.active .admin-login-link:hover {
-         background-color: var(--light-bg);
-         color: var(--primary-color);
-      }
-
 
     .mobile-menu-toggle {
-        display: block; /* Show the toggle button on mobile */
+        display: block; /* Show hamburger */
+        order: 1; /* Position hamburger left */
+        margin-right: 15px; /* Space between toggle and logo */
     }
+    .logo {
+         order: 2; /* Logo in the middle */
+         margin-left: auto;
+         margin-right: auto;
+         padding-left: 50px; /* Offset for toggle button */
+         padding-right: 50px; /* Offset for cart icon */
+    }
+     .mobile-cart-link {
+        display: flex; /* Show mobile cart icon (use flex for centering icon if needed) */
+         align-items: center; /* Center icon vertically */
+         order: 3; /* Position cart right */
+         margin-left: 0; /* Reset margin */
+    }
+
+    /* Hide desktop links container initially */
+    .nav-links {
+         display: none;
+         /* Styles for when menu is opened by JS adding .active class */
+         flex-direction: column;
+         width: 100%;
+         background-color: var(--white-bg);
+         position: absolute;
+         top: 100%; /* Start right below the header */
+         left: 0;
+         box-shadow: var(--box-shadow-md);
+         border-top: 1px solid var(--border-color);
+         z-index: 999;
+    }
+
+    /* Show the menu when .active class is present */
+    .nav-links.active { display: flex; }
+
+    /* Styles for links inside the active mobile menu */
+    .nav-links.active a { margin: 0; padding: 15px; text-align: center; border-bottom: 1px solid var(--border-color); width: 100%; color: var(--text-color); border-bottom-color: var(--border-color); }
+    .nav-links.active a:hover, .nav-links.active a.active { color: var(--primary-color); background-color: var(--light-bg); border-bottom-color: var(--border-color); }
+    .nav-links.active a:last-child { border-bottom: none; }
+    .nav-links.active .desktop-cart-link { display: none; } /* Hide desktop cart link in mobile menu */
+    .nav-links.active .admin-login-link { border: none; padding: 15px; margin-left: 0; background-color: transparent; font-size: 1em; color: var(--text-muted); border-bottom: 1px solid var(--border-color); }
+    .nav-links.active .admin-login-link:hover { background-color: var(--light-bg); color: var(--primary-color); }
 }
 
-/* Further adjustments for very small screens if needed */
-/* @media (max-width: 576px) { ... } */
+@media (max-width: 480px) {
+     .logo {
+         padding-left: 45px; /* Adjust offset */
+         padding-right: 45px; /* Adjust offset */
+     }
+      .logo img { max-height: 40px; } /* Smaller logo */
+      .mobile-menu-toggle { font-size: 1.6em; margin-right: 10px; }
+      .mobile-cart-link { font-size: 1.5em; }
+      .cart-count-badge { width: 16px; height: 16px; font-size: 9px; top: 0px; right: -3px;}
+}
