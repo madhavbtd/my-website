@@ -32,8 +32,8 @@
             apiKey: "AIzaSyBQj5rQmE77kKKGYixP8y3Hcimz8tiAqzQ", // आपका apiKey
             authDomain: "madhav-multyprint.firebaseapp.com",
             projectId: "madhav-multyprint",
-            // --- *** CORRECTED storageBucket *** ---
-            storageBucket: "madhav-multyprint.appspot.com", // '.appspot.com' वाला उपयोग करें
+            // --- *** बदलाव यहाँ (Line 1) *** ---
+            storageBucket: "madhav-prodect-pics", // <-- नया बकेट नाम यहाँ
             messagingSenderId: "104988349637",
             appId: "1:104988349637:web:faf045b77c6786a4e70cac"
         };
@@ -52,10 +52,11 @@
             }
             auth = getAuth(app);
             db = getFirestore(app);
-            storage = getStorage(app);
+            // --- *** बदलाव यहाँ (Line 2) *** ---
+            storage = getStorage(app, "gs://madhav-prodect-pics"); // <-- नए बकेट का gs:// पाथ
 
             // Make Firebase services globally available
-            window.db = db; window.auth = auth; window.storage = storage;
+            window.db = db; window.auth = auth; window.storage = storage; // अब storage नए बकेट को पॉइंट करेगा
             // Firestore functions
             window.collection = collection; window.doc = doc; window.addDoc = addDoc;
             window.updateDoc = updateDoc; window.deleteDoc = deleteDoc; window.onSnapshot = onSnapshot;
@@ -304,9 +305,7 @@
                              </div>
                          </fieldset>
                     </div>
-                </div> </form>
-
-            <div class="modal-actions">
+                </div> </form> <div class="modal-actions">
                 <button type="button" id="deleteProductBtn" class="button delete-button-modal" style="display: none;">
                     <i class="fas fa-trash-alt"></i> Delete Product
                 </button>
@@ -321,10 +320,7 @@
                      </button>
                </div>
              </div>
-        </div>
-    </div>
-
-    <div id="deleteConfirmModal" class="modal confirmation-modal">
+        </div> </div> <div id="deleteConfirmModal" class="modal confirmation-modal">
         <div class="modal-content small-modal">
             <span class="close-btn" id="closeDeleteConfirmModal" title="Close">&times;</span>
             <h2><i class="fas fa-exclamation-triangle warning-icon"></i> Confirm Deletion</h2>
