@@ -1,85 +1,210 @@
-// js/login.js (English Version)
+// js/login.js (Final Version with OTP Verification)
 
 // Get Firebase functions from global scope (initialized in login.html)
 const auth = window.auth;
+const functions = window.functions; // Functions instance
 const signInWithEmailAndPassword = window.signInWithEmailAndPassword;
+const signInWithCustomToken = window.signInWithCustomToken; // Custom token sign-in
+const httpsCallable = window.httpsCallable; // Callable function helper
 
-// HTML Elements
+// --- HTML Elements ---
+// Login Section
+const loginSection = document.getElementById('loginSection');
 const loginForm = document.getElementById('loginForm');
 const usernameInput = document.getElementById('username');
 const passwordInput = document.getElementById('password');
-const errorMessageElement = document.getElementById('errorMessage');
+const passwordGroup = document.getElementById('passwordGroup');
 const loginButton = document.getElementById('loginButton');
+const errorMessageElement = document.getElementById('errorMessage');
 
-// Check if Firebase Auth objects loaded correctly
-if (!auth || !signInWithEmailAndPassword) {
-    console.error("Firebase Auth is not available. Check initialization in login.html.");
-    if (errorMessageElement) {
-        // Changed message to English
-        errorMessageElement.textContent = "Login system did not load. Please refresh the page.";
+// OTP Section
+const otpSection = document.getElementById('otpSection');
+const otpForm = document.getElementById('otpForm');
+const otpInput = document.getElementById('otp');
+const verifyOtpButton = document.getElementById('verifyOtpButton');
+const otpStatusMessage = document.getElementById('otpStatusMessage');
+const otpErrorMessageElement = document.getElementById('otpErrorMessage');
+
+// --- Callable Function References ---
+let requestOtp;
+let verifyOtp; // verifyOtp के लिए रेफरेंस
+// Temporary storage for userId between steps
+let currentUserId = null;
+
+if (functions && httpsCallable) {
+    try {
+        requestOtp = httpsCallable(functions, 'requestOtp');
+        verifyOtp = httpsCallable(functions, 'verifyOtp'); // verifyOtp फंक्शन का संदर्भ
+        console.log("References to Firebase Functions obtained.");
+    } catch (e) {
+        console.error("Could not get httpsCallable function reference:", e);
+        if(errorMessageElement) errorMessageElement.textContent = "Error setting up function calls.";
+        if(loginButton) loginButton.disabled = true;
+        if(verifyOtpButton) verifyOtpButton.disabled = true;
     }
-    if(loginButton) loginButton.disabled = true;
-} else if (loginForm) {
-    // Add event listener for form submission
+} else {
+     console.error("Firebase Functions/httpsCallable not available.");
+     if(errorMessageElement) errorMessageElement.textContent = "Function call system did not load.";
+     if(loginButton) loginButton.disabled = true;
+     if(verifyOtpButton) verifyOtpButton.disabled = true;
+}
+
+
+// --- Event Listeners ---
+
+// 1. Login Form Submission (Request OTP)
+if (loginForm && auth && signInWithEmailAndPassword && requestOtp) {
     loginForm.addEventListener('submit', async (event) => {
-        event.preventDefault(); // Prevent default form submission
-        errorMessageElement.textContent = ''; // Clear previous error
-        if(loginButton) {
-            loginButton.disabled = true; // Disable login button
-            // Changed button text to English
-            loginButton.textContent = 'Logging in...';
-        }
+        event.preventDefault();
+        errorMessageElement.textContent = '';
+        otpStatusMessage.textContent = '';
+        otpErrorMessageElement.textContent = '';
+        currentUserId = null; // पिछला userId हटाएं
+
+        loginButton.disabled = true;
+        loginButton.textContent = 'Checking...';
 
         const username = usernameInput.value.trim();
         const password = passwordInput.value.trim();
 
-        // Basic validation
         if (!username || !password) {
-             // Changed message to English
             errorMessageElement.textContent = 'Please enter both username and password.';
-            if(loginButton) {
-                loginButton.disabled = false; // Re-enable button
-                 // Changed button text to English
-                loginButton.textContent = 'Login';
-            }
-            return; // Stop processing
+            loginButton.disabled = false;
+            loginButton.textContent = 'Login';
+            return;
         }
 
-        // Create the 'fake' email from username for Firebase Auth
-        // Ensure you use the same pattern when creating users in the console
         const fakeEmail = username + '@yourapp.auth';
-        console.log('Attempting login with:', fakeEmail);
+        console.log('Attempting password check with:', fakeEmail);
 
         try {
-            // Sign in using Firebase Authentication
+            // Step 1: Verify password first
             const userCredential = await signInWithEmailAndPassword(auth, fakeEmail, password);
-            console.log('Login successful:', userCredential.user.uid);
+            currentUserId = userCredential.user.uid; // <<< userId को स्टोर करें
+            console.log('Password correct for user:', currentUserId);
 
-            // Redirect to the main dashboard or index page on successful login
-            // Change 'index.html' to your actual main page if different
-            window.location.href = 'index.html';
+            // Step 2: Call requestOtp function
+            errorMessageElement.textContent = 'Password correct. Requesting OTP...';
+            console.log('Calling requestOtp Firebase function...');
+            const result = await requestOtp({ userId: currentUserId }); // स्टोर्ड userId भेजें
+
+            console.log('requestOtp function result:', result.data);
+
+            if (result.data.status === 'success') {
+                console.log('OTP Request successful.');
+                otpStatusMessage.textContent = result.data.message || 'OTP sent to your registered email.';
+                errorMessageElement.textContent = '';
+                if(loginSection) loginSection.style.display = 'none';
+                if(otpSection) otpSection.style.display = 'block';
+                otpInput.focus();
+                loginButton.disabled = false;
+                loginButton.textContent = 'Login';
+            } else {
+                console.error('OTP Request function returned non-success:', result.data);
+                errorMessageElement.textContent = result.data.message || 'Failed to send OTP. Please try again.';
+                loginButton.disabled = false;
+                loginButton.textContent = 'Login';
+                currentUserId = null; // userId हटाएं अगर OTP फेल हुआ
+            }
 
         } catch (error) {
-            console.error('Login failed:', error.code, error.message);
-            // Display user-friendly error messages in English
-            if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
+            console.error('Error during login or OTP request:', error);
+             currentUserId = null; // एरर पर userId हटाएं
+             if (error.code && (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential')) {
                 errorMessageElement.textContent = 'Invalid username or password.';
-            } else if (error.code === 'auth/network-request-failed') {
+            } else if (error.code && error.code.startsWith('functions/')) {
+                 errorMessageElement.textContent = 'Error requesting OTP: ' + (error.message || 'Please try again.');
+            }
+             else if (error.code === 'auth/network-request-failed') {
                 errorMessageElement.textContent = 'Network error. Please check your connection.';
             } else {
-                errorMessageElement.textContent = 'Login failed. Please try again. (' + error.code + ')';
+                errorMessageElement.textContent = 'Login failed. Please try again.';
             }
-            if(loginButton) {
-                loginButton.disabled = false; // Re-enable login button
-                 // Changed button text to English
-                loginButton.textContent = 'Login';
-            }
+            loginButton.disabled = false;
+            loginButton.textContent = 'Login';
         }
     });
 } else {
-    console.error("Login form element (#loginForm) not found!");
-    if(errorMessageElement) {
-        // Changed message to English
-        errorMessageElement.textContent = "Login form did not load.";
-    }
+    console.error("Could not initialize login form listener.");
+     if(errorMessageElement) errorMessageElement.textContent = "Login form failed to initialize.";
 }
+
+// 2. OTP Form Submission (Verify OTP and Login)
+if (otpForm && auth && signInWithCustomToken && verifyOtp) {
+    otpForm.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        otpErrorMessageElement.textContent = '';
+        otpStatusMessage.textContent = ''; // पिछला स्टेटस हटाएं
+
+        verifyOtpButton.disabled = true;
+        verifyOtpButton.textContent = 'Verifying...';
+
+        const otpValue = otpInput.value.trim();
+
+        // userId चेक करें (पहले स्टेप से मिलना चाहिए)
+        if (!currentUserId) {
+             otpErrorMessageElement.textContent = 'User session error. Please log in again.';
+             // यूजर को वापस लॉगिन स्क्रीन पर भेजें
+             if(loginSection) loginSection.style.display = 'block';
+             if(otpSection) otpSection.style.display = 'none';
+             verifyOtpButton.disabled = false;
+             verifyOtpButton.textContent = 'Verify OTP';
+             return;
+        }
+
+        if (!otpValue || !/^\d{6}$/.test(otpValue)) { // 6 अंकों का OTP जांचें
+             otpErrorMessageElement.textContent = 'Please enter a valid 6-digit OTP.';
+             verifyOtpButton.disabled = false;
+             verifyOtpButton.textContent = 'Verify OTP';
+             return;
+        }
+
+        console.log(`Attempting to verify OTP: ${otpValue} for userId: ${currentUserId}`);
+
+        try {
+            // Step 3: Call the verifyOtp function
+            const result = await verifyOtp({ userId: currentUserId, otp: otpValue });
+
+            console.log('verifyOtp function result:', result.data);
+
+            if (result.data.status === 'success' && result.data.token) {
+                // Step 4: OTP सही है, कस्टम टोकन मिला, अब साइन इन करें
+                console.log('OTP verified. Signing in with custom token...');
+                otpStatusMessage.textContent = 'OTP verified. Logging in...';
+                const customToken = result.data.token;
+
+                const userCredential = await signInWithCustomToken(auth, customToken);
+                console.log('Final login successful with OTP:', userCredential.user.uid);
+                currentUserId = null; // सेशन पूरा, userId हटाएं
+
+                // लॉगिन सफल, अब रीडायरेक्ट करें
+                window.location.href = 'index.html'; // या आपके डैशबोर्ड पेज पर
+
+            } else {
+                // फंक्शन ने सफलता नहीं लौटाई या टोकन नहीं मिला
+                console.error('OTP Verification function returned non-success or missing token:', result.data);
+                otpErrorMessageElement.textContent = result.data.message || 'OTP verification failed.';
+                verifyOtpButton.disabled = false;
+                verifyOtpButton.textContent = 'Verify OTP';
+            }
+        } catch (error) {
+            // Handle errors from verifyOtp call or signInWithCustomToken
+            console.error('Error during OTP verification or final sign-in:', error);
+             if (error.code && error.code.startsWith('functions/')) {
+                 otpErrorMessageElement.textContent = 'Verification Error: ' + (error.message || 'Please try again.');
+             } else if (error.code && error.code.startsWith('auth/')) {
+                 otpErrorMessageElement.textContent = 'Final login error. Please try again.';
+             }
+             else {
+                 otpErrorMessageElement.textContent = 'Verification failed. Please try again.';
+             }
+             verifyOtpButton.disabled = false;
+             verifyOtpButton.textContent = 'Verify OTP';
+        }
+    });
+} else {
+    console.error("Could not initialize OTP form listener.");
+    if(otpErrorMessageElement) otpErrorMessageElement.textContent = "OTP form failed to initialize.";
+}
+
+console.log("login.js loaded (final version).");
