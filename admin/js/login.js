@@ -1,4 +1,4 @@
-// js/login.js (Final Version with OTP Verification)
+// js/login.js (Final Version with OTP Verification + Debug Log)
 
 // Get Firebase functions from global scope (initialized in login.html)
 const auth = window.auth;
@@ -81,25 +81,35 @@ if (loginForm && auth && signInWithEmailAndPassword && requestOtp) {
             // Step 1: Verify password first
             const userCredential = await signInWithEmailAndPassword(auth, fakeEmail, password);
             currentUserId = userCredential.user.uid; // <<< userId को स्टोर करें
-            console.log('Password correct for user:', currentUserId);
+            console.log('Password correct for user:', currentUserId); // <<< यह लॉग पहले से था
+
+            // --- DEBUG: चेक करें कि userId फंक्शन में भेजने से पहले क्या है ---
+            console.log('Data being sent to requestOtp:', { userId: currentUserId });
+            // --- DEBUG लाइन यहाँ खत्म ---
+
+            errorMessageElement.textContent = 'Password correct. Requesting OTP...'; // स्टेटस अपडेट
+            console.log('Calling requestOtp Firebase function...');
 
             // Step 2: Call requestOtp function
-            errorMessageElement.textContent = 'Password correct. Requesting OTP...';
-            console.log('Calling requestOtp Firebase function...');
             const result = await requestOtp({ userId: currentUserId }); // स्टोर्ड userId भेजें
 
             console.log('requestOtp function result:', result.data);
 
             if (result.data.status === 'success') {
+                // OTP सफलतापूर्वक भेजा गया
                 console.log('OTP Request successful.');
                 otpStatusMessage.textContent = result.data.message || 'OTP sent to your registered email.';
-                errorMessageElement.textContent = '';
+                errorMessageElement.textContent = ''; // मुख्य एरर हटाएं
+                // UI बदलें: लॉगिन सेक्शन छिपाएं, OTP सेक्शन दिखाएं
                 if(loginSection) loginSection.style.display = 'none';
                 if(otpSection) otpSection.style.display = 'block';
-                otpInput.focus();
+                otpInput.focus(); // OTP इनपुट पर फोकस करें
+                // लॉगिन बटन को रीसेट करें (भले ही छिपा हो)
                 loginButton.disabled = false;
                 loginButton.textContent = 'Login';
+
             } else {
+                // फंक्शन ने सफलता नहीं लौटाई (शायद कोई एरर हुआ?)
                 console.error('OTP Request function returned non-success:', result.data);
                 errorMessageElement.textContent = result.data.message || 'Failed to send OTP. Please try again.';
                 loginButton.disabled = false;
@@ -108,11 +118,13 @@ if (loginForm && auth && signInWithEmailAndPassword && requestOtp) {
             }
 
         } catch (error) {
+            // Handle errors from BOTH signIn and requestOtp calls
             console.error('Error during login or OTP request:', error);
              currentUserId = null; // एरर पर userId हटाएं
              if (error.code && (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential')) {
                 errorMessageElement.textContent = 'Invalid username or password.';
             } else if (error.code && error.code.startsWith('functions/')) {
+                 // Handle Cloud Function errors (जैसे 'यूजर ID आवश्यक है।')
                  errorMessageElement.textContent = 'Error requesting OTP: ' + (error.message || 'Please try again.');
             }
              else if (error.code === 'auth/network-request-failed') {
@@ -125,7 +137,7 @@ if (loginForm && auth && signInWithEmailAndPassword && requestOtp) {
         }
     });
 } else {
-    console.error("Could not initialize login form listener.");
+    console.error("Could not initialize login form listener. Required elements or Firebase functions might be missing.");
      if(errorMessageElement) errorMessageElement.textContent = "Login form failed to initialize.";
 }
 
@@ -207,4 +219,4 @@ if (otpForm && auth && signInWithCustomToken && verifyOtp) {
     if(otpErrorMessageElement) otpErrorMessageElement.textContent = "OTP form failed to initialize.";
 }
 
-console.log("login.js loaded (final version).");
+console.log("login.js loaded (final version with debug).");
