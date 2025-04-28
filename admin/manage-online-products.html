@@ -17,11 +17,9 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
         import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
         // --- Firestore Imports ---
-        // (getDoc को इम्पोर्ट लिस्ट में पहले से शामिल होना चाहिए, यदि नहीं है तो जोड़ें)
         import {
             getFirestore, collection, doc, addDoc, updateDoc, deleteDoc,
-            onSnapshot, query, orderBy, serverTimestamp, Timestamp, getDoc // <-- getDoc यहाँ इम्पोर्टेड है
-             // अन्य आवश्यक इम्पोर्ट्स (where, limit, getDocs, runTransaction आदि) यदि इस पेज पर JS द्वारा उपयोग किए जाते हैं
+            onSnapshot, query, orderBy, serverTimestamp, Timestamp, getDoc
         } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
         // --- Storage Imports ---
         import {
@@ -32,8 +30,8 @@
             apiKey: "AIzaSyBQj5rQmE77kKKGYixP8y3Hcimz8tiAqzQ", // आपका apiKey
             authDomain: "madhav-multyprint.firebaseapp.com",
             projectId: "madhav-multyprint",
-            // --- *** CORRECTED storageBucket *** ---
-            storageBucket: "madhav-multyprint.appspot.com", // '.appspot.com' वाला उपयोग करें
+            // --- *** यह लाइन अपडेट की गई है *** ---
+            storageBucket: "madhav-multyprint.firebasestorage.app", // <<<---- यहाँ सही नाम डाला गया है
             messagingSenderId: "104988349637",
             appId: "1:104988349637:web:faf045b77c6786a4e70cac"
         };
@@ -45,7 +43,7 @@
                 app = initializeApp(firebaseConfig);
                 window.firebaseAppInitialized = true;
                 window.firebaseApp = app;
-                console.log("Firebase initialized (manage-online-products - Corrected).");
+                console.log("Firebase initialized (manage-online-products - Updated).");
             } else {
                 app = window.firebaseApp;
                 console.log("Firebase already initialized (manage-online-products).");
@@ -61,15 +59,10 @@
             window.updateDoc = updateDoc; window.deleteDoc = deleteDoc; window.onSnapshot = onSnapshot;
             window.query = query; window.orderBy = orderBy; window.serverTimestamp = serverTimestamp;
             window.Timestamp = Timestamp;
-            window.getDoc = getDoc; // <-- *** यह असाइनमेंट जोड़ा गया ***
+            window.getDoc = getDoc;
             // Storage functions
             window.storageRef = ref; window.uploadBytesResumable = uploadBytesResumable;
             window.getDownloadURL = getDownloadURL; window.deleteObject = deleteObject;
-            // अन्य आवश्यक ग्लोबल असाइनमेंट यहाँ जोड़ें यदि JS को उनकी आवश्यकता हो
-            // window.where = where;
-            // window.limit = limit;
-            // window.getDocs = getDocs;
-            // window.runTransaction = runTransaction;
 
             console.log("Firebase services made globally available (manage-online-products).");
 
@@ -79,7 +72,6 @@
                     window.location.replace('login.html');
                 } else if (user) {
                     console.log(`User logged in on ${page}. Initializing Online Product Management.`);
-                    // थोड़ा विलंब यह सुनिश्चित करने के लिए कि JS फ़ाइल लोड हो गई है
                     setTimeout(() => {
                          if (typeof initializeOnlineProductManagement === 'function') {
                              initializeOnlineProductManagement();
@@ -87,7 +79,7 @@
                          } else {
                               console.error("initializeOnlineProductManagement function not found in manage-online-products.js!");
                          }
-                    }, 150); // 150ms का विलंब
+                    }, 150);
                 }
             });
         } catch(e) {
@@ -304,9 +296,7 @@
                              </div>
                          </fieldset>
                     </div>
-                </div> </form>
-
-            <div class="modal-actions">
+                </div> </form> <div class="modal-actions">
                 <button type="button" id="deleteProductBtn" class="button delete-button-modal" style="display: none;">
                     <i class="fas fa-trash-alt"></i> Delete Product
                 </button>
@@ -321,10 +311,7 @@
                      </button>
                </div>
              </div>
-        </div>
-    </div>
-
-    <div id="deleteConfirmModal" class="modal confirmation-modal">
+        </div> </div> <div id="deleteConfirmModal" class="modal confirmation-modal">
         <div class="modal-content small-modal">
             <span class="close-btn" id="closeDeleteConfirmModal" title="Close">&times;</span>
             <h2><i class="fas fa-exclamation-triangle warning-icon"></i> Confirm Deletion</h2>
