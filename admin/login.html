@@ -1,83 +1,38 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
+<html lang="en"> <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Madhav MultyPrint - Login</title>
-    <style>
+    <title>Madhav MultyPrint - Login</title> <style>
         /* Basic Styling - same as before */
         body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; background-color: #f0f2f5; }
-        .login-container { text-align: center; background: white; padding: 2rem 3rem; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); width: 350px; /* थोड़ी चौड़ाई कम की */}
+        .login-container { text-align: center; background: white; padding: 2rem 3rem; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
         .logo-image { max-height: 60px; margin-bottom: 1.5rem; }
-        h2 { margin-bottom: 1.5rem; color: #333; font-size: 1.5rem;} /* थोड़ा छोटा हैडर */
+        h2 { margin-bottom: 1.5rem; color: #333; }
         .form-group { margin-bottom: 1rem; text-align: left; }
         label { display: block; margin-bottom: 0.5rem; font-weight: 600; color: #555; }
-        input[type="text"], input[type="password"], input[type="number"] { /* OTP के लिए नंबर जोड़ा */
-            width: 100%;
-            padding: 0.7rem;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            box-sizing: border-box;
-            font-size: 1rem;
-        }
+        input[type="text"], input[type="password"] { width: 100%; padding: 0.7rem; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; font-size: 1rem; }
         button { width: 100%; padding: 0.8rem; background-color: #1877f2; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 1.1rem; font-weight: bold; margin-top: 1rem; transition: background-color 0.2s; }
-        button:hover:not(:disabled) { background-color: #166fe5; } /* :not(:disabled) जोड़ा */
+        button:hover { background-color: #166fe5; }
         button:disabled { background-color: #9dbdfa; cursor: not-allowed;}
-        #errorMessage, #otpStatusMessage { /* दोनों मैसेज के लिए स्टाइल */
-             color: #dc3545;
-             margin-top: 1rem;
-             font-size: 0.9em;
-             min-height: 1.2em;
-             text-align: center;
-        }
-        #otpStatusMessage { /* OTP मैसेज के लिए अलग रंग */
-             color: #28a745; /* हरा रंग */
-        }
-        /* OTP सेक्शन के लिए स्टाइल (शुरुआत में छिपा हुआ) */
-        #otpSection {
-            margin-top: 1.5rem;
-            padding-top: 1.5rem;
-            border-top: 1px solid #eee;
-            display: none; /* शुरुआत में छिपा हुआ */
-        }
+        #errorMessage { color: #dc3545; margin-top: 1rem; font-size: 0.9em; min-height: 1.2em; }
     </style>
 </head>
 <body>
     <div class="login-container">
         <img src="https://i.ibb.co/Z6gKD9Rd/1.png" alt="Madhav MultyPrint Logo" class="logo-image">
-        <h2>Application Login</h2>
 
-        <div id="loginSection">
-            <form id="loginForm">
-                <div class="form-group">
-                    <label for="username">Username:</label>
-                    <input type="text" id="username" name="username" required autocomplete="username">
-                </div>
-                <div class="form-group" id="passwordGroup">
-                    <label for="password">Password:</label>
-                    <input type="password" id="password" name="password" required autocomplete="current-password">
-                </div>
-                <button type="submit" id="loginButton">Login</button>
-                <p id="errorMessage"></p>
-            </form>
-        </div>
-
-        <div id="otpSection">
-             <h2>Enter OTP</h2>
-             <p id="otpStatusMessage">An OTP has been sent to your registered email.</p>
-             <form id="otpForm">
-                 <div class="form-group">
-                     <label for="otp">OTP Code:</label>
-                     <input type="number" id="otp" name="otp" required inputmode="numeric" pattern="[0-9]*" autocomplete="one-time-code">
-                 </div>
-                 <button type="submit" id="verifyOtpButton">Verify OTP</button>
-                 <p id="otpErrorMessage"></p> </form>
-        </div>
-
+        <h2>Application Login</h2> <form id="loginForm">
+            <div class="form-group">
+                <label for="username">Username:</label> <input type="text" id="username" name="username" required autocomplete="username">
+            </div>
+            <div class="form-group">
+                <label for="password">Password:</label> <input type="password" id="password" name="password" required autocomplete="current-password">
+            </div>
+            <button type="submit" id="loginButton">Login</button> <p id="errorMessage"></p> </form>
     </div>
 
     <script type="module">
-        // Your Firebase Configuration (Same as before)
+        // Your Firebase Configuration
         const firebaseConfig = {
           apiKey: "AIzaSyBQj5rQmE77kKKGYixP8y3Hcimz8tiAqzQ",
           authDomain: "madhav-multyprint.firebaseapp.com",
@@ -87,35 +42,27 @@
           appId: "1:104988349637:web:faf045b77c6786a4e70cac"
         };
 
-        // Initialize Firebase App, Auth, Functions
+        // Initialize Firebase
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-        import { getAuth, signInWithEmailAndPassword, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js"; // signInWithCustomToken जोड़ा
-        import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-functions.js"; // Functions SDK जोड़ा
+        import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
         let app;
         try {
-            // Prevent re-initialization
+            // Prevent re-initialization - check if already initialized elsewhere (e.g., firebase-init.js)
             if (!window.firebaseAppInitialized) {
                  app = initializeApp(firebaseConfig);
-                 window.firebaseAppInitialized = true;
+                 window.firebaseAppInitialized = true; // Mark as initialized
+                 window.firebaseApp = app; // Store globally if needed by other scripts
                  console.log("Firebase initialized on login page.");
             } else {
-                app = window.firebaseApp || initializeApp(firebaseConfig); // Fallback
-                console.log("Firebase potentially already initialized (login page).");
+                app = window.firebaseApp; // Use existing app instance
+                console.log("Firebase already initialized (login page).");
             }
-            window.firebaseApp = app; // Ensure app is globally available
-
             const auth = getAuth(app);
-            const functions = getFunctions(app); // Functions service इनिशियलाइज़ किया
-
-            // Make necessary functions available globally for login.js
+            // Make auth and signIn method available globally for login.js
             window.auth = auth;
             window.signInWithEmailAndPassword = signInWithEmailAndPassword;
-            window.signInWithCustomToken = signInWithCustomToken; // इसे भी ग्लोबल बनाया
-            window.httpsCallable = httpsCallable; // इसे भी ग्लोबल बनाया
-            window.functions = functions; // Functions instance को भी ग्लोबल बनाया
-
-            console.log("Firebase Auth & Functions functions available globally.");
+            console.log("Firebase Auth functions available globally.");
 
         } catch (e) {
              console.error("Firebase initialization error:", e);
@@ -123,11 +70,8 @@
              if(errorMessageElement) {
                 errorMessageElement.textContent = 'Firebase configuration error. Contact admin.';
              }
-             // Disable forms if init fails
              const loginButton = document.getElementById('loginButton');
              if(loginButton) loginButton.disabled = true;
-             const verifyOtpButton = document.getElementById('verifyOtpButton');
-             if(verifyOtpButton) verifyOtpButton.disabled = true;
         }
     </script>
 
