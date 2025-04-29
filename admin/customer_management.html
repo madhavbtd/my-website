@@ -14,9 +14,14 @@
     <script type="module">
         // Import Firebase services
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-        // >>>>> सुनिश्चित करें कि सभी जरूरी Firestore फंक्शन्स यहां इम्पोर्टेड हैं <<<<<
-        import { getFirestore, collection, doc, addDoc, updateDoc, deleteDoc, onSnapshot, query, orderBy, serverTimestamp, runTransaction, getDoc, where, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+        import {
+            getFirestore, collection, doc, addDoc, updateDoc, deleteDoc, onSnapshot,
+            query, orderBy, serverTimestamp, runTransaction, getDoc, where, getDocs, limit
+         } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+        // Import the initialization function from customer_management.js
+        import { initializeCustomerManagement } from './js/customer_management.js';
 
         // **** Your Firebase Configuration ****
          const firebaseConfig = {
@@ -33,55 +38,40 @@
         let db;
 
         try {
-             // Initialize Firebase App (only once per page load)
+             // Initialize Firebase App
              if (!window.firebaseAppInitialized) {
                  app = initializeApp(firebaseConfig);
                  window.firebaseAppInitialized = true;
                  window.firebaseApp = app;
-                 console.log("Firebase initialized on this page (customer_management - V1.1 Check).");
+                 console.log("Firebase initialized on customer_management.html (V1.4 Style).");
              } else {
                  app = window.firebaseApp;
-                 console.log("Firebase already initialized on this page (customer_management - V1.1 Check).");
+                 console.log("Firebase already initialized (customer_management.html - V1.4 Style).");
              }
              auth = getAuth(app);
              db = getFirestore(app);
 
-             // >>>>> Make Firebase functions globally available <<<<<
-             window.db = db;
-             window.auth = auth;
-             window.collection = collection;
-             window.doc = doc;
-             window.addDoc = addDoc;
-             window.updateDoc = updateDoc;
-             window.deleteDoc = deleteDoc;
-             window.onSnapshot = onSnapshot;
-             window.query = query;
-             window.orderBy = orderBy;
-             window.serverTimestamp = serverTimestamp;
-             window.runTransaction = runTransaction;
-             window.getDoc = getDoc;
-             window.where = where;       // <<< यह लाइन जरूरी है
-             window.getDocs = getDocs;     // <<< यह लाइन जरूरी है
-
-             // ---->> Authentication State Check (Core Security) <<----
+             // ---->> Authentication State Check <<----
              onAuthStateChanged(auth, (user) => {
                  const currentPage = window.location.pathname.split('/').pop() || 'index.html';
-                 if (user) {
-                     console.log(`User is logged in on ${currentPage}:`, user.uid);
-                 } else {
+                 if (!user && currentPage.toLowerCase() !== 'login.html') {
                      console.log(`User is not logged in on ${currentPage}. Redirecting to login...`);
-                     if (currentPage.toLowerCase() !== 'login.html') {
-                        window.location.replace('login.html');
-                     }
+                    window.location.replace('login.html');
+                 } else if (user) {
+                     console.log(`User is logged in on ${currentPage}:`, user.uid);
+                     // Call the initialization function AFTER auth check and pass Firestore functions
+                     initializeCustomerManagement({
+                         db, collection, onSnapshot, query, orderBy, doc, addDoc,
+                         updateDoc, deleteDoc, serverTimestamp, runTransaction, getDoc,
+                         where, getDocs, limit
+                     });
                  }
              });
-             // ---->> Auth check end <<----
-
-             window.getCurrentUser = () => auth.currentUser;
 
         } catch(e) {
-            console.error("Firebase setup / Auth check error:", e);
-            alert("Error loading application. Please check console.");
+            console.error("Firebase setup / Auth check error in HTML:", e);
+            alert("Error loading application configuration in HTML.");
+            // Optionally disable functionality if setup fails
         }
     </script>
     </head>
@@ -94,7 +84,8 @@
 
         <div class="breadcrumb-container">
           <a href="index.html">Home</a> / Customer Management
-          </div>
+        </div>
+
         <div class="filter-bar">
               <div class="filter-group">
                  <button id="addNewCustomerBtn" class="button add-new-button">
@@ -112,7 +103,9 @@
                     <option value="createdAt_asc">Oldest First</option>
                     <option value="fullName_asc">Name (A-Z)</option>
                     <option value="fullName_desc">Name (Z-A)</option>
-                     <option value="customCustomerId_asc">ID (Low-High)</option> <option value="customCustomerId_desc">ID (High-Low)</option> </select>
+                     <option value="customCustomerId_asc">ID (Low-High)</option>
+                     <option value="customCustomerId_desc">ID (High-Low)</option>
+                 </select>
             </div>
             <div class="filter-group">
                  <button id="clearFiltersBtn" class="button clear-filters-button" title="Clear search and reset sort">
@@ -135,8 +128,7 @@
                 </thead>
                 <tbody id="customerTableBody">
                     <tr>
-                         <td colspan="7" id="loadingMessage">Loading customers...</td>
-                    </tr>
+                         <td colspan="7" id="loadingMessage">Loading customers...</td> </tr>
                 </tbody>
             </table>
         </div>
@@ -170,7 +162,8 @@
                  </div>
                 <div class="modal-actions">
                     <button type="submit" id="saveCustomerBtn" class="button save-button">
-                        <i class="fas fa-save"></i> <span>Save Customer</span> </button>
+                        <i class="fas fa-save"></i> <span>Save Customer</span>
+                    </button>
                      <button type="button" id="cancelCustomerBtn" class="button cancel-button">
                         Cancel
                     </button>
@@ -178,6 +171,7 @@
              </form>
         </div>
     </div>
+
     <script src="js/customer_management.js" type="module" defer></script>
 
 </body>
