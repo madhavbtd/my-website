@@ -1,5 +1,5 @@
 // js/order_history.js
-// Updated Version: Includes date format fix inside displayOrderRow
+// Updated Version: Includes date format fix inside displayOrderRow and status update button fix
 
 const {
     db, collection, onSnapshot, query, orderBy, where,
@@ -383,8 +383,25 @@ function displayOrderRow(firestoreId, data, searchTerm = '') {
 
     let itemsHtml = '-'; const items = data.items || []; const MAX_ITEMS_DISPLAY = 1;
     if (Array.isArray(items) && items.length > 0) {
-        itemsHtml = items.slice(0, MAX_ITEMS_DISPLAY).map(item => { if (!item) return ''; const name = highlightMatch(item.productName || 'Unnamed Item', searchTerm); const quantity = highlightMatch(item.quantity || '?', searchTerm); return `${name} (${quantity})`; }).filter(html => html).join('<br>');
-        if (items.length > MAX_ITEMS_DISPLAY) { itemsHtml += `<br><a href="#" class="see-more-link" data-id="${firestoreId}">... (${items.length - MAX_ITEMS_DISPLAY} more)</a>`; }
+        itemsHtml = items.slice(0, MAX_ITEMS_DISPLAY).map(item => {
+            if (!item) return '';
+            const name = highlightMatch(item.productName || 'Unnamed Item', searchTerm);
+            const quantity = highlightMatch(item.quantity || '?', searchTerm);
+            let sizeHtml = '';
+            // --- Add size info here ---
+            if (item.unitType === 'Sq Feet' && item.width && item.height) {
+                const width = escapeHtml(item.width);
+                const height = escapeHtml(item.height);
+                const unit = escapeHtml(item.dimensionUnit || 'units'); // Use dimensionUnit
+                sizeHtml = ` [${width} x ${height} ${unit}]`;
+            }
+            // --- End size info ---
+            return `${name} (Qty: ${quantity})${sizeHtml}`; // Add sizeHtml here
+        }).filter(html => html).join('<br>');
+
+        if (items.length > MAX_ITEMS_DISPLAY) {
+            itemsHtml += `<br><a href="#" class="see-more-link" data-id="${firestoreId}">... (${items.length - MAX_ITEMS_DISPLAY} more)</a>`;
+        }
     }
 
     const statusClass = `status-${status.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`;
@@ -425,27 +442,111 @@ function handleTableClick(event) {
     else if (target.closest('.customer-name-link')) { event.preventDefault(); const customerId = orderData.customerId; if (customerId) { window.location.href = `customer_account_detail.html?id=${customerId}`; } else { console.error(`Customer ID missing for order Firestore ID: ${firestoreId}`, orderData); alert('Customer linking ID not found for this order.'); } }
     else if (target.closest('.create-po-button')) { event.preventDefault(); openPOItemSelectionModal(firestoreId, orderData); }
     else if (target.closest('.view-po-details-link')) { event.preventDefault(); const poId = target.closest('.view-po-details-link').dataset.poid; if (poId) { openPODetailsPopup(poId); } else { console.error("PO ID missing on view link"); } }
-    else if (target.closest('.see-more-link')) { event.preventDefault(); openItemsOnlyPopup(firestoreId); }
+    else if (target.closest('.see-more-link')) { event.preventDefault(); openItemsOnlyPopup(firestoreId); } // <<< Calls the function to open the items popup
     else if (target.closest('.details-edit-button')) { openDetailsModal(firestoreId, orderData); }
     else if (target.closest('.whatsapp-button')) { sendWhatsAppMessage(firestoreId, orderData); }
 }
 
 // --- Open Details Modal ---
 async function openDetailsModal(firestoreId, orderData) {
-    // ... (Function remains the same as your provided file) ...
-    if (!orderData || !detailsModal) return; activeOrderDataForModal = orderData;
-    if(modalOrderIdInput) modalOrderIdInput.value = firestoreId; if(modalDisplayOrderIdSpan) modalDisplayOrderIdSpan.textContent = orderData.orderId || `(Sys: ${firestoreId.substring(0, 6)}...)`; if(modalCustomerNameSpan) modalCustomerNameSpan.textContent = orderData.customerDetails?.fullName || 'N/A'; if(modalCustomerWhatsAppSpan) modalCustomerWhatsAppSpan.textContent = orderData.customerDetails?.whatsappNo || 'N/A'; if(modalCustomerContactSpan) modalCustomerContactSpan.textContent = orderData.customerDetails?.contactNo || 'N/A'; if(modalCustomerAddressSpan) modalCustomerAddressSpan.textContent = orderData.customerDetails?.address || 'N/A';
-    const formatDate = (dIn) => { if (!dIn) return 'N/A'; try { const d = (dIn.toDate)?d.toDate():new Date(dIn); return isNaN(d.getTime())?'N/A':d.toLocaleDateString('en-GB'); } catch { return 'N/A'; } };
-    if(modalOrderDateSpan) modalOrderDateSpan.textContent = formatDate(orderData.orderDate); if(modalDeliveryDateSpan) modalDeliveryDateSpan.textContent = formatDate(orderData.deliveryDate); if(modalPrioritySpan) modalPrioritySpan.textContent = orderData.urgent || 'No'; if(modalRemarksSpan) modalRemarksSpan.textContent = escapeHtml(orderData.remarks || 'None');
-    if (modalProductListContainer) { modalProductListContainer.innerHTML = ''; const items = orderData.items || []; if (items.length > 0) { const ul = document.createElement('ul'); ul.className = 'modal-product-list-ul'; items.forEach(item => { if (!item) return; const li = document.createElement('li'); const nameSpan = document.createElement('span'); nameSpan.className = 'product-name'; nameSpan.textContent = escapeHtml(item.productName || 'Unnamed Item'); const detailsSpan = document.createElement('span'); detailsSpan.className = 'product-qty-details'; detailsSpan.textContent = ` - Qty: ${escapeHtml(item.quantity || '?')}`; li.append(nameSpan, detailsSpan); ul.appendChild(li); }); modalProductListContainer.appendChild(ul); } else { modalProductListContainer.innerHTML = '<p class="no-products">No items listed.</p>'; } }
+    // ... (Function remains the same as your provided file up to populating items) ...
+    if (!orderData || !detailsModal) return;
+    activeOrderDataForModal = orderData;
+
+    // Populate Customer and Order Info (same as before)
+    if(modalOrderIdInput) modalOrderIdInput.value = firestoreId;
+    if(modalDisplayOrderIdSpan) modalDisplayOrderIdSpan.textContent = orderData.orderId || `(Sys: ${firestoreId.substring(0, 6)}...)`;
+    if(modalCustomerNameSpan) modalCustomerNameSpan.textContent = orderData.customerDetails?.fullName || 'N/A';
+    if(modalCustomerWhatsAppSpan) modalCustomerWhatsAppSpan.textContent = orderData.customerDetails?.whatsappNo || 'N/A';
+    if(modalCustomerContactSpan) modalCustomerContactSpan.textContent = orderData.customerDetails?.contactNo || 'N/A';
+    if(modalCustomerAddressSpan) modalCustomerAddressSpan.textContent = orderData.customerDetails?.address || 'N/A';
+
+    const formatDate = (dIn) => { if (!dIn) return 'N/A'; try { const d = (dIn.toDate)?dIn.toDate():new Date(dIn); return isNaN(d.getTime())?'N/A':d.toLocaleDateString('en-GB'); } catch { return 'N/A'; } };
+    if(modalOrderDateSpan) modalOrderDateSpan.textContent = formatDate(orderData.orderDate);
+    if(modalDeliveryDateSpan) modalDeliveryDateSpan.textContent = formatDate(orderData.deliveryDate);
+    if(modalPrioritySpan) modalPrioritySpan.textContent = orderData.urgent || 'No';
+    if(modalRemarksSpan) modalRemarksSpan.textContent = escapeHtml(orderData.remarks || 'None');
+
+    // --- Populate Items with Size ---
+    if (modalProductListContainer) {
+        modalProductListContainer.innerHTML = ''; // Clear previous content
+        const items = orderData.items || [];
+        if (items.length > 0) {
+            const ul = document.createElement('ul');
+            ul.className = 'modal-product-list-ul'; // Use existing class for grid layout
+            items.forEach(item => {
+                if (!item) return;
+                const li = document.createElement('li');
+
+                const nameSpan = document.createElement('span');
+                nameSpan.className = 'product-name'; // Keep class if needed for styling
+                nameSpan.textContent = escapeHtml(item.productName || 'Unnamed Item');
+
+                const detailsSpan = document.createElement('span');
+                detailsSpan.className = 'product-qty-details'; // Keep class if needed
+
+                let itemDetails = ` - Qty: ${escapeHtml(item.quantity || '?')}`;
+                // Add size info if available
+                if (item.unitType === 'Sq Feet' && item.width && item.height) {
+                    const width = escapeHtml(item.width);
+                    const height = escapeHtml(item.height);
+                    const unit = escapeHtml(item.dimensionUnit || 'units');
+                    itemDetails += ` [${width} x ${height} ${unit}]`;
+                }
+                detailsSpan.textContent = itemDetails;
+
+                li.append(nameSpan, detailsSpan);
+                ul.appendChild(li);
+            });
+            modalProductListContainer.appendChild(ul);
+        } else {
+            modalProductListContainer.innerHTML = '<p class="no-products">No items listed.</p>';
+        }
+    }
+    // --- End Item Population ---
+
+    // Populate Status and History (same as before)
     if(modalOrderStatusSelect) modalOrderStatusSelect.value = orderData.status || '';
-    if (modalStatusHistoryListContainer) { modalStatusHistoryListContainer.innerHTML = ''; const history = orderData.statusHistory || []; if (history.length > 0) { const sortedHistory = [...history].sort((a, b) => (b.timestamp?.toDate?.()?.getTime() ?? 0) - (a.timestamp?.toDate?.()?.getTime() ?? 0)); const ul = document.createElement('ul'); ul.className = 'modal-status-history-ul'; sortedHistory.forEach(entry => { const li = document.createElement('li'); const statusSpan = document.createElement('span'); statusSpan.className = 'history-status'; statusSpan.textContent = escapeHtml(entry.status || '?'); const timeSpan = document.createElement('span'); timeSpan.className = 'history-time'; try { timeSpan.textContent = entry.timestamp?.toDate ? entry.timestamp.toDate().toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit', hour12: true }) : '?'; } catch { timeSpan.textContent = '?'; } li.append(statusSpan, timeSpan); ul.appendChild(li); }); modalStatusHistoryListContainer.appendChild(ul); } else { modalStatusHistoryListContainer.innerHTML = '<p class="no-history">No status history.</p>'; } }
-    const totalAmount = orderData.totalAmount ?? null; const amountPaid = orderData.amountPaid ?? null; let balanceDueText = 'N/A'; let paymentStatus = orderData.paymentStatus ?? null;
+    if (modalStatusHistoryListContainer) {
+        modalStatusHistoryListContainer.innerHTML = '';
+        const history = orderData.statusHistory || [];
+        if (history.length > 0) {
+            const sortedHistory = [...history].sort((a, b) => (b.timestamp?.toDate?.()?.getTime() ?? 0) - (a.timestamp?.toDate?.()?.getTime() ?? 0));
+            const ul = document.createElement('ul');
+            ul.className = 'modal-status-history-ul';
+            sortedHistory.forEach(entry => {
+                const li = document.createElement('li');
+                const statusSpan = document.createElement('span');
+                statusSpan.className = 'history-status';
+                statusSpan.textContent = escapeHtml(entry.status || '?');
+                const timeSpan = document.createElement('span');
+                timeSpan.className = 'history-time';
+                try { timeSpan.textContent = entry.timestamp?.toDate ? entry.timestamp.toDate().toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit', hour12: true }) : '?'; } catch { timeSpan.textContent = '?'; }
+                li.append(statusSpan, timeSpan);
+                ul.appendChild(li);
+            });
+            modalStatusHistoryListContainer.appendChild(ul);
+        } else {
+            modalStatusHistoryListContainer.innerHTML = '<p class="no-history">No status history.</p>';
+        }
+    }
+
+    // Populate Account Data (same as before)
+    const totalAmount = orderData.totalAmount ?? null;
+    const amountPaid = orderData.amountPaid ?? null;
+    let balanceDueText = 'N/A';
+    let paymentStatus = orderData.paymentStatus ?? null;
     if (totalAmount !== null && amountPaid !== null) { const balanceDue = totalAmount - amountPaid; balanceDueText = `₹ ${balanceDue.toFixed(2)}`; if (paymentStatus === null) paymentStatus = balanceDue <= 0 ? 'Paid' : 'Pending'; } else if (paymentStatus === null) { paymentStatus = 'N/A'; }
-    if(modalTotalAmountSpan) modalTotalAmountSpan.textContent = totalAmount !== null ? `₹ ${totalAmount.toFixed(2)}` : 'N/A'; if(modalAmountPaidSpan) modalAmountPaidSpan.textContent = amountPaid !== null ? `₹ ${amountPaid.toFixed(2)}` : 'N/A'; if(modalBalanceDueSpan) modalBalanceDueSpan.textContent = balanceDueText; if(modalPaymentStatusSpan) modalPaymentStatusSpan.textContent = escapeHtml(paymentStatus);
+    if(modalTotalAmountSpan) modalTotalAmountSpan.textContent = totalAmount !== null ? `₹ ${totalAmount.toFixed(2)}` : 'N/A';
+    if(modalAmountPaidSpan) modalAmountPaidSpan.textContent = amountPaid !== null ? `₹ ${amountPaid.toFixed(2)}` : 'N/A';
+    if(modalBalanceDueSpan) modalBalanceDueSpan.textContent = balanceDueText;
+    if(modalPaymentStatusSpan) modalPaymentStatusSpan.textContent = escapeHtml(paymentStatus);
+
+    // Display POs and show modal (same as before)
     await displayPOsInModal(firestoreId, orderData.linkedPOs || []);
     if(detailsModal) detailsModal.style.display = 'flex';
 }
+
 
 // --- Display POs in Modal ---
 async function displayPOsInModal(orderFirestoreId, linkedPOs) {
@@ -462,19 +563,71 @@ async function displayPOsInModal(orderFirestoreId, linkedPOs) {
 // --- Close Details Modal ---
 function closeDetailsModal() { if (detailsModal) detailsModal.style.display = 'none'; activeOrderDataForModal = null; }
 
-// --- Handle Status Update ---
+
+// --- Handle Status Update --- (*** UPDATED CODE ***)
 async function handleUpdateStatus() {
-    // ... (Function remains the same as your provided file) ...
-    const firestoreId = modalOrderIdInput.value; const newStatus = modalOrderStatusSelect.value; const orderDataForWhatsApp = activeOrderDataForModal ? { ...activeOrderDataForModal } : null;
-    if (!firestoreId || !newStatus || !orderDataForWhatsApp) { alert("Cannot update status."); return; } if (orderDataForWhatsApp.status === newStatus) { alert("Status is already set."); return; }
-    if (modalUpdateStatusBtn) { modalUpdateStatusBtn.disabled = true; modalUpdateStatusBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Updating...'; }
+    const firestoreId = modalOrderIdInput.value;
+    const newStatus = modalOrderStatusSelect.value;
+    const orderDataForWhatsApp = activeOrderDataForModal ? { ...activeOrderDataForModal } : null;
+
+    if (!firestoreId || !newStatus || !orderDataForWhatsApp) {
+        alert("Cannot update status. Order ID or new status missing or order data not loaded."); // More specific alert
+        return;
+    }
+
+    if (orderDataForWhatsApp.status === newStatus) {
+        alert("Status is already set to the selected value."); // Alert if status is same
+        return;
+    }
+
+    // Disable button and show spinner
+    if (modalUpdateStatusBtn) {
+        modalUpdateStatusBtn.disabled = true;
+        modalUpdateStatusBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Updating...';
+    }
+
     const historyEntry = { status: newStatus, timestamp: Timestamp.now() };
-    try { await updateDoc(doc(db, "orders", firestoreId), { status: newStatus, updatedAt: serverTimestamp(), statusHistory: arrayUnion(historyEntry) }); console.log(`Order ${firestoreId} status updated to ${newStatus}`); closeDetailsModal();
-        if (orderDataForWhatsApp.customerDetails?.whatsappNo) { showStatusUpdateWhatsAppReminder( orderDataForWhatsApp.customerDetails, orderDataForWhatsApp.orderId || `Sys:${firestoreId.substring(0,6)}`, newStatus ); }
-        else { console.log("No WhatsApp number found."); alert("Status updated successfully!"); }
-    } catch (e) { console.error("Error updating status:", firestoreId, e); alert("Error updating status: " + e.message); if (modalUpdateStatusBtn) { modalUpdateStatusBtn.disabled = false; modalUpdateStatusBtn.innerHTML = '<i class="fas fa-sync-alt"></i> Update Status'; } }
-    finally { if (modalUpdateStatusBtn && detailsModal.style.display !== 'none') { modalUpdateStatusBtn.disabled = false; modalUpdateStatusBtn.innerHTML = '<i class="fas fa-sync-alt"></i> Update Status'; } }
+
+    try {
+        // Update the document in Firestore
+        await updateDoc(doc(db, "orders", firestoreId), {
+            status: newStatus,
+            updatedAt: serverTimestamp(),
+            statusHistory: arrayUnion(historyEntry)
+        });
+
+        console.log(`Order ${firestoreId} status updated to ${newStatus}`);
+        closeDetailsModal(); // Close modal on success
+
+        // Show WhatsApp reminder or success alert
+        if (orderDataForWhatsApp.customerDetails?.whatsappNo) {
+            showStatusUpdateWhatsAppReminder(
+                orderDataForWhatsApp.customerDetails,
+                orderDataForWhatsApp.orderId || `Sys:${firestoreId.substring(0,6)}`,
+                newStatus
+            );
+        } else {
+            console.log("No WhatsApp number found for reminder.");
+            alert("Status updated successfully!"); // Simple alert if no WhatsApp number
+        }
+
+    } catch (e) {
+        console.error("Error updating status:", firestoreId, e);
+        alert("Error updating status: " + e.message);
+        // Note: Button reset is handled in finally block now for both success/error
+
+    } finally {
+        // *** THIS IS THE UPDATED BLOCK ***
+        // Always reset the button state, regardless of modal visibility
+        if (modalUpdateStatusBtn) {
+            modalUpdateStatusBtn.disabled = false;
+            modalUpdateStatusBtn.innerHTML = '<i class="fas fa-sync-alt"></i> Update Status';
+        }
+        // *** END OF UPDATE ***
+    }
 }
+// --- End Handle Status Update ---
+
 
 // --- Handle Delete from Modal ---
 function handleDeleteFromModal() {
@@ -553,8 +706,42 @@ async function handleBulkUpdateStatus() {
 // --- CSV Export ---
 function exportToCsv() {
     // ... (Function remains the same as your provided file) ...
-    if (currentlyDisplayedOrders.length === 0) { alert("No data to export."); return; } const headers = [ "Firestore ID", "Order ID", "Customer Name", "WhatsApp No", "Contact No", "Address", "Order Date", "Delivery Date", "Status", "Urgent", "Remarks", "Total Amount", "Amount Paid", "Payment Status", "Items (Name | Qty)" ]; const rows = currentlyDisplayedOrders.map(order => { const formatCsvDate = (dIn) => { if (!dIn) return ''; try { const d = (dIn.toDate)?d.toDate():new Date(dIn); if (isNaN(d.getTime())) return ''; const month = String(d.getMonth() + 1).padStart(2, '0'); const day = String(d.getDate()).padStart(2, '0'); return `${d.getFullYear()}-${month}-${day}`; } catch { return ''; } }; const itemsString = (order.items || []).map(p => `${String(p.productName || '').replace(/\|/g, '')}|${String(p.quantity || '')}`).join('; '); return [ order.id, order.orderId || '', order.customerDetails?.fullName || '', order.customerDetails?.whatsappNo || '', order.customerDetails?.contactNo || '', order.customerDetails?.address || '', formatCsvDate(order.orderDate), formatCsvDate(order.deliveryDate), order.status || '', order.urgent || 'No', order.remarks || '', order.totalAmount ?? '', order.amountPaid ?? '', order.paymentStatus || 'Pending', itemsString ]; }); const escapeCsvField = (field) => { const stringField = String(field ?? ''); return (stringField.includes(',') || stringField.includes('\n') || stringField.includes('"')) ? `"${stringField.replace(/"/g, '""')}"` : stringField; }; const csvHeader = headers.map(escapeCsvField).join(",") + "\n"; const csvRows = rows.map(row => row.map(escapeCsvField).join(",")).join("\n"); const csvContent = csvHeader + csvRows; const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' }); const link = document.createElement("a"); const url = URL.createObjectURL(blob); link.setAttribute("href", url); const timestamp = new Date().toISOString().slice(0, 10); link.setAttribute("download", `orders_export_${timestamp}.csv`); link.style.visibility = 'hidden'; document.body.appendChild(link); link.click(); document.body.removeChild(link); URL.revokeObjectURL(url);
+    if (currentlyDisplayedOrders.length === 0) { alert("No data to export."); return; } const headers = [ "Firestore ID", "Order ID", "Customer Name", "WhatsApp No", "Contact No", "Address", "Order Date", "Delivery Date", "Status", "Urgent", "Remarks", "Total Amount", "Amount Paid", "Payment Status", "Items (Name | Qty | W | H | Unit)" ]; // Added size headers
+    const rows = currentlyDisplayedOrders.map(order => {
+        const formatCsvDate = (dIn) => { if (!dIn) return ''; try { const d = (dIn.toDate)?dIn.toDate():new Date(dIn); if (isNaN(d.getTime())) return ''; const month = String(d.getMonth() + 1).padStart(2, '0'); const day = String(d.getDate()).padStart(2, '0'); return `${d.getFullYear()}-${month}-${day}`; } catch { return ''; } };
+        const itemsString = (order.items || []).map(p => {
+            let sizeStr = '';
+            if (p.unitType === 'Sq Feet') {
+                sizeStr = `|${String(p.width || '')}|${String(p.height || '')}|${String(p.dimensionUnit || '')}`;
+            } else {
+                 sizeStr = '|||'; // Placeholders for non-SqFeet items
+            }
+            return `${String(p.productName || '').replace(/\|/g, '')}|${String(p.quantity || '')}${sizeStr}`
+        }).join('; ');
+        return [
+            order.id, order.orderId || '', order.customerDetails?.fullName || '', order.customerDetails?.whatsappNo || '',
+            order.customerDetails?.contactNo || '', order.customerDetails?.address || '', formatCsvDate(order.orderDate),
+            formatCsvDate(order.deliveryDate), order.status || '', order.urgent || 'No', order.remarks || '',
+            order.totalAmount ?? '', order.amountPaid ?? '', order.paymentStatus || 'Pending', itemsString
+        ];
+    });
+    const escapeCsvField = (field) => { const stringField = String(field ?? ''); return (stringField.includes(',') || stringField.includes('\n') || stringField.includes('"')) ? `"${stringField.replace(/"/g, '""')}"` : stringField; };
+    const csvHeader = headers.map(escapeCsvField).join(",") + "\n";
+    const csvRows = rows.map(row => row.map(escapeCsvField).join(",")).join("\n");
+    const csvContent = csvHeader + csvRows;
+    const blob = new Blob(["\uFEFF" + csvContent], { type: 'text/csv;charset=utf-8;' }); // Added BOM for Excel
+    const link = document.createElement("a");
+    const url = URL.createObjectURL(blob);
+    link.setAttribute("href", url);
+    const timestamp = new Date().toISOString().slice(0, 10);
+    link.setAttribute("download", `orders_export_${timestamp}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
 }
+
 
 // --- Attempt Open Modal from URL ---
 function attemptOpenModalFromUrl() {
@@ -585,7 +772,9 @@ function handleProceedToCreatePO() { const orderFirestoreId = poItemSelectionOrd
 // --- PO Details Popup Functions ---
 async function openPODetailsPopup(poId) {
     // ... (Function remains the same as your provided file) ...
-    if (!poDetailsPopup || !poDetailsPopupContent || !db || !poId) return; poDetailsPopupContent.innerHTML = '<p><i class="fas fa-spinner fa-spin"></i> Loading...</p>'; poDetailsPopup.classList.add('active'); try { const poRef = doc(db, "purchaseOrders", poId); const poDocSnap = await getDoc(poRef); if (!poDocSnap.exists()) throw new Error(`PO ${poId} not found.`); const poData = poDocSnap.data(); const supplierName = poData.supplierName || 'Unknown'; const poNumberDisplay = poData.poNumber ? `#${poData.poNumber}` : 'N/A'; let orderDateStr = poData.orderDate?.toDate ? poData.orderDate.toDate().toLocaleDateString('en-GB') : 'N/A'; let popupHTML = `<div class="po-details-popup-header"><h3>PO ${escapeHtml(poNumberDisplay)}</h3><p><strong>Supplier:</strong> ${escapeHtml(supplierName)}</p><p><strong>Date:</strong> ${orderDateStr}</p><p><strong>Status:</strong> ${escapeHtml(poData.status || 'N/A')}</p><p><strong>Total:</strong> ₹ ${(poData.totalAmount || 0).toFixed(2)}</p></div><hr><h4>Items</h4>`; if (poData.items && poData.items.length > 0) { popupHTML += `<table class="details-table-popup"><thead><tr><th>#</th><th>Product</th><th>Details</th><th>Rate</th><th>Amount</th></tr></thead><tbody>`; poData.items.forEach((item, index) => { if (!item) return; let detailStr = ''; const qty = item.quantity || '?'; if (item.type === 'Sq Feet') { const w = item.realWidth || item.width || '?'; const h = item.realHeight || item.height || '?'; const u = item.unit || item.inputUnit || 'units'; detailStr = `Qty: ${escapeHtml(qty)} (${escapeHtml(w)}x${escapeHtml(h)} ${escapeHtml(u)})`; } else { detailStr = `Qty: ${escapeHtml(qty)}`; } popupHTML += `<tr><td>${index + 1}</td><td>${escapeHtml(item.productName || 'N/A')}</td><td>${detailStr}</td><td>${item.rate?.toFixed(2) ?? 'N/A'}</td><td align="right">${item.itemAmount?.toFixed(2) ?? 'N/A'}</td></tr>`; }); popupHTML += `</tbody></table>`; } else { popupHTML += `<p>No items.</p>`; } if (poData.notes) { popupHTML += `<div class="po-notes-popup"><strong>Notes:</strong><p>${escapeHtml(poData.notes).replace(/\n/g, '<br>')}</p></div>`; } poDetailsPopupContent.innerHTML = popupHTML; if(printPoDetailsPopupBtn) printPoDetailsPopupBtn.dataset.poid = poId; } catch (error) { console.error("Error loading PO popup:", error); poDetailsPopupContent.innerHTML = `<p class="error-message">Error: ${escapeHtml(error.message)}</p>`; }
+    if (!poDetailsPopup || !poDetailsPopupContent || !db || !poId) return; poDetailsPopupContent.innerHTML = '<p><i class="fas fa-spinner fa-spin"></i> Loading...</p>'; poDetailsPopup.classList.add('active'); try { const poRef = doc(db, "purchaseOrders", poId); const poDocSnap = await getDoc(poRef); if (!poDocSnap.exists()) throw new Error(`PO ${poId} not found.`); const poData = poDocSnap.data(); const supplierName = poData.supplierName || 'Unknown'; const poNumberDisplay = poData.poNumber ? `#${poData.poNumber}` : 'N/A'; let orderDateStr = poData.orderDate?.toDate ? poData.orderDate.toDate().toLocaleDateString('en-GB') : 'N/A'; let popupHTML = `<div class="po-details-popup-header"><h3>PO ${escapeHtml(poNumberDisplay)}</h3><p><strong>Supplier:</strong> ${escapeHtml(supplierName)}</p><p><strong>Date:</strong> ${orderDateStr}</p><p><strong>Status:</strong> ${escapeHtml(poData.status || 'N/A')}</p><p><strong>Total:</strong> ₹ ${(poData.totalAmount || 0).toFixed(2)}</p></div><hr><h4>Items</h4>`; if (poData.items && poData.items.length > 0) { popupHTML += `<table class="details-table-popup"><thead><tr><th>#</th><th>Product</th><th>Details</th><th>Rate</th><th>Amount</th></tr></thead><tbody>`; poData.items.forEach((item, index) => { if (!item) return; let detailStr = ''; const qty = item.quantity || '?'; if (item.type === 'Sq Feet' || item.unitType === 'Sq Feet') { // Check both for compatibility
+        const w = item.realWidth || item.width || '?'; const h = item.realHeight || item.height || '?'; const u = item.dimensionUnit || item.unit || item.inputUnit || 'units'; // Check multiple fields
+        detailStr = `Qty: ${escapeHtml(qty)} (${escapeHtml(w)}x${escapeHtml(h)} ${escapeHtml(u)})`; } else { detailStr = `Qty: ${escapeHtml(qty)}`; } popupHTML += `<tr><td>${index + 1}</td><td>${escapeHtml(item.productName || 'N/A')}</td><td>${detailStr}</td><td>${item.rate?.toFixed(2) ?? 'N/A'}</td><td align="right">${item.itemAmount?.toFixed(2) ?? 'N/A'}</td></tr>`; }); popupHTML += `</tbody></table>`; } else { popupHTML += `<p>No items.</p>`; } if (poData.notes) { popupHTML += `<div class="po-notes-popup"><strong>Notes:</strong><p>${escapeHtml(poData.notes).replace(/\n/g, '<br>')}</p></div>`; } poDetailsPopupContent.innerHTML = popupHTML; if(printPoDetailsPopupBtn) printPoDetailsPopupBtn.dataset.poid = poId; } catch (error) { console.error("Error loading PO popup:", error); poDetailsPopupContent.innerHTML = `<p class="error-message">Error: ${escapeHtml(error.message)}</p>`; }
 }
 function closePODetailsPopup() { if (poDetailsPopup) poDetailsPopup.classList.remove('active'); }
 function handlePrintPODetailsPopup(event) {
@@ -595,16 +784,70 @@ function handlePrintPODetailsPopup(event) {
 
 // --- Read-Only Order Details Popup Functions ---
 function openReadOnlyOrderPopup(firestoreId, orderData) {
-    // ... (Function remains the same as your provided file) ...
-    if (!readOnlyOrderModal || !readOnlyOrderModalContent || !readOnlyOrderModalTitle || !orderData) return; readOnlyOrderModalTitle.textContent = `Order Details: #${escapeHtml(orderData.orderId || firestoreId.substring(0,6))}`; readOnlyOrderModalContent.innerHTML = '<p><i class="fas fa-spinner fa-spin"></i> Loading...</p>'; readOnlyOrderModal.classList.add('active'); let contentHTML = '<div class="read-only-grid">'; contentHTML += '<div class="read-only-section"><h4>Customer</h4>'; contentHTML += `<p><strong>Name:</strong> ${escapeHtml(orderData.customerDetails?.fullName || 'N/A')}</p>`; contentHTML += `<p><strong>WhatsApp:</strong> ${escapeHtml(orderData.customerDetails?.whatsappNo || 'N/A')}</p>`; contentHTML += `<p><strong>Contact:</strong> ${escapeHtml(orderData.customerDetails?.contactNo || 'N/A')}</p>`; contentHTML += `<p><strong>Address:</strong> ${escapeHtml(orderData.customerDetails?.address || 'N/A')}</p></div>`; const formatDateRO = (dIn) => { if (!dIn) return 'N/A'; try { const d = (dIn.toDate)?d.toDate():new Date(dIn); return isNaN(d.getTime())?'N/A':d.toLocaleDateString('en-GB'); } catch { return 'N/A'; } }; contentHTML += '<div class="read-only-section"><h4>Order Info</h4>'; contentHTML += `<p><strong>Order Date:</strong> ${formatDateRO(orderData.orderDate)}</p>`; contentHTML += `<p><strong>Delivery Date:</strong> ${formatDateRO(orderData.deliveryDate)}</p>`; contentHTML += `<p><strong>Priority:</strong> ${escapeHtml(orderData.urgent || 'No')}</p>`; contentHTML += `<p><strong>Status:</strong> ${escapeHtml(orderData.status || 'N/A')}</p>`; contentHTML += `<p><strong>Remarks:</strong> ${escapeHtml(orderData.remarks || 'None')}</p></div>`; contentHTML += '<div class="read-only-section read-only-products"><h4>Items</h4>'; const itemsRO = orderData.items || []; if (itemsRO.length > 0) { contentHTML += '<ul class="read-only-product-list">'; itemsRO.forEach(item => { if (!item) return; contentHTML += `<li><strong>${escapeHtml(item.productName || 'Unnamed Item')}</strong> - Qty: ${escapeHtml(item.quantity || '?')}</li>`; }); contentHTML += '</ul>'; } else { contentHTML += '<p>No items listed.</p>'; } contentHTML += '</div>'; contentHTML += '<div class="read-only-section"><h4>Account Data</h4>'; const totalAmountRO = orderData.totalAmount ?? null; const amountPaidRO = orderData.amountPaid ?? null; let balanceDueROText = 'N/A'; let paymentStatusRO = orderData.paymentStatus ?? null; if (totalAmountRO !== null && amountPaidRO !== null) { const balanceDueRO = totalAmountRO - amountPaidRO; balanceDueROText = `₹ ${balanceDueRO.toFixed(2)}`; if (paymentStatusRO === null) paymentStatusRO = balanceDueRO <= 0 ? 'Paid' : 'Pending'; } else if (paymentStatusRO === null) { paymentStatusRO = 'N/A'; } contentHTML += `<p><strong>Total Amount:</strong> ${totalAmountRO !== null ? `₹ ${totalAmountRO.toFixed(2)}` : 'N/A'}</p>`; contentHTML += `<p><strong>Amount Paid:</strong> ${amountPaidRO !== null ? `₹ ${amountPaidRO.toFixed(2)}` : 'N/A'}</p>`; contentHTML += `<p><strong>Balance Due:</strong> ${balanceDueROText}</p>`; contentHTML += `<p><strong>Payment Status:</strong> ${escapeHtml(paymentStatusRO)}</p></div>`; contentHTML += '<div class="read-only-section"><h4>Status History</h4>'; const historyRO = orderData.statusHistory || []; if (historyRO.length > 0) { const sortedHistoryRO = [...historyRO].sort((a, b) => (b.timestamp?.toDate?.()?.getTime() ?? 0) - (a.timestamp?.toDate?.()?.getTime() ?? 0)); contentHTML += '<ul class="read-only-history-list">'; sortedHistoryRO.forEach(entry => { let timeStr = '?'; try { timeStr = entry.timestamp?.toDate ? entry.timestamp.toDate().toLocaleString('en-GB') : '?'; } catch {} contentHTML += `<li><strong>${escapeHtml(entry.status || '?')}</strong> at ${timeStr}</li>`; }); contentHTML += '</ul>'; } else { contentHTML += '<p>No status history.</p>'; } contentHTML += '</div>'; contentHTML += '</div>'; readOnlyOrderModalContent.innerHTML = contentHTML;
+    // ... (Function remains the same as your provided file, will show basic item info) ...
+    if (!readOnlyOrderModal || !readOnlyOrderModalContent || !readOnlyOrderModalTitle || !orderData) return; readOnlyOrderModalTitle.textContent = `Order Details: #${escapeHtml(orderData.orderId || firestoreId.substring(0,6))}`; readOnlyOrderModalContent.innerHTML = '<p><i class="fas fa-spinner fa-spin"></i> Loading...</p>'; readOnlyOrderModal.classList.add('active'); let contentHTML = '<div class="read-only-grid">'; contentHTML += '<div class="read-only-section"><h4>Customer</h4>'; contentHTML += `<p><strong>Name:</strong> ${escapeHtml(orderData.customerDetails?.fullName || 'N/A')}</p>`; contentHTML += `<p><strong>WhatsApp:</strong> ${escapeHtml(orderData.customerDetails?.whatsappNo || 'N/A')}</p>`; contentHTML += `<p><strong>Contact:</strong> ${escapeHtml(orderData.customerDetails?.contactNo || 'N/A')}</p>`; contentHTML += `<p><strong>Address:</strong> ${escapeHtml(orderData.customerDetails?.address || 'N/A')}</p></div>`; const formatDateRO = (dIn) => { if (!dIn) return 'N/A'; try { const d = (dIn.toDate)?dIn.toDate():new Date(dIn); return isNaN(d.getTime())?'N/A':d.toLocaleDateString('en-GB'); } catch { return 'N/A'; } }; contentHTML += '<div class="read-only-section"><h4>Order Info</h4>'; contentHTML += `<p><strong>Order Date:</strong> ${formatDateRO(orderData.orderDate)}</p>`; contentHTML += `<p><strong>Delivery Date:</strong> ${formatDateRO(orderData.deliveryDate)}</p>`; contentHTML += `<p><strong>Priority:</strong> ${escapeHtml(orderData.urgent || 'No')}</p>`; contentHTML += `<p><strong>Status:</strong> ${escapeHtml(orderData.status || 'N/A')}</p>`; contentHTML += `<p><strong>Remarks:</strong> ${escapeHtml(orderData.remarks || 'None')}</p></div>`; contentHTML += '<div class="read-only-section read-only-products"><h4>Items</h4>'; const itemsRO = orderData.items || []; if (itemsRO.length > 0) { contentHTML += '<ul class="read-only-product-list">'; itemsRO.forEach(item => {
+         if (!item) return;
+         // Add size info to read-only modal as well
+         let itemText = `<strong>${escapeHtml(item.productName || 'Unnamed Item')}</strong> - Qty: ${escapeHtml(item.quantity || '?')}`;
+         if (item.unitType === 'Sq Feet' && item.width && item.height) {
+             const width = escapeHtml(item.width);
+             const height = escapeHtml(item.height);
+             const unit = escapeHtml(item.dimensionUnit || 'units');
+             itemText += ` [${width} x ${height} ${unit}]`;
+         }
+         contentHTML += `<li>${itemText}</li>`;
+     }); contentHTML += '</ul>'; } else { contentHTML += '<p>No items listed.</p>'; } contentHTML += '</div>'; contentHTML += '<div class="read-only-section"><h4>Account Data</h4>'; const totalAmountRO = orderData.totalAmount ?? null; const amountPaidRO = orderData.amountPaid ?? null; let balanceDueROText = 'N/A'; let paymentStatusRO = orderData.paymentStatus ?? null; if (totalAmountRO !== null && amountPaidRO !== null) { const balanceDueRO = totalAmountRO - amountPaidRO; balanceDueROText = `₹ ${balanceDueRO.toFixed(2)}`; if (paymentStatusRO === null) paymentStatusRO = balanceDueRO <= 0 ? 'Paid' : 'Pending'; } else if (paymentStatusRO === null) { paymentStatusRO = 'N/A'; } contentHTML += `<p><strong>Total Amount:</strong> ${totalAmountRO !== null ? `₹ ${totalAmountRO.toFixed(2)}` : 'N/A'}</p>`; contentHTML += `<p><strong>Amount Paid:</strong> ${amountPaidRO !== null ? `₹ ${amountPaidRO.toFixed(2)}` : 'N/A'}</p>`; contentHTML += `<p><strong>Balance Due:</strong> ${balanceDueROText}</p>`; contentHTML += `<p><strong>Payment Status:</strong> ${escapeHtml(paymentStatusRO)}</p></div>`; contentHTML += '<div class="read-only-section"><h4>Status History</h4>'; const historyRO = orderData.statusHistory || []; if (historyRO.length > 0) { const sortedHistoryRO = [...historyRO].sort((a, b) => (b.timestamp?.toDate?.()?.getTime() ?? 0) - (a.timestamp?.toDate?.()?.getTime() ?? 0)); contentHTML += '<ul class="read-only-history-list">'; sortedHistoryRO.forEach(entry => { let timeStr = '?'; try { timeStr = entry.timestamp?.toDate ? entry.timestamp.toDate().toLocaleString('en-GB') : '?'; } catch {} contentHTML += `<li><strong>${escapeHtml(entry.status || '?')}</strong> at ${timeStr}</li>`; }); contentHTML += '</ul>'; } else { contentHTML += '<p>No status history.</p>'; } contentHTML += '</div>'; contentHTML += '</div>'; readOnlyOrderModalContent.innerHTML = contentHTML;
 }
 function closeReadOnlyOrderModal() { if (readOnlyOrderModal) readOnlyOrderModal.classList.remove('active'); }
 
-// --- Items Only Popup Functions ---
+// --- Items Only Popup Functions --- (*** UPDATED CODE ***)
 function openItemsOnlyPopup(firestoreId) {
-    // ... (Function remains the same as your provided file) ...
-    if (!itemsOnlyModal || !itemsOnlyModalContent || !itemsOnlyModalTitle) { console.error("Items Only Modal missing."); return; } const orderData = findOrderInCache(firestoreId); if (!orderData) { itemsOnlyModalTitle.textContent = "Error"; itemsOnlyModalContent.innerHTML = '<p class="error-message">No order data.</p>'; itemsOnlyModal.classList.add('active'); return; } itemsOnlyModalTitle.textContent = `Items for Order #${escapeHtml(orderData.orderId || firestoreId.substring(0, 6))}`; itemsOnlyModalContent.innerHTML = ''; const items = orderData.items || []; if (items.length > 0) { const ul = document.createElement('ul'); ul.className = 'items-only-list'; items.forEach((item, index) => { if (!item) return; const li = document.createElement('li'); const name = escapeHtml(item.productName || 'Unnamed Item'); const quantity = escapeHtml(item.quantity || '?'); li.innerHTML = `<strong>${index + 1}. ${name}</strong> - Qty: ${quantity}`; ul.appendChild(li); }); itemsOnlyModalContent.appendChild(ul); } else { itemsOnlyModalContent.innerHTML = '<p class="no-items">No items listed.</p>'; } itemsOnlyModal.classList.add('active');
+    if (!itemsOnlyModal || !itemsOnlyModalContent || !itemsOnlyModalTitle) {
+        console.error("Items Only Modal missing.");
+        return;
+    }
+    const orderData = findOrderInCache(firestoreId);
+    if (!orderData) {
+        itemsOnlyModalTitle.textContent = "Error";
+        itemsOnlyModalContent.innerHTML = '<p class="error-message">No order data.</p>';
+        itemsOnlyModal.classList.add('active');
+        return;
+    }
+
+    itemsOnlyModalTitle.textContent = `Items for Order #${escapeHtml(orderData.orderId || firestoreId.substring(0, 6))}`;
+    itemsOnlyModalContent.innerHTML = ''; // Clear previous content
+    const items = orderData.items || [];
+
+    if (items.length > 0) {
+        const ul = document.createElement('ul');
+        ul.className = 'items-only-list';
+        items.forEach((item, index) => {
+            if (!item) return;
+            const li = document.createElement('li');
+            const name = escapeHtml(item.productName || 'Unnamed Item');
+            const quantity = escapeHtml(item.quantity || '?');
+
+            // --- Add size info here ---
+            let sizeText = '';
+            if (item.unitType === 'Sq Feet' && item.width && item.height) {
+                const width = escapeHtml(item.width);
+                const height = escapeHtml(item.height);
+                const unit = escapeHtml(item.dimensionUnit || 'units');
+                sizeText = ` [${width} x ${height} ${unit}]`;
+            }
+            // --- End size info ---
+
+            li.innerHTML = `<strong>${index + 1}. ${name}</strong> - Qty: ${quantity}${sizeText}`; // Add sizeText
+            ul.appendChild(li);
+        });
+        itemsOnlyModalContent.appendChild(ul);
+    } else {
+        itemsOnlyModalContent.innerHTML = '<p class="no-items">No items listed.</p>';
+    }
+    itemsOnlyModal.classList.add('active');
 }
+// --- End Items Only Popup Functions ---
+
 function closeItemsOnlyPopup() { if (itemsOnlyModal) { itemsOnlyModal.classList.remove('active'); } }
 
-console.log("order_history.js loaded (v. Date Fix Applied).");
+console.log("order_history.js loaded (v. Button Fix + Size Display)."); // Updated version log
