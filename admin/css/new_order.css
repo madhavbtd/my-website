@@ -1,4 +1,4 @@
-/* === new_order.css - v1.2 (Balance Color & Desc Field Styles Added) === */
+/* === new_order.css - v1.0.1 (Minimal JS Compatibility: Balance Color & Desc Field Styles Added) === */
 
 /* --- Global Styles & Variables --- */
 :root {
@@ -109,8 +109,8 @@ body { font-family:var(--font-family);margin:0;padding:20px;background-color:var
 #orderItemsTable .rate-input { width:95px!important;text-align:right; }
 #orderItemsTable .dimension-unit-select { width:75px!important; }
 #orderItemsTable .item-amount { font-weight:600;text-align:right;white-space:nowrap;color:var(--secondary-color); }
-#orderItemsTable td:nth-last-child(2) { text-align: right; vertical-align: middle;}
-#orderItemsTable td:last-child { text-align: center; vertical-align: middle;}
+#orderItemsTable td:nth-last-child(2) { text-align: right; vertical-align: middle;} /* Amount Cell */
+#orderItemsTable td:last-child { text-align: center; vertical-align: middle;} /* Action Cell */
 .rate-input-wrapper { position:relative; }
 .hidden-col { display: none; } /* Hides Sq Ft columns */
 #orderItemsTable th.hidden-col { display: none; } /* Hides Sq Ft headers */
@@ -151,10 +151,8 @@ input[type=number] { -moz-appearance:textfield; }
 .calculation-preview .item-preview-entry strong { color: var(--primary-color); font-weight: 600; }
 
 /* --- Suggestions Boxes --- */
-/* Styling for the container div around the input */
-.suggestions-box { position: relative; }
-/* Styling for the UL element holding suggestions */
-.suggestions-list {
+.suggestions-box { position: relative; } /* Container for input + list */
+.suggestions-list { /* The UL element */
     position: absolute;
     list-style: none;
     margin: 1px 0 0;
@@ -163,17 +161,15 @@ input[type=number] { -moz-appearance:textfield; }
     background-color: #fff;
     max-height: 180px;
     overflow-y: auto;
-    z-index: 1000; /* Ensure suggestions appear above other elements */
+    z-index: 1000;
     border-radius: 0 0 var(--border-radius) var(--border-radius);
     box-shadow: var(--box-shadow-lg);
-    width: 100%; /* Match parent width */
+    width: 100%;
     box-sizing: border-box;
     display: none; /* Hidden by default */
 }
-.suggestions-list.active, /* Show when active class is added by JS */
-.suggestions-box:focus-within .suggestions-list { /* Optional: Show on focus */
-     /* display: block; */ /* JS handles display now */
-}
+.suggestions-list.active { display: block; } /* Show when active */
+
 .suggestions-list li { padding:8px 12px;font-size:.9em;cursor:pointer;border-bottom:1px solid #f0f0f0;transition:background-color .15s ease; }
 .suggestions-list li:last-child { border-bottom: none; }
 .suggestions-list li:hover, .suggestions-list li.selected { background-color: #e9ecef; }
@@ -181,7 +177,7 @@ input[type=number] { -moz-appearance:textfield; }
 .suggestions-list li.no-suggestions { color:var(--text-muted);font-style:italic;cursor:default; }
 .suggestions-list li.no-suggestions:hover { background-color: transparent; }
 
-/* Product Suggestions (position fixed by JS, this styles appearance) */
+/* Product Suggestions */
 .product-suggestions-list {
     position: absolute; /* Positioned by JS */
     list-style: none;
@@ -300,28 +296,25 @@ input[type=number] { -moz-appearance:textfield; }
 
 /* --- Order Status Dropdown Styles --- */
 .status-select {
-    /* Inherits basic .form-input styles */
-    appearance: none; /* Remove default system appearance */
+    appearance: none;
     -webkit-appearance: none;
     -moz-appearance: none;
-    background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23007bff%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E'); /* Custom arrow */
+    background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23007bff%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E');
     background-repeat: no-repeat;
     background-position: right 10px center;
     background-size: 8px 10px;
-    padding-right: 30px; /* Make space for arrow */
+    padding-right: 30px;
     font-weight: 500;
     transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
 }
 
-/* Default appearance if no status class applied */
 .status-select.status-select-default,
-.status-select:not([class*="status-select-"]) { /* Apply default if no specific class */
+.status-select:not([class*="status-select-"]) {
     background-color: #fff;
     color: var(--text-color);
     border: 1px solid #ced4da;
 }
 
-/* Status-specific background and text colors */
 .status-select.status-select-order-received { background-color: var(--status-order-received-bg); color: var(--status-light-text); border-color: var(--status-order-received-bg); }
 .status-select.status-select-designing { background-color: var(--status-designing-bg); color: var(--status-dark-text); border-color: var(--status-designing-bg); }
 .status-select.status-select-verification { background-color: var(--status-verification-bg); color: var(--status-light-text); border-color: var(--status-verification-bg); }
@@ -344,8 +337,6 @@ input[type=number] { -moz-appearance:textfield; }
 .status-select.status-select-delivered {
     background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23343a40%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E'); /* Dark arrow */
 }
-/* --- End of Status Dropdown Styles --- */
-
 
 /* --- Buttons & Error --- */
 .button-container { padding-top:25px;margin-top:30px;border-top:1px solid var(--border-color);display:flex;justify-content:flex-end;gap:15px;flex-wrap:wrap; }
