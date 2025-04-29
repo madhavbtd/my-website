@@ -49,7 +49,7 @@
             window.query = query;
             window.where = where;
             window.getDocs = getDocs;
-            window.orderBy = firestoreOrderBy; // Rename to avoid conflict
+            window.orderBy = orderBy; // Make the original orderBy function global
             window.updateDoc = updateDoc;
             window.deleteDoc = deleteDoc;
             window.Timestamp = Timestamp;
