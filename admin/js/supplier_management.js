@@ -160,7 +160,7 @@ async function openPoDetailsModal(poId) {
                     itemsHTML += `<tr>
                                     <td>${index + 1}</td>
                                     <td>${escapeHtml(item.productName || 'N/A')}</td>
-                                    <td>${escapeHtml(itemUnitType)}</td> {/* Display unitType */}
+                                    <td>${escapeHtml(itemUnitType)}</td> 
                                     <td>${detailStr}</td> {/* Use the generated detailStr */}
                                     <td>${item.rate?.toFixed(2) ?? 'N/A'}</td>
                                     <td>${escapeHtml(item.partyName || '-')}</td>
@@ -309,7 +309,7 @@ async function openPoShareModal(poId) {
                                 <td>${index + 1}</td>
                                 <td>${escapeHtml(item.productName || 'N/A')}</td>
                                 <td>${escapeHtml(itemUnitType)}</td> {/* Display unitType */}
-                                <td>${detailStr}</td>      {/* Use the generated detailStr */}
+                                <td>${detailStr}</td>      
                                 <td>${item.rate?.toFixed(2) ?? 'N/A'}</td>
                                 <td>${escapeHtml(item.partyName || '-')}</td>
                                 <td>${escapeHtml(item.designDetails || '-')}</td>
