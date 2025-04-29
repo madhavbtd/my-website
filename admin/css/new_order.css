@@ -1,20 +1,19 @@
-
-/* === new_order.css - v2.7 (Status Dropdown Implementation) === */
+/* === new_order.css - v2.8 (Balance Display Fix & Consistency) === */
 
 /* --- Global Styles & Variables --- */
 :root {
     --primary-color: #0056b3;
     --secondary-color: #495057;
-    --success-color: #28a745;
+    --success-color: #28a745; /* Green for credit */
     --warning-color: #ffc107;
     --info-color: #17a2b8;
-    --danger-color: #dc3545;
+    --danger-color: #dc3545; /* Red for due */
     --light-bg: #f8f9fa;
     --medium-grey: #e9ecef;
     --darker-grey: #6c757d;
     --border-color: #dee2e6;
     --text-color: #343a40;
-    --text-muted: #6c757d;
+    --text-muted: #6c757d; /* Grey for zero */
     --white-color: #ffffff;
     --body-bg: #f4f7f9;
     --font-family: 'Poppins', "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
@@ -80,9 +79,32 @@ body { font-family:var(--font-family);margin:0;padding:20px;background-color:var
 .radio-group label { margin-bottom: 0; font-weight: normal; font-size: 0.92em; }
 .radio-group input[type="radio"] { margin-right: 5px; }
 
-/* --- Customer Balance / Link --- */
-#customerBalanceArea strong { color:var(--danger-color);font-weight:600; }
-#customerBalanceArea strong.positive-balance { color: var(--success-color); }
+
+/* --- ======================================= --- */
+/* --- Customer Balance / Link (UPDATED Styles) --- */
+/* --- ======================================= --- */
+#customerBalanceArea {
+    font-size: 0.9em;
+    margin-bottom: 5px;
+}
+#customerBalanceArea strong { /* This is the #customerCurrentBalance element */
+    font-weight: 600;
+    /* Default color removed - color will be set by class */
+}
+#customerBalanceArea strong.positive-balance { /* Customer has Credit */
+    color: var(--success-color) !important; /* Green */
+}
+#customerBalanceArea strong.negative-balance { /* Customer Owes (Due) */
+    color: var(--danger-color) !important; /* Red */
+}
+#customerBalanceArea strong.zero-balance { /* Zero Balance */
+    color: var(--text-muted) !important; /* Grey */
+    font-weight: normal !important; /* Optional: make zero less prominent */
+}
+/* --- ======================================= --- */
+/* --- End of Updated Balance Styles           --- */
+/* --- ======================================= --- */
+
 
 /* --- Item Table Styling --- */
 .table-container.order-items-table { margin-bottom:15px;border:1px solid var(--medium-grey);border-radius:var(--border-radius);overflow:hidden;overflow-x:auto;-webkit-overflow-scrolling:touch;max-height:260px;overflow-y:auto; }
@@ -236,30 +258,25 @@ input[type=number] { -moz-appearance:textfield; }
     text-align: left;
 }
 
-/* --- ** NEW: Order Status Dropdown Styles ** --- */
+/* --- Order Status Dropdown Styles --- */
 .status-select {
-    /* Inherits basic .form-input styles */
-    appearance: none; /* Remove default system appearance */
+    appearance: none;
     -webkit-appearance: none;
     -moz-appearance: none;
     background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23007bff%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E'); /* Custom arrow */
     background-repeat: no-repeat;
     background-position: right 10px center;
     background-size: 8px 10px;
-    padding-right: 30px; /* Make space for arrow */
+    padding-right: 30px;
     font-weight: 500;
     transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
 }
-
-/* Default appearance if no status class applied */
 .status-select.status-select-default,
-.status-select:not([class*="status-select-"]) { /* Apply default if no specific class */
+.status-select:not([class*="status-select-"]) {
     background-color: #fff;
     color: var(--text-color);
     border: 1px solid #ced4da;
 }
-
-/* Status-specific background and text colors */
 .status-select.status-select-order-received { background-color: var(--status-order-received-bg); color: var(--status-light-text); border-color: var(--status-order-received-bg); }
 .status-select.status-select-designing { background-color: var(--status-designing-bg); color: var(--status-dark-text); border-color: var(--status-designing-bg); }
 .status-select.status-select-verification { background-color: var(--status-verification-bg); color: var(--status-light-text); border-color: var(--status-verification-bg); }
@@ -268,8 +285,6 @@ input[type=number] { -moz-appearance:textfield; }
 .status-select.status-select-ready-for-working { background-color: var(--status-ready-working-bg); color: var(--status-light-text); border-color: var(--status-ready-working-bg); }
 .status-select.status-select-delivered { background-color: var(--status-delivered-bg); color: var(--status-dark-text); border-color: var(--status-delivered-bg); }
 .status-select.status-select-completed { background-color: var(--status-completed-bg); color: var(--status-light-text); border-color: var(--status-completed-bg); }
-
-/* Adjust dropdown arrow color based on background */
 .status-select.status-select-order-received,
 .status-select.status-select-verification,
 .status-select.status-select-design-approved,
@@ -282,17 +297,6 @@ input[type=number] { -moz-appearance:textfield; }
 .status-select.status-select-delivered {
     background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23343a40%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E'); /* Dark arrow */
 }
-/* --- End of Status Dropdown Styles --- */
-
-/* --- REMOVED old status bar styles --- */
-/* #orderStatusSection { ... } */
-/* #order-status-group { ... } */
-/* #order-status-group label { ... } */
-/* #order-status-group label:hover { ... } */
-/* #order-status-group label input[type="checkbox"] { ... } */
-/* #order-status-group label:has(...) { ... } */
-/* --- End of REMOVED styles --- */
-
 
 /* --- Buttons & Error --- */
 .button-container { padding-top:25px;margin-top:30px;border-top:1px solid var(--border-color);display:flex;justify-content:flex-end;gap:15px;flex-wrap:wrap; }
@@ -329,7 +333,6 @@ input[type=number] { -moz-appearance:textfield; }
     .summary-right { flex-basis: auto; margin-left: 0; }
     .summary-left { min-width: auto; }
     #calculationPreviewArea { height: auto; max-height: 250px; }
-    /* #order-status-group label { font-size: 0.8em; padding: 5px 14px;} */ /* Removed */
 }
 @media (max-width: 767px) {
     body { padding: 15px; font-size: 14px;}
@@ -340,7 +343,6 @@ input[type=number] { -moz-appearance:textfield; }
     .button-container { justify-content: space-between; gap: 10px; }
     .save-button, .cancel-button { width: calc(50% - 5px); max-width: none; padding: 10px 15px; font-size: 0.95em;}
     .form-section-card { padding: 15px 20px; margin-bottom: 20px;}
-    /* #order-status-group label { font-size: 0.78em; padding: 4px 12px; } */ /* Removed */
     .summary-right { padding: 0; flex-basis: auto; }
     .summary-title { padding: 10px 15px; font-size: 1em; }
     .summary-grid { padding: 15px; gap: 8px 10px; }
@@ -359,8 +361,6 @@ input[type=number] { -moz-appearance:textfield; }
     .header { padding: 12px 15px; font-size: 1.1em; margin: -15px -15px 15px -15px;}
     .button-container { flex-direction: column; align-items: stretch; }
     .save-button, .cancel-button { width: 100%; max-width: none; }
-    /* #order-status-group { justify-content: flex-start; } */ /* Removed */
-    /* #order-status-group label { font-size: 0.75em; padding: 4px 10px; } */ /* Removed */
     .summary-grid { grid-template-columns: 1fr; text-align: left; padding: 15px; }
     .summary-grid .summary-label, .summary-grid label.summary-label { text-align: left; grid-column: 1 / -1; margin-bottom: 0; }
     .summary-grid .summary-value, .summary-grid .summary-input { text-align: left; grid-column: 1 / -1; }
