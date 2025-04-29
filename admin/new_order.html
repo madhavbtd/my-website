@@ -15,11 +15,11 @@
         // --- Firebase App and Auth Imports ---
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
         import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-        // --- Firestore Imports (UPDATED: Added runTransaction) ---
+        // --- Firestore Imports (Ensure all needed functions are here) ---
         import {
             getFirestore, collection, addDoc, doc, updateDoc, getDocs, query,
             where, getDoc, orderBy, limit, Timestamp, arrayUnion, serverTimestamp,
-            runTransaction // <-- *** यह जोड़ा गया ***
+            runTransaction
         } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
         // **** Your Firebase Configuration ****
@@ -40,15 +40,16 @@
                 app = initializeApp(firebaseConfig);
                 window.firebaseAppInitialized = true;
                 window.firebaseApp = app; // Store globally
-                console.log("Firebase initialized on new_order.html (Corrected)");
+                console.log("Firebase initialized on new_order.html (V1.2 Setup)");
             } else {
                 app = window.firebaseApp; // Use existing instance
-                console.log("Firebase already initialized (new_order.html)");
+                console.log("Firebase already initialized (new_order.html V1.2)");
             }
             auth = getAuth(app);
             db = getFirestore(app);
 
-            // --- Make Firebase/Firestore functions globally available ---
+            // --- Make Firebase/Firestore functions globally available for new_order.js ---
+            // This is needed because the JS file uses setTimeout and might access window later
             window.db = db;
             window.auth = auth;
             window.collection = collection;
@@ -64,9 +65,9 @@
             window.Timestamp = Timestamp;
             window.arrayUnion = arrayUnion;
             window.serverTimestamp = serverTimestamp;
-            window.runTransaction = runTransaction; // <-- *** यह जोड़ा गया ***
+            window.runTransaction = runTransaction;
 
-            console.log("Firestore functions made global (incl. runTransaction)."); // Log अपडेट किया
+            console.log("Firestore functions made global for new_order.js.");
 
             // Authentication State Check
             onAuthStateChanged(auth, (user) => {
@@ -75,8 +76,8 @@
                     console.log("User not logged in. Redirecting...");
                     window.location.replace('login.html'); // Ensure correct path to login.html
                 } else if (user) {
-                    console.log(`User logged in on ${currentPage}`);
-                    // Note: new_order.js now handles its own initialization logic
+                    console.log(`User logged in on ${currentPage}. new_order.js will initialize.`);
+                    // Note: new_order.js uses setTimeout to initialize its logic
                 }
             });
             // Function to get current user if needed by other scripts
@@ -108,16 +109,12 @@
                      <div class="form-section-card">
                          <div class="section-title">1. Customer Details</div>
                          <div class="form-row">
-                             <div class="form-group form-group-half">
-                                 <label for="full_name">Full Name *</label>
+                             <div class="form-group form-group-half suggestions-box"> <label for="full_name">Full Name *</label>
                                  <input type="text" id="full_name" name="full_name" required autocomplete="off" placeholder="Search or enter customer name...">
-                                 <div id="customer-suggestions-name" class="suggestions-box"><ul></ul></div>
-                             </div>
-                             <div class="form-group form-group-half">
-                                 <label for="whatsapp_no">WhatsApp No *</label>
+                                 <div id="customer-suggestions-name" class="suggestions-list"><ul></ul></div> </div>
+                             <div class="form-group form-group-half suggestions-box"> <label for="whatsapp_no">WhatsApp No *</label>
                                  <input type="text" id="whatsapp_no" name="whatsapp_no" required autocomplete="off" placeholder="Search or enter WhatsApp no...">
-                                 <div id="customer-suggestions-whatsapp" class="suggestions-box"><ul></ul></div>
-                             </div>
+                                 <div id="customer-suggestions-whatsapp" class="suggestions-list"><ul></ul></div> </div>
                          </div>
                           <div class="form-row">
                              <div class="form-group form-group-half">
@@ -202,7 +199,7 @@
                     <table id="orderItemsTable">
                         <thead>
                             <tr>
-                                <th style="width: 28%;">Product Name *</th>
+                                <th style="width: 28%;">Product Name / Description *</th>
                                 <th style="width: 10%;">Unit Type *</th>
                                 <th style="width: 15%;" class="sq-feet-header hidden-col">Dimensions (W x H) *</th>
                                 <th style="width: 8%;" class="sq-feet-header hidden-col">Unit *</th>
@@ -282,19 +279,55 @@
 
     <template id="item-row-template">
         <tr class="item-row">
-            <td> <input type="text" class="form-input product-name" placeholder="Search product..." required autocomplete="off"> </td>
-            <td> <select class="form-input unit-type-select"> <option value="Qty" selected>Qty</option> <option value="Sq Feet">Sq Feet</option> </select> </td>
-            <td class="sq-feet-input" style="display: none;"> <div class="dimension-input-container"> <input type="number" step="0.01" class="form-input dimension-input width-input" placeholder="W"> <span style="padding: 0 2px;">x</span> <input type="number" step="0.01" class="form-input dimension-input height-input" placeholder="H"> </div> </td>
-            <td class="sq-feet-input" style="display: none;"> <select class="form-input dimension-unit-select"> <option value="feet" selected>Feet</option> <option value="inches">Inches</option> </select> </td>
-            <td> <input type="number" step="1" class="form-input quantity-input" placeholder="Qty" min="1" value="1"> </td>
-            <td> <div class="rate-input-wrapper"> <input type="number" step="0.01" class="form-input rate-input" placeholder="Rate" required> </div> </td>
-            <td style="text-align: right; font-weight: 600; vertical-align: middle;"> ₹<span class="item-amount">0.00</span> </td>
-            <td style="text-align: center; vertical-align: middle;"> <button type="button" class="button delete-item-btn" title="Remove Item"><i class="fas fa-trash-alt"></i></button> </td>
+            <td data-label="Product Name / Description">
+                <input type="text" class="form-input product-name" placeholder="Search product..." required autocomplete="off">
+                <textarea class="form-input item-description-input" rows="1" placeholder="Product description (optional)..." style="margin-top: 4px; font-size: 0.85em; height: auto;"></textarea>
+            </td>
+            <td data-label="Unit Type">
+                 <select class="form-input unit-type-select">
+                     <option value="Qty" selected>Qty</option>
+                     <option value="Sq Feet">Sq Feet</option>
+                 </select>
+            </td>
+            <td data-label="Dimensions" class="sq-feet-header hidden-col">
+                 <div class="dimension-input-container sq-feet-input" style="display: none;">
+                     <input type="number" step="0.01" class="form-input dimension-input width-input" placeholder="W" required>
+                     <span style="padding: 0 2px;">x</span>
+                     <input type="number" step="0.01" class="form-input dimension-input height-input" placeholder="H" required>
+                 </div>
+            </td>
+            <td data-label="Dim Unit" class="sq-feet-header hidden-col">
+                 <select class="form-input dimension-unit-select sq-feet-input" style="display: none;">
+                     <option value="feet" selected>Feet</option>
+                     <option value="inches">Inches</option>
+                 </select>
+            </td>
+            <td data-label="Quantity">
+                 <input type="number" step="1" class="form-input quantity-input" placeholder="Qty" min="1" value="1" required>
+            </td>
+            <td data-label="Rate">
+                 <div class="rate-input-wrapper">
+                     <input type="number" step="0.01" class="form-input rate-input" placeholder="Rate" required>
+                 </div>
+            </td>
+            <td data-label="Amount" style="text-align: right; font-weight: 600; vertical-align: middle;">
+                 ₹<span class="item-amount">0.00</span>
+            </td>
+            <td data-label="Action" style="text-align: center; vertical-align: middle;">
+                 <button type="button" class="button delete-item-btn" title="Remove Item"><i class="fas fa-trash-alt"></i></button>
+            </td>
         </tr>
     </template>
-
     <div id="whatsapp-reminder-popup" class="popup-overlay">
-         <div class="popup-content"> <button id="popup-close-btn" class="popup-close" title="Close">&times;</button> <h4>Order Saved Successfully!</h4> <p>Send update to customer?</p> <div id="whatsapp-message-preview" class="message-preview"></div> <a href="#" id="whatsapp-send-link" class="button whatsapp-send-btn" target="_blank"> <i class="fab fa-whatsapp"></i> Send on WhatsApp </a> </div>
+         <div class="popup-content">
+             <button id="popup-close-btn" class="popup-close" title="Close">&times;</button>
+             <h4>Order Saved Successfully!</h4>
+             <p>Send update to customer?</p>
+             <div id="whatsapp-message-preview" class="message-preview"></div>
+             <a href="#" id="whatsapp-send-link" class="button whatsapp-send-btn" target="_blank">
+                 <i class="fab fa-whatsapp"></i> Send on WhatsApp
+             </a>
+         </div>
     </div>
 
     <script src="js/new_order.js" type="module" defer></script>
