@@ -1,8 +1,8 @@
 // js/customer_management.js
-// Version 1.2 (Balance Sign Display Fix)
+// Version 1.3 (Duplicate WhatsApp Check Added)
 
 // --- Ensure Firestore functions are available globally ---
-const { db, collection, onSnapshot, query, orderBy, doc, addDoc, updateDoc, deleteDoc, serverTimestamp, runTransaction, getDoc, where, getDocs } = window;
+const { db, collection, onSnapshot, query, orderBy, doc, addDoc, updateDoc, deleteDoc, serverTimestamp, runTransaction, getDoc, where, getDocs, limit } = window; // Added limit
 
 // --- DOM Elements ---
 const customerTableBody = document.getElementById('customerTableBody');
@@ -40,7 +40,7 @@ let searchDebounceTimer;
 
 // --- Initialization ---
 document.addEventListener('DOMContentLoaded', () => {
-    console.log("Customer Management DOM Loaded (V1.2 - Balance Sign Fix).");
+    console.log("Customer Management DOM Loaded (V1.3 - Duplicate Check)."); // Version Updated
     waitForDbConnection(() => {
         console.log("DB connection confirmed. Initializing listener.");
         listenForCustomers();
@@ -63,16 +63,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // --- DB Connection Wait ---
 function waitForDbConnection(callback) {
-    if (window.db && window.getDocs) { // Ensure getDocs is available
+    // Added limit to the check
+    if (window.db && window.getDocs && window.query && window.where && window.limit) {
         callback();
     } else {
         let attempts = 0; const maxAttempts = 20;
         const intervalId = setInterval(() => {
             attempts++;
-            if (window.db && window.getDocs) { // Check again
+            if (window.db && window.getDocs && window.query && window.where && window.limit) { // Check again
                 clearInterval(intervalId); callback();
             } else if (attempts >= maxAttempts) {
-                clearInterval(intervalId); console.error("DB timeout or function missing (getDocs)"); alert("DB Error");
+                clearInterval(intervalId); console.error("DB timeout or function missing (getDocs, query, where, limit)"); alert("DB Error");
             }
         }, 250);
     }
@@ -117,7 +118,6 @@ function listenForCustomers() {
     if (unsubscribeCustomers) { unsubscribeCustomers(); unsubscribeCustomers = null; }
     if (!db || !collection || !query || !orderBy || !onSnapshot) { console.error("Firestore functions not available!"); return; }
 
-    // colspan is now 7 including balance and actions
     customerTableBody.innerHTML = `<tr><td colspan="7" id="loadingMessage" style="text-align: center; color: #666;">Loading customers...</td></tr>`;
 
     try {
@@ -143,7 +143,8 @@ function listenForCustomers() {
 
 // --- Filter, Sort, and Render Function ---
 function applyFiltersAndRender() {
-    if (!allCustomersCache) return;
+    // ... (existing code - no changes needed here) ...
+     if (!allCustomersCache) return;
     console.log("Applying customer filters and rendering...");
 
     const filterSearchValue = filterSearchInput ? filterSearchInput.value.trim().toLowerCase() : '';
@@ -213,7 +214,8 @@ function applyFiltersAndRender() {
 
 // --- Helper: Fetch and Update Balances for Visible Rows ---
 async function updateBalancesForDisplayedCustomers(customers) {
-    console.log(`Fetching balances for ${customers.length} customers...`);
+    // ... (existing code - no changes needed here) ...
+     console.log(`Fetching balances for ${customers.length} customers...`);
     // Create an array of promises, one for each customer's balance calculation
     const balancePromises = customers.map(customer => getCustomerBalance(customer.id));
 
@@ -251,11 +253,9 @@ async function updateBalancesForDisplayedCustomers(customers) {
 
 
 // --- Helper: Get Balance for ONE Customer ---
-// NOTE: This function now needs to include adjustments for accuracy if used here.
-// For simplicity on the list page, it might only consider orders and payments,
-// but for true balance, adjustments should be included. Assuming adjustments are NOT included here for now.
 async function getCustomerBalance(customerId) {
-    if (!db || !collection || !query || !where || !getDocs) {
+    // ... (existing code - no changes needed here) ...
+     if (!db || !collection || !query || !where || !getDocs) {
         console.error("DB functions missing for balance calculation.");
         return null; // Indicate error or inability to calculate
     }
@@ -280,8 +280,6 @@ async function getCustomerBalance(customerId) {
         });
 
         // Simple Balance Calculation (Orders - Payments)
-        // Does NOT include adjustments here for performance on the list view.
-        // The detail page shows the fully adjusted balance.
         return totalOrderValue - totalPaidAmount;
 
     } catch (error) {
@@ -296,6 +294,7 @@ async function getCustomerBalance(customerId) {
 
 // --- Helper: Format Currency ---
 function formatCurrency(amount) {
+    // ... (existing code - no changes needed here) ...
     const num = Number(amount);
     if (isNaN(num)) return 'N/A';
     // Use Indian numbering system format, force currency symbol
@@ -309,6 +308,7 @@ function formatCurrency(amount) {
 
 // --- Helper: Update Balance Cell Appearance (MODIFIED for sign display) ---
 function updateBalanceCell(cellElement, balance) {
+    // ... (existing code from previous update - no changes needed here) ...
     // Handle cases where balance couldn't be calculated
     if (balance === null || typeof balance === 'undefined' || isNaN(balance)) {
         cellElement.innerHTML = `<span class="balance-value balance-loading" title="Error calculating balance">Error</span>`;
@@ -349,9 +349,10 @@ function updateBalanceCell(cellElement, balance) {
 }
 
 
-// --- Display Single Customer Row (Modified for balance cell class) ---
+// --- Display Single Customer Row ---
 function displayCustomerRow(firestoreId, data) {
-    const tableRow = document.createElement('tr');
+    // ... (existing code - no changes needed here) ...
+     const tableRow = document.createElement('tr');
     tableRow.setAttribute('data-id', firestoreId);
 
     const customId = data.customCustomerId || '-';
@@ -360,8 +361,6 @@ function displayCustomerRow(firestoreId, data) {
     const contact = data.contactNo || '-';
     const address = data.billingAddress || data.address || '-';
 
-    // Basic row structure - balance cell added with initial loading state
-    // Colspan should be 7 if there are 7 columns (ID, Name, WA, Contact, Address, Balance, Actions)
     tableRow.innerHTML = `
         <td>${customId}</td>
         <td>${name}</td>
@@ -379,40 +378,37 @@ function displayCustomerRow(firestoreId, data) {
         </td>
     `;
 
-    // Add click listener to the row (navigate to detail page)
     tableRow.style.cursor = 'pointer';
     tableRow.addEventListener('click', (e) => {
-        // Prevent navigation if an action button inside the row was clicked
         if (e.target.closest('button.action-button')) {
             return;
         }
         window.location.href = `customer_account_detail.html?id=${firestoreId}`;
     });
 
-    // Attach event listeners to action buttons AFTER setting innerHTML
     const editButton = tableRow.querySelector('.edit-button');
     if (editButton) {
         editButton.addEventListener('click', (e) => {
-            e.stopPropagation(); // Prevent row click listener from firing
+            e.stopPropagation();
             openEditModal(firestoreId, data);
         });
     }
     const deleteButton = tableRow.querySelector('.delete-button');
     if (deleteButton) {
         deleteButton.addEventListener('click', (e) => {
-            e.stopPropagation(); // Prevent row click listener from firing
+            e.stopPropagation();
             handleDeleteCustomer(firestoreId, name);
         });
     }
 
     customerTableBody.appendChild(tableRow);
-    // Balance is now fetched and updated later by updateBalancesForDisplayedCustomers
 }
 
 
 // --- Modal Handling (Add/Edit) --- (No changes needed here)
 function openAddModal() {
-    console.log("Opening modal to add new customer.");
+    // ... (existing code) ...
+     console.log("Opening modal to add new customer.");
     if (!customerModal || !customerForm) return;
     modalTitle.textContent = "Add New Customer";
     editCustomerIdInput.value = ''; // Clear ID for add mode
@@ -424,6 +420,7 @@ function openAddModal() {
 }
 
 function openEditModal(firestoreId, data) {
+    // ... (existing code) ...
      console.log("Opening modal to edit customer:", firestoreId);
      if (!customerModal || !customerForm) return;
      modalTitle.textContent = "Edit Customer";
@@ -451,24 +448,24 @@ function closeCustomerModal() {
      if (customerModal) { customerModal.classList.remove('active'); }
 }
 
-// --- Save/Update Customer Handler (WITH TRANSACTION for Add) --- (No change needed here)
+// --- Save/Update Customer Handler (MODIFIED with Duplicate Check) ---
 async function handleSaveCustomer(event) {
-    event.preventDefault(); // Prevent default form submission
-    // Check for required Firestore functions
-    if (!db || !collection || !addDoc || !doc || !updateDoc || !serverTimestamp || !runTransaction || !getDoc) {
-         console.error("Database functions unavailable.");
+    event.preventDefault();
+    // Check for required Firestore functions, including query, where, limit, getDocs
+    if (!db || !collection || !addDoc || !doc || !updateDoc || !serverTimestamp || !runTransaction || !getDoc || !query || !where || !limit || !getDocs) {
+         console.error("Database functions unavailable for saving customer.");
          alert("Database functions unavailable. Cannot save.");
          return;
     }
 
     const customerId = editCustomerIdInput.value; // Get Firestore ID from hidden input
-    const isEditing = !!customerId; // Check if we are editing (ID exists)
+    const isEditing = !!customerId; // Check if we are editing
 
     // Get form values
     const fullName = customerFullNameInput.value.trim();
-    const whatsappNo = customerWhatsAppInput.value.trim();
-    const contactNo = customerContactInput.value.trim() || null; // Store null if empty
-    const address = customerAddressInput.value.trim() || null; // Store null if empty
+    const whatsappNo = customerWhatsAppInput.value.trim(); // << Get WhatsApp number
+    const contactNo = customerContactInput.value.trim() || null;
+    const address = customerAddressInput.value.trim() || null;
 
     // Basic validation
     if (!fullName || !whatsappNo) {
@@ -481,87 +478,120 @@ async function handleSaveCustomer(event) {
     const originalButtonHTML = saveCustomerBtn.innerHTML;
     saveCustomerBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
 
-    // Prepare data payload for Firestore
-    const customerDataPayload = {
-        fullName: fullName,
-        whatsappNo: whatsappNo,
-        contactNo: contactNo,
-        billingAddress: address, // Using billingAddress field
-        updatedAt: serverTimestamp() // Always update timestamp
-        // NOTE: Status, Credit info etc. are handled on detail page or other logic
-    };
-
     try {
+        // --- Prepare data payload ---
+        const customerDataPayload = {
+            fullName: fullName,
+            whatsappNo: whatsappNo,
+            contactNo: contactNo,
+            billingAddress: address, // Using billingAddress field
+            updatedAt: serverTimestamp() // Always update timestamp
+        };
+
         if (isEditing) {
             // --- Update Existing Customer ---
-             console.log(`Updating customer ${customerId}...`);
-             const customerRef = doc(db, "customers", customerId);
-             await updateDoc(customerRef, customerDataPayload); // Use updateDoc
-             console.log("Customer updated successfully.");
-             alert("Customer updated successfully!");
-             closeCustomerModal();
-             // The listener (listenForCustomers) will automatically update the UI
+            // (Optional: Add check here if WhatsApp number changed and now duplicates another existing one)
+            console.log(`Updating customer ${customerId}...`);
+            const customerRef = doc(db, "customers", customerId);
+            await updateDoc(customerRef, customerDataPayload);
+            console.log("Customer updated successfully.");
+            alert("Customer updated successfully!");
+            closeCustomerModal();
+            // Listener updates UI
         } else {
-            // --- Add New Customer (using Transaction for Counter) ---
-            console.log("Adding new customer via transaction...");
-            const counterRef = doc(db, "counters", "customerCounter"); // Reference to the counter document
-            const newCustomerColRef = collection(db, "customers"); // Reference to the customers collection
+            // --- Add New Customer ---
 
-            // Run transaction to get next ID and save customer atomically
+            // <<<--- START: Duplicate WhatsApp Check --->>>
+            console.log(`Checking for existing customer with WhatsApp: ${whatsappNo}`);
+            const customersRef = collection(db, "customers");
+            const q = query(customersRef, where("whatsappNo", "==", whatsappNo), limit(1));
+            const querySnapshot = await getDocs(q);
+
+            if (!querySnapshot.empty) {
+                // Customer with this WhatsApp number already exists
+                const existingDoc = querySnapshot.docs[0];
+                const existingCustomer = existingDoc.data();
+                const existingCustomerId = existingDoc.id;
+                console.log(`Duplicate found: ${existingCustomer.fullName} (ID: ${existingCustomerId})`);
+
+                // Ask user if they want to update the existing customer
+                const updateExisting = confirm(
+                    `ग्राहक इस व्हाट्सएप नंबर (${whatsappNo}) के साथ पहले से मौजूद है: ${existingCustomer.fullName}.\n\nक्या आप मौजूदा ग्राहक विवरण को अपडेट करना चाहते हैं?`
+                );
+
+                if (updateExisting) {
+                    // User wants to update
+                    closeCustomerModal(); // Close the 'Add' modal
+                    // Open the 'Edit' modal with the existing customer's data
+                    openEditModal(existingCustomerId, existingCustomer);
+                    // Stop the save process here
+                    saveCustomerBtn.disabled = false; // Re-enable button
+                    saveCustomerBtn.innerHTML = originalButtonHTML;
+                    return;
+                } else {
+                    // User does not want to update, keep the 'Add' modal open
+                    alert("कृपया एक अलग व्हाट्सएप नंबर दर्ज करें या मौजूदा ग्राहक को अपडेट करें।");
+                    saveCustomerBtn.disabled = false; // Re-enable button
+                    saveCustomerBtn.innerHTML = originalButtonHTML;
+                    return; // Stop the save process
+                }
+            }
+            // <<<--- END: Duplicate WhatsApp Check --->>>
+
+            // --- If no duplicate found, proceed with adding new customer ---
+            console.log("No duplicate found. Proceeding to add new customer via transaction...");
+            const counterRef = doc(db, "counters", "customerCounter");
+            const newCustomerColRef = collection(db, "customers");
+
             await runTransaction(db, async (transaction) => {
-                const counterDoc = await transaction.get(counterRef); // Get the current counter value
-                let nextId = 101; // Default starting ID if counter doesn't exist
+                const counterDoc = await transaction.get(counterRef);
+                let nextId = 101;
                 if (counterDoc.exists() && counterDoc.data().lastId) {
-                    nextId = counterDoc.data().lastId + 1; // Increment last ID
+                    nextId = counterDoc.data().lastId + 1;
                 } else {
                      console.log("Counter document 'customerCounter' or field 'lastId' not found, starting ID at 101.");
                 }
 
-                // Add generated ID and creation timestamp to payload
                 customerDataPayload.customCustomerId = nextId;
                 customerDataPayload.createdAt = serverTimestamp();
-                customerDataPayload.status = 'active'; // Default status for new customer
+                customerDataPayload.status = 'active';
 
-                // Create a reference for the *new* customer document within the transaction
-                const newDocRef = doc(newCustomerColRef); // Generate a new unique Firestore ID
-
-                // Set the new customer document and update the counter within the transaction
+                const newDocRef = doc(newCustomerColRef);
                 transaction.set(newDocRef, customerDataPayload);
-                transaction.set(counterRef, { lastId: nextId }, { merge: true }); // Update or create counter
-
+                transaction.set(counterRef, { lastId: nextId }, { merge: true });
                 console.log(`Transaction prepared: Set customer ${newDocRef.id} with customId ${nextId}, update counter to ${nextId}.`);
             });
 
             console.log("Transaction successful. New customer added.");
             alert("New customer added successfully!");
             closeCustomerModal();
-             // The listener (listenForCustomers) will automatically update the UI
+            // Listener updates UI
         }
     } catch (error) {
         console.error("Error saving customer:", error);
         alert(`Error saving customer: ${error.message}`);
     } finally {
-        // Re-enable button and restore original text/icon
+        // Ensure button is re-enabled in case of early return or error
         saveCustomerBtn.disabled = false;
         saveCustomerBtn.innerHTML = originalButtonHTML;
     }
 }
 
 
-// --- Delete Customer Handler --- (No change needed here)
+// --- Delete Customer Handler ---
 async function handleDeleteCustomer(firestoreId, customerName) {
-    console.log(`handleDeleteCustomer called for ID: ${firestoreId}, Name: ${customerName}`);
+    // ... (existing code - no changes needed here) ...
+     console.log(`handleDeleteCustomer called for ID: ${firestoreId}, Name: ${customerName}`);
     if (!db || !doc || !deleteDoc) {
         console.error("Delete function not available.");
         alert("Error: Delete function not available.");
         return;
     }
-    // Confirmation dialog
     if (confirm(`Are you sure you want to delete customer "${customerName}"? This action cannot be undone.`)) {
         console.log(`User confirmed deletion for ${firestoreId}. Proceeding...`);
         try {
             const customerRef = doc(db, "customers", firestoreId);
-            await deleteDoc(customerRef); // Delete the customer document
+            await deleteDoc(customerRef);
             console.log(`Customer deleted successfully from Firestore: ${firestoreId}`);
             alert(`Customer "${customerName}" deleted.`);
             // UI updates happen automatically via the Firestore listener (onSnapshot)
@@ -575,4 +605,4 @@ async function handleDeleteCustomer(firestoreId, customerName) {
 }
 
 // --- Final Log ---
-console.log("customer_management.js (V1.2 - Balance Sign Display Fix) script fully loaded.");
+console.log("customer_management.js (V1.3 - Duplicate WhatsApp Check Added) script fully loaded.");
