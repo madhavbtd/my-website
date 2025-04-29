@@ -1,10 +1,10 @@
+/* css/customer_management.css (Version 1.2 - Balance Color Fix) */
+
 /* General Body Styles */
 body {
-    /* ----- इस लाइन को बदलें ----- */
+    /* ----- आपकी Poppins फॉन्ट सेटिंग ----- */
     font-family: 'Poppins', "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
     /* ----- बदलाव खत्म ----- */
-
-    /* बाकी स्टाइल वैसे ही रहने दें */
     margin: 0;
     padding: 15px;
     background-color: #f0f2f5;
@@ -42,23 +42,23 @@ body {
 .header-icon { font-size: 1em; }
 h1 { margin: 0; font-size: 1.2em; }
 
-/* --- Breadcrumb Styles --- */ /* <<-- नया जोड़ा गया */
+/* --- Breadcrumb Styles --- */
 .breadcrumb-container {
-  font-size: 14px;  /* फॉन्ट साइज़ */
-  color: #555555;   /* टेक्स्ट का रंग */
-  margin-bottom: 20px; /* ब्रेडक्रम्ब और फिल्टर बार के बीच जगह */
-  padding: 5px 0;     /* थोड़ा ऊपर-नीचे स्पेस */
+  font-size: 14px;
+  color: #555555;
+  margin-bottom: 20px;
+  padding: 5px 0;
 }
 
 .breadcrumb-container a {
-  color: #007bff;   /* 'Home' लिंक का रंग */
-  text-decoration: none; /* लिंक के नीचे लाइन नहीं */
+  color: #007bff;
+  text-decoration: none;
 }
 
 .breadcrumb-container a:hover {
-  text-decoration: underline; /* माउस ले जाने पर अंडरलाइन */
+  text-decoration: underline;
 }
-/* --- Breadcrumb Styles End --- */ /* <<-- नया जोड़ा गया */
+/* --- Breadcrumb Styles End --- */
 
 
 /* Filter Bar */
@@ -183,6 +183,48 @@ h1 { margin: 0; font-size: 1.2em; }
 .delete-button:hover { color: #c82333; }
 
 
+/* === Customer List Balance Column Styles (FIXED) === */
+
+/* बैलेंस कॉलम सेल (TD) के लिए सामान्य स्टाइल */
+#customerTable th:nth-child(6), /* Balance Header */
+#customerTable td:nth-child(6)  /* Balance Cell */
+{
+    text-align: right; /* बैलेंस को दाईं ओर अलाइन करें */
+    white-space: nowrap; /* बैलेंस को एक लाइन में रखें */
+    width: 120px; /* कॉलम की चौड़ाई निर्धारित करें (ज़रूरत अनुसार बदलें) */
+    font-weight: bold; /* डिफ़ॉल्ट रूप से बोल्ड */
+}
+
+/* रंग सीधे TD पर लागू करें */
+#customerTable td.balance-due { /* सेलेक्टर: td और क्लास के बीच स्पेस नहीं */
+    color: #dc3545 !important; /* Red color - Use !important if needed to override other styles */
+}
+
+#customerTable td.balance-credit { /* सेलेक्टर: td और क्लास के बीच स्पेस नहीं */
+    color: #28a745 !important; /* Green color - Use !important if needed */
+}
+
+#customerTable td.balance-zero { /* सेलेक्टर: td और क्लास के बीच स्पेस नहीं */
+    color: #6c757d !important; /* Grey color - Use !important if needed */
+    font-weight: normal !important; /* शून्य बैलेंस के लिए बोल्ड न रखें */
+}
+
+/* अंदर के span के लिए स्टाइल (यदि आवश्यक हो, रंग यहां से हटा दिया गया है) */
+#customerTable td .balance-value {
+    font-size: 0.95em;
+    /* आप चाहें तो पैडिंग आदि रख सकते हैं */
+    /* padding: 3px 6px; */
+    /* border-radius: 4px; */
+}
+
+/* लोडिंग स्थिति के लिए स्टाइल (वैकल्पिक) */
+#customerTable td span.balance-loading {
+    color: #adb5bd;
+    font-style: italic;
+    font-weight: normal;
+}
+
+
 /* --- Modal Styles (Add/Edit Customer) --- */
 .modal { display: none; position: fixed; z-index: 1050; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.5); align-items: center; justify-content: center; padding: 15px; box-sizing: border-box; }
 .modal.active { display: flex; }
@@ -236,6 +278,8 @@ h1 { margin: 0; font-size: 1.2em; }
     #customerTable { font-size: 0.85em; }
     #customerTable th, #customerTable td { padding: 8px; white-space: normal; }
     #customerTable td:nth-child(1), #customerTable th:nth-child(1) { text-align: left; width: auto; } /* Adjust ID column alignment */
+    #customerTable td:nth-child(6) { white-space: nowrap; } /* Keep balance nowrap */
+
 
     .button { font-size: 0.85em; padding: 7px 12px; }
     .modal-content { width: 95%; padding: 20px; }
@@ -244,43 +288,4 @@ h1 { margin: 0; font-size: 1.2em; }
 @media (max-width: 480px) {
     .modal-actions { flex-direction: column; }
     .modal-actions .button { width: 100%; justify-content: center; }
-}
-/* === Customer List Balance Column Styles === */
-
-/* बैलेंस कॉलम हैडर और सेल के लिए स्टाइल */
-#customerTable th:nth-child(6), /* Balance Header */
-#customerTable td:nth-child(6)  /* Balance Cell */
-{
-    text-align: right; /* बैलेंस को दाईं ओर अलाइन करें */
-    white-space: nowrap; /* बैलेंस को एक लाइन में रखें */
-    width: 120px; /* कॉलम की चौड़ाई निर्धारित करें (ज़रूरत अनुसार बदलें) */
-    font-weight: bold; /* बैलेंस को थोड़ा मोटा दिखाएं */
-}
-
-/* बैलेंस के लिए कलर क्लास */
-#customerTable td .balance-value {
-    padding: 3px 6px;
-    border-radius: 4px;
-    font-size: 0.95em;
-}
-
-#customerTable td .balance-due { /* ग्राहक पर बकाया (लाल) */
-    color: #dc3545; /* Red color */
-    /* background-color: #f8d7da; */ /* Optional light red background */
-}
-
-#customerTable td .balance-credit { /* ग्राहक के पास क्रेडिट (हरा) */
-    color: #28a745; /* Green color */
-     /* background-color: #d4edda; */ /* Optional light green background */
-}
-
-#customerTable td .balance-zero { /* शून्य बैलेंस (ग्रे) */
-    color: #6c757d; /* Grey color */
-    font-weight: normal; /* शून्य बैलेंस के लिए बोल्ड नहीं */
-}
-
-#customerTable td .balance-loading { /* लोडिंग के दौरान */
-    color: #adb5bd;
-    font-style: italic;
-    font-weight: normal;
 }
