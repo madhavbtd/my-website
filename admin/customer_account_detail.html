@@ -8,11 +8,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <link rel="stylesheet" href="css/customer_management.css">
-    <link rel="stylesheet" href="css/order_history.css"> <link rel="stylesheet" href="css/customer_account_detail.css">
-
-    <script type="module">
-        // --- Firebase Initialization (यह कोड वैसे ही रहेगा) ---
+    <link rel="stylesheet" href="css/customer_management.css"> <link rel="stylesheet" href="css/order_history.css"> <link rel="stylesheet" href="css/customer_account_detail.css"> <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
         import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
         import { getFirestore, doc, getDoc, collection, query, where, getDocs, orderBy, updateDoc, deleteDoc, Timestamp, arrayUnion, addDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
@@ -29,14 +25,15 @@
 
         let app; let auth; let db;
         try {
+            // Initialize Firebase App (only once per page load)
             if (!window.firebaseAppInitialized) {
                 app = initializeApp(firebaseConfig);
                 window.firebaseAppInitialized = true;
-                window.firebaseApp = app;
-                console.log("Firebase initialized (V2.5.0 HTML Compatible)");
+                window.firebaseApp = app; // Store globally
+                console.log("Firebase initialized (V2.4.0 Compatible)");
             } else {
-                app = window.firebaseApp;
-                console.log("Firebase already initialized (V2.5.0 HTML Compatible)");
+                app = window.firebaseApp; // Use existing instance
+                console.log("Firebase already initialized (V2.4.0 Compatible)");
             }
             auth = getAuth(app);
             db = getFirestore(app);
@@ -49,7 +46,7 @@
             window.query = query;
             window.where = where;
             window.getDocs = getDocs;
-            window.orderBy = orderBy; // Make the original orderBy function global
+            window.orderBy = orderBy; // Rename to avoid conflict with DOM orderBy
             window.updateDoc = updateDoc;
             window.deleteDoc = deleteDoc;
             window.Timestamp = Timestamp;
@@ -61,13 +58,15 @@
                 const currentPage = window.location.pathname.split('/').pop() || 'index.html';
                 if (!user && currentPage.toLowerCase() !== 'login.html') {
                     console.log("User not logged in. Redirecting to login...");
-                    window.location.replace('login.html');
+                    window.location.replace('login.html'); // Ensure correct path to login.html
                 } else if (user) {
-                    console.log(`User logged in. Initializing detail page for ${user.uid}. V2.5.0 OK.`);
-                    // JS initialization (यह वैसे ही रहेगा)
+                    console.log(`User logged in. Initializing detail page for ${user.uid}. V2.4.0 OK.`);
+                    // Call the initialization function from customer_account_detail.js
+                    // Use a slight delay or check to ensure the function is defined
                     if (typeof initializeCustomerDetailPage === 'function') {
                         initializeCustomerDetailPage(user);
                     } else {
+                        // Fallback if script loading is delayed
                         setTimeout(() => {
                             if (typeof initializeCustomerDetailPage === 'function') {
                                 initializeCustomerDetailPage(user);
@@ -75,7 +74,7 @@
                                 console.error("Initialization function 'initializeCustomerDetailPage' not found!");
                                 alert("Application Error: Page script failed to load.");
                             }
-                        }, 150);
+                        }, 150); // Adjust delay if needed
                     }
                 }
             });
@@ -101,11 +100,11 @@
         <div class="actions-bar cust-detail-actions">
             <button id="editCustomerBtn" class="button info-button" disabled><i class="fas fa-user-edit"></i> Edit Details</button>
             <button id="addPaymentBtn" class="button success-button" disabled><i class="fas fa-money-bill-wave"></i> Add Payment</button>
-            <button id="addAdjustmentBtn" class="button warning-button" disabled><i class="fas fa-sliders-h"></i> Add Adjustment</button>
             <a href="#" id="addNewOrderLink" class="button primary-button disabled"><i class="fas fa-plus-circle"></i> Add New Order</a>
             <button id="toggleStatusBtn" class="button" disabled><i class="fas fa-toggle-on"></i> <span>Loading...</span></button>
             <button id="deleteCustomerBtn" class="button danger-button" disabled><i class="fas fa-user-times"></i> Delete Customer</button>
         </div>
+
         <div class="customer-info-grid">
              <div class="info-box customer-details-box">
                  <h2><i class="fas fa-info-circle"></i> Customer Details</h2>
@@ -120,10 +119,8 @@
              </div>
              <div class="info-box account-summary-box">
                  <h2><i class="fas fa-calculator"></i> Account Summary</h2>
-                 <p><strong>Total Order Value:</strong> <span id="summary-total-orders">Loading...</span></p>
-                 <p><strong>Total Paid Amount:</strong> <span id="summary-total-paid">Loading...</span></p>
-                 <p><strong>Outstanding Balance:</strong> <strong id="summary-balance" class="balance-info">Loading...</strong></p>
-                 <hr>
+                 <p><strong>Total Order Value:</strong> <span id="summary-total-orders">Loading...</span></p> <p><strong>Total Paid Amount:</strong> <span id="summary-total-paid">Loading...</span></p>
+                 <p><strong>Outstanding Balance:</strong> <strong id="summary-balance" class="balance-info">Loading...</strong></p> <hr>
                  <p><strong>Credit Allowed:</strong> <span id="cust-detail-credit-allowed">...</span></p>
                  <p><strong>Credit Limit:</strong> <span id="cust-detail-credit-limit">...</span></p>
              </div>
@@ -135,8 +132,7 @@
 
         <div class="history-section">
             <h2><i class="fas fa-history"></i> Order History</h2>
-            <div class="table-container">
-                <table id="customerOrderTable">
+            <div class="table-container"> <table id="customerOrderTable">
                     <thead>
                         <tr>
                             <th>Order ID</th>
@@ -150,23 +146,7 @@
                     </tbody>
                 </table>
             </div>
-        </div>
-
-        <div class="history-section">
-            <h2><i class="fas fa-money-check-alt"></i> Payment History & Adjustments</h2>
-            <div class="table-container"> <table id="customerPaymentTable">
-                    <thead>
-                        <tr>
-                            <th>Date</th>
-                            <th>Amount (₹)</th> <th>Method/Type</th> <th>Notes/Remarks</th> <th>Action</th> </tr>
-                    </thead>
-                    <tbody id="customerPaymentTableBody">
-                        <tr><td colspan="5" style="text-align: center;">Loading history...</td></tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-        <div class="history-section">
+        </div> <div class="history-section">
             <h2 style="margin-top: 30px;"><i class="fas fa-book-open"></i> Account Ledger</h2>
             <div class="table-container ledger-table-container">
                 <table id="accountLedgerTable">
@@ -185,7 +165,7 @@
                 </table>
             </div>
         </div>
-    </div> <div id="detailsModal" class="modal">
+        </div> <div id="detailsModal" class="modal">
         <div class="modal-content">
             <span class="close-btn" id="closeDetailsModal" title="Close">&times;</span>
             <h2><i class="fas fa-receipt info-icon"></i> Order Details & Actions</h2>
@@ -259,11 +239,11 @@
     </div>
 
     <div id="customerEditModal" class="modal">
-         <div class="modal-content">
-             <span class="close-btn" id="closeCustomerEditModal" title="Close">&times;</span>
+         <div class="modal-content"> <span class="close-btn" id="closeCustomerEditModal" title="Close">&times;</span>
              <h2 id="customerEditModalTitle"><i class="fas fa-user-edit info-icon"></i> Edit Customer</h2>
              <form id="customerEditForm">
                  <input type="hidden" id="editCustPageCustomerId">
+
                  <div class="form-row">
                      <div class="form-group">
                          <label for="customerEditFullName">Full Name <span class="required">*</span>:</label>
@@ -274,6 +254,7 @@
                          <input type="tel" id="customerEditWhatsApp" required placeholder="e.g., 91XXXXXXXXXX">
                      </div>
                  </div>
+
                  <div class="form-row">
                      <div class="form-group">
                          <label for="customerEditContact">Contact No:</label>
@@ -284,6 +265,7 @@
                          <input type="email" id="customerEditEmail" placeholder="Optional email address">
                      </div>
                  </div>
+
                  <div class="form-row">
                     <div class="form-group">
                         <label for="customerEditCity">City:</label>
@@ -294,12 +276,12 @@
                         <input type="text" id="customerEditState">
                     </div>
                 </div>
-                 <div class="form-group form-group-address">
-                     <label for="customerEditAddress">Address:</label>
+
+                 <div class="form-group form-group-address"> <label for="customerEditAddress">Address:</label>
                      <textarea id="customerEditAddress" rows="2" placeholder="Optional address details"></textarea>
                  </div>
-                 <div class="form-group form-group-credit-radio">
-                     <label>Credit Allowed:</label>
+
+                 <div class="form-group form-group-credit-radio"> <label>Credit Allowed:</label>
                      <div>
                          <input type="radio" id="creditEditYes" name="creditAllowedEdit" value="yes"> <label for="creditEditYes">Yes</label>
                          <input type="radio" id="creditEditNo" name="creditAllowedEdit" value="no" checked> <label for="creditEditNo">No</label>
@@ -309,10 +291,11 @@
                      <label for="customerEditCreditLimit">Credit Limit:</label>
                      <input type="number" id="customerEditCreditLimit" step="0.01" placeholder="e.g., 5000.00">
                  </div>
-                 <div class="form-group form-group-notes">
-                     <label for="customerEditNotes">Remarks / Notes:</label>
+
+                 <div class="form-group form-group-notes"> <label for="customerEditNotes">Remarks / Notes:</label>
                      <textarea id="customerEditNotes" rows="2"></textarea>
                  </div>
+
                  <div class="modal-actions">
                      <button type="submit" id="saveCustomerEditBtn" class="button save-button"> <i class="fas fa-save"></i> <span>Update Customer</span> </button>
                      <button type="button" id="cancelCustomerEditBtn" class="button cancel-button"> Cancel </button>
@@ -355,36 +338,6 @@
         </div>
     </div>
 
-    <div id="addAdjustmentModal" class="modal">
-        <div class="modal-content small-modal"> <span class="close-btn" id="closeAdjustmentModal" title="Close">&times;</span>
-            <h2><i class="fas fa-sliders-h warning-icon"></i> Add Balance Adjustment</h2>
-            <form id="addAdjustmentForm">
-                <div class="form-group">
-                    <label>Type <span class="required">*</span>:</label>
-                    <div class="radio-group" style="padding-top: 5px;">
-                         <label><input type="radio" id="adjustmentTypeDebit" name="adjustmentType" value="debit" checked> Debit (-) <span style="font-size:0.8em; color: #6c757d;">(Increase Due)</span></label>
-                        <label><input type="radio" id="adjustmentTypeCredit" name="adjustmentType" value="credit"> Credit (+) <span style="font-size:0.8em; color: #6c757d;">(Decrease Due)</span></label>
-                    </div>
-                </div>
-                <div class="form-group">
-                     <label for="adjustmentDateInput">Date <span class="required">*</span>:</label>
-                    <input type="date" id="adjustmentDateInput" required>
-                </div>
-                <div class="form-group">
-                     <label for="adjustmentAmountInput">Amount <span class="required">*</span>:</label>
-                    <input type="number" id="adjustmentAmountInput" step="0.01" required placeholder="Enter positive amount">
-                </div>
-                <div class="form-group">
-                     <label for="adjustmentRemarksInput">Remarks:</label>
-                    <textarea id="adjustmentRemarksInput" rows="2" placeholder="Reason for adjustment..."></textarea>
-                </div>
-                <div class="modal-actions">
-                    <button type="submit" id="saveAdjustmentBtn" class="button save-button"><i class="fas fa-save"></i> Save Adjustment</button>
-                    <button type="button" id="cancelAdjustmentBtn" class="button cancel-button">Cancel</button>
-                </div>
-            </form>
-        </div>
-    </div>
     <script src="js/customer_account_detail.js" type="module" defer></script>
 
 </body>
