@@ -8,8 +8,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="css/index.css">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js" defer></script>
+    <link rel="stylesheet" href="css/index.css"> <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js" defer></script>
 
     </head>
 
@@ -68,7 +67,8 @@
                      <i class="fas fa-cloud-download-alt kpi-icon"></i> <div class="kpi-value" id="kpi-online-pending-orders"><span class="loading-placeholder">...</span></div>
                      <div class="kpi-label">Online Pending Orders</div>
                  </div>
-                 </div>
+            </div>
+
             <div class="order-control-panel">
                 <div class="panel-item light-blue"> <i class="fas fa-shopping-bag panel-icon"></i> Order Received <span class="panel-count" id="count-order-received"><span class="loading-placeholder">..</span></span> <a href="order_history.html?status=Order+Received" class="button-link">View</a> </div>
                 <div class="panel-item light-orange"> <i class="fas fa-hourglass-half panel-icon"></i> Designing <span class="panel-count" id="count-designing"><span class="loading-placeholder">..</span></span> <a href="order_history.html?status=Designing" class="button-link">View</a> </div>
@@ -86,6 +86,7 @@
                 <button id="order-id-search-button"><i class="fas fa-search"></i></button>
                 <div id="order-suggestions" class="suggestions-list"></div>
             </div>
+
             <div class="dashboard-grid">
                  <div class="info-feed-section card-layout">
                      <h3><i class="fas fa-history"></i> Recent Activity</h3>
@@ -116,11 +117,41 @@
                    </div>
             </div>
 
-        </div>
-    </div>
-
-    <script src="js/utils.js" type="module" defer></script>
-    <script src="js/dashboard.js" type="module" defer></script>
+            <div id="addPaymentModal" class="modal">
+                <div class="modal-content small-modal">
+                    <span class="close-btn" id="closePaymentModal" title="Close">&times;</span>
+                    <h2><i class="fas fa-money-bill-wave success-icon"></i> Add New Payment for <span id="payment-modal-cust-name">Customer</span></h2>
+                    <form id="addPaymentForm">
+                         <input type="hidden" id="quickPaymentCustomerId">
+                        <div class="form-group">
+                            <label for="paymentAmount">Amount Paid <span class="required">*</span>:</label>
+                            <input type="number" id="paymentAmount" step="0.01" required placeholder="e.g., 500.00">
+                        </div>
+                        <div class="form-group">
+                            <label for="paymentDate">Payment Date <span class="required">*</span>:</label>
+                            <input type="date" id="paymentDate" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="paymentMethod">Payment Method:</label>
+                            <select id="paymentMethod">
+                                <option value="Cash">Cash</option>
+                                <option value="Online">Online</option>
+                                <option value="Cheque">Cheque</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="paymentNotes">Notes:</label>
+                            <textarea id="paymentNotes" rows="2" placeholder="Optional payment notes"></textarea>
+                        </div>
+                        <div class="modal-actions">
+                            <button type="submit" id="savePaymentBtn" class="button save-button"><i class="fas fa-save"></i> Save Payment</button>
+                            <button type="button" id="cancelPaymentBtn" class="button cancel-button">Cancel</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            </div> </div> <script src="js/utils.js" type="module" defer></script> <script type="module" src="js/dashboard.js"></script>
 
     <script>
         function setActiveLink() {

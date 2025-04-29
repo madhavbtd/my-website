@@ -1,10 +1,11 @@
-// js/dashboard.js (Revised Import & Structure + Updates + Online Pending Orders KPI)
+// js/dashboard.js (Revised Import & Structure + Updates + Online Pending Orders KPI + Quick Payment)
 
 // Import initialized db and auth from firebase-init.js
 import { db, auth } from './firebase-init.js';
 
 // Import necessary functions directly from the SDK
-import { collection, onSnapshot, query, where, getDocs, limit, orderBy, Timestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+// Added addDoc for saving payments
+import { collection, onSnapshot, query, where, getDocs, limit, orderBy, Timestamp, addDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
 // --- DOM Elements ---
@@ -30,7 +31,7 @@ const kpiTotalSuppliers = document.getElementById('kpi-total-suppliers');
 const kpiPendingPayments = document.getElementById('kpi-pending-payments');
 const kpiOrdersToday = document.getElementById('kpi-orders-today');
 const kpiPendingPOs = document.getElementById('kpi-pending-pos');
-const kpiOnlinePendingOrders = document.getElementById('kpi-online-pending-orders'); // <<< नया KPI एलिमेंट जोड़ा गया
+const kpiOnlinePendingOrders = document.getElementById('kpi-online-pending-orders');
 // Other List Elements
 const recentActivityList = document.getElementById('recent-activity-list');
 const licReminderList = document.getElementById('lic-reminder-list');
@@ -39,10 +40,27 @@ const upcomingDeliveryList = document.getElementById('upcoming-delivery-list');
 const orderStatusChartCanvas = document.getElementById('orderStatusChart');
 let orderChartInstance = null;
 
+// --- Quick Payment Modal DOM Elements ---
+const quickAddPaymentBtn = document.getElementById('quickAddPaymentBtn');
+const addPaymentModal = document.getElementById('addPaymentModal'); // Modal from index.html
+const closePaymentModalBtn = document.getElementById('closePaymentModal'); // Close button in modal
+const cancelPaymentBtn = document.getElementById('cancelPaymentBtn'); // Cancel button in modal
+const addPaymentForm = document.getElementById('addPaymentForm'); // Form in modal
+const paymentModalCustNameSpan = document.getElementById('payment-modal-cust-name'); // Span for customer name in modal
+const quickPaymentCustomerIdInput = document.getElementById('quickPaymentCustomerId'); // Hidden input for customer ID in modal
+const paymentAmountInput = document.getElementById('paymentAmount'); // Amount input
+const paymentDateInput = document.getElementById('paymentDate'); // Date input
+const paymentMethodSelect = document.getElementById('paymentMethod'); // Method select
+const paymentNotesInput = document.getElementById('paymentNotes'); // Notes textarea
+const savePaymentBtn = document.getElementById('savePaymentBtn'); // Save button in modal
+
+
 // Global state
 let suggestionDebounceTimer;
 let dateTimeIntervalId = null;
 let userRole = null;
+let isQuickPaymentMode = false; // Flag to check if search is for quick payment
+let quickPaymentTargetCustomerId = null; // To store customer ID for saving
 
 // --- Initialization on DOM Load ---
 document.addEventListener('DOMContentLoaded', () => {
@@ -65,7 +83,15 @@ function setupEventListeners() {
     }
     if (orderIdSearchButton) orderIdSearchButton.addEventListener('click', triggerSearch);
     if (logoutLink) logoutLink.addEventListener('click', handleLogout);
-    console.log("[DEBUG] Dashboard event listeners set up.");
+
+    // --- Quick Payment Listeners ---
+    if (quickAddPaymentBtn) quickAddPaymentBtn.addEventListener('click', handleQuickPaymentClick);
+    if (closePaymentModalBtn) closePaymentModalBtn.addEventListener('click', closeAddPaymentModal);
+    if (cancelPaymentBtn) cancelPaymentBtn.addEventListener('click', closeAddPaymentModal);
+    if (addPaymentModal) addPaymentModal.addEventListener('click', (event) => { if (event.target === addPaymentModal) closeAddPaymentModal(); }); // Close on backdrop click
+    if (addPaymentForm) addPaymentForm.addEventListener('submit', handleSavePayment); // Use the same save function
+
+    console.log("[DEBUG] Dashboard event listeners set up (incl. Quick Payment).");
 }
 
 // --- Date/Time Update ---
@@ -114,7 +140,6 @@ function listenForAuthChanges() {
                  // Initialize data fetching even if role check fails, using default permissions
                  initializeDashboardDataFetching();
             });
-            // Removed: initializeDashboardDataFetching() moved inside .then/.catch
         } else {
             console.log("[DEBUG] User not authenticated. Redirecting...");
             if (!window.location.pathname.endsWith('login.html')) {
@@ -138,7 +163,7 @@ function clearDashboardDataDisplay() {
     if(kpiOrdersToday) showLoading(kpiOrdersToday);
     if(kpiPendingPayments) showLoading(kpiPendingPayments);
     if(kpiPendingPOs) showLoading(kpiPendingPOs);
-    if(kpiOnlinePendingOrders) showLoading(kpiOnlinePendingOrders); // <<< नए KPI को भी क्लियर करें
+    if(kpiOnlinePendingOrders) showLoading(kpiOnlinePendingOrders);
     if(recentActivityList) showLoading(recentActivityList, 'list');
     if(licReminderList) showLoading(licReminderList, 'list');
     if(upcomingTaskList) showLoading(upcomingTaskList, 'list');
@@ -156,8 +181,8 @@ function clearDashboardDataDisplay() {
 function initializeDashboardDataFetching() {
     console.log("[DEBUG] Initializing data fetching...");
     listenForOrderCounts();
-    loadDashboardKPIs(); // स्टैटिक KPIs के लिए
-    listenForOnlineOrderCount(); // <<< ऑनलाइन ऑर्डर काउंट के लिए लिस्नर कॉल करें
+    loadDashboardKPIs(); // For static KPIs
+    listenForOnlineOrderCount(); // Listener for online order count
     loadRecentActivity();
     loadRemindersAndTasks();
 }
@@ -186,36 +211,29 @@ function showLoading(element, type = 'text') {
 
 // --- Dashboard Counts ---
 function updateDashboardCounts(orders) {
-    // Initialize counts to zero for all statuses
     const statusCounts = {
         "Order Received": 0, "Designing": 0, "Verification": 0, "Design Approved": 0,
         "Ready for Working": 0, "Printing": 0, "Delivered": 0, "Completed": 0
     };
-    // Count orders for each status
     orders.forEach(order => { const status = order.status; if (status && statusCounts.hasOwnProperty(status)) { statusCounts[status]++; } });
 
     let totalActiveOrders = 0;
-    // Update DOM elements
     for (const status in countElements) {
         if (countElements[status]) {
             const count = statusCounts[status] || 0;
             const panelItem = countElements[status].closest('.panel-item');
             if (panelItem) {
-                 // Remove old status-specific classes but keep general color classes like 'light-blue'
                  panelItem.className = panelItem.className.replace(/\b\S+-status\b/g, '').trim();
-                 // Add new status-specific class
                  const statusClass = status.toLowerCase().replace(/\s+/g, '-') + '-status';
                  panelItem.classList.add(statusClass);
             }
             countElements[status].textContent = count.toString().padStart(2, '0');
-            // Calculate total active orders (excluding Delivered and Completed)
             if (status !== "Completed" && status !== "Delivered") {
                  totalActiveOrders += count;
             }
         }
     }
     console.log(`[DEBUG] Dashboard Counts Updated. Total Active: ${totalActiveOrders}`);
-    // Update the chart with new counts
     initializeOrUpdateChart(statusCounts);
 }
 
@@ -224,7 +242,6 @@ function listenForOrderCounts() {
     Object.values(countElements).forEach(el => showLoading(el));
     try {
         const ordersRef = collection(db, "orders");
-        // Simple query for all orders, filtering happens client-side in updateDashboardCounts
         const q = query(ordersRef);
         onSnapshot(q, (snapshot) => {
             const orders = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
@@ -232,7 +249,6 @@ function listenForOrderCounts() {
         }, (error) => {
              console.error("[DEBUG] Error listening to order counts:", error);
              Object.values(countElements).forEach(el => { if(el) el.textContent = 'Err'; });
-             // Optionally destroy chart on error
              if(orderChartInstance) { orderChartInstance.destroy(); orderChartInstance = null; }
         });
     } catch (e) {
@@ -241,22 +257,22 @@ function listenForOrderCounts() {
     }
 }
 
-// === नया फंक्शन: ऑनलाइन पेंडिंग ऑर्डर काउंट के लिए लिस्नर ===
+// --- Online Pending Order Count Listener ---
 function listenForOnlineOrderCount() {
-    const element = kpiOnlinePendingOrders; // उपयोग करने वाला एलिमेंट
+    const element = kpiOnlinePendingOrders;
     if (!element) {
         console.warn("KPI element for online pending orders not found.");
         return;
     }
-    showLoading(element); // लोडिंग दिखाएं
+    showLoading(element);
 
     try {
         const onlineOrdersRef = collection(db, "online_orders");
-        const q = query(onlineOrdersRef); // online_orders कलेक्शन को क्वेरी करें
+        const q = query(onlineOrdersRef);
 
         onSnapshot(q, (snapshot) => {
-            const count = snapshot.size; // डॉक्यूमेंट्स की संख्या ही काउंट है
-            element.textContent = count.toString(); // टेक्स्ट के रूप में सेट करें
+            const count = snapshot.size;
+            element.textContent = count.toString();
             console.log(`[DEBUG] Online Pending Orders Count Updated: ${count}`);
         }, (error) => {
             console.error("[DEBUG] Error listening to online order counts:", error);
@@ -267,26 +283,23 @@ function listenForOnlineOrderCount() {
         if(element) element.textContent = 'Err';
     }
 }
-// === नया फंक्शन समाप्त ===
 
-// --- Load KPIs (Updated - Online orders count is now handled by listener) ---
+// --- Load KPIs ---
 async function loadDashboardKPIs() {
-    // शो लोडिंग केवल उन KPIs के लिए जो यहाँ लोड हो रहे हैं
     showLoading(kpiTotalCustomers); showLoading(kpiTotalSuppliers); showLoading(kpiOrdersToday); showLoading(kpiPendingPayments); showLoading(kpiPendingPOs);
-    // Note: kpiOnlinePendingOrders is handled by its own listener, so no showLoading here for it
+    // kpiOnlinePendingOrders is handled by its listener
 
     try { const custSnapshot = await getDocs(collection(db, "customers")); if (kpiTotalCustomers) kpiTotalCustomers.textContent = custSnapshot.size; } catch (e) { console.error("KPI Error (Cust):", e); if(kpiTotalCustomers) kpiTotalCustomers.textContent = 'Err'; }
     try { const suppSnapshot = await getDocs(collection(db, "suppliers")); if (kpiTotalSuppliers) kpiTotalSuppliers.textContent = suppSnapshot.size; } catch (e) { console.error("KPI Error (Supp):", e); if(kpiTotalSuppliers) kpiTotalSuppliers.textContent = 'Err'; }
     try { const todayStart = new Date(); todayStart.setHours(0, 0, 0, 0); const todayEnd = new Date(); todayEnd.setHours(23, 59, 59, 999); const q = query(collection(db, "orders"), where('createdAt', '>=', Timestamp.fromDate(todayStart)), where('createdAt', '<=', Timestamp.fromDate(todayEnd))); const todaySnapshot = await getDocs(q); if(kpiOrdersToday) kpiOrdersToday.textContent = todaySnapshot.size; } catch (e) { console.error("KPI Error (Orders Today):", e); if(kpiOrdersToday) kpiOrdersToday.textContent = 'Err'; }
     try {
-        const ordersQuery = query(collection(db, "orders"), where('status', '!=', 'Completed')); // Query non-completed orders
+        const ordersQuery = query(collection(db, "orders"), where('status', '!=', 'Completed'));
         const ordersSnapshot = await getDocs(ordersQuery); let totalPendingAmount = 0;
         ordersSnapshot.forEach(doc => {
             const order = doc.data(); const totalAmount = Number(order.totalAmount) || 0; const amountPaid = Number(order.amountPaid) || 0; const balanceDue = totalAmount - amountPaid; if (balanceDue > 0) { totalPendingAmount += balanceDue; } });
         if (kpiPendingPayments) { kpiPendingPayments.textContent = `₹ ${totalPendingAmount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`; } console.log(`[DEBUG] Total Pending Payments Calculated: ₹ ${totalPendingAmount}`);
     } catch (e) { console.error("KPI Error (Pending Payments):", e); if(kpiPendingPayments) kpiPendingPayments.textContent = '₹ Err'; }
     try { const poQuery = query(collection(db, "purchaseOrders"), where('status', '==', 'Pending')); const poSnapshot = await getDocs(poQuery); const pendingPoCount = poSnapshot.size; if (kpiPendingPOs) { kpiPendingPOs.textContent = pendingPoCount; } console.log(`[DEBUG] Pending POs Count: ${pendingPoCount}`); } catch (e) { console.error("KPI Error (Pending POs):", e); if(kpiPendingPOs) kpiPendingPOs.textContent = 'Err'; }
-    // <<< ऑनलाइन ऑर्डर काउंट अब यहाँ से लोड नहीं होगा, लिस्नर करेगा >>>
 }
 
 // --- Load Recent Activity ---
@@ -314,8 +327,8 @@ async function loadRemindersAndTasks() {
     }
 }
 
-// --- Order/Customer/LIC Search Functions (Updated) ---
-function handleSearchInput() { clearTimeout(suggestionDebounceTimer); const searchTerm = orderIdSearchInput.value.trim(); if (searchTerm.length > 1) { suggestionDebounceTimer = setTimeout(() => fetchAndDisplaySuggestions(searchTerm), 300); } else { clearSuggestions(); } } // Require 2 chars
+// --- Order/Customer/LIC Search Functions ---
+function handleSearchInput() { clearTimeout(suggestionDebounceTimer); const searchTerm = orderIdSearchInput.value.trim(); if (searchTerm.length > 1) { suggestionDebounceTimer = setTimeout(() => fetchAndDisplaySuggestions(searchTerm), 300); } else { clearSuggestions(); } }
 function triggerSearch() { const searchTerm = orderIdSearchInput.value.trim(); if(searchTerm.length > 1) fetchAndDisplaySuggestions(searchTerm); else clearSuggestions(); }
 function clearSuggestions() { if (suggestionsContainer) { suggestionsContainer.innerHTML = ''; suggestionsContainer.style.display = 'none'; } }
 
@@ -332,39 +345,21 @@ async function fetchAndDisplaySuggestions(searchTerm) {
     try {
         const ordersRef = collection(db, "orders");
         const licCustomersRef = collection(db, "licCustomers");
-        const customersRef = collection(db, "customers"); // Customer collection reference
+        const customersRef = collection(db, "customers");
         const searchLower = searchTerm.toLowerCase();
-        const searchUpper = searchTerm.toUpperCase(); // For potential ID searches
+        const searchUpper = searchTerm.toUpperCase();
 
         // --- Firebase Queries ---
-        // Orders by ID
-        const orderByIdQuery = query(ordersRef,
-            where('orderId', '>=', searchTerm), // Case-sensitive might matter for orderId
-            where('orderId', '<=', searchTerm + '\uf8ff'),
-            limit(3)
-        );
-        // Orders by Customer Name (fetch more and filter client-side)
-        const orderByCustomerNameQuery = query(ordersRef, limit(15)); // Fetch a bit more for name filtering
+        const orderByIdQuery = query(ordersRef, where('orderId', '>=', searchTerm), where('orderId', '<=', searchTerm + '\uf8ff'), limit(3));
+        const orderByCustomerNameQuery = query(ordersRef, limit(15));
+        const licByNameQuery = query(licCustomersRef, where('customerNameLower', '>=', searchLower), where('customerNameLower', '<=', searchLower + '\uf8ff'), limit(3));
+        const licByPolicyNoQuery = query(licCustomersRef, where('policyNumber', '>=', searchTerm), where('policyNumber', '<=', searchTerm + '\uf8ff'), limit(3));
+        const customerByNameQuery = query(customersRef, where('fullNameLower', '>=', searchLower), where('fullNameLower', '<=', searchLower + '\uf8ff'), limit(3));
+        // --- NEW: Customer by Mobile/WhatsApp Query ---
+        // Combine queries if possible, or run separately
+        const customerByWhatsappQuery = query(customersRef, where('whatsappNo', '>=', searchTerm), where('whatsappNo', '<=', searchTerm + '\uf8ff'), limit(3));
+        const customerByContactQuery = query(customersRef, where('contactNo', '>=', searchTerm), where('contactNo', '<=', searchTerm + '\uf8ff'), limit(3));
 
-        // LIC Customers by Name (requires 'customerNameLower' field)
-        const licByNameQuery = query(licCustomersRef,
-            where('customerNameLower', '>=', searchLower),
-            where('customerNameLower', '<=', searchLower + '\uf8ff'),
-            limit(3)
-        );
-        // LIC Customers by Policy Number
-        const licByPolicyNoQuery = query(licCustomersRef,
-             where('policyNumber', '>=', searchTerm), // Policy number might be case-sensitive?
-             where('policyNumber', '<=', searchTerm + '\uf8ff'),
-             limit(3)
-         );
-
-        // Customers by Name (requires 'fullNameLower' field)
-         const customerByNameQuery = query(customersRef,
-             where('fullNameLower', '>=', searchLower),
-             where('fullNameLower', '<=', searchLower + '\uf8ff'),
-             limit(3)
-         );
 
         // Execute all queries in parallel
         const [
@@ -372,13 +367,17 @@ async function fetchAndDisplaySuggestions(searchTerm) {
             orderByCustomerNameSnapshot,
             licByNameSnapshot,
             licByPolicyNoSnapshot,
-            customerByNameSnapshot
-        ] = await Promise.allSettled([ // Use allSettled to handle potential errors in one query
+            customerByNameSnapshot,
+            customerByWhatsappSnapshot, // Added
+            customerByContactSnapshot // Added
+        ] = await Promise.allSettled([
             getDocs(orderByIdQuery),
             getDocs(orderByCustomerNameQuery),
             getDocs(licByNameQuery),
             getDocs(licByPolicyNoQuery),
-            getDocs(customerByNameQuery)
+            getDocs(customerByNameQuery),
+            getDocs(customerByWhatsappQuery), // Added
+            getDocs(customerByContactQuery) // Added
         ]);
 
         let suggestions = [];
@@ -386,67 +385,52 @@ async function fetchAndDisplaySuggestions(searchTerm) {
 
         // --- Process Results ---
 
-        // Customer Profiles
+        // Function to add suggestion if unique
+        const addUniqueSuggestion = (item, type) => {
+             const uniqueKey = `${type}-${item.id}`;
+             if (!addedIds.has(uniqueKey)) {
+                 suggestions.push({ ...item, type: type }); // Add type explicitly
+                 addedIds.add(uniqueKey);
+             }
+        };
+
+        // Customer Profiles (Name, WhatsApp, Contact)
         if (customerByNameSnapshot.status === 'fulfilled') {
-            customerByNameSnapshot.value.forEach((doc) => {
-                 const customer = { id: doc.id, ...doc.data(), type: 'CustomerProfile' };
-                 const uniqueKey = `cust-${customer.id}`;
-                 if (!addedIds.has(uniqueKey)) {
-                    suggestions.push(customer);
-                    addedIds.add(uniqueKey);
-                 }
-            });
-        } else { console.error("Customer Profile query failed:", customerByNameSnapshot.reason); }
+            customerByNameSnapshot.value.forEach(doc => addUniqueSuggestion({ id: doc.id, ...doc.data() }, 'CustomerProfile'));
+        } else { console.error("Customer Name query failed:", customerByNameSnapshot.reason); }
+
+        if (customerByWhatsappSnapshot.status === 'fulfilled') {
+            customerByWhatsappSnapshot.value.forEach(doc => addUniqueSuggestion({ id: doc.id, ...doc.data() }, 'CustomerProfile'));
+        } else { console.error("Customer WhatsApp query failed:", customerByWhatsappSnapshot.reason); }
+
+        if (customerByContactSnapshot.status === 'fulfilled') {
+            customerByContactSnapshot.value.forEach(doc => addUniqueSuggestion({ id: doc.id, ...doc.data() }, 'CustomerProfile'));
+        } else { console.error("Customer Contact query failed:", customerByContactSnapshot.reason); }
 
 
         // Orders by ID
         if (orderByIdSnapshot.status === 'fulfilled') {
-            orderByIdSnapshot.value.forEach((doc) => {
-                const order = { id: doc.id, ...doc.data(), type: 'Order' };
-                const uniqueKey = `order-${order.id}`;
-                if (!addedIds.has(uniqueKey)) {
-                    suggestions.push(order);
-                    addedIds.add(uniqueKey);
-                }
-            });
+            orderByIdSnapshot.value.forEach(doc => addUniqueSuggestion({ id: doc.id, ...doc.data() }, 'Order'));
         } else { console.error("Order by ID query failed:", orderByIdSnapshot.reason); }
 
         // Orders by Customer Name (Client-side filter)
         if (orderByCustomerNameSnapshot.status === 'fulfilled') {
-            orderByCustomerNameSnapshot.value.forEach((doc) => {
-                const order = { id: doc.id, ...doc.data(), type: 'Order' };
+            orderByCustomerNameSnapshot.value.forEach(doc => {
+                const order = { id: doc.id, ...doc.data() };
                 if (order.customerDetails?.fullName?.toLowerCase().includes(searchLower)) {
-                    const uniqueKey = `order-${order.id}`;
-                     if (!addedIds.has(uniqueKey)) {
-                         suggestions.push(order);
-                         addedIds.add(uniqueKey);
-                    }
+                    addUniqueSuggestion(order, 'Order');
                 }
             });
         } else { console.error("Order by Name query failed:", orderByCustomerNameSnapshot.reason); }
 
         // LIC by Name
         if (licByNameSnapshot.status === 'fulfilled') {
-            licByNameSnapshot.value.forEach((doc) => {
-                const licCustomer = { id: doc.id, ...doc.data(), type: 'LIC' };
-                const uniqueKey = `lic-${licCustomer.id}`;
-                 if (!addedIds.has(uniqueKey)) {
-                     suggestions.push(licCustomer);
-                     addedIds.add(uniqueKey);
-                }
-            });
+             licByNameSnapshot.value.forEach(doc => addUniqueSuggestion({ id: doc.id, ...doc.data() }, 'LIC'));
         } else { console.error("LIC by Name query failed:", licByNameSnapshot.reason); }
 
          // LIC by Policy No
          if (licByPolicyNoSnapshot.status === 'fulfilled') {
-            licByPolicyNoSnapshot.value.forEach((doc) => {
-                 const licCustomer = { id: doc.id, ...doc.data(), type: 'LIC' };
-                 const uniqueKey = `lic-${licCustomer.id}`;
-                 if (!addedIds.has(uniqueKey)) {
-                     suggestions.push(licCustomer);
-                     addedIds.add(uniqueKey);
-                }
-            });
+             licByPolicyNoSnapshot.value.forEach(doc => addUniqueSuggestion({ id: doc.id, ...doc.data() }, 'LIC'));
         } else { console.error("LIC by Policy No query failed:", licByPolicyNoSnapshot.reason); }
 
         // --- Render Suggestions ---
@@ -458,13 +442,14 @@ async function fetchAndDisplaySuggestions(searchTerm) {
         } else {
             suggestions.forEach((item) => {
                 const suggestionDiv = document.createElement('div');
-                suggestionDiv.classList.add('suggestion-item'); // Add class for styling
+                suggestionDiv.classList.add('suggestion-item');
                 let iconClass = '';
                 let displayName = '';
-                let destinationUrl = '#'; // Default URL
-                let actionType = 'navigate'; // Default action
+                let destinationUrl = '#';
+                let actionType = 'navigate'; // Default action is navigate
 
-                if (item.type === 'Order') {
+                // --- Determine display based on type ---
+                 if (item.type === 'Order') {
                     iconClass = 'fas fa-receipt';
                     displayName = `Order: ${item.orderId || 'N/A'} (${item.customerDetails?.fullName || 'Unknown'}) - ${item.status || 'N/A'}`;
                     destinationUrl = `order_history.html?openModalForId=${item.id}`;
@@ -472,40 +457,76 @@ async function fetchAndDisplaySuggestions(searchTerm) {
                 } else if (item.type === 'LIC') {
                     iconClass = 'fas fa-shield-alt';
                     displayName = `LIC: ${item.customerName || 'N/A'} (Policy: ${item.policyNumber || 'N/A'})`;
-                    // Navigate to LIC page with parameter to auto-open detail view
                     destinationUrl = `lic_management.html?openClientDetail=${item.id}`;
                     actionType = 'navigate';
                 } else if (item.type === 'CustomerProfile') {
                     iconClass = 'fas fa-user';
                     displayName = `Customer: ${item.fullName || 'N/A'} (${item.whatsappNo || item.contactNo || 'No Contact'})`;
-                    // Navigate to the customer detail page
+                    // If NOT in Quick Payment mode, destination is customer detail page
                     destinationUrl = `customer_account_detail.html?id=${item.id}`;
-                    actionType = 'navigate';
+                    // Action type depends on isQuickPaymentMode flag (checked in listener)
+                    actionType = 'customerAction'; // Special action type for customer
                 }
 
-                // Set content and attributes
                 suggestionDiv.innerHTML = `<i class="${iconClass}" style="margin-right: 8px; color: #555; width: 16px; text-align: center;"></i> ${displayName}`;
                 suggestionDiv.setAttribute('data-firestore-id', item.id);
-                suggestionDiv.setAttribute('data-type', item.type);
+                suggestionDiv.setAttribute('data-type', item.type); // Store the type ('Order', 'LIC', 'CustomerProfile')
                 suggestionDiv.setAttribute('data-url', destinationUrl);
-                suggestionDiv.setAttribute('data-action', actionType);
-                suggestionDiv.title = `Click to view ${item.type}`; // Add a tooltip
+                suggestionDiv.setAttribute('data-action', actionType); // Store action type
+                suggestionDiv.title = `Click to view ${item.type}`;
 
-                // Event listener for click/mousedown
+                // --- MODIFIED Mousedown Listener ---
                 suggestionDiv.addEventListener('mousedown', (e) => {
                     e.preventDefault(); // Prevent input blur before action
-                    const url = e.currentTarget.getAttribute('data-url');
-                    const action = e.currentTarget.getAttribute('data-action');
-
-                    console.log(`Suggestion clicked: Type=${item.type}, Action=${action}, URL=${url}, ID=${item.id}`);
-
-                    if (action === 'navigate' && url !== '#') {
-                        window.location.href = url;
+                    const targetElement = e.currentTarget;
+                    const type = targetElement.getAttribute('data-type');
+                    const id = targetElement.getAttribute('data-firestore-id');
+                    const url = targetElement.getAttribute('data-url');
+                    const action = targetElement.getAttribute('data-action');
+                    // Extract customer name directly from the displayed text
+                    const displayNameText = targetElement.textContent || '';
+                    let customerName = 'Customer'; // Default
+                    if (type === 'CustomerProfile' && displayNameText.startsWith('Customer:')) {
+                        const match = displayNameText.match(/Customer:\s*([^()]+)/);
+                        if (match && match[1]) {
+                             customerName = match[1].trim();
+                        }
                     }
-                    // Add other actions here if needed (e.g., 'openPopup')
 
-                    clearSuggestions(); // Hide suggestions after action
+                    console.log(`Suggestion clicked: Type=${type}, Action=${action}, URL=${url}, ID=${id}, QuickPaymentMode=${isQuickPaymentMode}`);
+
+                    if (isQuickPaymentMode && type === 'CustomerProfile' && id) {
+                        // <<< QUICK PAYMENT LOGIC >>>
+                        // If in quick payment mode and a customer is clicked, open the payment modal
+                        openQuickPaymentModal(id, customerName); // Pass ID and extracted name
+                        clearSuggestions(); // Hide suggestions
+                        isQuickPaymentMode = false; // Reset flag
+                        if(orderIdSearchInput) orderIdSearchInput.placeholder = "Search Order ID / Customer / LIC..."; // Reset placeholder
+
+                    } else if (action === 'navigate' && url !== '#') {
+                        // <<< DEFAULT NAVIGATION LOGIC >>>
+                        // Navigate if action is 'navigate' and URL is valid
+                        window.location.href = url;
+                        clearSuggestions(); // Hide suggestions after action
+                        isQuickPaymentMode = false; // Reset flag if navigation happens
+                         if(orderIdSearchInput) orderIdSearchInput.placeholder = "Search Order ID / Customer / LIC..."; // Reset placeholder
+                    } else if (action === 'customerAction' && type === 'CustomerProfile' && url !== '#'){
+                         // <<< DEFAULT CUSTOMER CLICK (Not Quick Payment) >>>
+                         // Navigate to customer detail page
+                         window.location.href = url;
+                         clearSuggestions();
+                         isQuickPaymentMode = false;
+                         if(orderIdSearchInput) orderIdSearchInput.placeholder = "Search Order ID / Customer / LIC..."; // Reset placeholder
+                    }
+                     else {
+                         // Handle other actions or do nothing
+                         console.log("Unhandled suggestion click or no action defined.");
+                         isQuickPaymentMode = false; // Reset flag on any other click too
+                          if(orderIdSearchInput) orderIdSearchInput.placeholder = "Search Order ID / Customer / LIC..."; // Reset placeholder
+                    }
                 });
+                 // --- End of MODIFIED Mousedown Listener ---
+
                 suggestionsContainer.appendChild(suggestionDiv);
             });
         }
@@ -513,10 +534,12 @@ async function fetchAndDisplaySuggestions(searchTerm) {
 
     } catch (error) {
         console.error("Error fetching or displaying suggestions:", error);
-        if (suggestionsContainer) { // Check if container exists before modifying
+        if (suggestionsContainer) {
              suggestionsContainer.innerHTML = '<div class="suggestion-item no-suggestions">सुझाव लाने में त्रुटि हुई।</div>';
              suggestionsContainer.style.display = 'block';
         }
+        isQuickPaymentMode = false; // Reset flag on error
+        if(orderIdSearchInput) orderIdSearchInput.placeholder = "Search Order ID / Customer / LIC..."; // Reset placeholder
     }
 }
 // ==============================================================
@@ -532,83 +555,167 @@ function initializeOrUpdateChart(statusCounts) {
     }
     const labels = Object.keys(statusCounts);
     const data = Object.values(statusCounts);
-    // Define consistent colors for each status
     const backgroundColors = labels.map(label => {
         switch(label.toLowerCase()) {
-            case "order received": return 'rgba(108, 117, 125, 0.7)'; // grey
-            case "designing":      return 'rgba(255, 193, 7, 0.7)';  // yellow
-            case "verification":   return 'rgba(253, 126, 20, 0.7)'; // orange
-            case "design approved": return 'rgba(32, 201, 151, 0.7)';// teal
-            case "printing":       return 'rgba(23, 162, 184, 0.7)'; // info blue
-            case "ready for working": return 'rgba(111, 66, 193, 0.7)';// purple
-            case "delivered":      return 'rgba(13, 202, 240, 0.7)'; // light blue / cyan
-            case "completed":      return 'rgba(40, 167, 69, 0.7)';  // green
-            default:               return 'rgba(200, 200, 200, 0.7)';// default grey
+            case "order received": return 'rgba(108, 117, 125, 0.7)'; case "designing":      return 'rgba(255, 193, 7, 0.7)'; case "verification":   return 'rgba(253, 126, 20, 0.7)'; case "design approved": return 'rgba(32, 201, 151, 0.7)'; case "printing":       return 'rgba(23, 162, 184, 0.7)'; case "ready for working": return 'rgba(111, 66, 193, 0.7)'; case "delivered":      return 'rgba(13, 202, 240, 0.7)'; case "completed":      return 'rgba(40, 167, 69, 0.7)'; default:               return 'rgba(200, 200, 200, 0.7)';
         }
     });
-    const borderColors = backgroundColors.map(color => color.replace('0.7', '1')); // Make borders solid
+    const borderColors = backgroundColors.map(color => color.replace('0.7', '1'));
 
-    const chartData = {
-        labels: labels,
-        datasets: [{
-            label: 'Order Count',
-            data: data,
-            backgroundColor: backgroundColors,
-            borderColor: borderColors,
-            borderWidth: 1
-        }]
-    };
-    const chartOptions = {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-            legend: { position: 'bottom', labels: { boxWidth: 12, padding: 15, font: { size: 10 } } },
-            tooltip: { callbacks: { label: function(context){ return `${context.label || ''}: ${context.parsed || 0}`; } } },
-            title: { display: false } // Keep title off unless needed
-        },
-        cutout: '50%' // Make it a doughnut chart
-    };
+    const chartData = { labels: labels, datasets: [{ label: 'Order Count', data: data, backgroundColor: backgroundColors, borderColor: borderColors, borderWidth: 1 }] };
+    const chartOptions = { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, padding: 15, font: { size: 10 } } }, tooltip: { callbacks: { label: function(context){ return `${context.label || ''}: ${context.parsed || 0}`; } } }, title: { display: false } }, cutout: '50%' };
 
-    // Destroy existing chart instance before creating a new one
     if (orderChartInstance) { orderChartInstance.destroy(); }
 
-    // Create new chart instance
     try {
-        orderChartInstance = new Chart(orderStatusChartCanvas, {
-            type: 'doughnut',
-            data: chartData,
-            options: chartOptions
-        });
+        orderChartInstance = new Chart(orderStatusChartCanvas, { type: 'doughnut', data: chartData, options: chartOptions });
         console.log("[DEBUG] Chart initialized/updated.");
     } catch (e) {
         console.error("Error creating chart:", e);
-        // Optional: Clear canvas or display error message on canvas
          const ctx = orderStatusChartCanvas.getContext('2d');
-         if (ctx) {
-             ctx.clearRect(0, 0, orderStatusChartCanvas.width, orderStatusChartCanvas.height);
-             ctx.fillStyle = '#6c757d'; // Use a muted text color
-             ctx.textAlign = 'center';
-             ctx.fillText('Chart Error', orderStatusChartCanvas.width / 2, orderStatusChartCanvas.height / 2);
-         }
+         if (ctx) { ctx.clearRect(0, 0, orderStatusChartCanvas.width, orderStatusChartCanvas.height); ctx.fillStyle = '#6c757d'; ctx.textAlign = 'center'; ctx.fillText('Chart Error', orderStatusChartCanvas.width / 2, orderStatusChartCanvas.height / 2); }
     }
 }
 
 // --- Helper Function: Time Ago ---
 function formatTimeAgo(date) {
-  if (!(date instanceof Date)) return '';
-  const seconds = Math.floor((new Date() - date) / 1000);
-  if (seconds < 5) return "just now";
-  if (seconds < 60) return Math.floor(seconds) + "s ago";
-  const minutes = Math.floor(seconds / 60);
-  if (minutes < 60) return minutes + "m ago";
-  const hours = Math.floor(minutes / 60);
-  if (hours < 24) return hours + "h ago";
-  const days = Math.floor(hours / 24);
-  if (days < 30) return days + "d ago";
-   const months = Math.floor(days / 30);
-  if (months < 12) return months + "mo ago";
-  const years = Math.floor(days / 365);
-  return years + "y ago";
+  if (!(date instanceof Date)) return ''; const seconds = Math.floor((new Date() - date) / 1000); if (seconds < 5) return "just now"; if (seconds < 60) return Math.floor(seconds) + "s ago"; const minutes = Math.floor(seconds / 60); if (minutes < 60) return minutes + "m ago"; const hours = Math.floor(minutes / 60); if (hours < 24) return hours + "h ago"; const days = Math.floor(hours / 24); if (days < 30) return days + "d ago"; const months = Math.floor(days / 30); if (months < 12) return months + "mo ago"; const years = Math.floor(days / 365); return years + "y ago";
 }
 
-console.log("dashboard.js (with firebase-init import and updates + online orders listener) script loaded."); // Log message updated
+// ==============================================================
+// <<< NEW Quick Payment Functions >>>
+// ==============================================================
+
+// --- Function to handle the Quick Payment button click ---
+function handleQuickPaymentClick() {
+    isQuickPaymentMode = true;
+    // Focus the existing search bar and maybe change placeholder
+    if (orderIdSearchInput) {
+        orderIdSearchInput.placeholder = "Search Customer Name/Mobile for Quick Payment...";
+        orderIdSearchInput.value = ''; // Clear current search term
+        orderIdSearchInput.focus();
+        // Optionally clear previous suggestions
+        clearSuggestions();
+    }
+    console.log("Quick Payment mode activated. Search for customer.");
+    // Inform the user to search using the main search bar
+    // You could display a small temporary message near the search bar if needed
+    // alert("Please search for the customer name or mobile number in the search bar above.");
+}
+
+// --- Function to open the Quick Payment modal ---
+function openQuickPaymentModal(customerId, customerName) {
+    // Ensure modal elements are available
+    if(!addPaymentModal || !customerId || !customerName || !paymentModalCustNameSpan || !quickPaymentCustomerIdInput || !paymentDateInput || !savePaymentBtn || !addPaymentForm){
+        console.error("Cannot open quick payment modal. Required elements (modal, name span, hidden input, date input, save button, form) or customerId/name missing.");
+        alert("Error opening payment form. Please check console.");
+        isQuickPaymentMode = false; // Reset flag on error
+        return;
+    }
+    console.log(`Opening Quick Payment modal for ${customerName} (ID: ${customerId})`);
+    addPaymentForm.reset(); // Clear the form
+    paymentModalCustNameSpan.textContent = customerName;
+    paymentDateInput.valueAsDate = new Date(); // Default to today
+    quickPaymentCustomerIdInput.value = customerId; // Store the customer ID in the hidden input
+    quickPaymentTargetCustomerId = customerId; // Also store in global variable for saving phase
+
+    savePaymentBtn.disabled = false;
+    savePaymentBtn.innerHTML = '<i class="fas fa-save"></i> Save Payment'; // Reset button text
+    addPaymentModal.classList.add('active'); // Show the modal
+}
+
+// --- Function to close the Quick Payment modal ---
+function closeAddPaymentModal() {
+    if (addPaymentModal) {
+         addPaymentModal.classList.remove('active');
+    }
+     quickPaymentTargetCustomerId = null; // Clear stored ID when closing
+     isQuickPaymentMode = false; // Ensure flag is reset if modal is closed manually
+     if(orderIdSearchInput) {
+        orderIdSearchInput.placeholder = "Search Order ID / Customer / LIC..."; // Reset placeholder
+        // orderIdSearchInput.value = ''; // Optionally clear search input
+     }
+     clearSuggestions(); // Hide any lingering suggestions
+}
+
+// --- Function to save the Quick Payment ---
+async function handleSavePayment(event) {
+    event.preventDefault();
+     // Ensure Firestore functions are available (should be imported at the top)
+    if (!db || !addDoc || !collection || !Timestamp) {
+        alert("Database functions are not available. Cannot save payment.");
+        console.error("Firestore functions (db, addDoc, collection, Timestamp) missing.");
+        return;
+    }
+
+    // Get customer ID from the stored variable (set when modal opened)
+    const customerId = quickPaymentTargetCustomerId || quickPaymentCustomerIdInput.value;
+
+    if (!customerId) {
+         alert("Customer ID missing. Cannot save payment.");
+         console.error("Customer ID not found for saving payment.");
+         return;
+     }
+
+    // Get form values (ensure elements exist)
+    const amount = paymentAmountInput ? parseFloat(paymentAmountInput.value) : NaN;
+    const date = paymentDateInput ? paymentDateInput.value : null;
+    const method = paymentMethodSelect ? paymentMethodSelect.value : 'Other';
+    const notes = paymentNotesInput ? paymentNotesInput.value.trim() : '';
+
+    if (isNaN(amount) || amount <= 0) { alert("Please enter a valid positive amount."); return; }
+    if (!date) { alert("Please select a payment date."); return; }
+    if (!savePaymentBtn) { console.error("Save button not found."); return; } // Check for save button
+
+
+    savePaymentBtn.disabled = true;
+    const originalHTML = savePaymentBtn.innerHTML;
+    savePaymentBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+
+    try {
+        const paymentDateTimestamp = Timestamp.fromDate(new Date(date + 'T00:00:00')); // Ensure time is start of day
+        const paymentData = {
+            customerId: customerId, // Use the correct customer ID
+            amountPaid: amount,
+            paymentDate: paymentDateTimestamp,
+            paymentMethod: method,
+            notes: notes || null, // Store null if notes are empty
+            createdAt: Timestamp.now() // Record when the payment was added
+        };
+
+        // Use addDoc with the 'payments' collection reference
+        const docRef = await addDoc(collection(db, "payments"), paymentData);
+
+        console.log("Quick Payment added successfully:", docRef.id, "for customer:", customerId);
+        alert("Payment added successfully!");
+        closeAddPaymentModal(); // Close modal on success
+
+        // Refresh pending payments KPI if needed
+        loadDashboardKPIs(); // Recalculate KPIs including pending payments
+
+
+    } catch (error) {
+        console.error("Error saving quick payment:", error);
+        alert(`Error saving payment: ${error.message}`);
+        // Re-enable button on error
+        savePaymentBtn.disabled = false;
+        savePaymentBtn.innerHTML = originalHTML;
+    } finally {
+        // Ensure button is re-enabled even if try block finishes without error but doesn't close modal
+        if (!addPaymentModal || !addPaymentModal.classList.contains('active')) {
+             // If modal is already closed, button state might be wrong
+        } else if(savePaymentBtn) {
+            savePaymentBtn.disabled = false;
+            savePaymentBtn.innerHTML = originalHTML;
+        }
+        quickPaymentTargetCustomerId = null; // Clear stored ID after attempt
+        isQuickPaymentMode = false; // Reset flag
+        if(orderIdSearchInput) orderIdSearchInput.placeholder = "Search Order ID / Customer / LIC..."; // Reset placeholder
+    }
+}
+
+// ==============================================================
+// <<< END OF Quick Payment Functions >>>
+// ==============================================================
+
+console.log("dashboard.js (with Quick Payment) script loaded."); // Log message updated
