@@ -40,10 +40,10 @@
                 app = initializeApp(firebaseConfig);
                 window.firebaseAppInitialized = true;
                 window.firebaseApp = app; // Store globally
-                console.log("Firebase initialized on new_order.html (V1.2 Setup)");
+                console.log("Firebase initialized on new_order.html (Minimal JS Setup)");
             } else {
                 app = window.firebaseApp; // Use existing instance
-                console.log("Firebase already initialized (new_order.html V1.2)");
+                console.log("Firebase already initialized (Minimal JS Setup)");
             }
             auth = getAuth(app);
             db = getFirestore(app);
@@ -109,12 +109,16 @@
                      <div class="form-section-card">
                          <div class="section-title">1. Customer Details</div>
                          <div class="form-row">
-                             <div class="form-group form-group-half suggestions-box"> <label for="full_name">Full Name *</label>
+                             <div class="form-group form-group-half suggestions-box">
+                                 <label for="full_name">Full Name *</label>
                                  <input type="text" id="full_name" name="full_name" required autocomplete="off" placeholder="Search or enter customer name...">
-                                 <div id="customer-suggestions-name" class="suggestions-list"><ul></ul></div> </div>
-                             <div class="form-group form-group-half suggestions-box"> <label for="whatsapp_no">WhatsApp No *</label>
+                                 <div id="customer-suggestions-name" class="suggestions-list"><ul></ul></div>
+                             </div>
+                             <div class="form-group form-group-half suggestions-box">
+                                 <label for="whatsapp_no">WhatsApp No *</label>
                                  <input type="text" id="whatsapp_no" name="whatsapp_no" required autocomplete="off" placeholder="Search or enter WhatsApp no...">
-                                 <div id="customer-suggestions-whatsapp" class="suggestions-list"><ul></ul></div> </div>
+                                 <div id="customer-suggestions-whatsapp" class="suggestions-list"><ul></ul></div>
+                             </div>
                          </div>
                           <div class="form-row">
                              <div class="form-group form-group-half">
