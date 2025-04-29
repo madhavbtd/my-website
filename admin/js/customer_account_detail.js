@@ -1,5 +1,5 @@
 // js/customer_account_detail.js
-// Version: 2.5.1 (Corrected firestoreOrderBy usage + Previous Updates)
+// Version: 2.5.2 (Fixed replaceChild error, Added listener logs)
 // WARNING: This code assumes corresponding changes have been made in customer_account_detail.html
 // and potentially in customer_account_detail.css for styling.
 // PLEASE TEST THOROUGHLY AFTER IMPLEMENTING.
@@ -83,7 +83,7 @@ const accountLedgerTableBody = document.getElementById('accountLedgerTableBody')
 
 // <<< NEW DOM REF >>>
 // Payment History Table
-const customerPaymentTableBody = document.getElementById('customerPaymentTableBody'); // Needs ID in HTML
+// ** NOTE: customerPaymentTableBody is now fetched INSIDE loadPaymentHistoryTable **
 
 // Adjustment Modal Elements
 const addAdjustmentBtn = document.getElementById('addAdjustmentBtn');               // Needs ID in HTML
@@ -117,7 +117,7 @@ function formatNumber(amount) {
 // <<< MODIFIED HELPER END >>>
 
 function displayError(message) {
-    console.error("V2.5.1: ERROR - ", message);
+    console.error("V2.5.2: ERROR - ", message);
     alert(message);
     const nameHeaderEl=document.getElementById('cust-detail-name-header');
     const nameBreadcrumbEl=document.getElementById('cust-detail-name-breadcrumb');
@@ -130,11 +130,19 @@ function displayError(message) {
 
 function getCustomerIdFromUrl() { const params = new URLSearchParams(window.location.search); return params.get('id'); }
 
-// Load Customer Details (No change)
+// Load Customer Details (Enables buttons)
 async function loadCustomerDetails(customerId) {
-    console.log(`V2.5.1: Loading details for customer: ${customerId}`);
+    console.log(`V2.5.2: Loading details for customer: ${customerId}`);
     currentCustomerData = null;
     if (!db || !doc || !getDoc) { displayError("DB function missing (details)."); return false; }
+    // --- Get button references again inside function for safety ---
+    const currentEditCustomerBtn = document.getElementById('editCustomerBtn');
+    const currentAddPaymentBtn = document.getElementById('addPaymentBtn');
+    const currentToggleStatusBtn = document.getElementById('toggleStatusBtn');
+    const currentDeleteCustomerBtn = document.getElementById('deleteCustomerBtn');
+    const currentAddAdjustmentBtn = document.getElementById('addAdjustmentBtn');
+    const currentAddNewOrderLink = document.getElementById('addNewOrderLink');
+    // --- Get display elements ---
     const nameHeaderEl = document.getElementById('cust-detail-name-header');
     const nameBreadcrumbEl = document.getElementById('cust-detail-name-breadcrumb');
     const idEl = document.getElementById('cust-detail-id');
@@ -148,13 +156,8 @@ async function loadCustomerDetails(customerId) {
     const creditAllowedEl = document.getElementById('cust-detail-credit-allowed');
     const creditLimitEl = document.getElementById('cust-detail-credit-limit');
     const notesEl = document.getElementById('cust-detail-notes');
-    const toggleStatusBtn = document.getElementById('toggleStatusBtn');
-    const toggleStatusBtnSpan = toggleStatusBtn ? toggleStatusBtn.querySelector('span') : null;
-    const addNewOrderLink = document.getElementById('addNewOrderLink');
-    const editCustomerBtn = document.getElementById('editCustomerBtn');
-    const addPaymentBtn = document.getElementById('addPaymentBtn');
-    const deleteCustomerBtn = document.getElementById('deleteCustomerBtn');
-    const addAdjustmentBtn = document.getElementById('addAdjustmentBtn');
+    const toggleStatusBtnSpan = currentToggleStatusBtn ? currentToggleStatusBtn.querySelector('span') : null;
+
 
     if (nameHeaderEl) nameHeaderEl.textContent = "Loading...";
     if (nameBreadcrumbEl) nameBreadcrumbEl.textContent = "Loading...";
@@ -165,7 +168,7 @@ async function loadCustomerDetails(customerId) {
 
         if (customerSnap.exists()) {
             currentCustomerData = customerSnap.data();
-            console.log("V2.5.1: Customer data fetched:", currentCustomerData);
+            console.log("V2.5.2: Customer data fetched:", currentCustomerData);
             const customerName = currentCustomerData.fullName || 'N/A';
 
             if (nameHeaderEl) nameHeaderEl.textContent = customerName;
@@ -182,15 +185,15 @@ async function loadCustomerDetails(customerId) {
             const status = currentCustomerData.status || 'active';
             if (statusEl) {
                 statusEl.textContent = status.charAt(0).toUpperCase() + status.slice(1);
-                statusEl.className = 'status-badge';
+                statusEl.className = 'status-badge'; // Reset class
                 statusEl.classList.add(`status-${status.toLowerCase()}`);
             }
 
-            if (toggleStatusBtn && toggleStatusBtnSpan) {
+            if (currentToggleStatusBtn && toggleStatusBtnSpan) {
                 const isInactive = status !== 'active';
                 toggleStatusBtnSpan.textContent = isInactive ? 'Enable Account' : 'Disable Account';
-                toggleStatusBtn.querySelector('i').className = isInactive ? 'fas fa-toggle-off' : 'fas fa-toggle-on';
-                toggleStatusBtn.className = `button ${isInactive ? 'success-button' : 'secondary-button'}`;
+                currentToggleStatusBtn.querySelector('i').className = isInactive ? 'fas fa-toggle-off' : 'fas fa-toggle-on';
+                currentToggleStatusBtn.className = `button ${isInactive ? 'success-button' : 'secondary-button'}`;
             }
 
             const creditAllowed = currentCustomerData.creditAllowed === true;
@@ -198,37 +201,45 @@ async function loadCustomerDetails(customerId) {
             if (creditLimitEl) creditLimitEl.textContent = creditAllowed ? `₹${formatNumber(currentCustomerData.creditLimit)}` : 'N/A';
             if (notesEl) notesEl.textContent = currentCustomerData.notes || 'No remarks.';
 
-            if (editCustomerBtn) editCustomerBtn.disabled = false;
-            if (addPaymentBtn) addPaymentBtn.disabled = false;
-            if (toggleStatusBtn) toggleStatusBtn.disabled = false;
-            if (deleteCustomerBtn) deleteCustomerBtn.disabled = false;
-            if (addAdjustmentBtn) addAdjustmentBtn.disabled = false;
+            // <<< Enable Buttons >>>
+            console.log("V2.5.2: Attempting to enable action buttons...");
+            if (currentEditCustomerBtn) { currentEditCustomerBtn.disabled = false; console.log("- Edit Button Enabled"); } else { console.warn("- Edit Button not found to enable."); }
+            if (currentAddPaymentBtn) { currentAddPaymentBtn.disabled = false; console.log("- Add Payment Button Enabled"); } else { console.warn("- Add Payment Button not found to enable."); }
+            if (currentToggleStatusBtn) { currentToggleStatusBtn.disabled = false; console.log("- Toggle Status Button Enabled"); } else { console.warn("- Toggle Status Button not found to enable."); }
+            if (currentDeleteCustomerBtn) { currentDeleteCustomerBtn.disabled = false; console.log("- Delete Customer Button Enabled"); } else { console.warn("- Delete Customer Button not found to enable."); }
+            if (currentAddAdjustmentBtn) { currentAddAdjustmentBtn.disabled = false; console.log("- Add Adjustment Button Enabled"); } else { console.warn("- Add Adjustment Button not found to enable."); }
 
-            if (addNewOrderLink) {
-                addNewOrderLink.href = `new_order.html?customerId=${encodeURIComponent(customerId)}&customerName=${encodeURIComponent(customerName)}`;
-                addNewOrderLink.classList.remove('disabled');
+            if (currentAddNewOrderLink) {
+                currentAddNewOrderLink.href = `new_order.html?customerId=${encodeURIComponent(customerId)}&customerName=${encodeURIComponent(customerName)}`;
+                currentAddNewOrderLink.classList.remove('disabled');
+                 console.log("- Add New Order Link Enabled");
+            } else {
+                 console.warn("- Add New Order Link not found to enable.");
             }
+             console.log("V2.5.2: Action buttons enabling process finished.");
+            // <<< End Enable Buttons >>>
 
-            console.log("V2.5.1: Customer details displayed.");
+            console.log("V2.5.2: Customer details displayed.");
             return true;
         } else {
             displayError("Customer not found.");
             return false;
         }
     } catch (error) {
-        console.error("V2.5.1: Error loading customer details:", error);
+        console.error("V2.5.2: Error loading customer details:", error);
         displayError(`Error loading details: ${error.message}`);
         return false;
     }
 }
 
+
 // Load Order History (Ensure firestoreOrderBy is used)
 async function loadOrderHistory(customerId) {
-    console.log(`V2.5.1: Loading order history for customer: ${customerId}`);
+    console.log(`V2.5.2: Loading order history for customer: ${customerId}`);
     const orderTableBody = document.getElementById('customerOrderTableBody');
     let totalOrderValue = 0;
 
-    if (!orderTableBody) { console.error("V2.5.1: Order table body missing."); return 0; }
+    if (!orderTableBody) { console.error("V2.5.2: Order table body missing."); return 0; }
     // Check for necessary Firestore functions including the renamed orderBy
     if (!collection || !query || !where || !getDocs || !firestoreOrderBy) { // <<< CHECK HERE
         displayError("DB function missing (orders).");
@@ -238,7 +249,15 @@ async function loadOrderHistory(customerId) {
 
     orderTableBody.innerHTML = `<tr><td colspan="4" style="text-align: center;">Loading orders...</td></tr>`;
     const newOrderTableBody = orderTableBody.cloneNode(false);
-    orderTableBody.parentNode.replaceChild(newOrderTableBody, orderTableBody);
+    // Add safety check for parentNode
+    if (orderTableBody.parentNode) {
+        orderTableBody.parentNode.replaceChild(newOrderTableBody, orderTableBody);
+    } else {
+         console.error("V2.5.2: Parent node of orderTableBody is null. Cannot replaceChild.");
+         displayError("Error: Could not refresh order table structure.");
+         return 0; // Stop if parent is missing
+    }
+
 
     try {
         const ordersRef = collection(db, "orders");
@@ -274,6 +293,7 @@ async function loadOrderHistory(customerId) {
                 cellStatus.appendChild(statusBadge);
             });
 
+             // Use the new body for the event listener
              newOrderTableBody.addEventListener('click', (event) => {
                  const clickedRow = event.target.closest('tr.order-row-clickable');
                  if (clickedRow && clickedRow.dataset.orderId) {
@@ -281,10 +301,10 @@ async function loadOrderHistory(customerId) {
                  }
              });
         }
-        console.log(`V2.5.1: Order history loaded. Total Order Value: ${totalOrderValue}`);
+        console.log(`V2.5.2: Order history loaded. Total Order Value: ${totalOrderValue}`);
         return totalOrderValue;
     } catch (error) {
-        console.error("V2.5.1: Error loading order history:", error);
+        console.error("V2.5.2: Error loading order history:", error);
          if(error.code === 'failed-precondition' && error.message.includes("index")){
              displayError(`Error loading orders: Index required. Please check Firestore console.`);
          } else{
@@ -297,7 +317,7 @@ async function loadOrderHistory(customerId) {
 
 // Load Payment History Calculation (No change needed here)
 async function loadPaymentHistory(customerId) {
-    console.log(`V2.5.1: Calculating total paid/adjusted amount for customer: ${customerId}`);
+    console.log(`V2.5.2: Calculating total paid/adjusted amount for customer: ${customerId}`);
     let totalPaidAdjusted = 0;
     if (!collection || !query || !where || !getDocs) {
         displayError("DB function missing (payments calculation).");
@@ -312,9 +332,9 @@ async function loadPaymentHistory(customerId) {
                 totalPaidAdjusted += Number(doc.data().amountPaid || 0);
             });
         } else {
-            console.log("V2.5.1: No payments or adjustments found during calculation.");
+            console.log("V2.5.2: No payments or adjustments found during calculation.");
         }
-        console.log(`V2.5.1: Payment/Adjustment calculation complete. Net Paid/Adjusted: ${totalPaidAdjusted}`);
+        console.log(`V2.5.2: Payment/Adjustment calculation complete. Net Paid/Adjusted: ${totalPaidAdjusted}`);
         currentTotalPaidAmount = totalPaidAdjusted;
         return totalPaidAdjusted;
     } catch (error) {
@@ -323,7 +343,7 @@ async function loadPaymentHistory(customerId) {
              console.error("Firestore Index Error:", error.message);
          } else{
              displayError(`Error calculating payments: ${error.message}`);
-             console.error("V2.5.1: Error calculating payment history:", error);
+             console.error("V2.5.2: Error calculating payment history:", error);
          }
         return 0;
     }
@@ -333,13 +353,13 @@ async function loadPaymentHistory(customerId) {
 // <<< MODIFIED FUNCTION >>>
 // Updates Account Summary with new balance display logic
 function updateAccountSummary(totalOrderValue) {
-    console.log(`V2.5.1: Updating account summary. Order Value: ${totalOrderValue}, Paid Amount (Net): ${currentTotalPaidAmount}`);
+    console.log(`V2.5.2: Updating account summary. Order Value: ${totalOrderValue}, Paid Amount (Net): ${currentTotalPaidAmount}`);
     const summaryTotalOrdersEl = document.getElementById('summary-total-orders');
     const summaryTotalPaidEl = document.getElementById('summary-total-paid');
     const summaryBalanceEl = document.getElementById('summary-balance');
 
     if (!summaryTotalOrdersEl || !summaryTotalPaidEl || !summaryBalanceEl) {
-        console.error("V2.5.1: Account summary elements missing!");
+        console.error("V2.5.2: Account summary elements missing!");
         return;
     }
 
@@ -370,10 +390,10 @@ function updateAccountSummary(totalOrderValue) {
     // --- End New Logic ---
 
     summaryBalanceEl.textContent = finalDisplay;
-    summaryBalanceEl.className = '';
-    summaryBalanceEl.classList.add(balanceClass);
+    summaryBalanceEl.className = ''; // Reset class
+    summaryBalanceEl.classList.add(balanceClass); // Apply new class
 
-    console.log("V2.5.1: Account summary updated with new display logic.");
+    console.log("V2.5.2: Account summary updated with new display logic.");
 }
 // <<< MODIFIED FUNCTION END >>>
 
@@ -381,16 +401,28 @@ function updateAccountSummary(totalOrderValue) {
 // <<< MODIFIED FUNCTION >>>
 // Loads Account Ledger - Corrected calculation, new display logic, uses firestoreOrderBy
 async function loadAccountLedger(customerId) {
-    console.log(`V2.5.1: Loading account ledger for customer: ${customerId}`);
-    if (!accountLedgerTableBody) { console.error("V2.5.1: Ledger table body missing."); return; }
+    console.log(`V2.5.2: Loading account ledger for customer: ${customerId}`);
+    // --- Get element inside function ---
+    const currentAccountLedgerTableBody = document.getElementById('accountLedgerTableBody');
+    if (!currentAccountLedgerTableBody) { console.error("V2.5.2: Ledger table body missing."); return; }
     // Check for necessary functions including renamed orderBy
     if (!db || !collection || !query || !where || !getDocs || !firestoreOrderBy || !Timestamp) { // <<< CHECK HERE
         displayError("DB function missing (ledger).");
-        accountLedgerTableBody.innerHTML = `<tr><td colspan="5" style="text-align: center;">Error loading ledger (DB func)</td></tr>`;
+        currentAccountLedgerTableBody.innerHTML = `<tr><td colspan="5" style="text-align: center;">Error loading ledger (DB func)</td></tr>`;
         return;
     }
 
-    accountLedgerTableBody.innerHTML = `<tr><td colspan="5" style="text-align: center;">Loading ledger...</td></tr>`;
+    currentAccountLedgerTableBody.innerHTML = `<tr><td colspan="5" style="text-align: center;">Loading ledger...</td></tr>`;
+    // --- Create new body and replace safely ---
+    const newLedgerTableBody = currentAccountLedgerTableBody.cloneNode(false);
+    if (currentAccountLedgerTableBody.parentNode) {
+        currentAccountLedgerTableBody.parentNode.replaceChild(newLedgerTableBody, currentAccountLedgerTableBody);
+    } else {
+        console.error("V2.5.2: Parent node of accountLedgerTableBody is null. Cannot replaceChild.");
+        displayError("Error: Could not refresh ledger table structure.");
+        return; // Stop if parent is missing
+    }
+
     let transactions = [];
 
     try {
@@ -403,7 +435,7 @@ async function loadAccountLedger(customerId) {
             const orderId = order.orderId || order.customOrderId || `Sys: ${doc.id.substring(0,6)}`;
             transactions.push({ date: order.createdAt, type: 'order', description: `Order #${orderId}`, debitAmount: Number(order.totalAmount || 0), creditAmount: 0, docId: doc.id });
         });
-        console.log(`V2.5.1: Fetched ${orderSnapshot.size} orders for ledger.`);
+        console.log(`V2.5.2: Fetched ${orderSnapshot.size} orders for ledger.`);
 
         // 2. Fetch Payments (Use firestoreOrderBy)
         const paymentsRef = collection(db, "payments");
@@ -414,34 +446,42 @@ async function loadAccountLedger(customerId) {
             let desc = `Payment Received (${payment.paymentMethod || 'N/A'})`;
             if (payment.isAdjustment === true) { desc = payment.notes || `Adjustment (${payment.paymentMethod})`; }
             let debitLedger = 0; let creditLedger = 0;
+            // amountPaid is negative for Debit Adj, positive for Credit Adj/Payment
             if (payment.amountPaid < 0) { debitLedger = Math.abs(payment.amountPaid); }
             else { creditLedger = payment.amountPaid; }
             transactions.push({ date: payment.paymentDate, type: payment.isAdjustment ? 'adjustment' : 'payment', description: desc, debitAmount: debitLedger, creditAmount: creditLedger, docId: doc.id });
         });
-        console.log(`V2.5.1: Fetched ${paymentSnapshot.size} payments/adjustments for ledger.`);
+        console.log(`V2.5.2: Fetched ${paymentSnapshot.size} payments/adjustments for ledger.`);
 
         // 3. Sort Transactions
         transactions.sort((a, b) => {
             const dateA = a.date?.toDate ? a.date.toDate().getTime() : 0;
             const dateB = b.date?.toDate ? b.date.toDate().getTime() : 0;
-            if (dateA === dateB) { if (a.type === 'order' && b.type !== 'order') return -1; if (a.type !== 'order' && b.type === 'order') return 1; }
-            return dateA - dateB;
+            // If dates are the same, prioritize orders (debits) before payments (credits) for consistency
+            if (dateA === dateB) {
+                 if (a.type === 'order' && b.type !== 'order') return -1; // Order first
+                 if (a.type !== 'order' && b.type === 'order') return 1;  // Order first
+                 // If types are also the same, maintain original order (or sort by docId if needed)
+            }
+            return dateA - dateB; // Sort by date ascending
         });
-        console.log(`V2.5.1: Sorted ${transactions.length} total transactions.`);
+        console.log(`V2.5.2: Sorted ${transactions.length} total transactions.`);
 
         // 4. Render Ledger Table
-        accountLedgerTableBody.innerHTML = '';
+        // Use the new body for rendering
+        newLedgerTableBody.innerHTML = '';
         let runningBalance = 0; // Positive = Due
 
         if (transactions.length === 0) {
-            accountLedgerTableBody.innerHTML = `<tr><td colspan="5" style="text-align: center;">No transactions found.</td></tr>`;
+            newLedgerTableBody.innerHTML = `<tr><td colspan="5" style="text-align: center;">No transactions found.</td></tr>`;
         } else {
             transactions.forEach(tx => {
                 // --- Correct Running Balance Calculation (Positive = Due) ---
+                 // Order increases due (debitAmount), Payment/CreditAdj decreases due (creditAmount)
                  runningBalance = runningBalance + (tx.debitAmount || 0) - (tx.creditAmount || 0);
                 // --- End Correction ---
 
-                const row = accountLedgerTableBody.insertRow();
+                const row = newLedgerTableBody.insertRow(); // Render into the new body
                 row.insertCell().textContent = tx.date?.toDate ? formatDate(tx.date.toDate()) : 'N/A';
                 row.insertCell().textContent = escapeHtml(tx.description);
                 const cellDebit = row.insertCell();
@@ -458,14 +498,14 @@ async function loadAccountLedger(customerId) {
                 let balanceClass = 'ledger-balance-zero';
                 let prefix = '';
 
-                if (runningBalance > 0.001) {
+                if (runningBalance > 0.001) { // Due
                     balanceClass = 'ledger-balance-negative'; // Use negative class for RED
                     prefix = '-';
-                } else if (runningBalance < -0.001) {
+                } else if (runningBalance < -0.001) { // Credit
                     balanceClass = 'ledger-balance-positive'; // Use positive class for GREEN
                     prefix = '+';
                     displayBalance = Math.abs(runningBalance);
-                } else {
+                } else { // Zero
                     prefix = ''; displayBalance = 0;
                 }
 
@@ -477,17 +517,18 @@ async function loadAccountLedger(customerId) {
                 cellBalance.innerHTML = `<span class="${balanceClass}">${finalDisplay}</span>`;
             });
         }
-        console.log(`V2.5.1: Ledger rendered. Final balance (internal): ${runningBalance}`);
+        console.log(`V2.5.2: Ledger rendered. Final balance (internal): ${runningBalance}`);
 
     } catch (error) {
-        console.error("V2.5.1: Error loading account ledger:", error);
+        console.error("V2.5.2: Error loading account ledger:", error);
          if(error.code === 'failed-precondition' && error.message.includes("index")){
              displayError(`Error loading ledger: Index required. Please check Firestore console.`);
              console.error("Firestore Index Error:", error.message);
          } else{
             displayError(`Error loading ledger: ${error.message}`);
          }
-        accountLedgerTableBody.innerHTML = `<tr><td colspan="5" style="text-align: center;">Error loading ledger.</td></tr>`;
+        // Use the new body for error message
+        newLedgerTableBody.innerHTML = `<tr><td colspan="5" style="text-align: center;">Error loading ledger.</td></tr>`;
     }
 }
 // <<< MODIFIED FUNCTION END >>>
@@ -502,9 +543,17 @@ async function handleDeleteFromModal_CustPage() { /* ... existing code ... */ }
 async function deleteSingleOrder_CustPage(firestoreId) { /* ... existing code ... */ }
 function handleEditFullFromModal_CustPage() { /* ... existing code ... */ }
 
-// --- Add Payment Modal Functions --- (Refreshes Payment Table)
-function openAddPaymentModal() { /* ... existing code ... */ }
-function closeAddPaymentModal() { /* ... existing code ... */ }
+// --- Add Payment Modal Functions --- (Refreshes data including Payment Table)
+function openAddPaymentModal() {
+     if (!addPaymentModal || !addPaymentForm) { alert("Cannot open payment modal. Elements missing."); return; }
+     console.log("V2.5.2: Opening Add Payment modal.");
+     addPaymentForm.reset();
+     if(paymentDateInput) paymentDateInput.valueAsDate = new Date();
+     if(paymentModalCustNameSpan && currentCustomerData) paymentModalCustNameSpan.textContent = currentCustomerData.fullName || 'Customer';
+     if(savePaymentBtn) { savePaymentBtn.disabled = false; savePaymentBtn.innerHTML = '<i class="fas fa-save"></i> Save Payment'; }
+     addPaymentModal.classList.add('active');
+}
+function closeAddPaymentModal() { if (addPaymentModal) { addPaymentModal.classList.remove('active'); } }
 async function handleSavePayment(event) {
     event.preventDefault();
     if (!addDoc || !collection || !Timestamp || !currentCustomerId) { alert("DB function missing or Customer ID missing."); return; }
@@ -521,18 +570,18 @@ async function handleSavePayment(event) {
         const paymentDateTimestamp = Timestamp.fromDate(new Date(date + 'T00:00:00'));
         const paymentData = { customerId: currentCustomerId, amountPaid: amount, paymentDate: paymentDateTimestamp, paymentMethod: method, notes: notes || null, createdAt: Timestamp.now(), isAdjustment: false };
         const docRef = await addDoc(collection(db, "payments"), paymentData);
-        console.log("V2.5.1: Payment added successfully:", docRef.id);
+        console.log("V2.5.2: Payment added successfully:", docRef.id);
         alert("Payment added successfully!");
         closeAddPaymentModal();
         // Refresh data
-        console.log("V2.5.1: Refreshing data after payment save...");
-        currentTotalPaidAmount = await loadPaymentHistory(currentCustomerId);
-        const currentOrderTotal = await loadOrderHistory(currentCustomerId);
-        updateAccountSummary(currentOrderTotal);
-        await loadAccountLedger(currentCustomerId);
+        console.log("V2.5.2: Refreshing data after payment save...");
+        await loadPaymentHistory(currentCustomerId); // Recalculate balance first
+        const currentOrderTotal = await loadOrderHistory(currentCustomerId); // Reload orders
+        updateAccountSummary(currentOrderTotal); // Update summary
+        await loadAccountLedger(currentCustomerId); // Reload ledger
         await loadPaymentHistoryTable(currentCustomerId); // <<< Refresh payment table
-        console.log("V2.5.1: Data refreshed.");
-    } catch (error) { console.error("V2.5.1: Error saving payment:", error); alert(`Error saving payment: ${error.message}`);
+        console.log("V2.5.2: Data refreshed.");
+    } catch (error) { console.error("V2.5.2: Error saving payment:", error); alert(`Error saving payment: ${error.message}`);
     } finally { savePaymentBtn.disabled = false; savePaymentBtn.innerHTML = originalHTML; }
 }
 
@@ -552,57 +601,88 @@ function closeConfirmDeleteModal() { /* ... existing code ... */}
 async function executeDeleteCustomer() { /* ... existing code ... */ }
 
 
-// <<< NEW FUNCTION >>> - Loads Payment History Table (Uses firestoreOrderBy)
+// <<< MODIFIED FUNCTION >>> - Loads Payment History Table (Uses firestoreOrderBy, Fixes replaceChild)
 async function loadPaymentHistoryTable(customerId) {
-    console.log(`V2.5.1: Loading payment history table for customer: ${customerId}`);
-    if (!customerPaymentTableBody) { console.log("V2.5.1: Payment history table body not found. Skipping."); return; }
+    // GET the element INSIDE the function
+    const customerPaymentTableBody = document.getElementById('customerPaymentTableBody');
+    // Add a check here
+    if (!customerPaymentTableBody) {
+        console.error("V2.5.2: Payment history table body element with ID 'customerPaymentTableBody' not found in the DOM.");
+        displayError("Error: Payment history table structure missing."); // Inform user
+        return; // Stop execution if element is missing
+    }
+
+    console.log(`V2.5.2: Loading payment history table for customer: ${customerId}`);
+
     // Check for necessary functions including renamed orderBy
     if (!collection || !query || !where || !getDocs || !firestoreOrderBy) { // <<< CHECK HERE
         displayError("DB function missing (payments table).");
+        // Use the variable fetched inside the function
         customerPaymentTableBody.innerHTML = `<tr><td colspan="5" style="text-align: center;">Error loading payments (DB func)</td></tr>`;
         return;
     }
+
+    // Use the variable fetched inside the function
     customerPaymentTableBody.innerHTML = `<tr><td colspan="5" style="text-align: center;">Loading payments...</td></tr>`;
     const newPaymentTableBody = customerPaymentTableBody.cloneNode(false);
-    customerPaymentTableBody.parentNode.replaceChild(newPaymentTableBody, customerPaymentTableBody);
+
+    // This line should now work, provided the element exists
+    // Ensure parentNode exists before calling replaceChild (additional safety)
+    if (customerPaymentTableBody.parentNode) {
+         customerPaymentTableBody.parentNode.replaceChild(newPaymentTableBody, customerPaymentTableBody);
+    } else {
+         console.error("V2.5.2: Parent node of customerPaymentTableBody is null. Cannot replaceChild.");
+         displayError("Error: Could not refresh payment table structure.");
+         return; // Stop if parent is missing
+    }
+
     try {
         const paymentsRef = collection(db, "payments");
         // Use the RENAMED firestoreOrderBy function here
         const q = query(paymentsRef, where("customerId", "==", customerId), firestoreOrderBy("paymentDate", "desc")); // <<< USE firestoreOrderBy
         const querySnapshot = await getDocs(q);
+
         if (querySnapshot.empty) {
             newPaymentTableBody.innerHTML = `<tr><td colspan="5" style="text-align: center;">No payments or adjustments found.</td></tr>`;
         } else {
             querySnapshot.forEach(doc => {
                 // ... (rest of row creation logic - same as previous version) ...
-                const payment = doc.data();
-                const paymentId = doc.id;
-                const paymentDate = payment.paymentDate?.toDate ? formatDate(payment.paymentDate.toDate()) : 'N/A';
-                const amountPaid = payment.amountPaid || 0;
-                const paymentMethod = payment.paymentMethod || 'N/A';
-                const notes = payment.notes || '';
-                const isAdj = payment.isAdjustment === true;
-                const row = newPaymentTableBody.insertRow();
-                row.insertCell().textContent = paymentDate;
-                const amountCell = row.insertCell();
-                amountCell.textContent = `₹${formatNumber(amountPaid)}`;
-                 if (isAdj && amountPaid < 0) { amountCell.style.color = 'red'; amountCell.title = 'Debit Adjustment'; }
-                 else if (isAdj && amountPaid >= 0) { amountCell.style.color = 'green'; amountCell.title = 'Credit Adjustment'; }
-                row.insertCell().textContent = paymentMethod;
-                row.insertCell().textContent = notes;
-                const actionCell = row.insertCell();
-                actionCell.style.textAlign = 'center';
-                const deleteButton = document.createElement('button');
-                deleteButton.innerHTML = '<i class="fas fa-trash-alt"></i>';
-                deleteButton.className = 'action-button delete-payment-btn';
-                deleteButton.title = 'Delete Payment/Adjustment';
-                deleteButton.setAttribute('data-payment-id', paymentId);
-                 if (payment.notes?.startsWith("Advance payment for Order #")) {
-                     deleteButton.disabled = true; deleteButton.title = 'Cannot delete advance payment entry.';
-                     deleteButton.style.opacity = '0.5'; deleteButton.style.cursor = 'not-allowed';
-                 }
-                actionCell.appendChild(deleteButton);
+                 const payment = doc.data();
+                 const paymentId = doc.id;
+                 const paymentDate = payment.paymentDate?.toDate ? formatDate(payment.paymentDate.toDate()) : 'N/A';
+                 const amountPaid = payment.amountPaid || 0; // Can be negative for Debit Adj
+                 const paymentMethod = payment.paymentMethod || 'N/A';
+                 const notes = payment.notes || '';
+                 const isAdj = payment.isAdjustment === true;
+
+                 const row = newPaymentTableBody.insertRow(); // Use new body
+                 row.insertCell().textContent = paymentDate;
+
+                 const amountCell = row.insertCell();
+                 amountCell.textContent = `₹${formatNumber(amountPaid)}`; // formatNumber handles Math.abs
+                 amountCell.style.textAlign = 'right'; // Align amount right
+                  if (isAdj && amountPaid < 0) { amountCell.style.color = 'red'; amountCell.title = 'Debit Adjustment'; }
+                  else if (isAdj && amountPaid >= 0) { amountCell.style.color = 'green'; amountCell.title = 'Credit Adjustment'; }
+                  else { amountCell.style.color = 'inherit'; amountCell.title = 'Payment'; } // Regular payment
+
+                 row.insertCell().textContent = paymentMethod;
+                 row.insertCell().textContent = escapeHtml(notes); // Escape notes
+
+                 const actionCell = row.insertCell();
+                 actionCell.style.textAlign = 'center';
+                 const deleteButton = document.createElement('button');
+                 deleteButton.innerHTML = '<i class="fas fa-trash-alt"></i>';
+                 deleteButton.className = 'action-button delete-payment-btn';
+                 deleteButton.title = 'Delete Payment/Adjustment';
+                 deleteButton.setAttribute('data-payment-id', paymentId);
+                  if (payment.notes?.startsWith("Advance payment for Order #")) {
+                      deleteButton.disabled = true; deleteButton.title = 'Cannot delete advance payment entry.';
+                      deleteButton.style.opacity = '0.5'; deleteButton.style.cursor = 'not-allowed';
+                  }
+                 actionCell.appendChild(deleteButton);
             });
+
+             // Attach listener to the NEW body element
              newPaymentTableBody.addEventListener('click', (event) => {
                  const deleteBtn = event.target.closest('button.delete-payment-btn');
                  if (deleteBtn && !deleteBtn.disabled) {
@@ -611,49 +691,50 @@ async function loadPaymentHistoryTable(customerId) {
                  }
              });
         }
-        console.log(`V2.5.1: Payment history table loaded.`);
+        console.log(`V2.5.2: Payment history table loaded.`);
     } catch (error) {
-        console.error("V2.5.1: Error loading payment history table:", error);
+        console.error("V2.5.2: Error loading payment history table:", error);
          if(error.code === 'failed-precondition' && error.message.includes("index")){
              displayError(`Error loading payments table: Index required. Please check Firestore console.`);
          } else{
             displayError(`Error loading payments table: ${error.message}`);
          }
+        // Use the new body for error message
         newPaymentTableBody.innerHTML = `<tr><td colspan="5" style="text-align: center;">Error loading payments table.</td></tr>`;
     }
 }
-// <<< NEW FUNCTION END >>>
+// <<< MODIFIED FUNCTION END >>>
 
 // <<< NEW FUNCTION >>> - Handles Payment/Adjustment Deletion
 async function handleDeletePayment(paymentId) {
     if (!deleteDoc || !doc) { alert("DB function missing (delete payment)"); return; }
-    if (!paymentId) { console.warn("V2.5.1: Delete payment called without ID."); return; }
+    if (!paymentId) { console.warn("V2.5.2: Delete payment called without ID."); return; }
     if (confirm('क्या आप वाकई इस भुगतान/एडजस्टमेंट एंट्री को डिलीट करना चाहते हैं? यह वापस नहीं लाया जा सकेगा।')) {
-        console.log(`V2.5.1: User confirmed deletion for payment/adjustment ${paymentId}. Proceeding...`);
+        console.log(`V2.5.2: User confirmed deletion for payment/adjustment ${paymentId}. Proceeding...`);
         try {
             await deleteDoc(doc(db, "payments", paymentId));
-            console.log("V2.5.1: Payment/Adjustment deleted successfully from Firestore.");
+            console.log("V2.5.2: Payment/Adjustment deleted successfully from Firestore.");
             alert("Payment/Adjustment record deleted.");
             // Refresh data
-            console.log("V2.5.1: Refreshing data after delete...");
-            currentTotalPaidAmount = await loadPaymentHistory(currentCustomerId);
-            const currentOrderTotal = await loadOrderHistory(currentCustomerId);
-            updateAccountSummary(currentOrderTotal);
-            await loadAccountLedger(currentCustomerId);
-            await loadPaymentHistoryTable(currentCustomerId);
-            console.log("V2.5.1: Data refreshed.");
-        } catch (error) { console.error(`V2.5.1: Error deleting payment/adjustment ${paymentId}:`, error); alert(`Failed to delete record: ${error.message}`); }
-    } else { console.log("V2.5.1: Deletion cancelled by user."); }
+            console.log("V2.5.2: Refreshing data after delete...");
+            await loadPaymentHistory(currentCustomerId); // Recalculate balance first
+            const currentOrderTotal = await loadOrderHistory(currentCustomerId); // Reload orders
+            updateAccountSummary(currentOrderTotal); // Update summary
+            await loadAccountLedger(currentCustomerId); // Reload ledger
+            await loadPaymentHistoryTable(currentCustomerId); // Refresh payment table
+            console.log("V2.5.2: Data refreshed.");
+        } catch (error) { console.error(`V2.5.2: Error deleting payment/adjustment ${paymentId}:`, error); alert(`Failed to delete record: ${error.message}`); }
+    } else { console.log("V2.5.2: Deletion cancelled by user."); }
 }
 // <<< NEW FUNCTION END >>>
 
 // <<< NEW FUNCTIONS >>> - Handle Balance Adjustment Modal
 function openAddAdjustmentModal() {
     if (!addAdjustmentModal || !addAdjustmentForm) { alert("Cannot open adjustment modal. Elements missing from HTML."); return; }
-    console.log("V2.5.1: Opening Add Adjustment modal.");
+    console.log("V2.5.2: Opening Add Adjustment modal.");
     addAdjustmentForm.reset();
     if (adjustmentDateInput) adjustmentDateInput.valueAsDate = new Date();
-    if(adjustmentTypeDebitRadio) adjustmentTypeDebitRadio.checked = true;
+    if(adjustmentTypeDebitRadio) adjustmentTypeDebitRadio.checked = true; // Default to Debit
     if (saveAdjustmentBtn) { saveAdjustmentBtn.disabled = false; saveAdjustmentBtn.innerHTML = '<i class="fas fa-save"></i> Save Adjustment'; }
     addAdjustmentModal.classList.add('active');
 }
@@ -675,93 +756,177 @@ async function handleSaveAdjustment(event) {
         const originalHTML = button ? button.innerHTML : '';
         if(button) button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
         try {
-            let amountToLog = adjustmentAmount; let method = "Adjustment"; let notes = adjustmentRemarks || "";
-            if (adjustmentType === 'debit') { amountToLog = -adjustmentAmount; notes = `Adjustment - Debit: ${notes}`; method = "Adj-Debit"; }
-            else { amountToLog = adjustmentAmount; notes = `Adjustment - Credit: ${notes}`; method = "Adj-Credit"; }
-            const paymentData = { customerId: currentCustomerId, amountPaid: amountToLog, paymentDate: Timestamp.fromDate(new Date(adjustmentDateStr + 'T00:00:00')), paymentMethod: method, notes: notes.trim(), createdAt: Timestamp.now(), isAdjustment: true };
+            let amountToLog = adjustmentAmount; // Amount entered by user (always positive)
+            let method = "Adjustment";
+            let notes = adjustmentRemarks || "";
+
+            // Determine final amount based on type (Debit makes amount negative)
+            if (adjustmentType === 'debit') {
+                 amountToLog = -adjustmentAmount; // Store negative for debit
+                 notes = `Adjustment - Debit: ${notes}`;
+                 method = "Adj-Debit";
+            } else { // Credit
+                 amountToLog = adjustmentAmount; // Store positive for credit
+                 notes = `Adjustment - Credit: ${notes}`;
+                 method = "Adj-Credit";
+            }
+
+            const paymentData = {
+                customerId: currentCustomerId,
+                amountPaid: amountToLog, // Store potentially negative amount
+                paymentDate: Timestamp.fromDate(new Date(adjustmentDateStr + 'T00:00:00')), // Use selected date
+                paymentMethod: method,
+                notes: notes.trim(),
+                createdAt: Timestamp.now(),
+                isAdjustment: true // Mark as adjustment
+            };
+
             const docRef = await addDoc(collection(db, "payments"), paymentData);
-            console.log("V2.5.1: Adjustment added successfully:", docRef.id);
+            console.log("V2.5.2: Adjustment added successfully:", docRef.id);
             alert("Adjustment saved successfully!");
             closeAddAdjustmentModal();
             // Refresh data
-            console.log("V2.5.1: Refreshing data after adjustment save...");
-            currentTotalPaidAmount = await loadPaymentHistory(currentCustomerId);
-            const currentOrderTotal = await loadOrderHistory(currentCustomerId);
-            updateAccountSummary(currentOrderTotal);
-            await loadAccountLedger(currentCustomerId);
-            await loadPaymentHistoryTable(currentCustomerId);
-            console.log("V2.5.1: Data refreshed.");
-        } catch (error) { console.error("V2.5.1: Error saving adjustment:", error); alert(`Error saving adjustment: ${error.message}`);
+            console.log("V2.5.2: Refreshing data after adjustment save...");
+            await loadPaymentHistory(currentCustomerId); // Recalculate balance first
+            const currentOrderTotal = await loadOrderHistory(currentCustomerId); // Reload orders
+            updateAccountSummary(currentOrderTotal); // Update summary
+            await loadAccountLedger(currentCustomerId); // Reload ledger
+            await loadPaymentHistoryTable(currentCustomerId); // <<< Refresh payment table
+            console.log("V2.5.2: Data refreshed.");
+        } catch (error) {
+            console.error("V2.5.2: Error saving adjustment:", error);
+            // --- Display specific error to user ---
+             if (error instanceof TypeError && error.message.includes('replaceChild')) {
+                  alert("Error saving adjustment: Failed to refresh payment table after saving. Please refresh the page manually to see the update.");
+             } else {
+                  alert(`Error saving adjustment: ${error.message}`);
+             }
+             // --- End error display ---
         } finally { if(button){ button.disabled = false; button.innerHTML = originalHTML; } }
-    } else { console.log("V2.5.1: Adjustment save cancelled by user."); }
+    } else { console.log("V2.5.2: Adjustment save cancelled by user."); }
 }
 // <<< NEW FUNCTIONS END >>>
 
 
-// <<< MODIFIED FUNCTION >>> - Setup ALL static event listeners
+// <<< MODIFIED FUNCTION >>> - Setup ALL static event listeners with added logs
 function setupStaticEventListeners() {
-    console.log("V2.5.1: Setting up static event listeners...");
+    console.log("V2.5.2: Setting up static event listeners...");
     // --- Existing Listeners (Verify IDs in HTML) ---
     if(closeModalBtn_CustPage) closeModalBtn_CustPage.addEventListener('click', closeDetailsModal_CustPage);
     if(detailsModal_CustPage) detailsModal_CustPage.addEventListener('click', (event) => { if(event.target === detailsModal_CustPage) closeDetailsModal_CustPage(); });
     if(modalUpdateStatusBtn_CustPage) modalUpdateStatusBtn_CustPage.addEventListener('click', handleUpdateStatus_CustPage);
     if(modalDeleteBtn_CustPage) modalDeleteBtn_CustPage.addEventListener('click', handleDeleteFromModal_CustPage); // Deletes ORDER
     if(modalEditFullBtn_CustPage) modalEditFullBtn_CustPage.addEventListener('click', handleEditFullFromModal_CustPage);
-    if(addPaymentBtn) addPaymentBtn.addEventListener('click', openAddPaymentModal);
+
+    // --- Action Bar Button Listeners with Logs ---
+    if (editCustomerBtn) {
+        editCustomerBtn.addEventListener('click', openEditCustomerModal_CustPage);
+        console.log("Listener ATTACHED to editCustomerBtn");
+    } else {
+        console.error("Element NOT FOUND: editCustomerBtn during listener setup!");
+    }
+
+    if (addPaymentBtn) {
+        addPaymentBtn.addEventListener('click', openAddPaymentModal);
+        console.log("Listener ATTACHED to addPaymentBtn");
+    } else {
+        console.error("Element NOT FOUND: addPaymentBtn during listener setup!");
+    }
+
+    if (toggleStatusBtn) {
+        toggleStatusBtn.addEventListener('click', handleToggleAccountStatus);
+        console.log("Listener ATTACHED to toggleStatusBtn");
+    } else {
+        console.error("Element NOT FOUND: toggleStatusBtn during listener setup!");
+    }
+
+    if (deleteCustomerBtn) {
+        deleteCustomerBtn.addEventListener('click', handleDeleteCustomer_CustPage);
+        console.log("Listener ATTACHED to deleteCustomerBtn");
+    } else {
+        console.error("Element NOT FOUND: deleteCustomerBtn during listener setup!");
+    }
+
+    if (addAdjustmentBtn) {
+        addAdjustmentBtn.addEventListener('click', openAddAdjustmentModal);
+         console.log("Listener ATTACHED to addAdjustmentBtn");
+    } else {
+         console.error("Element NOT FOUND: addAdjustmentBtn during listener setup!");
+    }
+    // --- End Action Bar Button Listeners ---
+
+    // --- Payment Modal Listeners ---
     if(closePaymentModalBtn) closePaymentModalBtn.addEventListener('click', closeAddPaymentModal);
     if(cancelPaymentBtn) cancelPaymentBtn.addEventListener('click', closeAddPaymentModal);
     if(addPaymentModal) addPaymentModal.addEventListener('click', (event) => { if(event.target === addPaymentModal) closeAddPaymentModal(); });
     if(addPaymentForm) addPaymentForm.addEventListener('submit', handleSavePayment);
-    if(editCustomerBtn) editCustomerBtn.addEventListener('click', openEditCustomerModal_CustPage);
+
+    // --- Edit Customer Modal Listeners ---
     if(closeCustomerEditModalBtn) closeCustomerEditModalBtn.addEventListener('click', closeEditCustomerModal_CustPage);
     if(cancelCustomerEditBtn) cancelCustomerEditBtn.addEventListener('click', closeEditCustomerModal_CustPage);
     if(customerEditModal) customerEditModal.addEventListener('click', (event) => { if(event.target === customerEditModal) closeEditCustomerModal_CustPage(); });
     if(customerEditForm) customerEditForm.addEventListener('submit', handleUpdateCustomer_CustPage);
     if(creditEditYesRadio && creditEditNoRadio && creditLimitEditGroup){ const toggleCreditLimitField = () => { creditLimitEditGroup.style.display = creditEditYesRadio.checked ? 'block' : 'none'; }; creditEditYesRadio.addEventListener('change', toggleCreditLimitField); creditEditNoRadio.addEventListener('change', toggleCreditLimitField); }
-    if(toggleStatusBtn) toggleStatusBtn.addEventListener('click', handleToggleAccountStatus);
+
+    // --- Confirmation Modal Listeners ---
     if(closeConfirmToggleModalBtn) closeConfirmToggleModalBtn.addEventListener('click', closeConfirmToggleModal);
     if(cancelToggleBtn) cancelToggleBtn.addEventListener('click', closeConfirmToggleModal);
     if(confirmToggleStatusModal) confirmToggleStatusModal.addEventListener('click', (e) => { if(e.target === confirmToggleStatusModal) closeConfirmToggleModal(); });
     if(confirmToggleCheckbox) confirmToggleCheckbox.addEventListener('change', () => { if(confirmToggleBtn) confirmToggleBtn.disabled = !confirmToggleCheckbox.checked; });
     if(confirmToggleBtn) confirmToggleBtn.addEventListener('click', () => { const newStatus = confirmToggleBtn.dataset.newStatus; if(confirmToggleCheckbox.checked && newStatus){ executeToggleStatus(newStatus); } });
-    if(deleteCustomerBtn) deleteCustomerBtn.addEventListener('click', handleDeleteCustomer_CustPage);
+
     if(closeConfirmDeleteModalBtn) closeConfirmDeleteModalBtn.addEventListener('click', closeConfirmDeleteModal);
     if(cancelDeleteBtn) cancelDeleteBtn.addEventListener('click', closeConfirmDeleteModal);
     if(confirmDeleteModal) confirmDeleteModal.addEventListener('click', (e) => { if(e.target === confirmDeleteModal) closeConfirmDeleteModal(); });
     if(confirmDeleteCheckboxModal) confirmDeleteCheckboxModal.addEventListener('change', () => { if(confirmDeleteBtn) confirmDeleteBtn.disabled = !confirmDeleteCheckboxModal.checked; });
     if(confirmDeleteBtn) confirmDeleteBtn.addEventListener('click', () => { if(confirmDeleteCheckboxModal.checked){ executeDeleteCustomer(); } });
-    // --- NEW Listeners ---
-    // Payment Deletion listener is now added dynamically within loadPaymentHistoryTable
-    // Adjustment Modal Listeners
-    if (addAdjustmentBtn) addAdjustmentBtn.addEventListener('click', openAddAdjustmentModal);
+
+    // --- Adjustment Modal Listeners ---
     if (closeAdjustmentModalBtn) closeAdjustmentModalBtn.addEventListener('click', closeAddAdjustmentModal);
     if (cancelAdjustmentBtn) cancelAdjustmentBtn.addEventListener('click', closeAddAdjustmentModal);
     if (addAdjustmentModal) addAdjustmentModal.addEventListener('click', (event) => { if (event.target === addAdjustmentModal) closeAddAdjustmentModal(); });
     if (addAdjustmentForm) addAdjustmentForm.addEventListener('submit', handleSaveAdjustment);
     // --- End NEW Listeners ---
-    console.log("V2.5.1: Static event listeners attached.");
+
+    console.log("V2.5.2: Static event listeners attach attempt finished.");
 }
 // <<< MODIFIED FUNCTION END >>>
 
 
 // <<< MODIFIED FUNCTION >>> - Initializes page, calls payment table load
 window.initializeCustomerDetailPage = async function(user) {
-    console.log("V2.5.1: Initializing customer detail page...");
+    console.log("V2.5.2: Initializing customer detail page...");
     currentCustomerId = getCustomerIdFromUrl();
     if (!currentCustomerId) { displayError("Customer ID missing from URL."); return; }
-    console.log(`V2.5.1: Customer ID found: ${currentCustomerId}`);
-    setupStaticEventListeners(); // Setup listeners first
+    console.log(`V2.5.2: Customer ID found: ${currentCustomerId}`);
+
+    // --- Setup listeners first ---
+    setupStaticEventListeners();
+
+    // --- Load initial customer data ---
     const customerLoaded = await loadCustomerDetails(currentCustomerId);
-    if (!customerLoaded) { console.error("V2.5.1: Failed to load customer details."); return; }
-    console.log("V2.5.1: Loading related data...");
-    const totalOrderValue = await loadOrderHistory(currentCustomerId);
-    await loadPaymentHistory(currentCustomerId); // Calculates global currentTotalPaidAmount
-    updateAccountSummary(totalOrderValue); // Update summary box
-    await loadAccountLedger(currentCustomerId); // Load ledger
-    await loadPaymentHistoryTable(currentCustomerId); // <<< Load the payment history table
-    console.log("V2.5.1: Customer detail page initialization complete.");
+    if (!customerLoaded) {
+        console.error("V2.5.2: Failed to load customer details. Page initialization stopped.");
+        // Buttons will remain disabled by default in HTML
+        return;
+    }
+
+    // --- Load related financial data ---
+    console.log("V2.5.2: Loading related financial data...");
+    try {
+        const totalOrderValue = await loadOrderHistory(currentCustomerId);
+        await loadPaymentHistory(currentCustomerId); // Calculates global currentTotalPaidAmount
+        updateAccountSummary(totalOrderValue); // Update summary box
+        await loadAccountLedger(currentCustomerId); // Load ledger
+        await loadPaymentHistoryTable(currentCustomerId); // <<< Load the payment history table
+        console.log("V2.5.2: Customer detail page initialization complete.");
+    } catch (error) {
+        console.error("V2.5.2: Error loading financial data during initialization:", error);
+        displayError(`Error loading account details: ${error.message}`);
+        // Consider adding specific error messages to relevant table bodies here if needed
+    }
 }
 // <<< MODIFIED FUNCTION END >>>
 
 // Log script load
-console.log("customer_account_detail.js (V2.5.1 - Corrected firestoreOrderBy) script loaded.");
+console.log("customer_account_detail.js (V2.5.2 - Fixes and Logs) script loaded.");
