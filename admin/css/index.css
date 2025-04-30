@@ -193,7 +193,7 @@ body {
 /* --- Chart Section --- */
 .chart-section .chart-container { position: relative; height: 250px; width: 100%; }
 
-/* --- Search Bar & Suggestions --- */
+/* --- Main Search Bar & Suggestions --- */
 .search-bar {
     display: flex; align-items: center; justify-content: flex-end; flex-wrap: wrap; gap: 10px;
     background-color: var(--card-bg); padding: 12px 15px; border-radius: var(--card-border-radius);
@@ -210,18 +210,19 @@ body {
     border-radius: 5px; font-size: 1.1em; height: 38px; line-height: 38px; transition: background-color 0.2s ease; flex-shrink: 0;
 }
 .search-bar button:hover { background-color: #1e7e34; }
+/* Suggestions for MAIN search bar */
 .suggestions-list {
     display: none; position: absolute; top: calc(100% + 5px); right: 15px; width: 350px; background-color: white;
     border: 1px solid var(--border-color); border-radius: 5px; box-shadow: 0 5px 10px rgba(0,0,0,0.1);
     max-height: 200px; overflow-y: auto; z-index: 1050;
 }
-.suggestions-list div.suggestion-item { padding: 8px 12px; cursor: pointer; border-bottom: 1px solid #eee; font-size: 0.9em; display: flex; align-items: center; } /* Added display flex */
+.suggestions-list div.suggestion-item { padding: 8px 12px; cursor: pointer; border-bottom: 1px solid #eee; font-size: 0.9em; display: flex; align-items: center; }
 .suggestions-list div:last-child { border-bottom: none; }
 .suggestions-list div:hover { background-color: #f0f0f0; }
 .suggestions-list div.no-suggestions, .suggestions-list div.loading-placeholder { color: var(--text-muted); cursor: default; font-style: italic; }
 
 
-/* === Quick Payment Modal Styles Start === */
+/* === Quick Payment Modal & General Modal Styles === */
 /* Base Modal Styles */
 .modal {
     display: none; /* Hidden by default */
@@ -249,19 +250,23 @@ body {
     padding: 25px 30px;
     border: none;
     width: 90%;
-    max-width: 500px; /* Default max width, adjust as needed */
-    border-radius: var(--card-border-radius, 8px); /* Use existing variable */
+    max-width: 500px; /* Default max width */
+    border-radius: var(--card-border-radius, 8px);
     position: relative;
     box-shadow: 0 5px 20px rgba(0,0,0,0.25);
     z-index: 1051;
 }
 
-/* Specific size for payment modal if needed */
-#addPaymentModal .modal-content {
+/* Specific size for payment entry modal and quick search modal */
+#addPaymentModal .modal-content,
+#quickPaymentSearchModal .modal-content {
     max-width: 480px;
 }
+/* Allow slightly wider content if needed */
+.modal-content.small-modal { max-width: 480px; }
 
-/* Close button (already in index.css, ensure it works) */
+
+/* Close button */
 .close-btn {
     color: #aaa;
     position: absolute;
@@ -294,6 +299,7 @@ body {
 }
 .modal h2 i { font-size: 1.1em; opacity: 0.9; }
 .modal h2 .success-icon { color: var(--success-color, #28a745); }
+.modal h2 .info-icon { color: var(--info-color, #17a2b8); } /* Added for search modal */
 
 /* Modal Form Styles */
 .modal .form-group {
@@ -341,34 +347,106 @@ body {
     justify-content: flex-end; /* Align buttons to the right */
     gap: 10px;
 }
-/* Use button-base styles or define specific modal button styles */
-.modal .modal-actions .button {
+.modal .modal-actions .button { /* Apply base styles or define fully */
     font-weight: 500;
     padding: 10px 20px;
     min-width: 100px;
-    /* Inherit from .button-base or define here */
-     border-radius: 5px;
-     text-decoration: none;
-     border: none;
-     cursor: pointer;
-     display: inline-flex;
-     align-items: center;
-     gap: 6px;
-     transition: background-color 0.2s ease, transform 0.1s ease;
-     line-height: 1.4;
+    border-radius: 5px;
+    text-decoration: none;
+    border: none;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center; /* Center text/icon in button */
+    gap: 6px;
+    transition: background-color 0.2s ease, transform 0.1s ease;
+    line-height: 1.4;
+    color: white; /* Default text color for buttons */
 }
 .modal .modal-actions .button:hover { opacity: 0.9; }
 .modal .modal-actions .button:active { transform: scale(0.98); }
 
 /* Specific action button colors */
-.modal .save-button { background-color: var(--success-color); color: white; }
+.modal .save-button { background-color: var(--success-color); }
 .modal .save-button:hover { background-color: #1e7e34; }
-.modal .cancel-button { background-color: var(--secondary-color); color: white; }
+.modal .cancel-button { background-color: var(--secondary-color); }
 .modal .cancel-button:hover { background-color: #5a6268; }
+.modal .primary-button { background-color: var(--primary-color); } /* Added for potential use */
+.modal .primary-button:hover { background-color: #004085; }
 
 /* Hidden input style (optional) */
 input[type="hidden"] { display: none; }
-/* === Quick Payment Modal Styles End === */
+
+/* --- Styles for Quick Payment Search Modal Results --- */
+#quick-payment-search-results {
+    border: 1px solid var(--border-color, #ccc); /* Match form input border */
+    margin-top: 10px;
+    max-height: 200px; /* Limit height and enable scroll */
+    overflow-y: auto;
+    position: static; /* Keep it within the modal flow */
+    display: block; /* Ensure it's visible when populated */
+    width: 100%; /* Take full width */
+    box-shadow: none; /* Remove shadow if needed */
+    border-radius: 4px; /* Match input border radius */
+}
+
+/* Style individual search result items */
+#quick-payment-search-results .suggestion-item {
+    padding: 10px 12px; /* Comfortable padding */
+    cursor: pointer;
+    border-bottom: 1px solid #eee;
+    font-size: 0.9em;
+    display: flex; /* Align icon, name, number */
+    align-items: center;
+}
+#quick-payment-search-results .suggestion-item:last-child {
+    border-bottom: none; /* No border on the last item */
+}
+#quick-payment-search-results .suggestion-item:hover {
+    background-color: #f0f0f0; /* Hover effect */
+}
+#quick-payment-search-results .suggestion-item.no-suggestions,
+#quick-payment-search-results .suggestion-item.loading-placeholder {
+    color: var(--text-muted, #6c757d);
+    cursor: default;
+    font-style: italic;
+    text-align: center; /* Center placeholder text */
+}
+
+/* Adjustments for Quick Search Modal Footer */
+#quickPaymentSearchModal .modal-actions {
+    margin-top: 20px; /* Reduce space above footer */
+    padding-top: 15px;
+    border-top: none; /* Remove top border if not needed */
+    justify-content: center; /* Center the cancel button */
+}
+
+/* --- Styles for Balance Display in Payment Entry Modal --- */
+#payment-modal-cust-balance {
+    font-weight: bold;
+    padding: 4px 10px; /* Slightly more padding */
+    border-radius: 4px;
+    display: inline-block; /* Keep inline */
+    border: 1px solid transparent; /* Base border */
+    margin: 0 5px; /* Add some horizontal space */
+    line-height: 1.4;
+}
+#payment-modal-cust-balance.balance-due {
+    color: var(--danger-color, #dc3545);
+    background-color: #f8d7da;
+    border-color: #f5c6cb;
+}
+#payment-modal-cust-balance.balance-credit {
+    color: var(--success-color, #28a745);
+    background-color: #d4edda;
+    border-color: #c3e6cb;
+}
+#payment-modal-cust-balance.balance-info { /* For Zero or Loading/Error */
+    color: var(--text-muted, #6c757d);
+    background-color: #e9ecef;
+    border-color: #dee2e6;
+}
+/* === End Quick Payment & Modal Styles === */
 
 
 /* --- Responsive --- */
@@ -413,7 +491,8 @@ input[type="hidden"] { display: none; }
     .search-bar { flex-direction: column; align-items: stretch; justify-content: flex-start; gap: 10px; padding: 10px; position: relative; }
     .search-bar input[type="text"] { width: 100%; max-width: none; }
      .search-bar button { width: 100%; }
-    .suggestions-list { position: static; width: 100%; max-width: none; margin-top: 5px; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05); border-radius: 5px; right: auto; left: auto; max-height: 150px; border: 1px solid var(--border-color); }
+    /* Main suggestions list positioning adjustment */
+    .suggestions-list { position: absolute; width: calc(100% - 20px); max-width: none; margin-top: 0; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05); border-radius: 5px; right: 10px; left: 10px; max-height: 150px; border: 1px solid var(--border-color); top: calc(100% + 5px); }
     .kpi-section { gap: 15px; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); }
     .kpi-card { padding: 15px 10px; min-height: 100px; border-left-width: 3px; }
     .kpi-icon { font-size: 1.6em; margin-bottom: 8px; }
@@ -426,7 +505,7 @@ input[type="hidden"] { display: none; }
     .panel-item a.button-link { font-size: 0.75em; padding: 6px 10px; }
     .dashboard-grid { gap: 20px; } .card-layout { padding: 15px; } .card-layout h3 { font-size: 1em; margin-bottom: 10px;} .card-layout ul { font-size: 0.85em; }
     /* Modal responsiveness */
-    .modal-content { padding: 20px; }
+    .modal-content { padding: 20px; max-width: 90%; /* Allow modals to be wider on mobile */}
 }
 @media (max-width: 480px) {
      body { font-size: 14px; } .main-content { padding: 10px; gap: 15px;}
@@ -438,7 +517,7 @@ input[type="hidden"] { display: none; }
      .panel-count { font-size: 2em; }
      .panel-item a.button-link { font-size: 0.7em; padding: 5px 8px; }
      .search-bar input, .search-bar button { height: 36px; font-size: 0.85em; }
-     .suggestions-list div { font-size: 0.85em; padding: 6px 10px; }
+     .suggestions-list div.suggestion-item { font-size: 0.85em; padding: 6px 10px; }
      .card-layout ul { max-height: 120px; } .chart-section .chart-container { height: 200px; }
      /* Modal responsiveness */
      .modal .modal-actions { flex-direction: column; }

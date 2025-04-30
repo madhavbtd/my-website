@@ -8,9 +8,9 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="css/index.css"> <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js" defer></script>
-
-    </head>
+    <link rel="stylesheet" href="css/index.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js" defer></script>
+</head>
 
 <body>
     <div class="container">
@@ -117,48 +117,86 @@
                    </div>
             </div>
 
+            <div id="quickPaymentSearchModal" class="modal">
+                <div class="modal-content small-modal">
+                    <span class="close-btn" id="closeQuickSearchModal" title="बंद करें">&times;</span>
+                    <h2><i class="fas fa-search info-icon"></i> क्विक पेमेंट - ग्राहक खोजें</h2>
+
+                    <div class="form-group">
+                        <label for="quick-payment-search-input">ग्राहक का नाम या मोबाइल नं. दर्ज करें:</label>
+                        <input type="text" id="quick-payment-search-input" placeholder="नाम या मोबाइल नं. ...">
+                    </div>
+
+                    <div id="quick-payment-search-results" class="suggestions-list" style="position: static; display: block; max-height: 200px; border: 1px solid #ccc; margin-top: 10px;">
+                        <div class="suggestion-item no-suggestions">खोजने के लिए टाइप करें...</div>
+                    </div>
+
+                    <div class="modal-actions" style="margin-top: 20px; border-top: none; justify-content: center;">
+                         <button type="button" id="cancelQuickSearchBtn" class="button cancel-button">रद्द करें</button>
+                     </div>
+                </div>
+            </div>
             <div id="addPaymentModal" class="modal">
                 <div class="modal-content small-modal">
-                    <span class="close-btn" id="closePaymentModal" title="Close">&times;</span>
-                    <h2><i class="fas fa-money-bill-wave success-icon"></i> Add New Payment for <span id="payment-modal-cust-name">Customer</span></h2>
+                    <span class="close-btn" id="closePaymentModal" title="बंद करें">&times;</span>
+                    <h2><i class="fas fa-money-bill-wave success-icon"></i> <span id="payment-modal-cust-name">Customer</span> के लिए नया पेमेंट जोड़ें</h2>
+
+                    <p class="customer-balance-display" style="text-align: center; margin-bottom: 15px; font-size: 1.1em;">
+                        वर्तमान बैलेंस: <strong id="payment-modal-cust-balance">Loading...</strong>
+                    </p>
                     <form id="addPaymentForm">
-                         <input type="hidden" id="quickPaymentCustomerId">
-                        <div class="form-group">
-                            <label for="paymentAmount">Amount Paid <span class="required">*</span>:</label>
-                            <input type="number" id="paymentAmount" step="0.01" required placeholder="e.g., 500.00">
+                         <input type="hidden" id="quickPaymentCustomerId"> <div class="form-group">
+                            <label for="paymentAmount">भुगतान की गई राशि <span class="required">*</span>:</label>
+                            <input type="number" id="paymentAmount" step="0.01" required placeholder="उदा. 500.00">
                         </div>
                         <div class="form-group">
-                            <label for="paymentDate">Payment Date <span class="required">*</span>:</label>
+                            <label for="paymentDate">भुगतान की तारीख <span class="required">*</span>:</label>
                             <input type="date" id="paymentDate" required>
                         </div>
                         <div class="form-group">
-                            <label for="paymentMethod">Payment Method:</label>
+                            <label for="paymentMethod">भुगतान का तरीका:</label>
                             <select id="paymentMethod">
-                                <option value="Cash">Cash</option>
-                                <option value="Online">Online</option>
-                                <option value="Cheque">Cheque</option>
-                                <option value="Other">Other</option>
+                                <option value="Cash">नकद (Cash)</option>
+                                <option value="Online">ऑनलाइन (Online)</option>
+                                <option value="Cheque">चेक (Cheque)</option>
+                                <option value="Other">अन्य (Other)</option>
                             </select>
                         </div>
                         <div class="form-group">
-                            <label for="paymentNotes">Notes:</label>
-                            <textarea id="paymentNotes" rows="2" placeholder="Optional payment notes"></textarea>
+                            <label for="paymentNotes">नोट्स:</label>
+                            <textarea id="paymentNotes" rows="2" placeholder="वैकल्पिक भुगतान नोट्स"></textarea>
                         </div>
                         <div class="modal-actions">
-                            <button type="submit" id="savePaymentBtn" class="button save-button"><i class="fas fa-save"></i> Save Payment</button>
-                            <button type="button" id="cancelPaymentBtn" class="button cancel-button">Cancel</button>
+                            <button type="submit" id="savePaymentBtn" class="button save-button"><i class="fas fa-save"></i> पेमेंट सेव करें</button>
+                            <button type="button" id="cancelPaymentBtn" class="button cancel-button">रद्द करें</button>
                         </div>
                     </form>
                 </div>
             </div>
-            </div> </div> <script src="js/utils.js" type="module" defer></script> <script type="module" src="js/dashboard.js"></script>
+             </div> </div> <script src="js/utils.js" type="module" defer></script> <script type="module" src="js/firebase-init.js"></script> <script type="module" src="js/dashboard.js"></script>
 
     <script>
         function setActiveLink() {
-             try { const path=window.location.pathname; const page=path.substring(path.lastIndexOf('/')+1)||'index.html'; const links=document.querySelectorAll('.sidebar ul li a'); links.forEach(l=>{const hrefAttr=l.getAttribute('href'); l.classList.remove('active'); if(hrefAttr){const linkPage=hrefAttr.substring(hrefAttr.lastIndexOf('/')+1).split('?')[0].split('#')[0]||'index.html'; if(page===linkPage||((page==='/'||page==='index.html')&&linkPage==='index.html')){l.classList.add('active');}}}); } catch(e){console.error("Error setting active link:",e);}
+             try {
+                const path = window.location.pathname;
+                const page = path.substring(path.lastIndexOf('/') + 1) || 'index.html';
+                const links = document.querySelectorAll('.sidebar ul li a');
+                links.forEach(l => {
+                    const hrefAttr = l.getAttribute('href');
+                    l.classList.remove('active');
+                    if (hrefAttr) {
+                        const linkPage = hrefAttr.substring(hrefAttr.lastIndexOf('/') + 1).split('?')[0].split('#')[0] || 'index.html';
+                        if (page === linkPage || ((page === '/' || page === 'index.html') && linkPage === 'index.html')) {
+                            l.classList.add('active');
+                        }
+                    }
+                });
+             } catch(e) {
+                console.error("Error setting active link:", e);
+             }
         }
         window.addEventListener('DOMContentLoaded', setActiveLink);
-        window.addEventListener('popstate', setActiveLink);
+        window.addEventListener('popstate', setActiveLink); // Handle browser back/forward
     </script>
 </body>
 </html>
