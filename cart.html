@@ -41,18 +41,13 @@
          .cart-item .item-details { flex-grow: 1; display: flex; flex-direction: column; gap: 4px; }
          .cart-item h4 { font-size: 1.1em; font-weight: 600; margin: 0; }
          .cart-item .item-options { font-size: 0.85em; color: #666; } /* For dimensions, type etc. */
-         .cart-item .item-price { font-size: 1em; font-weight: 600; color: var(--primary-color, #0056b3); margin: 4px 0; } /* Added default color */
+         .cart-item .item-price { font-size: 1em; font-weight: 600; color: var(--primary-color); margin: 4px 0; }
          .cart-item .item-quantity { display: flex; align-items: center; gap: 8px; margin-top: 10px; }
          .cart-item .item-quantity input[type="number"] { width: 50px; padding: 6px 8px; text-align: center; border: 1px solid #ccc; border-radius: 4px; font-size: 0.95em; }
          .cart-item .item-quantity .quantity-btn { /* Style similar to product detail page */ }
-         /* Adjusted styles for controls */
-         .cart-item .cart-item-controls { text-align: right; margin-left: auto; display: flex; flex-direction: column; align-items: flex-end; justify-content: space-between; min-width: 100px; }
-         .cart-item .remove-item-btn { background: none; border: none; color: #666; cursor: pointer; font-size: 1.1em; padding: 5px; line-height: 1; }
+         .cart-item .remove-item-btn { background: none; border: none; color: #666; cursor: pointer; font-size: 1.1em; padding: 5px; margin-left: auto; }
          .cart-item .remove-item-btn:hover { color: #dc3545; }
-         .cart-item .item-subtotal { font-size: 1.05em; font-weight: 700; margin-top: 8px; }
-         /* Display quantity text when input is hidden */
-         .item-quantity-display { font-size: 0.9em; color: #555; margin-top: 10px; }
-
+         .cart-item .item-subtotal { font-size: 1.05em; font-weight: 700; margin-top: 8px; text-align: right; }
 
     </style>
 </head>
@@ -112,6 +107,17 @@
                 <div class="form-section">
                     <h3 class="form-section-title">Design & Instructions</h3>
                     <div class="form-group">
+                         <label for="design-file-upload">Upload Design File (Optional)</label>
+                         <div class="custom-file-upload">
+                             <input type="file" id="design-file-upload" name="designFile" accept=".cdr,.pdf,.jpg,.jpeg,.png" style="display: none;">
+                             <button type="button" class="button-secondary upload-button" onclick="document.getElementById('design-file-upload').click();">
+                                 <i class="fas fa-upload"></i> Choose File
+                             </button>
+                             <span class="file-name">No file chosen</span>
+                         </div>
+                        <small>Accepted formats: CDR, PDF, JPG, PNG (Max 10MB)</small>
+                    </div>
+                    <div class="form-group">
                          <label for="special-instructions">Special Instructions/Notes</label>
                          <textarea id="special-instructions" name="specialInstructions" rows="3" placeholder="Any specific instructions for your order?"></textarea>
                     </div>
@@ -146,12 +152,26 @@
 
     <footer>
         <div class="container">
-             <p>&copy; 2025 Madhav Multiprint. All Rights Reserved.</p> <p><a href="#">Privacy Policy</a> | <a href="#">Terms & Conditions</a> | <a href="contact.html">Contact</a></p>
+             <p>&copy; 2025 Madhav Multiprint. All Rights Reserved.</p>
+             <p><a href="#">Privacy Policy</a> | <a href="#">Terms & Conditions</a> | <a href="contact.html">Contact</a></p>
          </div>
     </footer>
 
     <script src="js/firebase-config.js" type="module"></script>
     <script src="js/main.js" type="module" defer></script>
-    <script src="js/cart-page-logic.js" type="module" defer></script>
-    </body>
+    <script src="js/cart-page-logic.js" type="module" defer></script> <script>
+        // File upload name display script (keep as is)
+        const fileInput = document.getElementById('design-file-upload');
+        const fileNameSpan = document.querySelector('.file-name');
+        if (fileInput && fileNameSpan) {
+            fileInput.addEventListener('change', function() {
+                if (this.files && this.files.length > 0) {
+                    fileNameSpan.textContent = this.files[0].name;
+                } else {
+                    fileNameSpan.textContent = 'No file chosen';
+                }
+            });
+        }
+    </script>
+</body>
 </html>
