@@ -11,30 +11,41 @@
     <link rel="stylesheet" href="css/header-footer.css">
     <link rel="stylesheet" href="css/cart.css">
     <style>
-        /* इनलाइन स्टाइल केवल उदाहरण के लिए हैं, इन्हें cart.css में रखना बेहतर है */
+        /* WhatsApp और कन्फर्मेशन स्टाइल (पहले जैसे) */
         .button-whatsapp {
             display: inline-flex; align-items: center; justify-content: center; gap: 10px;
             padding: 10px 20px; background-color: #25D366; color: white;
-            text-decoration: none; border-radius: 6px; /* Use var(--border-radius) if defined */
+            text-decoration: none; border-radius: 12px; /* Updated border-radius */
             font-weight: 600; font-size: 1em; margin-top: 15px; border: none; cursor: pointer;
             transition: background-color 0.2s ease;
         }
         .button-whatsapp:hover { background-color: #1DAE50; }
         .button-whatsapp i { font-size: 1.2em; }
 
-        #order-status-message.success {
-            text-align: center; padding: 25px; margin-top: 20px;
-            background-color: #d1e7dd; color: #0f5132; border: 1px solid #badbcc; /* Default success style */
-            border-radius: 6px; /* Use var(--border-radius) */
+        #order-status-message {
+            text-align: center; padding: 20px 25px; margin-top: 20px;
+            border-radius: 12px; /* Updated border-radius */
+            font-size: 1.05em; line-height: 1.7;
         }
-         #order-status-message.success h4 { margin-top: 0; margin-bottom: 15px; font-size: 1.4em; color: #0f5132; }
-         #order-status-message.success p { margin-bottom: 10px; line-height: 1.6; }
+        #order-status-message.success {
+             background-color: #d1e7dd; color: #0f5132; border: 1px solid #badbcc;
+        }
+         #order-status-message.success h4 {
+             margin-top: 0; margin-bottom: 15px; font-size: 1.4em; color: #0a4226; font-weight: 600;
+             display: flex; align-items: center; justify-content: center; gap: 10px;
+         }
+         #order-status-message.success p { margin-bottom: 12px; }
 
          #order-status-message.error {
-             text-align: center; padding: 15px; margin-top: 20px;
-             background-color: #f8d7da; color: #842029; border: 1px solid #f5c2c7; /* Default error style */
-              border-radius: 6px; /* Use var(--border-radius) */
+              background-color: #f8d7da; color: #842029; border: 1px solid #f5c2c7;
          }
+         /* Add info class if needed */
+         #order-status-message.info {
+             background-color: #cff4fc; color: #055160; border: 1px solid #b6effb;
+         }
+
+         /* Utility for icons before text */
+         .icon-before { margin-right: 8px; }
     </style>
 </head>
 <body>
@@ -56,24 +67,26 @@
     </header>
 
     <main class="container cart-page">
-        <h1>Shopping Cart</h1>
+        <h1><i class="fas fa-shopping-cart icon-before"></i>Shopping Cart</h1>
 
         <div id="order-status-message" style="display: none;">
             </div>
 
         <div class="cart-layout">
+
             <div id="cart-items-section" class="cart-column">
-                <h2>Items in Your Cart</h2>
+                <h2><i class="fas fa-list-ul icon-before"></i>Items in Your Cart</h2>
                 <div id="cart-items">
                     <p class="empty-cart-message" style="display: none;">Your cart is currently empty. <a href="products.html">Continue Shopping</a></p>
                 </div>
-                <div style="text-align: center; margin-top: 20px;">
-                     <a href="products.html" class="button-secondary"><i class="fas fa-arrow-left"></i> Continue Shopping</a>
-                 </div>
+                 <div style="text-align: center; margin-top: 20px;">
+                      <a href="products.html" class="button-secondary"><i class="fas fa-arrow-left"></i> Continue Shopping</a>
+                  </div>
             </div>
 
             <form id="order-form" class="cart-column">
-                <h2>Your Information & Order</h2>
+                <h2><i class="fas fa-user-edit icon-before"></i>Your Information & Order</h2>
+
                 <div class="form-section">
                     <h3 class="form-section-title">Contact Information</h3>
                     <div class="form-group">
@@ -86,7 +99,8 @@
                     </div>
                     <div class="form-group">
                         <label for="customer-address">Full Delivery Address <span class="required">*</span></label>
-                        <textarea id="customer-address" name="customerAddress" rows="3" required placeholder="Enter your complete delivery address"></textarea> </div>
+                        <textarea id="customer-address" name="customerAddress" rows="1" required placeholder="Enter your complete delivery address"></textarea>
+                    </div>
                 </div>
 
                 <div id="cart-summary" class="form-section cart-summary-box">
@@ -102,21 +116,16 @@
                  </div>
 
                  <button type="submit" id="submit-order-btn" class="button-primary submit-order-button">
-                     <i class="fas fa-check-circle"></i> Place Order
+                     <i class="fas fa-check-circle icon-before"></i> Place Your Order
                  </button>
 
-            </form>
-        </div>
-
-        <div class="cart-suggestions" style="display: none;">
+            </form> </div> <div class="cart-suggestions" style="display: none;">
             <h3>Explore Our Products</h3>
             <p>Your cart is empty, but you can find great products here:</p>
             <a href="products.html" class="button-primary">View All Products</a>
         </div>
 
-    </main>
-
-    <footer>
+    </main> <footer>
         <div class="container">
              <p>&copy; 2025 Madhav Multiprint. All Rights Reserved.</p>
              <p><a href="#">Privacy Policy</a> | <a href="#">Terms & Conditions</a> | <a href="contact.html">Contact</a></p>
