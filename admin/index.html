@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Madhav Multiprint Dashboard (Fixed)</title> <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <title>Madhav Multiprint Dashboard</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -14,7 +15,8 @@
 <body>
     <div class="container">
         <div class="sidebar">
-             <h2><img src="https://i.ibb.co/Z6gKD9Rd/1.png" alt="Madhav Multiprint Logo"></h2> <ul>
+             <h2><img src="https://i.ibb.co/Z6gKD9Rd/1.png" alt="Madhav Multiprint Logo"></h2>
+             <ul>
                 <li><a href="index.html" class="active"><i class="fas fa-tachometer-alt"></i> <span>Dashboard</span></a></li>
                 <li><a href="order_history.html"><i class="fas fa-history"></i> <span>Order History</span></a></li>
                 <li><a href="customer_management.html"><i class="fas fa-users"></i> <span>Customers</span></a></li>
@@ -118,14 +120,20 @@
             <div id="quickPaymentSearchModal" class="modal">
                 <div class="modal-content small-modal">
                     <span class="close-btn" id="closeQuickSearchModal" title="Close">&times;</span>
-                    <h2><i class="fas fa-search info-icon"></i> Quick Payment - Find Customer</h2> <div class="form-group">
-                        <label for="quick-payment-search-input">Enter Customer Name or Mobile No.:</label> <input type="text" id="quick-payment-search-input" placeholder="Name or Mobile No. ..."> </div>
+                    <h2><i class="fas fa-search info-icon"></i> Quick Payment - Find Customer</h2>
+
+                    <div class="form-group">
+                        <label for="quick-payment-search-input">Enter Customer Name or Mobile No.:</label>
+                        <input type="text" id="quick-payment-search-input" placeholder="Name or Mobile No. ...">
+                    </div>
 
                     <div id="quick-payment-search-results" class="suggestions-list" style="position: static; display: block; max-height: 200px; border: 1px solid #ccc; margin-top: 10px;">
-                        <div class="suggestion-item no-suggestions">Type to search...</div> </div>
+                        <div class="suggestion-item no-suggestions">Type to search...</div>
+                    </div>
 
                     <div class="modal-actions" style="margin-top: 20px; border-top: none; justify-content: center;">
-                         <button type="button" id="cancelQuickSearchBtn" class="button cancel-button">Cancel</button> </div>
+                         <button type="button" id="cancelQuickSearchBtn" class="button cancel-button">Cancel</button>
+                     </div>
                 </div>
             </div>
             <div id="addPaymentModal" class="modal">
@@ -134,7 +142,8 @@
                     <h2><i class="fas fa-money-bill-wave success-icon"></i> Add New Payment for <span id="payment-modal-cust-name">Customer</span></h2>
 
                     <p class="customer-balance-display" style="text-align: center; margin-bottom: 15px; font-size: 1.1em;">
-                        Current Balance: <strong id="payment-modal-cust-balance">Loading...</strong> </p>
+                        Current Balance: <strong id="payment-modal-cust-balance">Loading...</strong>
+                    </p>
                     <form id="addPaymentForm">
                          <input type="hidden" id="quickPaymentCustomerId">
                         <div class="form-group">

@@ -93,7 +93,7 @@ body {
 .add-customer-btn { background-color: var(--success-color); }
 .add-supplier-btn { background-color: var(--info-color); }
 .new-order-btn { background-color: var(--primary-color); }
-.quick-payment-btn { background-color: var(--info-color); } /* You can change color if needed */
+.quick-payment-btn { background-color: var(--info-color); }
 .date-time-container { font-size: 0.9em; font-weight: 500; background-color: var(--light-bg); border: 1px solid var(--border-color); padding: 8px 12px; border-radius: 5px; color: var(--text-muted); white-space: nowrap; }
 .header-icons { display: flex; gap: 10px; align-items: center; }
 .icon-button { background: none; border: none; font-size: 1.3em; color: var(--text-muted); cursor: pointer; padding: 5px; position: relative; transition: color 0.2s ease; }
@@ -211,15 +211,29 @@ body {
 }
 .search-bar button:hover { background-color: #1e7e34; }
 /* Suggestions for MAIN search bar */
-.suggestions-list {
+#order-suggestions.suggestions-list { /* Target main suggestions specifically */
     display: none; position: absolute; top: calc(100% + 5px); right: 15px; width: 350px; background-color: white;
     border: 1px solid var(--border-color); border-radius: 5px; box-shadow: 0 5px 10px rgba(0,0,0,0.1);
     max-height: 200px; overflow-y: auto; z-index: 1050;
 }
-.suggestions-list div.suggestion-item { padding: 8px 12px; cursor: pointer; border-bottom: 1px solid #eee; font-size: 0.9em; display: flex; align-items: center; }
+/* General Suggestion Item Styling (used by both main and quick search) */
+.suggestions-list div.suggestion-item {
+    padding: 8px 12px;
+    cursor: pointer;
+    border-bottom: 1px solid #eee;
+    font-size: 0.9em;
+    display: flex;
+    align-items: center;
+}
 .suggestions-list div:last-child { border-bottom: none; }
 .suggestions-list div:hover { background-color: #f0f0f0; }
-.suggestions-list div.no-suggestions, .suggestions-list div.loading-placeholder { color: var(--text-muted); cursor: default; font-style: italic; }
+.suggestions-list div.no-suggestions,
+.suggestions-list div.loading-placeholder {
+    color: var(--text-muted);
+    cursor: default;
+    font-style: italic;
+    text-align: center; /* Center placeholder text */
+}
 
 
 /* === Quick Payment Modal & General Modal Styles === */
@@ -299,7 +313,7 @@ body {
 }
 .modal h2 i { font-size: 1.1em; opacity: 0.9; }
 .modal h2 .success-icon { color: var(--success-color, #28a745); }
-.modal h2 .info-icon { color: var(--info-color, #17a2b8); } /* Added for search modal */
+.modal h2 .info-icon { color: var(--info-color, #17a2b8); }
 
 /* Modal Form Styles */
 .modal .form-group {
@@ -371,7 +385,7 @@ body {
 .modal .save-button:hover { background-color: #1e7e34; }
 .modal .cancel-button { background-color: var(--secondary-color); }
 .modal .cancel-button:hover { background-color: #5a6268; }
-.modal .primary-button { background-color: var(--primary-color); } /* Added for potential use */
+.modal .primary-button { background-color: var(--primary-color); }
 .modal .primary-button:hover { background-color: #004085; }
 
 /* Hidden input style (optional) */
@@ -379,7 +393,7 @@ input[type="hidden"] { display: none; }
 
 /* --- Styles for Quick Payment Search Modal Results --- */
 #quick-payment-search-results {
-    border: 1px solid var(--border-color, #ccc); /* Match form input border */
+    border: 1px solid var(--border-color, #ccc);
     margin-top: 10px;
     max-height: 200px; /* Limit height and enable scroll */
     overflow-y: auto;
@@ -390,7 +404,7 @@ input[type="hidden"] { display: none; }
     border-radius: 4px; /* Match input border radius */
 }
 
-/* Style individual search result items */
+/* Style individual search result items inside the Quick Search Modal */
 #quick-payment-search-results .suggestion-item {
     padding: 10px 12px; /* Comfortable padding */
     cursor: pointer;
@@ -424,11 +438,11 @@ input[type="hidden"] { display: none; }
 /* --- Styles for Balance Display in Payment Entry Modal --- */
 #payment-modal-cust-balance {
     font-weight: bold;
-    padding: 4px 10px; /* Slightly more padding */
+    padding: 4px 10px;
     border-radius: 4px;
-    display: inline-block; /* Keep inline */
-    border: 1px solid transparent; /* Base border */
-    margin: 0 5px; /* Add some horizontal space */
+    display: inline-block;
+    border: 1px solid transparent;
+    margin: 0 5px;
     line-height: 1.4;
 }
 #payment-modal-cust-balance.balance-due {
@@ -445,6 +459,16 @@ input[type="hidden"] { display: none; }
     color: var(--text-muted, #6c757d);
     background-color: #e9ecef;
     border-color: #dee2e6;
+}
+
+/* --- Style for BOLD Save Payment Button --- */
+#addPaymentModal .modal-actions #savePaymentBtn {
+    font-weight: bold; /* Makes text bold */
+}
+
+/* Optional: Space between icon and text in Save button */
+#addPaymentModal .modal-actions #savePaymentBtn i {
+    margin-right: 5px;
 }
 /* === End Quick Payment & Modal Styles === */
 
@@ -488,11 +512,25 @@ input[type="hidden"] { display: none; }
     .header-buttons { justify-content: center; width: 100%; order: 2;}
     .date-time-container { order: 1; text-align: center; }
     .header-icons { order: 0; align-self: flex-end; }
+    /* Adjust main search bar and suggestions for mobile */
     .search-bar { flex-direction: column; align-items: stretch; justify-content: flex-start; gap: 10px; padding: 10px; position: relative; }
     .search-bar input[type="text"] { width: 100%; max-width: none; }
-     .search-bar button { width: 100%; }
-    /* Main suggestions list positioning adjustment */
-    .suggestions-list { position: absolute; width: calc(100% - 20px); max-width: none; margin-top: 0; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05); border-radius: 5px; right: 10px; left: 10px; max-height: 150px; border: 1px solid var(--border-color); top: calc(100% + 5px); }
+    .search-bar button { width: 100%; }
+    /* Main suggestions list positioning adjustment for mobile */
+    #order-suggestions.suggestions-list { /* Target specifically */
+        position: absolute; /* Keep absolute for main search */
+        width: calc(100% - 20px); /* Adjust width relative to search bar padding */
+        max-width: none;
+        margin-top: 0; /* Reset margin */
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        border-radius: 5px;
+        right: 10px; /* Align with search bar padding */
+        left: 10px; /* Align with search bar padding */
+        max-height: 150px;
+        border: 1px solid var(--border-color);
+        top: calc(100% + 5px); /* Position below search bar */
+        z-index: 1050; /* Ensure it's on top */
+    }
     .kpi-section { gap: 15px; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); }
     .kpi-card { padding: 15px 10px; min-height: 100px; border-left-width: 3px; }
     .kpi-icon { font-size: 1.6em; margin-bottom: 8px; }
@@ -518,6 +556,9 @@ input[type="hidden"] { display: none; }
      .panel-item a.button-link { font-size: 0.7em; padding: 5px 8px; }
      .search-bar input, .search-bar button { height: 36px; font-size: 0.85em; }
      .suggestions-list div.suggestion-item { font-size: 0.85em; padding: 6px 10px; }
+     /* Adjust quick search results container too */
+      #quick-payment-search-results .suggestion-item { font-size: 0.85em; padding: 6px 10px; }
+
      .card-layout ul { max-height: 120px; } .chart-section .chart-container { height: 200px; }
      /* Modal responsiveness */
      .modal .modal-actions { flex-direction: column; }
