@@ -1,8 +1,8 @@
-/* css/cart.css - Enhanced Cart Page Styles (Updated) */
+/* css/cart.css - Enhanced & More Responsive Cart Page Styles */
 
-/* --- Variables (यदि आपकी वेबसाइट में परिभाषित हैं, अन्यथा उन्हें यहाँ परिभाषित करें) --- */
+/* --- Variables (पहले की तरह) --- */
 :root {
-    --primary-color: #0056b3; /* या आपका प्राथमिक रंग */
+    --primary-color: #0056b3;
     --secondary-color: #6c757d;
     --text-color: #333;
     --text-muted: #666;
@@ -16,17 +16,16 @@
     --box-shadow-md: 0 4px 8px rgba(0,0,0,0.12);
 }
 
-
 /* --- Page Specific Layout --- */
 .cart-page {
-    padding-top: 40px;
-    padding-bottom: 60px;
+    padding-top: 30px; /* थोड़ा कम */
+    padding-bottom: 50px; /* थोड़ा कम */
 }
 
-.cart-page > h1 { /* मुख्य पृष्ठ शीर्षक */
+.cart-page > h1 {
     text-align: center;
-    margin-bottom: 40px;
-    font-size: 2.6em;
+    margin-bottom: 30px; /* थोड़ा कम */
+    font-size: 2.4em; /* थोड़ा छोटा */
     font-weight: 700;
     color: var(--text-color);
 }
@@ -34,468 +33,192 @@
 .cart-layout {
     display: flex;
     flex-wrap: wrap;
-    gap: 35px; /* कॉलम के बीच गैप */
+    gap: 30px; /* कॉलम के बीच गैप */
     align-items: flex-start;
 }
 
 .cart-column {
-    flex: 1 1 48%; /* कॉलम को लगभग आधा हिस्सा दें */
-    min-width: 320px; /* न्यूनतम चौड़ाई */
+    flex: 1 1 48%; /* डेस्कटॉप पर दो कॉलम */
+    min-width: 300px; /* न्यूनतम चौड़ाई */
     background-color: var(--white-bg);
     border-radius: var(--border-radius);
-    box-shadow: var(--box-shadow-md); /* थोड़ा स्पष्ट शैडो */
+    box-shadow: var(--box-shadow-md);
     border: 1px solid var(--border-color);
+    padding: 20px 25px; /* थोड़ा कम पैडिंग */
 }
 
 /* --- Cart Items Section --- */
-#cart-items-section {
-    padding: 25px 30px 30px;
-}
-
-#cart-items-section h2 {
-    font-size: 1.6em;
+#cart-items-section h2,
+#order-form h2 {
+    font-size: 1.4em; /* थोड़ा छोटा */
     font-weight: 600;
     text-align: center;
-    margin-bottom: 30px;
+    margin-bottom: 25px;
     padding-bottom: 15px;
     border-bottom: 1px solid var(--border-color);
     color: var(--primary-color);
 }
 
-/* Empty Cart Message */
-.empty-cart-message {
-    display: none; /* Initially hidden, shown by JS */
-    text-align: center;
-    padding: 40px 20px;
-    color: var(--text-muted);
-    font-size: 1.1em;
-    line-height: 1.6;
-}
-.empty-cart-message a {
-    font-weight: 600;
-    text-decoration: underline;
-    color: var(--primary-color);
-}
-.empty-cart-message a:hover {
-    color: var(--secondary-color);
-}
-
-/* Cart Item Styling (Updated Structure) */
-#cart-items {
-    /* Container for items */
-}
-
+/* Cart Item Styling */
 .cart-item {
     display: flex;
-    gap: 20px;
-    align-items: flex-start; /* Align items to the top */
-    padding: 20px 0;
-    border-bottom: 1px solid #eee; /* Light separator */
+    gap: 15px; /* थोड़ा कम गैप */
+    align-items: flex-start;
+    padding: 15px 0; /* थोड़ा कम पैडिंग */
+    border-bottom: 1px solid #eee;
 }
 .cart-item:last-child {
     border-bottom: none;
 }
 
 .cart-item img {
-    width: 85px; /* Slightly larger image */
-    height: 85px;
+    width: 75px; /* थोड़ा छोटा */
+    height: 75px;
     object-fit: cover;
-    border-radius: 4px; /* Less rounded */
-    flex-shrink: 0; /* Prevent image from shrinking */
-    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-    background-color: #f8f8f8; /* Placeholder background */
+    border-radius: 4px;
+    flex-shrink: 0;
+    background-color: #f8f8f8;
 }
 
 .cart-item .item-details {
-    flex-grow: 1; /* Take available space */
+    flex-grow: 1;
     display: flex;
     flex-direction: column;
-    gap: 4px; /* Less gap between details */
+    gap: 3px; /* कम गैप */
 }
 
-.cart-item h4 { /* Item Name */
-    font-size: 1.1em;
+.cart-item h4 {
+    font-size: 1.05em; /* थोड़ा छोटा */
     font-weight: 600;
-    color: var(--text-color);
     margin: 0;
     line-height: 1.3;
 }
-.cart-item h4 a { /* Make name a link */
-    color: inherit;
-    text-decoration: none;
-}
-.cart-item h4 a:hover {
-    color: var(--primary-color);
-}
+.cart-item h4 a { color: inherit; text-decoration: none; }
+.cart-item h4 a:hover { color: var(--primary-color); }
 
-.cart-item .item-options { /* e.g., Size, Color, Dimensions */
-    font-size: 0.85em;
-    color: var(--text-muted);
-    margin: 2px 0;
-}
-.cart-item .item-price { /* Unit price */
-    font-size: 1em;
+.cart-item .item-price {
+    font-size: 0.95em; /* थोड़ा छोटा */
     font-weight: 600;
     color: var(--primary-color);
-    margin: 4px 0;
+    margin: 3px 0; /* थोड़ा कम मार्जिन */
 }
 
-/* Quantity Input */
 .cart-item .item-quantity {
     display: flex;
     align-items: center;
     gap: 8px;
-    margin-top: 10px;
+    margin-top: 8px; /* थोड़ा कम मार्जिन */
 }
-
-.cart-item .item-quantity label {
-    font-size: 0.9em;
-    margin-right: 5px;
-    color: var(--text-muted);
-}
+.cart-item .item-quantity label { font-size: 0.85em; margin-right: 4px;}
 .cart-item .item-quantity input[type="number"].item-qty-input {
-    width: 50px; /* Width */
-    padding: 6px 8px;
-    text-align: center;
-    border: 1px solid var(--border-color);
-    border-radius: 4px;
-    font-size: 0.95em;
-    font-weight: 500;
-    appearance: textfield; /* Remove spinners in Chrome/Safari */
-    -moz-appearance: textfield; /* Remove spinners in Firefox */
-}
-/* Optional: Hide number input spinners */
-.cart-item .item-quantity input[type="number"]::-webkit-inner-spin-button,
-.cart-item .item-quantity input[type="number"]::-webkit-outer-spin-button {
-  -webkit-appearance: none;
-  margin: 0;
+    width: 45px; /* थोड़ा छोटा */
+    padding: 5px 6px; /* थोड़ी कम पैडिंग */
+    font-size: 0.9em; /* थोड़ा छोटा */
 }
 
-/* Item Controls (Right Side - Remove Button & Subtotal) */
-.cart-item > div:last-child { /* Target the right-side div holding button and subtotal */
+.cart-item > div:last-child { /* Right side div */
     text-align: right;
-    margin-left: auto; /* Push to the right */
+    margin-left: auto;
     display: flex;
     flex-direction: column;
     align-items: flex-end;
     justify-content: space-between;
-    min-width: 100px; /* Ensure minimum width */
+    min-width: 90px; /* थोड़ा कम */
 }
 
-.cart-item .remove-item-btn {
-    background: none;
-    border: none;
-    color: var(--text-muted);
-    cursor: pointer;
-    font-size: 1.1em; /* Adjust size */
-    padding: 5px;
-    line-height: 1; /* Prevent extra space */
-    transition: color 0.2s ease;
-}
-.cart-item .remove-item-btn:hover {
-    color: #dc3545; /* Red on hover */
-}
+.cart-item .remove-item-btn { font-size: 1em; } /* थोड़ा छोटा */
+.cart-item .item-subtotal { font-size: 1em; font-weight: 700; margin-top: 6px; }
 
-.cart-item .item-subtotal { /* Item total price (qty * price) */
-    font-size: 1.05em;
-    font-weight: 700;
-    color: var(--text-color);
-    margin-top: 8px; /* Space from remove button */
-}
-
-/* Continue Shopping Button */
-#cart-items-section .button-secondary { /* Style the button */
-     /* Use shared button styles if available */
-    padding: 8px 15px;
-    font-size: 0.9em;
-    /* Add other styles */
-}
-#cart-items-section .button-secondary i {
-    margin-right: 5px;
-}
 
 /* --- Order Form Section --- */
-#order-form {
-    padding: 25px 30px 30px;
-    background-color: #fcfcfc; /* Very light grey background */
-}
-
-#order-form h2 {
-    font-size: 1.6em;
-    font-weight: 600;
-    text-align: center;
-    margin-bottom: 25px;
-    padding-bottom: 15px;
-    border-bottom: 1px solid var(--border-color);
-    color: var(--primary-color);
-}
-
 .form-section {
-    margin-bottom: 30px;
-    padding-bottom: 20px;
-    border-bottom: 1px dashed #eee; /* Dashed border between sections */
+    margin-bottom: 25px; /* थोड़ा कम */
+    padding-bottom: 15px; /* थोड़ा कम */
+    border-bottom: 1px dashed #eee;
 }
-.form-section:last-of-type { /* For summary box */
-    border-bottom: none;
-    margin-bottom: 25px;
-    padding-bottom: 0;
+.form-section:last-of-type { /* Summary box */
+    border-bottom: none; margin-bottom: 20px; padding-bottom: 0;
 }
 .form-section-title {
-    font-size: 1.2em;
+    font-size: 1.1em; /* थोड़ा छोटा */
     font-weight: 600;
-    margin-bottom: 20px;
-    color: var(--text-color);
+    margin-bottom: 15px; /* थोड़ा कम */
 }
-
-#order-form .form-group {
-    margin-bottom: 20px;
-}
-#order-form label {
-    display: block;
-    margin-bottom: 8px; /* Gap between label and input */
-    font-weight: 500; /* Regular weight */
-    font-size: 0.9em;
-    color: #555; /* Slightly lighter text */
-}
-#order-form .required { color: #dc3545; font-weight: bold; margin-left: 2px;}
-
+#order-form .form-group { margin-bottom: 15px; } /* थोड़ा कम */
+#order-form label { margin-bottom: 6px; font-size: 0.85em; }
 #order-form input[type="text"],
 #order-form input[type="tel"],
 #order-form textarea {
-    width: 100%;
-    padding: 10px 14px; /* Slightly more padding */
-    border: 1px solid #ccc; /* Slightly darker border */
-    border-radius: 4px;
-    box-sizing: border-box;
-    font-size: 1em;
-    font-family: var(--font-family);
-    transition: border-color .2s ease, box-shadow .2s ease;
-    background-color: var(--white-bg); /* White background */
+    padding: 9px 12px; /* थोड़ा कम */
+    font-size: 0.95em; /* थोड़ा छोटा */
 }
-#order-form textarea {
-    resize: vertical;
-    min-height: 100px; /* Slightly taller */
-}
-#order-form input:focus,
-#order-form textarea:focus {
-    border-color: var(--primary-color);
-    outline: 0;
-    box-shadow: 0 0 0 3px rgba(0, 86, 179, 0.1); /* Light focus shadow */
-    background-color: var(--white-bg);
-}
-
-/* Custom File Upload Button */
-.custom-file-upload {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-.custom-file-upload .upload-button {
-    /* Use shared .button-secondary styles */
-    padding: 8px 15px;
-    font-size: 0.9em;
-    flex-shrink: 0; /* Prevent button shrinking */
-}
-.custom-file-upload .upload-button i {
-    margin-right: 5px;
-}
-.custom-file-upload .file-name {
-    font-size: 0.9em;
-    color: var(--text-muted);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-#order-form small { /* Help text */
-    display: block;
-    margin-top: 8px;
-    font-size: 0.8em;
-    color: var(--text-muted);
-}
-
+#order-form textarea { min-height: 80px; } /* थोड़ी कम ऊंचाई */
 
 /* Cart Summary Box */
 .cart-summary-box {
-    background-color: #f8f9fa; /* Light background */
-    padding: 20px 25px;
-    border: 1px solid var(--border-color);
-    border-radius: var(--border-radius);
+    padding: 15px 20px; /* थोड़ी कम पैडिंग */
 }
-.cart-summary-box .form-section-title {
-    margin-bottom: 15px;
-    text-align: left; /* Keep title left-aligned */
-}
-.summary-line {
-    display: flex;
-    justify-content: space-between;
-    margin-bottom: 10px;
-    font-size: 1em;
-    color: var(--text-muted);
-}
-.summary-line span:last-child {
-    font-weight: 600;
-    color: var(--text-color);
-}
-.summary-line.total {
-    margin-top: 15px;
-    padding-top: 15px;
-    border-top: 1px solid var(--border-color);
-    font-size: 1.15em; /* Larger total */
-    font-weight: 700;
-    color: var(--text-color);
-}
-.summary-line.total span:last-child {
-    color: var(--primary-color); /* Color for total amount */
-}
+.summary-line { margin-bottom: 8px; font-size: 0.95em; }
+.summary-line.total { margin-top: 12px; padding-top: 12px; font-size: 1.1em; }
+
 
 /* Submit Order Button */
 .submit-order-button {
-    /* Shared button styles */
-    width: 100%;
-    padding: 15px; /* Large button */
-    font-size: 1.15em;
-    font-weight: 600;
-    margin-top: 20px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
-}
-.submit-order-button:disabled {
-    background-color: #cccccc;
-    cursor: not-allowed;
-    opacity: 0.7;
-}
-.submit-order-button:disabled:hover {
-     background-color: #cccccc;
-}
-.submit-order-button .fa-spinner { /* Loading spinner */
-    animation: fa-spin 1.5s infinite linear;
-}
-@keyframes fa-spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-
-/* Order Status Message Area (Updated styles) */
-#order-status-message {
-    margin: 20px 0; /* Space above and below */
-    border-radius: var(--border-radius);
-    display: none; /* Hidden initially */
-}
-
-#order-status-message.success {
-    text-align: center;
-    padding: 25px;
-    background-color: #d1e7dd; color: #0f5132; border: 1px solid #badbcc;
-}
-#order-status-message.success h4 {
-    margin-top: 0;
-    margin-bottom: 15px;
-    font-size: 1.4em;
-    color: #0f5132; /* Dark green */
-}
-#order-status-message.success p {
-    margin-bottom: 10px;
-    line-height: 1.6;
-}
-
-#order-status-message.error {
-    text-align: center;
-    padding: 15px;
-    background-color: #f8d7da; color: #842029; border: 1px solid #f5c2c7;
-}
-
-/* WhatsApp Button Style */
-.button-whatsapp {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
-    padding: 10px 20px;
-    background-color: #25D366; /* WhatsApp green */
-    color: white;
-    text-decoration: none;
-    border-radius: var(--border-radius);
-    font-weight: 600;
-    font-size: 1em;
-    margin-top: 15px;
-    border: none;
-    cursor: pointer;
-    transition: background-color 0.2s ease;
-}
-.button-whatsapp:hover {
-    background-color: #1DAE50;
-}
-.button-whatsapp i {
-    font-size: 1.2em;
-}
-
-
-/* Cart Suggestions (when empty) */
-.cart-suggestions {
-    display: none; /* Shown by JS */
-    text-align: center;
-    margin-top: 40px;
-    padding: 30px;
-    background-color: var(--light-bg);
-    border: 1px solid var(--border-color);
-    border-radius: var(--border-radius);
-}
-.cart-suggestions h3 {
-    margin-bottom: 15px;
-    font-size: 1.4em;
-}
-.cart-suggestions p {
-    margin-bottom: 20px;
-    color: var(--text-muted);
+    padding: 12px; /* थोड़ा कम */
+    font-size: 1.1em; /* थोड़ा छोटा */
+    margin-top: 15px; /* थोड़ा कम */
 }
 
 
 /* --- Responsive Adjustments --- */
-@media (max-width: 992px) {
+
+/* टैबलेट और छोटे डेस्कटॉप (Single Column Layout Starts Here) */
+@media (max-width: 768px) {
     .cart-layout {
         flex-direction: column; /* Stack columns */
-        gap: 30px;
+        gap: 25px; /* थोड़ा कम गैप */
     }
     .cart-column {
         flex-basis: 100%; /* Full width */
+        padding: 15px 20px; /* थोड़ी कम पैडिंग */
     }
-}
+    .cart-page > h1 { font-size: 2em; margin-bottom: 25px; }
+    #cart-items-section h2, #order-form h2 { font-size: 1.3em; margin-bottom: 20px; }
+    .form-section-title { font-size: 1.05em; }
 
-@media (max-width: 768px) {
-     .cart-page > h1 { font-size: 2.2em; }
-     .cart-item { padding: 15px 0; gap: 15px;}
-     .cart-item img { width: 70px; height: 70px;}
-     .cart-column { padding: 20px;}
-     #cart-items-section h2, #order-form h2 { font-size: 1.4em; margin-bottom: 20px;}
-     .form-section-title { font-size: 1.1em;}
-}
-
-@media (max-width: 480px) {
-     .cart-page > h1 { font-size: 1.8em; margin-bottom: 30px;}
+    /* मोबाइल पर आइटम लेआउट */
      .cart-item {
-        flex-direction: column; /* Stack elements vertically on small screens */
-        align-items: center; /* Center items */
-        text-align: center;
-        position: relative;
-        padding-bottom: 20px; /* Add padding for controls if needed */
+        align-items: center; /* आइटम को बीच में संरेखित करें */
+        gap: 10px;
      }
-      .cart-item img { margin-bottom: 10px; }
-      .cart-item .item-details { align-items: center; }
-      .cart-item .item-quantity { justify-content: center;}
-      .cart-item > div:last-child { /* Right side controls block */
-        margin-left: 0; /* Remove auto margin */
-        width: 100%;
-        display: flex;
-        justify-content: space-around; /* Space out button and subtotal */
+      .cart-item img { width: 60px; height: 60px;} /* और छोटी इमेज */
+      .cart-item .item-details { text-align: left; } /* डिटेल्स लेफ्ट अलाइन */
+      .cart-item > div:last-child { /* राइट साइड ब्लॉक */
+        flex-direction: row; /* बटन और सबटोटल को पंक्ति में रखें */
         align-items: center;
-        margin-top: 15px;
+        justify-content: space-between; /* स्पेस दें */
+        width: 100%; /* पूरी चौड़ाई लें */
+        margin-left: 0;
+        margin-top: 10px; /* थोड़ा मार्जिन */
       }
-     .cart-item .remove-item-btn {
-        position: absolute; /* Optional: place top right */
-        top: 10px;
-        right: 0;
-      }
-      .cart-item .item-subtotal { margin-top: 0; }
-
-     .cart-column { padding: 15px;}
-     .submit-order-button { font-size: 1em; }
+       .cart-item .remove-item-btn { order: 2; /* बटन को दाईं ओर रखें */ }
+       .cart-item .item-subtotal { order: 1; margin-top: 0; }
 }
+
+/* छोटे मोबाइल */
+@media (max-width: 480px) {
+     .cart-page > h1 { font-size: 1.6em; margin-bottom: 20px;}
+     .cart-column { padding: 10px 15px; }
+     #cart-items-section h2, #order-form h2 { font-size: 1.2em; }
+     .cart-item { flex-direction: row; align-items: flex-start; /* वापस फ्लेक्स रो करें, लेकिन कॉम्पैक्ट */ }
+     .cart-item img { width: 50px; height: 50px;} /* और छोटी */
+     .cart-item h4 {font-size: 0.95em;}
+     .cart-item .item-price {font-size: 0.9em;}
+     .cart-item > div:last-child { flex-direction: column; align-items: flex-end; width: auto; margin-top: 0; } /* वापस कॉलम में */
+     .cart-item .remove-item-btn { margin-bottom: 5px; }
+
+     .submit-order-button { font-size: 1em; padding: 10px; }
+}
+
+/* ---- बाकी के नियम जैसे थे वैसे ही रहेंगे ---- */
+/* (जैसे .empty-cart-message, .button-whatsapp, #order-status-message आदि) */
