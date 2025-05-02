@@ -1,7 +1,6 @@
 // js/product-detail.js
-// FINAL UPDATED Version: Uses 'onlineProducts' collection for website data.
+// FINAL UPDATED Version: Uses 'onlineProducts', fixes Wedding Qty logic.
 // Includes Tabs, Quantity Buttons, New Price Layout, Related Products Slider, Schema Update, Review Logic (subcollection), Social Sharing, and Error Checks
-// Corrected Price Calculation for Wedding Cards & Flex Banners + Image in Cart
 
 // --- Imports ---
 import { db } from './firebase-config.js';
@@ -21,677 +20,588 @@ const errorMessageContainer = document.getElementById('error-message-container')
 const breadcrumbProductName = document.getElementById('breadcrumb-product-name');
 const productNameEl = document.getElementById('product-name');
 const mainImageEl = document.getElementById('main-product-image');
-const thumbnailContainer = document.getElementById('thumbnail-images');
-const productPriceEl = document.getElementById('product-price');
-const originalPriceEl = document.getElementById('original-price'); // Element for original price (if applicable)
-const discountBadgeEl = document.getElementById('discount-badge'); // Element for discount badge
-const productDescriptionEl = document.getElementById('product-description');
-const featuresListEl = document.getElementById('features-list');
+const thumbnailImagesContainer = document.getElementById('thumbnail-images'); // Corrected ID reference
+const priceEl = document.getElementById('product-price'); // Main price display SPAN
+const originalPriceEl = document.getElementById('original-price'); // Optional original price SPAN
 const addToCartBtn = document.getElementById('add-to-cart-btn');
-const quantityInput = document.getElementById('quantity-input');
-const quantityDecreaseBtn = document.getElementById('quantity-decrease');
-const quantityIncreaseBtn = document.getElementById('quantity-increase');
-const tabsContainer = document.getElementById('product-tabs');
-const tabsNav = tabsContainer?.querySelector('.tabs-nav');
-const tabsContent = tabsContainer?.querySelector('.tabs-content');
-const cartFeedback = document.getElementById('cart-feedback-message');
-const flexOptionsContainer = document.getElementById('flex-options-container'); // Container for flex options
-const relatedProductsContainer = document.getElementById('related-products-container');
-const relatedProductsSection = document.getElementById('related-products-section');
-const reviewForm = document.getElementById('review-form'); // Review form element
-const reviewList = document.getElementById('review-list'); // Review list element
-const reviewSection = document.getElementById('reviews-section'); // Reviews section container
-const avgRatingEl = document.getElementById('average-rating'); // Average rating display
-const reviewCountEl = document.getElementById('review-count'); // Review count display
-const faqListEl = document.getElementById('faq-list'); // FAQ list element
-const socialShareContainer = document.getElementById('social-share');
+const cartFeedbackEl = document.getElementById('cart-feedback'); // Feedback P element
+const productSchemaScript = document.getElementById('product-schema');
+const descriptionShortEl = document.getElementById('product-description-short'); // Short description P element
+const descriptionFullEl = document.getElementById('product-description-full'); // Full description P element in tab
+const specsListEl = document.getElementById('product-specs'); // Specs UL element in tab
+const usageCareInfoEl = document.getElementById('usage-care-info'); // Usage/care P element in tab
+const faqListEl = document.getElementById('faq-list'); // FAQ DIV element in tab
+const standardQuantityContainer = document.getElementById('standard-quantity-container'); // DIV for standard qty controls
+const flexInputsContainer = document.getElementById('flex-inputs-container'); // DIV for flex inputs
+const weddingQuantityContainer = document.getElementById('wedding-quantity-container'); // DIV for wedding qty dropdown
+const standardQuantityInput = document.getElementById('quantity'); // Standard quantity INPUT
+const bannerWidthInput = document.getElementById('banner-width'); // Flex width INPUT
+const bannerHeightInput = document.getElementById('banner-height'); // Flex height INPUT
+const bannerUnitSelect = document.getElementById('banner-unit'); // Flex unit SELECT
+const bannerQuantityInput = document.getElementById('banner-quantity'); // Flex quantity INPUT
+const tabsContainer = document.querySelector('.product-details-tabs'); // Main tabs container DIV
+const tabsNavLinks = document.querySelectorAll('.tabs-nav a'); // Tab navigation links
+const tabPanes = document.querySelectorAll('.tabs-content .tab-pane'); // Tab content panes
+const relatedProductsSection = document.getElementById('related-products-section'); // Related products SECTION
+const relatedProductsContainer = document.getElementById('related-products-container'); // Swiper wrapper DIV
+const reviewsListEl = document.getElementById('reviews-list'); // Review list DIV
+const reviewForm = document.getElementById('review-form'); // Review FORM element
+const reviewFeedbackEl = document.getElementById('review-feedback'); // Review feedback P element
+const averageRatingEl = document.getElementById('average-rating'); // Average rating SPAN
+const reviewCountEl = document.getElementById('review-count'); // Review count SPAN
+const socialShareLinksContainer = document.querySelector('.social-sharing'); // Container for social links
 
-// Product Schema element
-const productSchemaEl = document.getElementById('product-schema');
-
-// Store the current product data globally within this module's scope
-let currentProduct = null;
+// --- Global State ---
+let currentProductData = null;
 let currentProductId = null;
+let relatedProductsSwiper = null;
 
 // --- Helper Functions ---
-
-// Function to display loading indicator
-function showLoading(isLoading) {
-    if (loadingIndicator) {
-        loadingIndicator.style.display = isLoading ? 'flex' : 'none';
-    }
-    if (productContent) {
-        productContent.style.display = isLoading ? 'none' : 'block';
-    }
-    if (errorMessageContainer && isLoading) {
-        errorMessageContainer.style.display = 'none';
-        errorMessageContainer.textContent = '';
-    }
-}
-
-// Function to display error messages
+const formatIndianCurrency = (amount) => {
+    const num = Number(amount);
+    return isNaN(num) || num === null ? 'N/A' : `₹ ${num.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+};
+function formatSpecKey(key) {
+    const result = key.replace(/([A-Z])/g, ' $1');
+    return result.charAt(0).toUpperCase() + result.slice(1);
+ }
 function showError(message) {
-    showLoading(false);
+    if (productContent) productContent.style.display = 'none';
+    if (tabsContainer) tabsContainer.style.display = 'none';
+    if (relatedProductsSection) relatedProductsSection.style.display = 'none';
+    if (loadingIndicator) loadingIndicator.style.display = 'none';
     if (errorMessageContainer) {
         errorMessageContainer.textContent = message;
         errorMessageContainer.style.display = 'block';
     }
-    if (productContent) {
-        productContent.style.display = 'none';
+    document.title = "Error - Madhav Multiprint";
+    if (breadcrumbProductName) breadcrumbProductName.textContent = "Error";
+}
+function showFeedback(element, message, isError = false) {
+     if (element) {
+        element.textContent = message;
+        element.className = `cart-feedback-message ${isError ? 'error' : 'success'}`; // Ensure correct base class
+        element.style.display = 'block';
+        setTimeout(() => {
+            element.style.display = 'none';
+        }, 3000);
     }
 }
 
-// Show feedback message near cart button
-function showCartFeedback(message, type = 'success') {
-    if (!cartFeedback) return;
-    cartFeedback.textContent = message;
-    cartFeedback.className = `cart-feedback-message ${type}`;
-    cartFeedback.style.display = 'block';
-    setTimeout(() => {
-        cartFeedback.style.display = 'none';
-    }, 3000);
+// --- Flex Banner Calculation Logic ---
+// (Keep the existing robust calculateFlexDimensions function)
+const mediaWidthsFt = [3, 4, 5, 6, 8, 10]; // Default, can be overridden by product data
+function calculateFlexDimensions(widthFt, heightFt, availableMediaWidths = mediaWidthsFt) {
+    widthFt = Math.max(0, Number(widthFt)); heightFt = Math.max(0, Number(heightFt));
+    if (isNaN(widthFt) || isNaN(heightFt) || widthFt <= 0 || heightFt <= 0) return { printSqFtPerBanner: 0, actualWidthFt: 0, actualHeightFt: 0, error: "Invalid dimensions." };
+    const sortedMediaWidths = [...availableMediaWidths].sort((a, b) => a - b); let bestSqFt = Infinity;
+    const orientations = [{ w: widthFt, h: heightFt }, { w: heightFt, h: widthFt }];
+    for (const dim of orientations) {
+        const currentW = dim.w; const currentH = dim.h;
+        const smallerDim = Math.min(currentW, currentH); const largerDim = Math.max(currentW, currentH);
+        let suitableMediaWidth = sortedMediaWidths.find(mediaW => mediaW >= smallerDim);
+        if (suitableMediaWidth) { const currentSqFt = largerDim * suitableMediaWidth; bestSqFt = Math.min(bestSqFt, currentSqFt); }
+    }
+    if (bestSqFt === Infinity) {
+        console.warn(`Flex dimensions (${widthFt}x${heightFt}) may exceed largest media width. Using raw area.`);
+        bestSqFt = widthFt * heightFt;
+        if (bestSqFt <= 0) return { printSqFtPerBanner: 0, actualWidthFt: widthFt, actualHeightFt: heightFt, error: "Zero area." };
+    }
+    if (bestSqFt <= 0) return { printSqFtPerBanner: 0, actualWidthFt: widthFt, actualHeightFt: heightFt, error: "Calculated area is zero." };
+    return { printSqFtPerBanner: bestSqFt, actualWidthFt: widthFt, actualHeightFt: heightFt };
 }
 
 
-// --- Product Data Display Functions ---
+// --- Update Price Functions (Separate logic for clarity) ---
 
-// Update breadcrumbs
-function updateBreadcrumbs(category, productName) {
-    const breadcrumbsContainer = document.querySelector('.breadcrumbs');
-    if (breadcrumbsContainer) {
-        breadcrumbsContainer.innerHTML = `
-            <a href="index.html">Home</a> &gt;
-            <a href="products.html?category=${encodeURIComponent(category)}">${category}</a> &gt;
-            <span id="breadcrumb-product-name">${productName}</span>
-        `;
-    }
+function updateFlexPriceDisplay() {
+     const width = parseFloat(bannerWidthInput?.value);
+     const height = parseFloat(bannerHeightInput?.value);
+     const unit = bannerUnitSelect?.value;
+     const quantity = parseInt(bannerQuantityInput?.value, 10);
+     const pricing = currentProductData?.pricing;
+
+     if (!pricing || isNaN(width) || width <= 0 || isNaN(height) || height <= 0 || isNaN(quantity) || quantity <= 0) {
+         priceEl.textContent = "Enter valid dimensions & quantity"; return;
+     }
+     const ratePerSqFt = parseFloat(pricing.rate);
+     if (isNaN(ratePerSqFt) || ratePerSqFt <= 0) { priceEl.textContent = "Pricing unavailable"; return; }
+     const minimumOrderValue = parseFloat(pricing.minimumOrderValue || 0);
+     const mediaWidths = pricing.mediaWidths || mediaWidthsFt; // Use default if not specified
+
+     const widthFt = unit === 'inches' ? width / 12 : width;
+     const heightFt = unit === 'inches' ? height / 12 : height;
+     const dimResult = calculateFlexDimensions(widthFt, heightFt, mediaWidths);
+     if (dimResult.error || isNaN(dimResult.printSqFtPerBanner) || dimResult.printSqFtPerBanner <= 0) {
+         priceEl.textContent = dimResult.error || "Calculation error"; return;
+     }
+     const printSqFtPerBanner = dimResult.printSqFtPerBanner;
+     const totalPrintSqFt = printSqFtPerBanner * quantity;
+     const calculatedCost = totalPrintSqFt * ratePerSqFt;
+     const finalCost = Math.max(calculatedCost, minimumOrderValue);
+
+     priceEl.textContent = formatIndianCurrency(finalCost);
+     if (originalPriceEl) originalPriceEl.style.display = 'none'; // Flex usually doesn't have original price concept like this
 }
 
-// Function to display images
-function displayImages(imageUrls) {
-    if (!imageUrls || imageUrls.length === 0) {
-        mainImageEl.src = 'path/to/default/image.jpg';
-        mainImageEl.alt = "No image available";
-        thumbnailContainer.innerHTML = '';
-        return;
+function updateWeddingPriceDisplay() {
+    const quantityDropdown = document.getElementById('wedding-quantity-select');
+    const selectedQuantity = parseInt(quantityDropdown?.value, 10);
+    const pricing = currentProductData?.pricing;
+
+    if (!pricing || isNaN(selectedQuantity) || selectedQuantity <= 0) {
+        priceEl.textContent = "Select Quantity"; return;
     }
-    mainImageEl.src = imageUrls[0];
-    mainImageEl.alt = currentProduct.name;
-    thumbnailContainer.innerHTML = '';
+    const baseRate = parseFloat(pricing.rate);
+    if (isNaN(baseRate)) { priceEl.textContent = "Price info missing"; return; }
+    const designCharge = parseFloat(pricing.designCharge || 0);
+    const printingChargeBase = parseFloat(pricing.printingChargeBase || 0);
+    const transportCharge = parseFloat(pricing.transportCharge || 0);
+    const extraMarginPercent = parseFloat(pricing.extraMarginPercent || 0);
 
-    if (imageUrls.length > 1) {
-        imageUrls.forEach((url, index) => {
-            const thumb = document.createElement('img');
-            thumb.src = url;
-            thumb.alt = `${currentProduct.name} - view ${index + 1}`;
-            thumb.classList.add('thumbnail');
-            if (index === 0) thumb.classList.add('active');
-            thumb.addEventListener('click', () => {
-                mainImageEl.src = url;
-                thumbnailContainer.querySelectorAll('.thumbnail').forEach(t => t.classList.remove('active'));
-                thumb.classList.add('active');
-            });
-            thumbnailContainer.appendChild(thumb);
-        });
-    }
-}
+    const subTotal = (baseRate * selectedQuantity) + designCharge + printingChargeBase + transportCharge;
+    const finalAmount = subTotal * (1 + (extraMarginPercent / 100));
+    const averageUnitPrice = finalAmount / selectedQuantity;
 
-// --- Price Calculation & Display ---
-function calculatePrice(product, quantity = 1, options = {}) {
-    let basePrice = parseFloat(product.price || 0);
-    let originalPrice = basePrice;
-    let discount = parseFloat(product.discountPercentage || 0);
-    let finalPrice = basePrice;
-    let priceDetailsHTML = '';
+    if (isNaN(finalAmount)) { priceEl.textContent = "Calculation Error"; return; }
 
-    // Apply discount
-    if (discount > 0) {
-        finalPrice = basePrice * (1 - discount / 100);
-        priceDetailsHTML += `<span class="original-price">₹${basePrice.toFixed(2)}</span> `;
-        if (discountBadgeEl) {
-            discountBadgeEl.textContent = `${discount}% OFF`;
-            discountBadgeEl.style.display = 'inline-block';
-        }
-    } else {
-        if (originalPriceEl) originalPriceEl.style.display = 'none';
-        if (discountBadgeEl) discountBadgeEl.style.display = 'none';
-    }
-
-    // Wedding Cards Pricing
-    if (product.category === 'Wedding Cards' && options.cardType) {
-         const cardTypePrices = { 'Standard': 0, 'Premium': 5, 'Luxury': 15 };
-         const typeAdjustment = cardTypePrices[options.cardType] || 0;
-         finalPrice += typeAdjustment;
-         originalPrice += typeAdjustment;
-         if(discount > 0) priceDetailsHTML = `<span class="original-price">₹${originalPrice.toFixed(2)}</span> `;
-    }
-
-    // Flex Banner Pricing
-    if (product.category === 'Flex Banner' && options.width && options.height) {
-        const width = parseFloat(options.width);
-        const height = parseFloat(options.height);
-        const sides = parseInt(options.sides || 1, 10);
-        if (!isNaN(width) && !isNaN(height) && width > 0 && height > 0) {
-            const area = width * height;
-            const pricePerSqFt = parseFloat(product.pricePerSqFt || 15);
-            let calculatedFlexPrice = area * pricePerSqFt;
-            if (sides === 2) calculatedFlexPrice *= 1.8;
-            finalPrice = calculatedFlexPrice;
-            if (discount > 0) {
-                 originalPrice = finalPrice / (1 - discount / 100);
-                 priceDetailsHTML = `<span class="original-price">₹${originalPrice.toFixed(2)}</span> `;
-            } else {
-                priceDetailsHTML = '';
-            }
+    priceEl.textContent = `${formatIndianCurrency(finalAmount)} (${formatIndianCurrency(averageUnitPrice)}/card)`;
+    // Handle original price if applicable (logic depends on how original price is defined for wedding cards)
+    if (originalPriceEl) {
+        if (pricing.originalRate && averageUnitPrice < pricing.originalRate) { // Example condition
+             originalPriceEl.textContent = formatIndianCurrency(pricing.originalRate) + "/card (Original)";
+             originalPriceEl.style.display = 'inline-block';
+        } else {
+            originalPriceEl.style.display = 'none';
         }
     }
-
-    // Final Price Display
-    priceDetailsHTML += `<span class="current-price">₹${finalPrice.toFixed(2)}</span>`;
-    if (product.priceUnit) priceDetailsHTML += ` <span class="price-unit">(${product.priceUnit})</span>`;
-    if (productPriceEl) productPriceEl.innerHTML = priceDetailsHTML;
-    if (originalPriceEl && discount > 0) {
-        originalPriceEl.textContent = `₹${originalPrice.toFixed(2)}`;
-        originalPriceEl.style.display = 'inline';
-    } else if (originalPriceEl) {
-         originalPriceEl.style.display = 'none';
-    }
-
-    return { finalPrice: finalPrice, originalPrice: originalPrice };
 }
 
-// Get selected options for Flex Banners
-function getSelectedFlexOptions() {
-    const widthInput = document.getElementById('flex-width');
-    const heightInput = document.getElementById('flex-height');
-    const sidesInput = document.getElementById('flex-sides');
-    return {
-        width: widthInput?.value || null,
-        height: heightInput?.value || null,
-        sides: sidesInput?.value || null
-    };
-}
-
-// Update price display when options change
-function handleOptionChange() {
-    if (!currentProduct) return;
-    const quantity = parseInt(quantityInput.value, 10);
-    let options = {};
-    if (currentProduct.category === 'Flex Banner') {
-        options = getSelectedFlexOptions();
-        if (!options.width || !options.height || parseFloat(options.width) <= 0 || parseFloat(options.height) <= 0) {
-             if (productPriceEl) productPriceEl.innerHTML += ' <span style="color: red; font-size: 0.8em;">(Enter valid dimensions)</span>';
-            return;
-        }
-    } else if (currentProduct.category === 'Wedding Cards') {
-         const cardTypeSelect = document.getElementById('wedding-card-type');
-         if (cardTypeSelect) options.cardType = cardTypeSelect.value;
-    }
-    calculatePrice(currentProduct, quantity, options);
-}
-
-// Display Flex Banner specific options
-function displayFlexOptions(product) {
-    if (!flexOptionsContainer) return;
-    if (product.category === 'Flex Banner') {
-        flexOptionsContainer.innerHTML = `
-            <h4>Customize Your Flex Banner</h4>
-            <div class="flex-options">
-                 <div class="form-group-inline"><label for="flex-width">Width (ft):</label><input type="number" id="flex-width" name="flex-width" min="1" step="0.1" required></div>
-                 <div class="form-group-inline"><label for="flex-height">Height (ft):</label><input type="number" id="flex-height" name="flex-height" min="1" step="0.1" required></div>
-                 <div class="form-group-inline quantity-control-group"><label for="flex-sides">Sides:</label><select id="flex-sides" name="flex-sides"><option value="1">Single-Sided</option><option value="2">Double-Sided</option></select></div>
-            </div>
-            <p class="price-note">Price calculated based on square footage and sides.</p>`;
-        flexOptionsContainer.querySelectorAll('input, select').forEach(input => {
-            input.addEventListener('change', handleOptionChange);
-            input.addEventListener('keyup', handleOptionChange);
-        });
-        flexOptionsContainer.style.display = 'block';
-    } else {
-        flexOptionsContainer.innerHTML = '';
-        flexOptionsContainer.style.display = 'none';
-    }
-}
-
-// Display Wedding Card options
-function displayWeddingCardOptions(product) {
-     const optionsContainer = document.getElementById('wedding-card-options-container');
-     if (!optionsContainer) return;
-     if (product.category === 'Wedding Cards') {
-         optionsContainer.innerHTML = `
-             <h4>Select Card Options</h4>
-             <div class="form-group">
-                 <label for="wedding-card-type">Card Type:</label>
-                 <select id="wedding-card-type" name="wedding-card-type"><option value="Standard">Standard</option><option value="Premium">Premium (+₹5)</option><option value="Luxury">Luxury (+₹15)</option></select>
-             </div>`;
-         optionsContainer.querySelectorAll('select').forEach(select => {
-             select.addEventListener('change', handleOptionChange);
-         });
-         optionsContainer.style.display = 'block';
-     } else {
-         optionsContainer.innerHTML = '';
-         optionsContainer.style.display = 'none';
+function renderStandardPriceDisplay(pricing) {
+     if (!pricing || typeof pricing.rate !== 'number') {
+          priceEl.textContent = 'Price Unavailable';
+          if (originalPriceEl) originalPriceEl.style.display = 'none';
+          return;
+     }
+     priceEl.textContent = formatIndianCurrency(pricing.rate);
+     if (originalPriceEl) {
+         if (typeof pricing.originalRate === 'number' && pricing.originalRate > pricing.rate) {
+            originalPriceEl.textContent = formatIndianCurrency(pricing.originalRate);
+            originalPriceEl.style.display = 'inline';
+         } else {
+            originalPriceEl.style.display = 'none';
+         }
      }
 }
 
-// Update Product Schema
-function updateProductSchema(product) {
-    if (!productSchemaEl || !product) return;
-    const { finalPrice } = calculatePrice(product, 1, {});
+// --- Populate Wedding Dropdown (Corrected Logic) ---
+function populateWeddingQuantities(optionsArray) {
+    const selectEl = document.getElementById('wedding-quantity-select'); // Ensure this ID exists in HTML within weddingQuantityContainer
+    if (!selectEl) { console.error("Wedding quantity select element not found!"); return; }
+
+    selectEl.innerHTML = '<option value="">Select Quantity</option>'; // Default prompt
+
+    // Find the option object named 'Quantity' within the options array
+    const quantityOptionData = optionsArray?.find(opt => opt && opt.name?.toLowerCase() === 'quantity');
+
+    if (!quantityOptionData || !Array.isArray(quantityOptionData.values) || quantityOptionData.values.length === 0) {
+        console.warn("Wedding quantities data missing or invalid within product options.");
+        selectEl.innerHTML += '<option disabled>Quantities not available</option>'; // Show unavailability
+        return;
+    }
+
+    quantityOptionData.values.forEach(val => {
+        const numQty = Number(val); // Convert to number
+        if (!isNaN(numQty) && numQty > 0) {
+            const option = document.createElement('option');
+            option.value = numQty;
+            option.textContent = numQty;
+            selectEl.appendChild(option);
+        } else {
+            console.warn("Invalid quantity value found in wedding options array:", val);
+        }
+    });
+}
+
+
+// --- Schema Update Function ---
+function updateProductSchema(productData, reviewsData = { average: 0, count: 0, reviews: [] }) {
+    if (!productSchemaScript || !productData || !productData.productName) return;
+    let priceForSchema = productData.pricing?.rate ?? "0"; // Default
+    const category = productData.category?.toLowerCase() || '';
+    if (category.includes('flex') && productData.pricing?.minimumOrderValue) {
+        priceForSchema = productData.pricing.minimumOrderValue;
+    }
+
     const schema = {
         "@context": "https://schema.org/", "@type": "Product",
-        "name": product.name, "image": product.imageUrls || [],
-        "description": product.description || product.shortDescription || "High-quality printing services.",
-        "sku": product.sku || product.id,
-        "brand": { "@type": "Brand", "name": "Madhav Multiprint" },
+        "name": productData.productName, "image": productData.imageUrls || [],
+        "description": productData.description || productData.shortDescription || "",
+        "sku": productData.sku || currentProductId,
+        "brand": { "@type": "Brand", "name": productData.brand || "Madhav Multiprint" }, // Use brand if exists, else default
         "offers": {
             "@type": "Offer", "url": window.location.href, "priceCurrency": "INR",
-            "price": finalPrice.toFixed(2), "itemCondition": "https://schema.org/NewCondition",
-            "availability": product.stock > 0 ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
-            "priceValidUntil": new Date(new Date().setFullYear(new Date().getFullYear() + 1)).toISOString().split('T')[0]
-        }
+            "price": priceForSchema.toString(), // Use determined price, ensure string
+            "availability": productData.isEnabled ? "https://schema.org/InStock" : "https://schema.org/OutOfStock", // Use isEnabled field
+            "itemCondition": "https://schema.org/NewCondition"
+        },
+        "aggregateRating": {
+            "@type": "AggregateRating", "ratingValue": reviewsData.average.toFixed(1) || "0", "reviewCount": reviewsData.count || "0"
+        },
+        "review": reviewsData.reviews.map(review => ({
+             "@type": "Review", "author": {"@type": "Person", "name": review.reviewerName || "Anonymous"},
+             "datePublished": review.createdAt?.seconds ? new Date(review.createdAt.seconds * 1000).toISOString().split('T')[0] : "",
+             "reviewBody": review.comment || "", "reviewRating": { "@type": "Rating", "ratingValue": review.rating || "0" }
+        }))
     };
-    if (product.averageRating && product.reviewCount > 0) {
-        schema.aggregateRating = {
-            "@type": "AggregateRating", "ratingValue": product.averageRating.toFixed(1),
-            "bestRating": "5", "worstRating": "1", "ratingCount": product.reviewCount
-        };
-    }
-    productSchemaEl.textContent = JSON.stringify(schema, null, 2);
+    try { productSchemaScript.textContent = JSON.stringify(schema, null, 2); }
+    catch (e) { console.error("Error updating schema script:", e); }
 }
 
+// --- Main Product Loading Logic ---
+async function loadProductDetails(productId) {
+    if (!loadingIndicator || !productContent || !errorMessageContainer || !tabsContainer) { showError("Core layout elements missing!"); return; }
+    showLoading(true);
+    if (relatedProductsSection) relatedProductsSection.style.display = 'none';
+    if (weddingQuantityContainer) weddingQuantityContainer.innerHTML = ''; // Clear specifically
 
-// Display Product Details
-function displayProductDetails(product) {
-    currentProduct = product;
-    if (!product) { showError("Product data is not available."); return; }
+    try {
+        const productRef = doc(db, "onlineProducts", productId); // Fetch from onlineProducts
+        const productSnap = await getDoc(productRef);
 
-    if (productNameEl) productNameEl.textContent = product.name || 'Product Name Unavailable';
-    if (breadcrumbProductName) breadcrumbProductName.textContent = product.name || '';
-    if (productDescriptionEl) productDescriptionEl.innerHTML = product.description || 'No description available.';
-    updateBreadcrumbs(product.category || 'Products', product.name || 'Details');
-    displayImages(product.imageUrls || []);
-    calculatePrice(product, 1, {}); // Initial price calculation
+        if (productSnap.exists()) {
+            currentProductData = productSnap.data(); currentProductId = productId;
+            if (!currentProductData) { showError("Failed to process product data."); return; }
+            // Ensure pricing object exists (important!)
+            if (!currentProductData.pricing) { currentProductData.pricing = {}; }
+             // Ensure options array exists if needed (important!)
+             if (!currentProductData.options) { currentProductData.options = []; }
 
-    if (featuresListEl && product.features && product.features.length > 0) {
-        featuresListEl.innerHTML = product.features.map(feature => `<li>${feature}</li>`).join('');
-        featuresListEl.closest('.tab-pane')?.classList.add('active');
-    } else if (featuresListEl) {
-        featuresListEl.innerHTML = '<li>No specific features listed.</li>';
-    }
 
-    displayFlexOptions(product);
-    displayWeddingCardOptions(product);
-    setupQuantityControls();
-    setupTabs();
-    fetchRelatedProducts(product.category, product.id);
-    updateProductSchema(product);
-    setupReviewSystem(currentProductId); // Pass ID here
-    fetchAndDisplayFAQs(product.faqIds || []);
-    setupSocialSharing(product);
+            // --- Populate Base HTML ---
+            document.title = `${currentProductData.productName || 'Product'} - Madhav Multiprint`;
+            if(breadcrumbProductName) breadcrumbProductName.textContent = currentProductData.productName || 'Details';
+            if(productNameEl) productNameEl.textContent = currentProductData.productName || 'N/A';
+
+            // --- Populate Images ---
+            if (mainImageEl && thumbnailImagesContainer) {
+                const imageUrls = currentProductData.imageUrls && Array.isArray(currentProductData.imageUrls) ? currentProductData.imageUrls : [];
+                if (imageUrls.length > 0) {
+                    mainImageEl.src = imageUrls[0]; mainImageEl.alt = currentProductData.productName || 'Product image';
+                    thumbnailImagesContainer.innerHTML = '';
+                    imageUrls.forEach((url, index) => { /* ... thumbnail logic ... */
+                         const thumb = document.createElement('img'); thumb.src = url; thumb.alt = `Thumbnail ${index + 1}`; thumb.classList.add('thumbnail');
+                         if (index === 0) thumb.classList.add('active');
+                         thumbnailImagesContainer.appendChild(thumb);
+                    });
+                    thumbnailImagesContainer.style.display = imageUrls.length > 1 ? 'grid' : 'none'; // Show only if more than 1 image
+                } else { mainImageEl.src = 'images/placeholder.png'; mainImageEl.alt = 'Placeholder'; thumbnailImagesContainer.innerHTML = ''; thumbnailImagesContainer.style.display = 'none';}
+            }
+
+            // --- Populate Descriptions ---
+            if (descriptionShortEl) descriptionShortEl.textContent = currentProductData.shortDescription || currentProductData.description?.substring(0, 150) + '...' || '';
+            if (descriptionFullEl) descriptionFullEl.innerHTML = currentProductData.description || 'No description available.'; // Use innerHTML if needed
+
+            // --- Setup Product Options & Pricing ---
+            const category = currentProductData.category?.toLowerCase() || '';
+            // Hide all option containers initially
+            if (standardQuantityContainer) standardQuantityContainer.style.display = 'none';
+            if (flexInputsContainer) flexInputsContainer.style.display = 'none';
+            if (weddingQuantityContainer) weddingQuantityContainer.style.display = 'none';
+
+            if (category.includes('flex')) {
+                if (flexInputsContainer) flexInputsContainer.style.display = 'grid'; // Show flex container
+                updateFlexPriceDisplay(); // Initial price calculation
+            } else if (category.includes('wedding')) {
+                if (weddingQuantityContainer) {
+                     // ** Add the select dropdown HTML here if it's not static in product-detail.html **
+                     // Ensure the select element exists before populating
+                     if (!document.getElementById('wedding-quantity-select')) {
+                          const label = document.createElement('label'); label.htmlFor = 'wedding-quantity-select'; label.textContent = 'Select Quantity:';
+                          const select = document.createElement('select'); select.id = 'wedding-quantity-select'; select.name = 'wedding_quantity';
+                          weddingQuantityContainer.appendChild(label);
+                          weddingQuantityContainer.appendChild(select);
+                     }
+                     weddingQuantityContainer.style.display = 'flex'; // Show wedding container
+                     populateWeddingQuantities(currentProductData.options); // Populate using CORRECTED logic
+                     updateWeddingPriceDisplay(); // Initial price display (likely "Select Quantity")
+                }
+            } else {
+                 if (standardQuantityContainer) standardQuantityContainer.style.display = 'block'; // Show standard qty
+                 renderStandardPriceDisplay(currentProductData.pricing); // Render standard price
+            }
+
+            // --- Populate Tabs Content ---
+             if (specsListEl) { /* ... spec logic ... */
+                 specsListEl.innerHTML = '';
+                 if (currentProductData.specifications && typeof currentProductData.specifications === 'object' && Object.keys(currentProductData.specifications).length > 0) {
+                     for (const [key, value] of Object.entries(currentProductData.specifications)) { if (value) { const li = document.createElement('li'); li.innerHTML = `<strong>${formatSpecKey(key)}:</strong> <span>${value}</span>`; specsListEl.appendChild(li); } }
+                 } else { specsListEl.innerHTML = '<li>No specifications available.</li>'; }
+             }
+             if (usageCareInfoEl) usageCareInfoEl.textContent = currentProductData.usageInfo || "No usage information available.";
+             if (faqListEl) { await fetchAndDisplayFAQs(currentProductData.faqIds || []); } // Fetch FAQs if IDs exist
+
+
+            // --- Show Content & Tabs ---
+            productContent.style.display = 'grid'; // Use 'grid' as per your CSS
+            tabsContainer.style.display = 'block';
+            loadingIndicator.style.display = 'none';
+
+            // --- Load Reviews & Related Products ---
+            let reviewsData = { average: 0, count: 0, reviews: [] }; // Default
+            try { reviewsData = await fetchAndDisplayReviews(productId); } // Load reviews using correct subcollection path
+            catch (reviewError) { console.error("Error loading reviews (caught):", reviewError); }
+
+            updateProductSchema(currentProductData, reviewsData); // Update schema
+
+            if (currentProductData.category) { // Load related only if category exists
+                 fetchRelatedProducts(productId, currentProductData.category);
+            } else { if(relatedProductsSection) relatedProductsSection.style.display = 'none'; }
+
+            // Attach event listeners AFTER everything is rendered
+            setupAllEventListeners();
+
+
+        } else { showError(`Product not found (ID: ${productId}).`); }
+    } catch (error) {
+        console.error("Error in loadProductDetails:", error);
+        showError(`Failed to load details: ${error.message}`);
+    } finally { showLoading(false); }
 }
 
-// --- Quantity Controls ---
-function setupQuantityControls() {
-    if (!quantityInput || !quantityDecreaseBtn || !quantityIncreaseBtn) return;
-    quantityDecreaseBtn.addEventListener('click', () => {
-        let currentValue = parseInt(quantityInput.value, 10);
-        if (currentValue > 1) { quantityInput.value = currentValue - 1; handleOptionChange(); }
-    });
-    quantityIncreaseBtn.addEventListener('click', () => {
-        let currentValue = parseInt(quantityInput.value, 10);
-        quantityInput.value = currentValue + 1; handleOptionChange();
-    });
-    quantityInput.addEventListener('change', () => {
-        let currentValue = parseInt(quantityInput.value, 10);
-        if (isNaN(currentValue) || currentValue < 1) quantityInput.value = 1;
-        handleOptionChange();
-    });
-}
-
-// --- Tabs Functionality ---
-function setupTabs() {
-    if (!tabsNav || !tabsContent) return;
-    const tabLinks = tabsNav.querySelectorAll('a');
-    const tabPanes = tabsContent.querySelectorAll('.tab-pane');
-    const switchTab = (targetId) => {
-        tabLinks.forEach(link => link.classList.remove('active'));
-        tabPanes.forEach(pane => pane.classList.remove('active'));
-        const activeLink = tabsNav.querySelector(`a[href="#${targetId}"]`);
-        const activePane = tabsContent.querySelector(`#${targetId}`);
-        if (activeLink) activeLink.classList.add('active');
-        if (activePane) activePane.classList.add('active');
-    };
-    tabLinks.forEach(link => {
-        link.addEventListener('click', (e) => { e.preventDefault(); switchTab(link.getAttribute('href').substring(1)); });
-    });
-    let defaultTabId = 'description';
-    const featuresPane = document.getElementById('features');
-    if (featuresPane && featuresListEl && featuresListEl.children.length > 1) defaultTabId = 'features';
-    switchTab(defaultTabId);
-}
 
 // --- Related Products ---
-async function fetchRelatedProducts(category, currentProdId) {
-    if (!relatedProductsContainer || !category || !currentProdId) {
-         if (relatedProductsSection) relatedProductsSection.style.display = 'none';
-         return;
-    }
-    relatedProductsContainer.innerHTML = '<div class="swiper-slide"><p>Loading related products...</p></div>';
-    try {
-        // ***** CHANGE: Use 'onlineProducts' collection *****
-        const productsRef = collection(db, "onlineProducts");
-        const q = query( productsRef, where("category", "==", category), limit(8) );
-        const querySnapshot = await getDocs(q);
-        let relatedProducts = [];
-        querySnapshot.forEach((doc) => {
-            if (doc.id !== currentProdId) { // Exclude current product
-                relatedProducts.push({ id: doc.id, ...doc.data() });
-            }
-        });
-        relatedProducts = relatedProducts.slice(0, 6); // Limit displayed
+async function fetchRelatedProducts(currentProdId, category) {
+     if (!relatedProductsSection || !relatedProductsContainer) return;
+    relatedProductsContainer.innerHTML = '<div class="swiper-slide"><p>Loading...</p></div>'; // Loading state
+     try {
+         const productsRef = collection(db, "onlineProducts"); // Use correct collection
+         // Query needs refinement: Cannot use inequality (!=) on document ID AND other fields simultaneously easily.
+         // Fetch by category and filter client-side, OR ensure a unique field can be used for exclusion.
+         // Let's fetch by category and filter current ID later.
+         const q = query(collection(db, "onlineProducts"), where("category", "==", category), limit(10)); // Fetch a bit more
+         const querySnapshot = await getDocs(q); const relatedProducts = [];
+         querySnapshot.forEach((doc) => {
+             if (doc.id !== currentProdId) { // Filter current product ID here
+                 relatedProducts.push({ id: doc.id, ...doc.data() });
+             }
+         });
+         relatedProducts = relatedProducts.slice(0, 6); // Limit to display
 
-        if (relatedProducts.length > 0) {
-            displayRelatedProducts(relatedProducts);
-            relatedProductsSection.style.display = 'block';
-        } else {
-            relatedProductsSection.style.display = 'none';
-        }
-    } catch (error) {
-        console.error("Error fetching related products:", error);
-        relatedProductsContainer.innerHTML = '<div class="swiper-slide"><p>Could not load related products.</p></div>';
-        relatedProductsSection.style.display = 'block';
-    }
+         if (relatedProducts.length > 0) {
+             displayRelatedProducts(relatedProducts); // Call display function
+             relatedProductsSection.style.display = 'block';
+         } else { relatedProductsSection.style.display = 'none'; }
+     } catch (error) { console.error("Error loading related products:", error); /* Show error message */ }
 }
 
-function displayRelatedProducts(products) {
-    relatedProductsContainer.innerHTML = '';
+function displayRelatedProducts(products) { // Separated display logic
+    relatedProductsContainer.innerHTML = ''; // Clear loading
     products.forEach(product => {
-        const { finalPrice, originalPrice } = calculatePrice(product, 1, {});
-        const hasDiscount = product.discountPercentage && product.discountPercentage > 0;
-        const slide = document.createElement('div');
-        slide.classList.add('swiper-slide');
+        const slide = document.createElement('div'); slide.className = 'swiper-slide';
+        let imageUrl = product.imageUrls?.[0] || 'images/placeholder.png';
+        let priceHTML = 'Contact for Price';
+        const pricing = product.pricing;
+        if (pricing && typeof pricing.rate === 'number') {
+             priceHTML = formatIndianCurrency(pricing.rate);
+             if(product.unit && product.unit !== 'QTY') priceHTML += ` / ${product.unit}`;
+        }
         slide.innerHTML = `
-            <div class="product-card related">
-                <a href="product-detail.html?id=${product.id}" class="product-image-link">
-                    <img src="${product.imageUrls?.[0] || 'path/to/default/image.jpg'}" alt="${product.name}">
-                </a>
-                 ${hasDiscount ? `<span class="discount-badge-related">${product.discountPercentage}% OFF</span>` : ''}
-                <div class="product-info">
-                    <h3><a href="product-detail.html?id=${product.id}">${product.name}</a></h3>
-                    <div class="price-container">
-                        ${hasDiscount ? `<span class="original-price related">₹${originalPrice.toFixed(2)}</span>` : ''}
-                         <span class="price related">₹${finalPrice.toFixed(2)}</span>
-                     </div>
-                    <a href="product-detail.html?id=${product.id}" class="button-secondary view-details-btn">View Details</a>
-                </div>
-            </div>`;
+           <div class="product-card">
+               <div class="product-image-container"><a href="product-detail.html?id=${product.id}"><img src="${imageUrl}" alt="${product.productName || 'Product'}" loading="lazy"></a></div>
+               <div class="product-info">
+                    <h3><a href="product-detail.html?id=${product.id}">${product.productName || 'Unnamed'}</a></h3> <div class="price">${priceHTML}</div>
+                   <a href="product-detail.html?id=${product.id}" class="button-primary view-details-btn">View Details</a>
+               </div>
+           </div>`;
         relatedProductsContainer.appendChild(slide);
     });
-    initializeRelatedProductsSwiper();
+    initializeRelatedProductsSwiper(); // Initialize swiper after adding slides
 }
 
 function initializeRelatedProductsSwiper() {
      if (typeof Swiper === 'undefined') { console.error("Swiper library not loaded."); return; }
      if (relatedProductsContainer.swiper) relatedProductsContainer.swiper.destroy(true, true);
-     new Swiper('.related-products-swiper', {
-         slidesPerView: 1, spaceBetween: 15,
-         pagination: { el: '.swiper-pagination', clickable: true },
-         navigation: { nextEl: '.swiper-button-next', prevEl: '.swiper-button-prev' },
-         breakpoints: { 480: { slidesPerView: 2, spaceBetween: 20 }, 768: { slidesPerView: 3, spaceBetween: 30 }, 1024: { slidesPerView: 4, spaceBetween: 30 } }
+     relatedProductsContainer.swiper = new Swiper('.related-products-swiper', { // Assign to container property
+         loop: relatedProductsContainer.querySelectorAll('.swiper-slide').length > 5, // Loop only if enough slides
+         slidesPerView: 2, spaceBetween: 15,
+         autoplay: { delay: 4000, disableOnInteraction: false, },
+         pagination: { el: '.swiper-pagination', clickable: true, },
+         navigation: { nextEl: '.swiper-button-next', prevEl: '.swiper-button-prev', },
+         breakpoints: { 640: { slidesPerView: 3 }, 768: { slidesPerView: 4 }, 1024: { slidesPerView: 5 } }
      });
-     console.log("Related products swiper initialized.");
 }
 
-// --- Review System ---
-function setupReviewSystem(productId) { // productId is passed from main logic
-    if (!reviewSection || !productId) return;
-    fetchAndDisplayReviews(productId);
-    if (reviewForm) {
-        // Define handler here to capture productId
-        const submitHandler = (e) => handleReviewSubmit(e, productId);
-        reviewForm.removeEventListener('submit', submitHandler); // Remove potential previous listener
-        reviewForm.addEventListener('submit', submitHandler);
-    }
-}
-
-async function handleReviewSubmit(event, productId) { // Receive productId
-    event.preventDefault();
-    if (!reviewForm || !productId) return;
-
-    const ratingInput = reviewForm.querySelector('input[name="rating"]:checked');
-    const commentInput = reviewForm.querySelector('textarea[name="comment"]');
-    const nameInput = reviewForm.querySelector('input[name="reviewerName"]');
-    const submitButton = reviewForm.querySelector('button[type="submit"]');
-    const formFeedback = reviewForm.querySelector('.form-feedback');
-
-    if (!ratingInput) { if (formFeedback) formFeedback.textContent = "Please select a rating."; return; }
-    if (!commentInput || commentInput.value.trim() === '') { if (formFeedback) formFeedback.textContent = "Please enter your comment."; return; }
-    if (!nameInput || nameInput.value.trim() === '') { if (formFeedback) formFeedback.textContent = "Please enter your name."; return; }
-
-    const reviewData = {
-        // No need to store productId within the review document itself if it's a subcollection
-        rating: parseInt(ratingInput.value, 10),
-        comment: commentInput.value.trim(),
-        reviewerName: nameInput.value.trim(),
-        createdAt: serverTimestamp()
-    };
-
-    if (submitButton) submitButton.disabled = true;
-    if (formFeedback) formFeedback.textContent = "Submitting review...";
-
-    try {
-        // ***** CHANGE: Use 'onlineProducts/{productId}/reviews' subcollection *****
-        const reviewsRef = collection(db, "onlineProducts", productId, "reviews");
-        await addDoc(reviewsRef, reviewData);
-
-        if (formFeedback) formFeedback.textContent = "Review submitted successfully!";
-        formFeedback.className = 'form-feedback success';
-        reviewForm.reset();
-        await fetchAndDisplayReviews(productId); // Refresh reviews
-
-    } catch (error) {
-        console.error("Error submitting review:", error);
-        if (formFeedback) formFeedback.textContent = `Error: ${error.message}`;
-        formFeedback.className = 'form-feedback error';
-    } finally {
-        if (submitButton) submitButton.disabled = false;
-    }
-}
-
+// --- Review Functions (Using subcollection path) ---
 async function fetchAndDisplayReviews(productId) {
-     if (!reviewList || !avgRatingEl || !reviewCountEl || !productId) return;
-     reviewList.innerHTML = '<p>Loading reviews...</p>';
+     if (!reviewsListEl || !averageRatingEl || !reviewCountEl || !productId) return { average: 0, count: 0, reviews: [] }; // Return default data
+     reviewsListEl.innerHTML = '<p>Loading reviews...</p>'; let totalRating = 0; let reviewCount = 0; const fetchedReviews = [];
      try {
-         // ***** CHANGE: Use 'onlineProducts/{productId}/reviews' subcollection *****
-         const reviewsRef = collection(db, "onlineProducts", productId, "reviews");
-         const q = query( reviewsRef, orderBy("createdAt", "desc") );
-
+         const reviewsRef = collection(db, "onlineProducts", productId, "reviews"); // Correct Path
+         const q = query(reviewsRef, orderBy("createdAt", "desc"));
          const querySnapshot = await getDocs(q);
-         const reviews = [];
-         let totalRating = 0;
-         querySnapshot.forEach((doc) => {
-             const review = { id: doc.id, ...doc.data() };
-             reviews.push(review);
-             totalRating += review.rating;
-         });
-
-         const reviewCount = reviews.length;
-         const averageRating = reviewCount > 0 ? totalRating / reviewCount : 0;
-         avgRatingEl.textContent = averageRating.toFixed(1);
-         reviewCountEl.textContent = `(${reviewCount} review${reviewCount !== 1 ? 's' : ''})`;
-
-         if(currentProduct) { // Update schema if product data is loaded
-             currentProduct.averageRating = averageRating;
-             currentProduct.reviewCount = reviewCount;
-             updateProductSchema(currentProduct);
-         }
-
-         if (reviewCount > 0) {
-             reviewList.innerHTML = reviews.map(review => `
-                 <div class="review-item">
-                     <div class="review-rating">${'★'.repeat(review.rating)}${'☆'.repeat(5 - review.rating)}</div>
-                     <p class="review-comment">"${review.comment}"</p>
-                     <p class="review-author">- ${review.reviewerName || 'Anonymous'}</p>
-                     <p class="review-date">${review.createdAt ? new Date(review.createdAt.toDate()).toLocaleDateString() : ''}</p>
-                 </div>`).join('');
-         } else {
-             reviewList.innerHTML = '<p>Be the first to review this product!</p>';
-         }
-     } catch (error) {
-         console.error("Error fetching reviews:", error);
-         reviewList.innerHTML = `<p class="error">Could not load reviews. Error: ${error.message}</p>`;
-         avgRatingEl.textContent = 'N/A';
-         reviewCountEl.textContent = '(0 reviews)';
+         if (!querySnapshot.empty) {
+             reviewsListEl.innerHTML = '';
+             querySnapshot.forEach((doc) => { /* ... review rendering logic ... */
+                 const review = { id: doc.id, ...doc.data() }; fetchedReviews.push(review);
+                 const reviewItem = document.createElement('div'); reviewItem.className = 'review-item';
+                 const rating = review.rating || 0; const starsHTML = Array(5).fill(0).map((_, i) => `<i class="fas fa-star${i < rating ? '' : '-empty'}" style="color: #f0ad4e;"></i>`).join('');
+                 const date = review.createdAt?.seconds ? new Date(review.createdAt.seconds * 1000).toLocaleDateString() : 'N/A';
+                 reviewItem.innerHTML = `<div class="review-rating">${starsHTML}</div> <p class="review-comment">${review.comment || ''}</p> <p class="review-meta">By <strong>${review.reviewerName || 'Anonymous'}</strong> on ${date}</p>`;
+                 reviewsListEl.appendChild(reviewItem); totalRating += rating; reviewCount++;
+             });
+             const averageRating = reviewCount > 0 ? totalRating / reviewCount : 0;
+             averageRatingEl.textContent = `${averageRating.toFixed(1)} / 5`; reviewCountEl.textContent = reviewCount;
+             return { average: averageRating, count: reviewCount, reviews: fetchedReviews };
+         } else { reviewsListEl.innerHTML = '<p>No reviews yet.</p>'; averageRatingEl.textContent = 'N/A'; reviewCountEl.textContent = '0'; return { average: 0, count: 0, reviews: [] }; }
+     } catch (error) { /* ... error handling ... */
+         console.error("Error loading reviews:", error); reviewsListEl.innerHTML = '<p>Could not load reviews.</p>';
+         averageRatingEl.textContent = 'Error'; reviewCountEl.textContent = '0'; return { average: 0, count: 0, reviews: [] };
      }
 }
 
+async function handleReviewSubmit(event, productId) {
+     event.preventDefault(); if (!reviewForm || !productId || !reviewFeedbackEl) return;
+     const reviewerName = reviewForm.elements['reviewer_name']?.value.trim();
+     const comment = reviewForm.elements['review_comment']?.value.trim();
+     const ratingInput = reviewForm.querySelector('input[name="rating"]:checked');
+     const rating = ratingInput ? parseInt(ratingInput.value, 10) : 0;
+     if (!reviewerName || !comment || rating === 0) { showFeedback(reviewFeedbackEl, "Please fill name, comment and rating.", true); return; }
+     const submitButton = reviewForm.querySelector('button[type="submit"]');
+     if (submitButton) submitButton.disabled = true; showFeedback(reviewFeedbackEl, "Submitting...", false);
+     try {
+         const reviewsRef = collection(db, "onlineProducts", productId, "reviews"); // Correct Path
+         await addDoc(reviewsRef, { reviewerName, comment, rating, createdAt: serverTimestamp() });
+         showFeedback(reviewFeedbackEl, "Review submitted!", false); reviewForm.reset();
+         const reviewsData = await fetchAndDisplayReviews(productId); // Reload reviews
+         updateProductSchema(currentProductData, reviewsData); // Update schema
+     } catch (error) { console.error("Error submitting review:", error); showFeedback(reviewFeedbackEl, `Failed: ${error.message}`, true);
+     } finally { if (submitButton) submitButton.disabled = false; }
+}
+
+
 // --- FAQ System ---
 async function fetchAndDisplayFAQs(faqIds) {
-    if (!faqListEl || !faqIds || faqIds.length === 0) {
-        if (faqListEl) faqListEl.innerHTML = '<p>No FAQs available.</p>';
-        const faqTabLink = document.querySelector('a[href="#faqs"]');
-        const faqPane = document.getElementById('faqs');
-        if(faqTabLink) faqTabLink.style.display = 'none';
-        // if(faqPane) faqPane.style.display = 'none'; // Tab logic handles pane visibility
-        return;
-    }
+    if (!faqListEl || !faqIds || faqIds.length === 0) { if (faqListEl) faqListEl.innerHTML = '<p>No FAQs available.</p>'; return; }
     faqListEl.innerHTML = '<p>Loading FAQs...</p>';
     try {
         const faqs = [];
-        for (const id of faqIds) {
-             if (!id) continue;
-             // Assuming FAQs are top-level 'faqs' collection, as per rules
-             const faqRef = doc(db, "faqs", id);
-             const docSnap = await getDoc(faqRef);
-             if (docSnap.exists()) faqs.push({ id: docSnap.id, ...docSnap.data() });
-             else console.warn(`FAQ with ID ${id} not found.`);
-         }
-        if (faqs.length > 0) {
-            faqListEl.innerHTML = faqs.map((faq, index) => `
-                <details class="faq-item"><summary class="faq-question">${index + 1}. ${faq.question}</summary><div class="faq-answer">${faq.answer}</div></details>
-            `).join('');
-            const faqTabLink = document.querySelector('a[href="#faqs"]');
-            if(faqTabLink) faqTabLink.style.display = 'inline-block';
-        } else {
-            faqListEl.innerHTML = '<p>No FAQs available.</p>';
-            const faqTabLink = document.querySelector('a[href="#faqs"]');
-            if(faqTabLink) faqTabLink.style.display = 'none';
-        }
-    } catch (error) {
-        console.error("Error fetching FAQs:", error);
-        faqListEl.innerHTML = `<p class="error">Could not load FAQs. Error: ${error.message}</p>`;
-    }
+        for (const id of faqIds) { if (!id) continue; const faqRef = doc(db, "faqs", id); const docSnap = await getDoc(faqRef); if (docSnap.exists()) faqs.push({ id: docSnap.id, ...docSnap.data() }); }
+        if (faqs.length > 0) { /* ... render FAQs ... */
+             faqListEl.innerHTML = faqs.map((faq, index) => `<details class="faq-item"><summary class="faq-question">${index + 1}. ${faq.question}</summary><div class="faq-answer">${faq.answer}</div></details>`).join('');
+        } else { faqListEl.innerHTML = '<p>No FAQs available.</p>'; }
+    } catch (error) { console.error("Error fetching FAQs:", error); faqListEl.innerHTML = `<p class="error">Could not load FAQs.</p>`; }
 }
 
 // --- Social Sharing ---
-function setupSocialSharing(product) {
-     if (!socialShareContainer || !product) return;
-     const pageUrl = window.location.href;
-     const shareText = `Check out: ${product.name} from Madhav Multiprint!`;
-     const imageUrl = product.imageUrls?.[0] || '';
-     const whatsappUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(shareText + ' ' + pageUrl)}`;
-     const facebookUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(pageUrl)}`;
-     const twitterUrl = `https://twitter.com/intent/tweet?url=${encodeURIComponent(pageUrl)}&text=${encodeURIComponent(shareText)}`;
-     const pinterestUrl = imageUrl ? `https://pinterest.com/pin/create/button/?url=${encodeURIComponent(pageUrl)}&media=${encodeURIComponent(imageUrl)}&description=${encodeURIComponent(shareText)}` : '';
-
-     socialShareContainer.innerHTML = `
-         <span>Share:</span>
-         <a href="${whatsappUrl}" target="_blank" rel="noopener noreferrer" aria-label="Share on WhatsApp" class="social-icon whatsapp"><i class="fab fa-whatsapp"></i></a>
-         <a href="${facebookUrl}" target="_blank" rel="noopener noreferrer" aria-label="Share on Facebook" class="social-icon facebook"><i class="fab fa-facebook-f"></i></a>
-         <a href="${twitterUrl}" target="_blank" rel="noopener noreferrer" aria-label="Share on Twitter" class="social-icon twitter"><i class="fab fa-twitter"></i></a>
-         ${pinterestUrl ? `<a href="${pinterestUrl}" target="_blank" rel="noopener noreferrer" aria-label="Pin on Pinterest" class="social-icon pinterest"><i class="fab fa-pinterest"></i></a>` : ''}
-     `;
+function setupSocialSharing() {
+     if (!socialShareLinksContainer) return;
+     socialShareLinksContainer.addEventListener('click', (event) => {
+         event.preventDefault();
+         const link = event.target.closest('a.social-icon');
+         if (!link || !currentProductData || !currentProductData.productName) return;
+         const pageUrl = window.location.href;
+         const productName = encodeURIComponent(currentProductData.productName);
+         let shareUrl = '';
+         const network = link.getAttribute('aria-label')?.toLowerCase() ?? '';
+         if (network.includes('facebook')) { shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(pageUrl)}`; }
+         else if (network.includes('twitter')) { shareUrl = `https://twitter.com/intent/tweet?url=${encodeURIComponent(pageUrl)}&text=${productName}`; }
+         else if (network.includes('whatsapp')) { shareUrl = `https://api.whatsapp.com/send?text=${productName}%20${encodeURIComponent(pageUrl)}`; }
+         if (shareUrl) window.open(shareUrl, '_blank', 'width=600,height=400,noopener,noreferrer');
+     });
 }
 
-// --- Initialization ---
-document.addEventListener('DOMContentLoaded', async () => {
-    console.log("Product Detail Page Loaded.");
-    showLoading(true);
+// --- Add to Cart Handler ---
+function handleAddToCart() {
+     if (!currentProductId || !currentProductData) { showFeedback(cartFeedbackEl, "Product data not ready.", true); return; }
+     if (cartFeedbackEl) cartFeedbackEl.style.display = 'none'; // Clear previous feedback
+     try {
+         let cartOptions = { name: currentProductData.productName, imageUrl: mainImageEl?.src || 'img/placeholder.png' };
+         let itemToAdd = { productId: currentProductId, quantity: 1 };
+         const category = currentProductData.category?.toLowerCase() || '';
+         const pricing = currentProductData.pricing || {};
+
+         if (category.includes('wedding')) {
+             const quantityDropdown = document.getElementById('wedding-quantity-select');
+             const selectedQuantity = parseInt(quantityDropdown?.value, 10);
+             if (!quantityDropdown || isNaN(selectedQuantity) || selectedQuantity <= 0) { showFeedback(cartFeedbackEl, "Select wedding quantity.", true); return; }
+             const baseRate = parseFloat(pricing.rate);
+             if (isNaN(baseRate)) { showFeedback(cartFeedbackEl, "Price info missing.", true); return; }
+             const designCharge = parseFloat(pricing.designCharge || 0); const printingChargeBase = parseFloat(pricing.printingChargeBase || 0); const transportCharge = parseFloat(pricing.transportCharge || 0); const extraMarginPercent = parseFloat(pricing.extraMarginPercent || 0);
+             const subTotal = (baseRate * selectedQuantity) + designCharge + printingChargeBase + transportCharge; const finalAmount = subTotal * (1 + (extraMarginPercent / 100)); const averageUnitPrice = finalAmount / selectedQuantity;
+             if (isNaN(averageUnitPrice) || averageUnitPrice <= 0) { showFeedback(cartFeedbackEl, "Could not calculate price.", true); return; }
+             itemToAdd.quantity = selectedQuantity; cartOptions = { ...cartOptions, type: 'Wedding Card', price: averageUnitPrice };
+         } else if (category.includes('flex')) {
+             const width = parseFloat(bannerWidthInput?.value); const height = parseFloat(bannerHeightInput?.value); const unit = bannerUnitSelect?.value; const quantity = parseInt(bannerQuantityInput?.value, 10);
+             if (isNaN(width) || width <= 0 || isNaN(height) || height <= 0 || isNaN(quantity) || quantity <= 0) { showFeedback(cartFeedbackEl, "Enter valid flex dimensions & quantity.", true); return; }
+             const ratePerSqFt = parseFloat(pricing.rate); if (isNaN(ratePerSqFt) || ratePerSqFt <= 0) { showFeedback(cartFeedbackEl, "Flex price info missing.", true); return; }
+             const minimumOrderValue = parseFloat(pricing.minimumOrderValue || 0); const mediaWidths = pricing.mediaWidths || mediaWidthsFt;
+             const widthFt = unit === 'inches' ? width / 12 : width; const heightFt = unit === 'inches' ? height / 12 : height;
+             const dimResult = calculateFlexDimensions(widthFt, heightFt, mediaWidths); if (dimResult.error || isNaN(dimResult.printSqFtPerBanner) || dimResult.printSqFtPerBanner <= 0) { showFeedback(cartFeedbackEl, dimResult.error || "Cannot calculate area.", true); return; }
+             const printSqFtPerBanner = dimResult.printSqFtPerBanner; const totalPrintSqFt = printSqFtPerBanner * quantity; const calculatedCost = totalPrintSqFt * ratePerSqFt; const finalCost = Math.max(calculatedCost, minimumOrderValue); const pricePerBanner = finalCost / quantity;
+             if (isNaN(pricePerBanner) || pricePerBanner <= 0) { showFeedback(cartFeedbackEl, "Could not calculate price/banner.", true); return; }
+             itemToAdd.quantity = quantity; cartOptions = { ...cartOptions, type: 'Flex Banner', details: `${width}x${height} ${unit}`, price: pricePerBanner };
+         } else { // Standard Product
+             const quantitySelected = parseInt(standardQuantityInput?.value || 1, 10); if (isNaN(quantitySelected) || quantitySelected <= 0) { showFeedback(cartFeedbackEl, "Enter valid quantity.", true); return; }
+             const standardPrice = parseFloat(pricing?.rate); if (isNaN(standardPrice) || standardPrice < 0) { showFeedback(cartFeedbackEl, "Product price unavailable.", true); return; } // Allow 0 price?
+             itemToAdd.quantity = quantitySelected; cartOptions = { ...cartOptions, type: 'Standard', price: standardPrice };
+         }
+
+         if (typeof cartOptions.price !== 'number' || isNaN(cartOptions.price) || cartOptions.price < 0) { console.error("Invalid final price:", cartOptions.price); showFeedback(cartFeedbackEl, "Invalid price. Cannot add.", true); return; }
+
+         addToCart(itemToAdd.productId, itemToAdd.quantity, cartOptions); // Use imported addToCart
+         showFeedback(cartFeedbackEl, "Product added to cart!", false);
+         if (typeof updateCartCount === 'function') updateCartCount(); // Update header
+         else console.warn("updateCartCount function not available.");
+
+     } catch (error) { console.error("Error in handleAddToCart:", error); showFeedback(cartFeedbackEl, `Failed to add. ${error.message}`, true); }
+}
+
+// --- Setup Event Listeners (Consolidated) ---
+function setupAllEventListeners() {
+     // Add to Cart Button
+     if (addToCartBtn) { addToCartBtn.removeEventListener('click', handleAddToCart); addToCartBtn.addEventListener('click', handleAddToCart); }
+     // Thumbnail Click
+     if (thumbnailImagesContainer) {
+         thumbnailImagesContainer.removeEventListener('click', handleThumbnailClick); // Remove previous listener
+         thumbnailImagesContainer.addEventListener('click', handleThumbnailClick);
+     }
+     // Tab Navigation
+     setupTabs(); // Re-run setupTabs to ensure listeners are correct
+     // Standard Quantity Buttons
+     setupQuantityButtons();
+     // Flex Input Listeners
+     setupFlexInputListeners();
+     // Wedding Quantity Listener
+     setupWeddingQuantityListener();
+     // Review Form Submission
+     if (reviewForm) { reviewForm.removeEventListener('submit', handleReviewSubmitWrapper); reviewForm.addEventListener('submit', handleReviewSubmitWrapper); }
+     // Social Sharing
+     setupSocialSharing(); // Re-attaches listener to container
+}
+
+// Wrapper for thumbnail click handler
+function handleThumbnailClick(event) {
+     if (event.target.tagName === 'IMG' && mainImageEl) {
+          mainImageEl.src = event.target.src;
+          thumbnailImagesContainer.querySelectorAll('img').forEach(thumb => thumb.classList.remove('active'));
+          event.target.classList.add('active');
+     }
+}
+
+// Wrapper for review submit to pass productId
+function handleReviewSubmitWrapper(event) {
+     handleReviewSubmit(event, currentProductId);
+}
+
+
+// --- Initialize Page ---
+document.addEventListener('DOMContentLoaded', () => {
+    console.log("DOM fully loaded.");
     const urlParams = new URLSearchParams(window.location.search);
-    currentProductId = urlParams.get('id'); // Store globally
-
-    if (!currentProductId) { showError("No product ID specified."); return; }
-    console.log(`Workspaceing details for Product ID: ${currentProductId} from onlineProducts collection`);
-
-    try {
-        // ***** CHANGE: Use 'onlineProducts' collection *****
-        const productRef = doc(db, "onlineProducts", currentProductId);
-        const docSnap = await getDoc(productRef);
-
-        if (docSnap.exists()) {
-            const productData = { id: docSnap.id, ...docSnap.data() };
-            console.log("Product data fetched:", productData);
-            displayProductDetails(productData); // This now also calls setupReviewSystem with the ID
-
-            // --- Attach Event Listeners after rendering ---
-            const addToCartBtn = document.getElementById('add-to-cart-btn');
-            // Review form listener is attached within setupReviewSystem
-
-            if (addToCartBtn) {
-                const handleAddToCart = () => { // Define handler here
-                    console.log("Add to Cart button clicked.");
-                    try {
-                         const selectedQuantity = parseInt(document.getElementById('quantity-input').value, 10);
-                         if (isNaN(selectedQuantity) || selectedQuantity < 1) { showCartFeedback("Please enter a valid quantity.", 'error'); return; }
-                         let priceDetails = calculatePrice(currentProduct);
-                         let selectedOptions = {};
-                         let optionsValid = true; // Flag for validation
-
-                         if (currentProduct.category === 'Flex Banner') {
-                            options = getSelectedFlexOptions();
-                            if (!options.width || !options.height || parseFloat(options.width) <= 0 || parseFloat(options.height) <= 0) {
-                                showCartFeedback("Please enter valid dimensions for the flex banner.", 'error');
-                                optionsValid = false; // Mark options as invalid
-                            } else {
-                                priceDetails = calculatePrice(currentProduct, 1, options); // Recalculate with valid options
-                                selectedOptions = options;
-                            }
-                         } else if (currentProduct.category === 'Wedding Cards') {
-                              const cardTypeSelect = document.getElementById('wedding-card-type');
-                              if (cardTypeSelect) options.cardType = cardTypeSelect.value;
-                              priceDetails = calculatePrice(currentProduct, 1, options);
-                              selectedOptions = options;
-                         }
-                         // Add other option gathering/validation logic here...
-
-
-                         if (optionsValid) { // Only add to cart if options are valid
-                             addToCart(
-                                 currentProductId, currentProduct.name, selectedQuantity,
-                                 priceDetails.finalPrice, // Use final calculated price per item
-                                 currentProduct.imageUrls?.[0] || 'path/to/default/image.jpg',
-                                 selectedOptions // Pass selected options
-                             );
-                            showCartFeedback(`${selectedQuantity} x ${currentProduct.name} added to cart!`, 'success');
-                            updateCartCount();
-                         } // If options were not valid, feedback was already shown
-
-                    } catch (cartError) {
-                        console.error("Error adding to cart:", cartError);
-                        showCartFeedback(`Error adding item: ${cartError.message}`, 'error');
-                    }
-                }; // END of handleAddToCart
-
-                 addToCartBtn.removeEventListener('click', handleAddToCart); // Prevent duplicates
-                 addToCartBtn.addEventListener('click', handleAddToCart);
-            } else {
-                console.error("Add to Cart button not found after rendering!");
-            }
-
-        } else {
-            console.error(`No product found with ID: ${currentProductId} in onlineProducts collection.`);
-            showError(`Sorry, we couldn't find the product (ID: ${currentProductId}). It might have been removed or the link is incorrect.`);
-        }
-    } catch (error) {
-        console.error("Error fetching product details:", error);
-        // Check specifically for permission errors, although rules should allow reads now
-        if (error.code === 'permission-denied') {
-             showError(`Error: Insufficient permissions to read product data from onlineProducts. Please check Firestore rules.`);
-        } else {
-            showError(`Failed to load product details. Please try refreshing. Error: ${error.message}`);
-        }
-    } finally {
-         showLoading(false);
-    }
-}); // End DOMContentLoaded
+    const productId = urlParams.get('id');
+    if (!productId) { showError("Product ID not found in URL."); return; }
+    console.log(`Initializing page for Product ID: ${productId}`);
+    loadProductDetails(productId); // Fetch data and render
+    // Event listeners are now attached within loadProductDetails/renderProductDetails or called from there
+});
