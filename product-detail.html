@@ -3,40 +3,50 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Product Details - Madhav Multiprint</title>
-
+    <title>Your Shopping Cart - Madhav Multiprint</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://unpkg.com/swiper/swiper-bundle.min.css" />
-
     <link rel="stylesheet" href="css/header-footer.css">
-    <link rel="stylesheet" href="css/product-detail.css">
+    <link rel="stylesheet" href="css/cart.css">
+    <style>
+        /* WhatsApp और कन्फर्मेशन स्टाइल (पहले जैसे) */
+        .button-whatsapp {
+            display: inline-flex; align-items: center; justify-content: center; gap: 10px;
+            padding: 10px 20px; background-color: #25D366; color: white;
+            text-decoration: none; border-radius: 12px; /* Updated border-radius */
+            font-weight: 600; font-size: 1em; margin-top: 15px; border: none; cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+        .button-whatsapp:hover { background-color: #1DAE50; }
+        .button-whatsapp i { font-size: 1.2em; }
 
-    <script type="application/ld+json" id="product-schema">
-    {
-      "@context": "https://schema.org/",
-      "@type": "Product",
-      "name": "Loading...",
-      "image": [],
-      "description": "Loading description...",
-      "sku": "Loading...",
-      "brand": {
-        "@type": "Brand",
-        "name": "Madhav Multiprint"
-      },
-      "offers": {
-        "@type": "Offer",
-        "url": "", // Will be set by JS
-        "priceCurrency": "INR",
-        "price": "0", // Will be updated by JS
-        "availability": "https://schema.org/InStock", // Default
-        "itemCondition": "https://schema.org/NewCondition"
-      }
-      // Add "aggregateRating" or "review" here if you implement reviews
-    }
-    </script>
+        #order-status-message {
+            text-align: center; padding: 20px 25px; margin-top: 20px;
+            border-radius: 12px; /* Updated border-radius */
+            font-size: 1.05em; line-height: 1.7;
+        }
+        #order-status-message.success {
+             background-color: #d1e7dd; color: #0f5132; border: 1px solid #badbcc;
+        }
+         #order-status-message.success h4 {
+             margin-top: 0; margin-bottom: 15px; font-size: 1.4em; color: #0a4226; font-weight: 600;
+             display: flex; align-items: center; justify-content: center; gap: 10px;
+         }
+         #order-status-message.success p { margin-bottom: 12px; }
+
+         #order-status-message.error {
+              background-color: #f8d7da; color: #842029; border: 1px solid #f5c2c7;
+         }
+         /* Add info class if needed */
+         #order-status-message.info {
+             background-color: #cff4fc; color: #055160; border: 1px solid #b6effb;
+         }
+
+         /* Utility for icons before text */
+         .icon-before { margin-right: 8px; }
+    </style>
 </head>
 <body>
     <header>
@@ -49,127 +59,81 @@
                 <a href="products.html">Products</a>
                 <a href="about.html">About Us</a>
                 <a href="contact.html">Contact</a>
-                <a href="cart.html" class="cart-icon-link">
-                    <i class="fas fa-shopping-cart"></i>
-                    <span id="cart-count">0</span> </a>
+                <a href="cart.html" class="active"><i class="fas fa-shopping-cart"></i> Cart (<span id="cart-count">0</span>)</a>
+                <a href="/admin/login.html" class="admin-login-link" target="_blank">Admin Login</a>
             </div>
-            <button class="nav-toggle" aria-label="Toggle navigation">
-                <i class="fas fa-bars"></i>
-            </button>
+             <button class="mobile-menu-toggle" aria-label="Toggle menu"><i class="fas fa-bars"></i></button>
         </nav>
     </header>
 
-    <main class="container product-detail-page">
+    <main class="container cart-page">
+        <h1><i class="fas fa-shopping-cart icon-before"></i>Shopping Cart</h1>
 
-        <nav aria-label="breadcrumb" class="breadcrumbs">
-            <ol>
-                <li><a href="index.html">Home</a></li>
-                <li><a href="products.html">Products</a></li>
-                <li id="breadcrumb-product-name" aria-current="page">Product Name</li>
-            </ol>
-        </nav>
-
-        <div id="product-detail-container">
-            <div class="loading-indicator" style="display: none;">
-                <div class="spinner"></div>
-                <p>Loading Product Details...</p>
+        <div id="order-status-message" style="display: none;">
             </div>
 
-            <div id="error-message-container" style="display: none;">
-                Error message will appear here.
-            </div>
+        <div class="cart-layout">
 
-            <div class="product-content" style="display: none;">
-
-                <div class="product-image-gallery">
-                     <img id="main-product-image" src="images/placeholder.png" alt="Product Image">
-                    <div id="thumbnail-images">
-                        </div>
+            <div id="cart-items-section" class="cart-column">
+                <h2><i class="fas fa-list-ul icon-before"></i>Items in Your Cart</h2>
+                <div id="cart-items">
+                    <p class="empty-cart-message" style="display: none;">Your cart is currently empty. <a href="products.html">Continue Shopping</a></p>
                 </div>
+                 <div style="text-align: center; margin-top: 20px;">
+                      <a href="products.html" class="button-secondary"><i class="fas fa-arrow-left"></i> Continue Shopping</a>
+                  </div>
+            </div>
 
-                <div class="product-info">
-                    <h1 id="product-name">Product Name Loading...</h1>
-                    <div class="product-meta">
-                        </div>
+            <form id="order-form" class="cart-column">
+                <h2><i class="fas fa-user-edit icon-before"></i>Your Information & Order</h2>
 
-                    <div class="price-display-area">
-                        <span id="product-price" class="price">Loading...</span>
-                        <span id="original-price" class="original-price" style="display: none;"></span>
-                        <div id="wedding-per-card-price" class="price-per-card" style="display: none;"></div>
+                <div class="form-section">
+                    <h3 class="form-section-title">Contact Information</h3>
+                    <div class="form-group">
+                        <label for="customer-name">Full Name <span class="required">*</span></label>
+                        <input type="text" id="customer-name" name="customerName" required placeholder="Enter your full name">
                     </div>
-
-                    <div id="product-options-container" class="product-options">
-                        </div>
-
-                    <div class="product-actions">
-                        <button id="add-to-cart-btn" class="button-primary" disabled>
-                             Add to Cart
-                        </button>
-                        <div id="cart-feedback" class="cart-feedback-message" style="display: none;"></div>
-                        <a href="cart.html" id="view-cart-btn" class="button-secondary view-cart-button" style="display: none;">
-                            View Cart
-                        </a>
+                    <div class="form-group">
+                        <label for="customer-contact">Contact/WhatsApp Number <span class="required">*</span></label>
+                        <input type="tel" id="customer-contact" name="customerContact" required placeholder="Enter your phone or WhatsApp number">
+                    </div>
+                    <div class="form-group">
+                        <label for="customer-address">Full Delivery Address <span class="required">*</span></label>
+                        <textarea id="customer-address" name="customerAddress" rows="1" required placeholder="Enter your complete delivery address"></textarea>
                     </div>
                 </div>
-            </div> </div> <div class="product-description-tabs">
-            <div class="tabs">
-                <button class="tab-link active" data-target="description-tab-content">Description</button>
-                <button class="tab-link" data-target="specifications-tab-content">Specifications</button>
-                </div>
 
-            <div id="description-tab-content" class="tab-content active">
-                <p>Loading description...</p>
-            </div>
-            <div id="specifications-tab-content" class="tab-content">
-                <p>Loading specifications...</p>
-            </div>
-             </div>
-
-        <section class="related-products-section">
-            <h2 class="section-title">Related Products</h2>
-            <div id="related-products-grid" class="related-products-grid">
-                <p>Loading related products...</p>
-            </div>
-        </section>
-
-    </main>
-
-    <div id="confirmation-popup" class="popup">
-        <div class="popup-content">
-            <span class="close-popup">&times;</span>
-
-            <div class="popup-header">
-                 <h3 id="popup-product-name">Product Name</h3>
-            </div>
-            <h2>Confirm Item Addition</h2>
-
-            <div class="popup-product-details">
-                 <img id="popup-product-image" src="images/placeholder.png" alt="Product Image">
-                <div class="popup-product-info">
-                     <p>Quantity: <span id="popup-product-quantity">1</span></p>
-                    <p id="popup-product-options"></p> <p style="font-weight: bold;">Price: <span id="popup-product-price">₹0.00</span></p>
-                    <p id="popup-per-card-price" style="display: none;"></p> </div>
-            </div>
-            <div class="popup-actions">
-                 <button id="popup-confirm-add" class="button-primary">
-                    <i class="fas fa-check-circle"></i> Confirm & Add to Cart
-                </button>
-                <button id="popup-cancel" class="button-secondary">
-                     <i class="fas fa-times-circle"></i> Cancel
-                </button>
+                <div id="cart-summary" class="form-section cart-summary-box">
+                     <h3 class="form-section-title">Order Summary</h3>
+                     <div class="summary-line">
+                         <span>Subtotal:</span>
+                         <span id="summary-subtotal">₹0.00</span>
+                     </div>
+                     <div class="summary-line total">
+                         <span>Total Amount:</span>
+                         <span id="summary-total">₹0.00</span>
+                     </div>
                  </div>
-        </div>
-    </div>
 
-    <footer>
+                 <button type="submit" id="submit-order-btn" class="button-primary submit-order-button">
+                     <i class="fas fa-check-circle icon-before"></i> Place Your Order
+                 </button>
+
+            </form> </div> <div class="cart-suggestions" style="display: none;">
+            <h3>Explore Our Products</h3>
+            <p>Your cart is empty, but you can find great products here:</p>
+            <a href="products.html" class="button-primary">View All Products</a>
+        </div>
+
+    </main> <footer>
         <div class="container">
-             <p>&copy; <span id="current-year">2025</span> Madhav Multiprint. All Rights Reserved.</p> <p><a href="privacy.html">Privacy Policy</a> | <a href="terms.html">Terms & Conditions</a> | <a href="contact.html">Contact</a></p>
+             <p>&copy; 2025 Madhav Multiprint. All Rights Reserved.</p>
+             <p><a href="#">Privacy Policy</a> | <a href="#">Terms & Conditions</a> | <a href="contact.html">Contact</a></p>
          </div>
     </footer>
 
-    <script src="https://unpkg.com/swiper/swiper-bundle.min.js"></script> <script src="js/firebase-config.js" type="module"></script>
+    <script src="js/firebase-config.js" type="module"></script>
     <script src="js/main.js" type="module" defer></script>
-    <script src="js/product-detail.js" type="module" defer></script>
-
-</body>
+    <script src="js/cart-page-logic.js" type="module" defer></script>
+    </body>
 </html>
