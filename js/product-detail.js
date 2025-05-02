@@ -1,5 +1,5 @@
 // js/product-detail.js
-// FINAL Version: Includes Add-to-Cart Popup, Wedding Qty Fix, Related Products Fix, SetupTabs Fix, showLoading Fix, Debug Logs. Uses 'onlineProducts'.
+// FINAL Version: Includes Add-to-Cart Popup, Wedding Qty Fix, Related Products Fix, SetupTabs Fix, showLoading Fix, Debug Logs, Flex Qty Input Fix. Uses 'onlineProducts'.
 
 // --- Imports ---
 import { db } from './firebase-config.js';
@@ -35,7 +35,7 @@ const standardQuantityInput = document.getElementById('quantity');
 const bannerWidthInput = document.getElementById('banner-width');
 const bannerHeightInput = document.getElementById('banner-height');
 const bannerUnitSelect = document.getElementById('banner-unit');
-const bannerQuantityInput = document.getElementById('banner-quantity');
+const bannerQuantityInput = document.getElementById('banner-quantity'); // *** ADDED: Define banner quantity input globally ***
 const tabsContainer = document.querySelector('.product-details-tabs');
 const tabsNav = document.querySelector('.tabs-nav');
 const tabPanes = document.querySelectorAll('.tabs-content .tab-pane');
@@ -74,19 +74,19 @@ const mediaWidthsFt = [3, 4, 5, 6, 8, 10]; function calculateFlexDimensions(widt
 function updateFlexPriceDisplay() {
     const width = parseFloat(bannerWidthInput?.value); const height = parseFloat(bannerHeightInput?.value); const unit = bannerUnitSelect?.value; const quantity = parseInt(bannerQuantityInput?.value, 10); const pricing = currentProductData?.pricing;
     // DEBUG Logs for Flex Price
-    console.log("--- DEBUG: updateFlexPriceDisplay ---");
-    console.log(`Inputs: W=${width}, H=${height}, Unit=${unit}, Qty=${quantity}`);
-    console.log("Pricing Data:", pricing);
+    // console.log("--- DEBUG: updateFlexPriceDisplay ---");
+    // console.log(`Inputs: W=${width}, H=${height}, Unit=${unit}, Qty=${quantity}`);
+    // console.log("Pricing Data:", pricing);
     if (!priceEl) return;
     if (!pricing || isNaN(width) || width <= 0 || isNaN(height) || height <= 0 || isNaN(quantity) || quantity <= 0) { priceEl.textContent = "Enter valid dimensions & quantity"; if (originalPriceEl) originalPriceEl.style.display = 'none'; return; }
     const ratePerSqFt = parseFloat(pricing.rate); if (isNaN(ratePerSqFt) || ratePerSqFt <= 0) { priceEl.textContent = "Pricing unavailable"; if (originalPriceEl) originalPriceEl.style.display = 'none'; return; }
     const minimumOrderValue = parseFloat(pricing.minimumOrderValue || 0); const mediaWidths = pricing.mediaWidths || mediaWidthsFt; const widthFt = unit === 'inches' ? width / 12 : width; const heightFt = unit === 'inches' ? height / 12 : height; const dimResult = calculateFlexDimensions(widthFt, heightFt, mediaWidths);
-    console.log("Dim Result:", dimResult); // DEBUG
+    // console.log("Dim Result:", dimResult); // DEBUG
     if (dimResult.error || isNaN(dimResult.printSqFtPerBanner) || dimResult.printSqFtPerBanner <= 0) { priceEl.textContent = dimResult.error || "Calculation error"; if (originalPriceEl) originalPriceEl.style.display = 'none'; return; }
     const printSqFtPerBanner = dimResult.printSqFtPerBanner; const totalPrintSqFt = printSqFtPerBanner * quantity; const calculatedCost = totalPrintSqFt * ratePerSqFt; const finalCost = Math.max(calculatedCost, minimumOrderValue);
-    console.log(`SqFt/Banner=${printSqFtPerBanner}, TotalSqFt=${totalPrintSqFt}, Rate=${ratePerSqFt}, CalcCost=${calculatedCost}, MinVal=${minimumOrderValue}, FinalCost=${finalCost}`); // DEBUG
+    // console.log(`SqFt/Banner=${printSqFtPerBanner}, TotalSqFt=${totalPrintSqFt}, Rate=${ratePerSqFt}, CalcCost=${calculatedCost}, MinVal=${minimumOrderValue}, FinalCost=${finalCost}`); // DEBUG
     priceEl.textContent = formatIndianCurrency(finalCost); if (originalPriceEl) originalPriceEl.style.display = 'none';
-    console.log("--- DEBUG END: updateFlexPriceDisplay ---");
+    // console.log("--- DEBUG END: updateFlexPriceDisplay ---");
 }
 function updateWeddingPriceDisplay() {
     const quantityDropdown = document.getElementById('wedding-quantity-select'); const selectedQuantity = parseInt(quantityDropdown?.value, 10); const pricing = currentProductData?.pricing; const perCardPriceEl = weddingPerCardPriceEl; // Use variable from top
@@ -112,8 +112,7 @@ async function fetchRelatedProducts(currentProdId, category) {
     if (!relatedProductsSection || !relatedProductsContainer) return;
     relatedProductsContainer.innerHTML = '<div class="swiper-slide"><p>Loading...</p></div>';
     try {
-        // ***** FIX: Use let instead of const *****
-        let relatedProducts = [];
+        let relatedProducts = []; // Use let instead of const
         const productsRef = collection(db, "onlineProducts");
         const q = query(collection(db, "onlineProducts"), where("category", "==", category), limit(10));
         const querySnapshot = await getDocs(q);
@@ -163,16 +162,16 @@ function openAddToCartPopup() { /* ... unchanged ... */
     if (!addToCartPopup || !currentProductData) return; const calculationResult = getCurrentSelectionsAndPrice(); if (calculationResult.error) { showFeedback(cartFeedbackEl, calculationResult.error, true); return; }
     if (popupProductName) popupProductName.textContent = currentProductData.productName || 'N/A';
     // DEBUG Log for popup image
-    console.log("Popup Image Debug: Main image src=", mainImageEl?.src);
+    // console.log("Popup Image Debug: Main image src=", mainImageEl?.src);
     if (popupProductImage) popupProductImage.src = mainImageEl?.src || 'images/placeholder.png'; // Copy from main image or use placeholder
     if (popupProductQuantity) popupProductQuantity.textContent = calculationResult.quantity; if (popupProductPrice) popupProductPrice.textContent = calculationResult.displayTotalPrice; if (popupPerCardPrice) { popupPerCardPrice.textContent = calculationResult.displayPerCardPrice; popupPerCardPrice.style.display = calculationResult.displayPerCardPrice ? 'block' : 'none'; } if (popupProductOptions) { popupProductOptions.textContent = calculationResult.selectedOptionsDisplay; popupProductOptions.style.display = calculationResult.selectedOptionsDisplay ? 'block' : 'none'; }
     const finalDataToAdd = { productId: currentProductId, quantity: calculationResult.quantity, options: calculationResult.cartOptions };
     const newConfirmBtn = popupConfirmBtn.cloneNode(true); popupConfirmBtn.parentNode.replaceChild(newConfirmBtn, popupConfirmBtn);
     newConfirmBtn.addEventListener('click', () => {
         // DEBUG Log for multiple adds
-        console.log("Popup Confirm Button Clicked - Start");
-        try { console.log("Confirm Add clicked. Data:", finalDataToAdd); addToCart(finalDataToAdd.productId, finalDataToAdd.quantity, finalDataToAdd.options); showFeedback(cartFeedbackEl, "Product added to cart!", false); if (viewCartLink) viewCartLink.style.display = 'inline-block'; if (typeof updateCartCount === 'function') updateCartCount(); closeAddToCartPopup(); } catch (addError) { console.error("Error confirming add to cart:", addError); showFeedback(cartFeedbackEl, `Failed to add: ${addError.message}`, true); closeAddToCartPopup(); }
-        console.log("Popup Confirm Button Clicked - End"); // DEBUG Log
+        // console.log("Popup Confirm Button Clicked - Start");
+        try { /*console.log("Confirm Add clicked. Data:", finalDataToAdd); */ addToCart(finalDataToAdd.productId, finalDataToAdd.quantity, finalDataToAdd.options); showFeedback(cartFeedbackEl, "Product added to cart!", false); if (viewCartLink) viewCartLink.style.display = 'inline-block'; if (typeof updateCartCount === 'function') updateCartCount(); closeAddToCartPopup(); } catch (addError) { console.error("Error confirming add to cart:", addError); showFeedback(cartFeedbackEl, `Failed to add: ${addError.message}`, true); closeAddToCartPopup(); }
+        // console.log("Popup Confirm Button Clicked - End"); // DEBUG Log
     });
     if (addToCartPopup) { addToCartPopup.style.display = 'flex'; addToCartPopup.classList.add('active'); }
 }
@@ -181,17 +180,41 @@ function closeAddToCartPopup() { /* ... unchanged ... */
 }
 
 // --- Setup Event Listeners ---
-// ***** FIX: Included setupTabs definition *****
 function setupTabs() { if (!tabsNav || !tabPanes || tabPanes.length === 0) { return; } const tabLinks = tabsNav.querySelectorAll('a'); if (tabLinks.length === 0) return; tabLinks.forEach(link => { link.removeEventListener('click', handleTabClick); link.addEventListener('click', handleTabClick); }); const firstVisibleLink = Array.from(tabLinks).find(link => link.offsetParent !== null); if (firstVisibleLink && !tabsNav.querySelector('a.active')) { activateTab(firstVisibleLink); } else if (tabsNav.querySelector('a.active')) { activateTab(tabsNav.querySelector('a.active')); } }
 function handleTabClick(event) { event.preventDefault(); const clickedLink = event.currentTarget; activateTab(clickedLink); }
 function activateTab(activeLink) { if (!activeLink) return; const targetId = activeLink.getAttribute('href')?.substring(1); if (!targetId) return; tabsNav.querySelectorAll('a').forEach(link => link.classList.remove('active')); tabPanes.forEach(pane => pane.classList.remove('active')); activeLink.classList.add('active'); const targetPane = document.getElementById(targetId); if (targetPane) { targetPane.classList.add('active'); } else { console.warn(`Tab content pane with ID '${targetId}' not found.`); } }
-// (Includes setupAllEventListeners, handleThumbnailClick, handleReviewSubmitWrapper, setupQuantityButtons, handleQuantityButtonClick, setupFlexInputListeners, setupWeddingQuantityListener - code omitted for brevity)
 function setupAllEventListeners() { if (addToCartBtn) { addToCartBtn.removeEventListener('click', openAddToCartPopup); addToCartBtn.addEventListener('click', openAddToCartPopup); } if (thumbnailImagesContainer) { thumbnailImagesContainer.removeEventListener('click', handleThumbnailClick); thumbnailImagesContainer.addEventListener('click', handleThumbnailClick); } setupTabs(); setupQuantityButtons(); setupFlexInputListeners(); setupWeddingQuantityListener(); if (reviewForm) { reviewForm.removeEventListener('submit', handleReviewSubmitWrapper); reviewForm.addEventListener('submit', handleReviewSubmitWrapper); } setupSocialSharing(); if (popupCloseBtn) popupCloseBtn.addEventListener('click', closeAddToCartPopup); if (popupCancelBtn) popupCancelBtn.addEventListener('click', closeAddToCartPopup); if (addToCartPopup) { addToCartPopup.addEventListener('click', (event) => { if (event.target === addToCartPopup) { closeAddToCartPopup(); } }); } }
 function handleThumbnailClick(event) { if (event.target.tagName === 'IMG' && mainImageEl) { mainImageEl.src = event.target.src; thumbnailImagesContainer.querySelectorAll('img').forEach(thumb => thumb.classList.remove('active')); event.target.classList.add('active'); } }
 function handleReviewSubmitWrapper(event) { handleReviewSubmit(event, currentProductId); }
 function setupQuantityButtons() { [standardQuantityContainer, flexInputsContainer].forEach(container => { if (!container) return; container.removeEventListener('click', handleQuantityButtonClick); container.addEventListener('click', handleQuantityButtonClick); }); }
-function handleQuantityButtonClick(event) { const button = event.target.closest('.quantity-btn'); if (!button) return; const wrapper = button.closest('.quantity-input-wrapper'); if (!wrapper) return; const input = wrapper.querySelector('.quantity-input'); if (!input) return; let currentValue = parseInt(input.value, 10) || 1; const min = parseInt(input.min, 10) || 1; const step = parseInt(input.step, 10) || 1; if (button.classList.contains('quantity-increase')) { currentValue += step; } else if (button.classList.contains('quantity-decrease')) { currentValue -= step; } input.value = Math.max(min, currentValue); if (input.id === 'banner-quantity') { updateFlexPriceDisplay(); } }
-function setupFlexInputListeners() { const inputs = [bannerWidthInput, bannerHeightInput, bannerUnitSelect]; if (inputs.some(el => !el)) return; inputs.forEach(input => { const eventType = (input.tagName === 'SELECT') ? 'change' : 'input'; input.removeEventListener(eventType, updateFlexPriceDisplay); input.addEventListener(eventType, updateFlexPriceDisplay); }); }
+function handleQuantityButtonClick(event) { const button = event.target.closest('.quantity-btn'); if (!button) return; const wrapper = button.closest('.quantity-input-wrapper'); if (!wrapper) return; const input = wrapper.querySelector('.quantity-input'); if (!input) return; let currentValue = parseInt(input.value, 10) || 1; const min = parseInt(input.min, 10) || 1; const step = parseInt(input.step, 10) || 1; if (button.classList.contains('quantity-increase')) { currentValue += step; } else if (button.classList.contains('quantity-decrease')) { currentValue -= step; } input.value = Math.max(min, currentValue); // Important: Update flex price ONLY if the input ID matches banner quantity
+if (input.id === 'banner-quantity') { updateFlexPriceDisplay(); } // No need to update standard/wedding price here, other listeners handle those.
+}
+
+// *** MODIFIED Function to include bannerQuantityInput ***
+function setupFlexInputListeners() {
+    // Include bannerQuantityInput in the list of inputs to monitor
+    const inputs = [bannerWidthInput, bannerHeightInput, bannerUnitSelect, bannerQuantityInput]; // Added bannerQuantityInput
+
+    // Check if all elements were found before proceeding
+    if (inputs.some(el => !el)) {
+        console.warn("One or more flex input elements (width, height, unit, quantity) not found.");
+        return; // Exit if any crucial element is missing
+    }
+
+    inputs.forEach(input => {
+        // Use 'change' for select, 'input' for text/number inputs (updates immediately on typing)
+        const eventType = (input.tagName === 'SELECT') ? 'change' : 'input';
+
+        // Remove listener first to prevent duplicates if this function is called multiple times
+        input.removeEventListener(eventType, updateFlexPriceDisplay);
+        // Add the listener
+        input.addEventListener(eventType, updateFlexPriceDisplay);
+        // Optional: Add a log to confirm listener attachment during debugging
+        // console.log(`Event listener added for: ${input.id || input.tagName}, Event: ${eventType}`);
+    });
+}
+
 function setupWeddingQuantityListener() { const select = document.getElementById('wedding-quantity-select'); if (!select) return; select.removeEventListener('change', updateWeddingPriceDisplay); select.addEventListener('change', updateWeddingPriceDisplay); }
 
 
