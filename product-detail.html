@@ -5,8 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Product Details - Madhav Multiprint</title>
 
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"> <link rel="preconnect" href="https://fonts.googleapis.com"> <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet"> <link rel="stylesheet" href="https://unpkg.com/swiper/swiper-bundle.min.css" /> <link rel="stylesheet" href="css/header-footer.css"> <link rel="stylesheet" href="css/product-detail.css"> <script type="application/ld+json" id="product-schema">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/swiper/swiper-bundle.min.css" /> <link rel="stylesheet" href="css/header-footer.css">
+    <link rel="stylesheet" href="css/product-detail.css"> <script type="application/ld+json" id="product-schema">
     {
       "@context": "https://schema.org/",
       "@type": "Product",
@@ -23,7 +27,7 @@
         "url": "",
         "priceCurrency": "INR",
         "price": "0",
-        "availability": "https://schema.org/InStock", // Needs dynamic update based on actual status
+        "availability": "https://schema.org/InStock",
         "itemCondition": "https://schema.org/NewCondition"
       },
       "aggregateRating": {
@@ -75,8 +79,7 @@
 
                 <div class="product-image-gallery">
                     <div class="main-image">
-                        <img id="main-product-image" src="images/placeholder.png" alt="Product Image">
-                    </div>
+                        <img id="main-product-image" src="images/placeholder.png" alt="Product Image"> </div>
                     <div class="thumbnail-images" id="thumbnail-images">
                         </div>
                 </div>
@@ -126,15 +129,19 @@
                             <button type="button" class="quantity-btn quantity-increase" aria-label="Increase quantity">+</button>
                          </div>
                     </div>
-
                     <div class="product-actions">
                          <div class="price-display-area">
                             <span id="product-price" class="price">Loading Price...</span>
-                            <span id="original-price" class="original-price"></span> </div>
+                            <span id="original-price" class="original-price"></span>
+                            <span id="wedding-per-card-price" class="price-per-card"></span>
+                         </div>
                          <button id="add-to-cart-btn" class="button-primary">
                              <i class="fas fa-shopping-cart"></i> Add to Cart
                          </button>
                          <p id="cart-feedback" class="cart-feedback-message" aria-live="polite"></p>
+                         <a href="cart.html" id="view-cart-link" class="button-secondary view-cart-button" style="display: none; margin-left: 10px; vertical-align: middle;">
+                             View Cart <i class="fas fa-arrow-right" style="margin-left: 5px;"></i>
+                         </a>
                     </div>
 
                     <div class="social-sharing">
@@ -143,9 +150,11 @@
                          <a href="#" class="social-icon" aria-label="Share on Twitter"><i class="fab fa-twitter"></i></a>
                          <a href="#" class="social-icon" aria-label="Share on WhatsApp"><i class="fab fa-whatsapp"></i></a>
                          </div>
+
                 </div> </div> <div id="error-message-container" class="message-box error" style="display: none;"></div>
 
-            <div class="product-details-tabs" style="margin-top: 40px; display: none;"> <ul class="tabs-nav">
+            <div class="product-details-tabs" style="margin-top: 40px; display: none;">
+                 <ul class="tabs-nav">
                      <li><a href="#tab-description" class="active">Description</a></li>
                      <li><a href="#tab-specifications">Specifications</a></li>
                      <li><a href="#tab-reviews">Reviews (<span id="review-count">0</span>)</a></li>
@@ -224,7 +233,29 @@
              </div>
          </section>
 
-    </main> <footer>
+    </main>
+
+    <div id="add-to-cart-popup" class="popup-overlay" style="display: none;">
+        <div class="popup-content">
+            <button id="popup-close-btn" class="popup-close-btn" aria-label="Close popup">&times;</button>
+            <h2>Confirm Item Addition</h2>
+            <div class="popup-product-details">
+                <img id="popup-product-image" src="images/placeholder.png" alt="Product Image" style="width: 80px; height: auto; margin-right: 15px; border: 1px solid #eee;">
+                <div class="popup-product-info">
+                    <h3 id="popup-product-name">Product Name</h3>
+                    <p style="margin-bottom: 5px;">Quantity: <span id="popup-product-quantity">1</span></p>
+                    <p id="popup-product-options" style="font-size: 0.9em; color: #555; margin-bottom: 5px;"></p>
+                    <p style="font-weight: bold;">Price: <span id="popup-product-price">₹0.00</span></p>
+                    <p id="popup-per-card-price" style="font-size: 0.9em; color: #555;"></p>
+                </div>
+            </div>
+            <div class="popup-actions">
+                <button id="popup-confirm-add" class="button-primary">Confirm & Add to Cart</button>
+                <button id="popup-cancel" class="button-secondary">Cancel</button>
+            </div>
+        </div>
+    </div>
+    <footer>
         <div class="container">
             <p>&copy; 2025 Madhav Multiprint. All Rights Reserved.</p>
             <p><a href="#">Privacy Policy</a> | <a href="#">Terms & Conditions</a> | <a href="contact.html">Contact</a></p>
