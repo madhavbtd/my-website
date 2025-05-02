@@ -3,79 +3,94 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Our Products - Madhav Multiprint</title> <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <title>Our Products - Madhav Multiprint</title>
 
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
 
-    <link rel="stylesheet" href="https://unpkg.com/swiper/swiper-bundle.min.css" />
+    <link rel="stylesheet" href="css/header-footer.css"> <link rel="stylesheet" href="css/products.css">   <style>
+        /* Optional: Add any page-specific overrides here if needed */
+    </style>
 
-    <link rel="stylesheet" href="css/variables.css"> <link rel="stylesheet" href="css/header-footer.css"> <link rel="stylesheet" href="css/products.css"> <link rel="stylesheet" href="css/main.css"> <meta name="description" content="Browse our wide range of printing products including wedding cards, flex banners, and more at Madhav Multiprint.">
-    </head>
+</head>
 <body>
 
     <header>
-        <p style="text-align: center; padding: 20px; background-color: #eee;"><em>Replace this with your actual header content</em></p>
+        <nav class="container">
+            <button class="mobile-menu-toggle" aria-label="Toggle navigation" aria-expanded="false">
+                <i class="fas fa-bars"></i>
+            </button>
+
+            <a href="index.html" class="logo">
+                <img src="images/logo.png" alt="Madhav Multiprint Logo"> </a>
+
+            <div class="nav-links">
+                <a href="index.html">Home</a>
+                <a href="products.html" class="active">Products</a> <a href="about.html">About Us</a>
+                <a href="contact.html">Contact</a>
+                <a href="admin/login.html" class="admin-login-link">Admin Login</a>
+            </div>
+
+            <a href="cart.html" class="mobile-cart-link" aria-label="View Cart">
+                <i class="fas fa-shopping-cart"></i>
+                <span class="cart-count-badge" id="cart-count">0</span> </a>
+        </nav>
     </header>
-    <main class="container">
+    <main class="container product-listing-page">
         <h1>Our Products</h1>
 
-        <div class="product-controls">
+        <section class="product-controls">
             <div class="category-filters">
-                <button class="category-filter-btn active" data-category="all">
-                    <i class="fas fa-th-large"></i> All / सभी
-                </button>
-                <button class="category-filter-btn" data-category="Wedding Card">
-                    <i class="fas fa-envelope"></i> Wedding Card / शादी कार्ड
-                </button>
-                <button class="category-filter-btn" data-category="Flex Banner">
-                    <i class="fas fa-scroll"></i> Flex Banner / फ्लेक्स बैनर
-                </button>
-                 </div>
-
-            <div class="filter-sort-section">
-                <button id="filter-modal-btn" class="button-secondary"><i class="fas fa-filter"></i> Filters</button>
-                <div class="sort-control">
-                    <label for="sort-select">Sort by:</label>
-                    <select id="sort-select">
-                        <option value="default">Default</option>
-                        <option value="price-asc">Price: Low to High</option>
-                        <option value="price-desc">Price: High to Low</option>
-                        <option value="name-asc">Name: A-Z</option>
-                        <option value="name-desc">Name: Z-A</option>
-                        </select>
-                </div>
-            </div>
-            <div id="active-filters-display" class="active-filters-area">
-                </div>
-        </div>
-
-        <div id="product-grid" class="product-grid">
-            <div class="loading-spinner-container">
-                 <div class="loading-spinner"></div>
-                 <p>Loading products...</p>
-            </div>
+                <button class="category-filter-btn active" data-category="all">All</button>
+                <button class="category-filter-btn" data-category="Wedding Card">Wedding Cards</button>
+                <button class="category-filter-btn" data-category="Flex Banner">Flex Banners</button>
+                <button class="category-filter-btn" data-category="Visiting Card">Visiting Cards</button>
+                <button class="category-filter-btn" data-category="Pamphlet">Pamphlets</button>
+                <button id="filter-modal-btn" class="button-secondary filter-btn"><i class="fas fa-filter"></i> Filters</button>
             </div>
 
-        <div id="pagination-controls" class="pagination">
-             <button id="prev-page" disabled>&laquo; Previous</button>
-             <span id="page-info">Page 1</span>
-             <button id="next-page">Next &raquo;</button>
-        </div>
+            <div class="sort-options">
+                <label for="sort-select">Sort By:</label>
+                <select id="sort-select" class="form-control">
+                    <option value="default">Default</option>
+                    <option value="price-asc">Price: Low to High</option>
+                    <option value="price-desc">Price: High to Low</option>
+                    <option value="name-asc">Name: A to Z</option>
+                    <option value="name-desc">Name: Z to A</option>
+                    </select>
+            </div>
+        </section>
+
+        <div id="active-filters-display" class="active-filters-area">
+            </div>
+
+        <section id="product-grid" class="product-grid">
+            <div class="loading-spinner-container hidden">
+                <div class="loading-spinner"></div>
+                <p>Loading Products...</p>
+            </div>
+            </section>
+
+        <nav id="pagination-controls" class="pagination-controls" style="display: none;">
+            <button id="prev-page" class="button-secondary" disabled>Previous</button>
+            <span id="page-info">Page 1</span>
+            <button id="next-page" class="button-secondary">Next</button>
+        </nav>
 
     </main>
 
-    <div id="filter-modal" class="modal">
+    <div id="filter-modal" class="filter-modal">
         <div class="modal-content">
             <span class="close-modal-btn">&times;</span>
             <h2>Filters</h2>
             <div class="filter-group">
                 <label>Price Range:</label>
-                <div class="price-filter-inputs">
-                    <input type="number" id="min-price" placeholder="Min ₹" min="0">
+                <div class="price-inputs">
+                    <input type="number" id="min-price" placeholder="Min Price (₹)" min="0" class="form-control">
                     <span>-</span>
-                    <input type="number" id="max-price" placeholder="Max ₹" min="0">
+                    <input type="number" id="max-price" placeholder="Max Price (₹)" min="0" class="form-control">
                 </div>
             </div>
             <button id="apply-filters-btn" class="button-primary">Apply Filters</button>
@@ -83,15 +98,19 @@
     </div>
 
     <footer>
-         <p style="text-align: center; padding: 20px; background-color: #eee; margin-top: 30px;"><em>Replace this with your actual footer content</em></p>
+        <div class="container">
+            <p>&copy; 2025 Madhav Multiprint. All Rights Reserved.</p> <p>
+                <a href="privacy.html">Privacy Policy</a> |
+                <a href="terms.html">Terms & Conditions</a> |
+                <a href="contact.html">Contact</a>
+            </p>
+        </div>
     </footer>
-    <script src="https://unpkg.com/swiper/swiper-bundle.min.js"></script>
-
     <script src="js/firebase-config.js" type="module"></script>
 
-    <script src="js/main.js" type="module"></script>
+    <script src="js/cart.js" type="module"></script>
 
-    <script src="js/products.js" type="module"></script>
+    <script src="js/main.js" type="module" defer></script> <script src="js/products.js" type="module" defer></script>
 
 </body>
 </html>
