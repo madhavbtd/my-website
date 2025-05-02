@@ -1,7 +1,7 @@
 // js/product-detail.js
 // FINAL UPDATED Version: Includes Tabs, Quantity Buttons, New Price Layout, Related Products Slider, Schema Update, Review Logic, Social Sharing, and Error Checks
 // Corrected Price Calculation for Wedding Cards & Flex Banners + Image in Cart
-// Includes fix for potential SyntaxError around social sharing
+// Intended to fix SyntaxError caused by previous copy-paste issues.
 
 // --- Imports ---\
 import { db } from './firebase-config.js';
@@ -211,12 +211,14 @@ function renderProductDetails(productData) {
                 });
                 thumbnailImagesContainer.appendChild(img);
             });
-            if (thumbnailImagesContainer.firstChild) thumbnailImagesContainer.firstChild.classList.add('active');
+            // Make sure the first thumbnail is marked active initially
+            if (thumbnailImagesContainer.firstChild instanceof HTMLElement) {
+                 thumbnailImagesContainer.firstChild.classList.add('active');
+            }
         } else {
             thumbnailImagesContainer.style.display = 'none'; // Hide if only one image
         }
     }
-
     // --- Pricing and Options Logic ---
     // Reset visibility states first
     document.getElementById('standard-price-section')?.style.display = 'none';
@@ -225,8 +227,8 @@ function renderProductDetails(productData) {
     if (weddingOptionsContainer) weddingOptionsContainer.style.display = 'none';
     if (flexPriceDisplay) flexPriceDisplay.style.display = 'none';
     if (weddingPriceDisplay) weddingPriceDisplay.style.display = 'none';
-    if (priceEl) priceEl.textContent = '';
-    if (originalPriceEl) originalPriceEl.style.display = 'none';
+    if (priceEl) priceEl.textContent = ''; // Clear previous price
+    if (originalPriceEl) originalPriceEl.style.display = 'none'; // Hide original price
 
 
     const category = productData.category?.toLowerCase() || '';
@@ -262,7 +264,7 @@ function renderProductDetails(productData) {
             if (typeof pricing.originalRate === 'number' && pricing.originalRate > pricing.rate) {
                 if (originalPriceEl) {
                     originalPriceEl.textContent = formatCurrency(pricing.originalRate);
-                    originalPriceEl.style.display = 'inline';
+                    originalPriceEl.style.display = 'inline'; // Show original price if it exists and is higher
                 }
             }
         } else {
@@ -304,7 +306,7 @@ function renderProductDetails(productData) {
     fetchReviews();
 
     // Ensure add to cart button is enabled initially if price exists (might be disabled above if no price)
-     if (addToCartBtn && pricing && (pricing.rate || category.includes('flex') || category.includes('wedding')) ) {
+     if (addToCartBtn && pricing && (typeof pricing.rate === 'number' || category.includes('flex') || category.includes('wedding')) ) {
           addToCartBtn.disabled = false;
      }
 
@@ -818,10 +820,17 @@ async function fetchRelatedProducts(category, currentProdId) {
 
     try {
         const productsRef = collection(db, 'products');
+        // Make sure the field name used in 'where' clause matches your Firestore field
+        // Using 'productId' assumes you have a field named 'productId' in your documents.
+        // If your unique ID is the Firestore document ID itself, you cannot exclude it this way directly in the query.
+        // You might need to fetch more and filter client-side, or structure data differently.
+        // Assuming 'productId' field exists for this query:
         const q = query(
             productsRef,
             where('category', '==', category),
-            where('productId', '!=', currentProdId), // Use the actual unique product ID field
+             // Ensure 'productId' field exists and you want to compare against it.
+             // Firestore ID comparison requires different handling if 'productId' isn't a field.
+            where('productId', '!=', currentProdId),
             limit(6)
         );
 
@@ -970,6 +979,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     if (!currentProductId) {
         showError("Product ID not found in URL. Cannot load details.");
+        console.error("Initialization failed: No product ID in URL."); // Log detailed error
         return;
     }
 
@@ -985,7 +995,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (productSnap.exists()) {
             console.log("Product data fetched successfully.");
             // Combine data and ID
-            const productData = { ...productSnap.data(), productId: productSnap.id };
+            const productData = { ...productSnap.data(), productId: productSnap.id }; // Use Firestore ID as productId field if missing
 
             // --- Crucial Check & Default for Pricing ---
             if (!productData.pricing) {
@@ -1009,7 +1019,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                  reviewForm.removeEventListener('submit', handleReviewSubmit);
                  reviewForm.addEventListener('submit', handleReviewSubmit);
             } else {
-                 console.log("Review form not found."); // Not necessarily an error
+                 // console.log("Review form not found."); // Not necessarily an error, might not be on all products
             }
 
         } else {
@@ -1023,8 +1033,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         showError(`Failed to load product details. Please try refreshing the page. Error: ${error.message}`);
     } finally {
          // Ensure loading indicator is always hidden after attempt, regardless of success/failure
-         // Add a small delay? Sometimes rendering takes a moment after async ops finish.
-         // setTimeout(() => showLoading(false), 100); // Optional small delay
-         showLoading(false); // Usually fine to hide immediately
+         showLoading(false);
     }
 }); // End DOMContentLoaded
