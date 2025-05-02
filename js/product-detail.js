@@ -1,11 +1,11 @@
 // js/product-detail.js
-// FINAL Version: Includes Add-to-Cart Popup, Wedding Qty Fix, Related Products Fix, SetupTabs Fix, showLoading Fix, Debug Logs. Uses 'onlineProducts'.
+// FINAL Version: Includes Add-to-Cart Popup Fix, Wedding Qty Fix, Related Products Fix, SetupTabs Fix, showLoading Fix, Debug Logs, Flex Price Update Fix. Uses 'onlineProducts'.
 
 // --- Imports ---
 import { db } from './firebase-config.js';
 import { doc, getDoc, collection, query, where, limit, getDocs, addDoc, serverTimestamp, orderBy } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import { addToCart } from './cart.js';
-import { updateCartCount } from './main.js';
+import { updateCartCount } from './main.js'; // Assuming main.js exports this
 
 // --- DOM Elements ---
 const productDetailContainer = document.getElementById('product-detail-container');
@@ -16,191 +16,1162 @@ const breadcrumbProductName = document.getElementById('breadcrumb-product-name')
 const productNameEl = document.getElementById('product-name');
 const mainImageEl = document.getElementById('main-product-image');
 const thumbnailImagesContainer = document.getElementById('thumbnail-images');
-const priceEl = document.getElementById('product-price');
+const priceEl = document.getElementById('product-price'); // Main price display
 const originalPriceEl = document.getElementById('original-price');
-const weddingPerCardPriceEl = document.getElementById('wedding-per-card-price'); // For per-card price
+const perCardPriceEl = document.getElementById('per-card-price'); // Combined display area for per-card price
+const weddingPerCardPriceEl = document.getElementById('wedding-per-card-price'); // Specific wedding per-card price
 const addToCartBtn = document.getElementById('add-to-cart-btn');
-const cartFeedbackEl = document.getElementById('cart-feedback');
-const viewCartLink = document.getElementById('view-cart-link'); // View cart link
-const productSchemaScript = document.getElementById('product-schema');
-const descriptionShortEl = document.getElementById('product-description-short');
-const descriptionFullEl = document.getElementById('product-description-full');
-const specsListEl = document.getElementById('product-specs');
-const usageCareInfoEl = document.getElementById('usage-care-info');
-const faqListEl = document.getElementById('faq-list');
-const standardQuantityContainer = document.getElementById('standard-quantity-container');
-const flexInputsContainer = document.getElementById('flex-inputs-container');
-const weddingQuantityContainer = document.getElementById('wedding-quantity-container');
-const standardQuantityInput = document.getElementById('quantity');
+const cartFeedbackEl = document.getElementById('cart-feedback-message');
+const viewCartButton = document.getElementById('view-cart-button'); // Get the View Cart button
+
+// Product Type Specific Containers
+const standardOptionsContainer = document.getElementById('standard-options-container');
+const weddingOptionsContainer = document.getElementById('wedding-options-container');
+const flexOptionsContainer = document.getElementById('flex-options-container');
+
+// Standard Quantity Controls
+const quantityInput = document.getElementById('quantity');
+const quantityDecreaseBtn = document.getElementById('quantity-decrease');
+const quantityIncreaseBtn = document.getElementById('quantity-increase');
+
+// Wedding Quantity Controls
+const weddingQuantitySelect = document.getElementById('wedding-quantity-select');
+
+// Flex Banner Controls
 const bannerWidthInput = document.getElementById('banner-width');
 const bannerHeightInput = document.getElementById('banner-height');
 const bannerUnitSelect = document.getElementById('banner-unit');
-const bannerQuantityInput = document.getElementById('banner-quantity');
-const tabsContainer = document.querySelector('.product-details-tabs');
-const tabsNav = document.querySelector('.tabs-nav');
-const tabPanes = document.querySelectorAll('.tabs-content .tab-pane');
-const relatedProductsSection = document.getElementById('related-products-section');
-const relatedProductsContainer = document.getElementById('related-products-container');
-const reviewsListEl = document.getElementById('reviews-list');
-const reviewForm = document.getElementById('review-form');
-const reviewFeedbackEl = document.getElementById('review-feedback');
-const averageRatingEl = document.getElementById('average-rating');
-const reviewCountEl = document.getElementById('review-count');
-const socialShareLinksContainer = document.querySelector('.social-sharing');
-// Popup DOM Elements
-const addToCartPopup = document.getElementById('add-to-cart-popup');
-const popupCloseBtn = document.getElementById('popup-close-btn');
-const popupCancelBtn = document.getElementById('popup-cancel');
-const popupConfirmBtn = document.getElementById('popup-confirm-add');
+
+// Popup Elements
+const popupOverlay = document.getElementById('popup-overlay');
 const popupProductName = document.getElementById('popup-product-name');
 const popupProductImage = document.getElementById('popup-product-image');
 const popupProductQuantity = document.getElementById('popup-product-quantity');
-const popupProductPrice = document.getElementById('popup-product-price');
-const popupPerCardPrice = document.getElementById('popup-per-card-price');
 const popupProductOptions = document.getElementById('popup-product-options');
+const popupProductPrice = document.getElementById('popup-product-price');
+const popupPerCardPrice = document.getElementById('popup-per-card-price'); // Popup per card price element
+const popupConfirmBtn = document.getElementById('popup-confirm-add');
+const popupCancelBtn = document.getElementById('popup-cancel');
+const popupCloseBtn = popupOverlay?.querySelector('.popup-close-btn'); // Assuming a close 'x' button might exist
 
-// --- Global State ---
-let currentProductData = null; let currentProductId = null; let relatedProductsSwiper = null;
+// Related Products
+const relatedProductsSection = document.getElementById('related-products-section');
+const relatedProductsContainer = document.getElementById('related-products-container');
+
+// Tabs
+const tabsNav = document.querySelector('.tabs-nav');
+const tabPanes = document.querySelectorAll('.tab-pane');
+
+// Global variable to hold current product data
+let currentProductData = null;
+let currentPricingType = 'standard'; // 'standard', 'wedding', 'flex'
+let currentPerCardPrice = 0; // Store the calculated per-card price for wedding cards
 
 // --- Helper Functions ---
-function showLoading(isLoading) { if (loadingIndicator) loadingIndicator.style.display = isLoading ? 'flex' : 'none'; if (productContent) productContent.style.display = isLoading ? 'none' : 'grid'; if (errorMessageContainer && isLoading) { errorMessageContainer.style.display = 'none'; errorMessageContainer.textContent = ''; } }
-function showError(message) { showLoading(false); if (errorMessageContainer) { errorMessageContainer.textContent = message; errorMessageContainer.style.display = 'block'; } if (productContent) productContent.style.display = 'none'; if (tabsContainer) tabsContainer.style.display = 'none'; if (relatedProductsSection) relatedProductsSection.style.display = 'none'; document.title = "Error - Madhav Multiprint"; if (breadcrumbProductName) breadcrumbProductName.textContent = "Error"; }
-const formatIndianCurrency = (amount) => { const num = Number(amount); return isNaN(num) || num === null ? 'N/A' : `₹ ${num.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`; };
-function formatSpecKey(key) { const result = key.replace(/([A-Z])/g, ' $1'); return result.charAt(0).toUpperCase() + result.slice(1); }
-function showFeedback(element, message, isError = false) { if (element) { element.textContent = message; element.className = `cart-feedback-message ${isError ? 'error' : 'success'}`; element.style.display = 'block'; setTimeout(() => { element.style.display = 'none'; }, 3000); } }
-const mediaWidthsFt = [3, 4, 5, 6, 8, 10]; function calculateFlexDimensions(widthFt, heightFt, availableMediaWidths = mediaWidthsFt) { widthFt = Math.max(0, Number(widthFt)); heightFt = Math.max(0, Number(heightFt)); if (isNaN(widthFt) || isNaN(heightFt) || widthFt <= 0 || heightFt <= 0) return { printSqFtPerBanner: 0, actualWidthFt: 0, actualHeightFt: 0, error: "Invalid dimensions." }; const sortedMediaWidths = [...availableMediaWidths].sort((a, b) => a - b); let bestSqFt = Infinity; const orientations = [{ w: widthFt, h: heightFt }, { w: heightFt, h: widthFt }]; for (const dim of orientations) { const currentW = dim.w; const currentH = dim.h; const smallerDim = Math.min(currentW, currentH); const largerDim = Math.max(currentW, currentH); let suitableMediaWidth = sortedMediaWidths.find(mediaW => mediaW >= smallerDim); if (suitableMediaWidth) { const currentSqFt = largerDim * suitableMediaWidth; bestSqFt = Math.min(bestSqFt, currentSqFt); } } if (bestSqFt === Infinity) { console.warn(`Flex dimensions (${widthFt}x${heightFt}) may exceed largest media width. Using raw area.`); bestSqFt = widthFt * heightFt; if (bestSqFt <= 0) return { printSqFtPerBanner: 0, actualWidthFt: widthFt, actualHeightFt: heightFt, error: "Zero area." }; } if (bestSqFt <= 0) return { printSqFtPerBanner: 0, actualWidthFt: widthFt, actualHeightFt: heightFt, error: "Calculated area is zero." }; return { printSqFtPerBanner: bestSqFt, actualWidthFt: widthFt, actualHeightFt: heightFt }; }
-
-// --- Update Price Functions ---
-function updateFlexPriceDisplay() {
-    const width = parseFloat(bannerWidthInput?.value); const height = parseFloat(bannerHeightInput?.value); const unit = bannerUnitSelect?.value; const quantity = parseInt(bannerQuantityInput?.value, 10); const pricing = currentProductData?.pricing;
-    // DEBUG Logs for Flex Price
-    console.log("--- DEBUG: updateFlexPriceDisplay ---");
-    console.log(`Inputs: W=${width}, H=${height}, Unit=${unit}, Qty=${quantity}`);
-    console.log("Pricing Data:", pricing);
-    if (!priceEl) return;
-    if (!pricing || isNaN(width) || width <= 0 || isNaN(height) || height <= 0 || isNaN(quantity) || quantity <= 0) { priceEl.textContent = "Enter valid dimensions & quantity"; if (originalPriceEl) originalPriceEl.style.display = 'none'; return; }
-    const ratePerSqFt = parseFloat(pricing.rate); if (isNaN(ratePerSqFt) || ratePerSqFt <= 0) { priceEl.textContent = "Pricing unavailable"; if (originalPriceEl) originalPriceEl.style.display = 'none'; return; }
-    const minimumOrderValue = parseFloat(pricing.minimumOrderValue || 0); const mediaWidths = pricing.mediaWidths || mediaWidthsFt; const widthFt = unit === 'inches' ? width / 12 : width; const heightFt = unit === 'inches' ? height / 12 : height; const dimResult = calculateFlexDimensions(widthFt, heightFt, mediaWidths);
-    console.log("Dim Result:", dimResult); // DEBUG
-    if (dimResult.error || isNaN(dimResult.printSqFtPerBanner) || dimResult.printSqFtPerBanner <= 0) { priceEl.textContent = dimResult.error || "Calculation error"; if (originalPriceEl) originalPriceEl.style.display = 'none'; return; }
-    const printSqFtPerBanner = dimResult.printSqFtPerBanner; const totalPrintSqFt = printSqFtPerBanner * quantity; const calculatedCost = totalPrintSqFt * ratePerSqFt; const finalCost = Math.max(calculatedCost, minimumOrderValue);
-    console.log(`SqFt/Banner=${printSqFtPerBanner}, TotalSqFt=${totalPrintSqFt}, Rate=${ratePerSqFt}, CalcCost=${calculatedCost}, MinVal=${minimumOrderValue}, FinalCost=${finalCost}`); // DEBUG
-    priceEl.textContent = formatIndianCurrency(finalCost); if (originalPriceEl) originalPriceEl.style.display = 'none';
-    console.log("--- DEBUG END: updateFlexPriceDisplay ---");
+function showLoading(section = 'main') {
+    console.log(`लोडिंग दिखाया जा रहा है: ${section}`);
+    if (section === 'main' && loadingIndicator && productContent) {
+        loadingIndicator.style.display = 'flex';
+        productContent.style.display = 'none';
+        errorMessageContainer.style.display = 'none';
+        if(relatedProductsSection) relatedProductsSection.style.display = 'none'; // संबंधित उत्पादों को भी छिपाएं
+    } else if (section === 'related' && relatedProductsSection) {
+        // वैकल्पिक: यदि आवश्यक हो तो संबंधित उत्पादों के लिए एक विशिष्ट लोडर जोड़ें
+        relatedProductsContainer.innerHTML = '<p>संबंधित उत्पाद लोड हो रहे हैं...</p>';
+        relatedProductsSection.style.display = 'block';
+    }
 }
-function updateWeddingPriceDisplay() {
-    const quantityDropdown = document.getElementById('wedding-quantity-select'); const selectedQuantity = parseInt(quantityDropdown?.value, 10); const pricing = currentProductData?.pricing; const perCardPriceEl = weddingPerCardPriceEl; // Use variable from top
-    if (!priceEl || !perCardPriceEl) { console.error("Price display elements missing."); return; } priceEl.textContent = ""; perCardPriceEl.textContent = ""; perCardPriceEl.style.display = 'none'; if (originalPriceEl) originalPriceEl.style.display = 'none';
-    if (!pricing || isNaN(selectedQuantity) || selectedQuantity <= 0) { priceEl.textContent = "Select Quantity"; return; }
-    const baseRate = parseFloat(pricing.rate); if (isNaN(baseRate)) { priceEl.textContent = "Price info missing"; return; } const designCharge = parseFloat(pricing.designCharge || 0); const printingChargeBase = parseFloat(pricing.printingChargeBase || 0); const transportCharge = parseFloat(pricing.transportCharge || 0); const extraMarginPercent = parseFloat(pricing.extraMarginPercent || 0); const subTotal = (baseRate * selectedQuantity) + designCharge + printingChargeBase + transportCharge; const finalAmount = subTotal * (1 + (extraMarginPercent / 100)); const averageUnitPrice = finalAmount / selectedQuantity; if (isNaN(finalAmount) || isNaN(averageUnitPrice) || averageUnitPrice <= 0) { priceEl.textContent = "Calculation Error"; return; }
-    priceEl.textContent = `Total: ${formatIndianCurrency(finalAmount)}`; perCardPriceEl.textContent = `Per card: ${formatIndianCurrency(averageUnitPrice)}`; perCardPriceEl.style.display = 'block';
-    if (originalPriceEl) { if (pricing.originalRate && averageUnitPrice < pricing.originalRate) { originalPriceEl.textContent = formatIndianCurrency(pricing.originalRate) + "/card (Original)"; originalPriceEl.style.display = 'inline-block'; } else { originalPriceEl.style.display = 'none'; } }
+
+function hideLoading(section = 'main') {
+    console.log(`लोडिंग छिपाया जा रहा है: ${section}`);
+    if (section === 'main' && loadingIndicator && productContent) {
+        loadingIndicator.style.display = 'none';
+        productContent.style.display = 'grid'; // या आपके लेआउट के आधार पर 'block'
+    }
+    // यदि सामग्री लोडिंग टेक्स्ट को प्रतिस्थापित करती है तो संबंधित के लिए विशिष्ट छिपाने की आवश्यकता नहीं है
 }
-function renderStandardPriceDisplay(pricing) { if (!priceEl) return; if (!pricing || typeof pricing.rate !== 'number') { priceEl.textContent = 'Price Unavailable'; if (originalPriceEl) originalPriceEl.style.display = 'none'; return; } priceEl.textContent = formatIndianCurrency(pricing.rate); if (originalPriceEl) { if (typeof pricing.originalRate === 'number' && pricing.originalRate > pricing.rate) { originalPriceEl.textContent = formatIndianCurrency(pricing.originalRate); originalPriceEl.style.display = 'inline'; } else { originalPriceEl.style.display = 'none'; } } }
 
-// --- Populate Wedding Dropdown ---
-function populateWeddingQuantities(optionsArray) { const selectEl = document.getElementById('wedding-quantity-select'); if (!selectEl) { console.error("Wedding quantity select element not found!"); return; } selectEl.innerHTML = '<option value="">Select Quantity</option>'; const quantityOptionData = optionsArray?.find(opt => opt && opt.name?.toLowerCase() === 'quantity'); if (!quantityOptionData || !Array.isArray(quantityOptionData.values) || quantityOptionData.values.length === 0) { console.warn("Wedding quantities data missing or invalid within product options."); selectEl.innerHTML += '<option disabled>Quantities not available</option>'; return; } quantityOptionData.values.forEach(val => { const numQty = Number(val); if (!isNaN(numQty) && numQty > 0) { const option = document.createElement('option'); option.value = numQty; option.textContent = numQty; selectEl.appendChild(option); } else { console.warn("Invalid quantity value found in wedding options array:", val); } }); }
+function showError(message) {
+    console.error("त्रुटि प्रदर्शित:", message);
+    if (errorMessageContainer && loadingIndicator && productContent) {
+        errorMessageContainer.textContent = message;
+        errorMessageContainer.style.display = 'block';
+        loadingIndicator.style.display = 'none';
+        productContent.style.display = 'none';
+        if(relatedProductsSection) relatedProductsSection.style.display = 'none';
+    } else {
+        console.error("त्रुटि प्रदर्शन तत्व नहीं मिले।");
+    }
+}
 
-// --- Schema Update Function ---
-function updateProductSchema(productData, reviewsData = { average: 0, count: 0, reviews: [] }) { /* ... unchanged ... */ if (!productSchemaScript || !productData || !productData.productName) return; let priceForSchema = productData.pricing?.rate ?? "0"; const category = productData.category?.toLowerCase() || ''; if (category.includes('flex') && productData.pricing?.minimumOrderValue) { priceForSchema = productData.pricing.minimumOrderValue; } const schema = { "@context": "https://schema.org/", "@type": "Product", "name": productData.productName, "image": productData.imageUrls || [], "description": productData.description || productData.shortDescription || "", "sku": productData.sku || currentProductId, "brand": { "@type": "Brand", "name": productData.brand || "Madhav Multiprint" }, "offers": { "@type": "Offer", "url": window.location.href, "priceCurrency": "INR", "price": priceForSchema.toString(), "availability": productData.isEnabled ? "https://schema.org/InStock" : "https://schema.org/OutOfStock", "itemCondition": "https://schema.org/NewCondition" }, "aggregateRating": { "@type": "AggregateRating", "ratingValue": reviewsData.average.toFixed(1) || "0", "reviewCount": reviewsData.count || "0" }, "review": reviewsData.reviews.map(review => ({ "@type": "Review", "author": {"@type": "Person", "name": review.reviewerName || "Anonymous"}, "datePublished": review.createdAt?.seconds ? new Date(review.createdAt.seconds * 1000).toISOString().split('T')[0] : "", "reviewBody": review.comment || "", "reviewRating": { "@type": "Rating", "ratingValue": review.rating || "0" } })) }; try { productSchemaScript.textContent = JSON.stringify(schema, null, 2); } catch (e) { console.error("Error updating schema script:", e); } }
+function formatPrice(price) {
+    // सुनिश्चित करें कि मूल्य एक संख्या है
+    const numericPrice = Number(price);
+    if (isNaN(numericPrice)) {
+        console.error(`अमान्य मूल्य प्रारूपण के लिए इनपुट: ${price}`);
+        return 'N/A'; // या कोई डिफ़ॉल्ट स्ट्रिंग
+    }
+    return `₹${numericPrice.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+}
 
-// --- Main Product Loading Logic ---
-async function loadProductDetails(productId) { /* ... mostly unchanged, calls setupAllEventListeners at end ... */ if (!loadingIndicator || !productContent || !errorMessageContainer || !tabsContainer || !productNameEl || !mainImageEl || !thumbnailImagesContainer || !breadcrumbProductName || !descriptionShortEl || !descriptionFullEl || !specsListEl || !usageCareInfoEl || !faqListEl || !relatedProductsSection || !reviewsListEl) { console.error("Core layout elements missing! Cannot proceed."); const errContainer = errorMessageContainer || document.body; errContainer.textContent = "Page layout error. Required elements missing."; errContainer.style.display = 'block'; if (loadingIndicator) loadingIndicator.style.display = 'none'; return; } showLoading(true); relatedProductsSection.style.display = 'none'; if (weddingQuantityContainer) weddingQuantityContainer.innerHTML = ''; try { const productRef = doc(db, "onlineProducts", productId); const productSnap = await getDoc(productRef); if (productSnap.exists()) { currentProductData = productSnap.data(); currentProductId = productId; if (!currentProductData) { showError("Failed to process product data."); return; } if (!currentProductData.pricing) currentProductData.pricing = {}; if (!currentProductData.options) currentProductData.options = []; document.title = `${currentProductData.productName || 'Product'} - Madhav Multiprint`; breadcrumbProductName.textContent = currentProductData.productName || 'Details'; productNameEl.textContent = currentProductData.productName || 'N/A'; const imageUrls = currentProductData.imageUrls && Array.isArray(currentProductData.imageUrls) ? currentProductData.imageUrls : []; if (imageUrls.length > 0) { mainImageEl.src = imageUrls[0]; mainImageEl.alt = currentProductData.productName || 'Product image'; thumbnailImagesContainer.innerHTML = ''; imageUrls.forEach((url, index) => { const thumb = document.createElement('img'); thumb.src = url; thumb.alt = `Thumbnail ${index + 1}`; thumb.classList.add('thumbnail'); if (index === 0) thumb.classList.add('active'); thumbnailImagesContainer.appendChild(thumb); }); thumbnailImagesContainer.style.display = imageUrls.length > 1 ? 'grid' : 'none'; } else { mainImageEl.src = 'images/placeholder.png'; mainImageEl.alt = 'Placeholder'; thumbnailImagesContainer.innerHTML = ''; thumbnailImagesContainer.style.display = 'none';} descriptionShortEl.textContent = currentProductData.shortDescription || currentProductData.description?.substring(0, 150) + '...' || ''; descriptionFullEl.innerHTML = currentProductData.description || 'No description available.'; const category = currentProductData.category?.toLowerCase() || ''; if (standardQuantityContainer) standardQuantityContainer.style.display = 'none'; if (flexInputsContainer) flexInputsContainer.style.display = 'none'; if (weddingQuantityContainer) weddingQuantityContainer.style.display = 'none'; if (category.includes('flex')) { if (flexInputsContainer) flexInputsContainer.style.display = 'grid'; updateFlexPriceDisplay(); } else if (category.includes('wedding')) { if (weddingQuantityContainer) { if (!document.getElementById('wedding-quantity-select')) { const label = document.createElement('label'); label.htmlFor = 'wedding-quantity-select'; label.textContent = 'Select Quantity:'; const select = document.createElement('select'); select.id = 'wedding-quantity-select'; select.name = 'wedding_quantity'; weddingQuantityContainer.appendChild(label); weddingQuantityContainer.appendChild(select); } weddingQuantityContainer.style.display = 'flex'; populateWeddingQuantities(currentProductData.options); updateWeddingPriceDisplay(); } else { if (standardQuantityContainer) standardQuantityContainer.style.display = 'block'; renderStandardPriceDisplay(currentProductData.pricing); } } else { if (standardQuantityContainer) standardQuantityContainer.style.display = 'block'; renderStandardPriceDisplay(currentProductData.pricing); } specsListEl.innerHTML = ''; if (currentProductData.specifications && typeof currentProductData.specifications === 'object' && Object.keys(currentProductData.specifications).length > 0) { for (const [key, value] of Object.entries(currentProductData.specifications)) { if (value) { const li = document.createElement('li'); li.innerHTML = `<strong>${formatSpecKey(key)}:</strong> <span>${value}</span>`; specsListEl.appendChild(li); } } } else { specsListEl.innerHTML = '<li>No specifications available.</li>'; } usageCareInfoEl.textContent = currentProductData.usageInfo || "No usage information available."; await fetchAndDisplayFAQs(currentProductData.faqIds || []); productContent.style.display = 'grid'; tabsContainer.style.display = 'block'; let reviewsData = { average: 0, count: 0, reviews: [] }; try { reviewsData = await fetchAndDisplayReviews(productId); } catch (reviewError) { console.error("Error loading reviews (caught):", reviewError); } updateProductSchema(currentProductData, reviewsData); if (currentProductData.category) { fetchRelatedProducts(productId, currentProductData.category); } else { relatedProductsSection.style.display = 'none'; } setupAllEventListeners(); } else { showError(`Product not found (ID: ${productId}).`); } } catch (error) { console.error("Error in loadProductDetails:", error); showError(`Failed to load details: ${error.message}`); } finally { showLoading(false); } }
-
-// --- Related Products ---
-async function fetchRelatedProducts(currentProdId, category) {
-    if (!relatedProductsSection || !relatedProductsContainer) return;
-    relatedProductsContainer.innerHTML = '<div class="swiper-slide"><p>Loading...</p></div>';
+// --- Product Data Fetching & Rendering ---
+async function loadProductDetails(productId) {
+    showLoading('main');
     try {
-        // ***** FIX: Use let instead of const *****
-        let relatedProducts = [];
-        const productsRef = collection(db, "onlineProducts");
-        const q = query(collection(db, "onlineProducts"), where("category", "==", category), limit(10));
-        const querySnapshot = await getDocs(q);
-        querySnapshot.forEach((doc) => { if (doc.id !== currentProdId) { relatedProducts.push({ id: doc.id, ...doc.data() }); } });
-        relatedProducts = relatedProducts.slice(0, 6); // Limit display
+        console.log(`उत्पाद आईडी के साथ प्राप्त किया जा रहा है: ${productId}`);
+        const productRef = doc(db, "onlineProducts", productId); // 'onlineProducts' संग्रह का उपयोग करें
+        const productSnap = await getDoc(productRef);
 
-        if (relatedProducts.length > 0) {
-            displayRelatedProducts(relatedProducts);
-            relatedProductsSection.style.display = 'block';
-        } else { relatedProductsSection.style.display = 'none'; }
-    } catch (error) { console.error("Error loading related products:", error); relatedProductsSection.style.display = 'block'; relatedProductsContainer.innerHTML = '<p>Error loading related items.</p>'; }
-}
-function displayRelatedProducts(products) { /* ... unchanged ... */
-    relatedProductsContainer.innerHTML = ''; products.forEach(product => { const slide = document.createElement('div'); slide.className = 'swiper-slide'; let imageUrl = product.imageUrls?.[0] || 'images/placeholder.png'; let priceHTML = 'Contact for Price'; const pricing = product.pricing; if (pricing && typeof pricing.rate === 'number') { priceHTML = formatIndianCurrency(pricing.rate); if(product.unit && product.unit !== 'QTY') priceHTML += ` / ${product.unit}`; } slide.innerHTML = ` <div class="product-card"> <div class="product-image-container"><a href="product-detail.html?id=${product.id}"><img src="${imageUrl}" alt="${product.productName || 'Product'}" loading="lazy"></a></div> <div class="product-info"> <h3><a href="product-detail.html?id=${product.id}">${product.productName || 'Unnamed'}</a></h3> <div class="price">${priceHTML}</div> <a href="product-detail.html?id=${product.id}" class="button-primary view-details-btn">View Details</a> </div> </div>`; relatedProductsContainer.appendChild(slide); }); initializeRelatedProductsSwiper();
-}
-function initializeRelatedProductsSwiper() { /* ... unchanged ... */
-     if (typeof Swiper === 'undefined') { console.error("Swiper library not loaded."); return; } if (relatedProductsContainer.swiper) { relatedProductsContainer.swiper.destroy(true, true); relatedProductsContainer.swiper = null; } relatedProductsContainer.swiper = new Swiper('.related-products-swiper', { loop: relatedProductsContainer.querySelectorAll('.swiper-slide').length > 5, slidesPerView: 2, spaceBetween: 15, autoplay: { delay: 4000, disableOnInteraction: false, }, pagination: { el: '.swiper-pagination', clickable: true, }, navigation: { nextEl: '.swiper-button-next', prevEl: '.swiper-button-prev', }, breakpoints: { 640: { slidesPerView: 3 }, 768: { slidesPerView: 4 }, 1024: { slidesPerView: 5 } } });
-}
-
-// --- Review Functions ---
-async function fetchAndDisplayReviews(productId) { /* ... unchanged ... */
-     if (!reviewsListEl || !averageRatingEl || !reviewCountEl || !productId) return { average: 0, count: 0, reviews: [] }; reviewsListEl.innerHTML = '<p>Loading reviews...</p>'; let totalRating = 0; let reviewCount = 0; const fetchedReviews = []; try { const reviewsRef = collection(db, "onlineProducts", productId, "reviews"); const q = query(reviewsRef, orderBy("createdAt", "desc")); const querySnapshot = await getDocs(q); if (!querySnapshot.empty) { reviewsListEl.innerHTML = ''; querySnapshot.forEach((doc) => { const review = { id: doc.id, ...doc.data() }; fetchedReviews.push(review); const reviewItem = document.createElement('div'); reviewItem.className = 'review-item'; const rating = review.rating || 0; const starsHTML = Array(5).fill(0).map((_, i) => `<i class="fas fa-star${i < rating ? '' : '-empty'}" style="color: #f0ad4e;"></i>`).join(''); const date = review.createdAt?.seconds ? new Date(review.createdAt.seconds * 1000).toLocaleDateString() : 'N/A'; reviewItem.innerHTML = `<div class="review-rating">${starsHTML}</div> <p class="review-comment">${review.comment || ''}</p> <p class="review-meta">By <strong>${review.reviewerName || 'Anonymous'}</strong> on ${date}</p>`; reviewsListEl.appendChild(reviewItem); totalRating += rating; reviewCount++; }); const averageRating = reviewCount > 0 ? totalRating / reviewCount : 0; averageRatingEl.textContent = `${averageRating.toFixed(1)} / 5`; reviewCountEl.textContent = reviewCount; return { average: averageRating, count: reviewCount, reviews: fetchedReviews }; } else { reviewsListEl.innerHTML = '<p>No reviews yet.</p>'; averageRatingEl.textContent = 'N/A'; reviewCountEl.textContent = '0'; return { average: 0, count: 0, reviews: [] }; } } catch (error) { console.error("Error loading reviews:", error); reviewsListEl.innerHTML = '<p>Could not load reviews.</p>'; averageRatingEl.textContent = 'Error'; reviewCountEl.textContent = '0'; return { average: 0, count: 0, reviews: [] }; }
-}
-async function handleReviewSubmit(event, productId) { /* ... unchanged ... */
-     event.preventDefault(); if (!reviewForm || !productId || !reviewFeedbackEl) return; const reviewerName = reviewForm.elements['reviewer_name']?.value.trim(); const comment = reviewForm.elements['review_comment']?.value.trim(); const ratingInput = reviewForm.querySelector('input[name="rating"]:checked'); const rating = ratingInput ? parseInt(ratingInput.value, 10) : 0; if (!reviewerName || !comment || rating === 0) { showFeedback(reviewFeedbackEl, "Please fill name, comment and rating.", true); return; } const submitButton = reviewForm.querySelector('button[type="submit"]'); if (submitButton) submitButton.disabled = true; showFeedback(reviewFeedbackEl, "Submitting...", false); try { const reviewsRef = collection(db, "onlineProducts", productId, "reviews"); await addDoc(reviewsRef, { reviewerName, comment, rating, createdAt: serverTimestamp() }); showFeedback(reviewFeedbackEl, "Review submitted!", false); reviewForm.reset(); const reviewsData = await fetchAndDisplayReviews(productId); updateProductSchema(currentProductData, reviewsData); } catch (error) { console.error("Error submitting review:", error); showFeedback(reviewFeedbackEl, `Failed: ${error.message}`, true); } finally { if (submitButton) submitButton.disabled = false; }
+        if (productSnap.exists()) {
+            console.log("उत्पाद डेटा मिला:", productSnap.data());
+            currentProductData = { id: productSnap.id, ...productSnap.data() };
+            renderProductDetails(currentProductData);
+            // संबंधित उत्पादों को तुरंत प्राप्त न करें, मुख्य उत्पाद रेंडर की प्रतीक्षा करें
+        } else {
+            console.error("ऐसा कोई उत्पाद नहीं मिला!");
+            showError("उत्पाद नहीं मिला।");
+        }
+    } catch (error) {
+        console.error("उत्पाद विवरण प्राप्त करने में त्रुटि:", error);
+        showError("उत्पाद विवरण लोड नहीं किया जा सका। कृपया अपना कनेक्शन जांचें और पुनः प्रयास करें।");
+    } finally {
+        // मुख्य लोडिंग renderProductDetails या showError के अंदर छिपी हुई है
+    }
 }
 
-// --- FAQ System ---
-async function fetchAndDisplayFAQs(faqIds) { /* ... unchanged ... */
-    if (!faqListEl || !faqIds || faqIds.length === 0) { if (faqListEl) faqListEl.innerHTML = '<p>No FAQs available.</p>'; return; } faqListEl.innerHTML = '<p>Loading FAQs...</p>'; try { const faqs = []; for (const id of faqIds) { if (!id) continue; const faqRef = doc(db, "faqs", id); const docSnap = await getDoc(faqRef); if (docSnap.exists()) faqs.push({ id: docSnap.id, ...docSnap.data() }); } if (faqs.length > 0) { faqListEl.innerHTML = faqs.map((faq, index) => `<details class="faq-item"><summary class="faq-question">${index + 1}. ${faq.question}</summary><div class="faq-answer">${faq.answer}</div></details>`).join(''); } else { faqListEl.innerHTML = '<p>No FAQs available.</p>'; } } catch (error) { console.error("Error fetching FAQs:", error); faqListEl.innerHTML = `<p class="error">Could not load FAQs.</p>`; }
+function renderProductDetails(productData) {
+    console.log("उत्पाद विवरण प्रस्तुत किया जा रहा है...");
+
+    if (!productData || !productDetailContainer) {
+        showError("उत्पाद विवरण प्रस्तुत करने में विफल: डेटा या कंटेनर गायब है।");
+        return;
+    }
+
+    // मूल्य निर्धारण प्रकार निर्धारित करें
+    if (productData.pricingType === 'wedding') {
+        currentPricingType = 'wedding';
+    } else if (productData.pricingType === 'flex') {
+        currentPricingType = 'flex';
+    } else {
+        currentPricingType = 'standard';
+    }
+    console.log(`उत्पाद मूल्य निर्धारण प्रकार निर्धारित किया गया है: ${currentPricingType}`);
+
+    // --- मूल जानकारी अपडेट करें ---
+    if (breadcrumbProductName) breadcrumbProductName.textContent = productData.name || 'Product';
+    if (productNameEl) productNameEl.textContent = productData.name || 'N/A';
+    document.title = `${productData.name || 'Product'} Details - Madhav Multiprint`;
+
+    // --- छवियां अपडेट करें ---
+    if (mainImageEl) {
+        mainImageEl.src = productData.imageUrls?.[0] || 'images/placeholder.png'; // सुनिश्चित करें कि पाथ सही है
+        mainImageEl.alt = productData.name || 'Product Image';
+    }
+    if (thumbnailImagesContainer) {
+        thumbnailImagesContainer.innerHTML = ''; // पुराने थंबनेल साफ़ करें
+        if (productData.imageUrls && productData.imageUrls.length > 1) {
+            productData.imageUrls.forEach((url, index) => {
+                const img = document.createElement('img');
+                img.src = url;
+                img.alt = `Thumbnail ${index + 1}`;
+                img.dataset.full = url;
+                if (index === 0) img.classList.add('active');
+                img.addEventListener('click', () => {
+                    if (mainImageEl) mainImageEl.src = img.dataset.full;
+                    thumbnailImagesContainer.querySelectorAll('img').forEach(i => i.classList.remove('active'));
+                    img.classList.add('active');
+                });
+                thumbnailImagesContainer.appendChild(img);
+            });
+            thumbnailImagesContainer.style.display = 'grid';
+        } else {
+             thumbnailImagesContainer.style.display = 'none'; // यदि केवल एक छवि है तो थंबनेल छिपाएं
+        }
+    }
+
+    // --- विवरण अपडेट करें ---
+    const shortDescEl = document.querySelector('.product-description-short');
+    if (shortDescEl) shortDescEl.textContent = productData.shortDescription || '';
+    const longDescEl = document.getElementById('tab-description');
+    if (longDescEl) longDescEl.innerHTML = productData.longDescription || '<p>No description available.</p>'; // यदि विवरण में HTML है तो innerHTML का उपयोग करें
+
+    // --- विनिर्देश अपडेट करें ---
+    const specsList = document.getElementById('tab-specifications ul');
+    if (specsList) {
+        specsList.innerHTML = ''; // मौजूदा विनिर्देश साफ़ करें
+        if (productData.specifications && typeof productData.specifications === 'object') {
+            for (const [key, value] of Object.entries(productData.specifications)) {
+                if (value) { // केवल मान वाले विनिर्देश प्रदर्शित करें
+                    const li = document.createElement('li');
+                    const strong = document.createElement('strong');
+                    strong.textContent = key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase()); // कुंजी को अच्छी तरह से प्रारूपित करें
+                    const span = document.createElement('span');
+                    span.textContent = value;
+                    li.appendChild(strong);
+                    li.appendChild(span);
+                    specsList.appendChild(li);
+                }
+            }
+        } else {
+            specsList.innerHTML = '<li>No specifications available.</li>';
+        }
+    }
+
+
+    // --- मूल्य निर्धारण और विकल्प अपडेट करें ---
+    updatePricingAndOptionsVisibility(productData);
+
+    // --- ईवेंट श्रोता सेटअप करें (महत्वपूर्ण: तत्व प्रस्तुत होने के बाद) ---
+    attachEventListeners(productData); // मात्रा, कार्ट में जोड़ें आदि के लिए श्रोता संलग्न करें।
+
+    // --- Schema.org JSON-LD अपडेट करें ---
+    updateProductSchema(productData);
+
+    // --- संबंधित उत्पाद प्राप्त करें और प्रस्तुत करें ---
+    if (productData.category) {
+        loadRelatedProducts(productData.category, productData.id);
+    } else {
+        console.log("कोई श्रेणी नहीं मिली, संबंधित उत्पादों को छोड़ा जा रहा है।");
+        if(relatedProductsSection) relatedProductsSection.style.display = 'none';
+    }
+
+    // --- समीक्षाएं प्राप्त करें और प्रस्तुत करें ---
+    loadReviews(productData.id);
+
+    // --- टैब सेटअप करें ---
+    setupTabs(); // सुनिश्चित करें कि टैब काम करते हैं
+
+     // --- लोडिंग छिपाएं, सामग्री दिखाएं ---
+    hideLoading('main');
+    console.log("उत्पाद विवरण सफलतापूर्वक प्रस्तुत किया गया।");
 }
 
-// --- Social Sharing ---
-function setupSocialSharing() { /* ... unchanged ... */
-     if (!socialShareLinksContainer) return; socialShareLinksContainer.removeEventListener('click', handleSocialLinkClick); socialShareLinksContainer.addEventListener('click', handleSocialLinkClick);
-}
-function handleSocialLinkClick(event) { /* ... unchanged ... */
-    const link = event.target.closest('a.social-icon'); if (!link) return; event.preventDefault(); if (!currentProductData || !currentProductData.productName) return; const pageUrl = window.location.href; const productName = encodeURIComponent(currentProductData.productName); let shareUrl = ''; const network = link.getAttribute('aria-label')?.toLowerCase() ?? ''; if (network.includes('facebook')) { shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(pageUrl)}`; } else if (network.includes('twitter')) { shareUrl = `https://twitter.com/intent/tweet?url=${encodeURIComponent(pageUrl)}&text=${productName}`; } else if (network.includes('whatsapp')) { shareUrl = `https://api.whatsapp.com/send?text=${productName}%20${encodeURIComponent(pageUrl)}`; } if (shareUrl) window.open(shareUrl, '_blank', 'width=600,height=400,noopener,noreferrer');
+function updatePricingAndOptionsVisibility(productData) {
+    console.log("प्रकार के आधार पर मूल्य निर्धारण और विकल्पों की दृश्यता अपडेट की जा रही है:", currentPricingType);
+    // प्रारंभ में सभी विकल्प कंटेनर छिपाएं
+    if (standardOptionsContainer) standardOptionsContainer.style.display = 'none';
+    if (weddingOptionsContainer) weddingOptionsContainer.style.display = 'none';
+    if (flexOptionsContainer) flexOptionsContainer.style.display = 'none';
+    if (originalPriceEl) originalPriceEl.style.display = 'none'; // मूल मूल्य डिफ़ॉल्ट रूप से छिपाएं
+    if (perCardPriceEl) perCardPriceEl.style.display = 'none'; // सामान्य प्रति-कार्ड मूल्य प्रदर्शन छिपाएं
+    if (weddingPerCardPriceEl) weddingPerCardPriceEl.style.display = 'none'; // विशिष्ट वेडिंग प्रति-कार्ड मूल्य प्रदर्शन छिपाएं
+
+    switch (currentPricingType) {
+        case 'wedding':
+            if (weddingOptionsContainer) weddingOptionsContainer.style.display = 'block';
+            if (weddingQuantitySelect && productData.weddingPricing) {
+                populateWeddingQuantities(productData.weddingPricing);
+                updateWeddingPriceDisplay(); // प्रारंभिक मूल्य अपडेट
+            } else {
+                 console.error("वेडिंग मूल्य निर्धारण डेटा या चयन तत्व गायब है।");
+                 if (priceEl) priceEl.textContent = 'Price Unavailable';
+            }
+            break;
+        case 'flex':
+            if (flexOptionsContainer) flexOptionsContainer.style.display = 'block';
+            // सुनिश्चित करें कि फ्लेक्स के लिए मूल्य प्रदर्शन प्रारंभ में अपडेट किया गया है
+            updateFlexPriceDisplay(); // प्रारंभिक मूल्य अपडेट करें (या डिफ़ॉल्ट स्थिति सेट करें)
+            break;
+        case 'standard':
+        default:
+            if (standardOptionsContainer) standardOptionsContainer.style.display = 'block';
+            if (priceEl) priceEl.textContent = formatPrice(productData.price || 0);
+            if (productData.originalPrice && productData.originalPrice > productData.price) {
+                if (originalPriceEl) {
+                    originalPriceEl.textContent = formatPrice(productData.originalPrice);
+                    originalPriceEl.style.display = 'inline';
+                }
+            }
+            if (quantityInput) quantityInput.value = 1; // मात्रा रीसेट करें
+            break;
+    }
 }
 
+function populateWeddingQuantities(pricingTiers) {
+    if (!weddingQuantitySelect || !pricingTiers || pricingTiers.length === 0) return;
 
-// --- Add to Cart Popup Logic ---
-function getCurrentSelectionsAndPrice() { /* ... unchanged ... */
-    if (!currentProductId || !currentProductData) { return { error: "Product data not ready." }; } let quantity = 1; let calculatedPricePerItem = NaN; let displayTotalPriceFormatted = 'N/A'; let displayPerCardPriceFormatted = ''; let selectedOptionsDisplay = ''; let finalCartOptions = {}; const category = currentProductData.category?.toLowerCase() || ''; const pricing = currentProductData.pricing || {}; try { if (category.includes('wedding')) { const quantityDropdown = document.getElementById('wedding-quantity-select'); const selectedQty = parseInt(quantityDropdown?.value, 10); if (!quantityDropdown || isNaN(selectedQty) || selectedQty <= 0) return { error: "Please select quantity." }; quantity = selectedQty; const baseRate = parseFloat(pricing.rate); if (isNaN(baseRate)) throw new Error("Base price missing."); const designCharge = parseFloat(pricing.designCharge || 0); const printingChargeBase = parseFloat(pricing.printingChargeBase || 0); const transportCharge = parseFloat(pricing.transportCharge || 0); const extraMarginPercent = parseFloat(pricing.extraMarginPercent || 0); const subTotal = (baseRate * quantity) + designCharge + printingChargeBase + transportCharge; const finalAmount = subTotal * (1 + (extraMarginPercent / 100)); const averageUnitPrice = finalAmount / quantity; if (isNaN(averageUnitPrice) || averageUnitPrice <= 0) throw new Error("Could not calculate price per card."); calculatedPricePerItem = averageUnitPrice; displayTotalPriceFormatted = `Total: ${formatIndianCurrency(finalAmount)}`; displayPerCardPriceFormatted = `Per card: ${formatIndianCurrency(averageUnitPrice)}`; finalCartOptions = { type: 'Wedding Card', price: calculatedPricePerItem }; } else if (category.includes('flex')) { const width = parseFloat(bannerWidthInput?.value); const height = parseFloat(bannerHeightInput?.value); const unit = bannerUnitSelect?.value; const qty = parseInt(bannerQuantityInput?.value, 10); if (isNaN(width) || width <= 0 || isNaN(height) || height <= 0 || isNaN(qty) || qty <= 0) return { error: "Enter valid dimensions & quantity." }; const ratePerSqFt = parseFloat(pricing.rate); if (isNaN(ratePerSqFt) || ratePerSqFt <= 0) throw new Error("Flex price info missing."); const minimumOrderValue = parseFloat(pricing.minimumOrderValue || 0); const mediaWidths = pricing.mediaWidths || mediaWidthsFt; const widthFt = unit === 'inches' ? width / 12 : width; const heightFt = unit === 'inches' ? height / 12 : height; const dimResult = calculateFlexDimensions(widthFt, heightFt, mediaWidths); if (dimResult.error || isNaN(dimResult.printSqFtPerBanner) || dimResult.printSqFtPerBanner <= 0) throw new Error(dimResult.error || "Cannot calculate flex area."); const printSqFtPerBanner = dimResult.printSqFtPerBanner; const totalPrintSqFt = printSqFtPerBanner * qty; const calculatedCost = totalPrintSqFt * ratePerSqFt; const finalCost = Math.max(calculatedCost, minimumOrderValue); const pricePerBanner = finalCost / qty; if (isNaN(pricePerBanner) || pricePerBanner <= 0) throw new Error("Could not calculate price per banner."); quantity = qty; calculatedPricePerItem = pricePerBanner; displayTotalPriceFormatted = `Total: ${formatIndianCurrency(finalCost)}`; selectedOptionsDisplay = `${width}x${height} ${unit} (${printSqFtPerBanner.toFixed(2)} sqft/ea)`; finalCartOptions = { type: 'Flex Banner', details: selectedOptionsDisplay, price: calculatedPricePerItem }; } else { const qtySelected = parseInt(standardQuantityInput?.value || 1, 10); if (isNaN(qtySelected) || qtySelected <= 0) return { error: "Enter valid quantity." }; quantity = qtySelected; const standardPrice = parseFloat(pricing?.rate); if (isNaN(standardPrice) || standardPrice < 0) throw new Error("Product price unavailable."); calculatedPricePerItem = standardPrice; displayTotalPriceFormatted = formatIndianCurrency(calculatedPricePerItem * quantity); finalCartOptions = { type: 'Standard', price: calculatedPricePerItem }; } if (isNaN(calculatedPricePerItem) || calculatedPricePerItem < 0) throw new Error("Calculated price is invalid."); return { quantity: quantity, displayTotalPrice: displayTotalPriceFormatted, displayPerCardPrice: displayPerCardPriceFormatted, selectedOptionsDisplay: selectedOptionsDisplay, cartOptions: { name: currentProductData.productName || 'Unnamed Product', imageUrl: mainImageEl?.src || 'images/placeholder.png', ...finalCartOptions } }; } catch (error) { console.error("Error during price calculation for popup/cart:", error); return { error: error.message || "Calculation error." }; }
-}
-function openAddToCartPopup() { /* ... unchanged ... */
-    if (!addToCartPopup || !currentProductData) return; const calculationResult = getCurrentSelectionsAndPrice(); if (calculationResult.error) { showFeedback(cartFeedbackEl, calculationResult.error, true); return; }
-    if (popupProductName) popupProductName.textContent = currentProductData.productName || 'N/A';
-    // DEBUG Log for popup image
-    console.log("Popup Image Debug: Main image src=", mainImageEl?.src);
-    if (popupProductImage) popupProductImage.src = mainImageEl?.src || 'images/placeholder.png'; // Copy from main image or use placeholder
-    if (popupProductQuantity) popupProductQuantity.textContent = calculationResult.quantity; if (popupProductPrice) popupProductPrice.textContent = calculationResult.displayTotalPrice; if (popupPerCardPrice) { popupPerCardPrice.textContent = calculationResult.displayPerCardPrice; popupPerCardPrice.style.display = calculationResult.displayPerCardPrice ? 'block' : 'none'; } if (popupProductOptions) { popupProductOptions.textContent = calculationResult.selectedOptionsDisplay; popupProductOptions.style.display = calculationResult.selectedOptionsDisplay ? 'block' : 'none'; }
-    const finalDataToAdd = { productId: currentProductId, quantity: calculationResult.quantity, options: calculationResult.cartOptions };
-    const newConfirmBtn = popupConfirmBtn.cloneNode(true); popupConfirmBtn.parentNode.replaceChild(newConfirmBtn, popupConfirmBtn);
-    newConfirmBtn.addEventListener('click', () => {
-        // DEBUG Log for multiple adds
-        console.log("Popup Confirm Button Clicked - Start");
-        try { console.log("Confirm Add clicked. Data:", finalDataToAdd); addToCart(finalDataToAdd.productId, finalDataToAdd.quantity, finalDataToAdd.options); showFeedback(cartFeedbackEl, "Product added to cart!", false); if (viewCartLink) viewCartLink.style.display = 'inline-block'; if (typeof updateCartCount === 'function') updateCartCount(); closeAddToCartPopup(); } catch (addError) { console.error("Error confirming add to cart:", addError); showFeedback(cartFeedbackEl, `Failed to add: ${addError.message}`, true); closeAddToCartPopup(); }
-        console.log("Popup Confirm Button Clicked - End"); // DEBUG Log
+    // टियर्स को मात्रा के अनुसार आरोही क्रम में क्रमबद्ध करें
+    pricingTiers.sort((a, b) => a.minQuantity - b.minQuantity);
+
+    weddingQuantitySelect.innerHTML = ''; // मौजूदा विकल्प साफ़ करें
+    pricingTiers.forEach(tier => {
+        const option = document.createElement('option');
+        option.value = tier.minQuantity; // मान के रूप में minQuantity का उपयोग करें
+        option.dataset.pricePerCard = tier.pricePerCard; // डेटा विशेषता में प्रति कार्ड मूल्य संग्रहीत करें
+        option.textContent = `${tier.minQuantity}+ Cards`;
+        weddingQuantitySelect.appendChild(option);
     });
-    if (addToCartPopup) { addToCartPopup.style.display = 'flex'; addToCartPopup.classList.add('active'); }
-}
-function closeAddToCartPopup() { /* ... unchanged ... */
-    if (addToCartPopup) { addToCartPopup.classList.remove('active'); setTimeout(() => { if (!addToCartPopup.classList.contains('active')) { addToCartPopup.style.display = 'none'; } }, 300); }
+    // डिफ़ॉल्ट रूप से पहले विकल्प का चयन करें (यदि कोई हो)
+    if (weddingQuantitySelect.options.length > 0) {
+       weddingQuantitySelect.selectedIndex = 0;
+    }
 }
 
-// --- Setup Event Listeners ---
-// ***** FIX: Included setupTabs definition *****
-function setupTabs() { if (!tabsNav || !tabPanes || tabPanes.length === 0) { return; } const tabLinks = tabsNav.querySelectorAll('a'); if (tabLinks.length === 0) return; tabLinks.forEach(link => { link.removeEventListener('click', handleTabClick); link.addEventListener('click', handleTabClick); }); const firstVisibleLink = Array.from(tabLinks).find(link => link.offsetParent !== null); if (firstVisibleLink && !tabsNav.querySelector('a.active')) { activateTab(firstVisibleLink); } else if (tabsNav.querySelector('a.active')) { activateTab(tabsNav.querySelector('a.active')); } }
-function handleTabClick(event) { event.preventDefault(); const clickedLink = event.currentTarget; activateTab(clickedLink); }
-function activateTab(activeLink) { if (!activeLink) return; const targetId = activeLink.getAttribute('href')?.substring(1); if (!targetId) return; tabsNav.querySelectorAll('a').forEach(link => link.classList.remove('active')); tabPanes.forEach(pane => pane.classList.remove('active')); activeLink.classList.add('active'); const targetPane = document.getElementById(targetId); if (targetPane) { targetPane.classList.add('active'); } else { console.warn(`Tab content pane with ID '${targetId}' not found.`); } }
-// (Includes setupAllEventListeners, handleThumbnailClick, handleReviewSubmitWrapper, setupQuantityButtons, handleQuantityButtonClick, setupFlexInputListeners, setupWeddingQuantityListener - code omitted for brevity)
-function setupAllEventListeners() { if (addToCartBtn) { addToCartBtn.removeEventListener('click', openAddToCartPopup); addToCartBtn.addEventListener('click', openAddToCartPopup); } if (thumbnailImagesContainer) { thumbnailImagesContainer.removeEventListener('click', handleThumbnailClick); thumbnailImagesContainer.addEventListener('click', handleThumbnailClick); } setupTabs(); setupQuantityButtons(); setupFlexInputListeners(); setupWeddingQuantityListener(); if (reviewForm) { reviewForm.removeEventListener('submit', handleReviewSubmitWrapper); reviewForm.addEventListener('submit', handleReviewSubmitWrapper); } setupSocialSharing(); if (popupCloseBtn) popupCloseBtn.addEventListener('click', closeAddToCartPopup); if (popupCancelBtn) popupCancelBtn.addEventListener('click', closeAddToCartPopup); if (addToCartPopup) { addToCartPopup.addEventListener('click', (event) => { if (event.target === addToCartPopup) { closeAddToCartPopup(); } }); } }
-function handleThumbnailClick(event) { if (event.target.tagName === 'IMG' && mainImageEl) { mainImageEl.src = event.target.src; thumbnailImagesContainer.querySelectorAll('img').forEach(thumb => thumb.classList.remove('active')); event.target.classList.add('active'); } }
-function handleReviewSubmitWrapper(event) { handleReviewSubmit(event, currentProductId); }
-function setupQuantityButtons() { [standardQuantityContainer, flexInputsContainer].forEach(container => { if (!container) return; container.removeEventListener('click', handleQuantityButtonClick); container.addEventListener('click', handleQuantityButtonClick); }); }
-function handleQuantityButtonClick(event) { const button = event.target.closest('.quantity-btn'); if (!button) return; const wrapper = button.closest('.quantity-input-wrapper'); if (!wrapper) return; const input = wrapper.querySelector('.quantity-input'); if (!input) return; let currentValue = parseInt(input.value, 10) || 1; const min = parseInt(input.min, 10) || 1; const step = parseInt(input.step, 10) || 1; if (button.classList.contains('quantity-increase')) { currentValue += step; } else if (button.classList.contains('quantity-decrease')) { currentValue -= step; } input.value = Math.max(min, currentValue); if (input.id === 'banner-quantity') { updateFlexPriceDisplay(); } }
-function setupFlexInputListeners() { const inputs = [bannerWidthInput, bannerHeightInput, bannerUnitSelect]; if (inputs.some(el => !el)) return; inputs.forEach(input => { const eventType = (input.tagName === 'SELECT') ? 'change' : 'input'; input.removeEventListener(eventType, updateFlexPriceDisplay); input.addEventListener(eventType, updateFlexPriceDisplay); }); }
-function setupWeddingQuantityListener() { const select = document.getElementById('wedding-quantity-select'); if (!select) return; select.removeEventListener('change', updateWeddingPriceDisplay); select.addEventListener('change', updateWeddingPriceDisplay); }
+
+function updateWeddingPriceDisplay() {
+    if (!weddingQuantitySelect || !priceEl || !weddingPerCardPriceEl) return;
+
+    // चयनित विकल्प प्राप्त करें, सुनिश्चित करें कि एक चयनित है
+     const selectedIndex = weddingQuantitySelect.selectedIndex;
+     if (selectedIndex < 0 || selectedIndex >= weddingQuantitySelect.options.length) {
+          console.warn("कोई वेडिंग मात्रा चयनित नहीं है।");
+          // यदि कोई चयन नहीं है तो मूल्य को डिफ़ॉल्ट या N/A पर सेट करें
+          priceEl.textContent = 'Select Quantity';
+          weddingPerCardPriceEl.textContent = '';
+          weddingPerCardPriceEl.style.display = 'none';
+          currentPerCardPrice = 0; // वैश्विक प्रति-कार्ड मूल्य रीसेट करें
+          return;
+     }
+    const selectedOption = weddingQuantitySelect.options[selectedIndex];
+
+    if (!selectedOption || !selectedOption.dataset.pricePerCard) {
+        console.error("चयनित वेडिंग विकल्प या मूल्य डेटा गायब है।");
+        priceEl.textContent = 'N/A';
+        weddingPerCardPriceEl.textContent = '';
+        weddingPerCardPriceEl.style.display = 'none';
+        return;
+    }
+
+    const quantity = parseInt(selectedOption.value, 10);
+    currentPerCardPrice = parseFloat(selectedOption.dataset.pricePerCard); // वैश्विक प्रति-कार्ड मूल्य अपडेट करें
+    const totalPrice = quantity * currentPerCardPrice;
+
+    // totalPrice की NaN के लिए जांच करें
+    if (isNaN(totalPrice)) {
+         console.error("वेडिंग कार्ड के लिए NaN मूल्य की गणना की गई।");
+         priceEl.textContent = 'Error';
+         weddingPerCardPriceEl.textContent = '';
+         weddingPerCardPriceEl.style.display = 'none';
+         return;
+    }
+
+    priceEl.textContent = formatPrice(totalPrice);
+    weddingPerCardPriceEl.textContent = `${formatPrice(currentPerCardPrice)} per card`;
+    weddingPerCardPriceEl.style.display = 'block'; // प्रति-कार्ड मूल्य दिखाएं
+
+    console.log(`वेडिंग मूल्य अपडेट किया गया: मात्रा=${quantity}, प्रति कार्ड=${currentPerCardPrice}, कुल=${totalPrice}`);
+}
+
+// **संशोधित और बेहतर updateFlexPriceDisplay फ़ंक्शन**
+function updateFlexPriceDisplay() {
+    // पहले सुनिश्चित करें कि सभी जरूरी एलिमेंट और डेटा मौजूद हैं
+    if (!bannerWidthInput || !bannerHeightInput || !bannerUnitSelect || !priceEl || !currentProductData?.basePriceSqFt) {
+         console.warn("फ्लेक्स मूल्य अपडेट छोड़ा गया: आवश्यक तत्व या बेस मूल्य गायब है।");
+         // अगर इनपुट गायब हैं तो मूल्य को साफ़ करें या डिफ़ॉल्ट दिखाएं
+         if (priceEl) priceEl.textContent = formatPrice(0); // या 'N/A' दिखा सकते हैं
+         return;
+    }
+
+    const width = parseFloat(bannerWidthInput.value) || 0;
+    const height = parseFloat(bannerHeightInput.value) || 0;
+    const unit = bannerUnitSelect.value;
+    const basePriceSqFt = parseFloat(currentProductData.basePriceSqFt);
+
+    // मान प्राप्त करने के बाद मान्य डाइमेंशन और बेस मूल्य की जांच करें
+    if (width <= 0 || height <= 0 || !basePriceSqFt || isNaN(basePriceSqFt)) {
+        priceEl.textContent = formatPrice(0); // यदि डाइमेंशन अमान्य हैं तो 0 दिखाएं
+        console.log("अमान्य डाइमेंशन या बेस मूल्य के कारण फ्लेक्स मूल्य 0 पर सेट किया गया।");
+        return;
+    }
+
+    let areaSqFt = 0;
+    if (unit === 'ft') {
+        areaSqFt = width * height;
+    } else if (unit === 'in') {
+        areaSqFt = (width / 12) * (height / 12);
+    } else if (unit === 'cm') {
+        // cm से फीट में सही रूपांतरण (1 फीट = 30.48 सेमी)
+        areaSqFt = (width / 30.48) * (height / 30.48);
+    } else {
+        console.error(`अज्ञात इकाई: ${unit}`);
+        priceEl.textContent = 'N/A'; // त्रुटि दर्शाएं
+        return;
+    }
+
+    // बेस मूल्य से गुणा करने से पहले क्षेत्र की जांच करें
+    if (isNaN(areaSqFt) || areaSqFt < 0) {
+         console.error("गणना किया गया क्षेत्रफल अमान्य है।");
+         priceEl.textContent = 'Error'; // गणना त्रुटि दर्शाएं
+         return;
+    }
+
+
+    const totalPrice = areaSqFt * basePriceSqFt;
+
+    // अंतिम मूल्य की जांच करें
+    if (isNaN(totalPrice)) {
+         console.error("गणना किया गया कुल मूल्य NaN है।");
+         priceEl.textContent = 'Error'; // गणना त्रुटि दर्शाएं
+         return;
+    }
+
+    priceEl.textContent = formatPrice(totalPrice); // मूल्य प्रदर्शन अपडेट करें
+    console.log(`फ्लेक्स मूल्य अपडेट किया गया: W=${width}, H=${height}, Unit=${unit}, AreaSqFt=${areaSqFt.toFixed(2)}, BasePrice=${basePriceSqFt}, Total=${totalPrice}`);
+}
+
+
+function updateProductSchema(productData) {
+    const schemaScript = document.getElementById('product-schema');
+    if (schemaScript) {
+        try {
+            const schema = {
+                "@context": "https://schema.org/",
+                "@type": "Product",
+                "name": productData.name || "Unnamed Product",
+                "image": productData.imageUrls || [],
+                "description": productData.shortDescription || productData.longDescription || "No description available.",
+                "sku": productData.sku || productData.id, // SKU का उपयोग करें यदि उपलब्ध हो, अन्यथा उत्पाद आईडी
+                "brand": {
+                    "@type": "Brand",
+                    "name": "Madhav Multiprint" // एक निश्चित ब्रांड नाम मानते हुए
+                },
+                "offers": {
+                    "@type": "Offer",
+                    "url": window.location.href, // वर्तमान पृष्ठ URL
+                    "priceCurrency": "INR",
+                    // मूल्य निर्धारण pricingType के आधार पर तर्क की आवश्यकता है
+                    "price": determineSchemaPrice(productData),
+                    "availability": "https://schema.org/InStock", // अभी के लिए हमेशा स्टॉक में मानते हुए
+                    "priceValidUntil": new Date(new Date().setDate(new Date().getDate() + 30)).toISOString().substring(0,10) // 30 दिनों के लिए मान्य उदाहरण
+                },
+                // वैकल्पिक: यदि समीक्षाएं लागू की गई हैं तो aggregateRating जोड़ें
+                // "aggregateRating": {
+                //   "@type": "AggregateRating",
+                //   "ratingValue": "4.5", // उदाहरण
+                //   "reviewCount": "15" // उदाहरण
+                // },
+                // वैकल्पिक: समीक्षाएं जोड़ें
+                // "review": [ { ... समीक्षा स्कीमा ... } ]
+            };
+            schemaScript.textContent = JSON.stringify(schema, null, 2); // JSON को सुंदर प्रिंट करें
+             console.log("उत्पाद स्कीमा अपडेट किया गया।");
+        } catch (e) {
+            console.error("उत्पाद स्कीमा अपडेट करने में त्रुटि:", e);
+        }
+    }
+}
+
+function determineSchemaPrice(productData) {
+    // Schema.org के लिए एक प्रतिनिधि मूल्य प्रदान करता है
+    // परिवर्तनीय मूल्य निर्धारण के लिए, आधार या निम्नतम टियर मूल्य का उपयोग करना आम है।
+    switch (productData.pricingType) {
+        case 'wedding':
+            // निम्नतम मात्रा टियर का मूल्य उपयोग करें
+            const weddingTiers = productData.weddingPricing || [];
+            const sortedTiers = [...weddingTiers].sort((a,b) => a.minQuantity - b.minQuantity);
+             return sortedTiers[0] ? (sortedTiers[0].pricePerCard * sortedTiers[0].minQuantity).toString() : "0";
+        case 'flex':
+            // फ्लेक्स मूल्य आयामों पर निर्भर करता है, शायद प्रति वर्ग फुट आधार मूल्य प्रदान करें?
+            // या डिफ़ॉल्ट आकार (जैसे, 1x1 फीट) के लिए गणना करें। अभी के लिए 0 या आधार मूल्य का उपयोग करें।
+            return productData.basePriceSqFt ? productData.basePriceSqFt.toString() : "0"; // प्रति वर्ग फुट मूल्य का प्रतिनिधित्व करते हुए
+        case 'standard':
+        default:
+            return productData.price ? productData.price.toString() : "0";
+    }
+}
+
+// --- ईवेंट श्रोता सेटअप ---
+// हटाने की अनुमति देने के लिए श्रोताओं के संदर्भ संग्रहीत करें
+let handleAddToCartListener;
+let standardQuantityButtonListener;
+let weddingQuantityChangeListener;
+let flexInputListeners = []; // फ्लेक्स इनपुट के लिए एकाधिक श्रोता संग्रहीत करें
+
+function attachEventListeners(productData) {
+    console.log("ईवेंट श्रोता संलग्न किए जा रहे हैं...");
+
+    // --- पिछले श्रोताओं को हटाएं (महत्वपूर्ण) ---
+    // यह डुप्लिकेट श्रोताओं को रोकता है यदि renderProductDetails को किसी तरह फिर से कॉल किया जाता है
+    if (addToCartBtn && handleAddToCartListener) {
+        addToCartBtn.removeEventListener('click', handleAddToCartListener);
+        console.log("पिछला कार्ट में जोड़ें श्रोता हटाया गया।");
+    }
+    if (quantityDecreaseBtn && standardQuantityButtonListener) {
+        quantityDecreaseBtn.removeEventListener('click', standardQuantityButtonListener);
+    }
+    if (quantityIncreaseBtn && standardQuantityButtonListener) {
+        quantityIncreaseBtn.removeEventListener('click', standardQuantityButtonListener);
+         console.log("पिछले मानक मात्रा श्रोता हटाए गए।");
+    }
+    if (weddingQuantitySelect && weddingQuantityChangeListener) {
+        weddingQuantitySelect.removeEventListener('change', weddingQuantityChangeListener);
+        console.log("पिछला वेडिंग मात्रा श्रोता हटाया गया।");
+    }
+    // पिछले फ्लेक्स श्रोताओं को हटाएं
+    flexInputListeners.forEach(({ element, type, listener }) => {
+        if (element) element.removeEventListener(type, listener);
+    });
+    flexInputListeners = []; // ऐरे साफ़ करें
+    console.log("पिछले फ्लेक्स इनपुट श्रोता हटाए गए।");
+
+
+    // --- नए श्रोता जोड़ें ---
+
+    // कार्ट में जोड़ें बटन
+    if (addToCartBtn) {
+        handleAddToCartListener = () => handleAddToCart(productData); // श्रोता को परिभाषित करें
+        addToCartBtn.addEventListener('click', handleAddToCartListener);
+        console.log("कार्ट में जोड़ें बटन श्रोता संलग्न किया गया।");
+    } else {
+        console.error("कार्ट में जोड़ें बटन नहीं मिला।");
+    }
+
+    // मानक मात्रा नियंत्रण
+    if (quantityDecreaseBtn && quantityIncreaseBtn && quantityInput && currentPricingType === 'standard') {
+        standardQuantityButtonListener = (event) => handleStandardQuantityChange(event.target); // श्रोता को परिभाषित करें
+        quantityDecreaseBtn.addEventListener('click', standardQuantityButtonListener);
+        quantityIncreaseBtn.addEventListener('click', standardQuantityButtonListener);
+        console.log("मानक मात्रा बटन श्रोता संलग्न किए गए।");
+    }
+
+    // वेडिंग मात्रा चयन
+    if (weddingQuantitySelect && currentPricingType === 'wedding') {
+        weddingQuantityChangeListener = updateWeddingPriceDisplay; // श्रोता को परिभाषित करें
+        weddingQuantitySelect.addEventListener('change', weddingQuantityChangeListener);
+        console.log("वेडिंग मात्रा चयन श्रोता संलग्न किया गया।");
+    }
+
+    // फ्लेक्स इनपुट नियंत्रण
+    if (currentPricingType === 'flex') {
+        const inputs = [bannerWidthInput, bannerHeightInput, bannerUnitSelect];
+        if (inputs.every(el => el)) { // जांचें कि क्या सभी तत्व मौजूद हैं
+            inputs.forEach(input => {
+                const eventType = (input.tagName === 'SELECT') ? 'change' : 'input';
+                const listener = updateFlexPriceDisplay; // श्रोता को परिभाषित करें
+                input.addEventListener(eventType, listener);
+                flexInputListeners.push({ element: input, type: eventType, listener }); // श्रोता जानकारी संग्रहीत करें
+            });
+             console.log("फ्लेक्स इनपुट श्रोता संलग्न किए गए।");
+        } else {
+             console.error("एक या अधिक फ्लेक्स इनपुट तत्व नहीं मिले।");
+        }
+    }
+}
+
+
+function handleStandardQuantityChange(button) {
+    if (!quantityInput) return;
+    let currentValue = parseInt(quantityInput.value, 10) || 1;
+    const min = parseInt(quantityInput.min, 10) || 1;
+    const step = parseInt(quantityInput.step, 10) || 1;
+
+    if (button.classList.contains('quantity-increase')) {
+        currentValue += step;
+    } else if (button.classList.contains('quantity-decrease')) {
+        currentValue -= step;
+    }
+
+    quantityInput.value = Math.max(min, currentValue);
+    // नोट: मानक मूल्य निर्धारण आमतौर पर यहां मात्रा के साथ नहीं बदलता है, मूल्य प्रति आइटम है।
+    // यदि मूल्य मात्रा पर निर्भर करता है, तो आप यहां मूल्य प्रदर्शन अपडेट करेंगे।
+    console.log(`मानक मात्रा अपडेट की गई: ${quantityInput.value}`);
+}
+
+
+// --- कार्ट में जोड़ें तर्क ---
+function handleAddToCart(productData) {
+    console.log(`'कार्ट में जोड़ें' पर क्लिक किया गया उत्पाद के लिए: ${productData.id}`);
+    if (!productData) {
+        console.error("कार्ट में नहीं जोड़ा जा सकता: उत्पाद डेटा गायब है।");
+        showCartFeedback("त्रुटि: उत्पाद डेटा अनुपलब्ध।", "error");
+        return;
+    }
+
+    let quantity = 1;
+    let price = productData.price || 0;
+    let options = {}; // चयनित विकल्प एकत्र करें
+    let itemPerCardPrice = null; // विशेष रूप से वेडिंग कार्ड के लिए
+
+    try {
+        switch (currentPricingType) {
+            case 'wedding':
+                if (!weddingQuantitySelect || weddingQuantitySelect.selectedIndex < 0) {
+                    throw new Error("कृपया वेडिंग कार्ड के लिए एक मात्रा चुनें।");
+                }
+                const selectedWeddingOption = weddingQuantitySelect.options[weddingQuantitySelect.selectedIndex];
+                quantity = parseInt(selectedWeddingOption.value, 10);
+                itemPerCardPrice = parseFloat(selectedWeddingOption.dataset.pricePerCard);
+
+                 if (isNaN(quantity) || quantity <= 0 || isNaN(itemPerCardPrice) || itemPerCardPrice <= 0) {
+                     throw new Error("अमान्य वेडिंग मात्रा या प्रति कार्ड मूल्य।");
+                 }
+
+                price = quantity * itemPerCardPrice; // चयनित मात्रा के लिए कुल मूल्य
+                options['Quantity Tier'] = `${quantity}+ Cards`;
+                options['Price Per Card'] = formatPrice(itemPerCardPrice);
+                break;
+            case 'flex':
+                if (!bannerWidthInput || !bannerHeightInput || !bannerUnitSelect || !priceEl) {
+                     throw new Error("फ्लेक्स बैनर विवरण अपूर्ण।");
+                }
+                 const width = parseFloat(bannerWidthInput.value) || 0;
+                 const height = parseFloat(bannerHeightInput.value) || 0;
+                 const unit = bannerUnitSelect.value;
+                 if (width <= 0 || height <= 0) {
+                     throw new Error("कृपया फ्लेक्स बैनर के लिए मान्य आयाम दर्ज करें।");
+                 }
+                 // मूल्य प्रदर्शन से मूल्य प्राप्त करें (क्योंकि यह रीयल-टाइम में अपडेट होता है)
+                 price = parseFloat(priceEl.textContent.replace(/[^0-9.]/g, ''));
+                 quantity = 1; // फ्लेक्स आमतौर पर विशिष्ट आयामों के साथ एक इकाई के रूप में बेचा जाता है
+                 options['Dimensions'] = `${width} x ${height} ${unit}`;
+                break;
+            case 'standard':
+            default:
+                if (!quantityInput) {
+                     throw new Error("मात्रा इनपुट नहीं मिला।");
+                 }
+                quantity = parseInt(quantityInput.value, 10) || 1;
+                if (quantity < 1) {
+                     throw new Error("मात्रा कम से कम 1 होनी चाहिए।");
+                 }
+                 // मानक मूल्य निर्धारण के लिए उत्पाद डेटा से आधार मूल्य का उपयोग करें
+                 price = (productData.price || 0) * quantity; // कुल मूल्य
+                 // अन्य मानक विकल्प जोड़ें यदि वे मौजूद हैं (जैसे, आकार, रंग ड्रॉपडाउन)
+                 // options['Size'] = document.getElementById('size-select')?.value;
+                break;
+        }
+
+        // NaN या शून्य मूल्य के लिए जाँच करें (फ्लेक्स के लिए 0 की अनुमति दें यदि गणना की गई हो)
+        if (isNaN(price) || (price <= 0 && !(currentPricingType === 'flex' && price === 0))) {
+             throw new Error("अमान्य मूल्य गणना की गई। कृपया विकल्प जांचें।");
+        }
+
+
+        const itemDetails = {
+            quantity: quantity,
+            price: price, // आइटम/मात्रा के लिए कुल मूल्य
+            options: options,
+            // इकाई मूल्य (add to cart फंक्शन के लिए) - यदि आवश्यक हो तो गणना करें
+            unitPrice: (currentPricingType === 'standard') ? (productData.price || 0) : (price / quantity),
+            perCardPrice: itemPerCardPrice // गैर-वेडिंग आइटम के लिए शून्य होगा
+        };
+
+        console.log("पॉपअप के लिए तैयार आइटम विवरण:", itemDetails);
+        showConfirmationPopup(itemDetails, productData);
+
+    } catch (error) {
+        console.error("कार्ट के लिए आइटम तैयार करने में त्रुटि:", error);
+        showCartFeedback(error.message || "आइटम तैयार नहीं किया जा सका। कृपया चयन जांचें।", "error");
+    }
+}
+
+// --- पॉपअप प्रबंधन ---
+// उचित निष्कासन की अनुमति देने के लिए श्रोता कार्यों को संग्रहीत करें
+let handleConfirmAdd;
+let handleCancelPopup;
+let handleClosePopup;
+
+function showConfirmationPopup(itemDetails, productData) {
+    console.log("पुष्टिकरण पॉपअप दिखाया जा रहा है...");
+    if (!popupOverlay || !productData || !itemDetails) {
+        console.error("पॉपअप तत्व, उत्पाद डेटा, या आइटम विवरण गायब हैं।");
+        return;
+    }
+
+    // पॉपअप सामग्री भरें
+    popupProductName.textContent = productData.name || 'Product';
+    popupProductImage.src = productData.imageUrls?.[0] || 'images/placeholder.png'; // पाथ जांचें
+    popupProductImage.alt = productData.name || 'Product';
+    popupProductQuantity.textContent = itemDetails.quantity;
+    popupProductPrice.textContent = formatPrice(itemDetails.price); // कुल मूल्य प्रदर्शित करें
+
+    // विकल्प प्रदर्शित करें
+    let optionsText = Object.entries(itemDetails.options)
+        .map(([key, value]) => `<strong>${key}:</strong> ${value}`)
+        .join('<br>');
+    popupProductOptions.innerHTML = optionsText;
+
+    // प्रति-कार्ड मूल्य केवल वेडिंग कार्ड के लिए प्रदर्शित करें
+    if (itemDetails.perCardPrice !== null && itemDetails.perCardPrice > 0) {
+        popupPerCardPrice.textContent = `${formatPrice(itemDetails.perCardPrice)} per card`;
+        popupPerCardPrice.style.display = 'block';
+    } else {
+        popupPerCardPrice.textContent = '';
+        popupPerCardPrice.style.display = 'none';
+    }
+
+
+    // श्रोताओं को जोड़ने से *पहले* परिभाषित करें
+    handleConfirmAdd = () => {
+        console.log("पुष्टि बटन पर क्लिक किया गया।");
+        try {
+            // addToCart को यूनिट मूल्य भेजें (यदि आवश्यक हो)
+            const unitPriceForCart = itemDetails.unitPrice || (itemDetails.price / itemDetails.quantity);
+            addToCart(
+                productData.id,
+                itemDetails.quantity,
+                unitPriceForCart, // कार्ट फ़ंक्शन में इकाई मूल्य भेजें
+                productData.name,
+                productData.imageUrls?.[0] || 'images/placeholder.png', // पाथ जांचें
+                itemDetails.options,
+                itemDetails.perCardPrice // यदि उपलब्ध हो तो perCardPrice पास करें
+            );
+            showCartFeedback("आइटम सफलतापूर्वक जोड़ा गया!", "success", true); // प्रतिक्रिया और कार्ट देखें बटन दिखाएं
+            updateCartCount(); // हेडर कार्ट गणना अपडेट करें
+        } catch (error) {
+            console.error("कार्ट में आइटम जोड़ने में त्रुटि:", error);
+            showCartFeedback("कार्ट में आइटम जोड़ने में त्रुटि। कृपया पुनः प्रयास करें।", "error");
+        } finally {
+            hidePopup();
+        }
+    };
+
+    handleCancelPopup = () => {
+        console.log("रद्द करें बटन पर क्लिक किया गया।");
+        hidePopup();
+    };
+
+    handleClosePopup = () => {
+         console.log("पॉपअप बंद करें बटन पर क्लिक किया गया।");
+         hidePopup();
+    }
+
+
+    // *** नए जोड़ने से पहले मौजूदा श्रोताओं को हटाएं ***
+    popupConfirmBtn.removeEventListener('click', handleConfirmAdd);
+    popupCancelBtn.removeEventListener('click', handleCancelPopup);
+    popupCloseBtn?.removeEventListener('click', handleClosePopup); // क्लोज बटन के लिए वैकल्पिक चेनिंग का उपयोग करें
+
+    // नए श्रोता जोड़ें
+    popupConfirmBtn.addEventListener('click', handleConfirmAdd);
+    popupCancelBtn.addEventListener('click', handleCancelPopup);
+    popupCloseBtn?.addEventListener('click', handleClosePopup); // वैकल्पिक चेनिंग का उपयोग करें
+
+    // पॉपअप दिखाएं
+    popupOverlay.classList.add('active');
+     console.log("पॉपअप प्रदर्शित किया गया और श्रोता संलग्न किए गए।");
+}
+
+function hidePopup() {
+    if (!popupOverlay) return;
+    console.log("पॉपअप छिपाया जा रहा है...");
+    popupOverlay.classList.remove('active');
+
+    // *** छिपाने पर श्रोताओं को हटाएं ***
+    popupConfirmBtn.removeEventListener('click', handleConfirmAdd);
+    popupCancelBtn.removeEventListener('click', handleCancelPopup);
+    popupCloseBtn?.removeEventListener('click', handleClosePopup); // वैकल्पिक चेनिंग का उपयोग करें
+
+     console.log("पॉपअप छिपाया गया और श्रोता हटा दिए गए।");
+
+    // वैकल्पिक: यदि चाहें तो संग्रहीत श्रोता कार्यों को रीसेट करें, हालांकि उन्हें हटाना मुख्य भाग है
+    handleConfirmAdd = null;
+    handleCancelPopup = null;
+    handleClosePopup = null;
+}
+
+// --- कार्ट प्रतिक्रिया ---
+function showCartFeedback(message, type = 'success', showViewCart = false) {
+    if (!cartFeedbackEl) return;
+
+    console.log(`कार्ट प्रतिक्रिया (${type}): ${message}`);
+    cartFeedbackEl.textContent = message;
+    cartFeedbackEl.className = `cart-feedback-message ${type}`; // कक्षाएं रीसेट करें और नई जोड़ें
+    cartFeedbackEl.style.display = 'block';
+
+    // सफलता के आधार पर कार्ट देखें बटन दिखाएं/छिपाएं
+     if (viewCartButton) {
+        viewCartButton.style.display = showViewCart ? 'inline-flex' : 'none';
+     }
+
+
+    // वैकल्पिक: देरी के बाद संदेश छिपाएं
+    // setTimeout(() => {
+    //     cartFeedbackEl.style.display = 'none';
+    //      if (viewCartButton) viewCartButton.style.display = 'none'; // संदेश के साथ बटन छिपाएं
+    // }, 5000); // 5 सेकंड के बाद छिपाएं
+}
+
+// --- संबंधित उत्पाद ---
+async function loadRelatedProducts(category, currentProductId) {
+    if (!relatedProductsSection || !relatedProductsContainer) {
+        console.log("संबंधित उत्पाद अनुभाग/कंटेनर नहीं मिला, छोड़ा जा रहा है।");
+        return;
+    }
+    showLoading('related'); // इस अनुभाग के लिए विशेष रूप से लोडिंग इंगित करें
+
+    try {
+        console.log(`श्रेणी के लिए संबंधित उत्पाद प्राप्त किए जा रहे हैं: ${category}, आईडी को छोड़कर: ${currentProductId}`);
+        const productsRef = collection(db, "onlineProducts");
+        // समान श्रेणी में उत्पादों के लिए क्वेरी, वर्तमान को छोड़कर, परिणाम सीमित करें
+        const q = query(
+            productsRef,
+            where("category", "==", category),
+            // where(documentId(), "!=", currentProductId), // Firestore जटिल क्वेरी में आईडी पर प्रत्यक्ष असमानता का आसानी से समर्थन नहीं करता है
+            limit(10) // संबंधित उत्पादों की संख्या सीमित करें
+        );
+        const querySnapshot = await getDocs(q);
+
+        relatedProductsContainer.innerHTML = ''; // पिछली सामग्री/लोडर साफ़ करें
+        let count = 0;
+        const slides = [];
+
+        querySnapshot.forEach((docSnap) => {
+            // वर्तमान उत्पाद को बाहर करने के लिए मैन्युअल जांच
+            if (docSnap.id !== currentProductId) {
+                 const product = { id: docSnap.id, ...docSnap.data() };
+                 // केवल आवश्यक जानकारी (नाम, मूल्य, छवि) वाले उत्पादों को शामिल करें
+                 if (product.name && (product.price || product.weddingPricing || product.basePriceSqFt) && product.imageUrls?.[0]) {
+                    slides.push(createRelatedProductSlide(product));
+                    count++;
+                 } else {
+                     console.warn(`लापता डेटा के कारण संबंधित उत्पाद (${product.id}) को छोड़ा जा रहा है।`);
+                 }
+
+            }
+        });
+
+        if (count > 0) {
+             // स्वाइपर रैपर और आवश्यक नेविगेशन बटन डालें
+             relatedProductsContainer.innerHTML = `
+                <div class="swiper related-products-swiper">
+                    <div class="swiper-wrapper">
+                        ${slides.join('')}
+                    </div>
+                    <div class="swiper-pagination"></div>
+                    <div class="swiper-button-prev"></div>
+                    <div class="swiper-button-next"></div>
+                </div>
+            `;
+            relatedProductsSection.style.display = 'block'; // अनुभाग दिखाएं
+            initializeRelatedProductsSwiper(); // स्लाइड जोड़ने के बाद स्वाइपर प्रारंभ करें
+             console.log(`${count} संबंधित उत्पाद लोड किए गए।`);
+        } else {
+            relatedProductsSection.style.display = 'none'; // यदि कोई संबंधित उत्पाद नहीं मिला तो अनुभाग छिपाएं
+             console.log("कोई उपयुक्त संबंधित उत्पाद नहीं मिला।");
+        }
+
+    } catch (error) {
+        console.error("संबंधित उत्पाद प्राप्त करने में त्रुटि:", error);
+        relatedProductsContainer.innerHTML = '<p>संबंधित उत्पाद लोड नहीं किए जा सके।</p>'; // कंटेनर में त्रुटि दिखाएं
+        relatedProductsSection.style.display = 'block'; // त्रुटि दिखाने के लिए अनुभाग दृश्यमान सुनिश्चित करें
+    }
+}
+
+
+function createRelatedProductSlide(product) {
+    const priceDisplay = getProductPriceForCard(product); // उपयुक्त मूल्य प्रदर्शन प्राप्त करें
+    const imageUrl = product.imageUrls?.[0] || 'images/placeholder.png'; // पाथ जांचें
+    const productUrl = `product-detail.html?id=${product.id}`;
+
+    // स्वाइपर स्लाइड संरचना का उपयोग करना
+    return `
+        <div class="swiper-slide">
+            <div class="product-card">
+                <a href="${productUrl}" class="product-image-container">
+                    <img src="${imageUrl}" alt="${product.name || 'Product'}" loading="lazy">
+                </a>
+                <div class="product-info">
+                    <h3><a href="${productUrl}">${product.name || 'N/A'}</a></h3>
+                    <div class="price">${priceDisplay}</div>
+                    <a href="${productUrl}" class="view-details-btn">View Details</a>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+function getProductPriceForCard(product) {
+    // उत्पाद कार्ड पर एक प्रतिनिधि मूल्य प्रदर्शित करने में सहायक
+    switch (product.pricingType) {
+        case 'wedding':
+            const weddingTiers = product.weddingPricing || [];
+            const sortedTiers = [...weddingTiers].sort((a,b) => a.minQuantity - b.minQuantity);
+            const lowestTier = sortedTiers[0];
+            return lowestTier ? `${formatPrice(lowestTier.pricePerCard)}/card (for ${lowestTier.minQuantity}+)` : 'Price Varies';
+        case 'flex':
+            return product.basePriceSqFt ? `${formatPrice(product.basePriceSqFt)}/sq.ft` : 'Price Varies';
+        case 'standard':
+        default:
+            return formatPrice(product.price || 0);
+    }
+}
+
+
+function initializeRelatedProductsSwiper() {
+    // इसे कॉल करने से पहले सुनिश्चित करें कि स्वाइपर लाइब्रेरी लोड हो गई है
+     if (typeof Swiper === 'undefined') {
+         console.error("स्वाइपर लाइब्रेरी लोड नहीं है।");
+         return;
+     }
+
+     // जांचें कि क्या कंटेनर पर स्वाइपर इंस्टेंस पहले से मौजूद है और इसे नष्ट कर दें
+     const swiperContainer = relatedProductsContainer.querySelector('.related-products-swiper');
+     if (!swiperContainer) {
+          console.error("स्वाइपर कंटेनर तत्व नहीं मिला।");
+          return;
+     }
+
+    if (swiperContainer.swiper) {
+        swiperContainer.swiper.destroy(true, true);
+         console.log("मौजूदा स्वाइपर इंस्टेंस नष्ट किया गया।");
+    }
+
+
+    // स्वाइपर प्रारंभ करें
+    const swiper = new Swiper('.related-products-swiper', {
+        slidesPerView: 2, // प्रारंभ में मोबाइल पर 2 स्लाइड दिखाएं
+        spaceBetween: 15,
+        pagination: {
+            el: '.swiper-pagination',
+            clickable: true,
+        },
+        navigation: {
+            nextEl: '.swiper-button-next',
+            prevEl: '.swiper-button-prev',
+        },
+        breakpoints: {
+            // जब विंडो की चौड़ाई >= 576px हो
+            576: { slidesPerView: 2, spaceBetween: 20 },
+            // जब विंडो की चौड़ाई >= 768px हो
+            768: { slidesPerView: 3, spaceBetween: 25 },
+            // जब विंडो की चौड़ाई >= 992px हो
+            992: { slidesPerView: 4, spaceBetween: 30 },
+             // जब विंडो की चौड़ाई >= 1200px हो
+             1200: { slidesPerView: 5, spaceBetween: 30 }
+        },
+         // गतिशील सामग्री लोडिंग के लिए ऑब्जर्वर और ऑब्जर्वपेरेंट्स जोड़ें
+         observer: true,
+         observeParents: true,
+    });
+     console.log("संबंधित उत्पाद स्वाइपर प्रारंभ किया गया।");
+}
+
+
+// --- Tabs ---
+function setupTabs() {
+     if (!tabsNav || !tabPanes.length) {
+          console.warn("टैब सेटअप छोड़ा गया: नेव या पैन नहीं मिले।");
+          return; // यदि टैब तत्व मौजूद नहीं हैं तो बाहर निकलें
+     }
+
+     console.log("टैब सेटअप किया जा रहा है...");
+
+    // डिफ़ॉल्ट रूप से पहले टैब और पैन को सक्रिय के रूप में सेट करें
+    const firstTabLink = tabsNav.querySelector('li a');
+    const firstPaneId = firstTabLink?.getAttribute('href');
+    if (firstTabLink && firstPaneId && firstPaneId.startsWith('#')) { // सुनिश्चित करें कि href एक आईडी है
+        tabsNav.querySelectorAll('li a').forEach(link => link.classList.remove('active'));
+        tabPanes.forEach(pane => pane.classList.remove('active'));
+
+        firstTabLink.classList.add('active');
+        try {
+            const firstPane = document.querySelector(firstPaneId);
+            if (firstPane) {
+                firstPane.classList.add('active');
+                console.log(`डिफ़ॉल्ट सक्रिय टैब सेट किया गया: ${firstPaneId}`);
+            } else {
+                 console.error(`डिफ़ॉल्ट सक्रिय पैन (${firstPaneId}) नहीं मिला।`);
+            }
+        } catch (e) {
+            console.error(`अमान्य चयनकर्ता ${firstPaneId} के साथ पैन खोजने में त्रुटि:`, e);
+        }
+
+    } else {
+         console.warn("डिफ़ॉल्ट सक्रिय टैब सेट नहीं किया जा सका। पहला लिंक या मान्य href गायब है।");
+    }
+
+
+    // नेविगेशन कंटेनर में क्लिक इवेंट श्रोता जोड़ें (इवेंट डेलिगेशन)
+    tabsNav.addEventListener('click', (e) => {
+        // जांचें कि क्या क्लिक किया गया तत्व एक टैब लिंक (<a> टैग) है और एक आईडी href है
+        if (e.target.tagName === 'A' && e.target.getAttribute('href')?.startsWith('#')) {
+            e.preventDefault(); // डिफ़ॉल्ट एंकर लिंक व्यवहार रोकें
+
+            const targetPaneId = e.target.getAttribute('href');
+            console.log(`टैब क्लिक किया गया: ${targetPaneId}`);
+
+            // सभी टैब लिंक और पैन से 'सक्रिय' वर्ग हटाएं
+            tabsNav.querySelectorAll('li a').forEach(link => link.classList.remove('active'));
+            tabPanes.forEach(pane => pane.classList.remove('active'));
+
+            // क्लिक किए गए टैब लिंक में 'सक्रिय' वर्ग जोड़ें
+            e.target.classList.add('active');
+
+            // संबंधित टैब पैन में 'सक्रिय' वर्ग जोड़ें
+            try {
+                 const targetPane = document.querySelector(targetPaneId);
+                 if (targetPane) {
+                     targetPane.classList.add('active');
+                 } else {
+                     console.error(`लक्ष्य पैन (${targetPaneId}) नहीं मिला।`);
+                 }
+            } catch (er) {
+                 console.error(`अमान्य चयनकर्ता ${targetPaneId} के साथ पैन खोजने में त्रुटि:`, er);
+            }
+        }
+    });
+     console.log("टैब क्लिक श्रोता तैयार हैं।");
+}
+
+
+// --- समीक्षाएं ---
+async function loadReviews(productId) {
+    const reviewsList = document.getElementById('reviews-list');
+    const reviewsSummary = document.querySelector('.reviews-summary'); // औसत रेटिंग/गणना दिखाने के लिए तत्व
+    if (!reviewsList || !reviewsSummary) {
+         console.warn("समीक्षा सूची या सारांश तत्व नहीं मिला, समीक्षा लोडिंग छोड़ी जा रही है।");
+         return;
+    }
+
+    reviewsList.innerHTML = '<li>Loading reviews...</li>'; // लोडिंग इंगित करें
+    reviewsSummary.textContent = ''; // सारांश साफ़ करें
+
+    try {
+        console.log(`उत्पाद आईडी के लिए समीक्षाएं प्राप्त की जा रही हैं: ${productId}`);
+        const reviewsRef = collection(db, "onlineProducts", productId, "reviews");
+        const q = query(reviewsRef, orderBy("timestamp", "desc")); // नवीनतम समीक्षाएं पहले प्राप्त करें
+        const querySnapshot = await getDocs(q);
+
+        reviewsList.innerHTML = ''; // लोडिंग संदेश साफ़ करें
+        let totalRating = 0;
+        let reviewCount = 0;
+
+        if (querySnapshot.empty) {
+            reviewsList.innerHTML = '<li>Be the first to review this product!</li>';
+             reviewsSummary.textContent = 'No reviews yet.';
+        } else {
+            querySnapshot.forEach((doc) => {
+                const review = doc.data();
+                if (review.rating && review.comment && review.userName) { // मूल सत्यापन
+                    const li = document.createElement('li');
+                    li.classList.add('review-item');
+                    li.innerHTML = `
+                        <div class="review-rating">${generateStarRating(review.rating)}</div>
+                        <p class="review-comment">${escapeHTML(review.comment)}</p>
+                        <p class="review-meta">By <strong>${escapeHTML(review.userName)}</strong> on ${review.timestamp?.toDate().toLocaleDateString() || 'N/A'}</p>
+                    `;
+                    reviewsList.appendChild(li);
+                    totalRating += Number(review.rating);
+                    reviewCount++;
+                }
+            });
+
+            if (reviewCount > 0) {
+                 const averageRating = (totalRating / reviewCount).toFixed(1);
+                 reviewsSummary.innerHTML = `Average Rating: ${generateStarRating(averageRating)} (${averageRating} out of 5) based on ${reviewCount} review(s).`;
+                 console.log(`लोड की गई ${reviewCount} समीक्षाएं। औसत रेटिंग: ${averageRating}`);
+            } else {
+                 reviewsList.innerHTML = '<li>No valid reviews found.</li>';
+                 reviewsSummary.textContent = 'No reviews yet.';
+            }
+
+        }
+    } catch (error) {
+        console.error("समीक्षाएं प्राप्त करने में त्रुटि:", error);
+        reviewsList.innerHTML = '<li>Could not load reviews. Please try again later.</li>';
+         reviewsSummary.textContent = 'Could not load rating.';
+    }
+
+    // समीक्षा फ़ॉर्म श्रोता सेटअप करें (भले ही समीक्षाएं लोड हुई हों या नहीं)
+    setupReviewForm(productId);
+}
+
+function generateStarRating(ratingStrOrNum) {
+    const rating = Number(ratingStrOrNum); // संख्या में कनवर्ट करें
+    if (isNaN(rating) || rating < 0) return 'No Rating'; // अमान्य रेटिंग संभालें
+
+    const totalStars = 5;
+    let starsHTML = '';
+    const fullStars = Math.floor(rating);
+    const halfStar = rating % 1 >= 0.45 ? 1 : 0; // आधे स्टार के लिए थोड़ी सहनशीलता
+    const emptyStars = totalStars - fullStars - halfStar;
+
+    for (let i = 0; i < fullStars; i++) starsHTML += '<i class="fas fa-star"></i>';
+    if (halfStar) starsHTML += '<i class="fas fa-star-half-alt"></i>';
+    for (let i = 0; i < emptyStars; i++) starsHTML += '<i class="far fa-star"></i>'; // खाली सितारों के लिए far का उपयोग करें
+
+    return starsHTML || 'No Rating'; // उस स्थिति को संभालें जहां रेटिंग 0 हो सकती है
+}
+
+function setupReviewForm(productId) {
+    const reviewForm = document.getElementById('review-form');
+    const formMessage = document.getElementById('review-form-message');
+    if (!reviewForm || !formMessage) {
+        console.warn("समीक्षा फ़ॉर्म या संदेश तत्व नहीं मिला, सेटअप छोड़ा जा रहा है।");
+        return;
+    }
+
+     console.log("समीक्षा फ़ॉर्म श्रोता सेटअप किया जा रहा है।");
+
+    reviewForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        formMessage.textContent = '';
+        formMessage.className = ''; // पिछली स्थिति कक्षाएं साफ़ करें
+        const submitButton = reviewForm.querySelector('button[type="submit"]');
+        if (submitButton) { // जांचें कि क्या बटन मौजूद है
+           submitButton.disabled = true;
+           submitButton.textContent = 'Submitting...';
+        }
+
+        try {
+            const rating = reviewForm.querySelector('input[name="rating"]:checked')?.value;
+            const userName = reviewForm.querySelector('#reviewer-name').value.trim();
+            const comment = reviewForm.querySelector('#review-comment').value.trim();
+
+            if (!rating || !userName || !comment) {
+                throw new Error("Please fill in all fields and select a rating.");
+            }
+            if (userName.length < 2) {
+                 throw new Error("Name must be at least 2 characters long.");
+            }
+             if (comment.length < 10) {
+                 throw new Error("Comment must be at least 10 characters long.");
+            }
+
+
+            const reviewsRef = collection(db, "onlineProducts", productId, "reviews");
+            await addDoc(reviewsRef, {
+                rating: Number(rating),
+                userName: userName,
+                comment: comment,
+                timestamp: serverTimestamp()
+            });
+
+            formMessage.textContent = 'Review submitted successfully! Thank you.';
+            formMessage.className = 'success'; // सफलता वर्ग जोड़ें
+            reviewForm.reset(); // फ़ॉर्म साफ़ करें
+             console.log("समीक्षा प्रस्तुत की गई।");
+
+            // वैकल्पिक: सबमिशन के बाद समीक्षाएं पुनः लोड करें
+             setTimeout(() => loadReviews(productId), 1000); // 1 सेकंड के बाद पुनः लोड करें
+
+        } catch (error) {
+            console.error("समीक्षा सबमिट करने में त्रुटि:", error);
+            formMessage.textContent = `Error: ${error.message || "Could not submit review."}`;
+            formMessage.className = 'error'; // त्रुटि वर्ग जोड़ें
+        } finally {
+             if (submitButton) { // जांचें कि क्या बटन मौजूद है
+                 submitButton.disabled = false;
+                 submitButton.textContent = 'Submit Review';
+             }
+        }
+    });
+}
+
+// XSS को रोकने के लिए HTML एस्केप करने की उपयोगिता
+function escapeHTML(str) {
+    if (!str) return '';
+    const div = document.createElement('div');
+    div.appendChild(document.createTextNode(str));
+    return div.innerHTML;
+}
 
 
 // --- Initialize Page ---
 document.addEventListener('DOMContentLoaded', () => {
-    console.log("DOM fully loaded.");
+    console.log("DOM पूरी तरह से लोड हो गया।");
     const urlParams = new URLSearchParams(window.location.search);
     const productId = urlParams.get('id');
-    if (!productId) { showError("Product ID not found in URL."); return; }
-    console.log(`Initializing page for Product ID: ${productId}`);
-    loadProductDetails(productId); // Fetch data and render, includes attaching event listeners
+
+    if (!productId) {
+        showError("URL में उत्पाद आईडी नहीं मिली। कृपया दुकान पर वापस जाएं और एक उत्पाद चुनें।");
+        return;
+    }
+
+    console.log(`उत्पाद आईडी के लिए पृष्ठ प्रारंभ किया जा रहा है: ${productId}`);
+    loadProductDetails(productId); // डेटा प्राप्त करें और रेंडर करें, इसमें ईवेंट श्रोताओं को संलग्न करना शामिल है
+
+    // पृष्ठ लोड पर प्रारंभिक कार्ट गणना अपडेट
+    updateCartCount();
 });
