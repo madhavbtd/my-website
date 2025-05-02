@@ -1,26 +1,23 @@
-/* css/product-detail.css - Product Detail Page Styles (Includes Popup Header, Icon Buttons, Tabs, Related Products, Fixes) */
+/* css/product-detail.css - Product Detail Page Styles (Reconstructed + Popup Header/Icons) */
 
-/* --- Variables --- */
+/* --- Variables (from snippet) --- */
 :root {
-    --primary-color: #0056b3; /* नीला */
-    --primary-dark: #003f80; /* गहरा नीला */
-    --secondary-color: #6c757d; /* ग्रे */
-    --success-color: #28a745; /* हरा */
-    --danger-color: #dc3545; /* लाल */
-    --warning-color: #ffc107; /* पीला */
-    --info-color: #17a2b8; /* हल्का नीला */
+    --primary-color: #0056b3;
+    --secondary-color: #6c757d;
     --text-color: #333;
     --text-muted: #666;
-    --border-color: #dee2e6; /* थोड़ा गहरा बॉर्डर */
-    --input-border-focus: #86b7fe; /* फोकस पर नीला ग्लो */
+    --border-color: #e0e0e0; /* Using border color from snippet */
+    --input-border-focus: #86b7fe; /* From previous full CSS, seems standard */
     --white-bg: #fff;
     --light-bg: #f8f9fa;
     --lighter-bg: #f1f3f5;
-    --border-radius: 12px; /* गोल कोने (cart.css के समान) */
-    --border-radius-sm: 8px; /* छोटा गोल कोना */
+    --danger-color: #dc3545; /* From previous full CSS */
+    --success-color: #28a745; /* From previous full CSS */
+    --border-radius: 6px; /* Using border radius from snippet */
+    --border-radius-sm: 4px; /* Smaller radius derived */
     --font-family: 'Poppins', sans-serif;
-    --box-shadow-sm: 0 2px 4px rgba(0,0,0,0.06);
-    --box-shadow-md: 0 5px 10px rgba(0,0,0,0.1);
+    --box-shadow-sm: 0 1px 3px rgba(0,0,0,0.08); /* From snippet */
+    --box-shadow-md: 0 4px 8px rgba(0,0,0,0.12); /* From snippet */
 }
 
 /* --- Base & Font --- */
@@ -28,7 +25,7 @@ body {
     font-family: var(--font-family), sans-serif;
     color: var(--text-color);
     line-height: 1.6;
-    background-color: var(--white-bg); /* पेज के लिए सफेद बैकग्राउंड */
+    background-color: var(--white-bg);
 }
 
 /* --- Layout & Spacing --- */
@@ -39,49 +36,34 @@ body {
 }
 
 .product-detail-page {
-    padding-top: 30px; /* हेडर से थोड़ा गैप */
-    padding-bottom: 60px;
+    padding-top: 40px; /* From snippet */
+    padding-bottom: 60px; /* From snippet */
 }
 
-/* --- Breadcrumbs --- */
+/* --- Breadcrumbs (from snippet) --- */
 .breadcrumbs {
-    margin-bottom: 30px;
+    margin-bottom: 40px;
     font-size: 0.9em;
     color: var(--text-muted);
 }
-
 .breadcrumbs ol {
     list-style: none;
     padding: 0;
     margin: 0;
     display: flex;
-    flex-wrap: wrap; /* छोटी स्क्रीन के लिए रैप */
+    flex-wrap: wrap;
     gap: 8px;
 }
-
 .breadcrumbs li::after {
     content: '/';
     margin-left: 8px;
     color: var(--text-muted);
 }
+.breadcrumbs li:last-child::after { content: ''; }
+.breadcrumbs a { color: var(--primary-color); text-decoration: none; }
+.breadcrumbs a:hover { text-decoration: underline; }
+.breadcrumbs li[aria-current="page"] { font-weight: 500; color: var(--text-color); }
 
-.breadcrumbs li:last-child::after {
-    content: ''; /* आखिरी आइटम के बाद स्लैश न दिखाएं */
-}
-
-.breadcrumbs a {
-    color: var(--primary-color);
-    text-decoration: none;
-}
-
-.breadcrumbs a:hover {
-    text-decoration: underline;
-}
-
-.breadcrumbs li[aria-current="page"] {
-    font-weight: 500;
-    color: var(--text-color);
-}
 
 /* --- Loading Indicator & Error --- */
 .loading-indicator {
@@ -93,759 +75,339 @@ body {
     text-align: center;
     color: var(--text-muted);
 }
-
 .spinner {
-    border: 5px solid var(--light-bg); /* हल्का ग्रे */
-    border-top: 5px solid var(--primary-color); /* नीला */
+    border: 4px solid var(--light-bg);
+    border-top: 4px solid var(--primary-color);
     border-radius: 50%;
-    width: 50px;
-    height: 50px;
+    width: 40px;
+    height: 40px;
     animation: spin 1s linear infinite;
     margin-bottom: 15px;
 }
-
 @keyframes spin {
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
 }
-
 #error-message-container {
     border: 1px solid var(--danger-color);
-    background-color: #f8d7da; /* हल्का लाल */
-    color: #721c24; /* गहरा लाल */
+    background-color: #f8d7da;
+    color: #721c24;
     padding: 15px 20px;
-    border-radius: var(--border-radius-sm);
+    border-radius: var(--border-radius);
     margin: 20px 0;
     text-align: center;
 }
 
+
 /* --- Product Content Grid --- */
 .product-content {
     display: grid;
-    grid-template-columns: repeat(2, 1fr); /* दो बराबर कॉलम */
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); /* Responsive grid */
     gap: 40px;
     margin-bottom: 50px;
 }
 
-/* --- Image Gallery (Left Column) --- */
-.product-image-gallery {
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
-}
-
+/* --- Image Gallery --- */
+.product-image-gallery { display: flex; flex-direction: column; gap: 15px; }
 #main-product-image {
     width: 100%;
-    max-width: 500px; /* अधिकतम चौड़ाई */
+    max-width: 500px;
     height: auto;
-    aspect-ratio: 1 / 1; /* स्क्वायर अनुपात बनाए रखें */
-    object-fit: cover; /* इमेज को कवर करें */
-    border: 1px solid var(--border-color);
-    border-radius: var(--border-radius-sm);
-    box-shadow: var(--box-shadow-sm);
-    display: block; /* अतिरिक्त स्पेस हटाएं */
-    margin: 0 auto; /* सेंटर में रखें अगर कंटेनर बड़ा है */
-}
-
-#thumbnail-images {
-    display: flex;
-    gap: 10px;
-    flex-wrap: wrap; /* अगर ज्यादा थंबनेल हों */
-    justify-content: center; /* थंबनेल सेंटर में */
-}
-
-#thumbnail-images img {
-    width: 70px;
-    height: 70px;
+    aspect-ratio: 1 / 1;
     object-fit: cover;
-    border: 2px solid transparent; /* इनएक्टिव के लिए */
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    box-shadow: var(--box-shadow-sm);
+    display: block;
+    margin: 0 auto;
+}
+#thumbnail-images { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
+#thumbnail-images img {
+    width: 70px; height: 70px; object-fit: cover;
+    border: 2px solid transparent;
     border-radius: var(--border-radius-sm);
     cursor: pointer;
     transition: border-color 0.3s ease, transform 0.2s ease;
 }
+#thumbnail-images img:hover { border-color: var(--secondary-color); transform: scale(1.05); }
+#thumbnail-images img.active { border-color: var(--primary-color); transform: scale(1.05); }
 
-#thumbnail-images img:hover {
-    border-color: var(--secondary-color);
-    transform: scale(1.05);
-}
 
-#thumbnail-images img.active {
-    border-color: var(--primary-color);
-    transform: scale(1.05);
-}
-
-/* --- Product Info (Right Column) --- */
-.product-info {
-    display: flex;
-    flex-direction: column;
-}
-
-#product-name {
-    font-size: 2em; /* बड़ा फ़ॉन्ट */
-    font-weight: 600;
-    margin-bottom: 10px;
-    color: var(--text-color);
-}
-
-.product-meta {
-    font-size: 0.9em;
-    color: var(--text-muted);
-    margin-bottom: 20px;
-}
+/* --- Product Info --- */
+.product-info { display: flex; flex-direction: column; }
+#product-name { font-size: 2.2em; font-weight: 600; margin-bottom: 10px; color: var(--text-color); }
+.product-meta { font-size: 0.9em; color: var(--text-muted); margin-bottom: 20px; }
 
 /* Pricing Area */
-.price-display-area {
-    margin-bottom: 25px;
-    display: flex;
-    flex-direction: column; /* वर्टीकल अलाइनमेंट */
-    align-items: flex-start; /* लेफ्ट अलाइन */
-    gap: 5px;
-}
-
-#product-price.price {
-    font-size: 2.4em;
-    font-weight: 700;
-    color: var(--primary-color);
-    line-height: 1.2;
-}
-
-#original-price.original-price {
-    font-size: 1.1em;
-    text-decoration: line-through;
-    color: var(--text-muted);
-    margin-left: 5px; /* वर्तमान मूल्य से थोड़ी दूरी */
-}
-
-#wedding-per-card-price.price-per-card {
-    font-size: 1em;
-    color: var(--success-color); /* हरा रंग */
-    font-weight: 500;
-    margin-top: 5px; /* मुख्य मूल्य से थोड़ी दूरी */
-    display: block; /* नई लाइन पर */
-}
+.price-display-area { margin-bottom: 25px; display: flex; flex-direction: column; align-items: flex-start; gap: 5px; }
+#product-price.price { font-size: 2.4em; font-weight: 700; color: var(--primary-color); line-height: 1.2; }
+#original-price.original-price { font-size: 1.1em; text-decoration: line-through; color: var(--text-muted); margin-left: 5px; }
+#wedding-per-card-price.price-per-card { font-size: 1em; color: var(--success-color); font-weight: 500; margin-top: 5px; display: block; }
 
 /* Product Options */
-.product-options {
-    margin-bottom: 30px;
-    display: flex;
-    flex-direction: column;
-    gap: 20px; /* विकल्पों के बीच गैप */
-}
-
-.option-group {
-    border: 1px solid var(--border-color);
-    padding: 15px;
-    border-radius: var(--border-radius-sm);
-    background-color: var(--lighter-bg); /* हल्का बैकग्राउंड */
-}
-
-.option-group label {
-    display: block;
-    font-weight: 600;
-    margin-bottom: 10px;
-    color: var(--text-color);
-}
-
+.product-options { margin-bottom: 30px; display: flex; flex-direction: column; gap: 20px; }
+.option-group { border: 1px solid var(--border-color); padding: 15px; border-radius: var(--border-radius); background-color: var(--lighter-bg); }
+.option-group label { display: block; font-weight: 600; margin-bottom: 10px; color: var(--text-color); }
 .option-group select,
 .option-group input[type="number"],
 .option-group input[type="text"] {
-    width: 100%;
-    padding: 10px 12px;
-    border: 1px solid var(--border-color);
-    border-radius: var(--border-radius-sm);
-    font-size: 1em;
-    box-sizing: border-box; /* पैडिंग और बॉर्डर को चौड़ाई में शामिल करें */
+    width: 100%; padding: 10px 12px; border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-sm); font-size: 1em; box-sizing: border-box;
     transition: border-color 0.2s ease;
 }
-
 .option-group select:focus,
-.option-group input:focus {
-    border-color: var(--input-border-focus);
-    outline: none;
-    box-shadow: 0 0 0 3px rgba(0, 86, 179, 0.1); /* हल्का नीला ग्लो */
-}
+.option-group input:focus { border-color: var(--input-border-focus); outline: none; box-shadow: 0 0 0 3px rgba(0, 86, 179, 0.1); }
 
 /* Quantity Controls */
-.quantity-control {
-    display: flex;
-    align-items: center;
-    gap: 5px;
-    max-width: 150px; /* चौड़ाई सीमित करें */
-}
-
+.quantity-control { display: flex; align-items: center; gap: 5px; max-width: 150px; }
 .quantity-control button {
-    background-color: var(--secondary-color);
-    color: white;
-    border: none;
-    padding: 0; /* पैडिंग हटाएं */
-    width: 35px; /* निश्चित चौड़ाई */
-    height: 35px; /* निश्चित ऊंचाई */
-    font-size: 1.2em;
-    border-radius: 50%; /* गोल बटन */
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    background-color: var(--secondary-color); color: white; border: none; padding: 0;
+    width: 35px; height: 35px; font-size: 1.2em; border-radius: 50%; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
     transition: background-color 0.2s ease, transform 0.1s ease;
 }
-
-.quantity-control button:hover {
-    background-color: #5a6268; /* थोड़ा गहरा ग्रे */
-}
-
-.quantity-control button:active {
-    transform: scale(0.95);
-}
-
+.quantity-control button:hover { background-color: #5a6268; }
+.quantity-control button:active { transform: scale(0.95); }
 .quantity-control input[type="number"] {
-    text-align: center;
-    border: 1px solid var(--border-color);
-    border-radius: var(--border-radius-sm);
-    padding: 6px 8px;
-    height: 35px; /* बटन के समान ऊंचाई */
-    width: 50px; /* चौड़ाई */
-    font-weight: 600;
-    /* ब्राउज़र के डिफ़ॉल्ट स्पिनर छुपाएं */
-    -moz-appearance: textfield;
-    appearance: textfield;
+    text-align: center; border: 1px solid var(--border-color); border-radius: var(--border-radius-sm);
+    padding: 6px 8px; height: 35px; width: 50px; font-weight: 600;
+    -moz-appearance: textfield; appearance: textfield;
 }
 .quantity-control input[type="number"]::-webkit-outer-spin-button,
-.quantity-control input[type="number"]::-webkit-inner-spin-button {
-    -webkit-appearance: none;
-    margin: 0;
-}
+.quantity-control input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
 
 /* Flex Banner Options */
-.flex-options {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); /* लचीला ग्रिड */
-    gap: 15px;
-    align-items: flex-end; /* नीचे अलाइन करें */
-}
+.flex-options { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 15px; align-items: flex-end; }
+.flex-options .input-group { display: flex; flex-direction: column; }
+.flex-options label { font-size: 0.9em; margin-bottom: 5px; font-weight: 500; }
+#flex-price-display { margin-top: 15px; font-weight: 600; color: var(--primary-color); font-size: 1.1em; padding: 10px; background-color: var(--white-bg); border: 1px dashed var(--primary-color); border-radius: var(--border-radius-sm); text-align: center; }
 
-.flex-options .input-group {
-    display: flex;
-    flex-direction: column;
-}
-
-.flex-options label {
-    font-size: 0.9em;
-    margin-bottom: 5px;
-    font-weight: 500;
-}
-
-#flex-price-display {
-    margin-top: 15px;
-    font-weight: 600;
-    color: var(--primary-color);
-    font-size: 1.1em;
-    padding: 10px;
-    background-color: var(--white-bg);
-    border: 1px dashed var(--primary-color);
-    border-radius: var(--border-radius-sm);
-    text-align: center;
-}
-
-/* Wedding Card Options */
-.wedding-options {
-    /* यदि आवश्यक हो तो विशिष्ट स्टाइल जोड़ें */
-}
+/* Wedding Card Options - Placeholder for specific dropdown styles if needed */
+.wedding-options { /* Styles for wedding card dropdowns/options would go here if specific styling is needed beyond .option-group */ }
 
 
-/* --- Product Actions (Add to Cart etc.) --- */
-.product-actions {
-    margin-top: auto; /* बाकी जगह भरें, बटन नीचे पुश करें */
-    padding-top: 20px; /* ऊपर के एलिमेंट से थोड़ी जगह */
-    display: flex;
-    flex-direction: column; /* बटन और लिंक वर्टिकली */
-    gap: 15px; /* बटन के बीच गैप */
-}
+/* --- Product Actions --- */
+.product-actions { margin-top: 20px; /* Removed auto, added top margin */ display: flex; flex-direction: column; gap: 15px; }
 
-/* Button Styles (Primary & Secondary) - Ensuring consistency */
+/* Button Styles (Consistent with cart.css vars) */
 .button-primary, .button-secondary {
-    display: inline-flex; /* आइकन और टेक्स्ट अलाइन करने के लिए */
-    align-items: center;
-    justify-content: center;
-    gap: 10px; /* आइकन और टेक्स्ट के बीच गैप */
-    padding: 12px 25px;
-    font-size: 1.1em;
-    font-weight: 600;
-    border-radius: var(--border-radius); /* Rounded corners */
-    text-decoration: none;
-    cursor: pointer;
-    border: none;
+    display: inline-flex; align-items: center; justify-content: center; gap: 10px;
+    padding: 12px 25px; font-size: 1.1em; font-weight: 600;
+    border-radius: var(--border-radius); /* Use radius from snippet */
+    text-decoration: none; cursor: pointer; border: none;
     transition: background-color 0.3s ease, transform 0.1s ease, box-shadow 0.2s ease;
     text-align: center;
 }
+.button-primary { background-color: var(--primary-color); color: white; }
+.button-primary:hover { background-color: var(--primary-dark); box-shadow: var(--box-shadow-sm); }
+.button-primary:disabled { background-color: #a0c3e8; cursor: not-allowed; box-shadow: none; }
+.button-secondary { background-color: var(--secondary-color); color: white; }
+.button-secondary:hover { background-color: #5a6268; box-shadow: var(--box-shadow-sm); }
+.button-primary:active, .button-secondary:active { transform: scale(0.98); }
 
-.button-primary {
-    background-color: var(--primary-color);
-    color: white;
-}
-
-.button-primary:hover {
-    background-color: var(--primary-dark);
-    box-shadow: var(--box-shadow-sm);
-}
-
-.button-primary:disabled {
-    background-color: #a0c3e8; /* फीका नीला */
-    cursor: not-allowed;
-    box-shadow: none;
-}
-
-.button-secondary {
-    background-color: var(--secondary-color);
-    color: white;
-}
-
-.button-secondary:hover {
-    background-color: #5a6268;
-    box-shadow: var(--box-shadow-sm);
-}
-
-.button-primary:active, .button-secondary:active {
-    transform: scale(0.98);
-}
-
-/* Specific Button Styling */
-#add-to-cart-btn {
-    /* अतिरिक्त स्टाइल यदि आवश्यक हो */
-    width: 100%; /* पूरी चौड़ाई ले */
-}
-
-#add-to-cart-btn .icon-before {
-    font-size: 1em; /* आइकन का साइज़ */
-}
-
+#add-to-cart-btn { width: 100%; }
 .cart-feedback-message {
-    margin-top: 10px;
-    padding: 10px 15px;
-    border-radius: var(--border-radius-sm);
-    font-size: 0.95em;
-    text-align: center;
-    font-weight: 500;
+    margin-top: 10px; padding: 10px 15px; border-radius: var(--border-radius-sm);
+    font-size: 0.95em; text-align: center; font-weight: 500;
 }
-.cart-feedback-message.success {
-    background-color: #d4edda; /* हल्का हरा */
-    color: #155724; /* गहरा हरा */
-    border: 1px solid #c3e6cb;
-}
-.cart-feedback-message.error {
-    background-color: #f8d7da; /* हल्का लाल */
-    color: #721c24; /* गहरा लाल */
-    border: 1px solid #f5c6cb;
-}
+.cart-feedback-message.success { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+.cart-feedback-message.error { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+.view-cart-button { background-color: var(--success-color); color: white; width: 100%; }
+.view-cart-button:hover { background-color: #218838; }
 
-.view-cart-button {
-    background-color: var(--success-color); /* हरा बटन */
-    color: white;
-    width: 100%; /* पूरी चौड़ाई ले */
-}
 
-.view-cart-button:hover {
-    background-color: #218838; /* थोड़ा गहरा हरा */
-}
-
-.view-cart-button .icon-before {
-    font-size: 1em;
-}
-
-/* --- Product Description / Specifications / Reviews (Tabs) --- */
-.product-description-tabs {
-    margin-top: 50px;
-    border: 1px solid var(--border-color);
-    border-radius: var(--border-radius-sm);
-    overflow: hidden; /* बॉर्डर रेडियस को लागू करने के लिए */
-    background-color: var(--white-bg);
-    box-shadow: var(--box-shadow-sm);
-}
-
-.tabs {
-    display: flex;
-    background-color: var(--light-bg);
-    border-bottom: 1px solid var(--border-color);
-}
-
+/* --- Tabs --- */
+.product-description-tabs { margin-top: 50px; border: 1px solid var(--border-color); border-radius: var(--border-radius); overflow: hidden; background-color: var(--white-bg); box-shadow: var(--box-shadow-sm); }
+.tabs { display: flex; background-color: var(--light-bg); border-bottom: 1px solid var(--border-color); }
 .tab-link {
-    padding: 15px 25px;
-    cursor: pointer;
-    border: none;
-    background-color: transparent;
-    font-size: 1em;
-    font-weight: 500;
-    color: var(--text-muted);
+    padding: 15px 25px; cursor: pointer; border: none; background-color: transparent;
+    font-size: 1em; font-weight: 500; color: var(--text-muted);
     transition: color 0.3s ease, border-bottom 0.3s ease;
-    border-bottom: 3px solid transparent; /* नीचे बॉर्डर के लिए जगह */
-    margin-bottom: -1px; /* कंटेनर के बॉर्डर के साथ ओवरलैप करने के लिए */
+    border-bottom: 3px solid transparent; margin-bottom: -1px;
 }
+.tab-link:hover { color: var(--primary-color); }
+.tab-link.active { color: var(--primary-color); border-bottom: 3px solid var(--primary-color); font-weight: 600; }
+.tab-content { display: none; padding: 30px 25px; animation: fadeIn 0.5s ease; }
+.tab-content.active { display: block; }
+.tab-content h3 { margin-top: 0; margin-bottom: 15px; font-size: 1.3em; font-weight: 600; }
+.tab-content p, .tab-content ul, .tab-content table { margin-bottom: 15px; color: var(--text-color); }
+.tab-content ul { list-style: disc; padding-left: 25px; }
+#specifications-tab-content table { width: 100%; border-collapse: collapse; }
+#specifications-tab-content th, #specifications-tab-content td { border: 1px solid var(--border-color); padding: 10px 12px; text-align: left; vertical-align: top; }
+#specifications-tab-content th { background-color: var(--lighter-bg); font-weight: 600; width: 30%; }
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
-.tab-link:hover {
-    color: var(--primary-color);
-}
 
-.tab-link.active {
-    color: var(--primary-color);
-    border-bottom: 3px solid var(--primary-color);
-    font-weight: 600;
-}
-
-.tab-content {
-    display: none; /* डिफ़ॉल्ट रूप से छुपाएं */
-    padding: 30px 25px;
-    animation: fadeIn 0.5s ease; /* फेड इन एनिमेशन */
-}
-
-.tab-content.active {
-    display: block; /* सक्रिय टैब दिखाएं */
-}
-
-.tab-content h3 {
-    margin-top: 0;
-    margin-bottom: 15px;
-    font-size: 1.3em;
-    font-weight: 600;
-}
-
-.tab-content p,
-.tab-content ul,
-.tab-content table {
-    margin-bottom: 15px;
-    color: var(--text-color);
-}
-
-.tab-content ul {
-    list-style: disc;
-    padding-left: 25px;
-}
-
-/* Specifications Table */
-#specifications-tab-content table {
-    width: 100%;
-    border-collapse: collapse;
-}
-
-#specifications-tab-content th,
-#specifications-tab-content td {
-    border: 1px solid var(--border-color);
-    padding: 10px 12px;
-    text-align: left;
-    vertical-align: top; /* ऊपर संरेखित करें */
-}
-
-#specifications-tab-content th {
-    background-color: var(--lighter-bg);
-    font-weight: 600;
-    width: 30%; /* स्पेसिफिकेशन नाम के लिए चौड़ाई */
-}
-
-@keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
-}
-
-/* --- Related Products Section --- */
-.related-products-section {
-    margin-top: 60px;
-    padding-top: 40px;
-    border-top: 1px solid var(--border-color);
-}
-
-.related-products-section .section-title {
-    text-align: center;
-    font-size: 1.8em;
-    font-weight: 600;
-    margin-bottom: 40px;
-    color: var(--text-color);
-}
-
-.related-products-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); /* रिस्पॉन्सिव ग्रिड */
-    gap: 25px;
-}
-
-/* Related Product Card Styling (products.css से मिलती-जुलती स्टाइल इस्तेमाल करें) */
+/* --- Related Products --- */
+.related-products-section { margin-top: 60px; padding-top: 40px; border-top: 1px solid var(--border-color); }
+.related-products-section .section-title { text-align: center; font-size: 1.8em; font-weight: 600; margin-bottom: 40px; color: var(--text-color); }
+.related-products-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 25px; }
 .related-product-card {
-    border: 1px solid var(--border-color);
-    border-radius: var(--border-radius-sm);
-    background-color: var(--white-bg);
-    overflow: hidden;
+    border: 1px solid var(--border-color); border-radius: var(--border-radius);
+    background-color: var(--white-bg); overflow: hidden;
     transition: box-shadow 0.3s ease, transform 0.2s ease;
-    display: flex;
-    flex-direction: column;
-    text-decoration: none; /* लिंक से अंडरलाइन हटाएं */
-    color: inherit; /* पैरेंट से रंग लें */
+    display: flex; flex-direction: column; text-decoration: none; color: inherit;
 }
-
-.related-product-card:hover {
-    box-shadow: var(--box-shadow-md);
-    transform: translateY(-5px);
+.related-product-card:hover { box-shadow: var(--box-shadow-md); transform: translateY(-5px); }
+.related-product-card img { width: 100%; height: 200px; object-fit: cover; display: block; }
+.related-product-card .product-info { padding: 15px; flex-grow: 1; display: flex; flex-direction: column; }
+.related-product-card h4 {
+    font-size: 1.1em; font-weight: 600; margin: 0 0 8px 0; color: var(--text-color);
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+    overflow: hidden; text-overflow: ellipsis; min-height: calc(1.1em * 1.4 * 2); line-height: 1.4;
 }
+.related-product-card .price { font-size: 1.1em; font-weight: 600; color: var(--primary-color); margin-top: auto; padding-top: 10px; }
 
-.related-product-card img {
-    width: 100%;
-    height: 200px; /* निश्चित ऊंचाई */
-    object-fit: cover;
-    display: block;
-}
 
-.related-product-card .product-info {
-    padding: 15px;
-    flex-grow: 1; /* कार्ड की ऊंचाई समान करने के लिए */
-    display: flex;
-    flex-direction: column;
-}
-
-.related-product-card h4 { /* Related में h4 का उपयोग करें ताकि SEO में h1 डुप्लिकेट न हो */
-    font-size: 1.1em;
-    font-weight: 600;
-    margin: 0 0 8px 0;
-    color: var(--text-color);
-     /* टेक्स्ट को 2 लाइनों तक सीमित करें */
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    min-height: calc(1.1em * 1.4 * 2); /* लगभग 2 लाइन की ऊंचाई */
-    line-height: 1.4;
-}
-
-.related-product-card .price {
-    font-size: 1.1em;
-    font-weight: 600;
-    color: var(--primary-color);
-    margin-top: auto; /* मूल्य को नीचे धकेलें */
-    padding-top: 10px; /* नाम से थोड़ा गैप */
-}
-
-/* --- Confirmation Popup Styles --- */
+/* --- Confirmation Popup Styles (Based on Original Snippet + Requested Changes) --- */
 .popup {
-    display: none; /* Hidden by default */
-    position: fixed;
-    z-index: 1000; /* सबसे ऊपर रहे */
-    left: 0;
-    top: 0;
-    width: 100%;
-    height: 100%;
-    overflow: auto; /* Scroll if needed */
-    background-color: rgba(0, 0, 0, 0.6); /* गहरा बैकड्रॉप */
+    display: none; position: fixed; z-index: 1000; left: 0; top: 0;
+    width: 100%; height: 100%; overflow: auto; background-color: rgba(0, 0, 0, 0.6);
     animation: fadeInPopup 0.3s ease;
 }
-
 .popup-content {
     background-color: var(--white-bg);
-    margin: 10% auto; /* वर्टिकली सेंटर और थोड़ा नीचे */
-    padding: 0; /* अंदरूनी पैडिंग हटा दी, हेडर/कंटेंट में मैनेज होगी */
+    margin: 10% auto;
+    padding: 0; /* Removed padding, handled by inner sections */
     border: 1px solid var(--border-color);
-    border-radius: var(--border-radius);
-    width: 90%;
-    max-width: 550px; /* अधिकतम चौड़ाई */
+    border-radius: var(--border-radius); /* Use radius from snippet */
+    width: 90%; max-width: 550px;
     box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
-    position: relative; /* क्लोज बटन के लिए */
-    overflow: hidden; /* हेडर के बैकग्राउंड को कंट्रोल करने के लिए */
+    position: relative;
+    overflow: hidden; /* For header */
     animation: slideInPopup 0.4s ease forwards;
 }
 
-/* UPDATED: Popup Header */
+/* ===== नया पॉपअप हेडर स्टाइल ===== */
 .popup-header {
     background-color: var(--primary-color);
     color: white;
     padding: 15px 25px;
-    border-bottom: 1px solid var(--primary-dark);
+    border-bottom: 1px solid var(--primary-dark); /* Added for definition */
+    border-top-left-radius: var(--border-radius); /* Match content radius */
+    border-top-right-radius: var(--border-radius);
 }
-
-.popup-header h3 { /* Target #popup-product-name inside header */
+.popup-header h3 { /* Style for #popup-product-name inside header */
     margin: 0;
     font-size: 1.3em;
     font-weight: 600;
     line-height: 1.3;
 }
+/* ============================== */
 
 /* Popup Title (Confirm Item Addition) */
-.popup-content > h2 { /* Direct child H2 */
-    font-size: 1.4em;
-    font-weight: 600;
-    color: var(--text-color);
-    margin: 25px 25px 15px 25px; /* हेडर के नीचे और कंटेंट से पहले स्पेस */
-    padding: 0;
-    text-align: center;
+.popup-content > h2 { /* Target direct child H2 */
+    font-size: 1.4em; font-weight: 600; color: var(--text-color);
+    margin: 25px 25px 15px 25px; /* Space below new header */
+    padding: 0; text-align: center;
 }
 
 .close-popup {
-    color: white; /* सफेद X */
+    color: white; /* Changed to white for header */
     position: absolute;
-    top: 10px; /* कोने में */
-    right: 15px;
-    font-size: 28px;
-    font-weight: bold;
-    line-height: 1;
-    cursor: pointer;
-    transition: color 0.2s ease;
+    top: 10px; right: 15px;
+    font-size: 28px; font-weight: bold; line-height: 1;
+    cursor: pointer; transition: color 0.2s ease;
+    z-index: 1; /* Ensure it's above header */
 }
+.close-popup:hover, .close-popup:focus { color: #ddd; text-decoration: none; }
 
-.close-popup:hover,
-.close-popup:focus {
-    color: #ddd; /* हल्का सफेद */
-    text-decoration: none;
-}
+.popup-product-details { display: flex; align-items: center; gap: 20px; padding: 10px 25px 25px 25px; /* Padding for content below title */ border-bottom: 1px solid var(--border-color); }
+.popup-product-details img { width: 90px; height: 90px; object-fit: cover; border-radius: var(--border-radius-sm); border: 1px solid var(--border-color); flex-shrink: 0; }
+.popup-product-info { flex-grow: 1; }
+/* Removed h3 style from here as it's moved to header */
+.popup-product-info p { margin: 5px 0; font-size: 1em; color: var(--text-muted); }
+.popup-product-info p:last-child { margin-bottom: 0; }
+.popup-product-info #popup-product-price { font-weight: bold; color: var(--primary-color); font-size: 1.1em; }
+.popup-product-info #popup-per-card-price { font-weight: 500; color: var(--success-color); font-size: 0.95em; }
+.popup-product-info #popup-product-options { font-style: italic; font-size: 0.9em; }
 
-.popup-product-details {
-    display: flex;
-    align-items: center;
-    gap: 20px;
-    padding: 10px 25px 25px 25px; /* मुख्य कंटेंट क्षेत्र में पैडिंग */
-    border-bottom: 1px solid var(--border-color); /* एक्शन से अलग */
-}
+.popup-actions { padding: 20px 25px; background-color: var(--light-bg); display: flex; justify-content: flex-end; gap: 15px; }
 
-.popup-product-details img {
-    width: 90px;
-    height: 90px;
-    object-fit: cover;
-    border-radius: var(--border-radius-sm);
-    border: 1px solid var(--border-color);
-    flex-shrink: 0; /* इमेज को सिकुड़ने न दें */
-}
-
-.popup-product-info {
-    flex-grow: 1; /* बची हुई जगह ले */
-}
-
-.popup-product-info p {
-    margin: 5px 0;
-    font-size: 1em;
-    color: var(--text-muted);
-}
-
-.popup-product-info p:last-child {
-    margin-bottom: 0;
-}
-
-.popup-product-info #popup-product-price {
-    font-weight: bold;
-    color: var(--primary-color);
-    font-size: 1.1em;
-}
-.popup-product-info #popup-per-card-price {
-    font-weight: 500;
-    color: var(--success-color);
-    font-size: 0.95em;
-}
-.popup-product-info #popup-product-options {
-    font-style: italic;
-    font-size: 0.9em;
-}
-
-
-.popup-actions {
-    padding: 20px 25px;
-    background-color: var(--light-bg); /* एक्शन एरिया का हल्का बैकग्राउंड */
-    display: flex;
-    justify-content: flex-end; /* बटन दाईं ओर */
-    gap: 15px;
-}
-
-/* पॉपअप बटन आइकन */
+/* ===== पॉपअप बटन आइकन स्टाइल ===== */
 .popup-actions button .fas {
-    margin-right: 8px; /* आइकन और टेक्स्ट के बीच गैप */
+    margin-right: 8px;
     font-size: 1em;
 }
-
+/* ================================ */
 
 /* Popup Animations */
-@keyframes fadeInPopup {
-    from { background-color: rgba(0, 0, 0, 0); }
-    to { background-color: rgba(0, 0, 0, 0.6); }
-}
+@keyframes fadeInPopup { from { background-color: rgba(0, 0, 0, 0); } to { background-color: rgba(0, 0, 0, 0.6); } }
+@keyframes slideInPopup { from { transform: translateY(-30px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
 
-@keyframes slideInPopup {
-    from { transform: translateY(-30px); opacity: 0; }
-    to { transform: translateY(0); opacity: 1; }
-}
 
-/* --- Responsiveness --- */
+/* --- Responsiveness (Based on snippet and standard practices) --- */
 @media (max-width: 992px) {
-    .product-content {
-        grid-template-columns: 1fr; /* सिंगल कॉलम लेआउट */
-        gap: 30px;
-    }
-    .product-image-gallery {
-        order: 1; /* इमेज पहले */
-        align-items: center; /* इमेज सेंटर में */
-    }
-    .product-info {
-        order: 2; /* जानकारी बाद में */
-    }
-    .price-display-area {
-        align-items: center; /* कीमत सेंटर में */
-        text-align: center;
-    }
-    .product-actions {
-        align-items: center;
-    }
-    #add-to-cart-btn, .view-cart-button {
-         width: auto; /* पूरी चौड़ाई न लें */
-         max-width: 300px; /* अधिकतम चौड़ाई सेट करें */
-    }
-    .related-products-grid {
-        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-    }
+    .product-content { grid-template-columns: 1fr; gap: 30px; }
+    .product-image-gallery { order: 1; align-items: center; }
+    .product-info { order: 2; }
+    .price-display-area { align-items: center; text-align: center; }
+    .related-products-grid { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); }
 }
 
 @media (max-width: 768px) {
     .container { padding: 0 15px; }
-    .product-detail-page { padding-top: 20px; padding-bottom: 40px; }
-    #product-name { font-size: 1.8em; }
+    .product-detail-page { padding-top: 30px; padding-bottom: 50px; }
+    #product-name { font-size: 2em; }
     #product-price.price { font-size: 2.2em; }
     .button-primary, .button-secondary { font-size: 1em; padding: 10px 20px; }
-    .tabs { flex-wrap: wrap; } /* टैब बटन रैप करें */
+    .tabs { flex-wrap: wrap; }
     .tab-link { padding: 12px 18px; font-size: 0.95em; }
     .tab-content { padding: 20px 18px; }
     .related-products-section .section-title { font-size: 1.6em; }
     .related-products-grid { grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 20px; }
     .popup-content { width: 90%; margin: 15% auto; }
-    .popup-header { padding: 12px 20px;}
+    /* Added responsive for new header */
+    .popup-header { padding: 12px 20px; }
     .popup-header h3 { font-size: 1.2em; }
+    .close-popup { top: 8px; right: 12px; font-size: 24px; }
     .popup-content > h2 { font-size: 1.3em; margin: 20px 20px 15px 20px; }
     .popup-product-details { padding: 10px 20px 20px 20px; }
     .popup-actions { padding: 15px 20px; }
 }
 
 @media (max-width: 576px) {
-    .breadcrumbs { margin-bottom: 20px; font-size: 0.85em; }
+    .breadcrumbs { margin-bottom: 30px; font-size: 0.85em; } /* Adjusted from snippet */
     #main-product-image { max-width: 100%; }
     #thumbnail-images img { width: 60px; height: 60px; }
-    #product-name { font-size: 1.6em; text-align: center; }
-    .price-display-area { margin-bottom: 20px; }
-    #product-price.price { font-size: 2em; }
+    #product-name { font-size: 1.8em; text-align: center; } /* Adjusted */
+    .price-display-area { margin-bottom: 20px; text-align: center; } /* Adjusted from snippet */
+    #product-price.price { font-size: 2.1em; } /* Adjusted */
     .option-group { padding: 12px; }
-    .product-actions { gap: 12px; }
-    #add-to-cart-btn, .view-cart-button { width: 100%; max-width: none; } /* मोबाइल पर पूरी चौड़ाई */
-    .cart-feedback-message { font-size: 0.9em; }
+    .product-actions { gap: 12px; align-items: stretch; } /* Adjusted from snippet */
+    #add-to-cart-btn, .view-cart-button { width: 100%; } /* Adjusted from snippet */
+    .cart-feedback-message { order: 3; width: 100%; font-size: 0.9em;} /* Added width */
     .related-products-section { margin-top: 40px; padding-top: 30px; }
-    .related-products-section .section-title { font-size: 1.4em; margin-bottom: 30px;}
-    .related-products-grid { grid-template-columns: repeat(2, 1fr); gap: 15px; } /* मोबाइल पर 2 कॉलम */
+    .related-products-section .section-title { font-size: 1.4em; } /* Adjusted from snippet */
+    .related-products-grid { grid-template-columns: repeat(2, 1fr); gap: 15px; }
     .related-product-card img { height: 150px; }
     .related-product-card h4 { font-size: 1em; min-height: calc(1em * 1.4 * 2); }
     .related-product-card .price { font-size: 1em; }
 
-    .popup-content { width: 95%; padding: 0; margin: 20% auto;}
-    .popup-header { padding: 10px 15px;}
+    .popup-content { width: 95%; padding: 0; margin: 20% auto; } /* Adjusted from snippet */
+    .popup-header { padding: 10px 15px; }
     .popup-header h3 { font-size: 1.1em; }
-    .close-popup { top: 8px; right: 10px; font-size: 24px; }
+    .close-popup { top: 6px; right: 10px; font-size: 22px; } /* Adjusted */
     .popup-content > h2 { font-size: 1.2em; margin: 15px 15px 10px 15px; }
-    .popup-product-details { flex-direction: column; align-items: center; text-align: center; gap: 15px; padding: 15px 15px 20px 15px; }
-    .popup-product-details img { width: 80px; height: 80px; margin-right: 0; margin-bottom: 0; }
-    .popup-product-info { text-align: center; }
-    .popup-actions { flex-direction: column; gap: 10px; padding: 15px; }
-    .popup-actions button { width: 100%; }
+    .popup-product-details { flex-direction: column; align-items: center; text-align: center; gap: 15px; padding: 15px 15px 20px 15px; } /* Adjusted from snippet */
+    .popup-product-details img { margin-right: 0; margin-bottom: 10px; width: 80px; height: 80px;} /* Adjusted */
+    .popup-product-info { text-align: center; } /* Adjusted from snippet */
+    .popup-actions { flex-direction: column; gap: 10px; padding: 15px; } /* Adjusted from snippet */
+    .popup-actions button { width: 100%; } /* Adjusted from snippet */
 }
 
 @media (max-width: 480px) {
-    .flex-options { grid-template-columns: 1fr; } /* सिंगल कॉलम */
-    .tab-link { width: 100%; text-align: center; border-bottom: 2px solid transparent; } /* टैब फुल विड्थ */
+    #product-name { font-size: 1.6em; } /* Adjusted from snippet */
+    .breadcrumbs { font-size: 0.8em; } /* From snippet */
+    .flex-options { grid-template-columns: 1fr; } /* From snippet */
+    #product-price.price { font-size: 2em; } /* From snippet */
+    .original-price { font-size: 1em; } /* From snippet */
+    #wedding-per-card-price.price-per-card { font-size: 0.9em; } /* Adjusted from snippet */
+    #add-to-cart-btn { font-size: 1em; padding: 12px 20px; } /* From snippet */
+    .view-cart-button { padding: 10px 15px; font-size: 0.9em;} /* Adjusted from snippet */
+
+    .tab-link { width: 100%; text-align: center; border-bottom: 2px solid transparent; }
     .tab-link.active { border-bottom: 2px solid var(--primary-color); }
-    .related-products-grid { grid-template-columns: 1fr; } /* मोबाइल पर सिंगल कॉलम */
-    .related-product-card img { height: 180px; } /* सिंगल कॉलम में थोड़ी बड़ी इमेज */
+    .related-products-grid { grid-template-columns: 1fr; }
+    .related-product-card img { height: 180px; }
 }
