@@ -1,6 +1,7 @@
 // js/product-detail.js
 // FINAL UPDATED Version: Includes Tabs, Quantity Buttons, New Price Layout, Related Products Slider, Schema Update, Review Logic, Social Sharing, and Error Checks
 // Corrected Price Calculation for Wedding Cards & Flex Banners + Image in Cart
+// Includes fix for potential SyntaxError around social sharing
 
 // --- Imports ---\
 import { db } from './firebase-config.js';
@@ -10,7 +11,8 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import { addToCart } from './cart.js';
 // Ensure updateCartCount is exported from main.js or handle it appropriately
-import { updateCartCount } from './main.js';
+// If main.js doesn't export it reliably, consider adding a fallback or direct update mechanism here.
+import { updateCartCount } from './main.js'; // Make sure this import works
 
 // --- DOM Elements ---\
 const productDetailContainer = document.getElementById('product-detail-container');
@@ -39,6 +41,8 @@ const relatedProductsContainer = document.getElementById('related-products-conta
 const relatedLoadingIndicator = document.getElementById('related-loading');
 const flexOptionsContainer = document.getElementById('flex-options'); // Container for flex inputs
 const weddingOptionsContainer = document.getElementById('wedding-options'); // Container for wedding quantity
+const flexPriceDisplay = document.getElementById('flex-calculated-price'); // Specific element for flex price
+const weddingPriceDisplay = document.getElementById('wedding-calculated-price'); // Specific element for wedding price
 
 // --- Global Variables ---\
 let currentProductData = null;
@@ -49,114 +53,123 @@ let currentProductId = null;
 // Function to display loading state
 function showLoading(isLoading) {
     if (loadingIndicator) loadingIndicator.style.display = isLoading ? 'block' : 'none';
-    if (productContent) productContent.style.display = isLoading ? 'none' : 'block'; // Hide content when loading
-    if (isLoading && errorMessageContainer) errorMessageContainer.style.display = 'none'; // Hide errors when loading
+    // Hide/show content area as well to prevent showing stale data while loading
+    if (productContent) productContent.style.display = isLoading ? 'none' : 'block';
+    if (isLoading && errorMessageContainer) errorMessageContainer.style.display = 'none'; // Hide errors when starting to load
 }
 
 // Function to display error messages
 function showError(message) {
-    showLoading(false); // Hide loading indicator
-    if (productContent) productContent.style.display = 'none'; // Hide content on error
+    showLoading(false); // Ensure loading is hidden
+    if (productContent) productContent.style.display = 'none'; // Hide the main content area on error
     if (errorMessageContainer) {
         errorMessageContainer.textContent = message;
         errorMessageContainer.style.display = 'block';
     }
-    console.error("Error Displayed:", message); // Log error to console
+    console.error("Product Detail Page Error:", message);
 }
 
-// Function to show feedback messages (e.g., for cart actions)
+// Function to show feedback messages (e.g., for cart actions, reviews)
 function showFeedback(element, message, isError = false) {
-    if (!element) return;
+    if (!element) {
+        console.warn("Feedback element not found for message:", message);
+        return;
+    }
     element.textContent = message;
-    element.className = isError ? 'feedback error' : 'feedback success'; // Add classes for styling
-    element.style.display = 'block';
+    element.className = isError ? 'feedback error active' : 'feedback success active'; // Use classes for styling visibility
+    element.style.display = 'block'; // Ensure it's visible
+
     // Hide message after 3 seconds
     setTimeout(() => {
         element.style.display = 'none';
+        element.classList.remove('active');
     }, 3000);
 }
 
 // Format currency (ensure this matches your needs)
 function formatCurrency(amount) {
-    if (typeof amount !== 'number' || isNaN(amount)) {
-        return 'N/A'; // Or some other placeholder
+    // Handle potential non-numeric input gracefully
+    const numericAmount = Number(amount);
+    if (isNaN(numericAmount)) {
+        // console.warn("Invalid amount passed to formatCurrency:", amount);
+        return 'N/A'; // Or return a default string like "₹ -.--"
     }
-    return `₹${amount.toFixed(2)}`; // Example: ₹1,234.50
+    // Use Intl.NumberFormat for better localization and formatting if needed
+    // return new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' }).format(numericAmount);
+    return `₹${numericAmount.toFixed(2)}`; // Simple formatting
 }
 
 // --- Flex Banner Calculation Logic ---
 /**
  * Calculates the printable square footage for a flex banner based on standard media widths.
+ * Attempts to find the most efficient orientation (width x height or height x width) on available media.
  * @param {number} widthFt - Requested width in feet.
  * @param {number} heightFt - Requested height in feet.
- * @param {Array<number>} mediaWidthsFt - Array of available media widths in feet (e.g., [3, 4, 5, 6, 8, 10]).
- * @returns {{printSqFtPerBanner: number, actualWidthFt: number, actualHeightFt: number}} - Object with calculated dimensions.
+ * @param {Array<number>} mediaWidthsFt - Array of available media widths in feet (e.g., [3, 4, 5, 6, 8, 10]). Sorted ascending.
+ * @returns {{printSqFtPerBanner: number, actualWidthFt: number, actualHeightFt: number, error?: string}} - Object with calculated dimensions or error.
  */
 function calculateFlexDimensions(widthFt, heightFt, mediaWidthsFt = [3, 4, 5, 6, 8, 10]) {
-    // Ensure dimensions are positive
-    widthFt = Math.max(0, widthFt);
-    heightFt = Math.max(0, heightFt);
+    // Validate inputs
+    widthFt = Math.max(0, Number(widthFt));
+    heightFt = Math.max(0, Number(heightFt));
 
-    // Sort media widths for efficient searching
-    mediaWidthsFt.sort((a, b) => a - b);
+    if (isNaN(widthFt) || isNaN(heightFt) || widthFt <= 0 || heightFt <= 0) {
+        return { printSqFtPerBanner: 0, actualWidthFt: 0, actualHeightFt: 0, error: "Invalid dimensions provided." };
+    }
+
+    // Ensure media widths are sorted numerically
+    const sortedMediaWidths = [...mediaWidthsFt].sort((a, b) => a - b);
 
     let bestSqFt = Infinity;
-    let actualWidth = widthFt; // Initialize with requested dimensions
-    let actualHeight = heightFt;
 
-    // Option 1: Print as is (width x height)
-    // Find the smallest media width that fits the smaller dimension
-    const smallerDim = Math.min(widthFt, heightFt);
-    const largerDim = Math.max(widthFt, heightFt);
-    let suitableMediaWidth = mediaWidthsFt.find(w => w >= smallerDim);
+    // Try both orientations (width x height and height x width)
+    const orientations = [
+        { w: widthFt, h: heightFt }, // Original
+        { w: heightFt, h: widthFt }  // Rotated
+    ];
 
-    if (suitableMediaWidth) {
-        bestSqFt = largerDim * suitableMediaWidth; // Area used on the roll
-        actualWidth = widthFt; // Keep original orientation
-        actualHeight = heightFt;
-    } else {
-        // If even the largest media doesn't fit the smaller dimension, need multiple panels (complex case, maybe just use requested dimensions for now)
-        console.warn(`Flex dimensions (${widthFt}x${heightFt}) exceed largest media width (${mediaWidthsFt[mediaWidthsFt.length - 1]}). Calculating based on requested size.`);
-        bestSqFt = widthFt * heightFt;
-        actualWidth = widthFt;
-        actualHeight = heightFt;
-        // More sophisticated logic could split the banner, but that's beyond basic calculation
-    }
+    for (const dim of orientations) {
+        const currentW = dim.w;
+        const currentH = dim.h;
 
+        // Find the smallest media roll width that the banner's smaller dimension fits onto
+        const smallerDim = Math.min(currentW, currentH);
+        const largerDim = Math.max(currentW, currentH);
 
-    // Option 2: Rotate 90 degrees (height x width) - Check if this is more efficient
-    const smallerDimRotated = Math.min(heightFt, widthFt); // Same as smallerDim
-    const largerDimRotated = Math.max(heightFt, widthFt); // Same as largerDim
-    let suitableMediaWidthRotated = mediaWidthsFt.find(w => w >= smallerDimRotated);
+        let suitableMediaWidth = sortedMediaWidths.find(mediaW => mediaW >= smallerDim);
 
-    if (suitableMediaWidthRotated) {
-        const rotatedSqFt = largerDimRotated * suitableMediaWidthRotated;
-        if (rotatedSqFt < bestSqFt) {
-            bestSqFt = rotatedSqFt;
-            // Keep original width/height values as 'actual' because the *request* is still WxH
-            // The calculation uses rotation for efficiency, but the user ordered WxH
-            actualWidth = widthFt;
-            actualHeight = heightFt;
+        if (suitableMediaWidth) {
+            // Calculate the square footage used on this roll for this orientation
+            const currentSqFt = largerDim * suitableMediaWidth;
+            bestSqFt = Math.min(bestSqFt, currentSqFt); // Keep track of the minimum area needed
         }
+        // If no suitable width found for this orientation's smaller dimension, this orientation is impossible on available rolls
     }
 
-    // If no suitable media found in either orientation (e.g., banner is wider/taller than largest roll)
+    // Check if a valid calculation was possible
     if (bestSqFt === Infinity) {
-        console.error(`Could not find suitable media for dimensions ${widthFt}x${heightFt}. Using raw area.`);
-        bestSqFt = widthFt * heightFt > 0 ? widthFt * heightFt : 0; // Avoid negative area if inputs were 0
-        actualWidth = widthFt;
-        actualHeight = heightFt;
+        console.warn(`Flex dimensions (${widthFt}x${heightFt}) might exceed largest media width in any orientation. Using raw area.`);
+        // As a fallback, calculate raw area, but signal potential issue.
+        // Or, you might decide to return an error here.
+        bestSqFt = widthFt * heightFt; // Use raw area as fallback if > 0
+        if (bestSqFt <= 0) {
+             return { printSqFtPerBanner: 0, actualWidthFt: widthFt, actualHeightFt: heightFt, error: "Dimensions result in zero area." };
+        }
+         // Optionally add an error/warning message to the result object
+         // return { printSqFtPerBanner: bestSqFt, actualWidthFt: widthFt, actualHeightFt: heightFt, warning: "Dimensions may exceed media limitations." };
     }
 
+     if (bestSqFt <= 0) {
+           return { printSqFtPerBanner: 0, actualWidthFt: widthFt, actualHeightFt: heightFt, error: "Calculated area is zero or negative." };
+     }
 
-    console.log(`Flex Input: ${widthFt}x${heightFt}. Calculated Best SqFt Use: ${bestSqFt}. Actual Dims Used for Calc: W=${actualWidth}, H=${actualHeight}`);
 
-    // Return the *calculated* square footage needed per banner,
-    // but keep the original dimensions for reference if needed elsewhere.
-    // The price should be based on bestSqFt.
+    // console.log(`Flex Input: ${widthFt}x${heightFt}. Calculated Best SqFt Use: ${bestSqFt}.`);
+
+    // Return the calculated minimum printable square footage needed per banner.
     return {
-        printSqFtPerBanner: bestSqFt > 0 ? bestSqFt : widthFt * heightFt, // Use calculated or raw area if calc failed but > 0
-        actualWidthFt: widthFt, // Return original requested dimensions
+        printSqFtPerBanner: bestSqFt,
+        actualWidthFt: widthFt, // Return original requested dimensions for reference
         actualHeightFt: heightFt
     };
 }
@@ -167,107 +180,106 @@ function calculateFlexDimensions(widthFt, heightFt, mediaWidthsFt = [3, 4, 5, 6,
 // Function to populate product details on the page
 function renderProductDetails(productData) {
     if (!productData) {
-        showError("Failed to load product data.");
+        showError("Failed to load product data (productData is null).");
         return;
     }
 
     currentProductData = productData; // Store globally
 
-    // Update breadcrumb and product name
+    // --- Basic Info ---
     if (breadcrumbProductName) breadcrumbProductName.textContent = productData.productName;
     if (productNameEl) productNameEl.textContent = productData.productName;
 
-    // Update main image
+    // --- Images ---
     if (mainImageEl) {
-        mainImageEl.src = productData.imageUrl || 'img/placeholder.png'; // Use placeholder if no image
-        mainImageEl.alt = productData.productName;
+        mainImageEl.src = productData.imageUrl || 'img/placeholder.png';
+        mainImageEl.alt = productData.productName || 'Product Image';
     }
-
-    // Update thumbnails
     if (thumbnailImagesContainer) {
-        thumbnailImagesContainer.innerHTML = ''; // Clear existing thumbnails
-        const imageUrls = [productData.imageUrl, ...(productData.additionalImages || [])].filter(Boolean); // Combine main and additional images
-
-        if (imageUrls.length > 1) { // Only show thumbnails if there's more than one image
-            imageUrls.forEach(url => {
+        thumbnailImagesContainer.innerHTML = ''; // Clear existing
+        const imageUrls = [productData.imageUrl, ...(productData.additionalImages || [])].filter(Boolean);
+        if (imageUrls.length > 1) {
+            thumbnailImagesContainer.style.display = 'flex'; // Or 'block' based on your CSS
+            imageUrls.forEach((url, index) => {
                 const img = document.createElement('img');
                 img.src = url;
-                img.alt = `${productData.productName} - Thumbnail`;
+                img.alt = `${productData.productName || 'Product'} - Thumbnail ${index + 1}`;
                 img.addEventListener('click', () => {
                     if (mainImageEl) mainImageEl.src = url;
-                    // Optionally highlight active thumbnail
                     thumbnailImagesContainer.querySelectorAll('img').forEach(thumb => thumb.classList.remove('active'));
                     img.classList.add('active');
                 });
                 thumbnailImagesContainer.appendChild(img);
             });
-            // Set first thumbnail as active initially
-            if (thumbnailImagesContainer.firstChild) {
-                thumbnailImagesContainer.firstChild.classList.add('active');
-            }
+            if (thumbnailImagesContainer.firstChild) thumbnailImagesContainer.firstChild.classList.add('active');
         } else {
-            thumbnailImagesContainer.style.display = 'none'; // Hide container if only one image
+            thumbnailImagesContainer.style.display = 'none'; // Hide if only one image
         }
     }
 
-
-    // --- Pricing Logic ---
-    // Reset price display initially
+    // --- Pricing and Options Logic ---
+    // Reset visibility states first
+    document.getElementById('standard-price-section')?.style.display = 'none';
+    document.getElementById('standard-quantity-section')?.style.display = 'none';
+    if (flexOptionsContainer) flexOptionsContainer.style.display = 'none';
+    if (weddingOptionsContainer) weddingOptionsContainer.style.display = 'none';
+    if (flexPriceDisplay) flexPriceDisplay.style.display = 'none';
+    if (weddingPriceDisplay) weddingPriceDisplay.style.display = 'none';
     if (priceEl) priceEl.textContent = '';
     if (originalPriceEl) originalPriceEl.style.display = 'none';
 
-    const category = productData.category?.toLowerCase() || '';
-    const pricing = productData.pricing;
 
-    if (category.includes('flex')) {
-        // Hide standard price/quantity, show flex options
-        if (priceEl) priceEl.closest('.price-section').style.display = 'none'; // Hide whole price section initially
-        if (originalPriceEl) originalPriceEl.style.display = 'none';
-        document.getElementById('standard-quantity-section')?.style.display = 'none';
+    const category = productData.category?.toLowerCase() || '';
+    const pricing = productData.pricing; // Ensure pricing object exists
+
+    if (!pricing) {
+         console.warn(`Product ${currentProductId} has no pricing information.`);
+         // Display a general message if appropriate
+         if(priceEl) priceEl.textContent = "Price not available";
+         document.getElementById('standard-price-section')?.style.display = 'block'; // Show price section with message
+         // Disable add to cart?
+         if (addToCartBtn) addToCartBtn.disabled = true;
+
+    } else if (category.includes('flex')) {
         if (flexOptionsContainer) flexOptionsContainer.style.display = 'block';
-        if (weddingOptionsContainer) weddingOptionsContainer.style.display = 'none';
-        // Flex price is calculated on input change, see event listener below
+        if (flexPriceDisplay) flexPriceDisplay.style.display = 'block'; // Show calculated price area
+        // Price calculation is triggered by input listeners
 
     } else if (category.includes('wedding')) {
-        // Hide standard price/quantity, show wedding options
-        if (priceEl) priceEl.closest('.price-section').style.display = 'none'; // Hide whole price section initially
-        if (originalPriceEl) originalPriceEl.style.display = 'none';
-        document.getElementById('standard-quantity-section')?.style.display = 'none';
-        if (flexOptionsContainer) flexOptionsContainer.style.display = 'none';
         if (weddingOptionsContainer) weddingOptionsContainer.style.display = 'block';
-        // Populate wedding quantity dropdown
-        populateWeddingQuantities(pricing?.quantities); // Assumes quantities are in pricing object
-        // Wedding price is calculated on selection change
+        if (weddingPriceDisplay) weddingPriceDisplay.style.display = 'block'; // Show calculated price area
+        populateWeddingQuantities(pricing.quantities); // Pass quantities array
+        // Price calculation is triggered by dropdown listener
 
     } else { // Standard Product
-        if (flexOptionsContainer) flexOptionsContainer.style.display = 'none';
-        if (weddingOptionsContainer) weddingOptionsContainer.style.display = 'none';
-        document.getElementById('standard-quantity-section')?.style.display = 'block'; // Show standard quantity
-        if (priceEl?.closest('.price-section')) priceEl.closest('.price-section').style.display = 'block'; // Show price section
+        const priceSection = document.getElementById('standard-price-section');
+        const quantitySection = document.getElementById('standard-quantity-section');
+        if (priceSection) priceSection.style.display = 'block';
+        if (quantitySection) quantitySection.style.display = 'block';
 
-        if (pricing?.rate) {
+        if (typeof pricing.rate === 'number' && !isNaN(pricing.rate)) {
             if (priceEl) priceEl.textContent = formatCurrency(pricing.rate);
-            // Handle optional original price for discounts
-            if (pricing.originalRate && pricing.originalRate > pricing.rate) {
+            if (typeof pricing.originalRate === 'number' && pricing.originalRate > pricing.rate) {
                 if (originalPriceEl) {
                     originalPriceEl.textContent = formatCurrency(pricing.originalRate);
-                    originalPriceEl.style.display = 'inline'; // Show strikethrough price
+                    originalPriceEl.style.display = 'inline';
                 }
             }
         } else {
-             if (priceEl) priceEl.textContent = "Price not available"; // Fallback
+             if (priceEl) priceEl.textContent = "Price not available";
+              if (addToCartBtn) addToCartBtn.disabled = true; // Disable if no price
         }
     }
-
 
     // --- Tabs ---
     if (descriptionContent) descriptionContent.innerHTML = productData.description || 'No description available.';
     if (specificationsContent) {
-        const specs = productData.specifications; // Assuming it's an object like { key: value, ... }
+        const specs = productData.specifications;
         if (specs && typeof specs === 'object' && Object.keys(specs).length > 0) {
             let specsHtml = '<ul>';
             for (const key in specs) {
-                specsHtml += `<li><strong>${key}:</strong> ${specs[key]}</li>`;
+                // Basic sanitation might be needed here if keys/values come from user input elsewhere
+                specsHtml += `<li><strong>${String(key)}:</strong> ${String(specs[key])}</li>`;
             }
             specsHtml += '</ul>';
             specificationsContent.innerHTML = specsHtml;
@@ -275,41 +287,57 @@ function renderProductDetails(productData) {
             specificationsContent.innerHTML = 'No specifications available.';
         }
     }
-    // Reviews are loaded separately
+    // Reviews are loaded separately via fetchReviews()
 
     // --- Related Products ---
-    fetchRelatedProducts(productData.category, productData.productId); // Use actual product ID if available
+    fetchRelatedProducts(productData.category, currentProductId); // Pass current product ID
 
     // --- Update Schema.org JSON-LD ---
     updateProductSchema(productData);
 
-    // --- Initialize UI elements ---
+    // --- Initialize UI elements (after data is loaded) ---
     setupTabs();
-    setupQuantityButtons(); // For standard products
-    setupFlexInputListeners(); // For flex banners
-    setupWeddingQuantityListener(); // For wedding cards
-    setupSocialSharing(); // Setup share buttons
-    fetchReviews(); // Fetch and display reviews
+    setupQuantityButtons(); // For standard products (will only work if section is visible)
+    setupFlexInputListeners(); // For flex banners (will only work if section is visible)
+    setupWeddingQuantityListener(); // For wedding cards (will only work if section is visible)
+    setupSocialSharing();
+    fetchReviews();
 
-    showLoading(false); // Hide loading indicator once done
+    // Ensure add to cart button is enabled initially if price exists (might be disabled above if no price)
+     if (addToCartBtn && pricing && (pricing.rate || category.includes('flex') || category.includes('wedding')) ) {
+          addToCartBtn.disabled = false;
+     }
+
+
+    showLoading(false); // Hide loading indicator
 }
 
 // Function to populate wedding quantity dropdown
 function populateWeddingQuantities(quantities) {
     const selectEl = document.getElementById('wedding-quantity-select');
-    if (!selectEl || !quantities || !Array.isArray(quantities)) {
-         console.warn("Wedding quantity dropdown or quantities data missing/invalid.");
-         if (selectEl) selectEl.innerHTML = '<option value="">Quantities not available</option>';
+    if (!selectEl) return; // Element not found
+
+    // Clear previous options but keep the default prompt
+    selectEl.innerHTML = '<option value="">Select Quantity</option>';
+
+    if (!quantities || !Array.isArray(quantities) || quantities.length === 0) {
+        console.warn("Wedding quantities data missing or invalid.");
+        const option = document.createElement('option');
+        option.textContent = "Quantities not available";
+        option.disabled = true;
+        selectEl.appendChild(option);
         return;
     }
 
-    selectEl.innerHTML = '<option value="">Select Quantity</option>'; // Default option
     quantities.forEach(qty => {
-        if (typeof qty === 'number' && qty > 0) {
+        const numQty = Number(qty); // Ensure it's a number
+        if (!isNaN(numQty) && numQty > 0) {
             const option = document.createElement('option');
-            option.value = qty;
-            option.textContent = qty;
+            option.value = numQty;
+            option.textContent = numQty;
             selectEl.appendChild(option);
+        } else {
+            console.warn("Invalid quantity value found in wedding quantities array:", qty);
         }
     });
 }
@@ -319,20 +347,19 @@ function populateWeddingQuantities(quantities) {
 // Setup Tabs Functionality
 function setupTabs() {
     if (!tabsContainer || !tabContentsContainer) return;
-
     const tabs = tabsContainer.querySelectorAll('.tab-link');
     const contents = tabContentsContainer.querySelectorAll('.tab-content');
+    if (tabs.length === 0 || contents.length === 0) return; // No tabs/content found
 
     tabs.forEach(tab => {
         tab.addEventListener('click', (event) => {
             event.preventDefault();
-            const targetId = tab.getAttribute('href').substring(1); // Get ID like 'description-content'
+            const targetId = tab.getAttribute('href')?.substring(1); // Use optional chaining
+            if (!targetId) return;
 
-            // Deactivate all tabs and contents
             tabs.forEach(t => t.classList.remove('active'));
             contents.forEach(c => c.classList.remove('active'));
 
-            // Activate clicked tab and corresponding content
             tab.classList.add('active');
             const targetContent = document.getElementById(targetId);
             if (targetContent) {
@@ -341,29 +368,41 @@ function setupTabs() {
         });
     });
 
-    // Activate the first tab by default if none are active
-    if (!tabsContainer.querySelector('.active')) {
-        if (tabs[0]) tabs[0].classList.add('active');
-        if (contents[0]) contents[0].classList.add('active');
+    // Ensure first tab is active by default if none is marked active in HTML
+    const activeTab = tabsContainer.querySelector('.tab-link.active');
+    if (!activeTab && tabs.length > 0) {
+        tabs[0].classList.add('active');
+        const firstContentId = tabs[0].getAttribute('href')?.substring(1);
+        if (firstContentId) {
+             const firstContent = document.getElementById(firstContentId);
+             if(firstContent) firstContent.classList.add('active');
+        }
+    } else if (activeTab) {
+         // Ensure corresponding content is active if tab is pre-selected
+         const targetId = activeTab.getAttribute('href')?.substring(1);
+         if (targetId) {
+              contents.forEach(c => c.classList.remove('active')); // Deactivate others first
+              const targetContent = document.getElementById(targetId);
+              if (targetContent) targetContent.classList.add('active');
+         }
     }
 }
 
 // Setup Standard Quantity Buttons Functionality
 function setupQuantityButtons() {
     if (quantityInput && quantityIncreaseBtn && quantityDecreaseBtn) {
-        quantityIncreaseBtn.addEventListener('click', () => {
+        quantityIncreaseBtn.onclick = () => { // Use onclick for simplicity or replace previous listener
             let currentValue = parseInt(quantityInput.value, 10);
-            if (isNaN(currentValue)) currentValue = 1;
-            quantityInput.value = currentValue + 1;
-        });
-
-        quantityDecreaseBtn.addEventListener('click', () => {
+            quantityInput.value = isNaN(currentValue) ? 1 : currentValue + 1;
+        };
+        quantityDecreaseBtn.onclick = () => { // Use onclick for simplicity
             let currentValue = parseInt(quantityInput.value, 10);
-            if (isNaN(currentValue)) currentValue = 1;
-            if (currentValue > 1) {
+            if (!isNaN(currentValue) && currentValue > 1) {
                 quantityInput.value = currentValue - 1;
+            } else {
+                 quantityInput.value = 1; // Reset to 1 if invalid or less than 1
             }
-        });
+        };
     }
 }
 
@@ -373,117 +412,165 @@ function setupFlexInputListeners() {
     const heightInput = document.getElementById('flex-height');
     const unitSelect = document.getElementById('flex-unit');
     const quantityInput = document.getElementById('flex-quantity'); // Quantity of banners
-    const flexPriceDisplay = document.getElementById('flex-calculated-price'); // Specific element for flex price
+
+    // Combine all relevant inputs into an array
+    const inputsToListen = [widthInput, heightInput, unitSelect, quantityInput];
+
+    // Check if all required elements exist
+    if (!flexPriceDisplay || inputsToListen.some(el => !el)) {
+        // console.warn("One or more Flex elements missing. Cannot setup listeners.");
+        return;
+    }
 
     const calculateAndUpdateFlexPrice = () => {
-        if (!currentProductData || !currentProductData.pricing || !flexPriceDisplay) return;
+         // Check if current product is actually a flex banner before calculating
+         if (!currentProductData || !currentProductData.category?.toLowerCase().includes('flex') || !currentProductData.pricing) {
+              flexPriceDisplay.textContent = ""; // Clear price if not a flex product or no pricing
+              flexPriceDisplay.style.display = 'none';
+             return;
+         }
 
-        const width = parseFloat(widthInput?.value || 0);
-        const height = parseFloat(heightInput?.value || 0);
-        const unit = unitSelect?.value || 'feet';
-        const quantity = parseInt(quantityInput?.value || 1, 10);
-        const ratePerSqFt = parseFloat(currentProductData.pricing.rate || 0); // Rate per sq ft
-        const minimumOrderValue = parseFloat(currentProductData.pricing.minimumOrderValue || 0);
-        const mediaWidths = currentProductData.pricing.mediaWidths || [3, 4, 5, 6, 8, 10]; // Get from Firestore or default
+        const width = parseFloat(widthInput.value);
+        const height = parseFloat(heightInput.value);
+        const unit = unitSelect.value;
+        const quantity = parseInt(quantityInput.value, 10);
+        const ratePerSqFt = parseFloat(currentProductData.pricing.rate);
+        const minimumOrderValue = parseFloat(currentProductData.pricing.minimumOrderValue || 0); // Default min value to 0
+        const mediaWidths = currentProductData.pricing.mediaWidths || [3, 4, 5, 6, 8, 10];
 
-        if (isNaN(width) || isNaN(height) || width <= 0 || height <= 0 || isNaN(quantity) || quantity <= 0 || isNaN(ratePerSqFt) || ratePerSqFt <= 0) {
-            flexPriceDisplay.textContent = "Please enter valid dimensions and quantity.";
+        // Basic validation for inputs
+        if (isNaN(width) || width <= 0 || isNaN(height) || height <= 0 || isNaN(quantity) || quantity <= 0) {
+            flexPriceDisplay.textContent = "Enter valid dimensions & quantity.";
+            flexPriceDisplay.style.display = 'block';
+            return;
+        }
+        // Validate pricing data
+         if (isNaN(ratePerSqFt) || ratePerSqFt <= 0) {
+            flexPriceDisplay.textContent = "Pricing info unavailable.";
+            flexPriceDisplay.style.display = 'block';
+            return;
+         }
+
+
+        // Convert dimensions to feet
+        const widthFt = unit === 'inches' ? width / 12 : width;
+        const heightFt = unit === 'inches' ? height / 12 : height;
+
+        // Calculate printable square footage
+        const dimResult = calculateFlexDimensions(widthFt, heightFt, mediaWidths);
+
+        if (dimResult.error || isNaN(dimResult.printSqFtPerBanner) || dimResult.printSqFtPerBanner <= 0) {
+            flexPriceDisplay.textContent = dimResult.error || "Cannot calculate area.";
             flexPriceDisplay.style.display = 'block';
             return;
         }
 
-        // Convert dimensions to feet if necessary
-        const widthFt = unit === 'inches' ? width / 12 : width;
-        const heightFt = unit === 'inches' ? height / 12 : height;
-
-        // Calculate printable square footage using the utility function
-        const { printSqFtPerBanner } = calculateFlexDimensions(widthFt, heightFt, mediaWidths);
-
-        if (isNaN(printSqFtPerBanner) || printSqFtPerBanner <= 0) {
-             flexPriceDisplay.textContent = "Could not calculate area.";
-              flexPriceDisplay.style.display = 'block';
-              return;
-        }
-
+        const printSqFtPerBanner = dimResult.printSqFtPerBanner;
         const totalPrintSqFt = printSqFtPerBanner * quantity;
 
-        // Calculate cost based on total print area
+        // Calculate cost
         const calculatedCost = totalPrintSqFt * ratePerSqFt;
+        const finalCost = Math.max(calculatedCost, minimumOrderValue); // Apply min order value
 
-        // Apply minimum order value
-        const finalCost = Math.max(calculatedCost, minimumOrderValue);
-
-        // Display the calculated *total* price for the given quantity
+        // Display the calculated total price
         flexPriceDisplay.textContent = `Total Price: ${formatCurrency(finalCost)} (${printSqFtPerBanner.toFixed(2)} sqft/banner)`;
-         flexPriceDisplay.style.display = 'block';
+        flexPriceDisplay.style.display = 'block';
     };
 
-    // Add listeners
-    widthInput?.addEventListener('input', calculateAndUpdateFlexPrice);
-    heightInput?.addEventListener('input', calculateAndUpdateFlexPrice);
-    unitSelect?.addEventListener('change', calculateAndUpdateFlexPrice);
-    quantityInput?.addEventListener('input', calculateAndUpdateFlexPrice);
+    // Add a single listener to each input
+    inputsToListen.forEach(input => {
+         // Use 'input' for text/number fields, 'change' for select dropdown
+         const eventType = (input.tagName === 'SELECT') ? 'change' : 'input';
+         input.removeEventListener(eventType, calculateAndUpdateFlexPrice); // Remove previous listener if any
+         input.addEventListener(eventType, calculateAndUpdateFlexPrice);
+    });
 
-    // Initial calculation if values are pre-filled (optional)
+    // Optional: Trigger initial calculation if inputs might have default values
     // calculateAndUpdateFlexPrice();
 }
 
 // Setup Wedding Quantity Listener for Price Calculation
 function setupWeddingQuantityListener() {
      const quantitySelect = document.getElementById('wedding-quantity-select');
-     const weddingPriceDisplay = document.getElementById('wedding-calculated-price'); // Specific element
+     if (!quantitySelect || !weddingPriceDisplay) {
+          // console.warn("Wedding quantity select or price display element missing.");
+          return;
+     }
 
      const calculateAndUpdateWeddingPrice = () => {
-         if (!currentProductData || !currentProductData.pricing || !quantitySelect || !weddingPriceDisplay) return;
-
-         const selectedQuantity = parseInt(quantitySelect.value, 10);
-         if (isNaN(selectedQuantity) || selectedQuantity <= 0) {
-             weddingPriceDisplay.textContent = "Please select a quantity.";
-              weddingPriceDisplay.style.display = 'block';
+         // Check if current product is actually a wedding card before calculating
+         if (!currentProductData || !currentProductData.category?.toLowerCase().includes('wedding') || !currentProductData.pricing) {
+             weddingPriceDisplay.textContent = ""; // Clear price
+             weddingPriceDisplay.style.display = 'none';
              return;
          }
 
-         // Get pricing details from currentProductData
-         const baseRate = parseFloat(currentProductData.pricing.rate || 0);
-         const designCharge = parseFloat(currentProductData.pricing.designCharge || 0);
-         const printingChargeBase = parseFloat(currentProductData.pricing.printingChargeBase || 0);
-         const transportCharge = parseFloat(currentProductData.pricing.transportCharge || 0);
-         const extraMarginPercent = parseFloat(currentProductData.pricing.extraMarginPercent || 0);
+         const selectedQuantity = parseInt(quantitySelect.value, 10);
 
-         // Validate required pricing fields
-         if (isNaN(baseRate)) { // Only baseRate is strictly required for per-unit calculation part
-              weddingPriceDisplay.textContent = "Pricing information incomplete.";
-              weddingPriceDisplay.style.display = 'block';
-              return;
+         // Handle the default "Select Quantity" option
+         if (isNaN(selectedQuantity) || selectedQuantity <= 0) {
+             weddingPriceDisplay.textContent = "Please select quantity.";
+             weddingPriceDisplay.style.display = 'block';
+             return;
          }
 
-         // Calculate total amount for the selected quantity
+         // Get pricing details safely
+         const pricing = currentProductData.pricing;
+         const baseRate = parseFloat(pricing.rate);
+         const designCharge = parseFloat(pricing.designCharge || 0);
+         const printingChargeBase = parseFloat(pricing.printingChargeBase || 0);
+         const transportCharge = parseFloat(pricing.transportCharge || 0);
+         const extraMarginPercent = parseFloat(pricing.extraMarginPercent || 0);
+
+         // Validate base rate is essential
+         if (isNaN(baseRate)) {
+             weddingPriceDisplay.textContent = "Base price info missing.";
+             weddingPriceDisplay.style.display = 'block';
+             return;
+         }
+
+         // Calculate total amount
          const subTotal = (baseRate * selectedQuantity) + designCharge + printingChargeBase + transportCharge;
          const finalAmount = subTotal * (1 + (extraMarginPercent / 100));
 
-         // Calculate average price per unit for display purposes
+         // Calculate average price per unit
          const averageUnitPrice = finalAmount / selectedQuantity;
 
-         if (isNaN(finalAmount) || finalAmount <= 0 || isNaN(averageUnitPrice) || averageUnitPrice <= 0) {
-              weddingPriceDisplay.textContent = "Could not calculate price.";
-              weddingPriceDisplay.style.display = 'block';
-               return;
+         // Final validation of calculated prices
+         if (isNaN(finalAmount) || finalAmount < 0 || isNaN(averageUnitPrice) || averageUnitPrice < 0) {
+             weddingPriceDisplay.textContent = "Error calculating price.";
+             weddingPriceDisplay.style.display = 'block';
+             return;
          }
 
-         // Display the total price and average price per unit
+         // Display the results
          weddingPriceDisplay.textContent = `Total: ${formatCurrency(finalAmount)} (${formatCurrency(averageUnitPrice)}/card)`;
          weddingPriceDisplay.style.display = 'block';
      };
 
-     quantitySelect?.addEventListener('change', calculateAndUpdateWeddingPrice);
+     // Add listener (use change event for select dropdown)
+     quantitySelect.removeEventListener('change', calculateAndUpdateWeddingPrice); // Remove previous if any
+     quantitySelect.addEventListener('change', calculateAndUpdateWeddingPrice);
+
+     // Optional: Trigger initial calculation if a default value might be selected
+     // calculateAndUpdateWeddingPrice();
 }
 
-// --- Add to Cart Logic (UPDATED) ---
+// --- Add to Cart Logic (UPDATED - Includes checks and correct price sending) ---
 async function handleAddToCart() {
+    // 1. Check if product data is loaded
     if (!currentProductData || !currentProductId) {
-        showFeedback(cartFeedbackEl, "Product data not loaded yet.", true);
+        showFeedback(cartFeedbackEl, "Product data not ready. Please wait.", true);
         return;
     }
+    // 2. Check if pricing info exists (unless it's handled inside category checks)
+     if (!currentProductData.pricing && !currentProductData.category?.toLowerCase().includes('flex') && !currentProductData.category?.toLowerCase().includes('wedding')) {
+         // Allow flex/wedding to proceed as their price might be calculated dynamically
+         // but block standard products without pricing.
+          showFeedback(cartFeedbackEl, "Pricing information is missing for this product.", true);
+          return;
+     }
+
 
     // Clear previous feedback
     if (cartFeedbackEl) cartFeedbackEl.style.display = 'none';
@@ -492,159 +579,132 @@ async function handleAddToCart() {
         // --- Base Cart Options (Common to all types) ---
         let cartOptions = {
             name: currentProductData.productName || 'Unnamed Product',
-            imageUrl: mainImageEl ? mainImageEl.src : (currentProductData.thumbnailUrl || 'img/placeholder.png')
-            // Add any other common options here if needed later
+            // Ensure mainImageEl exists and has a src, otherwise use thumbnail or placeholder
+            imageUrl: mainImageEl?.src || currentProductData.thumbnailUrl || 'img/placeholder.png'
         };
 
-        let itemToAdd = { productId: currentProductId, quantity: 1 }; // Default quantity
+        let itemToAdd = { productId: currentProductId, quantity: 1 }; // Default values
         const category = currentProductData.category?.toLowerCase() || '';
-        const pricing = currentProductData.pricing;
+        const pricing = currentProductData.pricing || {}; // Use empty object if pricing is missing
 
         // --- Category-Specific Logic ---
+
         if (category.includes('wedding')) {
             const quantityDropdown = document.getElementById('wedding-quantity-select');
-            if (!quantityDropdown || !quantityDropdown.value) {
-                showFeedback(cartFeedbackEl, "Please select a wedding card quantity.", true); return;
-            }
-            const selectedQuantity = parseInt(quantityDropdown.value, 10);
+            const selectedQuantity = parseInt(quantityDropdown?.value, 10);
 
-            if (isNaN(selectedQuantity) || selectedQuantity <= 0) {
-                 showFeedback(cartFeedbackEl, "Invalid quantity selected.", true); return;
+            if (!quantityDropdown || isNaN(selectedQuantity) || selectedQuantity <= 0) {
+                showFeedback(cartFeedbackEl, "Please select a valid wedding card quantity.", true); return;
             }
 
-            // Get pricing details
-            const baseRate = parseFloat(pricing?.rate || 0);
-            const designCharge = parseFloat(pricing?.designCharge || 0);
-            const printingChargeBase = parseFloat(pricing?.printingChargeBase || 0);
-            const transportCharge = parseFloat(pricing?.transportCharge || 0);
-            const extraMarginPercent = parseFloat(pricing?.extraMarginPercent || 0);
+            // Recalculate price to ensure consistency (avoids relying on display)
+            const baseRate = parseFloat(pricing.rate);
+            if (isNaN(baseRate)) { showFeedback(cartFeedbackEl, "Base price info missing.", true); return; }
+            const designCharge = parseFloat(pricing.designCharge || 0);
+            const printingChargeBase = parseFloat(pricing.printingChargeBase || 0);
+            const transportCharge = parseFloat(pricing.transportCharge || 0);
+            const extraMarginPercent = parseFloat(pricing.extraMarginPercent || 0);
 
-            // Calculate Total Amount
             const subTotal = (baseRate * selectedQuantity) + designCharge + printingChargeBase + transportCharge;
             const finalAmount = subTotal * (1 + (extraMarginPercent / 100));
-
-            // *** Calculate Average Unit Price for Cart ***
             const averageUnitPrice = finalAmount / selectedQuantity;
 
-            // Validate calculated price
-             if (isNaN(averageUnitPrice) || averageUnitPrice <= 0) {
-                  console.error("Wedding Card price calculation resulted in invalid average price:", averageUnitPrice, "Final Amount:", finalAmount, "Quantity:", selectedQuantity);
-                  showFeedback(cartFeedbackEl, "Could not calculate a valid price for this quantity.", true);
-                  return;
-             }
+            if (isNaN(averageUnitPrice) || averageUnitPrice <= 0) {
+                showFeedback(cartFeedbackEl, "Could not calculate valid price per card.", true); return;
+            }
 
-            // Update item details and cart options
             itemToAdd.quantity = selectedQuantity;
-            cartOptions = {
-                 ...cartOptions, // Preserve base options (name, image)
-                type: 'Wedding Card',
-                price: averageUnitPrice // <<<--- Send AVERAGE UNIT PRICE to cart
-            };
+            cartOptions = { ...cartOptions, type: 'Wedding Card', price: averageUnitPrice };
 
         } else if (category.includes('flex')) {
             const widthInput = document.getElementById('flex-width');
             const heightInput = document.getElementById('flex-height');
             const unitSelect = document.getElementById('flex-unit');
-            const quantityInput = document.getElementById('flex-quantity'); // Quantity of banners
+            const quantityInput = document.getElementById('flex-quantity');
 
-            const width = parseFloat(widthInput?.value || 0);
-            const height = parseFloat(heightInput?.value || 0);
-            const unit = unitSelect?.value || 'feet';
-            const quantity = parseInt(quantityInput?.value || 1, 10); // Quantity of banners
+            const width = parseFloat(widthInput?.value);
+            const height = parseFloat(heightInput?.value);
+            const unit = unitSelect?.value;
+            const quantity = parseInt(quantityInput?.value, 10); // Quantity of banners
 
-             if (isNaN(width) || isNaN(height) || width <= 0 || height <= 0 || isNaN(quantity) || quantity <= 0) {
-                showFeedback(cartFeedbackEl, "Please enter valid dimensions and quantity for the banner.", true); return;
+            if (isNaN(width) || width <= 0 || isNaN(height) || height <= 0 || isNaN(quantity) || quantity <= 0) {
+                showFeedback(cartFeedbackEl, "Enter valid flex dimensions & quantity.", true); return;
             }
 
-            const ratePerSqFt = parseFloat(pricing?.rate || 0);
-            const minimumOrderValue = parseFloat(pricing?.minimumOrderValue || 0);
-            const mediaWidths = pricing?.mediaWidths || [3, 4, 5, 6, 8, 10];
+            const ratePerSqFt = parseFloat(pricing.rate);
+            if (isNaN(ratePerSqFt) || ratePerSqFt <= 0) { showFeedback(cartFeedbackEl, "Flex price info missing.", true); return; }
+            const minimumOrderValue = parseFloat(pricing.minimumOrderValue || 0);
+            const mediaWidths = pricing.mediaWidths || [3, 4, 5, 6, 8, 10];
 
-             if (isNaN(ratePerSqFt) || ratePerSqFt <= 0) {
-                  showFeedback(cartFeedbackEl, "Flex pricing information is missing.", true); return;
-             }
-
-            // Convert dimensions to feet
             const widthFt = unit === 'inches' ? width / 12 : width;
             const heightFt = unit === 'inches' ? height / 12 : height;
 
-            // Calculate printable square footage
-            const { printSqFtPerBanner } = calculateFlexDimensions(widthFt, heightFt, mediaWidths);
-
-             if (isNaN(printSqFtPerBanner) || printSqFtPerBanner <= 0) {
-                 showFeedback(cartFeedbackEl, "Could not calculate printable area.", true); return;
+            const dimResult = calculateFlexDimensions(widthFt, heightFt, mediaWidths);
+            if (dimResult.error || isNaN(dimResult.printSqFtPerBanner) || dimResult.printSqFtPerBanner <= 0) {
+                 showFeedback(cartFeedbackEl, dimResult.error || "Cannot calculate flex area.", true); return;
             }
+            const printSqFtPerBanner = dimResult.printSqFtPerBanner;
 
-            // Calculate total cost for all banners
+            // Recalculate total cost and price per banner
             const totalPrintSqFt = printSqFtPerBanner * quantity;
             const calculatedCost = totalPrintSqFt * ratePerSqFt;
-            const finalCost = Math.max(calculatedCost, minimumOrderValue); // Apply min order value
-
-            // *** Calculate Price Per Banner for Cart ***
+            const finalCost = Math.max(calculatedCost, minimumOrderValue);
             const pricePerBanner = finalCost / quantity;
 
-             // Validate calculated price per banner
-             if (isNaN(pricePerBanner) || pricePerBanner <= 0) {
-                  console.error("Flex Banner price calculation resulted in invalid price per banner:", pricePerBanner, "Final Cost:", finalCost, "Quantity:", quantity);
-                  showFeedback(cartFeedbackEl, "Could not calculate a valid price per banner.", true);
-                  return;
-             }
+            if (isNaN(pricePerBanner) || pricePerBanner <= 0) {
+                showFeedback(cartFeedbackEl, "Could not calculate valid price per banner.", true); return;
+            }
 
-            // Update item details and cart options
-             itemToAdd.quantity = quantity; // Number of banners
-             cartOptions = {
-                 ...cartOptions, // Preserve base options
-                 type: 'Flex Banner',
-                 sqFtInfo: `(${widthFt.toFixed(2)}' x ${heightFt.toFixed(2)}' = ${printSqFtPerBanner.toFixed(2)} sqft/banner)`, // Example details
-                 price: pricePerBanner // <<<--- Send PRICE PER BANNER to cart
-             };
+            itemToAdd.quantity = quantity; // Number of banners
+            cartOptions = {
+                ...cartOptions,
+                type: 'Flex Banner',
+                sqFtInfo: `(${widthFt.toFixed(2)}'x${heightFt.toFixed(2)}'=${printSqFtPerBanner.toFixed(2)}sqft/ea)`, // Example detail
+                price: pricePerBanner
+            };
 
         } else { // Standard Product
             const quantitySelected = parseInt(quantityInput?.value || 1, 10);
-             if (isNaN(quantitySelected) || quantitySelected <= 0) {
-                 showFeedback(cartFeedbackEl, "Please enter a valid quantity.", true); return;
-             }
+            if (isNaN(quantitySelected) || quantitySelected <= 0) {
+                showFeedback(cartFeedbackEl, "Please enter a valid quantity.", true); return;
+            }
 
-            const standardPrice = parseFloat(pricing?.rate || 0);
-             if (isNaN(standardPrice) || standardPrice <= 0) {
-                 showFeedback(cartFeedbackEl, "Product price is not available.", true); return;
-             }
+            const standardPrice = parseFloat(pricing?.rate); // Use optional chaining
+            if (isNaN(standardPrice) || standardPrice <= 0) {
+                showFeedback(cartFeedbackEl, "Product price is not available.", true); return;
+            }
 
-             // Update item details and cart options
             itemToAdd.quantity = quantitySelected;
-            cartOptions = {
-                 ...cartOptions, // Preserve base options
-                 type: 'Standard', // Or use productData.category
-                 price: standardPrice // <<<--- Send standard UNIT PRICE to cart
-             };
+            cartOptions = { ...cartOptions, type: 'Standard', price: standardPrice };
         }
 
-        // --- Final Price Validation (Before Adding to Cart) ---
-         if (typeof cartOptions.price !== 'number' || isNaN(cartOptions.price) || cartOptions.price <= 0) {
-              console.error("Invalid price determined before calling addToCart:", cartOptions.price, "Product ID:", itemToAdd.productId);
-              showFeedback(cartFeedbackEl, "Could not determine a valid price for this item. Cannot add to cart.", true);
-              return;
-         }
+        // --- Final Price Validation (Universal) ---
+        if (typeof cartOptions.price !== 'number' || isNaN(cartOptions.price) || cartOptions.price < 0) { // Allow 0 price? Decide policy. Usually > 0.
+            console.error("Invalid final price determined before addToCart:", cartOptions.price, "Data:", itemToAdd, cartOptions);
+            showFeedback(cartFeedbackEl, "Could not determine a valid price. Item not added.", true);
+            return;
+        }
 
 
         // --- Add To Cart Call ---
-         console.log("Adding to cart:", itemToAdd.productId, itemToAdd.quantity, cartOptions); // Log what's being added
-         addToCart(itemToAdd.productId, itemToAdd.quantity, cartOptions);
+        console.log("Adding to cart:", itemToAdd.productId, "Qty:", itemToAdd.quantity, "Options:", cartOptions);
+        addToCart(itemToAdd.productId, itemToAdd.quantity, cartOptions);
 
-         showFeedback(cartFeedbackEl, "Product added to cart!", false);
+        showFeedback(cartFeedbackEl, "Product added to cart!", false);
 
-         // Update cart count in header (ensure updateCartCount is imported and working)
-         if (typeof updateCartCount === 'function') {
-             updateCartCount();
-         } else {
-             console.warn("updateCartCount function not available.");
-             // Optional: Implement a fallback or log this issue
-         }
+        // Update cart count in header
+        if (typeof updateCartCount === 'function') {
+            updateCartCount();
+        } else {
+            console.warn("updateCartCount function is not available or not imported correctly.");
+            // Maybe add a manual event dispatch if updateCartCount is unreliable
+            // document.dispatchEvent(new CustomEvent('cartUpdated')); // cart.js should dispatch this anyway
+        }
 
-     } catch (error) {
-         console.error("Error adding product to cart:", error);
-         showFeedback(cartFeedbackEl, `Failed to add product to cart. ${error.message || 'Unknown error'}`, true);
-     }
+    } catch (error) {
+        console.error("Error in handleAddToCart:", error);
+        showFeedback(cartFeedbackEl, `Failed to add product. ${error.message || 'Unknown error'}`, true);
+    }
 }
 
 
@@ -653,11 +713,11 @@ async function handleAddToCart() {
 // Fetch and display reviews
 async function fetchReviews() {
     if (!currentProductId || !reviewList) return;
-    reviewList.innerHTML = '<li>Loading reviews...</li>'; // Show loading state
+    reviewList.innerHTML = '<li>Loading reviews...</li>';
 
     try {
         const reviewsRef = collection(db, 'products', currentProductId, 'reviews');
-        const q = query(reviewsRef, orderBy('createdAt', 'desc'), limit(10)); // Get latest 10 reviews
+        const q = query(reviewsRef, orderBy('createdAt', 'desc'), limit(10));
         const querySnapshot = await getDocs(q);
 
         if (querySnapshot.empty) {
@@ -668,15 +728,20 @@ async function fetchReviews() {
         let reviewsHtml = '';
         querySnapshot.forEach((doc) => {
             const review = doc.data();
-            const ratingStars = '★'.repeat(review.rating) + '☆'.repeat(5 - review.rating);
+            // Basic XSS prevention (replace < and >) - consider a library for robust sanitization if needed
+            const safeComment = review.comment?.replace(/</g, "&lt;").replace(/>/g, "&gt;") || '';
+            const safeUserName = review.userName?.replace(/</g, "&lt;").replace(/>/g, "&gt;") || 'Anonymous';
+            const rating = Number(review.rating) || 0; // Ensure rating is a number
+            const ratingStars = '★'.repeat(Math.max(0, Math.min(5, Math.round(rating)))) + '☆'.repeat(Math.max(0, 5 - Math.round(rating)));
             const reviewDate = review.createdAt?.toDate ? review.createdAt.toDate().toLocaleDateString() : 'Unknown date';
+
             reviewsHtml += `
                 <li>
                     <div class="review-header">
-                        <strong>${review.userName || 'Anonymous'}</strong> - ${reviewDate}
+                        <strong>${safeUserName}</strong> - <span class="review-date">${reviewDate}</span>
                     </div>
                     <div class="review-rating">${ratingStars}</div>
-                    <p>${review.comment || ''}</p>
+                    <p class="review-comment">${safeComment}</p>
                 </li>
             `;
         });
@@ -694,44 +759,46 @@ async function handleReviewSubmit(event) {
     if (!currentProductId || !reviewForm) return;
 
     const submitButton = reviewForm.querySelector('button[type="submit"]');
-    const feedbackEl = document.getElementById('review-feedback'); // Specific feedback element for reviews
+    const feedbackEl = document.getElementById('review-feedback');
 
     // Basic validation
-    const rating = parseInt(reviewForm.rating.value, 10);
-    const comment = reviewForm.comment.value.trim();
-    const userName = reviewForm.userName.value.trim() || 'Anonymous'; // Optional name
+    const rating = parseInt(reviewForm.rating?.value, 10);
+    const comment = reviewForm.comment?.value.trim();
+    const userName = reviewForm.userName?.value.trim(); // Keep it simple, allow empty
+
+    // Ensure feedbackEl exists before using
+    const showReviewFeedback = (msg, isErr) => feedbackEl ? showFeedback(feedbackEl, msg, isErr) : console.warn("Review feedback element missing");
+
 
     if (isNaN(rating) || rating < 1 || rating > 5) {
-        showFeedback(feedbackEl, "Please select a rating between 1 and 5.", true);
-        return;
+        showReviewFeedback("Please select a rating (1-5 stars).", true); return;
     }
     if (!comment) {
-        showFeedback(feedbackEl, "Please enter your review comment.", true);
-        return;
+        showReviewFeedback("Please enter your review comment.", true); return;
     }
 
-    // Disable button during submission
-    submitButton.disabled = true;
-    showFeedback(feedbackEl, "Submitting review...", false);
+    // Disable button and show loading feedback
+    if(submitButton) submitButton.disabled = true;
+    showReviewFeedback("Submitting review...", false);
 
     try {
         const reviewsRef = collection(db, 'products', currentProductId, 'reviews');
         await addDoc(reviewsRef, {
             rating: rating,
             comment: comment,
-            userName: userName,
-            createdAt: serverTimestamp() // Use server timestamp
+            userName: userName || 'Anonymous', // Default to Anonymous if empty
+            createdAt: serverTimestamp()
         });
 
-        showFeedback(feedbackEl, "Review submitted successfully!", false);
-        reviewForm.reset(); // Clear the form
+        showReviewFeedback("Review submitted successfully!", false);
+        reviewForm.reset();
         fetchReviews(); // Refresh the review list
 
     } catch (error) {
         console.error("Error submitting review:", error);
-        showFeedback(feedbackEl, "Failed to submit review. Please try again.", true);
+        showReviewFeedback("Failed to submit review. Please try again.", true);
     } finally {
-        submitButton.disabled = false; // Re-enable button
+         if(submitButton) submitButton.disabled = false; // Re-enable button
     }
 }
 
@@ -739,50 +806,58 @@ async function handleReviewSubmit(event) {
 // --- Related Products Logic ---
 
 async function fetchRelatedProducts(category, currentProdId) {
-    if (!relatedProductsContainer || !category) return;
+    if (!relatedProductsContainer || !category || !currentProdId) {
+        // Hide section or show placeholder if essential info is missing
+         if(relatedLoadingIndicator) relatedLoadingIndicator.style.display = 'none';
+         if(relatedProductsContainer) relatedProductsContainer.innerHTML = ''; // Clear it
+        return;
+    }
 
     if (relatedLoadingIndicator) relatedLoadingIndicator.style.display = 'block';
-    relatedProductsContainer.innerHTML = ''; // Clear previous related products
+    relatedProductsContainer.innerHTML = ''; // Clear previous
 
     try {
         const productsRef = collection(db, 'products');
-        // Query for products in the same category, excluding the current one, limit results
         const q = query(
             productsRef,
             where('category', '==', category),
-            where('productId', '!=', currentProdId || ''), // Exclude current product using its ID field
-            limit(6) // Limit number of related products
+            where('productId', '!=', currentProdId), // Use the actual unique product ID field
+            limit(6)
         );
 
         const querySnapshot = await getDocs(q);
 
         if (querySnapshot.empty) {
-             relatedProductsContainer.innerHTML = '<p>No related products found.</p>';
+            relatedProductsContainer.innerHTML = '<p>No related products found in this category.</p>';
         } else {
             let productsHtml = '';
             querySnapshot.forEach((doc) => {
                 const product = doc.data();
-                const productPrice = product.pricing?.rate ? formatCurrency(product.pricing.rate) : 'N/A';
-                 // Use product.productId if it exists, otherwise doc.id as fallback
-                 const productId = product.productId || doc.id;
+                 // Ensure required fields exist before creating HTML
+                 const pId = product.productId || doc.id; // Use field or doc ID
+                 const pName = product.productName || 'Unnamed Product';
+                 const pImageUrl = product.thumbnailUrl || product.imageUrl || 'img/placeholder.png';
+                 const pPrice = (product.pricing && typeof product.pricing.rate === 'number')
+                                ? formatCurrency(product.pricing.rate)
+                                : 'N/A';
+
                  productsHtml += `
                     <div class="related-product-item">
-                        <a href="product-detail.html?id=${productId}">
-                            <img src="${product.thumbnailUrl || product.imageUrl || 'img/placeholder.png'}" alt="${product.productName}">
-                            <h3>${product.productName}</h3>
-                            <p class="related-price">${productPrice}</p>
+                        <a href="product-detail.html?id=${pId}">
+                            <img src="${pImageUrl}" alt="${pName}" loading="lazy">
+                            <h3>${pName}</h3>
+                            <p class="related-price">${pPrice}</p>
                         </a>
                     </div>
                 `;
             });
-             relatedProductsContainer.innerHTML = productsHtml;
-             // Basic Slider Initialization (Optional, needs CSS)
-             // setupBasicSlider(relatedProductsContainer); // Implement this if needed
+            relatedProductsContainer.innerHTML = productsHtml;
+             // Optional: Initialize a slider if needed for related products
         }
 
     } catch (error) {
         console.error("Error fetching related products:", error);
-        relatedProductsContainer.innerHTML = '<p>Could not load related products.</p>';
+        relatedProductsContainer.innerHTML = '<p>Could not load related products due to an error.</p>';
     } finally {
         if (relatedLoadingIndicator) relatedLoadingIndicator.style.display = 'none';
     }
@@ -795,70 +870,94 @@ function updateProductSchema(productData) {
     const schemaScript = document.getElementById('product-schema');
     if (!schemaScript || !productData) return;
 
+    const priceInfo = productData.pricing;
+    let offerDetails = null;
+
+    // Create offer only if there's a valid price (rate)
+    if (priceInfo && typeof priceInfo.rate === 'number' && !isNaN(priceInfo.rate) && priceInfo.rate >= 0) {
+        offerDetails = {
+            "@type": "Offer",
+            "url": window.location.href,
+            "priceCurrency": "INR", // Adjust if needed
+            "price": priceInfo.rate.toFixed(2),
+            // Determine availability based on stock status if available, otherwise assume InStock
+            "availability": (productData.stockStatus === 'OutOfStock') ? "https://schema.org/OutOfStock" : "https://schema.org/InStock",
+            "itemCondition": "https://schema.org/NewCondition"
+        };
+        // Add original price if applicable (for Sale price indication)
+        if (typeof priceInfo.originalRate === 'number' && priceInfo.originalRate > priceInfo.rate) {
+            // Schema.org doesn't have a direct 'originalPrice' field in Offer,
+            // but indicating a sale price often relies on context or specific offer types.
+            // For simplicity, we include the sale price. You could use PriceSpecification for more detail.
+        }
+    }
+
+
     const schema = {
         "@context": "https://schema.org/",
         "@type": "Product",
         "name": productData.productName || "Unnamed Product",
         "image": productData.imageUrl || "",
-        "description": productData.shortDescription || productData.description || "No description available.", // Prefer short description
-        "sku": productData.sku || productData.productId || currentProductId, // Use SKU if available, else ID
+        // Use description or a shorter version if available
+        "description": productData.description || "No description available.",
+        // Use SKU or product ID if available
+        "sku": productData.sku || productData.productId || currentProductId,
         "brand": {
             "@type": "Brand",
-            "name": productData.brand || "Madhav Multiprint" // Use brand if available, else default
+            "name": productData.brand || "Madhav Multiprint" // Default brand
         },
-        // Add offers only if price is available
-        ...(productData.pricing?.rate && {
-            "offers": {
-                "@type": "Offer",
-                "url": window.location.href, // URL of the product page
-                "priceCurrency": "INR", // Or your currency code
-                "price": productData.pricing.rate.toFixed(2),
-                "availability": "https://schema.org/InStock", // Or other availability status
-                "itemCondition": "https://schema.org/NewCondition"
-            }
-        })
-        // AggregateRating can be added here if you calculate average rating
-        // "aggregateRating": {
-        //     "@type": "AggregateRating",
-        //     "ratingValue": "4.5", // Example average rating
-        //     "reviewCount": "15" // Example review count
-        // }
+        // Only include offers if valid price details were found
+        ...(offerDetails && { "offers": offerDetails })
+        // AggregateRating can be added later if review data is processed
     };
 
-    schemaScript.textContent = JSON.stringify(schema);
+    schemaScript.textContent = JSON.stringify(schema, null, 2); // Use null, 2 for pretty printing JSON
 }
 
-// --- Social Sharing Logic ---
+// --- Social Sharing Logic (Corrected Version) ---
 function setupSocialSharing() {
     const socialShareLinks = document.querySelectorAll('.social-share a'); // Target links inside the container
 
      if (socialShareLinks.length > 0) {
          socialShareLinks.forEach(link => {
-             link.addEventListener('click', (event) => {
-                 event.preventDefault();
-                 if (!currentProductData?.productName) return; // Need product name
-
-                 const pageUrl = window.location.href;
-                 const productName = encodeURIComponent(currentProductData.productName);
-                 let shareUrl = '';
-                 const network = link.getAttribute('aria-label')?.toLowerCase() || ''; // Get network from aria-label
-
-                 if (network.includes('facebook')) {
-                     shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(pageUrl)}`;
-                 } else if (network.includes('twitter')) {
-                     shareUrl = `https://twitter.com/intent/tweet?url=${encodeURIComponent(pageUrl)}&text=${productName}`;
-                 } else if (network.includes('whatsapp')) {
-                     shareUrl = `https://api.whatsapp.com/send?text=${productName}%20${encodeURIComponent(pageUrl)}`;
-                 }
-                 // Add more networks like Pinterest, LinkedIn if needed
-
-                 if (shareUrl) {
-                     // Open in a new, smaller window
-                     window.open(shareUrl, '_blank', 'width=600,height=400');
-                 }
-             });
+             // Ensure event listeners are not duplicated if this function is called multiple times
+             link.removeEventListener('click', handleSocialLinkClick); // Remove previous listener first
+             link.addEventListener('click', handleSocialLinkClick); // Add the new listener
          });
+     } else {
+          // console.log("No social share links found to attach listeners to.");
      }
+}
+// Define the handler function separately to allow removal
+function handleSocialLinkClick(event) {
+    event.preventDefault();
+    // Ensure currentProductData and productName are available before proceeding
+    if (!currentProductData || !currentProductData.productName) {
+        console.warn("Cannot share: Product data or name missing.");
+        return;
+    }
+
+    const pageUrl = window.location.href;
+    const productName = encodeURIComponent(currentProductData.productName);
+    let shareUrl = '';
+    // Use nullish coalescing for safety, although aria-label should ideally exist
+    const network = this.getAttribute('aria-label')?.toLowerCase() ?? ''; // 'this' refers to the clicked link
+
+    if (network.includes('facebook')) {
+        shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(pageUrl)}`;
+    } else if (network.includes('twitter')) {
+        shareUrl = `https://twitter.com/intent/tweet?url=${encodeURIComponent(pageUrl)}&text=${productName}`;
+    } else if (network.includes('whatsapp')) {
+        shareUrl = `https://api.whatsapp.com/send?text=${productName}%20${encodeURIComponent(pageUrl)}`;
+    }
+    // Add more networks like Pinterest, LinkedIn if needed
+
+    if (shareUrl) {
+        // Open in a new, smaller window for better user experience
+        window.open(shareUrl, '_blank', 'width=600,height=400,noopener,noreferrer');
+    } else {
+         console.warn(`Could not generate share URL for network: ${network}`);
+    }
 }
 
 
@@ -870,7 +969,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     currentProductId = urlParams.get('id'); // Store globally
 
     if (!currentProductId) {
-        showError("Product ID not found in URL.");
+        showError("Product ID not found in URL. Cannot load details.");
         return;
     }
 
@@ -878,36 +977,54 @@ document.addEventListener('DOMContentLoaded', async () => {
     showLoading(true);
 
     try {
+        // Construct the document reference
         const productRef = doc(db, 'products', currentProductId);
+        // Fetch the document
         const productSnap = await getDoc(productRef);
 
         if (productSnap.exists()) {
             console.log("Product data fetched successfully.");
-            const productData = { ...productSnap.data(), productId: productSnap.id }; // Include Firestore doc ID
-             // Ensure pricing exists, create if not
-             if (!productData.pricing) {
-                 productData.pricing = {}; // Create an empty pricing object if it's missing
-                 console.warn(`Product ${currentProductId} missing 'pricing' object. Created empty one.`);
-             }
+            // Combine data and ID
+            const productData = { ...productSnap.data(), productId: productSnap.id };
 
-            renderProductDetails(productData);
-            // Add event listener for the Add to Cart button AFTER rendering product details
-            if (addToCartBtn) {
-                addToCartBtn.addEventListener('click', handleAddToCart);
-            } else {
-                console.error("Add to Cart button not found!");
+            // --- Crucial Check & Default for Pricing ---
+            if (!productData.pricing) {
+                productData.pricing = {}; // Ensure pricing object exists, even if empty
+                console.warn(`Product ${currentProductId} was missing 'pricing' object. Created an empty one.`);
             }
-             // Add event listener for review form submission
-             if (reviewForm) {
+            // -----------------------------------------
+
+            renderProductDetails(productData); // Render everything
+
+            // Attach event listeners AFTER elements are potentially rendered/modified by renderProductDetails
+            if (addToCartBtn) {
+                 // Remove previous listener before adding new one to prevent duplicates on potential re-renders
+                 addToCartBtn.removeEventListener('click', handleAddToCart);
+                 addToCartBtn.addEventListener('click', handleAddToCart);
+            } else {
+                console.error("Add to Cart button not found after rendering!");
+            }
+
+            if (reviewForm) {
+                 reviewForm.removeEventListener('submit', handleReviewSubmit);
                  reviewForm.addEventListener('submit', handleReviewSubmit);
-             }
+            } else {
+                 console.log("Review form not found."); // Not necessarily an error
+            }
 
         } else {
+            // Product with the given ID doesn't exist in Firestore
             console.error(`No product found with ID: ${currentProductId}`);
-            showError(`Product not found. It might have been removed or the ID is incorrect.`);
+            showError(`Sorry, we couldn't find the product you're looking for (ID: ${currentProductId}). It might have been removed or the link is incorrect.`);
         }
     } catch (error) {
+        // Handle errors during Firestore fetch or processing
         console.error("Error fetching product details:", error);
-        showError(`Failed to load product details. Please check the console for more information or try again later. Error: ${error.message}`);
+        showError(`Failed to load product details. Please try refreshing the page. Error: ${error.message}`);
+    } finally {
+         // Ensure loading indicator is always hidden after attempt, regardless of success/failure
+         // Add a small delay? Sometimes rendering takes a moment after async ops finish.
+         // setTimeout(() => showLoading(false), 100); // Optional small delay
+         showLoading(false); // Usually fine to hide immediately
     }
 }); // End DOMContentLoaded
