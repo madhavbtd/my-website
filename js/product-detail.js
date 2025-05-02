@@ -1,5 +1,5 @@
 // js/product-detail.js
-// FINAL UPDATED Version: Uses 'onlineProducts', fixes Wedding Qty logic.
+// FINAL UPDATED Version: Uses 'onlineProducts', fixes Wedding Qty logic, includes showLoading.
 // Includes Tabs, Quantity Buttons, New Price Layout, Related Products Slider, Schema Update, Review Logic (subcollection), Social Sharing, and Error Checks
 
 // --- Imports ---
@@ -57,6 +57,40 @@ let currentProductId = null;
 let relatedProductsSwiper = null;
 
 // --- Helper Functions ---
+
+// Function to display loading indicator <<--- यह फंक्शन यहाँ शामिल है!
+function showLoading(isLoading) {
+    if (loadingIndicator) {
+        loadingIndicator.style.display = isLoading ? 'flex' : 'none'; // Use flex if your CSS uses display:flex
+    }
+    if (productContent) {
+        // Hide content when loading starts, show when loading finishes
+        productContent.style.display = isLoading ? 'none' : 'grid'; // Use 'grid' or 'block' as per your layout
+    }
+    // Hide error message when loading starts
+    if (errorMessageContainer && isLoading) {
+        errorMessageContainer.style.display = 'none';
+        errorMessageContainer.textContent = '';
+    }
+}
+
+// Function to display error messages
+function showError(message) {
+    showLoading(false); // Ensure loading is hidden when error occurs
+    if (errorMessageContainer) {
+        errorMessageContainer.textContent = message;
+        errorMessageContainer.style.display = 'block';
+    }
+    if (productContent) {
+        productContent.style.display = 'none'; // Hide content area on error
+    }
+    // Optionally hide other sections too
+    if (tabsContainer) tabsContainer.style.display = 'none';
+    if (relatedProductsSection) relatedProductsSection.style.display = 'none';
+    document.title = "Error - Madhav Multiprint";
+    if (breadcrumbProductName) breadcrumbProductName.textContent = "Error";
+}
+
 const formatIndianCurrency = (amount) => {
     const num = Number(amount);
     return isNaN(num) || num === null ? 'N/A' : `₹ ${num.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -65,18 +99,7 @@ function formatSpecKey(key) {
     const result = key.replace(/([A-Z])/g, ' $1');
     return result.charAt(0).toUpperCase() + result.slice(1);
  }
-function showError(message) {
-    if (productContent) productContent.style.display = 'none';
-    if (tabsContainer) tabsContainer.style.display = 'none';
-    if (relatedProductsSection) relatedProductsSection.style.display = 'none';
-    if (loadingIndicator) loadingIndicator.style.display = 'none';
-    if (errorMessageContainer) {
-        errorMessageContainer.textContent = message;
-        errorMessageContainer.style.display = 'block';
-    }
-    document.title = "Error - Madhav Multiprint";
-    if (breadcrumbProductName) breadcrumbProductName.textContent = "Error";
-}
+
 function showFeedback(element, message, isError = false) {
      if (element) {
         element.textContent = message;
@@ -89,7 +112,6 @@ function showFeedback(element, message, isError = false) {
 }
 
 // --- Flex Banner Calculation Logic ---
-// (Keep the existing robust calculateFlexDimensions function)
 const mediaWidthsFt = [3, 4, 5, 6, 8, 10]; // Default, can be overridden by product data
 function calculateFlexDimensions(widthFt, heightFt, availableMediaWidths = mediaWidthsFt) {
     widthFt = Math.max(0, Number(widthFt)); heightFt = Math.max(0, Number(heightFt));
@@ -113,7 +135,7 @@ function calculateFlexDimensions(widthFt, heightFt, availableMediaWidths = media
 
 
 // --- Update Price Functions (Separate logic for clarity) ---
-
+// (Includes updateFlexPriceDisplay, updateWeddingPriceDisplay, renderStandardPriceDisplay - code omitted for brevity, but included in the full block below)
 function updateFlexPriceDisplay() {
      const width = parseFloat(bannerWidthInput?.value);
      const height = parseFloat(bannerHeightInput?.value);
@@ -122,26 +144,26 @@ function updateFlexPriceDisplay() {
      const pricing = currentProductData?.pricing;
 
      if (!pricing || isNaN(width) || width <= 0 || isNaN(height) || height <= 0 || isNaN(quantity) || quantity <= 0) {
-         priceEl.textContent = "Enter valid dimensions & quantity"; return;
+         if(priceEl) priceEl.textContent = "Enter valid dimensions & quantity"; return;
      }
      const ratePerSqFt = parseFloat(pricing.rate);
-     if (isNaN(ratePerSqFt) || ratePerSqFt <= 0) { priceEl.textContent = "Pricing unavailable"; return; }
+     if (isNaN(ratePerSqFt) || ratePerSqFt <= 0) { if(priceEl) priceEl.textContent = "Pricing unavailable"; return; }
      const minimumOrderValue = parseFloat(pricing.minimumOrderValue || 0);
-     const mediaWidths = pricing.mediaWidths || mediaWidthsFt; // Use default if not specified
+     const mediaWidths = pricing.mediaWidths || mediaWidthsFt;
 
      const widthFt = unit === 'inches' ? width / 12 : width;
      const heightFt = unit === 'inches' ? height / 12 : height;
      const dimResult = calculateFlexDimensions(widthFt, heightFt, mediaWidths);
      if (dimResult.error || isNaN(dimResult.printSqFtPerBanner) || dimResult.printSqFtPerBanner <= 0) {
-         priceEl.textContent = dimResult.error || "Calculation error"; return;
+         if(priceEl) priceEl.textContent = dimResult.error || "Calculation error"; return;
      }
      const printSqFtPerBanner = dimResult.printSqFtPerBanner;
      const totalPrintSqFt = printSqFtPerBanner * quantity;
      const calculatedCost = totalPrintSqFt * ratePerSqFt;
      const finalCost = Math.max(calculatedCost, minimumOrderValue);
 
-     priceEl.textContent = formatIndianCurrency(finalCost);
-     if (originalPriceEl) originalPriceEl.style.display = 'none'; // Flex usually doesn't have original price concept like this
+     if(priceEl) priceEl.textContent = formatIndianCurrency(finalCost);
+     if (originalPriceEl) originalPriceEl.style.display = 'none';
 }
 
 function updateWeddingPriceDisplay() {
@@ -150,10 +172,10 @@ function updateWeddingPriceDisplay() {
     const pricing = currentProductData?.pricing;
 
     if (!pricing || isNaN(selectedQuantity) || selectedQuantity <= 0) {
-        priceEl.textContent = "Select Quantity"; return;
+        if(priceEl) priceEl.textContent = "Select Quantity"; return;
     }
     const baseRate = parseFloat(pricing.rate);
-    if (isNaN(baseRate)) { priceEl.textContent = "Price info missing"; return; }
+    if (isNaN(baseRate)) { if(priceEl) priceEl.textContent = "Price info missing"; return; }
     const designCharge = parseFloat(pricing.designCharge || 0);
     const printingChargeBase = parseFloat(pricing.printingChargeBase || 0);
     const transportCharge = parseFloat(pricing.transportCharge || 0);
@@ -163,12 +185,11 @@ function updateWeddingPriceDisplay() {
     const finalAmount = subTotal * (1 + (extraMarginPercent / 100));
     const averageUnitPrice = finalAmount / selectedQuantity;
 
-    if (isNaN(finalAmount)) { priceEl.textContent = "Calculation Error"; return; }
+    if (isNaN(finalAmount)) { if(priceEl) priceEl.textContent = "Calculation Error"; return; }
 
-    priceEl.textContent = `${formatIndianCurrency(finalAmount)} (${formatIndianCurrency(averageUnitPrice)}/card)`;
-    // Handle original price if applicable (logic depends on how original price is defined for wedding cards)
+    if(priceEl) priceEl.textContent = `${formatIndianCurrency(finalAmount)} (${formatIndianCurrency(averageUnitPrice)}/card)`;
     if (originalPriceEl) {
-        if (pricing.originalRate && averageUnitPrice < pricing.originalRate) { // Example condition
+        if (pricing.originalRate && averageUnitPrice < pricing.originalRate) {
              originalPriceEl.textContent = formatIndianCurrency(pricing.originalRate) + "/card (Original)";
              originalPriceEl.style.display = 'inline-block';
         } else {
@@ -179,11 +200,11 @@ function updateWeddingPriceDisplay() {
 
 function renderStandardPriceDisplay(pricing) {
      if (!pricing || typeof pricing.rate !== 'number') {
-          priceEl.textContent = 'Price Unavailable';
+          if(priceEl) priceEl.textContent = 'Price Unavailable';
           if (originalPriceEl) originalPriceEl.style.display = 'none';
           return;
      }
-     priceEl.textContent = formatIndianCurrency(pricing.rate);
+     if(priceEl) priceEl.textContent = formatIndianCurrency(pricing.rate);
      if (originalPriceEl) {
          if (typeof pricing.originalRate === 'number' && pricing.originalRate > pricing.rate) {
             originalPriceEl.textContent = formatIndianCurrency(pricing.originalRate);
@@ -201,7 +222,6 @@ function populateWeddingQuantities(optionsArray) {
 
     selectEl.innerHTML = '<option value="">Select Quantity</option>'; // Default prompt
 
-    // Find the option object named 'Quantity' within the options array
     const quantityOptionData = optionsArray?.find(opt => opt && opt.name?.toLowerCase() === 'quantity');
 
     if (!quantityOptionData || !Array.isArray(quantityOptionData.values) || quantityOptionData.values.length === 0) {
@@ -225,6 +245,7 @@ function populateWeddingQuantities(optionsArray) {
 
 
 // --- Schema Update Function ---
+// (Included updateProductSchema - code omitted for brevity, but included in the full block below)
 function updateProductSchema(productData, reviewsData = { average: 0, count: 0, reviews: [] }) {
     if (!productSchemaScript || !productData || !productData.productName) return;
     let priceForSchema = productData.pricing?.rate ?? "0"; // Default
@@ -259,143 +280,138 @@ function updateProductSchema(productData, reviewsData = { average: 0, count: 0, 
 }
 
 // --- Main Product Loading Logic ---
+// (Included loadProductDetails - code omitted for brevity, but included in the full block below)
 async function loadProductDetails(productId) {
-    if (!loadingIndicator || !productContent || !errorMessageContainer || !tabsContainer) { showError("Core layout elements missing!"); return; }
+    // Ensure core elements exist
+    if (!loadingIndicator || !productContent || !errorMessageContainer || !tabsContainer || !productNameEl || !mainImageEl || !thumbnailImagesContainer || !breadcrumbProductName || !descriptionShortEl || !descriptionFullEl || !specsListEl || !usageCareInfoEl || !faqListEl || !relatedProductsSection || !reviewsListEl) {
+        console.error("Core layout elements missing! Cannot proceed.");
+        // Display error using body as fallback if error container missing
+        const errContainer = errorMessageContainer || document.body;
+        errContainer.textContent = "Page layout error. Required elements missing.";
+        errContainer.style.display = 'block';
+        if (loadingIndicator) loadingIndicator.style.display = 'none';
+        return;
+    }
     showLoading(true);
-    if (relatedProductsSection) relatedProductsSection.style.display = 'none';
-    if (weddingQuantityContainer) weddingQuantityContainer.innerHTML = ''; // Clear specifically
+    relatedProductsSection.style.display = 'none'; // Hide related initially
+    if (weddingQuantityContainer) weddingQuantityContainer.innerHTML = ''; // Clear specific containers
 
     try {
-        const productRef = doc(db, "onlineProducts", productId); // Fetch from onlineProducts
+        const productRef = doc(db, "onlineProducts", productId); // Use onlineProducts
         const productSnap = await getDoc(productRef);
 
         if (productSnap.exists()) {
             currentProductData = productSnap.data(); currentProductId = productId;
             if (!currentProductData) { showError("Failed to process product data."); return; }
-            // Ensure pricing object exists (important!)
-            if (!currentProductData.pricing) { currentProductData.pricing = {}; }
-             // Ensure options array exists if needed (important!)
-             if (!currentProductData.options) { currentProductData.options = []; }
+            if (!currentProductData.pricing) currentProductData.pricing = {}; // Ensure pricing exists
+            if (!currentProductData.options) currentProductData.options = []; // Ensure options exists
 
-
-            // --- Populate Base HTML ---
+            // Populate Base HTML
             document.title = `${currentProductData.productName || 'Product'} - Madhav Multiprint`;
-            if(breadcrumbProductName) breadcrumbProductName.textContent = currentProductData.productName || 'Details';
-            if(productNameEl) productNameEl.textContent = currentProductData.productName || 'N/A';
+            breadcrumbProductName.textContent = currentProductData.productName || 'Details';
+            productNameEl.textContent = currentProductData.productName || 'N/A';
 
-            // --- Populate Images ---
-            if (mainImageEl && thumbnailImagesContainer) {
-                const imageUrls = currentProductData.imageUrls && Array.isArray(currentProductData.imageUrls) ? currentProductData.imageUrls : [];
-                if (imageUrls.length > 0) {
-                    mainImageEl.src = imageUrls[0]; mainImageEl.alt = currentProductData.productName || 'Product image';
-                    thumbnailImagesContainer.innerHTML = '';
-                    imageUrls.forEach((url, index) => { /* ... thumbnail logic ... */
-                         const thumb = document.createElement('img'); thumb.src = url; thumb.alt = `Thumbnail ${index + 1}`; thumb.classList.add('thumbnail');
-                         if (index === 0) thumb.classList.add('active');
-                         thumbnailImagesContainer.appendChild(thumb);
-                    });
-                    thumbnailImagesContainer.style.display = imageUrls.length > 1 ? 'grid' : 'none'; // Show only if more than 1 image
-                } else { mainImageEl.src = 'images/placeholder.png'; mainImageEl.alt = 'Placeholder'; thumbnailImagesContainer.innerHTML = ''; thumbnailImagesContainer.style.display = 'none';}
+            // Populate Images
+            const imageUrls = currentProductData.imageUrls && Array.isArray(currentProductData.imageUrls) ? currentProductData.imageUrls : [];
+            if (imageUrls.length > 0) {
+                mainImageEl.src = imageUrls[0]; mainImageEl.alt = currentProductData.productName || 'Product image';
+                thumbnailImagesContainer.innerHTML = '';
+                imageUrls.forEach((url, index) => {
+                    const thumb = document.createElement('img'); thumb.src = url; thumb.alt = `Thumbnail ${index + 1}`; thumb.classList.add('thumbnail');
+                    if (index === 0) thumb.classList.add('active');
+                    thumbnailImagesContainer.appendChild(thumb);
+                });
+                thumbnailImagesContainer.style.display = imageUrls.length > 1 ? 'grid' : 'none';
+            } else {
+                mainImageEl.src = 'images/placeholder.png'; mainImageEl.alt = 'Placeholder'; thumbnailImagesContainer.innerHTML = ''; thumbnailImagesContainer.style.display = 'none';
             }
 
-            // --- Populate Descriptions ---
-            if (descriptionShortEl) descriptionShortEl.textContent = currentProductData.shortDescription || currentProductData.description?.substring(0, 150) + '...' || '';
-            if (descriptionFullEl) descriptionFullEl.innerHTML = currentProductData.description || 'No description available.'; // Use innerHTML if needed
+            // Populate Descriptions
+            descriptionShortEl.textContent = currentProductData.shortDescription || currentProductData.description?.substring(0, 150) + '...' || '';
+            descriptionFullEl.innerHTML = currentProductData.description || 'No description available.';
 
-            // --- Setup Product Options & Pricing ---
+            // Setup Product Options & Pricing
             const category = currentProductData.category?.toLowerCase() || '';
-            // Hide all option containers initially
             if (standardQuantityContainer) standardQuantityContainer.style.display = 'none';
             if (flexInputsContainer) flexInputsContainer.style.display = 'none';
             if (weddingQuantityContainer) weddingQuantityContainer.style.display = 'none';
 
             if (category.includes('flex')) {
-                if (flexInputsContainer) flexInputsContainer.style.display = 'grid'; // Show flex container
-                updateFlexPriceDisplay(); // Initial price calculation
+                if (flexInputsContainer) flexInputsContainer.style.display = 'grid';
+                updateFlexPriceDisplay();
             } else if (category.includes('wedding')) {
                 if (weddingQuantityContainer) {
-                     // ** Add the select dropdown HTML here if it's not static in product-detail.html **
-                     // Ensure the select element exists before populating
-                     if (!document.getElementById('wedding-quantity-select')) {
-                          const label = document.createElement('label'); label.htmlFor = 'wedding-quantity-select'; label.textContent = 'Select Quantity:';
-                          const select = document.createElement('select'); select.id = 'wedding-quantity-select'; select.name = 'wedding_quantity';
-                          weddingQuantityContainer.appendChild(label);
-                          weddingQuantityContainer.appendChild(select);
-                     }
-                     weddingQuantityContainer.style.display = 'flex'; // Show wedding container
-                     populateWeddingQuantities(currentProductData.options); // Populate using CORRECTED logic
-                     updateWeddingPriceDisplay(); // Initial price display (likely "Select Quantity")
+                    if (!document.getElementById('wedding-quantity-select')) {
+                        const label = document.createElement('label'); label.htmlFor = 'wedding-quantity-select'; label.textContent = 'Select Quantity:';
+                        const select = document.createElement('select'); select.id = 'wedding-quantity-select'; select.name = 'wedding_quantity';
+                        weddingQuantityContainer.appendChild(label); weddingQuantityContainer.appendChild(select);
+                    }
+                    weddingQuantityContainer.style.display = 'flex';
+                    populateWeddingQuantities(currentProductData.options); // Corrected logic uses this
+                    updateWeddingPriceDisplay();
+                } else { // Fallback if container missing
+                    if (standardQuantityContainer) standardQuantityContainer.style.display = 'block';
+                    renderStandardPriceDisplay(currentProductData.pricing);
                 }
-            } else {
-                 if (standardQuantityContainer) standardQuantityContainer.style.display = 'block'; // Show standard qty
-                 renderStandardPriceDisplay(currentProductData.pricing); // Render standard price
+            } else { // Standard product
+                if (standardQuantityContainer) standardQuantityContainer.style.display = 'block';
+                renderStandardPriceDisplay(currentProductData.pricing);
             }
 
-            // --- Populate Tabs Content ---
-             if (specsListEl) { /* ... spec logic ... */
-                 specsListEl.innerHTML = '';
-                 if (currentProductData.specifications && typeof currentProductData.specifications === 'object' && Object.keys(currentProductData.specifications).length > 0) {
-                     for (const [key, value] of Object.entries(currentProductData.specifications)) { if (value) { const li = document.createElement('li'); li.innerHTML = `<strong>${formatSpecKey(key)}:</strong> <span>${value}</span>`; specsListEl.appendChild(li); } }
-                 } else { specsListEl.innerHTML = '<li>No specifications available.</li>'; }
-             }
-             if (usageCareInfoEl) usageCareInfoEl.textContent = currentProductData.usageInfo || "No usage information available.";
-             if (faqListEl) { await fetchAndDisplayFAQs(currentProductData.faqIds || []); } // Fetch FAQs if IDs exist
+            // Populate Tabs Content
+            specsListEl.innerHTML = '';
+            if (currentProductData.specifications && typeof currentProductData.specifications === 'object' && Object.keys(currentProductData.specifications).length > 0) {
+                for (const [key, value] of Object.entries(currentProductData.specifications)) { if (value) { const li = document.createElement('li'); li.innerHTML = `<strong>${formatSpecKey(key)}:</strong> <span>${value}</span>`; specsListEl.appendChild(li); } }
+            } else { specsListEl.innerHTML = '<li>No specifications available.</li>'; }
+            usageCareInfoEl.textContent = currentProductData.usageInfo || "No usage information available.";
+            await fetchAndDisplayFAQs(currentProductData.faqIds || []);
 
-
-            // --- Show Content & Tabs ---
-            productContent.style.display = 'grid'; // Use 'grid' as per your CSS
+            // Show Content & Tabs
+            productContent.style.display = 'grid';
             tabsContainer.style.display = 'block';
-            loadingIndicator.style.display = 'none';
 
-            // --- Load Reviews & Related Products ---
-            let reviewsData = { average: 0, count: 0, reviews: [] }; // Default
-            try { reviewsData = await fetchAndDisplayReviews(productId); } // Load reviews using correct subcollection path
+            // Load Reviews & Related Products
+            let reviewsData = { average: 0, count: 0, reviews: [] };
+            try { reviewsData = await fetchAndDisplayReviews(productId); }
             catch (reviewError) { console.error("Error loading reviews (caught):", reviewError); }
+            updateProductSchema(currentProductData, reviewsData);
+            if (currentProductData.category) { fetchRelatedProducts(productId, currentProductData.category); }
+            else { relatedProductsSection.style.display = 'none'; }
 
-            updateProductSchema(currentProductData, reviewsData); // Update schema
-
-            if (currentProductData.category) { // Load related only if category exists
-                 fetchRelatedProducts(productId, currentProductData.category);
-            } else { if(relatedProductsSection) relatedProductsSection.style.display = 'none'; }
-
-            // Attach event listeners AFTER everything is rendered
+            // Attach event listeners AFTER rendering
             setupAllEventListeners();
-
 
         } else { showError(`Product not found (ID: ${productId}).`); }
     } catch (error) {
         console.error("Error in loadProductDetails:", error);
         showError(`Failed to load details: ${error.message}`);
-    } finally { showLoading(false); }
+    } finally { showLoading(false); } // Ensure loading is hidden
 }
 
-
 // --- Related Products ---
+// (Included fetchRelatedProducts, displayRelatedProducts, initializeRelatedProductsSwiper - code omitted for brevity)
 async function fetchRelatedProducts(currentProdId, category) {
      if (!relatedProductsSection || !relatedProductsContainer) return;
     relatedProductsContainer.innerHTML = '<div class="swiper-slide"><p>Loading...</p></div>'; // Loading state
      try {
          const productsRef = collection(db, "onlineProducts"); // Use correct collection
-         // Query needs refinement: Cannot use inequality (!=) on document ID AND other fields simultaneously easily.
-         // Fetch by category and filter client-side, OR ensure a unique field can be used for exclusion.
-         // Let's fetch by category and filter current ID later.
-         const q = query(collection(db, "onlineProducts"), where("category", "==", category), limit(10)); // Fetch a bit more
+         const q = query(collection(db, "onlineProducts"), where("category", "==", category), limit(10)); // Fetch by category
          const querySnapshot = await getDocs(q); const relatedProducts = [];
          querySnapshot.forEach((doc) => {
-             if (doc.id !== currentProdId) { // Filter current product ID here
+             if (doc.id !== currentProdId) { // Filter current product ID client-side
                  relatedProducts.push({ id: doc.id, ...doc.data() });
              }
          });
          relatedProducts = relatedProducts.slice(0, 6); // Limit to display
 
          if (relatedProducts.length > 0) {
-             displayRelatedProducts(relatedProducts); // Call display function
+             displayRelatedProducts(relatedProducts);
              relatedProductsSection.style.display = 'block';
          } else { relatedProductsSection.style.display = 'none'; }
-     } catch (error) { console.error("Error loading related products:", error); /* Show error message */ }
+     } catch (error) { console.error("Error loading related products:", error); relatedProductsSection.style.display = 'block'; relatedProductsContainer.innerHTML = '<p>Error loading related items.</p>'; }
 }
 
-function displayRelatedProducts(products) { // Separated display logic
+function displayRelatedProducts(products) {
     relatedProductsContainer.innerHTML = ''; // Clear loading
     products.forEach(product => {
         const slide = document.createElement('div'); slide.className = 'swiper-slide';
@@ -416,14 +432,14 @@ function displayRelatedProducts(products) { // Separated display logic
            </div>`;
         relatedProductsContainer.appendChild(slide);
     });
-    initializeRelatedProductsSwiper(); // Initialize swiper after adding slides
+    initializeRelatedProductsSwiper();
 }
 
 function initializeRelatedProductsSwiper() {
      if (typeof Swiper === 'undefined') { console.error("Swiper library not loaded."); return; }
-     if (relatedProductsContainer.swiper) relatedProductsContainer.swiper.destroy(true, true);
-     relatedProductsContainer.swiper = new Swiper('.related-products-swiper', { // Assign to container property
-         loop: relatedProductsContainer.querySelectorAll('.swiper-slide').length > 5, // Loop only if enough slides
+     if (relatedProductsContainer.swiper) { relatedProductsContainer.swiper.destroy(true, true); relatedProductsContainer.swiper = null; } // Properly destroy and nullify
+     relatedProductsContainer.swiper = new Swiper('.related-products-swiper', {
+         loop: relatedProductsContainer.querySelectorAll('.swiper-slide').length > 5,
          slidesPerView: 2, spaceBetween: 15,
          autoplay: { delay: 4000, disableOnInteraction: false, },
          pagination: { el: '.swiper-pagination', clickable: true, },
@@ -433,8 +449,9 @@ function initializeRelatedProductsSwiper() {
 }
 
 // --- Review Functions (Using subcollection path) ---
+// (Included fetchAndDisplayReviews, handleReviewSubmit - code omitted for brevity)
 async function fetchAndDisplayReviews(productId) {
-     if (!reviewsListEl || !averageRatingEl || !reviewCountEl || !productId) return { average: 0, count: 0, reviews: [] }; // Return default data
+     if (!reviewsListEl || !averageRatingEl || !reviewCountEl || !productId) return { average: 0, count: 0, reviews: [] };
      reviewsListEl.innerHTML = '<p>Loading reviews...</p>'; let totalRating = 0; let reviewCount = 0; const fetchedReviews = [];
      try {
          const reviewsRef = collection(db, "onlineProducts", productId, "reviews"); // Correct Path
@@ -442,7 +459,7 @@ async function fetchAndDisplayReviews(productId) {
          const querySnapshot = await getDocs(q);
          if (!querySnapshot.empty) {
              reviewsListEl.innerHTML = '';
-             querySnapshot.forEach((doc) => { /* ... review rendering logic ... */
+             querySnapshot.forEach((doc) => {
                  const review = { id: doc.id, ...doc.data() }; fetchedReviews.push(review);
                  const reviewItem = document.createElement('div'); reviewItem.className = 'review-item';
                  const rating = review.rating || 0; const starsHTML = Array(5).fill(0).map((_, i) => `<i class="fas fa-star${i < rating ? '' : '-empty'}" style="color: #f0ad4e;"></i>`).join('');
@@ -454,7 +471,7 @@ async function fetchAndDisplayReviews(productId) {
              averageRatingEl.textContent = `${averageRating.toFixed(1)} / 5`; reviewCountEl.textContent = reviewCount;
              return { average: averageRating, count: reviewCount, reviews: fetchedReviews };
          } else { reviewsListEl.innerHTML = '<p>No reviews yet.</p>'; averageRatingEl.textContent = 'N/A'; reviewCountEl.textContent = '0'; return { average: 0, count: 0, reviews: [] }; }
-     } catch (error) { /* ... error handling ... */
+     } catch (error) {
          console.error("Error loading reviews:", error); reviewsListEl.innerHTML = '<p>Could not load reviews.</p>';
          averageRatingEl.textContent = 'Error'; reviewCountEl.textContent = '0'; return { average: 0, count: 0, reviews: [] };
      }
@@ -473,50 +490,55 @@ async function handleReviewSubmit(event, productId) {
          const reviewsRef = collection(db, "onlineProducts", productId, "reviews"); // Correct Path
          await addDoc(reviewsRef, { reviewerName, comment, rating, createdAt: serverTimestamp() });
          showFeedback(reviewFeedbackEl, "Review submitted!", false); reviewForm.reset();
-         const reviewsData = await fetchAndDisplayReviews(productId); // Reload reviews
-         updateProductSchema(currentProductData, reviewsData); // Update schema
+         const reviewsData = await fetchAndDisplayReviews(productId);
+         updateProductSchema(currentProductData, reviewsData);
      } catch (error) { console.error("Error submitting review:", error); showFeedback(reviewFeedbackEl, `Failed: ${error.message}`, true);
      } finally { if (submitButton) submitButton.disabled = false; }
 }
 
 
 // --- FAQ System ---
+// (Included fetchAndDisplayFAQs - code omitted for brevity)
 async function fetchAndDisplayFAQs(faqIds) {
     if (!faqListEl || !faqIds || faqIds.length === 0) { if (faqListEl) faqListEl.innerHTML = '<p>No FAQs available.</p>'; return; }
     faqListEl.innerHTML = '<p>Loading FAQs...</p>';
     try {
         const faqs = [];
         for (const id of faqIds) { if (!id) continue; const faqRef = doc(db, "faqs", id); const docSnap = await getDoc(faqRef); if (docSnap.exists()) faqs.push({ id: docSnap.id, ...docSnap.data() }); }
-        if (faqs.length > 0) { /* ... render FAQs ... */
+        if (faqs.length > 0) {
              faqListEl.innerHTML = faqs.map((faq, index) => `<details class="faq-item"><summary class="faq-question">${index + 1}. ${faq.question}</summary><div class="faq-answer">${faq.answer}</div></details>`).join('');
         } else { faqListEl.innerHTML = '<p>No FAQs available.</p>'; }
     } catch (error) { console.error("Error fetching FAQs:", error); faqListEl.innerHTML = `<p class="error">Could not load FAQs.</p>`; }
 }
 
 // --- Social Sharing ---
+// (Included setupSocialSharing, handleSocialLinkClick - code omitted for brevity)
 function setupSocialSharing() {
      if (!socialShareLinksContainer) return;
-     socialShareLinksContainer.addEventListener('click', (event) => {
-         event.preventDefault();
-         const link = event.target.closest('a.social-icon');
-         if (!link || !currentProductData || !currentProductData.productName) return;
-         const pageUrl = window.location.href;
-         const productName = encodeURIComponent(currentProductData.productName);
-         let shareUrl = '';
-         const network = link.getAttribute('aria-label')?.toLowerCase() ?? '';
-         if (network.includes('facebook')) { shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(pageUrl)}`; }
-         else if (network.includes('twitter')) { shareUrl = `https://twitter.com/intent/tweet?url=${encodeURIComponent(pageUrl)}&text=${productName}`; }
-         else if (network.includes('whatsapp')) { shareUrl = `https://api.whatsapp.com/send?text=${productName}%20${encodeURIComponent(pageUrl)}`; }
-         if (shareUrl) window.open(shareUrl, '_blank', 'width=600,height=400,noopener,noreferrer');
-     });
+     // Use event delegation on the container
+     socialShareLinksContainer.removeEventListener('click', handleSocialLinkClick); // Remove previous listener first
+     socialShareLinksContainer.addEventListener('click', handleSocialLinkClick);
+}
+function handleSocialLinkClick(event) {
+    const link = event.target.closest('a.social-icon'); // Find the closest anchor link
+    if (!link) return; // Exit if the click wasn't on a link or its child icon
+    event.preventDefault(); // Prevent default link navigation
+    if (!currentProductData || !currentProductData.productName) return;
+    const pageUrl = window.location.href; const productName = encodeURIComponent(currentProductData.productName); let shareUrl = '';
+    const network = link.getAttribute('aria-label')?.toLowerCase() ?? '';
+    if (network.includes('facebook')) { shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(pageUrl)}`; }
+    else if (network.includes('twitter')) { shareUrl = `https://twitter.com/intent/tweet?url=${encodeURIComponent(pageUrl)}&text=${productName}`; }
+    else if (network.includes('whatsapp')) { shareUrl = `https://api.whatsapp.com/send?text=${productName}%20${encodeURIComponent(pageUrl)}`; }
+    if (shareUrl) window.open(shareUrl, '_blank', 'width=600,height=400,noopener,noreferrer');
 }
 
 // --- Add to Cart Handler ---
+// (Included handleAddToCart - code omitted for brevity)
 function handleAddToCart() {
      if (!currentProductId || !currentProductData) { showFeedback(cartFeedbackEl, "Product data not ready.", true); return; }
-     if (cartFeedbackEl) cartFeedbackEl.style.display = 'none'; // Clear previous feedback
+     if (cartFeedbackEl) cartFeedbackEl.style.display = 'none';
      try {
-         let cartOptions = { name: currentProductData.productName, imageUrl: mainImageEl?.src || 'img/placeholder.png' };
+         let cartOptions = { name: currentProductData.productName, imageUrl: mainImageEl?.src || 'images/placeholder.png' }; // Use placeholder if main image not found
          let itemToAdd = { productId: currentProductId, quantity: 1 };
          const category = currentProductData.category?.toLowerCase() || '';
          const pricing = currentProductData.pricing || {};
@@ -543,44 +565,33 @@ function handleAddToCart() {
              itemToAdd.quantity = quantity; cartOptions = { ...cartOptions, type: 'Flex Banner', details: `${width}x${height} ${unit}`, price: pricePerBanner };
          } else { // Standard Product
              const quantitySelected = parseInt(standardQuantityInput?.value || 1, 10); if (isNaN(quantitySelected) || quantitySelected <= 0) { showFeedback(cartFeedbackEl, "Enter valid quantity.", true); return; }
-             const standardPrice = parseFloat(pricing?.rate); if (isNaN(standardPrice) || standardPrice < 0) { showFeedback(cartFeedbackEl, "Product price unavailable.", true); return; } // Allow 0 price?
+             const standardPrice = parseFloat(pricing?.rate); if (isNaN(standardPrice) || standardPrice < 0) { showFeedback(cartFeedbackEl, "Product price unavailable.", true); return; }
              itemToAdd.quantity = quantitySelected; cartOptions = { ...cartOptions, type: 'Standard', price: standardPrice };
          }
 
          if (typeof cartOptions.price !== 'number' || isNaN(cartOptions.price) || cartOptions.price < 0) { console.error("Invalid final price:", cartOptions.price); showFeedback(cartFeedbackEl, "Invalid price. Cannot add.", true); return; }
 
-         addToCart(itemToAdd.productId, itemToAdd.quantity, cartOptions); // Use imported addToCart
+         addToCart(itemToAdd.productId, itemToAdd.quantity, cartOptions);
          showFeedback(cartFeedbackEl, "Product added to cart!", false);
-         if (typeof updateCartCount === 'function') updateCartCount(); // Update header
+         if (typeof updateCartCount === 'function') updateCartCount();
          else console.warn("updateCartCount function not available.");
 
      } catch (error) { console.error("Error in handleAddToCart:", error); showFeedback(cartFeedbackEl, `Failed to add. ${error.message}`, true); }
 }
 
 // --- Setup Event Listeners (Consolidated) ---
+// (Included setupAllEventListeners, handleThumbnailClick, handleReviewSubmitWrapper - code omitted for brevity)
 function setupAllEventListeners() {
-     // Add to Cart Button
      if (addToCartBtn) { addToCartBtn.removeEventListener('click', handleAddToCart); addToCartBtn.addEventListener('click', handleAddToCart); }
-     // Thumbnail Click
-     if (thumbnailImagesContainer) {
-         thumbnailImagesContainer.removeEventListener('click', handleThumbnailClick); // Remove previous listener
-         thumbnailImagesContainer.addEventListener('click', handleThumbnailClick);
-     }
-     // Tab Navigation
-     setupTabs(); // Re-run setupTabs to ensure listeners are correct
-     // Standard Quantity Buttons
-     setupQuantityButtons();
-     // Flex Input Listeners
-     setupFlexInputListeners();
-     // Wedding Quantity Listener
-     setupWeddingQuantityListener();
-     // Review Form Submission
+     if (thumbnailImagesContainer) { thumbnailImagesContainer.removeEventListener('click', handleThumbnailClick); thumbnailImagesContainer.addEventListener('click', handleThumbnailClick); }
+     setupTabs(); // Setup tab clicks
+     setupQuantityButtons(); // Setup standard +/- buttons
+     setupFlexInputListeners(); // Setup flex input changes
+     setupWeddingQuantityListener(); // Setup wedding dropdown changes
      if (reviewForm) { reviewForm.removeEventListener('submit', handleReviewSubmitWrapper); reviewForm.addEventListener('submit', handleReviewSubmitWrapper); }
-     // Social Sharing
-     setupSocialSharing(); // Re-attaches listener to container
+     setupSocialSharing(); // Setup social sharing clicks
 }
 
-// Wrapper for thumbnail click handler
 function handleThumbnailClick(event) {
      if (event.target.tagName === 'IMG' && mainImageEl) {
           mainImageEl.src = event.target.src;
@@ -589,11 +600,67 @@ function handleThumbnailClick(event) {
      }
 }
 
-// Wrapper for review submit to pass productId
 function handleReviewSubmitWrapper(event) {
      handleReviewSubmit(event, currentProductId);
 }
 
+// Setup Standard Quantity Buttons
+function setupQuantityButtons() {
+    // Use event delegation on a parent container if elements are dynamic,
+    // otherwise direct binding is fine if containers exist on load.
+    [standardQuantityContainer, flexInputsContainer].forEach(container => {
+        if (!container) return;
+        container.removeEventListener('click', handleQuantityButtonClick); // Remove previous listener
+        container.addEventListener('click', handleQuantityButtonClick);
+    });
+}
+function handleQuantityButtonClick(event) {
+    const button = event.target.closest('.quantity-btn');
+    if (!button) return;
+    const wrapper = button.closest('.quantity-input-wrapper');
+    if (!wrapper) return;
+    const input = wrapper.querySelector('.quantity-input');
+    if (!input) return;
+
+    let currentValue = parseInt(input.value, 10) || 1;
+    const min = parseInt(input.min, 10) || 1;
+    const step = parseInt(input.step, 10) || 1; // Assume step is 1 if not defined
+
+    if (button.classList.contains('quantity-increase')) {
+        currentValue += step;
+    } else if (button.classList.contains('quantity-decrease')) {
+        currentValue -= step;
+    }
+
+    input.value = Math.max(min, currentValue); // Ensure value doesn't go below min
+
+    // Trigger price update specifically for flex banners if quantity changed
+    if (input.id === 'banner-quantity') {
+         updateFlexPriceDisplay();
+    }
+    // Add logic for standard price update if needed based on quantity
+    // if (input.id === 'quantity') { /* update standard price if dynamic */ }
+}
+
+
+// Setup Flex Input Listeners
+function setupFlexInputListeners() {
+    const inputs = [bannerWidthInput, bannerHeightInput, bannerUnitSelect];
+    if (inputs.some(el => !el)) return; // Exit if any element is missing
+    inputs.forEach(input => {
+        const eventType = (input.tagName === 'SELECT') ? 'change' : 'input';
+        input.removeEventListener(eventType, updateFlexPriceDisplay); // Remove previous
+        input.addEventListener(eventType, updateFlexPriceDisplay);
+    });
+}
+
+// Setup Wedding Quantity Listener
+function setupWeddingQuantityListener() {
+    const select = document.getElementById('wedding-quantity-select');
+    if (!select) return;
+    select.removeEventListener('change', updateWeddingPriceDisplay); // Remove previous
+    select.addEventListener('change', updateWeddingPriceDisplay);
+}
 
 // --- Initialize Page ---
 document.addEventListener('DOMContentLoaded', () => {
@@ -602,6 +669,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const productId = urlParams.get('id');
     if (!productId) { showError("Product ID not found in URL."); return; }
     console.log(`Initializing page for Product ID: ${productId}`);
-    loadProductDetails(productId); // Fetch data and render
-    // Event listeners are now attached within loadProductDetails/renderProductDetails or called from there
+    loadProductDetails(productId); // Fetch data and render, includes attaching event listeners
+    // Note: setupAllEventListeners() is now called within loadProductDetails after elements are populated.
 });
