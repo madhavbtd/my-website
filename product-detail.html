@@ -14,28 +14,10 @@
     {
       "@context": "https://schema.org/",
       "@type": "Product",
-      "name": "Loading...",
-      "image": [],
-      "description": "Loading...",
-      "sku": "Loading...",
-      "brand": {
-        "@type": "Brand",
-        "name": "Madhav Multiprint"
-      },
-      "offers": {
-        "@type": "Offer",
-        "url": "",
-        "priceCurrency": "INR",
-        "price": "0",
-        "availability": "https://schema.org/InStock",
-        "itemCondition": "https://schema.org/NewCondition"
-      },
-      "aggregateRating": {
-        "@type": "AggregateRating",
-        "ratingValue": "0",
-        "reviewCount": "0"
-      },
-      "review": []
+      "name": "Loading...", "image": [], "description": "Loading...", "sku": "Loading...",
+      "brand": { "@type": "Brand", "name": "Madhav Multiprint" },
+      "offers": { "@type": "Offer", "url": "", "priceCurrency": "INR", "price": "0", "availability": "https://schema.org/InStock", "itemCondition": "https://schema.org/NewCondition" },
+      "aggregateRating": { "@type": "AggregateRating", "ratingValue": "0", "reviewCount": "0" }, "review": []
     }
     </script>
 </head>
@@ -43,210 +25,88 @@
 <body>
     <header>
         <nav class="container">
-            <div class="logo">
-                <a href="index.html"><img src="https://i.ibb.co/Z6gKD9Rd/1.png" alt="Madhav Multiprint Logo"></a>
-            </div>
-            <div class="nav-links">
-                <a href="index.html">Home</a>
-                <a href="products.html">Products</a>
-                <a href="about.html">About Us</a>
-                <a href="contact.html">Contact</a>
-                <a href="cart.html"><i class="fas fa-shopping-cart"></i> Cart (<span id="cart-count">0</span>)</a>
-                <a href="/admin/login.html" class="admin-login-link" target="_blank">Admin Login</a>
-            </div>
+            <div class="logo"> <a href="index.html"><img src="https://i.ibb.co/Z6gKD9Rd/1.png" alt="Madhav Multiprint Logo"></a> </div>
+            <div class="nav-links"> <a href="index.html">Home</a> <a href="products.html">Products</a> <a href="about.html">About Us</a> <a href="contact.html">Contact</a> <a href="cart.html"><i class="fas fa-shopping-cart"></i> Cart (<span id="cart-count">0</span>)</a> <a href="/admin/login.html" class="admin-login-link" target="_blank">Admin Login</a> </div>
             <button class="mobile-menu-toggle" aria-label="Toggle menu"><i class="fas fa-bars"></i></button>
         </nav>
     </header>
 
     <main class="container product-detail-page">
-
         <nav aria-label="breadcrumb" class="breadcrumbs">
-            <ol>
-                <li><a href="index.html">Home</a></li>
-                <li><a href="products.html">Products</a></li>
-                <li><span id="breadcrumb-product-name" aria-current="page">Loading...</span></li>
-            </ol>
+            <ol> <li><a href="index.html">Home</a></li> <li><a href="products.html">Products</a></li> <li><span id="breadcrumb-product-name" aria-current="page">Loading...</span></li> </ol>
         </nav>
 
         <div id="product-detail-container" class="product-detail-layout">
-
-            <div class="loading-indicator" style="display: flex;">
-                <p>Loading product details...</p>
-                <i class="fas fa-spinner fa-spin fa-2x"></i>
-            </div>
-
+            <div class="loading-indicator" style="display: flex;"> <p>Loading product details...</p> <i class="fas fa-spinner fa-spin fa-2x"></i> </div>
             <div class="product-content" style="display: none;">
-
                 <div class="product-image-gallery">
-                    <div class="main-image">
-                        <img id="main-product-image" src="images/placeholder.png" alt="Product Image"> </div>
-                    <div class="thumbnail-images" id="thumbnail-images">
-                        </div>
+                    <div class="main-image"> <img id="main-product-image" src="images/placeholder.png" alt="Product Image"> </div>
+                    <div class="thumbnail-images" id="thumbnail-images"> </div>
                 </div>
-
                 <div class="product-info-details">
                     <h1 id="product-name">Product Name</h1>
-
-                    <div class="product-description-short">
-                        <p id="product-description-short">Loading short description...</p>
-                    </div>
+                    <div class="product-description-short"> <p id="product-description-short">Loading...</p> </div>
 
                     <div id="flex-inputs-container" style="display: none;" class="product-options flex-options">
                          <h4>Enter Dimensions & Quantity:</h4>
-                         <div class="form-group-inline">
-                             <label for="banner-width">Width:</label>
-                             <input type="number" id="banner-width" name="banner_width" placeholder="e.g., 4" min="0" step="any">
-                         </div>
-                         <div class="form-group-inline">
-                             <label for="banner-height">Height:</label>
-                             <input type="number" id="banner-height" name="banner_height" placeholder="e.g., 2" min="0" step="any">
-                         </div>
-                         <div class="form-group-inline">
-                              <label for="banner-unit">Unit:</label>
-                              <select id="banner-unit" name="banner_unit">
-                                  <option value="feet" selected>Feet</option>
-                                  <option value="inches">Inches</option>
-                              </select>
-                         </div>
-                         <div class="form-group-inline quantity-control-group">
-                             <label for="banner-quantity">Quantity:</label>
-                             <div class="quantity-input-wrapper">
-                                <button type="button" class="quantity-btn quantity-decrease" aria-label="Decrease quantity">-</button>
-                                <input type="number" id="banner-quantity" name="banner_quantity" value="1" min="1" class="quantity-input">
-                                <button type="button" class="quantity-btn quantity-increase" aria-label="Increase quantity">+</button>
-                             </div>
-                         </div>
+                         <div class="form-group-inline"> <label for="banner-width">Width:</label> <input type="number" id="banner-width" name="banner_width" placeholder="e.g., 4" min="0" step="any"> </div>
+                         <div class="form-group-inline"> <label for="banner-height">Height:</label> <input type="number" id="banner-height" name="banner_height" placeholder="e.g., 2" min="0" step="any"> </div>
+                         <div class="form-group-inline"> <label for="banner-unit">Unit:</label> <select id="banner-unit" name="banner_unit"> <option value="feet" selected>Feet</option> <option value="inches">Inches</option> </select> </div>
+                         <div class="form-group-inline quantity-control-group"> <label for="banner-quantity">Quantity:</label> <div class="quantity-input-wrapper"> <button type="button" class="quantity-btn quantity-decrease" aria-label="Decrease quantity">-</button> <input type="number" id="banner-quantity" name="banner_quantity" value="1" min="1" class="quantity-input"> <button type="button" class="quantity-btn quantity-increase" aria-label="Increase quantity">+</button> </div> </div>
                     </div>
-
-                    <div id="wedding-quantity-container" style="display: none;" class="product-options wedding-options">
-                        </div>
-
+                    <div id="wedding-quantity-container" style="display: none;" class="product-options wedding-options"> </div>
                     <div id="standard-quantity-container" style="display: none;" class="product-options standard-options">
                          <label for="quantity">Quantity:</label>
-                         <div class="quantity-input-wrapper">
-                            <button type="button" class="quantity-btn quantity-decrease" aria-label="Decrease quantity">-</button>
-                            <input type="number" id="quantity" name="quantity" value="1" min="1" class="quantity-input">
-                            <button type="button" class="quantity-btn quantity-increase" aria-label="Increase quantity">+</button>
-                         </div>
+                         <div class="quantity-input-wrapper"> <button type="button" class="quantity-btn quantity-decrease" aria-label="Decrease quantity">-</button> <input type="number" id="quantity" name="quantity" value="1" min="1" class="quantity-input"> <button type="button" class="quantity-btn quantity-increase" aria-label="Increase quantity">+</button> </div>
                     </div>
+
                     <div class="product-actions">
                          <div class="price-display-area">
-                            <span id="product-price" class="price">Loading Price...</span>
+                            <span id="product-price" class="price">Loading...</span>
                             <span id="original-price" class="original-price"></span>
-                            <span id="wedding-per-card-price" class="price-per-card"></span>
-                         </div>
-                         <button id="add-to-cart-btn" class="button-primary">
-                             <i class="fas fa-shopping-cart"></i> Add to Cart
-                         </button>
+                            <span id="wedding-per-card-price" class="price-per-card"></span> </div>
+                         <button id="add-to-cart-btn" class="button-primary"> <i class="fas fa-shopping-cart"></i> Add to Cart </button>
                          <p id="cart-feedback" class="cart-feedback-message" aria-live="polite"></p>
-                         <a href="cart.html" id="view-cart-link" class="button-secondary view-cart-button" style="display: none; margin-left: 10px; vertical-align: middle;">
-                             View Cart <i class="fas fa-arrow-right" style="margin-left: 5px;"></i>
-                         </a>
-                    </div>
-
-                    <div class="social-sharing">
-                         <span>Share:</span>
-                         <a href="#" class="social-icon" aria-label="Share on Facebook"><i class="fab fa-facebook-f"></i></a>
-                         <a href="#" class="social-icon" aria-label="Share on Twitter"><i class="fab fa-twitter"></i></a>
-                         <a href="#" class="social-icon" aria-label="Share on WhatsApp"><i class="fab fa-whatsapp"></i></a>
-                         </div>
-
-                </div> </div> <div id="error-message-container" class="message-box error" style="display: none;"></div>
-
-            <div class="product-details-tabs" style="margin-top: 40px; display: none;">
-                 <ul class="tabs-nav">
-                     <li><a href="#tab-description" class="active">Description</a></li>
-                     <li><a href="#tab-specifications">Specifications</a></li>
-                     <li><a href="#tab-reviews">Reviews (<span id="review-count">0</span>)</a></li>
-                     <li><a href="#tab-usage">Usage & Care</a></li>
-                     <li><a href="#tab-faq">FAQs</a></li>
-                 </ul>
-
+                         <a href="cart.html" id="view-cart-link" class="button-secondary view-cart-button" style="display: none;"> View Cart <i class="fas fa-arrow-right" style="margin-left: 5px;"></i> </a> </div>
+                    <div class="social-sharing"> <span>Share:</span> <a href="#" class="social-icon" aria-label="Share on Facebook"><i class="fab fa-facebook-f"></i></a> <a href="#" class="social-icon" aria-label="Share on Twitter"><i class="fab fa-twitter"></i></a> <a href="#" class="social-icon" aria-label="Share on WhatsApp"><i class="fab fa-whatsapp"></i></a> </div>
+                </div>
+            </div>
+            <div id="error-message-container" class="message-box error" style="display: none;"></div>
+            <div class="product-details-tabs" style="display: none;">
+                 <ul class="tabs-nav"> <li><a href="#tab-description" class="active">Description</a></li> <li><a href="#tab-specifications">Specifications</a></li> <li><a href="#tab-reviews">Reviews (<span id="review-count">0</span>)</a></li> <li><a href="#tab-usage">Usage & Care</a></li> <li><a href="#tab-faq">FAQs</a></li> </ul>
                  <div class="tabs-content">
-                     <div id="tab-description" class="tab-pane active">
-                         <h2>Product Description</h2>
-                         <p id="product-description-full">Loading full description...</p>
-                     </div>
-
-                     <div id="tab-specifications" class="tab-pane">
-                         <h2>Specifications</h2>
-                         <ul id="product-specs">
-                             <li>Loading specifications...</li>
-                         </ul>
-                     </div>
-
+                     <div id="tab-description" class="tab-pane active"> <h2>Product Description</h2> <p id="product-description-full">Loading...</p> </div>
+                     <div id="tab-specifications" class="tab-pane"> <h2>Specifications</h2> <ul id="product-specs"><li>Loading...</li></ul> </div>
                      <div id="tab-reviews" class="tab-pane">
-                         <h2>Customer Reviews</h2>
-                         <div class="reviews-summary" style="margin-bottom: 20px;">
-                            Average Rating: <span id="average-rating">N/A</span>
-                         </div>
-                         <div id="reviews-list">
-                             <p>Loading reviews...</p>
-                         </div>
-                         <div id="add-review-form-container" style="margin-top: 30px;">
-                             <h3>Write a Review</h3>
-                             <form id="review-form">
-                                 <div class="form-group">
-                                     <label for="reviewer-name">Name:</label>
-                                     <input type="text" id="reviewer-name" name="reviewer_name" required>
-                                 </div>
-                                 <div class="form-group">
-                                     <label>Rating:</label>
-                                     <div class="star-rating">
-                                        <input type="radio" id="star5" name="rating" value="5" required/><label for="star5" title="5 stars"></label>
-                                        <input type="radio" id="star4" name="rating" value="4" /><label for="star4" title="4 stars"></label>
-                                        <input type="radio" id="star3" name="rating" value="3" /><label for="star3" title="3 stars"></label>
-                                        <input type="radio" id="star2" name="rating" value="2" /><label for="star2" title="2 stars"></label>
-                                        <input type="radio" id="star1" name="rating" value="1" /><label for="star1" title="1 star"></label>
-                                     </div>
-                                 </div>
-                                  <div class="form-group">
-                                     <label for="review-comment">Comment:</label>
-                                     <textarea id="review-comment" name="review_comment" rows="4" required></textarea>
-                                 </div>
-                                 <button type="submit" class="button-secondary">Submit Review</button>
-                                 <p id="review-feedback" class="cart-feedback-message" style="margin-top: 10px; display: none;"></p>
-                             </form>
-                         </div>
+                         <h2>Reviews</h2> <div class="reviews-summary"> Avg Rating: <span id="average-rating">N/A</span> </div> <div id="reviews-list"><p>Loading...</p></div>
+                         <div id="add-review-form-container"> <h3>Write a Review</h3> <form id="review-form"> <div class="form-group"> <label for="reviewer-name">Name:</label> <input type="text" id="reviewer-name" name="reviewer_name" required> </div> <div class="form-group"> <label>Rating:</label> <div class="star-rating"> <input type="radio" id="star5" name="rating" value="5" required/><label for="star5"></label> <input type="radio" id="star4" name="rating" value="4" /><label for="star4"></label> <input type="radio" id="star3" name="rating" value="3" /><label for="star3"></label> <input type="radio" id="star2" name="rating" value="2" /><label for="star2"></label> <input type="radio" id="star1" name="rating" value="1" /><label for="star1"></label> </div> </div> <div class="form-group"> <label for="review-comment">Comment:</label> <textarea id="review-comment" name="review_comment" rows="4" required></textarea> </div> <button type="submit" class="button-secondary">Submit Review</button> <p id="review-feedback" class="cart-feedback-message" style="display: none;"></p> </form> </div>
                      </div>
-
-                      <div id="tab-usage" class="tab-pane">
-                         <h2>Usage & Care Instructions</h2>
-                         <p id="usage-care-info">Loading usage and care information...</p>
-                     </div>
-
-                     <div id="tab-faq" class="tab-pane">
-                         <h2>Frequently Asked Questions</h2>
-                         <div id="faq-list">
-                            <p>Loading FAQs...</p>
-                         </div>
-                     </div>
-                 </div> </div> </div> <section id="related-products-section" class="related-products container" style="margin-top: 50px; display: none;">
+                     <div id="tab-usage" class="tab-pane"> <h2>Usage & Care</h2> <p id="usage-care-info">Loading...</p> </div>
+                     <div id="tab-faq" class="tab-pane"> <h2>FAQs</h2> <div id="faq-list"><p>Loading...</p></div> </div>
+                 </div>
+            </div>
+        </div>
+        <section id="related-products-section" class="related-products" style="display: none;">
              <h2 class="section-title"><i class="fas fa-tags"></i> Related Products</h2>
              <div class="swiper related-products-swiper">
-                 <div class="swiper-wrapper" id="related-products-container">
-                     <div class="swiper-slide"><p>Loading related products...</p></div>
-                 </div>
-                 <div class="swiper-pagination"></div>
-                 <div class="swiper-button-next"></div>
-                 <div class="swiper-button-prev"></div>
+                 <div class="swiper-wrapper" id="related-products-container"> <div class="swiper-slide"><p>Loading...</p></div> </div>
+                 <div class="swiper-pagination"></div> <div class="swiper-button-next"></div> <div class="swiper-button-prev"></div>
              </div>
          </section>
-
     </main>
 
-    <div id="add-to-cart-popup" class="popup-overlay" style="display: none;">
+    <div id="add-to-cart-popup" class="popup-overlay">
         <div class="popup-content">
             <button id="popup-close-btn" class="popup-close-btn" aria-label="Close popup">&times;</button>
             <h2>Confirm Item Addition</h2>
             <div class="popup-product-details">
-                <img id="popup-product-image" src="images/placeholder.png" alt="Product Image" style="width: 80px; height: auto; margin-right: 15px; border: 1px solid #eee;">
+                <img id="popup-product-image" src="images/placeholder.png" alt="Product Image">
                 <div class="popup-product-info">
                     <h3 id="popup-product-name">Product Name</h3>
-                    <p style="margin-bottom: 5px;">Quantity: <span id="popup-product-quantity">1</span></p>
-                    <p id="popup-product-options" style="font-size: 0.9em; color: #555; margin-bottom: 5px;"></p>
+                    <p>Quantity: <span id="popup-product-quantity">1</span></p>
+                    <p id="popup-product-options"></p>
                     <p style="font-weight: bold;">Price: <span id="popup-product-price">₹0.00</span></p>
-                    <p id="popup-per-card-price" style="font-size: 0.9em; color: #555;"></p>
+                    <p id="popup-per-card-price"></p>
                 </div>
             </div>
             <div class="popup-actions">
@@ -256,11 +116,12 @@
         </div>
     </div>
     <footer>
-        <div class="container">
-            <p>&copy; 2025 Madhav Multiprint. All Rights Reserved.</p>
-            <p><a href="#">Privacy Policy</a> | <a href="#">Terms & Conditions</a> | <a href="contact.html">Contact</a></p>
-        </div>
+        <div class="container"> <p>&copy; 2025 Madhav Multiprint. All Rights Reserved.</p> <p><a href="#">Privacy Policy</a> | <a href="#">Terms & Conditions</a> | <a href="contact.html">Contact</a></p> </div>
     </footer>
 
-    <script src="https://unpkg.com/swiper/swiper-bundle.min.js"></script> <script src="js/firebase-config.js" type="module"></script> <script src="js/main.js" type="module" defer></script> <script src="js/cart.js" type="module" defer></script> <script src="js/product-detail.js" type="module" defer></script> </body>
+    <script src="https://unpkg.com/swiper/swiper-bundle.min.js"></script>
+    <script src="js/firebase-config.js" type="module"></script>
+    <script src="js/main.js" type="module" defer></script>
+    <script src="js/cart.js" type="module" defer></script>
+    <script src="js/product-detail.js" type="module" defer></script> </body>
 </html>
