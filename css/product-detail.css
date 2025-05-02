@@ -1,1115 +1,1087 @@
-/* css/product-detail.css - Product Detail Page Styles (Includes Popup, Fixes, Design Improvements, Icon & Button Colors) */
+// js/product-detail.js
+// FINAL Version: Includes Add-to-Cart Popup Fix, Wedding Qty Fix, Related Products Fix, SetupTabs Fix, showLoading Fix, Debug Logs. Uses 'onlineProducts'.
 
-/* --- Variables --- */
-:root {
-    --primary-color: #0056b3;
-    --secondary-color: #6c757d;
-    --text-color: #333;
-    --text-muted: #666;
-    --border-color: #e0e0e0;
-    --white-bg: #fff;
-    --light-bg: #f8f9fa;
-    --lighter-bg: #f1f3f5;
-    --border-radius: 6px;
-    --font-family: 'Poppins', sans-serif; /* Poppins Font */
-    --box-shadow-sm: 0 1px 3px rgba(0,0,0,0.08);
-    --box-shadow-md: 0 4px 8px rgba(0,0,0,0.12);
+// --- Imports ---
+import { db } from './firebase-config.js';
+import { doc, getDoc, collection, query, where, limit, getDocs, addDoc, serverTimestamp, orderBy } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { addToCart } from './cart.js';
+import { updateCartCount } from './main.js'; // Assuming main.js exports this
 
-    /* नए बटन रंग */
-    --button-confirm-bg: #007bff; /* नीला */
-    --button-confirm-hover-bg: #0056b3; /* गहरा नीला */
-    --button-cancel-bg: #28a745; /* हरा */
-    --button-cancel-hover-bg: #218838; /* गहरा हरा */
-}
+// --- DOM Elements ---
+const productDetailContainer = document.getElementById('product-detail-container');
+const loadingIndicator = productDetailContainer?.querySelector('.loading-indicator');
+const productContent = productDetailContainer?.querySelector('.product-content');
+const errorMessageContainer = document.getElementById('error-message-container');
+const breadcrumbProductName = document.getElementById('breadcrumb-product-name');
+const productNameEl = document.getElementById('product-name');
+const mainImageEl = document.getElementById('main-product-image');
+const thumbnailImagesContainer = document.getElementById('thumbnail-images');
+const priceEl = document.getElementById('product-price');
+const originalPriceEl = document.getElementById('original-price');
+const perCardPriceEl = document.getElementById('per-card-price'); // Combined display area for per-card price
+const weddingPerCardPriceEl = document.getElementById('wedding-per-card-price'); // Specific wedding per-card price
+const addToCartBtn = document.getElementById('add-to-cart-btn');
+const cartFeedbackEl = document.getElementById('cart-feedback-message');
+const viewCartButton = document.getElementById('view-cart-button'); // Get the View Cart button
 
-/* --- Base & Font --- */
-body {
-    font-family: var(--font-family), sans-serif;
-    color: var(--text-color);
-    line-height: 1.6;
-    background-color: var(--white-bg);
-}
+// Product Type Specific Containers
+const standardOptionsContainer = document.getElementById('standard-options-container');
+const weddingOptionsContainer = document.getElementById('wedding-options-container');
+const flexOptionsContainer = document.getElementById('flex-options-container');
 
-/* --- Layout & Spacing --- */
-.container {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 0 20px;
-}
-.product-detail-page {
-    padding-top: 40px;
-    padding-bottom: 60px;
-}
-.breadcrumbs {
-    margin-bottom: 40px;
-    font-size: 0.9em;
-    color: var(--text-muted);
-}
-.breadcrumbs ol {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-}
-.breadcrumbs li:not(:last-child)::after {
-    content: '/';
-    margin-left: 8px;
-    color: var(--text-muted);
-}
-.breadcrumbs a {
-    color: var(--primary-color);
-    text-decoration: none;
-}
-.breadcrumbs a:hover {
-    text-decoration: underline;
-}
-.breadcrumbs [aria-current="page"] {
-    color: var(--text-color);
-    font-weight: 500;
-}
+// Standard Quantity Controls
+const quantityInput = document.getElementById('quantity');
+const quantityDecreaseBtn = document.getElementById('quantity-decrease');
+const quantityIncreaseBtn = document.getElementById('quantity-increase');
 
-/* --- Main Content Layout --- */
-.product-detail-layout {
-    position: relative;
-    min-height: 400px;
-}
-.product-content {
-    display: grid;
-    gap: 30px;
-    margin-bottom: 40px;
-    align-items: start;
-    grid-template-columns: 1fr;
-}
-@media (min-width: 768px) {
-    .product-content {
-        grid-template-columns: 1fr 1fr;
-        gap: 50px;
+// Wedding Quantity Controls
+const weddingQuantitySelect = document.getElementById('wedding-quantity-select');
+
+// Flex Banner Controls
+const bannerWidthInput = document.getElementById('banner-width');
+const bannerHeightInput = document.getElementById('banner-height');
+const bannerUnitSelect = document.getElementById('banner-unit');
+
+// Popup Elements
+const popupOverlay = document.getElementById('popup-overlay');
+const popupProductName = document.getElementById('popup-product-name');
+const popupProductImage = document.getElementById('popup-product-image');
+const popupProductQuantity = document.getElementById('popup-product-quantity');
+const popupProductOptions = document.getElementById('popup-product-options');
+const popupProductPrice = document.getElementById('popup-product-price');
+const popupPerCardPrice = document.getElementById('popup-per-card-price'); // Popup per card price element
+const popupConfirmBtn = document.getElementById('popup-confirm-add');
+const popupCancelBtn = document.getElementById('popup-cancel');
+const popupCloseBtn = popupOverlay?.querySelector('.popup-close-btn'); // Assuming a close 'x' button might exist
+
+// Related Products
+const relatedProductsSection = document.getElementById('related-products-section');
+const relatedProductsContainer = document.getElementById('related-products-container');
+
+// Tabs
+const tabsNav = document.querySelector('.tabs-nav');
+const tabPanes = document.querySelectorAll('.tab-pane');
+
+// Global variable to hold current product data
+let currentProductData = null;
+let currentPricingType = 'standard'; // 'standard', 'wedding', 'flex'
+let currentPerCardPrice = 0; // Store the calculated per-card price for wedding cards
+
+// --- Helper Functions ---
+function showLoading(section = 'main') {
+    console.log(`Showing loading for: ${section}`);
+    if (section === 'main' && loadingIndicator && productContent) {
+        loadingIndicator.style.display = 'flex';
+        productContent.style.display = 'none';
+        errorMessageContainer.style.display = 'none';
+        if(relatedProductsSection) relatedProductsSection.style.display = 'none'; // Hide related products too
+    } else if (section === 'related' && relatedProductsSection) {
+        // Optional: Add a specific loader for related products if needed
+        relatedProductsContainer.innerHTML = '<p>Loading related products...</p>';
+        relatedProductsSection.style.display = 'block';
     }
 }
 
-/* --- Loading & Error --- */
-.loading-indicator {
-    display: none; /* Initially hidden */
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 80px 40px;
-    text-align: center;
-    color: var(--text-muted);
-    width: 100%;
-    min-height: 350px;
-}
-.loading-indicator i {
-    color: var(--primary-color);
-    margin-top: 15px;
-    font-size: 2.5em;
-    animation: fa-spin 1.5s infinite linear;
-}
-.loading-indicator p {
-    font-size: 1.2em;
-    font-weight: 500;
-}
-.message-box.error {
-    padding: 20px;
-    margin: 30px 0;
-    border-radius: var(--border-radius);
-    text-align: center;
-    font-size: 1.1em;
-    border-left: 4px solid #dc3545;
-    background-color: #f8d7da;
-    color: #721c24;
-    display: none; /* Initially hidden */
-}
-
-/* --- Image Gallery --- */
-.product-image-gallery {
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
-    position: sticky;
-    top: 20px;
-}
-.main-image {
-    border: 1px solid var(--border-color);
-    border-radius: var(--border-radius);
-    overflow: hidden;
-    background-color: var(--light-bg);
-    aspect-ratio: 1 / 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-.main-image img {
-    display: block;
-    max-width: 100%;
-    max-height: 100%;
-    object-fit: contain;
-    transition: transform 0.3s ease;
-}
-.thumbnail-images {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(65px, 1fr));
-    gap: 10px;
-}
-.thumbnail-images img {
-    width: 100%;
-    height: auto;
-    aspect-ratio: 1 / 1;
-    object-fit: cover;
-    border: 2px solid transparent;
-    border-radius: 4px;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    background-color: #eee;
-    opacity: 0.7;
-}
-.thumbnail-images img:hover {
-    border-color: #ccc;
-    opacity: 1;
-}
-.thumbnail-images img.active {
-    border-color: var(--primary-color);
-    box-shadow: 0 0 5px rgba(0, 86, 179, 0.5);
-    opacity: 1;
-}
-
-/* --- Product Info --- */
-.product-info-details {
-    display: flex;
-    flex-direction: column;
-    padding-top: 10px;
-}
-#product-name {
-    font-size: 2.2em;
-    font-weight: 600;
-    color: var(--text-color);
-    margin-top: 0;
-    margin-bottom: 20px;
-    line-height: 1.3;
-}
-.product-description-short {
-    font-size: 1em;
-    color: var(--text-muted);
-    line-height: 1.7;
-    margin-bottom: 30px;
-}
-
-/* --- Options Containers --- */
-.product-options {
-    margin-bottom: 25px;
-    padding: 20px;
-    border: 1px solid var(--lighter-bg);
-    border-radius: var(--border-radius);
-    background-color: var(--lighter-bg);
-}
-.product-options h4 {
-    margin-top: 0;
-    margin-bottom: 15px;
-    font-size: 1.1em;
-    font-weight: 600;
-}
-.flex-options {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-    gap: 15px 20px;
-    align-items: end;
-}
-.flex-options .form-group-inline {
-    display: flex;
-    flex-direction: column;
-    gap: 5px;
-}
-.flex-options label {
-    font-size: 0.9em;
-    font-weight: 500;
-    color: var(--text-muted);
-    margin-bottom: 3px;
-}
-.flex-options input[type="number"], .flex-options select {
-    font-family: var(--font-family), sans-serif;
-    width: 100%;
-    padding: 9px 12px;
-    border: 1px solid var(--border-color);
-    border-radius: 4px;
-    font-size: 1em;
-    box-sizing: border-box;
-    height: 42px;
-    background-color: var(--white-bg);
-}
-.flex-options select {
-    appearance: none;
-    -webkit-appearance: none;
-    -moz-appearance: none;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23333'%3E%3Cpath fill-rule='evenodd' d='M4.22 6.03a.75.75 0 0 1 1.06 0L8 8.74l2.72-2.71a.75.75 0 1 1 1.06 1.06l-3.25 3.25a.75.75 0 0 1-1.06 0L4.22 7.09a.75.75 0 0 1 0-1.06Z' clip-rule='evenodd' /%3E%3C/svg%3E");
-    background-repeat: no-repeat;
-    background-position: right 10px center;
-    background-size: 16px 16px;
-    padding-right: 35px;
-    cursor: pointer;
-}
-.wedding-options {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-}
-#wedding-quantity-container {
-    max-width: 250px;
-}
-.wedding-options label {
-    font-size: 0.9em;
-    font-weight: 500;
-    color: var(--text-muted);
-    margin-bottom: 3px;
-}
-.wedding-options select {
-    font-family: var(--font-family), sans-serif;
-    width: 100%;
-    padding: 9px 12px;
-    border: 1px solid var(--border-color);
-    border-radius: 4px;
-    font-size: 0.95em;
-    box-sizing: border-box;
-    height: 42px;
-    background-color: var(--white-bg);
-    appearance: none;
-    -webkit-appearance: none;
-    -moz-appearance: none;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23333'%3E%3Cpath fill-rule='evenodd' d='M4.22 6.03a.75.75 0 0 1 1.06 0L8 8.74l2.72-2.71a.75.75 0 1 1 1.06 1.06l-3.25 3.25a.75.75 0 0 1-1.06 0L4.22 7.09a.75.75 0 0 1 0-1.06Z' clip-rule='evenodd' /%3E%3C/svg%3E");
-    background-repeat: no-repeat;
-    background-position: right 10px center;
-    background-size: 16px 16px;
-    padding-right: 35px;
-    cursor: pointer;
-}
-.standard-options {
-    display: flex;
-    flex-direction: column;
-    gap: 5px;
-}
-.standard-options label {
-    font-size: 0.9em;
-    font-weight: 500;
-    color: var(--text-muted);
-    margin-bottom: 3px;
-}
-.quantity-input-wrapper {
-    display: flex;
-    align-items: center;
-    border: 1px solid var(--border-color);
-    border-radius: 4px;
-    background-color: var(--white-bg);
-    overflow: hidden;
-    width: 120px;
-    height: 42px;
-}
-.quantity-input {
-    font-family: var(--font-family), sans-serif;
-    width: 100%;
-    padding: 8px 5px;
-    border: none;
-    font-size: 1em;
-    text-align: center;
-    height: 40px;
-    box-sizing: border-box;
-    appearance: textfield;
-    -moz-appearance: textfield;
-}
-.quantity-input::-webkit-outer-spin-button, .quantity-input::-webkit-inner-spin-button {
-    -webkit-appearance: none;
-    margin: 0;
-}
-.quantity-btn {
-    background-color: var(--lighter-bg);
-    border: none;
-    color: var(--text-muted);
-    cursor: pointer;
-    padding: 0 12px;
-    font-size: 1.3em;
-    font-weight: 400;
-    height: 40px;
-    line-height: 40px;
-    transition: background-color 0.2s ease, color 0.2s ease;
-}
-.quantity-btn:hover {
-    background-color: #e2e6ea;
-    color: var(--text-color);
-}
-.quantity-decrease {
-    border-right: 1px solid var(--border-color);
-    border-top-left-radius: 3px;
-    border-bottom-left-radius: 3px;
-}
-.quantity-increase {
-    border-left: 1px solid var(--border-color);
-    border-top-right-radius: 3px;
-    border-bottom-right-radius: 3px;
-}
-
-/* --- Product Actions --- */
-.product-actions {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 15px 20px;
-    margin-top: 30px;
-    padding-top: 25px;
-    border-top: 1px solid var(--border-color);
-}
-.price-display-area {
-    order: 1;
-    width: 100%;
-    margin-bottom: 15px;
-    text-align: left;
-}
-#product-price.price {
-    font-size: 2.4em;
-    font-weight: 700;
-    color: var(--primary-color);
-    margin-right: 10px;
-    line-height: 1.1;
-    display: block;
-}
-.original-price {
-    font-size: 1.1em;
-    color: var(--text-muted);
-    text-decoration: line-through;
-    display: inline-block;
-    margin-left: 0;
-    margin-right: 10px;
-}
-.price-per-card {
-    display: block;
-    font-size: 0.95em;
-    color: var(--text-muted);
-    margin-top: 5px;
-}
-#add-to-cart-btn {
-    order: 2;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
-    padding: 14px 30px;
-    font-size: 1.15em;
-    font-weight: 600;
-    flex-grow: 0;
-    width: auto;
-    background-color: var(--primary-color);
-    color: white;
-    border: none;
-    border-radius: var(--border-radius);
-    cursor: pointer;
-    transition: background-color 0.2s ease, box-shadow 0.2s ease;
-    text-align: center;
-    line-height: 1.4;
-    box-shadow: var(--box-shadow-sm);
-}
-#add-to-cart-btn:hover {
-    background-color: #004a99;
-    box-shadow: var(--box-shadow-md);
-}
-#add-to-cart-btn i {
-    font-size: 1em;
-}
-.view-cart-button { /* Styles for View Cart button */
-    order: 3;
-    margin-left: 15px;
-    vertical-align: middle;
-    padding: 12px 20px;
-    font-size: 1em;
-    line-height: 1.4;
-    text-decoration: none;
-    background-color: var(--secondary-color); /* Default secondary button style */
-    color: white;
-    border-radius: var(--border-radius);
-    transition: background-color 0.2s ease;
-    display: inline-flex; /* Align icon */
-    align-items: center;
-    gap: 5px;
-}
-.view-cart-button:hover {
-    background-color: #5a6268;
-}
-.cart-feedback-message {
-    order: 4;
-    width: 100%;
-    text-align: left;
-    margin-top: 15px;
-    font-size: 0.9em;
-    padding: 10px 15px;
-    border-radius: 4px;
-    display: none; /* Initially hidden */
-    box-sizing: border-box;
-}
-.cart-feedback-message.success {
-    background-color: #d1e7dd;
-    color: #0f5132;
-    border: 1px solid #badbcc;
-}
-.cart-feedback-message.error {
-    background-color: #f8d7da;
-    color: #842029;
-    border: 1px solid #f5c2c7;
-}
-
-/* Social Sharing */
-.social-sharing {
-    margin-top: 30px;
-    padding-top: 20px;
-    border-top: 1px solid var(--border-color);
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    flex-wrap: wrap;
-}
-.social-sharing span {
-    font-size: 0.95em;
-    font-weight: 500;
-    color: var(--text-muted);
-    margin-right: 8px;
-}
-.social-icon {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-    background-color: var(--lighter-bg);
-    color: var(--secondary-color);
-    text-decoration: none;
-    transition: all 0.2s ease;
-    font-size: 1em;
-}
-.social-icon:hover {
-    background-color: var(--primary-color);
-    color: var(--white-bg);
-    transform: scale(1.1);
-}
-.social-icon i {
-    line-height: 1;
-}
-
-/* --- Product Tabs --- */
-.product-details-tabs {
-    margin-top: 60px;
-    border-top: 1px solid var(--border-color);
-    padding-top: 35px;
-    display: block; /* Ensure it's displayed */
-}
-.tabs-nav {
-    list-style: none;
-    padding: 0;
-    margin: 0 0 30px 0;
-    display: flex;
-    flex-wrap: wrap;
-    border-bottom: 2px solid var(--border-color);
-}
-.tabs-nav li {
-    margin: 0;
-}
-.tabs-nav a {
-    display: block;
-    padding: 14px 22px;
-    color: var(--text-muted);
-    text-decoration: none;
-    font-weight: 500;
-    font-size: 1.05em;
-    border-bottom: 3px solid transparent;
-    transition: color 0.2s ease, border-color 0.2s ease, background-color 0.2s ease;
-    margin-bottom: -2px;
-    cursor: pointer;
-    border-top-left-radius: 4px;
-    border-top-right-radius: 4px;
-}
-.tabs-nav a:hover {
-    color: var(--primary-color);
-    background-color: var(--lighter-bg);
-}
-.tabs-nav a.active {
-    color: var(--primary-color);
-    border-bottom-color: var(--primary-color);
-    font-weight: 600;
-    background-color: var(--white-bg);
-}
-.tabs-content {
-    padding: 30px 10px;
-}
-.tab-pane {
-    display: none; /* Hidden by default */
-    animation: fadeIn 0.5s ease;
-}
-.tab-pane.active {
-    display: block; /* Show active tab */
-}
-.tab-pane h2 {
-    font-size: 1.5em;
-    font-weight: 600;
-    margin-top: 0;
-    margin-bottom: 25px;
-    color: var(--text-color);
-    border-bottom: 1px solid #eee;
-    padding-bottom: 10px;
-}
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
-}
-
-/* Specifications */
-#tab-specifications ul {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-    font-size: 0.95em;
-    line-height: 1.9;
-}
-#tab-specifications li {
-    padding: 10px 0;
-    border-bottom: 1px dashed #eee;
-    display: flex;
-    justify-content: space-between;
-    gap: 15px;
-}
-#tab-specifications li:last-child {
-    border-bottom: none;
-}
-#tab-specifications li strong {
-    color: var(--text-color);
-    margin-right: 10px;
-    flex-shrink: 0;
-    font-weight: 500;
-    width: 150px;
-}
-#tab-specifications li span {
-    color: var(--text-muted);
-    text-align: right;
-    flex-grow: 1;
-}
-
-/* Reviews */
-.reviews-summary {
-    font-size: 1.1em;
-    font-weight: 500;
-    margin-bottom: 25px;
-}
-#reviews-list .review-item {
-    padding: 20px 0;
-    border-bottom: 1px dashed #eee;
-}
-#reviews-list .review-item:last-child {
-    border-bottom: none;
-}
-.review-item .review-rating {
-    margin-bottom: 10px;
-    font-size: 1em;
-    color: #f0ad4e;
-}
-.review-item .review-rating i {
-    margin-right: 2px;
-}
-.review-item .review-comment {
-    line-height: 1.6;
-    color: var(--text-color);
-    margin-bottom: 10px;
-    font-style: italic;
-}
-.review-item .review-comment::before { content: '"'; margin-right: 2px;}
-.review-item .review-comment::after { content: '"'; margin-left: 2px;}
-.review-item .review-meta {
-    font-size: 0.9em;
-    color: var(--text-muted);
-}
-.review-item .review-meta strong {
-    color: var(--text-color);
-    font-weight: 600;
-}
-#add-review-form-container {
-    border-top: 1px solid var(--border-color);
-    padding-top: 30px;
-    margin-top: 35px;
-}
-#add-review-form-container h3 {
-    font-size: 1.3em;
-    margin-bottom: 20px;
-}
-#review-form .form-group {
-    margin-bottom: 18px;
-}
-#review-form label {
-    display: block;
-    margin-bottom: 6px;
-    font-weight: 500;
-    font-size: 0.9em;
-    color: var(--text-muted);
-}
-#review-form input[type="text"], #review-form textarea {
-    font-family: var(--font-family), sans-serif;
-    width: 100%;
-    padding: 12px 15px;
-    border: 1px solid var(--border-color);
-    border-radius: 4px;
-    font-size: 1em;
-    box-sizing: border-box;
-}
-#review-form textarea {
-    min-height: 100px;
-    resize: vertical;
-}
-/* Styles for Review Submit Button (Using general button class) */
-#review-form button[type="submit"] {
-    padding: 12px 25px;
-    font-size: 1em;
-    cursor: pointer;
-    background-color: var(--secondary-color); /* Using secondary color */
-    color: white;
-    border: none;
-    border-radius: var(--border-radius);
-    transition: background-color 0.2s ease;
-}
-#review-form button[type="submit"]:hover {
-    background-color: #5a6268;
-}
-
-.star-rating {
-    display: inline-block;
-    direction: rtl;
-    font-size: 1.6em;
-    line-height: 1;
-}
-.star-rating input[type="radio"] {
-    display: none;
-}
-.star-rating label {
-    color: #ccc;
-    cursor: pointer;
-    padding: 0 3px;
-    transition: color 0.2s ease;
-    display: inline-block;
-}
-.star-rating label:before {
-    content: '\f005';
-    font-family: 'Font Awesome 6 Free';
-    font-weight: 900;
-}
-.star-rating input:checked ~ label,
-.star-rating:not(:checked) > label:hover,
-.star-rating:not(:checked) > label:hover ~ label {
-    color: #f0ad4e;
-}
-.star-rating input:checked + label:hover,
-.star-rating input:checked ~ label:hover,
-.star-rating label:hover ~ input:checked ~ label,
-.star-rating input:checked ~ label:hover ~ label {
-    color: #f5c174;
-}
-
-/* Usage & Care / FAQs */
-#tab-usage p, #tab-faq .faq-answer {
-    color: var(--text-muted);
-    line-height: 1.7;
-    font-size: 0.95em;
-}
-.faq-item {
-    margin-bottom: 20px;
-    padding-bottom: 20px;
-    border-bottom: 1px dashed #eee;
-}
-.faq-item:last-child {
-    border-bottom: none;
-}
-.faq-item summary {
-    font-size: 1.15em;
-    font-weight: 600;
-    margin-bottom: 10px;
-    color: var(--primary-color);
-    cursor: pointer;
-    list-style: none;
-    position: relative;
-    padding-left: 25px;
-}
-.faq-item summary::-webkit-details-marker { display: none; }
-.faq-item summary::before {
-    content: '+';
-    position: absolute;
-    left: 0;
-    top: 1px;
-    font-weight: bold;
-    color: var(--primary-color);
-    transition: transform 0.2s ease;
-}
-.faq-item[open] summary::before {
-    transform: rotate(45deg);
-}
-.faq-item .faq-answer {
-    padding-left: 25px;
-    margin-top: 8px;
-}
-
-/* --- Related Products --- */
-#related-products-section {
-    padding: 50px 0;
-    background-color: var(--lighter-bg);
-    margin-top: 60px;
-    overflow: hidden;
-    border-top: 1px solid var(--border-color);
-    display: none; /* Initially hidden */
-}
-#related-products-section .section-title {
-    text-align: center;
-    font-size: 1.6em;
-    font-weight: 600;
-    color: var(--primary-color);
-    margin-bottom: 30px;
-    padding-bottom: 10px;
-    border-bottom: 1px solid var(--border-color);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
-}
-.related-products-swiper {
-    width: 100%;
-    padding: 10px 0 40px 0;
-    position: relative;
-}
-#related-products-container .swiper-slide {
-    height: auto;
-    display: flex;
-    justify-content: center;
-    align-items: stretch;
-    padding: 5px;
-    box-sizing: border-box;
-}
-#related-products-container .product-card {
-    border: 1px solid var(--border-color);
-    border-radius: var(--border-radius);
-    background-color: var(--white-bg);
-    box-shadow: var(--box-shadow-sm);
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
-    width: 100%;
-    height: 100%;
-    margin-bottom: 0;
-}
-#related-products-container .product-card:hover {
-    transform: translateY(-4px);
-    box-shadow: var(--box-shadow-md);
-}
-#related-products-container .product-card .product-image-container {
-    width: 100%;
-    aspect-ratio: 4 / 3;
-    background-color: #f8f9fa;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    overflow: hidden;
-    position: relative;
-}
-#related-products-container .product-card .product-image-container img {
-    display: block;
-    max-width: 100%;
-    max-height: 100%;
-    object-fit: contain;
-}
-#related-products-container .product-card .product-info {
-    padding: 10px 12px;
-    flex-grow: 1;
-    display: flex;
-    flex-direction: column;
-    text-align: center;
-}
-#related-products-container .product-card h3 {
-    font-size: 0.9em;
-    margin: 0 0 5px 0;
-    font-weight: 600;
-    line-height: 1.3;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-    min-height: calc(0.9em * 1.3 * 2); /* Reserve space for 2 lines */
-}
-#related-products-container .product-card h3 a {
-    text-decoration: none;
-    color: inherit;
-}
-#related-products-container .product-card .price {
-    margin-bottom: 8px;
-    font-size: 0.9em;
-    font-weight: 500;
-    color: var(--text-color);
-    min-height: 1.4em; /* Ensure consistent height */
-}
-#related-products-container .product-card .view-details-btn {
-    padding: 6px 10px;
-    font-size: 0.85em;
-    margin-top: auto; /* Push to bottom */
-    display: block;
-    width: auto;
-    margin-left: auto;
-    margin-right: auto;
-    text-decoration: none;
-    background-color: var(--primary-color); /* Match main button */
-    color: white;
-    border: none;
-    border-radius: 4px;
-    transition: background-color 0.2s ease;
-}
-#related-products-container .product-card .view-details-btn:hover {
-    background-color: #004a99;
-}
-.related-products-swiper .swiper-button-next,
-.related-products-swiper .swiper-button-prev {
-    color: var(--primary-color);
-    background-color: rgba(255, 255, 255, 0.8);
-    border-radius: 50%;
-    width: 35px;
-    height: 35px;
-    top: 50%;
-    transform: translateY(-50%);
-    box-shadow: var(--box-shadow-sm);
-    transition: background-color 0.2s ease;
-}
-.related-products-swiper .swiper-button-next:hover,
-.related-products-swiper .swiper-button-prev:hover {
-    background-color: var(--white-bg);
-}
-.related-products-swiper .swiper-button-next::after,
-.related-products-swiper .swiper-button-prev::after {
-    font-size: 16px;
-    font-weight: bold;
-}
-.related-products-swiper .swiper-pagination-bullet {
-    background-color: var(--primary-color);
-    opacity: 0.6;
-}
-.related-products-swiper .swiper-pagination-bullet-active {
-    opacity: 1;
-}
-
-/* --- Popup Styles --- */
-.popup-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.65);
-    display: none; /* Hidden by default */
-    justify-content: center;
-    align-items: center;
-    z-index: 1000;
-    opacity: 0;
-    visibility: hidden;
-    transition: opacity 0.3s ease, visibility 0s linear 0.3s;
-}
-.popup-overlay.active {
-    display: flex;
-    opacity: 1;
-    visibility: visible;
-    transition: opacity 0.3s ease;
-}
-.popup-content {
-    background-color: #fdfdfd;
-    padding: 30px 40px;
-    border-radius: var(--border-radius);
-    box-shadow: var(--box-shadow-md);
-    max-width: 550px;
-    width: 90%;
-    position: relative;
-    text-align: center;
-    transform: scale(0.9);
-    opacity: 0;
-    transition: transform 0.3s ease, opacity 0.3s ease;
-}
-.popup-overlay.active .popup-content {
-    transform: scale(1);
-    opacity: 1;
-}
-.popup-close-btn {
-    position: absolute;
-    top: 8px;
-    right: 12px;
-    background: none;
-    border: none;
-    font-size: 2.2em;
-    line-height: 1;
-    cursor: pointer;
-    color: #aaa;
-    padding: 0;
-    transition: color 0.2s ease;
-}
-.popup-close-btn:hover {
-    color: var(--text-color);
-}
-
-/* *** UPDATED POPUP HEADING *** */
-.popup-content h2 {
-    margin-top: 0;
-    margin-bottom: 25px;
-    font-size: 1.5em;
-    color: var(--primary-color);
-    font-family: var(--font-family); /* Poppins Font */
-    display: flex; /* Align icon and text */
-    align-items: center; /* Vertically align */
-    justify-content: center; /* Center align */
-    gap: 8px; /* Space between icon and text */
-}
-.popup-content h2 i { /* Style for the icon */
-    font-size: 1em; /* Match h2 font size */
-    /* Color inherited from h2 */
-}
-
-.popup-product-details {
-    display: flex;
-    align-items: flex-start;
-    text-align: left;
-    margin-bottom: 30px;
-    border-bottom: 1px solid #eee;
-    padding: 20px;
-    background-color: var(--white-bg);
-    border-radius: 5px;
-    border: 1px solid #eee;
-    gap: 20px;
-}
-.popup-product-details img {
-    width: 100px;
-    height: 100px;
-    object-fit: contain;
-    border: 1px solid var(--border-color);
-    border-radius: 4px;
-    flex-shrink: 0;
-    background-color: #f9f9f9;
-}
-.popup-product-info {
-    flex-grow: 1;
-}
-.popup-product-info h3 {
-    margin-top: 0;
-    margin-bottom: 10px;
-    font-size: 1.2em;
-    line-height: 1.3;
-}
-.popup-product-info p {
-    margin-bottom: 6px;
-    line-height: 1.5;
-    font-size: 0.95em;
-}
-#popup-product-options { /* Style for options text */
-    font-size: 0.9em;
-    color: var(--text-muted);
-    margin-bottom: 8px;
-    font-style: italic;
-}
-#popup-per-card-price { /* Style for per card price */
-    font-size: 0.9em;
-    color: var(--text-muted);
-    display: block; /* Ensure it's on its own line */
-}
-.popup-actions {
-    display: flex;
-    justify-content: center; /* Keep buttons centered */
-    gap: 15px;
-    margin-top: 15px;
-}
-.popup-actions button { /* General style for popup buttons */
-    padding: 12px 25px;
-    font-size: 1em;
-    font-weight: 500;
-    border: none;
-    border-radius: var(--border-radius);
-    cursor: pointer;
-    transition: background-color 0.2s ease, border-color 0.2s ease;
-}
-
-/* *** UPDATED POPUP BUTTON COLORS *** */
-#popup-confirm-add.button-primary {
-    background-color: var(--button-confirm-bg); /* Blue */
-    border-color: var(--button-confirm-bg);
-    color: white;
-}
-#popup-confirm-add.button-primary:hover {
-     background-color: var(--button-confirm-hover-bg); /* Darker Blue */
-     border-color: var(--button-confirm-hover-bg);
-}
-
-#popup-cancel.button-secondary {
-    background-color: var(--button-cancel-bg); /* Green */
-    border-color: var(--button-cancel-bg);
-    color: white; /* Ensure text is visible */
-}
- #popup-cancel.button-secondary:hover {
-     background-color: var(--button-cancel-hover-bg); /* Darker Green */
-     border-color: var(--button-cancel-hover-bg);
-}
-
-/* --- Responsive Adjustments --- */
-@media (max-width: 992px) {
-    .product-content { gap: 30px; }
-    .flex-options { grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); }
-    #product-name { font-size: 2em; }
-}
-
-@media (max-width: 768px) {
-    .product-content { grid-template-columns: 1fr; }
-    .product-image-gallery { position: static; margin-bottom: 30px;}
-    #product-name { font-size: 1.8em; }
-    .flex-options { grid-template-columns: 1fr 1fr; }
-    .flex-options .form-group-inline:nth-child(3), /* Unit select */
-    .flex-options .quantity-control-group { grid-column: span 2; } /* Flex quantity */
-    #wedding-quantity-container { max-width: none; }
-    .product-actions {
-        flex-direction: row;
-        align-items: center;
-        flex-wrap: wrap;
+function hideLoading(section = 'main') {
+    console.log(`Hiding loading for: ${section}`);
+    if (section === 'main' && loadingIndicator && productContent) {
+        loadingIndicator.style.display = 'none';
+        productContent.style.display = 'grid'; // Or 'block' depending on your layout
     }
-    .price-display-area { order: 1; width: auto; margin-bottom: 0; }
-    #add-to-cart-btn { order: 2; width: auto; margin-top: 0;}
-    .view-cart-button { order: 3; width: auto; margin-left: 10px; margin-top: 0;}
-    .cart-feedback-message { order: 4; width: 100%; margin-top: 15px; text-align: center; }
-    .social-sharing { justify-content: flex-start; }
-    .tabs-nav { justify-content: flex-start; }
-    .tabs-nav a { padding: 10px 15px; font-size: 0.95em; }
-    #related-products-section .section-title { font-size: 1.4em; }
-    .popup-content { width: 95%; padding: 20px;}
-    .popup-product-details { flex-direction: column; align-items: center; text-align: center;}
-    .popup-product-details img { margin-right: 0; margin-bottom: 15px;}
-    .popup-product-info { text-align: center;}
-    .popup-actions { flex-direction: column; gap: 10px; } /* Stack buttons vertically */
-    .popup-actions button { width: 100%; } /* Make buttons full width */
+    // No specific hiding for related needed if content replaces the loading text
 }
 
-@media (max-width: 480px) {
-    #product-name { font-size: 1.6em; }
-    .breadcrumbs { font-size: 0.8em; }
-    .flex-options { grid-template-columns: 1fr; } /* Single column for flex options */
-    .flex-options .form-group-inline:nth-child(3), /* Reset grid span */
-    .flex-options .quantity-control-group { grid-column: auto; }
-    #product-price.price { font-size: 2em; }
-    .original-price { font-size: 1em; }
-    .price-per-card { font-size: 0.9em; }
-    .product-actions { flex-direction: column; align-items: stretch;} /* Stack main actions */
-    .price-display-area { text-align: center; margin-bottom: 15px;}
-    #add-to-cart-btn { width: 100%; order: 1; font-size: 1em; padding: 12px 20px; }
-    .view-cart-button { width: 100%; order: 2; margin-left: 0; margin-top: 10px; padding: 10px 15px;}
-    .cart-feedback-message { order: 3; }
-    .tabs-nav { justify-content: space-around; } /* Space out tabs */
-    .tabs-nav a { padding: 8px 10px; font-size: 0.9em; }
-    .tab-pane h2 { font-size: 1.3em; }
-    #related-products-section .section-title { font-size: 1.3em; }
-    .related-products-swiper .swiper-button-next,
-    .related-products-swiper .swiper-button-prev { display: none; } /* Hide arrows on small screens */
-    .popup-content h2 { font-size: 1.3em;}
-    .popup-actions button { font-size: 0.95em;}
+function showError(message) {
+    console.error("Error displayed:", message);
+    if (errorMessageContainer && loadingIndicator && productContent) {
+        errorMessageContainer.textContent = message;
+        errorMessageContainer.style.display = 'block';
+        loadingIndicator.style.display = 'none';
+        productContent.style.display = 'none';
+        if(relatedProductsSection) relatedProductsSection.style.display = 'none';
+    } else {
+        console.error("Error display elements not found.");
+    }
 }
 
-/* Spin Animation */
-@keyframes fa-spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
+function formatPrice(price) {
+    return `₹${Number(price).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
+
+// --- Product Data Fetching & Rendering ---
+async function loadProductDetails(productId) {
+    showLoading('main');
+    try {
+        console.log(`Workspaceing product with ID: ${productId}`);
+        const productRef = doc(db, "onlineProducts", productId); // Use 'onlineProducts' collection
+        const productSnap = await getDoc(productRef);
+
+        if (productSnap.exists()) {
+            console.log("Product data found:", productSnap.data());
+            currentProductData = { id: productSnap.id, ...productSnap.data() };
+            renderProductDetails(currentProductData);
+            // Don't fetch related products immediately, wait for main product render
+        } else {
+            console.error("No such product found!");
+            showError("Product not found.");
+        }
+    } catch (error) {
+        console.error("Error fetching product details:", error);
+        showError("Could not load product details. Please check your connection and try again.");
+    } finally {
+        // Main loading hidden inside renderProductDetails or showError
+    }
+}
+
+function renderProductDetails(productData) {
+    console.log("Rendering product details...");
+
+    if (!productData || !productDetailContainer) {
+        showError("Failed to render product details: Data or container missing.");
+        return;
+    }
+
+    // Determine pricing type
+    if (productData.pricingType === 'wedding') {
+        currentPricingType = 'wedding';
+    } else if (productData.pricingType === 'flex') {
+        currentPricingType = 'flex';
+    } else {
+        currentPricingType = 'standard';
+    }
+    console.log(`Product pricing type determined as: ${currentPricingType}`);
+
+    // --- Update Basic Info ---
+    if (breadcrumbProductName) breadcrumbProductName.textContent = productData.name || 'Product';
+    if (productNameEl) productNameEl.textContent = productData.name || 'N/A';
+    document.title = `${productData.name || 'Product'} Details - Madhav Multiprint`;
+
+    // --- Update Images ---
+    if (mainImageEl) {
+        mainImageEl.src = productData.imageUrls?.[0] || 'images/placeholder.png';
+        mainImageEl.alt = productData.name || 'Product Image';
+    }
+    if (thumbnailImagesContainer) {
+        thumbnailImagesContainer.innerHTML = ''; // Clear old thumbnails
+        if (productData.imageUrls && productData.imageUrls.length > 1) {
+            productData.imageUrls.forEach((url, index) => {
+                const img = document.createElement('img');
+                img.src = url;
+                img.alt = `Thumbnail ${index + 1}`;
+                img.dataset.full = url;
+                if (index === 0) img.classList.add('active');
+                img.addEventListener('click', () => {
+                    if (mainImageEl) mainImageEl.src = img.dataset.full;
+                    thumbnailImagesContainer.querySelectorAll('img').forEach(i => i.classList.remove('active'));
+                    img.classList.add('active');
+                });
+                thumbnailImagesContainer.appendChild(img);
+            });
+            thumbnailImagesContainer.style.display = 'grid';
+        } else {
+             thumbnailImagesContainer.style.display = 'none'; // Hide thumbnails if only one image
+        }
+    }
+
+    // --- Update Descriptions ---
+    const shortDescEl = document.querySelector('.product-description-short');
+    if (shortDescEl) shortDescEl.textContent = productData.shortDescription || '';
+    const longDescEl = document.getElementById('tab-description');
+    if (longDescEl) longDescEl.innerHTML = productData.longDescription || '<p>No description available.</p>'; // Use innerHTML if description contains HTML
+
+    // --- Update Specifications ---
+    const specsList = document.getElementById('tab-specifications ul');
+    if (specsList) {
+        specsList.innerHTML = ''; // Clear existing specs
+        if (productData.specifications && typeof productData.specifications === 'object') {
+            for (const [key, value] of Object.entries(productData.specifications)) {
+                if (value) { // Only display specs with a value
+                    const li = document.createElement('li');
+                    const strong = document.createElement('strong');
+                    strong.textContent = key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase()); // Format key nicely
+                    const span = document.createElement('span');
+                    span.textContent = value;
+                    li.appendChild(strong);
+                    li.appendChild(span);
+                    specsList.appendChild(li);
+                }
+            }
+        } else {
+            specsList.innerHTML = '<li>No specifications available.</li>';
+        }
+    }
+
+
+    // --- Update Pricing & Options ---
+    updatePricingAndOptionsVisibility(productData);
+
+    // --- Setup Event Listeners (Crucial: After elements are rendered) ---
+    attachEventListeners(productData); // Attach listeners for quantity, add to cart etc.
+
+    // --- Update Schema.org JSON-LD ---
+    updateProductSchema(productData);
+
+    // --- Fetch and Render Related Products ---
+    if (productData.category) {
+        loadRelatedProducts(productData.category, productData.id);
+    } else {
+        console.log("No category found, skipping related products.");
+        if(relatedProductsSection) relatedProductsSection.style.display = 'none';
+    }
+
+    // --- Fetch and Render Reviews ---
+    loadReviews(productData.id);
+
+    // --- Setup Tabs ---
+    setupTabs(); // Make sure tabs work
+
+     // --- Hide Loading, Show Content ---
+    hideLoading('main');
+    console.log("Product details rendered successfully.");
+}
+
+function updatePricingAndOptionsVisibility(productData) {
+    console.log("Updating pricing and options visibility based on type:", currentPricingType);
+    // Hide all option containers initially
+    if (standardOptionsContainer) standardOptionsContainer.style.display = 'none';
+    if (weddingOptionsContainer) weddingOptionsContainer.style.display = 'none';
+    if (flexOptionsContainer) flexOptionsContainer.style.display = 'none';
+    if (originalPriceEl) originalPriceEl.style.display = 'none'; // Hide original price by default
+    if (perCardPriceEl) perCardPriceEl.style.display = 'none'; // Hide general per-card price display
+    if (weddingPerCardPriceEl) weddingPerCardPriceEl.style.display = 'none'; // Hide specific wedding per-card price display
+
+    switch (currentPricingType) {
+        case 'wedding':
+            if (weddingOptionsContainer) weddingOptionsContainer.style.display = 'block';
+            if (weddingQuantitySelect && productData.weddingPricing) {
+                populateWeddingQuantities(productData.weddingPricing);
+                updateWeddingPriceDisplay(); // Initial price update
+            } else {
+                 console.error("Wedding pricing data or select element missing.");
+                 if (priceEl) priceEl.textContent = 'Price Unavailable';
+            }
+            break;
+        case 'flex':
+            if (flexOptionsContainer) flexOptionsContainer.style.display = 'block';
+            if (bannerWidthInput && bannerHeightInput && bannerUnitSelect && productData.basePriceSqFt) {
+                updateFlexPriceDisplay(); // Initial price update
+            } else {
+                console.error("Flex pricing elements or base price missing.");
+                if (priceEl) priceEl.textContent = 'Price Unavailable';
+            }
+            break;
+        case 'standard':
+        default:
+            if (standardOptionsContainer) standardOptionsContainer.style.display = 'block';
+            if (priceEl) priceEl.textContent = formatPrice(productData.price || 0);
+            if (productData.originalPrice && productData.originalPrice > productData.price) {
+                if (originalPriceEl) {
+                    originalPriceEl.textContent = formatPrice(productData.originalPrice);
+                    originalPriceEl.style.display = 'inline';
+                }
+            }
+            if (quantityInput) quantityInput.value = 1; // Reset quantity
+            break;
+    }
+}
+
+function populateWeddingQuantities(pricingTiers) {
+    if (!weddingQuantitySelect || !pricingTiers || pricingTiers.length === 0) return;
+
+    // Sort tiers by quantity ascending
+    pricingTiers.sort((a, b) => a.minQuantity - b.minQuantity);
+
+    weddingQuantitySelect.innerHTML = ''; // Clear existing options
+    pricingTiers.forEach(tier => {
+        const option = document.createElement('option');
+        option.value = tier.minQuantity; // Use minQuantity as the value
+        option.dataset.pricePerCard = tier.pricePerCard; // Store price per card in data attribute
+        option.textContent = `${tier.minQuantity}+ Cards`;
+        weddingQuantitySelect.appendChild(option);
+    });
+    weddingQuantitySelect.selectedIndex = 0; // Select the first option by default
+}
+
+function updateWeddingPriceDisplay() {
+    if (!weddingQuantitySelect || !priceEl || !weddingPerCardPriceEl) return;
+
+    const selectedOption = weddingQuantitySelect.options[weddingQuantitySelect.selectedIndex];
+    if (!selectedOption || !selectedOption.dataset.pricePerCard) {
+        console.error("Selected wedding option or price data missing.");
+        priceEl.textContent = 'N/A';
+        weddingPerCardPriceEl.textContent = '';
+        weddingPerCardPriceEl.style.display = 'none';
+        return;
+    }
+
+    const quantity = parseInt(selectedOption.value, 10);
+    currentPerCardPrice = parseFloat(selectedOption.dataset.pricePerCard); // Update global per-card price
+    const totalPrice = quantity * currentPerCardPrice;
+
+    priceEl.textContent = formatPrice(totalPrice);
+    weddingPerCardPriceEl.textContent = `${formatPrice(currentPerCardPrice)} per card`;
+    weddingPerCardPriceEl.style.display = 'block'; // Show the per-card price
+
+    console.log(`Wedding price updated: Qty=${quantity}, PerCard=${currentPerCardPrice}, Total=${totalPrice}`);
+}
+
+
+function updateFlexPriceDisplay() {
+    if (!bannerWidthInput || !bannerHeightInput || !bannerUnitSelect || !priceEl || !currentProductData?.basePriceSqFt) {
+         console.warn("Flex pricing update skipped: Missing elements or base price.");
+         return;
+    }
+
+    const width = parseFloat(bannerWidthInput.value) || 0;
+    const height = parseFloat(bannerHeightInput.value) || 0;
+    const unit = bannerUnitSelect.value;
+    const basePriceSqFt = parseFloat(currentProductData.basePriceSqFt);
+
+    if (width <= 0 || height <= 0 || !basePriceSqFt) {
+        priceEl.textContent = formatPrice(0);
+        return;
+    }
+
+    let areaSqFt = 0;
+    if (unit === 'ft') {
+        areaSqFt = width * height;
+    } else if (unit === 'in') {
+        areaSqFt = (width / 12) * (height / 12);
+    } else if (unit === 'cm') {
+        areaSqFt = (width / 30.48) * (height / 30.48);
+    }
+
+    const totalPrice = areaSqFt * basePriceSqFt;
+    priceEl.textContent = formatPrice(totalPrice);
+    console.log(`Flex price updated: W=${width}, H=${height}, Unit=${unit}, AreaSqFt=${areaSqFt.toFixed(2)}, Total=${totalPrice}`);
+}
+
+function updateProductSchema(productData) {
+    const schemaScript = document.getElementById('product-schema');
+    if (schemaScript) {
+        try {
+            const schema = {
+                "@context": "https://schema.org/",
+                "@type": "Product",
+                "name": productData.name || "Unnamed Product",
+                "image": productData.imageUrls || [],
+                "description": productData.shortDescription || productData.longDescription || "No description available.",
+                "sku": productData.sku || productData.id, // Use SKU if available, else product ID
+                "brand": {
+                    "@type": "Brand",
+                    "name": "Madhav Multiprint" // Assuming a fixed brand name
+                },
+                "offers": {
+                    "@type": "Offer",
+                    "url": window.location.href, // Current page URL
+                    "priceCurrency": "INR",
+                    // Price determination needs logic based on pricingType
+                    "price": determineSchemaPrice(productData),
+                    "availability": "https://schema.org/InStock", // Assuming always in stock for now
+                    "priceValidUntil": new Date(new Date().setDate(new Date().getDate() + 30)).toISOString().substring(0,10) // Valid for 30 days example
+                },
+                // Optional: Add aggregateRating if reviews are implemented
+                // "aggregateRating": {
+                //   "@type": "AggregateRating",
+                //   "ratingValue": "4.5", // Example
+                //   "reviewCount": "15" // Example
+                // },
+                // Optional: Add reviews
+                // "review": [ { ... review schema ... } ]
+            };
+            schemaScript.textContent = JSON.stringify(schema, null, 2); // Pretty print JSON
+             console.log("Product schema updated.");
+        } catch (e) {
+            console.error("Error updating product schema:", e);
+        }
+    }
+}
+
+function determineSchemaPrice(productData) {
+    // Provides a representative price for Schema.org
+    // For variable pricing, using the base or lowest tier price is common.
+    switch (productData.pricingType) {
+        case 'wedding':
+            // Use the price of the lowest quantity tier
+            return productData.weddingPricing?.sort((a,b) => a.minQuantity - b.minQuantity)[0]?.pricePerCard * productData.weddingPricing[0]?.minQuantity || "0";
+        case 'flex':
+            // Flex price depends on dimensions, maybe provide base price per sq ft?
+            // Or calculate for a default size (e.g., 1x1 ft). Let's use 0 for now or base price.
+            return productData.basePriceSqFt || "0"; // Representing price per sq ft
+        case 'standard':
+        default:
+            return productData.price || "0";
+    }
+}
+
+// --- Event Listeners Setup ---
+// Store references to listeners to allow removal
+let handleAddToCartListener;
+let standardQuantityButtonListener;
+let weddingQuantityChangeListener;
+let flexInputListeners = []; // Store multiple listeners for flex inputs
+
+function attachEventListeners(productData) {
+    console.log("Attaching event listeners...");
+
+    // --- Remove Previous Listeners (IMPORTANT) ---
+    // This prevents duplicate listeners if renderProductDetails is somehow called again
+    if (addToCartBtn && handleAddToCartListener) {
+        addToCartBtn.removeEventListener('click', handleAddToCartListener);
+        console.log("Removed previous Add to Cart listener.");
+    }
+    if (quantityDecreaseBtn && standardQuantityButtonListener) {
+        quantityDecreaseBtn.removeEventListener('click', standardQuantityButtonListener);
+    }
+    if (quantityIncreaseBtn && standardQuantityButtonListener) {
+        quantityIncreaseBtn.removeEventListener('click', standardQuantityButtonListener);
+         console.log("Removed previous standard quantity listeners.");
+    }
+    if (weddingQuantitySelect && weddingQuantityChangeListener) {
+        weddingQuantitySelect.removeEventListener('change', weddingQuantityChangeListener);
+        console.log("Removed previous wedding quantity listener.");
+    }
+    // Remove previous flex listeners
+    flexInputListeners.forEach(({ element, type, listener }) => {
+        if (element) element.removeEventListener(type, listener);
+    });
+    flexInputListeners = []; // Clear the array
+    console.log("Removed previous flex input listeners.");
+
+
+    // --- Add New Listeners ---
+
+    // Add to Cart Button
+    if (addToCartBtn) {
+        handleAddToCartListener = () => handleAddToCart(productData); // Define the listener
+        addToCartBtn.addEventListener('click', handleAddToCartListener);
+        console.log("Add to Cart button listener attached.");
+    } else {
+        console.error("Add to Cart button not found.");
+    }
+
+    // Standard Quantity Controls
+    if (quantityDecreaseBtn && quantityIncreaseBtn && quantityInput && currentPricingType === 'standard') {
+        standardQuantityButtonListener = (event) => handleStandardQuantityChange(event.target); // Define listener
+        quantityDecreaseBtn.addEventListener('click', standardQuantityButtonListener);
+        quantityIncreaseBtn.addEventListener('click', standardQuantityButtonListener);
+        console.log("Standard quantity button listeners attached.");
+    }
+
+    // Wedding Quantity Select
+    if (weddingQuantitySelect && currentPricingType === 'wedding') {
+        weddingQuantityChangeListener = updateWeddingPriceDisplay; // Define listener
+        weddingQuantitySelect.addEventListener('change', weddingQuantityChangeListener);
+        console.log("Wedding quantity select listener attached.");
+    }
+
+    // Flex Input Controls
+    if (currentPricingType === 'flex') {
+        const inputs = [bannerWidthInput, bannerHeightInput, bannerUnitSelect];
+        if (inputs.every(el => el)) { // Check if all elements exist
+            inputs.forEach(input => {
+                const eventType = (input.tagName === 'SELECT') ? 'change' : 'input';
+                const listener = updateFlexPriceDisplay; // Define listener
+                input.addEventListener(eventType, listener);
+                flexInputListeners.push({ element: input, type: eventType, listener }); // Store listener info
+            });
+             console.log("Flex input listeners attached.");
+        } else {
+             console.error("One or more flex input elements not found.");
+        }
+    }
+}
+
+
+function handleStandardQuantityChange(button) {
+    if (!quantityInput) return;
+    let currentValue = parseInt(quantityInput.value, 10) || 1;
+    const min = parseInt(quantityInput.min, 10) || 1;
+    const step = parseInt(quantityInput.step, 10) || 1;
+
+    if (button.classList.contains('quantity-increase')) {
+        currentValue += step;
+    } else if (button.classList.contains('quantity-decrease')) {
+        currentValue -= step;
+    }
+
+    quantityInput.value = Math.max(min, currentValue);
+    // Note: Standard pricing doesn't usually change with quantity here, price is per item.
+    // If price *did* depend on quantity, you'd update the price display here.
+    console.log(`Standard quantity updated to: ${quantityInput.value}`);
+}
+
+
+// --- Add to Cart Logic ---
+function handleAddToCart(productData) {
+    console.log(`'Add to Cart' clicked for product: ${productData.id}`);
+    if (!productData) {
+        console.error("Cannot add to cart: Product data is missing.");
+        showCartFeedback("Error: Product data unavailable.", "error");
+        return;
+    }
+
+    let quantity = 1;
+    let price = productData.price || 0;
+    let options = {}; // Collect selected options
+    let itemPerCardPrice = null; // Specifically for wedding cards
+
+    try {
+        switch (currentPricingType) {
+            case 'wedding':
+                if (!weddingQuantitySelect || weddingQuantitySelect.selectedIndex < 0) {
+                    throw new Error("Please select a quantity for wedding cards.");
+                }
+                const selectedWeddingOption = weddingQuantitySelect.options[weddingQuantitySelect.selectedIndex];
+                quantity = parseInt(selectedWeddingOption.value, 10);
+                itemPerCardPrice = parseFloat(selectedWeddingOption.dataset.pricePerCard);
+                price = quantity * itemPerCardPrice; // Total price for the selected quantity
+                options['Quantity Tier'] = `${quantity}+ Cards`;
+                options['Price Per Card'] = formatPrice(itemPerCardPrice);
+                break;
+            case 'flex':
+                if (!bannerWidthInput || !bannerHeightInput || !bannerUnitSelect || !priceEl) {
+                     throw new Error("Flex banner details incomplete.");
+                }
+                 const width = parseFloat(bannerWidthInput.value) || 0;
+                 const height = parseFloat(bannerHeightInput.value) || 0;
+                 const unit = bannerUnitSelect.value;
+                 if (width <= 0 || height <= 0) {
+                     throw new Error("Please enter valid dimensions for the flex banner.");
+                 }
+                 price = parseFloat(priceEl.textContent.replace(/[^0-9.]/g, '')); // Get price from display
+                 quantity = 1; // Flex is usually sold as one unit with specific dimensions
+                 options['Dimensions'] = `${width} x ${height} ${unit}`;
+                break;
+            case 'standard':
+            default:
+                if (!quantityInput) {
+                     throw new Error("Quantity input not found.");
+                 }
+                quantity = parseInt(quantityInput.value, 10) || 1;
+                if (quantity < 1) {
+                     throw new Error("Quantity must be at least 1.");
+                 }
+                price = productData.price * quantity; // Total price
+                // Add other standard options if they exist (e.g., size, color dropdowns)
+                // options['Size'] = document.getElementById('size-select')?.value;
+                break;
+        }
+
+        if (isNaN(price) || price <= 0 && !(currentPricingType === 'flex' && price === 0)) { // Allow 0 price only if flex might calculate to 0 initially
+             throw new Error("Invalid price calculated. Please check options.");
+        }
+
+
+        const itemDetails = {
+            quantity: quantity,
+            price: price, // Total price for the item/quantity
+            options: options,
+            perCardPrice: itemPerCardPrice // Will be null for non-wedding items
+        };
+
+        console.log("Item details prepared for popup:", itemDetails);
+        showConfirmationPopup(itemDetails, productData);
+
+    } catch (error) {
+        console.error("Error preparing item for cart:", error);
+        showCartFeedback(error.message || "Could not prepare item. Please check selections.", "error");
+    }
+}
+
+// --- Popup Management ---
+// Store listener functions to allow proper removal
+let handleConfirmAdd;
+let handleCancelPopup;
+let handleClosePopup;
+
+function showConfirmationPopup(itemDetails, productData) {
+    console.log("Showing confirmation popup...");
+    if (!popupOverlay || !productData || !itemDetails) {
+        console.error("Popup elements, product data, or item details missing.");
+        return;
+    }
+
+    // Populate Popup Content
+    popupProductName.textContent = productData.name || 'Product';
+    popupProductImage.src = productData.imageUrls?.[0] || 'images/placeholder.png';
+    popupProductImage.alt = productData.name || 'Product';
+    popupProductQuantity.textContent = itemDetails.quantity;
+    popupProductPrice.textContent = formatPrice(itemDetails.price); // Display total price
+
+    // Display options
+    let optionsText = Object.entries(itemDetails.options)
+        .map(([key, value]) => `<strong>${key}:</strong> ${value}`)
+        .join('<br>');
+    popupProductOptions.innerHTML = optionsText;
+
+    // Display per-card price only for wedding cards
+    if (itemDetails.perCardPrice !== null) {
+        popupPerCardPrice.textContent = `${formatPrice(itemDetails.perCardPrice)} per card`;
+        popupPerCardPrice.style.display = 'block';
+    } else {
+        popupPerCardPrice.textContent = '';
+        popupPerCardPrice.style.display = 'none';
+    }
+
+
+    // Define listeners *before* adding them
+    handleConfirmAdd = () => {
+        console.log("Confirm button clicked.");
+        try {
+            addToCart(
+                productData.id,
+                itemDetails.quantity,
+                itemDetails.price / itemDetails.quantity, // Send unit price to cart function
+                productData.name,
+                productData.imageUrls?.[0] || 'images/placeholder.png',
+                itemDetails.options,
+                itemDetails.perCardPrice // Pass perCardPrice if available
+            );
+            showCartFeedback("Item added successfully!", "success", true); // Show feedback and View Cart button
+            updateCartCount(); // Update header cart count
+        } catch (error) {
+            console.error("Error adding item to cart:", error);
+            showCartFeedback("Error adding item to cart. Please try again.", "error");
+        } finally {
+            hidePopup();
+        }
+    };
+
+    handleCancelPopup = () => {
+        console.log("Cancel button clicked.");
+        hidePopup();
+    };
+
+    handleClosePopup = () => {
+         console.log("Popup close button clicked.");
+         hidePopup();
+    }
+
+
+    // *** Remove existing listeners before adding new ones ***
+    popupConfirmBtn.removeEventListener('click', handleConfirmAdd);
+    popupCancelBtn.removeEventListener('click', handleCancelPopup);
+    popupCloseBtn?.removeEventListener('click', handleClosePopup); // Use optional chaining for close button
+
+    // Add new listeners
+    popupConfirmBtn.addEventListener('click', handleConfirmAdd);
+    popupCancelBtn.addEventListener('click', handleCancelPopup);
+    popupCloseBtn?.addEventListener('click', handleClosePopup); // Use optional chaining
+
+    // Show Popup
+    popupOverlay.classList.add('active');
+     console.log("Popup displayed and listeners attached.");
+}
+
+function hidePopup() {
+    if (!popupOverlay) return;
+    console.log("Hiding popup...");
+    popupOverlay.classList.remove('active');
+
+    // *** Remove listeners on hide ***
+    popupConfirmBtn.removeEventListener('click', handleConfirmAdd);
+    popupCancelBtn.removeEventListener('click', handleCancelPopup);
+    popupCloseBtn?.removeEventListener('click', handleClosePopup); // Use optional chaining
+
+     console.log("Popup hidden and listeners removed.");
+
+    // Optional: Reset stored listener functions if desired, though removing them is the key part
+    handleConfirmAdd = null;
+    handleCancelPopup = null;
+    handleClosePopup = null;
+}
+
+// --- Cart Feedback ---
+function showCartFeedback(message, type = 'success', showViewCart = false) {
+    if (!cartFeedbackEl) return;
+
+    console.log(`Cart Feedback (${type}): ${message}`);
+    cartFeedbackEl.textContent = message;
+    cartFeedbackEl.className = `cart-feedback-message ${type}`; // Reset classes and add new ones
+    cartFeedbackEl.style.display = 'block';
+
+    // Show/Hide View Cart button based on success
+     if (viewCartButton) {
+        viewCartButton.style.display = showViewCart ? 'inline-flex' : 'none';
+     }
+
+
+    // Optional: Hide message after a delay
+    // setTimeout(() => {
+    //     cartFeedbackEl.style.display = 'none';
+    //      if (viewCartButton) viewCartButton.style.display = 'none'; // Hide button with message
+    // }, 5000); // Hide after 5 seconds
+}
+
+// --- Related Products ---
+async function loadRelatedProducts(category, currentProductId) {
+    if (!relatedProductsSection || !relatedProductsContainer) {
+        console.log("Related products section/container not found, skipping.");
+        return;
+    }
+    showLoading('related'); // Indicate loading specifically for this section
+
+    try {
+        console.log(`Workspaceing related products for category: ${category}, excluding ID: ${currentProductId}`);
+        const productsRef = collection(db, "onlineProducts");
+        // Query for products in the same category, exclude the current one, limit results
+        const q = query(
+            productsRef,
+            where("category", "==", category),
+            // where(doc.id, "!=", currentProductId), // Firestore doesn't support direct inequality on ID in compound queries easily
+            limit(10) // Limit the number of related products
+        );
+        const querySnapshot = await getDocs(q);
+
+        relatedProductsContainer.innerHTML = ''; // Clear previous content/loader
+        let count = 0;
+        const slides = [];
+
+        querySnapshot.forEach((docSnap) => {
+            // Manual check to exclude the current product
+            if (docSnap.id !== currentProductId) {
+                 const product = { id: docSnap.id, ...docSnap.data() };
+                 // Only include products with necessary info (name, price, image)
+                 if (product.name && (product.price || product.weddingPricing || product.basePriceSqFt) && product.imageUrls?.[0]) {
+                    slides.push(createRelatedProductSlide(product));
+                    count++;
+                 } else {
+                     console.warn(`Skipping related product (${product.id}) due to missing data.`);
+                 }
+
+            }
+        });
+
+        if (count > 0) {
+            relatedProductsContainer.innerHTML = slides.join(''); // Add all slides at once
+            relatedProductsSection.style.display = 'block'; // Show the section
+            initializeRelatedProductsSwiper(); // Initialize Swiper AFTER adding slides
+             console.log(`Loaded ${count} related products.`);
+        } else {
+            relatedProductsSection.style.display = 'none'; // Hide section if no related products found
+             console.log("No suitable related products found.");
+        }
+
+    } catch (error) {
+        console.error("Error fetching related products:", error);
+        relatedProductsContainer.innerHTML = '<p>Could not load related products.</p>'; // Show error in container
+        relatedProductsSection.style.display = 'block'; // Ensure section is visible to show the error
+    }
+}
+
+function createRelatedProductSlide(product) {
+    const priceDisplay = getProductPriceForCard(product); // Get appropriate price display
+    const imageUrl = product.imageUrls?.[0] || 'images/placeholder.png';
+    const productUrl = `product-detail.html?id=${product.id}`;
+
+    // Using Swiper slide structure
+    return `
+        <div class="swiper-slide">
+            <div class="product-card">
+                <a href="${productUrl}" class="product-image-container">
+                    <img src="${imageUrl}" alt="${product.name || 'Product'}" loading="lazy">
+                </a>
+                <div class="product-info">
+                    <h3><a href="${productUrl}">${product.name || 'N/A'}</a></h3>
+                    <div class="price">${priceDisplay}</div>
+                    <a href="${productUrl}" class="view-details-btn">View Details</a>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+function getProductPriceForCard(product) {
+    // Helper to display a representative price on the product card
+    switch (product.pricingType) {
+        case 'wedding':
+            const lowestTier = product.weddingPricing?.sort((a,b) => a.minQuantity - b.minQuantity)[0];
+            return lowestTier ? `${formatPrice(lowestTier.pricePerCard)}/card (for ${lowestTier.minQuantity}+)` : 'Price Varies';
+        case 'flex':
+            return product.basePriceSqFt ? `${formatPrice(product.basePriceSqFt)}/sq.ft` : 'Price Varies';
+        case 'standard':
+        default:
+            return formatPrice(product.price || 0);
+    }
+}
+
+
+function initializeRelatedProductsSwiper() {
+    // Ensure Swiper library is loaded before calling this
+     if (typeof Swiper === 'undefined') {
+         console.error("Swiper library is not loaded.");
+         return;
+     }
+
+     // Check if a Swiper instance already exists on the container and destroy it
+    if (relatedProductsContainer.swiper) {
+        relatedProductsContainer.swiper.destroy(true, true);
+         console.log("Destroyed existing Swiper instance.");
+    }
+
+
+    // Initialize Swiper
+    const swiper = new Swiper('.related-products-swiper', {
+        slidesPerView: 2, // Show 2 slides on mobile initially
+        spaceBetween: 15,
+        pagination: {
+            el: '.swiper-pagination',
+            clickable: true,
+        },
+        navigation: {
+            nextEl: '.swiper-button-next',
+            prevEl: '.swiper-button-prev',
+        },
+        breakpoints: {
+            // when window width is >= 576px
+            576: {
+                slidesPerView: 2,
+                spaceBetween: 20
+            },
+            // when window width is >= 768px
+            768: {
+                slidesPerView: 3,
+                spaceBetween: 25
+            },
+            // when window width is >= 992px
+            992: {
+                slidesPerView: 4,
+                spaceBetween: 30
+            },
+             // when window width is >= 1200px
+             1200: {
+                slidesPerView: 5,
+                spaceBetween: 30
+             }
+        },
+         // Add observer and observeParents for dynamic content loading
+         observer: true,
+         observeParents: true,
+    });
+     console.log("Related products Swiper initialized.");
+}
+
+
+// --- Tabs ---
+function setupTabs() {
+     if (!tabsNav || !tabPanes.length) {
+          console.warn("Tabs setup skipped: Nav or panes not found.");
+          return; // Exit if tabs elements aren't present
+     }
+
+     console.log("Setting up tabs...");
+
+    // Set the first tab and pane as active by default
+    const firstTabLink = tabsNav.querySelector('li a');
+    const firstPaneId = firstTabLink?.getAttribute('href');
+    if (firstTabLink && firstPaneId) {
+        tabsNav.querySelectorAll('li a').forEach(link => link.classList.remove('active'));
+        tabPanes.forEach(pane => pane.classList.remove('active'));
+
+        firstTabLink.classList.add('active');
+        const firstPane = document.querySelector(firstPaneId);
+        if (firstPane) {
+            firstPane.classList.add('active');
+            console.log(`Default active tab set to: ${firstPaneId}`);
+        } else {
+             console.error(`Default active pane (${firstPaneId}) not found.`);
+        }
+
+    } else {
+         console.warn("Could not set default active tab.");
+    }
+
+
+    // Add click event listener to the navigation container (event delegation)
+    tabsNav.addEventListener('click', (e) => {
+        // Check if the clicked element is a tab link (<a> tag)
+        if (e.target.tagName === 'A' && e.target.getAttribute('href').startsWith('#')) {
+            e.preventDefault(); // Prevent default anchor link behavior
+
+            const targetPaneId = e.target.getAttribute('href');
+            console.log(`Tab clicked: ${targetPaneId}`);
+
+            // Remove 'active' class from all tab links and panes
+            tabsNav.querySelectorAll('li a').forEach(link => link.classList.remove('active'));
+            tabPanes.forEach(pane => pane.classList.remove('active'));
+
+            // Add 'active' class to the clicked tab link
+            e.target.classList.add('active');
+
+            // Add 'active' class to the corresponding tab pane
+            const targetPane = document.querySelector(targetPaneId);
+            if (targetPane) {
+                targetPane.classList.add('active');
+            } else {
+                console.error(`Target pane (${targetPaneId}) not found.`);
+            }
+        }
+    });
+     console.log("Tab click listeners ready.");
+}
+
+
+// --- Reviews ---
+async function loadReviews(productId) {
+    const reviewsList = document.getElementById('reviews-list');
+    const reviewsSummary = document.querySelector('.reviews-summary'); // Element to show average rating/count
+    if (!reviewsList || !reviewsSummary) {
+         console.warn("Reviews list or summary element not found, skipping review loading.");
+         return;
+    }
+
+    reviewsList.innerHTML = '<li>Loading reviews...</li>'; // Indicate loading
+    reviewsSummary.textContent = ''; // Clear summary
+
+    try {
+        console.log(`Workspaceing reviews for product ID: ${productId}`);
+        const reviewsRef = collection(db, "onlineProducts", productId, "reviews");
+        const q = query(reviewsRef, orderBy("timestamp", "desc")); // Get newest reviews first
+        const querySnapshot = await getDocs(q);
+
+        reviewsList.innerHTML = ''; // Clear loading message
+        let totalRating = 0;
+        let reviewCount = 0;
+
+        if (querySnapshot.empty) {
+            reviewsList.innerHTML = '<li>Be the first to review this product!</li>';
+             reviewsSummary.textContent = 'No reviews yet.';
+        } else {
+            querySnapshot.forEach((doc) => {
+                const review = doc.data();
+                if (review.rating && review.comment && review.userName) { // Basic validation
+                    const li = document.createElement('li');
+                    li.classList.add('review-item');
+                    li.innerHTML = `
+                        <div class="review-rating">${generateStarRating(review.rating)}</div>
+                        <p class="review-comment">${escapeHTML(review.comment)}</p>
+                        <p class="review-meta">By <strong>${escapeHTML(review.userName)}</strong> on ${review.timestamp?.toDate().toLocaleDateString() || 'N/A'}</p>
+                    `;
+                    reviewsList.appendChild(li);
+                    totalRating += Number(review.rating);
+                    reviewCount++;
+                }
+            });
+
+            if (reviewCount > 0) {
+                 const averageRating = (totalRating / reviewCount).toFixed(1);
+                 reviewsSummary.innerHTML = `Average Rating: ${generateStarRating(averageRating)} (${averageRating} out of 5) based on ${reviewCount} review(s).`;
+                 console.log(`Loaded ${reviewCount} reviews. Average rating: ${averageRating}`);
+            } else {
+                 reviewsList.innerHTML = '<li>No valid reviews found.</li>';
+                 reviewsSummary.textContent = 'No reviews yet.';
+            }
+
+        }
+    } catch (error) {
+        console.error("Error fetching reviews:", error);
+        reviewsList.innerHTML = '<li>Could not load reviews. Please try again later.</li>';
+         reviewsSummary.textContent = 'Could not load rating.';
+    }
+
+    // Setup review form listener (do this regardless of whether reviews were loaded)
+    setupReviewForm(productId);
+}
+
+function generateStarRating(rating) {
+    const totalStars = 5;
+    let starsHTML = '';
+    const fullStars = Math.floor(rating);
+    const halfStar = rating % 1 >= 0.5 ? 1 : 0;
+    const emptyStars = totalStars - fullStars - halfStar;
+
+    for (let i = 0; i < fullStars; i++) starsHTML += '<i class="fas fa-star"></i>';
+    if (halfStar) starsHTML += '<i class="fas fa-star-half-alt"></i>';
+    for (let i = 0; i < emptyStars; i++) starsHTML += '<i class="far fa-star"></i>'; // Use far for empty stars
+
+    return starsHTML || 'No Rating'; // Handle case where rating might be 0 or invalid
+}
+
+function setupReviewForm(productId) {
+    const reviewForm = document.getElementById('review-form');
+    const formMessage = document.getElementById('review-form-message');
+    if (!reviewForm || !formMessage) {
+        console.warn("Review form or message element not found, skipping setup.");
+        return;
+    }
+
+     console.log("Setting up review form listener.");
+
+    reviewForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        formMessage.textContent = '';
+        formMessage.className = ''; // Clear previous status classes
+        const submitButton = reviewForm.querySelector('button[type="submit"]');
+        submitButton.disabled = true;
+        submitButton.textContent = 'Submitting...';
+
+        try {
+            const rating = reviewForm.querySelector('input[name="rating"]:checked')?.value;
+            const userName = reviewForm.querySelector('#reviewer-name').value.trim();
+            const comment = reviewForm.querySelector('#review-comment').value.trim();
+
+            if (!rating || !userName || !comment) {
+                throw new Error("Please fill in all fields and select a rating.");
+            }
+            if (userName.length < 2) {
+                 throw new Error("Name must be at least 2 characters long.");
+            }
+             if (comment.length < 10) {
+                 throw new Error("Comment must be at least 10 characters long.");
+            }
+
+
+            const reviewsRef = collection(db, "onlineProducts", productId, "reviews");
+            await addDoc(reviewsRef, {
+                rating: Number(rating),
+                userName: userName,
+                comment: comment,
+                timestamp: serverTimestamp()
+            });
+
+            formMessage.textContent = 'Review submitted successfully! Thank you.';
+            formMessage.className = 'success'; // Add success class
+            reviewForm.reset(); // Clear the form
+             console.log("Review submitted.");
+
+            // Optional: Reload reviews after submission
+             setTimeout(() => loadReviews(productId), 1000); // Reload after 1 second
+
+        } catch (error) {
+            console.error("Error submitting review:", error);
+            formMessage.textContent = `Error: ${error.message || "Could not submit review."}`;
+            formMessage.className = 'error'; // Add error class
+        } finally {
+             submitButton.disabled = false;
+             submitButton.textContent = 'Submit Review';
+        }
+    });
+}
+
+// Utility to escape HTML to prevent XSS
+function escapeHTML(str) {
+    if (!str) return '';
+    const div = document.createElement('div');
+    div.appendChild(document.createTextNode(str));
+    return div.innerHTML;
+}
+
+
+// --- Initialize Page ---
+document.addEventListener('DOMContentLoaded', () => {
+    console.log("DOM fully loaded.");
+    const urlParams = new URLSearchParams(window.location.search);
+    const productId = urlParams.get('id');
+
+    if (!productId) {
+        showError("Product ID not found in URL. Please go back to the shop and select a product.");
+        return;
+    }
+
+    console.log(`Initializing page for Product ID: ${productId}`);
+    loadProductDetails(productId); // Fetch data and render, includes attaching event listeners
+
+    // Initial cart count update on page load
+    updateCartCount();
+});
