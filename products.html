@@ -1,4 +1,5 @@
-<!DOCTYPE html> <html lang="en">
+<!DOCTYPE html>
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,7 +9,8 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/header-footer.css">
-    <link rel="stylesheet" href="css/products.css"> </head>
+    <link rel="stylesheet" href="css/products.css">
+</head>
 <body>
     <header>
         <nav class="container">
@@ -33,12 +35,12 @@
         <section class="featured-products">
              <h2><i class="fas fa-star"></i> Featured Products</h2>
              <div class="featured-grid">
-                 <div class="featured-item clickable-featured" data-category="Flex Banner Printing">
+                 <div class="featured-item clickable-featured" data-category="FLEX BANER">
                      <div class="featured-slider" id="slider-flex-banner"></div>
                      <h4>Flex Banner Printing</h4>
                      <span class="featured-item-link">View Products <i class="fas fa-arrow-right"></i></span>
                  </div>
-                 <div class="featured-item clickable-featured" data-category="Wedding Invitation Cards">
+                 <div class="featured-item clickable-featured" data-category="WEDDING CARD">
                       <div class="featured-slider" id="slider-wedding-card"></div>
                      <h4>Wedding Invitation Cards</h4>
                      <span class="featured-item-link">View Products <i class="fas fa-arrow-right"></i></span>
@@ -58,7 +60,7 @@
                       <label for="category-filter"><i class="fas fa-tags"></i> Category:</label>
                       <select id="category-filter" name="category">
                           <option value="all">All Categories</option>
-                      </select>
+                          </select>
                   </div>
                   <div class="filter-group">
                       <label for="sort-filter"><i class="fas fa-sort-amount-down"></i> Sort by:</label>
@@ -77,40 +79,29 @@
                      <i class="fas fa-spinner fa-spin fa-3x"></i>
                      <p>Loading products...</p>
                  </div>
-             </div>
+                 </div>
              <p id="no-products-message" class="message-box info" style="display: none;">No products found matching your criteria.</p>
              <div class="pagination-controls" style="text-align: center; margin-top: 30px; display: none;" id="pagination-container">
                  <button id="load-more-button" class="button-primary">Load More Products</button>
              </div>
          </section>
 
-        <section class="testimonials-section">
-            <h2 class="section-title"><i class="fas fa-comments"></i> What Our Customers Say</h2>
-            <div class="testimonial-grid">
-                <div class="testimonial-card">
-                    <img src="https://i.ibb.co/jd62Ks4/1.jpg" alt="ROOPA RAM CHOUDHAY" class="testimonial-photo">
-                    <p class="testimonial-text">"Excellent quality printing and fast turnaround time. Highly recommended!"</p>
-                    <p class="testimonial-author">- ROOPA RAM CHOUDHAY</p>
-                </div>
-                <div class="testimonial-card">
-                     <img src="https://i.ibb.co/jPqDbNTz/1.jpg" alt="HIMTHARAM CHOUDHARY" class="testimonial-photo">
-                    <p class="testimonial-text">"Madhav Multiprint provided great service for our wedding invitations. Beautiful designs!"</p>
-                    <p class="testimonial-author">- HIMTHARAM CHOUDHARY</p>
-                </div>
-            </div>
+        <section class="custom-cta-section">
+             <p class="poppins-text">
+                 <a href="contact.html">फ्लेक्स बैनर और वेडिंग कार्ड के लिए यहां क्लिक करें</a>
+             </p>
         </section>
-
-    </main>
+        </main>
 
     <footer>
         <div class="container">
-              <p>&copy; 2025 Madhav Multiprint. All Rights Reserved.</p>
-              <p><a href="#">Privacy Policy</a> | <a href="#">Terms & Conditions</a> | <a href="contact.html">Contact</a></p>
+              <p>&copy; 2025 Madhav Multiprint. All Rights Reserved.</p> <p><a href="#">Privacy Policy</a> | <a href="#">Terms & Conditions</a> | <a href="contact.html">Contact</a></p>
           </div>
     </footer>
 
     <script src="js/firebase-config.js" type="module"></script>
     <script src="js/main.js" type="module" defer></script>
     <script src="js/cart.js" type="module" defer></script>
-    <script src="js/products.js" type="module" defer></script> </body>
+    <script src="js/products.js" type="module" defer></script>
+</body>
 </html>
