@@ -8,7 +8,6 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-
     <link rel="stylesheet" href="https://unpkg.com/swiper/swiper-bundle.min.css" />
 
     <link rel="stylesheet" href="css/header-footer.css">
@@ -56,7 +55,8 @@
                         </div>
                     </div>
                     <div class="swiper-slide" style="background-image: url('https://i.ibb.co/6cC4JTnr/1-1.webp');">
-                         <div class="hero-overlay"></div> <div class="container hero-content">
+                         <div class="hero-overlay"></div>
+                         <div class="container hero-content">
                              <h1>Fast & Reliable Printing</h1>
                              <p>Get your prints delivered quickly without compromising on quality.</p>
                              <div class="hero-buttons">
@@ -65,7 +65,9 @@
                              </div>
                          </div>
                      </div>
-                     <div class="swiper-slide" style="background-image: url('https://via.placeholder.com/1920x600.png?text=Hero+Background+3');"> <div class="hero-overlay" style="background-color: rgba(80, 0, 40, 0.65);"></div> <div class="container hero-content">
+                     <div class="swiper-slide" style="background-image: url('https://via.placeholder.com/1920x600.png?text=Replace+Me+Hero+3');">
+                         <div class="hero-overlay" style="background-color: rgba(80, 0, 40, 0.65);"></div>
+                         <div class="container hero-content">
                              <h1>Custom Printing Solutions</h1>
                              <p>Tailored printing to meet your specific business needs.</p>
                              <div class="hero-buttons">
@@ -73,12 +75,13 @@
                              </div>
                          </div>
                      </div>
-                     </div>
+                </div>
                 <div class="swiper-pagination hero-pagination"></div>
-                 <div class="swiper-button-next hero-nav-button hero-button-next"></div>
-                 <div class="swiper-button-prev hero-nav-button hero-button-prev"></div>
+                <div class="swiper-button-next hero-nav-button hero-button-next"></div>
+                <div class="swiper-button-prev hero-nav-button hero-button-prev"></div>
             </div>
         </section>
+
         <section id="featured-products" class="container info-section">
             <h2>Featured Products</h2>
             <p class="section-subtitle">Check out some of our popular printing products.</p>
@@ -90,13 +93,28 @@
                      </div>
                 </div>
                 <div class="swiper-pagination featured-pagination"></div>
-                 <div class="swiper-button-next featured-nav-button featured-button-next"></div>
-                 <div class="swiper-button-prev featured-nav-button featured-button-prev"></div>
+                <div class="swiper-button-next featured-nav-button featured-button-next"></div>
+                <div class="swiper-button-prev featured-nav-button featured-button-prev"></div>
             </div>
         </section>
 
-        <section class="info-section section-bg-light" id="process">
-             <div class="container">
+        <section id="more-featured-products" class="container info-section section-bg-light">
+            <h2>More Products</h2>
+            <p class="section-subtitle">Explore more options available.</p>
+            <div class="swiper more-featured-products-swiper">
+                <div class="swiper-wrapper" id="more-featured-product-cards-container">
+                    <div class="swiper-slide" style="width:100%; text-align: center; padding: 50px 0;">
+                        <i class="fas fa-spinner fa-spin fa-2x" style="color: var(--secondary-color);"></i>
+                        <p style="margin-top: 10px; color: var(--text-muted);">Loading More Products...</p>
+                    </div>
+                </div>
+                <div class="swiper-pagination more-featured-pagination"></div>
+                <div class="swiper-button-next more-featured-nav-button more-featured-button-next"></div>
+                <div class="swiper-button-prev more-featured-nav-button more-featured-button-prev"></div>
+            </div>
+        </section>
+
+        <section class="info-section" id="process"> <div class="container">
                 <h2>Our Process (How It Works)</h2>
                 <div class="process-steps">
                     <div class="step-item">
@@ -123,61 +141,24 @@
              </div>
         </section>
 
-        <section class="container info-section" id="portfolio">
-             <h2>Our Work</h2>
-             <p class="section-subtitle" style="text-align:center;">Take a look at some of our finest printing projects.</p>
-             <div class="swiper portfolio-swiper">
-                 <div class="swiper-wrapper">
-                     <div class="swiper-slide">
-                         <div class="portfolio-item">
-                             <img src="https://via.placeholder.com/400x300.png?text=Visiting+Cards+1" alt="Portfolio Item 1" loading="lazy">
-                         </div>
-                     </div>
-                     <div class="swiper-slide">
-                         <div class="portfolio-item">
-                              <img src="https://via.placeholder.com/400x300.png?text=Brochure+1" alt="Portfolio Item 2" loading="lazy">
-                         </div>
-                     </div>
-                     <div class="swiper-slide">
-                         <div class="portfolio-item">
-                             <img src="https://via.placeholder.com/400x300.png?text=Flex+Banner+1" alt="Portfolio Item 3" loading="lazy">
-                         </div>
-                     </div>
-                     <div class="swiper-slide">
-                        <div class="portfolio-item">
-                            <img src="https://via.placeholder.com/400x300.png?text=Wedding+Card" alt="Portfolio Item 4" loading="lazy">
-                        </div>
-                     </div>
-                     <div class="swiper-slide">
-                        <div class="portfolio-item">
-                            <img src="https://via.placeholder.com/400x300.png?text=ID+Card" alt="Portfolio Item 5" loading="lazy">
-                        </div>
-                     </div>
-                      </div>
-                 <div class="swiper-pagination portfolio-pagination"></div>
-                 <div class="swiper-button-next portfolio-nav-button portfolio-button-next"></div>
-                 <div class="swiper-button-prev portfolio-nav-button portfolio-button-prev"></div>
-             </div>
-             <div style="text-align: center; margin-top: 30px;">
-                 <a href="products.html" class="button-secondary">View More</a>
-             </div>
-         </section>
-
-         <section class="info-section section-bg-light" id="testimonials">
-            <div class="container">
+        <section class="info-section section-bg-light" id="testimonials"> <div class="container">
                 <h2>What Our Clients Say</h2>
                 <div class="testimonials-container">
                      <div class="testimonial">
                          <img src="https://i.ibb.co/Fkr9Kw2d/1-2.webp" alt="Ashok Godara" class="testimonial-photo">
-                         <p>"माधव मल्टीप्रिंट की सेवाएँ बहुत शानदार हैं! प्रिंटिंग की गुणवत्ता बेहतरीन है और डिलीवरी हमेशा समय पर होती है। मैं इनके काम से पूरी तरह संतुष्ट हूँ।"</p>
-                         <span class="testimonial-author">- Ashok Godara</span>
+                         <div class="testimonial-content">
+                             <p>"माधव मल्टीप्रिंट की सेवाएँ बहुत शानदार हैं! प्रिंटिंग की गुणवत्ता बेहतरीन है और डिलीवरी हमेशा समय पर होती है। मैं इनके काम से पूरी तरह संतुष्ट हूँ।"</p>
+                             <span class="testimonial-author">- Ashok Godara</span>
+                         </div>
                     </div>
                     <div class="testimonial">
                           <img src="https://i.ibb.co/XftrCdgq/1-3.webp" alt="Devendra Choudhary" class="testimonial-photo">
-                         <p>"Excellent service and top-notch printing quality. Madhav Multiprint handled our requirements professionally and delivered exactly what we needed. Highly recommended!"</p>
-                         <span class="testimonial-author">- Devendra Choudhary</span>
+                          <div class="testimonial-content">
+                             <p>"Excellent service and top-notch printing quality. Madhav Multiprint handled our requirements professionally and delivered exactly what we needed. Highly recommended!"</p>
+                             <span class="testimonial-author">- Devendra Choudhary</span>
+                          </div>
                     </div>
-                </div>
+                    </div>
             </div>
          </section>
     </main>
@@ -198,154 +179,5 @@
     <script src="js/firebase-config.js" type="module"></script>
     <script src="js/main.js" type="module" defer></script>
 
-    <script type="module">
-        // --- Firebase Imports ---
-        import { db } from './js/firebase-config.js';
-        import { collection, query, where, orderBy, limit, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-
-        // --- DOMContentLoaded Listener ---
-        document.addEventListener('DOMContentLoaded', () => {
-
-            // --- Helper Function: Format Currency ---
-            const formatIndianCurrency = (amount) => {
-                const num = Number(amount);
-                return (isNaN(num) || num === null || num === 0) ? 'Contact for Price' : `₹ ${num.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-            };
-
-            // --- Render Function: Create HTML for one product card slide ---
-            const renderFeaturedProductCard = (product) => {
-                if (!product || !product.id || !product.productName) return '';
-                const imageUrl = (product.imageUrls && product.imageUrls[0]) ? product.imageUrls[0] : 'images/placeholder.png';
-                const productName = product.productName;
-                const productUrl = `product-detail.html?id=${product.id}`;
-                let priceHTML = 'Contact for Price';
-                if (product.pricing && typeof product.pricing.rate !== 'undefined' && product.pricing.rate !== null) {
-                    const rate = product.pricing.rate; const unit = product.unit || 'Qty';
-                    if (unit.toLowerCase() === 'sq feet') { priceHTML = `From ${formatIndianCurrency(rate)} / sq ft${(product.pricing.minimumOrderValue > 0 ? ` (Min. ${formatIndianCurrency(product.pricing.minimumOrderValue)})` : '')}`; }
-                    else { const formattedPrice = formatIndianCurrency(rate); priceHTML = (formattedPrice === 'Contact for Price') ? formattedPrice : `${formattedPrice} / ${unit}`; }
-                }
-                return `
-                    <div class="swiper-slide">
-                        <div class="product-card">
-                            <div class="product-image-container"><a href="${productUrl}"><img src="${imageUrl}" alt="${productName}" loading="lazy" onerror="this.onerror=null; this.src='images/placeholder.png'; this.alt='Image not available';"></a></div>
-                            <div class="product-info">
-                                <h3><a href="${productUrl}">${productName}</a></h3>
-                                <div class="price">${priceHTML}</div>
-                                <a href="${productUrl}" class="button-primary view-details-btn">View Details</a>
-                            </div>
-                        </div>
-                    </div>`;
-            };
-
-            // --- Async Function: Fetch and Render Featured Products ---
-            async function loadAndRenderFeaturedProducts() {
-                const container = document.getElementById('featured-product-cards-container');
-                if (!container) { console.error("Featured products container not found."); return false; }
-                // Keep initial loading message from HTML
-
-                try {
-                    // ** Ensure your Firestore collection/fields match these **
-                    const q = query(collection(db, "onlineProducts"), where("isEnabled", "==", true), orderBy("productName"), limit(8));
-                    const querySnapshot = await getDocs(q);
-                    let productsHTML = '';
-                    if (querySnapshot.empty) {
-                        productsHTML = '<div class="swiper-slide" style="width:100%; text-align:center; padding:50px 0;"><p style="color: var(--text-muted);">No featured products available.</p></div>';
-                    } else {
-                        querySnapshot.forEach((doc) => {
-                            productsHTML += renderFeaturedProductCard({ id: doc.id, ...doc.data() });
-                        });
-                    }
-                    container.innerHTML = productsHTML;
-                    return true;
-                } catch (error) {
-                    console.error("Error loading featured products:", error);
-                    container.innerHTML = '<div class="swiper-slide" style="width:100%; text-align:center; padding:50px 0;"><p style="color: red;">Error loading products.</p></div>';
-                    return false;
-                }
-            }
-
-            // --- Swiper Initializations ---
-            if (typeof Swiper !== 'undefined') {
-                // 1. Hero Slider
-                try {
-                    // Check if there are multiple slides before enabling loop
-                    const heroSlides = document.querySelectorAll('.hero-swiper .swiper-slide');
-                    new Swiper('.hero-swiper', {
-                        loop: heroSlides.length > 1, // Enable loop only if more than 1 slide
-                        effect: 'fade', fadeEffect: { crossFade: true },
-                        autoplay: { delay: 5000, disableOnInteraction: false },
-                        pagination: { el: '.hero-pagination', clickable: true },
-                        navigation: { nextEl: '.hero-button-next', prevEl: '.hero-button-prev' },
-                    });
-                    console.log("Hero Swiper Initialized");
-                } catch(e) { console.error("Hero Swiper Error:", e); }
-
-                // 2. Portfolio Slider
-                try {
-                     const portfolioSlides = document.querySelectorAll('.portfolio-swiper .swiper-slide');
-                    new Swiper('.portfolio-swiper', {
-                        slidesPerView: 1, spaceBetween: 20,
-                        loop: portfolioSlides.length > 4, // Example loop condition (adjust if needed)
-                        autoplay: { delay: 3000, disableOnInteraction: false },
-                        pagination: { el: '.portfolio-pagination', clickable: true },
-                        navigation: { nextEl: '.portfolio-button-next', prevEl: '.portfolio-button-prev' },
-                        breakpoints: { 640: { slidesPerView: 2 }, 768: { slidesPerView: 3 }, 1024: { slidesPerView: 4, spaceBetween: 30 } }
-                    });
-                    console.log("Portfolio Swiper Initialized");
-                } catch(e) { console.error("Portfolio Swiper Error:", e); }
-
-                // 3. Featured Products Slider (Initialize AFTER data is loaded)
-                loadAndRenderFeaturedProducts().then((productsLoadedSuccessfully) => {
-                    const container = document.getElementById('featured-product-cards-container');
-                    // Initialize only if loading was successful AND products were actually rendered (not just error/empty message)
-                    if (productsLoadedSuccessfully && container && container.children.length > 0 && container.querySelector('.product-card')) {
-                         try {
-                             const featuredSlidesCount = container.children.length;
-                             new Swiper('.featured-products-swiper', {
-                                 slidesPerView: 1, spaceBetween: 20,
-                                 loop: featuredSlidesCount > 4, // Loop only if enough items loaded (example: more than 4)
-                                 autoplay: { delay: 4000, disableOnInteraction: false },
-                                 pagination: { el: '.featured-pagination', clickable: true },
-                                 navigation: { nextEl: '.featured-button-next', prevEl: '.featured-button-prev' },
-                                 breakpoints: { 576: { slidesPerView: 2 }, 768: { slidesPerView: 3, spaceBetween: 25 }, 1024: { slidesPerView: 4, spaceBetween: 30 } },
-                                 observer: true, observeParents: true,
-                             });
-                             console.log("Featured Products Swiper Initialized AFTER loading data.");
-                         } catch(e) { console.error("Featured Products Swiper Error:", e); }
-                     } else {
-                         console.log("Featured Products Swiper not initialized (no products/error).");
-                         // Hide controls if no products
-                         const swiperContainer = document.querySelector('.featured-products-swiper');
-                         if(swiperContainer){
-                            ['.featured-pagination', '.featured-button-next', '.featured-button-prev'].forEach(selector => {
-                                const el = swiperContainer.querySelector(selector);
-                                if(el) el.style.display = 'none';
-                            });
-                         }
-                     }
-                 });
-
-            } else {
-                 console.error("Swiper library is not loaded.");
-                 document.querySelectorAll('.hero-swiper, .portfolio-swiper, .featured-products-swiper').forEach(el => el.innerHTML = "<p style='text-align:center; color: #888;'>Slider could not be loaded.</p>");
-            }
-
-            // --- Mobile Cart Count Update Logic ---
-            const mobileCartCountBadge = document.getElementById('mobile-cart-count');
-            function updateMobileCartBadge() {
-                const cartCountSpan = document.getElementById('cart-count');
-                if (mobileCartCountBadge && cartCountSpan) {
-                    const count = parseInt(cartCountSpan.textContent || '0', 10);
-                    mobileCartCountBadge.textContent = count;
-                    mobileCartCountBadge.style.display = count > 0 ? 'flex' : 'none';
-                }
-            }
-            setTimeout(updateMobileCartBadge, 100);
-            document.addEventListener('cartUpdated', updateMobileCartBadge);
-
-        }); // End DOMContentLoaded listener
-
-    </script>
-
-</body>
+    <script src="js/home.js" type="module" defer></script> </body>
 </html>
