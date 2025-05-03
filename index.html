@@ -1,193 +1,51 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Home - Madhav Multiprint</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <link rel="stylesheet" href="https://unpkg.com/swiper/swiper-bundle.min.css" />
+<section class="hero-section-slider">
+    <div class="swiper hero-swiper">
+        <div class="swiper-wrapper">
 
-    <link rel="stylesheet" href="css/header-footer.css">
-    <link rel="stylesheet" href="css/index.css">
-
-</head>
-<body>
-    <header>
-        <nav class="container">
-            <div class="logo">
-                <a href="index.html"><img src="https://i.ibb.co/Z6gKD9Rd/1.png" alt="Madhav Multiprint Logo"></a>
-            </div>
-            <a href="cart.html" class="mobile-cart-link" aria-label="View Cart">
-                <i class="fas fa-shopping-cart"></i>
-                <span id="mobile-cart-count" class="cart-count-badge">0</span>
-            </a>
-            <button class="mobile-menu-toggle" aria-label="Toggle menu"><i class="fas fa-bars"></i></button>
-
-            <div class="nav-links">
-                <a href="index.html" class="active">Home</a>
-                <a href="products.html">Products</a>
-                <a href="about.html">About Us</a>
-                <a href="contact.html">Contact</a>
-                <a href="cart.html" class="desktop-cart-link">
-                    <i class="fas fa-shopping-cart"></i> Cart (<span id="cart-count">0</span>)
-                </a>
-                <a href="/admin/login.html" class="admin-login-link" target="_blank">Admin Login</a>
-            </div>
-        </nav>
-    </header>
-
-    <main>
-        <section class="hero-section-slider">
-            <div class="swiper hero-swiper">
-                <div class="swiper-wrapper">
-
-                    <div class="swiper-slide" style="background-image: url('https://i.ibb.co/w2J279C/2.webp');">
-                        <div class="hero-overlay"></div>
-                        <div class="container hero-content">
-                            <h1>Quality Printing Services - Bring Your Ideas to Life</h1>
-                            <p>For Flex Banners, Wedding Cards, Bill Books, Visiting Cards, and all your printing needs.</p>
-                            <div class="hero-buttons">
-                               <a href="products.html" class="button-primary">View Our Products</a>
-                               <a href="contact.html" class="button-secondary">Get a Quote</a>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="swiper-slide" style="background-image: url('https://i.ibb.co/6cC4JTnr/1-1.webp');">
-                         <div class="hero-overlay"></div>
-                         <div class="container hero-content">
-                             <h1>Fast & Reliable Printing</h1>
-                             <p>Get your prints delivered quickly without compromising on quality.</p>
-                             <div class="hero-buttons">
-                                <a href="products.html" class="button-primary">Explore Services</a>
-                                <a href="contact.html" class="button-secondary">Contact Us</a>
-                             </div>
-                         </div>
-                     </div>
-
-                    <div class="swiper-slide" style="background-image: url('https://via.placeholder.com/1920x600.png?text=Replace+Me+Hero+3');">
-                         <div class="hero-overlay" style="background-color: rgba(80, 0, 40, 0.65);"></div>
-                         <div class="container hero-content">
-                             <h1>Custom Printing Solutions</h1>
-                             <p>Tailored printing to meet your specific business needs.</p>
-                             <div class="hero-buttons">
-                                <a href="about.html" class="button-primary">Learn More About Us</a>
-                             </div>
-                         </div>
-                     </div>
-
-                    <div class="swiper-slide" style="background-image: url('यहां_अपनी_स्टाम्प_इमेज_का_URL_डालें.jpg');"> <div class="hero-overlay"></div> <div class="container hero-content">
-                            <h1>Custom Stamps & Seals</h1> <p>High-quality, durable stamps for your business and personal needs.</p> <div class="hero-buttons">
-                               <a href="products.html?category=Stamps" class="button-primary">View Stamps</a> <a href="contact.html" class="button-secondary">Request Info</a>
-                            </div>
-                        </div>
-                    </div>
-                    </div>
-                <div class="swiper-pagination hero-pagination"></div>
-                <div class="swiper-button-next hero-nav-button hero-button-next"></div>
-                <div class="swiper-button-prev hero-nav-button hero-button-prev"></div>
-            </div>
-        </section>
-
-        <section id="featured-products" class="container info-section">
-            <h2>Featured Products</h2>
-            <p class="section-subtitle">Check out some of our popular printing products.</p>
-            <div class="swiper featured-products-swiper">
-                <div class="swiper-wrapper" id="featured-product-cards-container">
-                    <div class="swiper-slide" style="width:100%; text-align: center; padding: 50px 0;">
-                         <i class="fas fa-spinner fa-spin fa-2x" style="color: var(--primary-color);"></i>
-                         <p style="margin-top: 10px; color: var(--text-muted);">Loading Products...</p>
-                     </div>
-                </div>
-                <div class="swiper-pagination featured-pagination"></div>
-                <div class="swiper-button-next featured-nav-button featured-button-next"></div>
-                <div class="swiper-button-prev featured-nav-button featured-button-prev"></div>
-            </div>
-        </section>
-
-        <section id="more-featured-products" class="container info-section section-bg-light">
-            <h2>More Products</h2>
-            <p class="section-subtitle">Explore more options available.</p>
-            <div class="swiper more-featured-products-swiper">
-                <div class="swiper-wrapper" id="more-featured-product-cards-container">
-                    <div class="swiper-slide" style="width:100%; text-align: center; padding: 50px 0;">
-                        <i class="fas fa-spinner fa-spin fa-2x" style="color: var(--secondary-color);"></i>
-                        <p style="margin-top: 10px; color: var(--text-muted);">Loading More Products...</p>
+            <div class="swiper-slide" style="background-image: url('https://i.ibb.co/w2J279C/2.webp');">
+                <div class="hero-overlay"></div>
+                <div class="container hero-content">
+                    <h1>Quality Printing Services - Bring Your Ideas to Life</h1>
+                    <p>For Flex Banners, Wedding Cards, Bill Books, Visiting Cards, and all your printing needs.</p>
+                    <div class="hero-buttons">
+                       <a href="products.html" class="button-primary">View Our Products</a>
+                       <a href="contact.html" class="button-secondary">Get a Quote</a>
                     </div>
                 </div>
-                <div class="swiper-pagination more-featured-pagination"></div>
-                <div class="swiper-button-next more-featured-nav-button more-featured-button-next"></div>
-                <div class="swiper-button-prev more-featured-nav-button more-featured-button-prev"></div>
             </div>
-        </section>
 
-        <section class="info-section" id="process">
-             <div class="container">
-                <h2>Our Process (How It Works)</h2>
-                <div class="process-steps">
-                    <div class="step-item">
-                        <div class="step-icon-wrapper"><i class="fas fa-upload step-icon"></i></div>
-                        <h4>1. Share Requirement / Design</h4>
-                        <p>Tell us your printing needs or upload your design file.</p>
-                    </div>
-                    <div class="step-item">
-                        <div class="step-icon-wrapper"><i class="fas fa-calculator step-icon"></i></div>
-                        <h4>2. Quotation & Confirmation</h4>
-                        <p>We'll send a quote based on your specifications.</p>
-                    </div>
-                    <div class="step-item">
-                        <div class="step-icon-wrapper"><i class="fas fa-print step-icon"></i></div>
-                        <h4>3. Printing</h4>
-                        <p>After confirmation, we start high-quality printing.</p>
-                    </div>
-                    <div class="step-item">
-                         <div class="step-icon-wrapper"><i class="fas fa-truck-fast step-icon"></i></div>
-                         <h4>4. Delivery</h4>
-                         <p>Fast and secure delivery of your finished products.</p>
-                    </div>
-                </div>
+            <div class="swiper-slide" style="background-image: url('https://i.ibb.co/6cC4JTnr/1-1.webp');">
+                 <div class="hero-overlay"></div>
+                 <div class="container hero-content">
+                     <h1>Fast & Reliable Printing</h1>
+                     <p>Get your prints delivered quickly without compromising on quality.</p>
+                     <div class="hero-buttons">
+                        <a href="products.html" class="button-primary">Explore Services</a>
+                        <a href="contact.html" class="button-secondary">Contact Us</a>
+                     </div>
+                 </div>
              </div>
-        </section>
 
-        <section class="info-section section-bg-light" id="testimonials">
-            <div class="container">
-                <h2>What Our Clients Say</h2>
-                <div class="testimonials-container">
-                     <div class="testimonial">
-                         <img src="https://i.ibb.co/Fkr9Kw2d/1-2.webp" alt="Ashok Godara" class="testimonial-photo">
-                         <div class="testimonial-content">
-                             <p>"माधव मल्टीप्रिंट की सेवाएँ बहुत शानदार हैं! प्रिंटिंग की गुणवत्ता बेहतरीन है और डिलीवरी हमेशा समय पर होती है। मैं इनके काम से पूरी तरह संतुष्ट हूँ।"</p>
-                             <span class="testimonial-author">- Ashok Godara</span>
-                         </div>
+            <div class="swiper-slide" style="background-image: url('https://via.placeholder.com/1920x600.png?text=Replace+Me+Hero+3');">
+                 <div class="hero-overlay" style="background-color: rgba(80, 0, 40, 0.65);"></div>
+                 <div class="container hero-content">
+                     <h1>Custom Printing Solutions</h1>
+                     <p>Tailored printing to meet your specific business needs.</p>
+                     <div class="hero-buttons">
+                        <a href="about.html" class="button-primary">Learn More About Us</a>
+                     </div>
+                 </div>
+             </div>
+
+            <div class="swiper-slide" style="background-image: url('यहां_अपनी_स्टाम्प_इमेज_का_URL_डालें.jpg');"> <div class="hero-overlay"></div> <div class="container hero-content">
+                    <h1>Custom Stamps & Seals</h1> <p>High-quality, durable stamps for your business and personal needs.</p> <div class="hero-buttons">
+                       <a href="products.html?category=Stamps" class="button-primary">View Stamps</a> <a href="contact.html" class="button-secondary">Request Info</a>
                     </div>
-                    <div class="testimonial">
-                          <img src="https://i.ibb.co/XftrCdgq/1-3.webp" alt="Devendra Choudhary" class="testimonial-photo">
-                          <div class="testimonial-content">
-                             <p>"Excellent service and top-notch printing quality. Madhav Multiprint handled our requirements professionally and delivered exactly what we needed. Highly recommended!"</p>
-                             <span class="testimonial-author">- Devendra Choudhary</span>
-                          </div>
-                    </div>
-                    </div>
+                </div>
             </div>
-         </section>
-    </main>
-
-    <footer>
-         <div class="container">
-             <p>&copy; 2025 Madhav Multiprint. All Rights Reserved.</p>
-              <p>
-                 <a href="#">Privacy Policy</a> |
-                 <a href="#">Terms & Conditions</a> |
-                 <a href="contact.html">Contact</a>
-              </p>
-         </div>
-    </footer>
-
-    <script src="https://unpkg.com/swiper/swiper-bundle.min.js"></script>
-
-    <script src="js/firebase-config.js" type="module"></script>
-    <script src="js/main.js" type="module" defer></script> <script src="js/home.js" type="module" defer></script> </body>
-</html>
+            </div>
+        <div class="swiper-pagination hero-pagination"></div>
+        <div class="swiper-button-next hero-nav-button hero-button-next"></div>
+        <div class="swiper-button-prev hero-nav-button hero-button-prev"></div>
+    </div>
+</section>
