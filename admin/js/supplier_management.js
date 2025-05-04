@@ -1,4 +1,4 @@
-// js/supplier_management.js - v23+Fixes (आपकी मूल v23 फाइल + डिलीट रिफ्रेश और एडिट एरर हैंडलिंग)
+// js/supplier_management.js - v23+Fixes (पूरा कोड + डिलीट रिफ्रेश और एडिट एरर हैंडलिंग)
 
 // --- Imports ---
 // import { generatePoPdf } from './utils.js'; // यदि आवश्यक हो तो उपयोग करें
@@ -53,6 +53,7 @@ const editSupplierIdInput = document.getElementById('editSupplierId');
 const supplierNameInput = document.getElementById('supplierNameInput');
 const supplierCompanyInput = document.getElementById('supplierCompanyInput');
 const supplierWhatsappInput = document.getElementById('supplierWhatsappInput');
+const supplierContactInput = document.getElementById('supplierContactInput'); // <<< यह सुनिश्चित करें कि HTML में मौजूद है
 const supplierEmailInput = document.getElementById('supplierEmailInput');
 const supplierAddressInput = document.getElementById('supplierAddressInput');
 const supplierGstInput = document.getElementById('supplierGstInput');
@@ -70,12 +71,12 @@ const statusErrorMsg = document.getElementById('statusErrorMsg');
 const poDetailsModal = document.getElementById('poDetailsModal');
 const poDetailsModalTitle = document.getElementById('poDetailsModalTitle');
 const closePoDetailsModalBtn = document.getElementById('closePoDetailsModal');
-const closePoDetailsBtn = document.getElementById('closePoDetailsModalBottomBtn'); // Assuming this ID exists
+const closePoDetailsBtn = document.getElementById('closePoDetailsBtn'); // <<< यह सुनिश्चित करें कि HTML में मौजूद है
 const poDetailsContent = document.getElementById('poDetailsContent');
 const printPoDetailsBtn = document.getElementById('printPoDetailsBtn');
 const poShareModal = document.getElementById('poShareModal');
 const poShareModalTitle = document.getElementById('poShareModalTitle');
-const closePoShareModal = document.getElementById('closePoShareModalTopBtn'); // Assuming this ID exists
+const closePoShareModal = document.getElementById('closePoShareModal'); // <<< यह सुनिश्चित करें कि HTML में मौजूद है
 const closePoShareModalBtn = document.getElementById('closePoShareModalBtn');
 const printPoShareModalBtn = document.getElementById('printPoShareModalBtn');
 const emailPoShareModalBtn = document.getElementById('emailPoShareModalBtn');
@@ -150,6 +151,7 @@ async function loadSuppliers() { // Renamed from displaySupplierTable for clarit
                 supplierTableBody.appendChild(tr);
             });
             populateSupplierFilterDropdown(); // Update PO filter dropdown
+            // updateSupplierBalances(suppliersDataCache); // Function to calculate balance if needed
         }
         console.log(`Displayed ${querySnapshot.size} suppliers.`);
     } catch (error) {
@@ -280,14 +282,11 @@ async function deleteSupplier(supplierId, supplierName) {
     if (window.confirm(`Are you sure you want to delete supplier "${escapeHtml(supplierName)}"? This cannot be undone.`)) {
         try {
             // TODO: Check for associated POs or Payments before deleting if needed
-            // Example: const poCheckQuery = query(collection(db, "purchaseOrders"), where("supplierId", "==", supplierId), limit(1));
-            // const poCheckSnap = await getDocs(poCheckQuery);
-            // if (!poCheckSnap.empty) { throw new Error("Cannot delete supplier with existing Purchase Orders."); }
-
             await deleteDoc(doc(db, "suppliers", supplierId));
             console.log(`Supplier ${supplierId} deleted successfully.`);
             displaySuccessMessage(`Supplier "${escapeHtml(supplierName)}" deleted.`);
-            await loadSuppliers(); // *** पहले यहाँ रिफ्रेश कॉल नहीं था, अब जोड़ दिया गया है ***
+            await loadSuppliers(); // <<< REFRESH FIX ADDED HERE
+
         } catch (error) {
             console.error("Error deleting supplier:", error);
             displayGlobalError(`Failed to delete supplier: ${error.message}`);
@@ -328,7 +327,7 @@ async function handleEditSupplierClick(supplierId) {
     if (!db || !doc || !getDoc) { displayGlobalError("Database functions unavailable."); return; }
 
     const supplierRef = doc(db, "suppliers", supplierId);
-    try { // *** एरर हैंडलिंग के लिए try...catch जोड़ा गया ***
+    try { // <<< Added try block for error handling
         const docSnap = await getDoc(supplierRef);
         if (docSnap.exists()) {
             const supplierData = { id: docSnap.id, ...docSnap.data() };
@@ -337,7 +336,7 @@ async function handleEditSupplierClick(supplierId) {
             console.error(`Supplier document not found for ID: ${supplierId}`);
             displayGlobalError("Supplier details not found. It might have been deleted.");
         }
-    } catch (error) { // *** एरर को पकड़ें और लॉग करें ***
+    } catch (error) { // <<< Catch block to log errors
         console.error(`Error fetching supplier ${supplierId} for edit:`, error);
         displayGlobalError(`Failed to load supplier details for editing. Error: ${error.message}`);
     }
@@ -527,7 +526,7 @@ async function handlePOTableActions(event) {
 
 // --- PO Receiving Logic ---
 // (v23 के अनुसार फंक्शन)
-async function markPOAsReceived(poId) { if (!poId || !db) { alert("Error: Cannot mark PO as received."); return; } if (confirm(`Mark PO #${poId.substring(0, 6)}... as 'Product Received'?`)) { try { await updateDoc(doc(db, "purchaseOrders", poId), { status: "Product Received", receivedDate: serverTimestamp(), updatedAt: serverTimestamp() }); alert("PO status updated to Product Received."); displayPoList(); } catch (error) { console.error(`Error marking PO ${poId} received:`, error); alert("Error updating PO status: " + error.message); } } }
+async function markPOAsReceived(poId) { if (!poId || !db) { alert("Error: Cannot mark PO as received."); return; } if (window.confirm(`Mark PO #${poId.substring(0, 6)}... as 'Product Received'?`)) { try { await updateDoc(doc(db, "purchaseOrders", poId), { status: "Product Received", receivedDate: serverTimestamp(), updatedAt: serverTimestamp() }); alert("PO status updated to Product Received."); displayPoList(); } catch (error) { console.error(`Error marking PO ${poId} received:`, error); alert("Error updating PO status: " + error.message); } } }
 
 // --- Status Update Modal Functions ---
 // (v23 के अनुसार फंक्शन्स)
@@ -550,7 +549,19 @@ function handleEmailPoShare(event) { console.log("Email PO called"); alert("Emai
 
 // --- Batch Action Bar Update ---
 // (v23 के अनुसार फंक्शन)
-function updateBatchActionBar() { const count = selectedPoIds.size; if (count > 0) { poSelectedCount.textContent = `${count} PO${count > 1 ? 's' : ''} selected`; poBatchActionsBar.style.display = 'flex'; batchApplyStatusBtn.disabled = !batchUpdateStatusSelect.value; } else { poBatchActionsBar.style.display = 'none'; } }
+function updateBatchActionBar() {
+    const count = selectedPoIds.size;
+    if (poBatchActionsBar) {
+        if (count > 0) {
+            if(poSelectedCount) poSelectedCount.textContent = `${count} PO${count > 1 ? 's' : ''} selected`;
+            poBatchActionsBar.style.display = 'flex';
+             if(batchApplyStatusBtn) batchApplyStatusBtn.disabled = !batchUpdateStatusSelect.value; // Enable apply only if a status is selected
+        } else {
+            poBatchActionsBar.style.display = 'none';
+             if(batchApplyStatusBtn) batchApplyStatusBtn.disabled = true;
+        }
+    }
+}
 
 
 // --- Page Initialization & Event Listeners Setup ---
