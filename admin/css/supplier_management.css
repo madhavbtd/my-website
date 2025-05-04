@@ -1,4 +1,4 @@
-/* css/supplier_management.css - v11 (Reviewed Modal CSS) */
+/* css/supplier_management.css - v10 (Adjusted PO Share Info Layout) */
 
 /* --- Basic and Variables --- */
 :root {
@@ -19,20 +19,10 @@
     --font-family: 'Poppins', sans-serif;
 }
 
-/* --- Base Styles --- */
-body {
-    font-family: var(--font-family);
-    background-color: #f0f2f5;
-    margin: 0;
-    color: var(--text-color);
-    line-height: 1.5;
-}
-.main-content {
-    padding: 25px;
-    box-sizing: border-box;
-    max-width: 1500px; /* Adjust as needed */
-    margin: 20px auto;
-}
+/* --- Base Styles (body, container, main-content) --- */
+body { font-family: var(--font-family); background-color: #f0f2f5; margin: 0; color: var(--text-color); line-height: 1.5; }
+.container { }
+.main-content { padding: 25px; box-sizing: border-box; max-width: 1500px; margin: 20px auto; }
 
 /* --- Buttons --- */
 .button {
@@ -257,6 +247,143 @@ td.actions-cell {
     padding: 10px 15px;
 }
 
+/* --- Filters --- */
+.filter-controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    align-items: flex-end; /* Align items to bottom for better look */
+    margin-bottom: 20px;
+    padding: 15px 20px;
+    background-color: #fdfdff; /* Slightly different background */
+    border-bottom: 1px solid var(--medium-gray);
+}
+.filter-group {
+    display: flex;
+    flex-direction: column;
+}
+.filter-group label {
+    margin-bottom: 5px;
+    font-size: 0.85em;
+    color: var(--dark-gray);
+}
+.filter-group input,
+.filter-group select {
+    padding: 6px 10px;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    font-size: 0.9em;
+}
+.filter-group button {
+    margin-left: 5px; /* Space between last filter and button */
+}
+
+/* --- PO Specific Modals (Details, Share) --- */
+#poDetailsModal .modal-content,
+#poShareModal .modal-content {
+    max-width: 800px; /* Wider modals for PO details */
+}
+
+#poDetailsContent, #poShareContent {
+    font-size: 0.95em;
+    line-height: 1.6;
+}
+
+.details-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px 25px; /* Row and column gap */
+    margin-bottom: 20px;
+}
+.detail-item strong {
+    display: block;
+    color: var(--dark-gray);
+    font-size: 0.9em;
+    margin-bottom: 3px;
+}
+.detail-item span {
+    font-weight: 500;
+}
+
+.details-table {
+    width: 100%;
+    margin-top: 15px;
+    border-collapse: collapse;
+}
+.details-table th, .details-table td {
+    border: 1px solid var(--medium-gray);
+    padding: 8px 10px;
+    text-align: left;
+}
+.details-table th {
+    background-color: #f1f3f7;
+    font-weight: 600;
+}
+.details-table td.number-cell {
+    text-align: right;
+}
+.details-table tfoot td {
+    font-weight: bold;
+}
+
+#poShareInfo {
+    display: grid;
+    grid-template-columns: 1fr 1fr; /* Two columns */
+    gap: 20px;
+    margin-bottom: 20px;
+    padding: 15px;
+    border: 1px solid var(--medium-gray);
+    border-radius: 6px;
+    background-color: var(--light-gray);
+}
+.po-share-info-left, .po-share-info-right {
+    font-size: 0.9em;
+}
+.po-share-info-left p, .po-share-info-right p {
+    margin: 0 0 8px 0;
+}
+.po-share-info-left strong, .po-share-info-right strong {
+    color: var(--dark-gray);
+    min-width: 80px; /* Align values */
+    display: inline-block;
+}
+.po-share-info-right {
+    text-align: right;
+}
+.po-number-large {
+    font-size: 1.4em;
+    font-weight: 600;
+    color: var(--primary-color);
+    margin-bottom: 10px !important;
+}
+
+#poShareGreeting {
+    margin: 20px 0;
+    font-style: italic;
+}
+
+hr.po-share-divider {
+    border: 0;
+    height: 1px;
+    background-color: var(--medium-gray);
+    margin: 25px 0;
+}
+
+#poShareItemsContainer h3, #poShareTerms h3 {
+    margin-bottom: 15px;
+    color: var(--secondary-color);
+    font-size: 1.1em;
+}
+
+#poShareTermList {
+    padding-left: 20px; /* Indent list */
+    margin: 0;
+    font-size: 0.85em;
+    color: var(--dark-gray);
+}
+#poShareTermList li {
+    margin-bottom: 5px;
+}
 
 /* --- Global Notifications --- */
 #globalErrorDisplay, #globalSuccessDisplay {
@@ -280,4 +407,65 @@ td.actions-cell {
     border: 1px solid #c3e6cb;
 }
 
-/* Add other styles as needed for PO section, filters, etc. */
+/* --- Print Styles --- */
+@media print {
+    body { background-color: var(--white-color); font-size: 10pt; }
+    .main-content { padding: 0; margin: 0; max-width: 100%; }
+    .content-card { box-shadow: none; border: none; margin: 0; }
+    .card-header, .card-controls, .modal-actions, button, .actions-cell, /* Hide non-essentials */
+    #addSupplierBtn, #exportPoCsvBtn, /* Hide specific buttons */
+    #globalErrorDisplay, #globalSuccessDisplay, /* Hide notifications */
+    .filter-controls /* Hide filters */
+     { display: none !important; }
+
+    table { font-size: 9pt; }
+    th, td { padding: 5px 8px; }
+    tbody tr { page-break-inside: avoid; }
+    thead { display: table-header-group; } /* Repeat headers on each page */
+    .table-container { overflow: visible; }
+
+    /* PO Share Print Specifics */
+    #poShareModal { position: static; display: block !important; height: auto; width: auto; overflow: visible; background: none; animation: none; }
+    #poShareModal .modal-content { margin: 0; padding: 0; border: none; box-shadow: none; max-width: 100%; animation: none; }
+    #poShareInfo { grid-template-columns: 1fr 1fr; border: 1px solid #ccc; font-size: 9pt; background: #fff !important; }
+    #poShareInfo p { margin-bottom: 5px; }
+    #poShareInfo strong { color: #333 !important; }
+    #poShareInfo .po-number-large { font-size: 1.2em; color: #000 !important; }
+    #poShareGreeting { display: block !important; font-size: 10pt; margin-bottom: 15px; color: #000 !important; }
+    .po-share-divider { display: none !important; }
+    #poShareItemsContainer h3, #poShareTerms h3 { display: block !important; font-size: 12pt; color: #000 !important; margin-bottom: 8px; border-bottom: 1px solid #eee; padding-bottom: 4px; }
+    #poShareItemsContainer .details-table { font-size: 9pt; border: 1px solid #ccc; width: 100%; border-collapse: collapse; }
+    #poShareItemsContainer .details-table th, #poShareItemsContainer .details-table td { border: 1px solid #ccc; padding: 5px 7px; background: #fff !important; color: #000 !important;}
+    #poShareItemsContainer .details-table thead th { background-color: #eee !important; }
+    #poShareTerms { display: block !important; border: none; padding: 0; margin-top: 20px; font-size: 9pt; color: #333 !important; }
+    #poShareTermList { color: #333 !important; }
+}
+
+/* Specific class for print view enhancement */
+body.printing-po-share { /* Applied via JS before printing */
+    background: white !important;
+    font-size: 10pt;
+}
+body.printing-po-share .main-content, body.printing-po-share .modal { /* Reset padding/margin for print */
+    padding: 0 !important;
+    margin: 0 !important;
+    max-width: 100% !important;
+    box-shadow: none !important;
+    border: none !important;
+}
+body.printing-po-share #poShareModal { position: static !important; display: block !important; height: auto !important; width: auto !important; overflow: visible !important; background: none !important; animation: none !important; z-index: auto !important; }
+body.printing-po-share #poShareModal .modal-content { margin: 0 !important; padding: 1cm !important; /* Add print margin */ border: none !important; box-shadow: none !important; max-width: 100% !important; animation: none !important; }
+body.printing-po-share .modal-actions, body.printing-po-share .modal-header h3 /* Hide modal buttons/headers for print */ { display: none !important; }
+
+body.printing-po-share #poShareInfo { grid-template-columns: 1fr 1fr; border: 1px solid #ccc; font-size: 9pt; background: #fff !important; padding: 10px; }
+body.printing-po-share #poShareInfo p { margin-bottom: 5px; }
+body.printing-po-share #poShareInfo strong { color: #333 !important; }
+body.printing-po-share #poShareInfo .po-number-large { font-size: 1.2em; color: #000 !important; }
+body.printing-po-share #poShareGreeting { display: block !important; font-size: 10pt; margin-bottom: 15px; color: #000 !important; }
+body.printing-po-share .po-share-divider { display: none !important; }
+body.printing-po-share #poShareItemsContainer h3, body.printing-po-share #poShareTerms h3 { display: block !important; font-size: 12pt; color: #000 !important; margin-bottom: 8px; border-bottom: 1px solid #eee; padding-bottom: 4px; }
+body.printing-po-share #poShareItemsContainer .details-table { font-size: 9pt; border: 1px solid #ccc; width: 100%; border-collapse: collapse; }
+body.printing-po-share #poShareItemsContainer .details-table th, body.printing-po-share #poShareItemsContainer .details-table td { border: 1px solid #ccc; padding: 5px 7px; background: #fff !important; color: #000 !important;}
+body.printing-po-share #poShareItemsContainer .details-table thead th { background-color: #eee !important; }
+body.printing-po-share #poShareTerms { display: block !important; border: none; padding: 0; margin-top: 20px; font-size: 9pt; color: #333 !important; }
+body.printing-po-share #poShareTermList { color: #333 !important; }
