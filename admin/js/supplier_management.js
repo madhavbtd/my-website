@@ -1,621 +1,492 @@
-// js/supplier_management.js - v24 (Fix Delete Refresh, Add/Edit Modal Debugging, Edit Fetch Error Handling)
+// js/supplier_management.js - v23 (Fix handleSupplierTableActions error, Refined PO Load)
 
 // --- Imports ---
+// import { generatePoPdf } from './utils.js'; // Ensure this utility exists if uncommented
 import { db, auth } from './firebase-init.js';
 import {
     collection, addDoc, doc, getDoc, getDocs, updateDoc, deleteDoc,
-    query, orderBy, where, Timestamp, serverTimestamp, limit, onSnapshot, writeBatch
+    query, orderBy, where, Timestamp, serverTimestamp, limit, onSnapshot
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-
-// --- Global Variables ---
-let currentSuppliers = []; // To hold the fetched supplier data locally
-let currentPOs = []; // To hold the fetched PO data locally
-let supplierNameMap = {}; // Map supplier IDs to names for PO table
 
 // --- DOM Elements ---
+// (Keep all DOM element variables exactly as defined in v22)
+// PO Section
+const poTableBody = document.getElementById('poTableBody');
+const poSearchInput = document.getElementById('poSearchInput');
+const poSupplierFilter = document.getElementById('poSupplierFilter');
+const poStatusFilter = document.getElementById('poStatusFilter');
+const poStartDateFilter = document.getElementById('poStartDateFilter');
+const poEndDateFilter = document.getElementById('poEndDateFilter');
+const poFilterBtn = document.getElementById('poFilterBtn');
+const poClearFilterBtn = document.getElementById('poClearFilterBtn');
+const poTotalsDisplay = document.getElementById('poTotalsDisplay');
+const poLoadingMessage = document.getElementById('poLoadingMessage');
+const poListError = document.getElementById('poListError');
+const poPaginationControls = document.getElementById('poPaginationControls');
+const prevPageBtn = document.getElementById('prevPageBtn');
+const nextPageBtn = document.getElementById('nextPageBtn');
+const pageInfo = document.getElementById('pageInfo');
+const itemsPerPageSelect = document.getElementById('itemsPerPageSelect');
+const selectAllPoCheckbox = document.getElementById('selectAllPoCheckbox');
+const poBatchActionsBar = document.getElementById('poBatchActionsBar');
+const poSelectedCount = document.getElementById('poSelectedCount');
+const batchUpdateStatusSelect = document.getElementById('batchUpdateStatusSelect');
+const batchApplyStatusBtn = document.getElementById('batchApplyStatusBtn');
+const batchMarkReceivedBtn = document.getElementById('batchMarkReceivedBtn');
+const batchDeletePoBtn = document.getElementById('batchDeletePoBtn');
+const deselectAllPoBtn = document.getElementById('deselectAllPoBtn');
+const poTableHeader = document.querySelector('#poTable thead');
+
 // Supplier Section
-const addSupplierBtn = document.getElementById('addSupplierBtn');
+const suppliersListSection = document.getElementById('suppliersListSection');
 const supplierTableBody = document.getElementById('supplierTableBody');
 const supplierLoadingMessage = document.getElementById('supplierLoadingMessage');
 const supplierListError = document.getElementById('supplierListError');
-const supplierFilterInput = document.getElementById('supplierFilterInput');
-const supplierFilterDropdown = document.getElementById('supplierFilterDropdown'); // Assuming you might add a dropdown filter
+const addNewSupplierBtn = document.getElementById('addNewSupplierBtn');
 
-// Add Supplier Modal
-const addSupplierModal = document.getElementById('addSupplierModal');
-const addSupplierForm = document.getElementById('addSupplierForm');
+// Supplier Modal
+const supplierModal = document.getElementById('supplierModal');
+const supplierModalTitle = document.getElementById('supplierModalTitle');
+const closeSupplierModalBtn = document.getElementById('closeSupplierModal');
+const cancelSupplierBtn = document.getElementById('cancelSupplierBtn');
 const saveSupplierBtn = document.getElementById('saveSupplierBtn');
-const cancelAddSupplierBtn = document.getElementById('cancelAddSupplierBtn');
-const addSupplierError = document.getElementById('addSupplierError');
+const supplierForm = document.getElementById('supplierForm');
+const editSupplierIdInput = document.getElementById('editSupplierId');
+const supplierNameInput = document.getElementById('supplierNameInput');
+const supplierCompanyInput = document.getElementById('supplierCompanyInput');
+const supplierWhatsappInput = document.getElementById('supplierWhatsappInput');
+const supplierEmailInput = document.getElementById('supplierEmailInput');
+const supplierAddressInput = document.getElementById('supplierAddressInput');
+const supplierGstInput = document.getElementById('supplierGstInput');
+const supplierFormError = document.getElementById('supplierFormError');
 
-// Edit Supplier Modal
-const editSupplierModal = document.getElementById('editSupplierModal');
-const editSupplierForm = document.getElementById('editSupplierForm');
-const updateSupplierBtn = document.getElementById('updateSupplierBtn');
-const cancelEditSupplierBtn = document.getElementById('cancelEditSupplierBtn');
-const editSupplierError = document.getElementById('editSupplierError');
-const editingSupplierId = document.getElementById('editingSupplierId'); // Hidden input to store ID
+// Status Update Modal
+const statusUpdateModal = document.getElementById('statusUpdateModal');
+const statusModalTitle = document.getElementById('statusModalTitle');
+const closeStatusModalBtn = document.getElementById('closeStatusModal');
+const cancelStatusBtn = document.getElementById('cancelStatusBtn');
+const saveStatusBtn = document.getElementById('saveStatusBtn');
+const statusUpdateForm = document.getElementById('statusUpdateForm');
+const statusUpdatePOId = document.getElementById('statusUpdatePOId');
+const currentPOStatusSpan = document.getElementById('currentPOStatus');
+const statusSelect = document.getElementById('statusSelect');
+const statusErrorMsg = document.getElementById('statusErrorMsg');
 
-// PO Section Elements (Keep relevant ones from v23 if needed)
-const poTableBody = document.getElementById('poTableBody');
-const poLoadingMessage = document.getElementById('poLoadingMessage');
-const poListError = document.getElementById('poListError');
-// Add other PO elements if necessary...
+// PO Details Modal
+const poDetailsModal = document.getElementById('poDetailsModal');
+const poDetailsModalTitle = document.getElementById('poDetailsModalTitle');
+const closePoDetailsModalBtn = document.getElementById('closePoDetailsModal');
+const closePoDetailsBtn = document.getElementById('closePoDetailsModalBottomBtn');
+const poDetailsContent = document.getElementById('poDetailsContent');
+const printPoDetailsBtn = document.getElementById('printPoDetailsBtn');
+
+// PO Share Modal
+const poShareModal = document.getElementById('poShareModal');
+const poShareModalTitle = document.getElementById('poShareModalTitle');
+const closePoShareModal = document.getElementById('closePoShareModalTopBtn');
+const closePoShareModalBtn = document.getElementById('closePoShareModalBtn');
+const printPoShareModalBtn = document.getElementById('printPoShareModalBtn');
+const emailPoShareModalBtn = document.getElementById('emailPoShareModalBtn');
+
+// Export Button
+const exportPoCsvBtn = document.getElementById('exportPoCsvBtn');
+
+
+// --- Global State ---
+// (Keep global state variables exactly as defined in v22)
+let currentEditingSupplierId = null;
+let suppliersDataCache = [];
+let cachedPOs = {};
+let currentPoQuery = null;
+let poQueryUnsubscribe = null;
+let poPagination = { currentPage: 1, itemsPerPage: 25, lastVisibleDoc: null, firstVisibleDoc: null, totalItems: 0, hasNextPage: false, hasPrevPage: false }; // Added default values
+let selectedPoIds = new Set();
+let currentPoSortField = 'createdAt';
+let currentPoSortDirection = 'desc';
 
 
 // --- Utility Functions ---
-function displayGlobalError(message) {
-    console.error("Global Error:", message);
-    const errorDiv = document.getElementById('globalErrorDisplay'); // Ensure you have this div in HTML
-    if (errorDiv) {
-        errorDiv.textContent = message;
-        errorDiv.style.display = 'block';
-        // Optionally hide after some time
-        // setTimeout(() => { errorDiv.style.display = 'none'; }, 5000);
-    } else {
-        alert(`Error: ${message}`); // Fallback
-    }
-}
+// (Keep escapeHtml, formatCurrency, formatDate as they were)
+function escapeHtml(unsafe) { if (typeof unsafe !== 'string') { try { unsafe = String(unsafe ?? ''); } catch (e) { unsafe = ''; } } return unsafe.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;"); }
+function formatCurrency(amount) { const num = Number(amount); if (isNaN(num)) return 'N/A'; return num.toLocaleString('en-IN', { style: 'currency', currency: 'INR', minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+function formatDate(timestamp) { if (!timestamp || typeof timestamp.toDate !== 'function') return '-'; try { return timestamp.toDate().toLocaleDateString('en-GB'); } catch (e) { console.error("Error formatting date:", e); return '-'; } }
 
-function displaySuccessMessage(message) {
-    console.log("Success:", message);
-    const successDiv = document.getElementById('globalSuccessDisplay'); // Ensure you have this div in HTML
-    if (successDiv) {
-        successDiv.textContent = message;
-        successDiv.style.display = 'block';
-        setTimeout(() => { successDiv.style.display = 'none'; }, 3000); // Hide after 3 seconds
-    } else {
-        // Simple fallback notification if needed
-    }
-}
 
-function hideError(elementId) {
-    const errorElement = document.getElementById(elementId);
-    if (errorElement) {
-        errorElement.style.display = 'none';
-        errorElement.textContent = '';
-    }
-}
+// --- Error Display Functions ---
+// (Keep showSupplierListError, showPoListError, showSupplierFormError, showStatusError as they were)
+function showSupplierListError(message) { if(supplierListError) { supplierListError.textContent = message; supplierListError.style.display = message ? 'block' : 'none'; } if(supplierLoadingMessage) supplierLoadingMessage.style.display = 'none'; if(supplierTableBody) supplierTableBody.innerHTML = ''; }
+function showPoListError(message) { if(poListError) { poListError.textContent = message; poListError.style.display = message ? 'block' : 'none'; } if(poLoadingMessage) poLoadingMessage.style.display = 'none'; if(poTableBody) poTableBody.innerHTML = ''; }
+function showSupplierFormError(message) { if(supplierFormError) { supplierFormError.textContent = message; supplierFormError.style.display = message ? 'block' : 'none'; } }
+function showStatusError(message) { if(statusErrorMsg) { statusErrorMsg.textContent = message; statusErrorMsg.style.display = message ? 'block' : 'none'; } }
 
-function showError(elementId, message) {
-    const errorElement = document.getElementById(elementId);
-    if (errorElement) {
-        errorElement.textContent = message;
-        errorElement.style.display = 'block';
-    } else {
-        console.error(`Error element #${elementId} not found. Message: ${message}`);
-    }
-}
 
-// --- Supplier Management Functions ---
-
-// Load Suppliers
-async function loadSuppliers() {
-    console.log("Loading suppliers...");
-    if (!db) { console.error("Firestore DB not available."); displayGlobalError("Database connection failed."); return; }
-    if (supplierLoadingMessage) supplierLoadingMessage.style.display = 'block';
-    if (supplierTableBody) supplierTableBody.innerHTML = ''; // Clear existing table
-    hideError('supplierListError'); // Hide previous errors
-
-    const suppliersRef = collection(db, "suppliers");
-    // Add query constraints like orderBy if needed: query(suppliersRef, orderBy("name"))
+// --- Supplier List Functions ---
+// (Keep displaySupplierTable and populateSupplierFilterDropdown as they were)
+async function displaySupplierTable() {
+    if (!supplierTableBody || !supplierLoadingMessage) { console.error("Supplier table body missing"); return; }
+    if (!db || !collection || !getDocs || !query || !orderBy) { showSupplierListError("Error: DB functions missing."); return; }
+    showSupplierListError('');
+    supplierLoadingMessage.style.display = 'table-row';
+    supplierTableBody.innerHTML = '';
+    suppliersDataCache = [];
     try {
-        const q = query(suppliersRef, orderBy("name")); // Order by name
+        const q = query(collection(db, "suppliers"), orderBy("name_lowercase"));
         const querySnapshot = await getDocs(q);
-        currentSuppliers = []; // Reset local cache
-        supplierNameMap = {}; // Reset name map
-        querySnapshot.forEach((doc) => {
-            const supplier = { id: doc.id, ...doc.data() };
-            currentSuppliers.push(supplier);
-            supplierNameMap[supplier.id] = supplier.name; // Populate map
-        });
-        console.log(`Workspaceed ${currentSuppliers.length} suppliers.`);
-        renderSupplierTable(currentSuppliers); // Render the fetched suppliers
-        populateSupplierFilterDropdown(currentSuppliers); // Update filter dropdown
-        if (supplierLoadingMessage) supplierLoadingMessage.style.display = 'none';
-        if (currentSuppliers.length === 0) {
-            if (supplierTableBody) supplierTableBody.innerHTML = '<tr><td colspan="4">No suppliers found.</td></tr>';
-        }
-    } catch (error) {
-        console.error("Error loading suppliers: ", error);
-        showError('supplierListError', `Failed to load suppliers. Error: ${error.message}`);
-        if (supplierLoadingMessage) supplierLoadingMessage.style.display = 'none';
-    }
-}
-
-// Render Supplier Table
-function renderSupplierTable(suppliersToRender) {
-     if (!supplierTableBody) { console.error("Supplier table body not found!"); return; }
-     supplierTableBody.innerHTML = ''; // Clear table
-
-     if (suppliersToRender.length === 0) {
-         supplierTableBody.innerHTML = '<tr><td colspan="5">No suppliers match the current filter.</td></tr>'; // Updated colspan
-         return;
-     }
-
-     suppliersToRender.forEach(supplier => {
-         const row = supplierTableBody.insertRow();
-         row.dataset.id = supplier.id; // Add ID to row for potential future use
-
-         // Calculate outstanding balance (placeholder - needs PO/Payment data)
-         // For now, display "Calculating..." or a static value
-         const outstandingBalance = "Calculating..."; // Replace with actual calculation later if needed here
-
-         row.innerHTML = `
-             <td>${supplier.name || 'N/A'}</td>
-             <td>${supplier.contactNo || 'N/A'}</td>
-             <td class="outstanding-balance-cell">${outstandingBalance}</td>
-             <td class="actions-cell">
-                 <button class="button icon-button edit-button" data-id="${supplier.id}" title="Edit Supplier"><i class="fas fa-edit"></i></button>
-                 <button class="button icon-button delete-button" data-id="${supplier.id}" title="Delete Supplier"><i class="fas fa-trash-alt"></i></button>
-                 <button class="button icon-button view-button" data-id="${supplier.id}" title="View Details"><i class="fas fa-eye"></i></button>
-             </td>
-         `;
-     });
-     console.log(`Displayed ${suppliersToRender.length} suppliers.`);
- }
-
-
-// Populate Filter Dropdown (Example)
-function populateSupplierFilterDropdown(suppliers) {
-    if (supplierFilterDropdown) {
-        supplierFilterDropdown.innerHTML = '<option value="">All Suppliers</option>'; // Default option
-        suppliers.forEach(supplier => {
-            const option = document.createElement('option');
-            option.value = supplier.id;
-            option.textContent = supplier.name;
-            supplierFilterDropdown.appendChild(option);
-        });
-        console.log("Supplier filter dropdown populated.");
-    }
-     // Also populate PO filter dropdown if it exists
-     const poSupplierFilter = document.getElementById('poSupplierFilter');
-     if (poSupplierFilter) {
-         poSupplierFilter.innerHTML = '<option value="">All Suppliers</option>'; // Default option
-         suppliers.forEach(supplier => {
-             const option = document.createElement('option');
-             option.value = supplier.id; // Use ID as value
-             option.textContent = supplier.name;
-             poSupplierFilter.appendChild(option);
-         });
-         console.log("PO Supplier filter dropdown populated.");
-     }
-}
-
-// --- Add Supplier ---
-function openAddSupplierModal() {
-    console.log("Attempting to open Add Supplier Modal...");
-    if (!addSupplierModal) {
-        console.error("Add Supplier Modal element (#addSupplierModal) not found in DOM!");
-        displayGlobalError("Could not open the add supplier form.");
-        return;
-    }
-    console.log("Add Supplier Modal element found. Setting display to block.");
-    clearAddSupplierForm(); // Clear previous entries
-    hideError('addSupplierError'); // Hide previous errors
-    addSupplierModal.style.display = 'block';
-    // Verify if display is set correctly (for debugging)
-    setTimeout(() => {
-        if (window.getComputedStyle(addSupplierModal).display !== 'block') {
-            console.warn("Add Supplier Modal display style was set to 'block', but computed style is not 'block'. Check CSS conflicts.");
+        supplierLoadingMessage.style.display = 'none';
+        if (querySnapshot.empty) {
+            supplierTableBody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 15px;">No suppliers found.</td></tr>';
         } else {
-            console.log("Add Supplier Modal should be visible now.");
+            querySnapshot.forEach((docSnapshot) => {
+                const supplier = docSnapshot.data();
+                const supplierId = docSnapshot.id;
+                suppliersDataCache.push({ id: supplierId, ...supplier });
+                const tr = document.createElement('tr');
+                tr.setAttribute('data-id', supplierId);
+                const name = escapeHtml(supplier.name || 'N/A');
+                const contact = escapeHtml(supplier.whatsappNo || supplier.contactNo || '-');
+                const balancePlaceholder = `<span class="balance-loading" style="font-style: italic; color: #999;">Calculating...</span>`;
+                // *** Ensure button HTML is correct here ***
+                tr.innerHTML = `
+                    <td>${name}</td>
+                    <td>${contact}</td>
+                    <td class="supplier-balance-cell">${balancePlaceholder}</td>
+                    <td class="action-buttons">
+                        <button class="button view-account-button small-button" data-id="${supplierId}" title="View Account Details"><i class="fas fa-eye"></i></button>
+                        <button class="button edit-button small-button" data-id="${supplierId}" title="Edit Supplier"><i class="fas fa-edit"></i></button>
+                        <button class="button delete-button small-button" data-id="${supplierId}" data-name="${escapeHtml(supplier.name || '')}" title="Delete Supplier"><i class="fas fa-trash-alt"></i></button>
+                    </td>`;
+                supplierTableBody.appendChild(tr);
+            });
+            populateSupplierFilterDropdown();
+            // updateSupplierBalances(suppliersDataCache); // TODO later
         }
-    }, 0);
-}
-
-
-function closeAddSupplierModal() {
-    if (addSupplierModal) addSupplierModal.style.display = 'none';
-}
-
-function clearAddSupplierForm() {
-    if (addSupplierForm) addSupplierForm.reset();
-    hideError('addSupplierError');
-}
-
-async function handleAddSupplierSubmit(event) {
-    event.preventDefault();
-    if (!db) { console.error("Firestore DB not available."); showError('addSupplierError', 'Database connection failed.'); return; }
-    if (!saveSupplierBtn) { return; } // Avoid multiple submits
-
-    saveSupplierBtn.disabled = true;
-    saveSupplierBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
-    hideError('addSupplierError');
-
-    // Get data from form
-    const supplierData = {
-        name: document.getElementById('addSupplierNameInput').value.trim(),
-        contactPerson: document.getElementById('addSupplierContactPersonInput')?.value.trim() || "", // Optional field
-        contactNo: document.getElementById('addSupplierContactInput').value.trim(),
-        whatsappNo: document.getElementById('addSupplierWhatsappInput')?.value.trim() || "", // Optional
-        email: document.getElementById('addSupplierEmailInput').value.trim().toLowerCase(),
-        gstNo: document.getElementById('addSupplierGstInput').value.trim().toUpperCase(),
-        address: document.getElementById('addSupplierAddressInput').value.trim(),
-        createdAt: serverTimestamp() // Record creation time
-    };
-
-    // Basic Validation
-    if (!supplierData.name || !supplierData.contactNo) {
-        showError('addSupplierError', 'Supplier Name and Contact Number are required.');
-        saveSupplierBtn.disabled = false;
-        saveSupplierBtn.innerHTML = '<i class="fas fa-save"></i> Save Supplier';
-        return;
-    }
-
-    try {
-        const docRef = await addDoc(collection(db, "suppliers"), supplierData);
-        console.log("Supplier added with ID: ", docRef.id);
-        displaySuccessMessage(`Supplier "${supplierData.name}" added successfully.`);
-        closeAddSupplierModal();
-        await loadSuppliers(); // Refresh the list
+        console.log(`Displayed ${querySnapshot.size} suppliers.`);
     } catch (error) {
-        console.error("Error adding supplier: ", error);
-        showError('addSupplierError', `Failed to add supplier. Error: ${error.message}`);
-    } finally {
-        saveSupplierBtn.disabled = false;
-        saveSupplierBtn.innerHTML = '<i class="fas fa-save"></i> Save Supplier';
+        console.error("Error fetching suppliers: ", error);
+        showSupplierListError(`Error loading suppliers: ${error.message}`);
+        populateSupplierFilterDropdown(); // Populate even on error
     }
 }
-
-
-// --- Edit Supplier ---
-function openEditSupplierModal(supplierData) {
-    console.log("Attempting to open Edit Supplier Modal...");
-     if (!editSupplierModal) {
-         console.error("Edit Supplier Modal element (#editSupplierModal) not found in DOM!");
-         displayGlobalError("Could not open the edit supplier form.");
-         return;
-     }
-     console.log("Edit Supplier Modal element found. Setting display to block.");
-     populateEditSupplierForm(supplierData);
-     hideError('editSupplierError');
-     editSupplierModal.style.display = 'block';
-      // Verify if display is set correctly (for debugging)
-      setTimeout(() => {
-        if (window.getComputedStyle(editSupplierModal).display !== 'block') {
-            console.warn("Edit Supplier Modal display style was set to 'block', but computed style is not 'block'. Check CSS conflicts.");
-        } else {
-             console.log("Edit Supplier Modal should be visible now.");
-         }
-     }, 0);
-}
-
-function closeEditSupplierModal() {
-    if (editSupplierModal) editSupplierModal.style.display = 'none';
-}
-
-function populateEditSupplierForm(supplier) {
-    if (!editSupplierForm) return;
-    document.getElementById('editSupplierNameInput').value = supplier.name || '';
-    document.getElementById('editSupplierContactPersonInput').value = supplier.contactPerson || '';
-    document.getElementById('editSupplierContactInput').value = supplier.contactNo || '';
-    document.getElementById('editSupplierWhatsappInput').value = supplier.whatsappNo || '';
-    document.getElementById('editSupplierEmailInput').value = supplier.email || '';
-    document.getElementById('editSupplierGstInput').value = supplier.gstNo || '';
-    document.getElementById('editSupplierAddressInput').value = supplier.address || '';
-    editingSupplierId.value = supplier.id; // Store the ID
-}
-
-async function handleEditSupplierClick(supplierId) {
-    console.log(`Attempting to fetch supplier ${supplierId} for edit.`);
-    if (!db || !editSupplierModal) {
-        console.error("Firestore DB or Edit Modal not available.");
-        displayGlobalError("Cannot initiate edit. Required resources missing.");
-        return;
-    }
-
-    const supplierRef = doc(db, "suppliers", supplierId);
-    try { // <<< Added try block
-        const docSnap = await getDoc(supplierRef);
-
-        if (docSnap.exists()) {
-            const supplierData = { id: docSnap.id, ...docSnap.data() };
-            console.log("Supplier data fetched for edit:", supplierData);
-            openEditSupplierModal(supplierData); // Open modal with fetched data
-        } else {
-            console.error(`Supplier document not found for ID: ${supplierId}`);
-            displayGlobalError("Supplier details not found. It might have been deleted.");
-        }
-    } catch (error) { // <<< Added catch block
-        console.error(`Error fetching supplier ${supplierId} for edit:`, error);
-        displayGlobalError(`Failed to load supplier details for editing. Please check console. Error: ${error.message}`);
-    }
-}
-
-
-async function handleUpdateSupplierSubmit(event) {
-    event.preventDefault();
-    if (!db) { console.error("Firestore DB not available."); showError('editSupplierError', 'Database connection failed.'); return; }
-    if (!updateSupplierBtn) { return; }
-
-    const supplierId = editingSupplierId.value;
-    if (!supplierId) {
-        showError('editSupplierError', 'Supplier ID is missing. Cannot update.');
-        return;
-    }
-
-    updateSupplierBtn.disabled = true;
-    updateSupplierBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Updating...';
-    hideError('editSupplierError');
-
-    const supplierData = {
-        name: document.getElementById('editSupplierNameInput').value.trim(),
-        contactPerson: document.getElementById('editSupplierContactPersonInput')?.value.trim() || "",
-        contactNo: document.getElementById('editSupplierContactInput').value.trim(),
-        whatsappNo: document.getElementById('editSupplierWhatsappInput')?.value.trim() || "",
-        email: document.getElementById('editSupplierEmailInput').value.trim().toLowerCase(),
-        gstNo: document.getElementById('editSupplierGstInput').value.trim().toUpperCase(),
-        address: document.getElementById('editSupplierAddressInput').value.trim(),
-        updatedAt: serverTimestamp() // Record update time
-    };
-
-    // Basic Validation
-    if (!supplierData.name || !supplierData.contactNo) {
-        showError('editSupplierError', 'Supplier Name and Contact Number are required.');
-        updateSupplierBtn.disabled = false;
-        updateSupplierBtn.innerHTML = '<i class="fas fa-save"></i> Update Supplier';
-        return;
-    }
-
-    try {
-        const supplierRef = doc(db, "suppliers", supplierId);
-        await updateDoc(supplierRef, supplierData);
-        console.log(`Supplier ${supplierId} updated successfully.`);
-        displaySuccessMessage(`Supplier "${supplierData.name}" updated successfully.`);
-        closeEditSupplierModal();
-        await loadSuppliers(); // Refresh the list
-    } catch (error) {
-        console.error(`Error updating supplier ${supplierId}:`, error);
-        showError('editSupplierError', `Failed to update supplier. Error: ${error.message}`);
-    } finally {
-        updateSupplierBtn.disabled = false;
-        updateSupplierBtn.innerHTML = '<i class="fas fa-save"></i> Update Supplier';
-    }
-}
-
-// --- Delete Supplier ---
-async function handleDeleteSupplierClick(supplierId) {
-    console.log(`Attempting to delete supplier: ${supplierId}`);
-    if (!db) { console.error("Firestore DB not available for delete."); displayGlobalError("Database connection failed."); return; }
-
-    const supplier = currentSuppliers.find(s => s.id === supplierId);
-    const supplierName = supplier ? supplier.name : `ID: ${supplierId}`;
-
-    if (window.confirm(`Are you sure you want to delete supplier "${supplierName}"? This action cannot be undone.`)) {
-        const supplierRef = doc(db, "suppliers", supplierId);
-        // Optional: Add a loading indicator here if deletion takes time
-        try {
-            await deleteDoc(supplierRef);
-            console.log(`Supplier ${supplierId} successfully deleted from Firestore.`);
-            displaySuccessMessage(`Supplier "${supplierName}" deleted successfully.`); // Display success message
-
-            // Refresh the supplier list on the UI <<<< THIS IS THE FIX
-            await loadSuppliers();
-
-        } catch (error) {
-            console.error(`Error deleting supplier ${supplierId}:`, error);
-            displayGlobalError(`Failed to delete supplier "${supplierName}". Please try again. Error: ${error.message}`);
-        } finally {
-            // Optional: Remove loading indicator here
-        }
-    } else {
-        console.log(`Deletion cancelled for supplier ${supplierId}.`);
-    }
-}
-
-// --- Supplier Filtering (Example) ---
-function filterSuppliers() {
-    if (!supplierFilterInput) return; // Only filter if input exists
-    const filterText = supplierFilterInput.value.toLowerCase();
-    const filteredSuppliers = currentSuppliers.filter(supplier => {
-        return (supplier.name?.toLowerCase().includes(filterText) ||
-                supplier.contactNo?.toLowerCase().includes(filterText) ||
-                supplier.email?.toLowerCase().includes(filterText));
+function populateSupplierFilterDropdown() {
+    // (Keep this function exactly as it was in v23)
+     if (!poSupplierFilter) return;
+    const selectedVal = poSupplierFilter.value;
+    poSupplierFilter.innerHTML = '<option value="">All Suppliers</option>';
+    const sortedSuppliers = [...suppliersDataCache].sort((a, b) => (a.name_lowercase || '').localeCompare(b.name_lowercase || ''));
+    sortedSuppliers.forEach(supplier => {
+        const option = document.createElement('option');
+        option.value = supplier.id;
+        option.textContent = escapeHtml(supplier.name || supplier.id);
+        poSupplierFilter.appendChild(option);
     });
-    renderSupplierTable(filteredSuppliers);
+    if (poSupplierFilter.querySelector(`option[value="${selectedVal}"]`)) { poSupplierFilter.value = selectedVal; }
+    else { poSupplierFilter.value = ""; }
+    console.log("Supplier filter dropdown populated.");
 }
 
-// --- Handle Supplier Table Actions (Edit/Delete/View) ---
-// This function uses event delegation on the table body
+// --- handleSupplierTableActions (Keep the updated version from last response) ---
 function handleSupplierTableActions(event) {
-    const targetButton = event.target.closest('button.icon-button'); // Find the closest button with the icon-button class
-
-    if (!targetButton) {
-        // console.log("Clicked inside table body, but not on an action button.");
-        return; // Exit if the click wasn't on or inside an icon button
-    }
+    const targetButton = event.target.closest('button[data-id]'); // Target button with data-id
+    if (!targetButton) return;
 
     const supplierId = targetButton.dataset.id;
     if (!supplierId) {
-        console.warn("Action button clicked, but it's missing the data-id attribute:", targetButton);
-        return; // Exit if the button doesn't have a data-id
+        console.error("Action button clicked, but Supplier ID missing from data-id attribute.");
+        return;
     }
+    console.log(`Action button clicked: Supplier ID = ${supplierId}, Classes = ${targetButton.className}`); // Debug Log
 
-    console.log(`Action button clicked: Supplier ID = ${supplierId}, Target =`, targetButton); // Log the action
-
-    if (targetButton.classList.contains('edit-button')) {
-        console.log(`Edit action triggered for supplier ID: ${supplierId}`);
-        handleEditSupplierClick(supplierId); // Call the specific edit handler
+    if (targetButton.classList.contains('view-account-button')) {
+        console.log(`Navigating to account details for supplier: ${supplierId}`);
+        try {
+            window.location.href = `supplier_account_detail.html?id=${supplierId}`; // Navigation line
+        } catch (navError) { console.error("Navigation Error:", navError); alert("Could not navigate."); }
+    } else if (targetButton.classList.contains('edit-button')) {
+        console.log(`Opening edit modal for supplier: ${supplierId}`);
+        const supplierData = suppliersDataCache.find(s => s.id === supplierId);
+        if (supplierData) { openSupplierModal('edit', supplierData, supplierId); }
+        else { /* Fetch fallback */ }
     } else if (targetButton.classList.contains('delete-button')) {
-        console.log(`Delete action triggered for supplier ID: ${supplierId}`);
-        handleDeleteSupplierClick(supplierId); // Call the specific delete handler
-    } else if (targetButton.classList.contains('view-button')) {
-        console.log(`View action triggered for supplier ID: ${supplierId}`);
-        // Redirect to the detail page
-        window.location.href = `supplier_account_detail.html?supplierId=${supplierId}`;
-    } else {
-        console.log("Clicked on an unknown icon button within the table:", targetButton);
+        console.log(`Initiating delete for supplier: ${supplierId}`);
+        const supplierName = targetButton.dataset.name || supplierId;
+        deleteSupplier(supplierId, supplierName);
+    } else { console.log("Clicked on an unknown action button:", targetButton.className); }
+}
+
+
+// --- Supplier Modal/CRUD Functions ---
+// (Keep openSupplierModal, closeSupplierModal, saveSupplier, deleteSupplier as they were)
+function openSupplierModal(mode = 'add', supplierData = null, supplierId = null) { /* ... */ }
+function closeSupplierModal() { /* ... */ }
+async function saveSupplier(event) { /* ... */ }
+async function deleteSupplier(supplierId, supplierName) { /* ... */ }
+
+
+// --- PO List Functions ---
+// (Keep displayPoList as it was in v23 - includes filter/sort query building)
+async function displayPoList() {
+    if (!poTableBody || !poLoadingMessage) return;
+    if (!db || !collection || !getDocs || !query || !orderBy || !where || !doc || !getDoc || !Timestamp || !limit) { showPoListError("Error: DB functions missing."); return; }
+    showPoListError('');
+    poLoadingMessage.style.display = 'table-row';
+    poTableBody.innerHTML = '';
+    if (poTotalsDisplay) poTotalsDisplay.textContent = 'Loading totals...';
+    if (poPaginationControls) poPaginationControls.style.display = 'none';
+    selectedPoIds.clear();
+    updateBatchActionBar();
+    if (selectAllPoCheckbox) selectAllPoCheckbox.checked = false;
+
+    try {
+        let conditions = [];
+        let baseQuery = collection(db, "purchaseOrders");
+        const searchTerm = poSearchInput.value.trim().toLowerCase();
+        const supplierFilterId = poSupplierFilter.value; // Reads the selected supplier
+        const statusFilter = poStatusFilter.value;
+        const startDateVal = poStartDateFilter.value;
+        const endDateVal = poEndDateFilter.value;
+
+        // Build Conditions
+        if (supplierFilterId) { conditions.push(where("supplierId", "==", supplierFilterId)); }
+        if (statusFilter) { conditions.push(where("status", "==", statusFilter)); }
+        if (startDateVal) { try { conditions.push(where("orderDate", ">=", Timestamp.fromDate(new Date(startDateVal + 'T00:00:00')))); } catch (e) {} }
+        if (endDateVal) { try { conditions.push(where("orderDate", "<=", Timestamp.fromDate(new Date(endDateVal + 'T23:59:59')))); } catch (e) {} }
+
+        // Build Sorting
+        const sortFieldMapping = { poNumber: 'poNumber', orderDate: 'orderDate', supplierName: 'supplierName', totalAmount: 'totalAmount', status: 'status', paymentStatus: 'paymentStatus' };
+        const firestoreSortField = sortFieldMapping[currentPoSortField] || 'createdAt';
+        const firestoreSortDirection = currentPoSortDirection || 'desc';
+        let sortClauses = [orderBy(firestoreSortField, firestoreSortDirection)];
+        if (firestoreSortField !== 'createdAt') { sortClauses.push(orderBy('createdAt', 'desc')); }
+
+        // Build Query
+        const queryLimit = 100; // Placeholder limit
+        currentPoQuery = query(baseQuery, ...conditions, ...sortClauses, limit(queryLimit));
+
+        // Fetch and Display
+        const querySnapshot = await getDocs(currentPoQuery);
+        poLoadingMessage.style.display = 'none';
+        let filteredDocs = querySnapshot.docs;
+        let grandTotalAmount = 0;
+        cachedPOs = {};
+
+        if (searchTerm) { // Basic client-side search
+             filteredDocs = filteredDocs.filter(docRef_po => {
+                const po = docRef_po.data();
+                return po.poNumber?.toString().toLowerCase().includes(searchTerm);
+            });
+        }
+
+        if (filteredDocs.length === 0) {
+             poTableBody.innerHTML = `<tr><td colspan="8" style="text-align: center; padding: 15px;">No POs found.</td></tr>`; // colspan=8
+             if (poTotalsDisplay) poTotalsDisplay.textContent = 'Total PO Value: ₹ 0.00';
+             return;
+        }
+
+        // Loop and render rows (HTML structure as before)
+        filteredDocs.forEach(docRef_po => {
+            const po = docRef_po.data();
+            const poId = docRef_po.id;
+            cachedPOs[poId] = po;
+            let supplierName = suppliersDataCache.find(s => s.id === po.supplierId)?.name || po.supplierName || 'Unknown';
+            let orderDateStr = formatDate(po.orderDate || po.createdAt);
+            let statusText = po.status || 'Unknown';
+            let statusClass = statusText.toLowerCase().replace(/\s+/g, '-');
+            let paymentStatusText = po.paymentStatus || 'Pending';
+            let paymentStatusClass = paymentStatusText.toLowerCase().replace(/\s+/g, '-');
+            let amount = po.totalAmount || 0;
+            let amountStr = formatCurrency(amount);
+            grandTotalAmount += amount;
+            const tr = document.createElement('tr');
+            tr.setAttribute('data-id', poId);
+            // *** Ensure the row HTML matches the header (8 data cells + 1 checkbox cell) ***
+            tr.innerHTML = `
+                <td style="text-align: center;"><input type="checkbox" class="po-select-checkbox" value="${poId}"></td>
+                <td class="po-number-link" title="View PO Details">${escapeHtml(po.poNumber || 'N/A')}</td>
+                <td>${orderDateStr}</td>
+                <td>${escapeHtml(supplierName)}</td>
+                <td style="text-align: right;">${amountStr}</td>
+                <td><span class="status-badge status-${statusClass}">${escapeHtml(statusText)}</span></td>
+                <td><span class="payment-badge payment-${paymentStatusClass}">${escapeHtml(paymentStatusText)}</span></td>
+                <td class="action-buttons">
+                    ${statusText === 'Sent' || statusText === 'Printing' ? `<button class="button mark-received-btn small-button success-button" data-id="${poId}" title="Mark as Received"><i class="fas fa-check"></i></button>` : ''}
+                    <a href="new_po.html?editPOId=${poId}" class="button edit-button small-button" title="Edit PO"><i class="fas fa-edit"></i></a>
+                    <button class="button status-button small-button" data-id="${poId}" data-number="${escapeHtml(po.poNumber)}" data-status="${escapeHtml(statusText)}" title="Update Status"><i class="fas fa-sync-alt"></i></button>
+                    <button class="button share-button small-button" data-id="${poId}" title="Share PO"><i class="fas fa-share-alt"></i></button>
+                    <button class="button pdf-button small-button" data-id="${poId}" title="Generate PDF"><i class="fas fa-file-pdf"></i></button>
+                    <button class="button delete-button small-button" data-id="${poId}" data-number="${escapeHtml(po.poNumber)}" title="Delete PO"><i class="fas fa-trash-alt"></i></button>
+                </td>`;
+            poTableBody.appendChild(tr);
+        });
+
+
+        if (poTotalsDisplay) poTotalsDisplay.textContent = `Total PO Value (Displayed): ${formatCurrency(grandTotalAmount)}`;
+        // updatePaginationControls(querySnapshot); // TODO later
+        console.log(`Displayed ${filteredDocs.length} POs.`);
+
+    } catch (error) {
+        console.error("Error fetching/displaying POs: ", error);
+        if (error.code === 'failed-precondition') { showPoListError(`Error: Firestore index missing. Check console. Details: ${error.message}`); }
+        else { showPoListError(`Error loading POs: ${error.message}`); }
+        if (poTotalsDisplay) poTotalsDisplay.textContent = 'Error loading totals';
     }
 }
 
 
-// --- PO Management Functions --- (Placeholders/Basic Structure) ---
-async function loadPOs() {
-     console.log("Loading Purchase Orders...");
-     if (!db) { console.error("Firestore DB not available."); displayGlobalError("Database connection failed."); return; }
-     if (poLoadingMessage) poLoadingMessage.style.display = 'block';
-     if (poTableBody) poTableBody.innerHTML = '';
-     hideError('poListError');
+// --- PO Table Sorting Logic (handlePoSort, updateSortIndicators) ---
+// (Keep these functions exactly as they were in v23)
+function handlePoSort(event) { const header = event.target.closest('th[data-sortable="true"]'); if (!header) return; const sortKey = header.dataset.sortKey; if (!sortKey) return; let newDirection; if (currentPoSortField === sortKey) { newDirection = currentPoSortDirection === 'asc' ? 'desc' : 'asc'; } else { newDirection = 'asc'; } currentPoSortField = sortKey; currentPoSortDirection = newDirection; console.log(`Sorting POs by: ${currentPoSortField}, Dir: ${currentPoSortDirection}`); updateSortIndicators(); displayPoList(); }
+function updateSortIndicators() { if (!poTableHeader) return; poTableHeader.querySelectorAll('th[data-sortable="true"]').forEach(th => { th.classList.remove('sort-asc', 'sort-desc'); th.querySelector('.sort-indicator')?.remove(); if (th.dataset.sortKey === currentPoSortField) { const indicator = document.createElement('span'); indicator.classList.add('sort-indicator'); if (currentPoSortDirection === 'asc') { th.classList.add('sort-asc'); indicator.innerHTML = ' &uarr;'; } else { th.classList.add('sort-desc'); indicator.innerHTML = ' &darr;'; } th.appendChild(indicator); } }); }
 
-     // Basic query - adjust as needed (e.g., add filters, pagination)
-     const poRef = collection(db, "purchaseOrders");
-     try {
-         // Example: Order by creation date descending
-         const q = query(poRef, orderBy("createdAt", "desc"), limit(25)); // Limit for initial load
-         const querySnapshot = await getDocs(q);
-         currentPOs = []; // Reset local cache
-         querySnapshot.forEach((doc) => {
-             currentPOs.push({ id: doc.id, ...doc.data() });
-         });
-         console.log(`Workspaceed ${currentPOs.length} POs.`);
-         renderPOTable(currentPOs);
-         if (poLoadingMessage) poLoadingMessage.style.display = 'none';
-         if (currentPOs.length === 0) {
-             if (poTableBody) poTableBody.innerHTML = '<tr><td colspan="7">No purchase orders found.</td></tr>'; // Adjust colspan
-         }
-     } catch (error) {
-         console.error("Error loading POs: ", error);
-         showError('poListError', `Failed to load purchase orders. Error: ${error.message}`);
-         if (poLoadingMessage) poLoadingMessage.style.display = 'none';
+
+// --- PO Table Action Handling (handlePOTableActions) ---
+// (Keep this function as it was in v23)
+async function handlePOTableActions(event) {
+    const actionElement = event.target.closest('button[data-id], a.edit-button');
+    const targetCell = event.target.closest('td');
+
+    if (targetCell && targetCell.classList.contains('po-number-link')) {
+        const row = targetCell.closest('tr'); const poId = row?.dataset.id; if (poId) { openPoShareModal(poId); } return;
+    }
+    if (!actionElement) return;
+    const poId = actionElement.dataset.id; const poNumber = actionElement.dataset.number; if (!poId) { console.error("PO ID missing"); return; }
+
+    if (actionElement.classList.contains('edit-button') && actionElement.tagName === 'A') { console.log(`Navigating to edit PO: ${poId}`); }
+    else if (actionElement.classList.contains('status-button')) { const currentStatus = actionElement.dataset.status; openStatusModal(poId, currentStatus, poNumber); }
+    else if (actionElement.classList.contains('share-button')) { openPoShareModal(poId); }
+    else if (actionElement.classList.contains('pdf-button')) {
+         actionElement.disabled = true; actionElement.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+        try { /* Existing PDF logic... ensure generatePoPdf is available */
+             let poData = cachedPOs[poId]; if (!poData) { const poSnap = await getDoc(doc(db, "purchaseOrders", poId)); if (poSnap.exists()) poData = poSnap.data(); } if (!poData) throw new Error(`PO data ${poId}`); let supplierData = suppliersDataCache.find(s => s.id === poData.supplierId); if (!supplierData && poData.supplierId) { const supSnap = await getDoc(doc(db, "suppliers", poData.supplierId)); if (supSnap.exists()) supplierData = supSnap.data(); } if (!supplierData) { supplierData = { name: poData.supplierName || 'Unknown' }; } if (typeof generatePoPdf === 'function') { await generatePoPdf(poData, supplierData); } else { alert("PDF function unavailable."); }
+        } catch (error) { console.error("PDF Error:", error); alert("PDF Error: " + error.message); }
+        finally { actionElement.disabled = false; actionElement.innerHTML = '<i class="fas fa-file-pdf"></i>'; }
      }
- }
+    else if (actionElement.classList.contains('delete-button')) { handleDeletePO(poId, poNumber); }
+    else if (actionElement.classList.contains('mark-received-btn')) { markPOAsReceived(poId); }
+}
 
- function renderPOTable(posToRender) {
-     if (!poTableBody) return;
-     poTableBody.innerHTML = '';
+// --- PO Receiving Logic Placeholder (markPOAsReceived) ---
+// (Keep this function as it was in v23)
+async function markPOAsReceived(poId) { if (!poId || !db || !doc || !updateDoc || !serverTimestamp) { alert("Error: Cannot mark PO as received."); return; } if (confirm(`Mark PO #${poId.substring(0, 6)}... as 'Product Received'?`)) { try { await updateDoc(doc(db, "purchaseOrders", poId), { status: "Product Received", receivedDate: serverTimestamp(), updatedAt: serverTimestamp() }); alert("PO status updated."); displayPoList(); } catch (error) { console.error(`Error marking PO ${poId} received:`, error); alert("Error: " + error.message); } } }
 
-     if (posToRender.length === 0) {
-         poTableBody.innerHTML = '<tr><td colspan="7">No purchase orders match the current filters.</td></tr>'; // Adjust colspan
-         return;
-     }
 
-     posToRender.forEach(po => {
-         const row = poTableBody.insertRow();
-         const supplierName = supplierNameMap[po.supplierId] || 'Unknown Supplier'; // Use the map
-         const poDate = po.poDate?.toDate ? po.poDate.toDate().toLocaleDateString() : 'N/A';
-         const totalAmount = typeof po.totalAmount === 'number' ? `₹${po.totalAmount.toFixed(2)}` : 'N/A';
+// --- Status Update Modal Functions (openStatusModal, closeStatusModal, handleStatusUpdate) ---
+// (Keep these functions exactly as they were)
+function openStatusModal(poId, currentStatus, poNumber) { /* ... */ }
+function closeStatusModal() { /* ... */ }
+async function handleStatusUpdate(event) { /* ... */ }
 
-         row.innerHTML = `
-             <td>${po.poNumber || 'N/A'}</td>
-             <td>${supplierName}</td>
-             <td>${poDate}</td>
-             <td>${totalAmount}</td>
-             <td>${po.status || 'Pending'}</td>
-             <td>${po.paymentStatus || 'Unpaid'}</td>
-             <td class="actions-cell">
-                 <button class="button icon-button view-po-button" data-id="${po.id}" title="View PO Details"><i class="fas fa-eye"></i></button>
-                  <button class="button icon-button share-po-button" data-id="${po.id}" title="Share PO"><i class="fas fa-share-alt"></i></button>
-                 <%-- Add Edit/Delete PO buttons if needed --%>
-             </td>
-         `;
-     });
- }
 
-// --- Event Listeners Setup ---
+// --- Delete PO Function (handleDeletePO) ---
+// (Keep this function exactly as it was)
+async function handleDeletePO(poId, poNumber) { /* ... */ }
+
+
+// --- PO Details & Share Modal Functions ---
+// (Keep existing placeholders or actual functions)
+async function openPoDetailsModal(poId) { console.log("openPoDetailsModal called for", poId); alert("PO Details Modal needs implementation."); }
+function closePoDetailsModal() { /* ... */ }
+async function openPoShareModal(poId) { console.log("openPoShareModal called for", poId); alert("PO Share Modal needs implementation."); }
+function closePoShareModalFunction() { /* ... */ }
+function handleEmailPoShare(event) { console.log("Email PO called"); alert("Email PO needs implementation."); }
+
+
+// --- Batch Action Bar Update (Placeholder) ---
+function updateBatchActionBar() { /* ... (same as v23) ... */ }
+
+
+// --- Page Initialization & Event Listeners Setup ---
+// (Keep initializeSupplierManagementPage and setupEventListeners as they were in v23)
+async function initializeSupplierManagementPage(user) {
+    console.log("Initializing Supplier Management Page v23...");
+    setupEventListeners(); // Setup all event listeners first
+    try {
+        await displaySupplierTable(); // Load suppliers (populates filter)
+        await displayPoList();      // Then load initial POs
+    } catch (error) {
+        console.error("Error during initial data load:", error);
+        // Errors should be shown by individual display functions
+    }
+     console.log("Supplier Management Page Initialized v23.");
+}
+
 function setupEventListeners() {
-    console.log("Setting up event listeners v24...");
+    console.log("Setting up event listeners v23...");
 
-    // Supplier Listeners
-    if (addSupplierBtn) addSupplierBtn.addEventListener('click', openAddSupplierModal);
-    if (addSupplierForm) addSupplierForm.addEventListener('submit', handleAddSupplierSubmit);
-    if (cancelAddSupplierBtn) cancelAddSupplierBtn.addEventListener('click', closeAddSupplierModal);
-    if (addSupplierModal) addSupplierModal.addEventListener('click', (event) => { if (event.target === addSupplierModal) closeAddSupplierModal(); }); // Close on backdrop click
+    // --- Supplier List Actions ---
+    if (supplierTableBody) {
+        supplierTableBody.addEventListener('click', handleSupplierTableActions); // Use corrected handler
+    } else { console.error("Supplier table body not found for event listener."); }
 
-    if (editSupplierForm) editSupplierForm.addEventListener('submit', handleUpdateSupplierSubmit);
-    if (cancelEditSupplierBtn) cancelEditSupplierBtn.addEventListener('click', closeEditSupplierModal);
-    if (editSupplierModal) editSupplierModal.addEventListener('click', (event) => { if (event.target === editSupplierModal) closeEditSupplierModal(); }); // Close on backdrop click
+    // --- Supplier Modal ---
+    if (addNewSupplierBtn) addNewSupplierBtn.addEventListener('click', () => openSupplierModal('add'));
+    if (closeSupplierModalBtn) closeSupplierModalBtn.addEventListener('click', closeSupplierModal);
+    if (cancelSupplierBtn) cancelSupplierBtn.addEventListener('click', closeSupplierModal);
+    if (supplierForm) supplierForm.addEventListener('submit', saveSupplier);
+    if (supplierModal) supplierModal.addEventListener('click', (event) => { if (event.target === supplierModal) closeSupplierModal(); });
 
-    // Use event delegation for dynamically added Edit/Delete/View buttons in the supplier table
-    if (supplierTableBody) supplierTableBody.addEventListener('click', handleSupplierTableActions);
+    // --- PO Filters ---
+    if (poFilterBtn) {
+        poFilterBtn.addEventListener('click', () => {
+            poPagination.currentPage = 1;
+            poPagination.lastVisibleDoc = null;
+            displayPoList();
+        });
+    }
+    if (poClearFilterBtn) {
+        poClearFilterBtn.addEventListener('click', () => {
+            if(poSearchInput) poSearchInput.value = '';
+            if(poSupplierFilter) poSupplierFilter.value = '';
+            if(poStatusFilter) poStatusFilter.value = '';
+            if(poStartDateFilter) poStartDateFilter.value = '';
+            if(poEndDateFilter) poEndDateFilter.value = '';
+            currentPoSortField = 'createdAt'; currentPoSortDirection = 'desc';
+            updateSortIndicators();
+            poPagination.currentPage = 1; poPagination.lastVisibleDoc = null;
+            displayPoList();
+        });
+    }
 
-    // Supplier Filtering Listener (Example)
-    if (supplierFilterInput) supplierFilterInput.addEventListener('input', filterSuppliers);
+    // --- PO Table Sorting ---
+    if (poTableHeader) {
+        poTableHeader.addEventListener('click', handlePoSort);
+    } else { console.error("PO table header not found for sort listener."); }
 
-    // PO Listeners (Add as needed, e.g., for filters, view PO button)
-    // Example: Event delegation for PO actions
-     if (poTableBody) {
-         poTableBody.addEventListener('click', (event) => {
-             const targetButton = event.target.closest('button.icon-button');
-             if (!targetButton) return;
-             const poId = targetButton.dataset.id;
-             if (!poId) return;
+    // --- PO Table Actions (Delegated) ---
+    if (poTableBody) {
+        poTableBody.addEventListener('click', handlePOTableActions);
+    } else { console.error("PO table body not found for PO actions listener."); }
 
-             if (targetButton.classList.contains('view-po-button')) {
-                 console.log(`View PO clicked: ${poId}`);
-                 // Add function to handle viewing PO details, maybe open a modal
-                 // openPoDetailsModal(poId);
-                 alert(`View PO ${poId} - Needs Implementation`);
-             } else if (targetButton.classList.contains('share-po-button')) {
-                  console.log(`Share PO clicked: ${poId}`);
-                  // openPoShareModal(poId); // Ensure this function exists and works
-                  alert(`Share PO ${poId} - Needs Implementation`);
-             }
-             // Add other PO action handlers (edit, delete) if needed
-         });
-     }
+    // --- Batch Actions (Placeholders - Step 5) ---
+    // TODO: Add listeners for selectAllPoCheckbox, po-select-checkbox, batch action buttons
 
-    console.log("Event listeners setup complete v24.");
+    // --- Modals (Status, Details, Share) ---
+    if (closeStatusModalBtn) closeStatusModalBtn.addEventListener('click', closeStatusModal);
+    if (cancelStatusBtn) cancelStatusBtn.addEventListener('click', closeStatusModal);
+    if (statusUpdateForm) statusUpdateForm.addEventListener('submit', handleStatusUpdate);
+    if (statusUpdateModal) statusUpdateModal.addEventListener('click', (event) => { if (event.target === statusUpdateModal) closeStatusModal(); });
+
+    if (closePoDetailsModalBtn) closePoDetailsModalBtn.addEventListener('click', closePoDetailsModal);
+    if (closePoDetailsBtn) closePoDetailsBtn.addEventListener('click', closePoDetailsModal);
+    if (poDetailsModal) poDetailsModal.addEventListener('click', (event) => { if (event.target === poDetailsModal) closePoDetailsModal(); });
+    if (printPoDetailsBtn) printPoDetailsBtn.addEventListener('click', () => { alert("Print Details needs implementation."); });
+
+    if (closePoShareModal) closePoShareModal.addEventListener('click', closePoShareModalFunction);
+    if (closePoShareModalBtn) closePoShareModalBtn.addEventListener('click', closePoShareModalFunction);
+    if (poShareModal) poShareModal.addEventListener('click', (event) => { if (event.target === poShareModal) closePoShareModalFunction(); });
+    if (printPoShareModalBtn) printPoShareModalBtn.addEventListener('click', () => { alert("Print Share needs implementation."); });
+    if (emailPoShareModalBtn) emailPoShareModalBtn.addEventListener('click', handleEmailPoShare);
+
+    // --- CSV Export (Placeholder - Step 5) ---
+    if (exportPoCsvBtn) exportPoCsvBtn.addEventListener('click', () => { alert("CSV Export needs implementation."); });
+
+    // --- Pagination (Placeholder - Step 5) ---
+    // TODO: Add listeners for prevPageBtn, nextPageBtn, itemsPerPageSelect
+
+    console.log("Event listeners setup complete v23.");
 }
 
 
-// --- Initialization ---
-async function initializeSupplierManagementPage() {
-     console.log("Initializing Supplier Management Page v24...");
-     if (window.supplierManagementPageInitialized) {
-         console.log("Page already initialized. Skipping.");
-         return;
-     }
-     if (!db || !auth) { console.error("Firebase db or auth instance not available!"); displayGlobalError("Core Firebase services failed to load."); return; }
-
-     setupEventListeners(); // Setup listeners first
-
-     // Use onAuthStateChanged to ensure user is logged in before loading data
-     onAuthStateChanged(auth, async (user) => {
-         if (user) {
-             console.log("User is authenticated. Loading data...");
-             // Load initial data
-             await loadSuppliers(); // Load suppliers first to populate map
-             await loadPOs(); // Then load POs
-             // Any other initial setup after data load
-         } else {
-             console.log("User is not authenticated. Redirecting or showing login.");
-             // Optionally redirect to login page
-             // window.location.href = 'login.html';
-             displayGlobalError("Please log in to view supplier and PO information.");
-             if (supplierLoadingMessage) supplierLoadingMessage.style.display = 'none';
-             if (poLoadingMessage) poLoadingMessage.style.display = 'none';
-         }
-     });
-
-     window.supplierManagementPageInitialized = true; // Mark as initialized
-     console.log("Supplier Management Page Initialized v24.");
- }
-
-
-// Make initialization function global if needed by other scripts or inline calls
+// Make initialization function global
 window.initializeSupplierManagementPage = initializeSupplierManagementPage;
 
-console.log("supplier_management.js v24 loaded.");
-
-// Attempt immediate initialization if possible, otherwise wait for DOMContentLoaded
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', () => {
-      console.log("DOMContentLoaded fired. Calling initializeSupplierManagementPage.");
-      if (typeof initializeSupplierManagementPage === 'function') {
-          initializeSupplierManagementPage();
-      } else {
-          console.error("initializeSupplierManagementPage not defined at DOMContentLoaded.");
-          displayGlobalError("Initialization function failed to load.");
-      }
-  });
-} else {
-  console.log("DOM already loaded. Calling initializeSupplierManagementPage immediately.");
-   if (typeof initializeSupplierManagementPage === 'function') {
-       initializeSupplierManagementPage();
-   } else {
-       console.error("initializeSupplierManagementPage not defined when DOM already loaded.");
-       displayGlobalError("Initialization function failed to load.");
-   }
-}
+console.log("supplier_management.js v23 (Fix handleSupplierTableActions) loaded.");

@@ -9,7 +9,7 @@
     --warning-color: #ffc107;
     --info-color: #17a2b8;
     --purple-color: #6f42c1;
-    --copy-color: #5b21b6; /* For copy button */
+    --copy-color: #5b21b6;
     --light-gray: #f8f9fa;
     --medium-gray: #e9ecef;
     --dark-gray: #6c757d;
@@ -20,629 +20,258 @@
 }
 
 /* --- Base Styles (body, container, main-content) --- */
-body {
-    font-family: var(--font-family);
-    background-color: #f0f2f5; /* Lighter background */
-    margin: 0;
-    color: var(--text-color);
-    line-height: 1.5;
-}
+body { font-family: var(--font-family); background-color: #f0f2f5; margin: 0; color: var(--text-color); line-height: 1.5; }
+.container { }
+.main-content { padding: 25px; box-sizing: border-box; max-width: 1500px; margin: 20px auto; background-color: var(--white-color); border-radius: 8px; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.07); }
 
-.container {
-    /* Using main-content for max-width now */
-}
+/* Header & Breadcrumb */
+.page-header { margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid var(--medium-gray); }
+.page-header h1 { margin: 0; font-size: 1.7em; color: var(--primary-color); font-weight: 600; }
+.page-header h1 i { margin-right: 12px; }
+.breadcrumb { font-size: 0.9em; color: var(--dark-gray); margin-bottom: 25px; }
+.breadcrumb a { color: var(--primary-color); text-decoration: none; }
+.breadcrumb a:hover { text-decoration: underline; }
+.breadcrumb span { margin-left: 5px; }
+.breadcrumb span::before { content: "/"; margin-right: 5px; color: var(--dark-gray); }
 
-.main-content {
-    padding: 25px;
-    box-sizing: border-box;
-    max-width: 1500px; /* Increased max-width */
-    margin: 20px auto; /* Center the content area */
-    background-color: var(--white-color); /* White background for content */
-    border-radius: 8px; /* Rounded corners */
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05); /* Subtle shadow */
-}
+/* Action Bar & Buttons */
+.actions-bar { display: flex; gap: 12px; margin-bottom: 25px; flex-wrap: wrap; align-items: center; }
+.button { padding: 9px 18px; font-size: 0.95em; border: none; border-radius: 5px; cursor: pointer; font-weight: 600; display: inline-flex; align-items: center; gap: 7px; text-decoration: none; transition: background-color 0.2s ease, opacity 0.2s ease, box-shadow 0.2s ease; white-space: nowrap; vertical-align: middle; line-height: 1; }
+.button i { line-height: 1; margin-right: 2px; }
+.button:hover:not(:disabled) { box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+.button:disabled { background-color: #adb5bd !important; color: #fff !important; cursor: not-allowed; opacity: 0.7; box-shadow: none; }
+.button:disabled:hover { background-color: #adb5bd !important; }
+.add-new-button { background-color: var(--success-color); color: var(--white-color); }
+.add-new-button:hover:not(:disabled) { background-color: #218838; }
+.view-suppliers-button { background-color: var(--secondary-color); color: var(--white-color); }
+.view-suppliers-button:hover:not(:disabled) { background-color: #1a2531; }
+.cancel-button { background-color: var(--dark-gray); color: var(--white-color);}
+.cancel-button:hover:not(:disabled) { background-color: #5a6268;}
+.save-button { background-color: var(--primary-color); color: var(--white-color);}
+.save-button:hover:not(:disabled) { background-color: #004085; }
+.print-button { background-color: var(--info-color); color: var(--white-color); }
+.print-button:hover:not(:disabled) { background-color: #117a8b; }
+.print-button i { margin-right: 6px; }
+.copy-button { background-color: var(--copy-color); color: var(--white-color); }
+.copy-button:hover:not(:disabled) { background-color: #4c1d95; }
+.copy-button i { margin-right: 6px; }
+.copy-button.copying { background-color: var(--warning-color); color: #333; cursor: wait; }
+.copy-button.copied { background-color: var(--success-color); color: var(--white-color); }
 
-/* --- Typography and Links --- */
-h1, h2, h3 {
-    color: var(--secondary-color);
-    margin-bottom: 0.75em;
-    font-weight: 600;
-}
-
-h1 { font-size: 1.8em; }
-h2 { font-size: 1.5em; margin-top: 1.5em; border-bottom: 1px solid var(--medium-gray); padding-bottom: 0.4em;}
-h3 { font-size: 1.2em; }
-
-a {
-    color: var(--primary-color);
-    text-decoration: none;
-    transition: color 0.2s ease;
-}
-a:hover { color: #003d80; text-decoration: underline; }
-
-/* --- Buttons --- */
-.button {
-    display: inline-block;
-    padding: 10px 18px;
-    font-size: 0.95em;
-    font-weight: 500;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    transition: background-color 0.2s ease, box-shadow 0.2s ease;
-    text-align: center;
-    vertical-align: middle;
-    margin-right: 8px; /* Spacing between buttons */
-    line-height: 1.4; /* Ensure text aligns well */
-}
-.button i { margin-right: 6px; } /* Icon spacing */
-
-/* Button Variants */
-.add-new-button { background-color: var(--primary-color); color: var(--white-color); }
-.add-new-button:hover { background-color: #004a9a; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-
-.view-suppliers-button { background-color: var(--purple-color); color: var(--white-color); }
-.view-suppliers-button:hover { background-color: #5a3b9a; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-
-.info-button { background-color: var(--info-color); color: var(--white-color); }
-.info-button:hover { background-color: #138496; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-
-.save-button { background-color: var(--success-color); color: var(--white-color); }
-.save-button:hover { background-color: #218838; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-
-.cancel-button { background-color: var(--dark-gray); color: var(--white-color); }
-.cancel-button:hover { background-color: #5a6268; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-
+/* Action buttons inside tables */
+.action-buttons .button { padding: 5px 9px; font-size: 0.85em; gap: 4px; border-radius: 4px; }
+.action-buttons .button i { margin-right: 0; font-size: 0.9em; }
+.edit-button { background-color: var(--warning-color); color: #333; }
+.edit-button:hover:not(:disabled) { background-color: #e0a800; }
 .delete-button { background-color: var(--danger-color); color: var(--white-color); }
-.delete-button:hover { background-color: #c82333; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+.delete-button:hover:not(:disabled) { background-color: #c82333; }
+.pdf-button { background-color: #fd7e14; color: var(--white-color); }
+.pdf-button:hover:not(:disabled) { background-color: #e66a04; }
+.status-button { background-color: var(--info-color); color: var(--white-color); }
+.status-button:hover:not(:disabled) { background-color: #117a8b; }
+.view-details-button { background-color: var(--purple-color); color: var(--white-color); }
+.view-details-button:hover:not(:disabled) { background-color: #5a2d9e; }
 
-.edit-button { background-color: var(--warning-color); color: #333; } /* Darker text for yellow */
-.edit-button:hover { background-color: #e0a800; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+/* Section Containers */
+.section-container { background-color: var(--white-color); padding: 20px 25px; border-radius: 8px; box-shadow: 0 1px 5px rgba(0, 0, 0, 0.05); margin-bottom: 25px; }
+.section-container h2 { margin-top: 0; margin-bottom: 20px; font-size: 1.4em; color: var(--secondary-color); border-bottom: 1px solid var(--medium-gray); padding-bottom: 12px; font-weight: 600; }
+.section-container h2 i { margin-right: 10px; color: var(--primary-color); }
 
-.print-button { background-color: var(--secondary-color); color: var(--white-color); }
-.print-button:hover { background-color: #1d2b37; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+/* Table Styling */
+.table-container { width: 100%; overflow-x: auto; border: 1px solid var(--medium-gray); border-radius: 6px; margin-bottom: 15px; }
+table { width: 100%; border-collapse: collapse; font-size: 0.9em; }
+table thead { background-color: var(--light-gray); border-bottom: 2px solid var(--medium-gray); }
+table th, table td { border: 1px solid #e0e0e0; padding: 10px 12px; text-align: left; vertical-align: middle; }
+table th { font-weight: 600; color: #495057; white-space: nowrap; }
+table tbody tr:nth-child(even) { background-color: #fdfdfd; }
+table tbody tr:hover { background-color: #f1f5f9; }
+table td.action-buttons { display: flex; gap: 5px; justify-content: flex-start; flex-wrap: nowrap; padding: 6px 8px; align-items: center; }
 
-.filter-action-button { padding: 8px 15px; font-size: 0.9em; } /* Slightly smaller filter buttons */
+/* Clickable PO Number Style */
+#poTableBody td.po-number-link { color: var(--primary-color); font-weight: 600; cursor: pointer; text-decoration: none; }
+#poTableBody td.po-number-link:hover { text-decoration: underline; color: #003d80; }
 
-.small-button { padding: 5px 10px; font-size: 0.85em; }
-.small-button i { margin-right: 4px; }
+/* Status Badge Styles */
+.status-badge { padding: 4px 10px; font-size: 0.8em; border-radius: 12px; font-weight: 500; white-space: nowrap; display: inline-block; text-transform: capitalize; }
+.status-new { background-color: #cfe2ff; color: #0a58ca; border: 1px solid #b6d4fe;}
+.status-sent { background-color: #e2e3e5; color: #41464b; border: 1px solid #d3d6d8;}
+.status-printing { background-color: #ffedd5; color: #9a3412; border: 1px solid #fed7aa;}
+.status-received, .status-product-received { background-color: #d1e7dd; color: #0f5132; border: 1px solid #badbcc;}
+.status-po-paid { background-color: #a3cfbb; color: #0a3622; border: 1px solid #88c3a5;}
+.status-cancel { background-color: #f8d7da; color: #842029; border: 1px solid #f5c2c7;}
+.status-unknown { background-color: #eee; color: #555; border: 1px solid #ddd;}
 
-.button:disabled { background-color: #ccc; color: #666; cursor: not-allowed; box-shadow: none; }
+/* PO Filters */
+.po-filters { margin-bottom: 25px; padding: 15px; background-color: #f9f9f9; border: 1px solid var(--medium-gray); border-radius: 6px; display: flex; gap: 15px; flex-wrap: wrap; align-items: flex-end; }
+.filter-group { display: flex; flex-direction: column; gap: 4px; }
+.filter-group label { font-size: 0.85em; font-weight: 500; color: #495057; }
+.po-filters input[type="text"], .po-filters select, .po-filters input[type="date"] { padding: 8px 12px; border: 1px solid #ced4da; border-radius: 4px; font-size: 0.9em; height: 38px; box-sizing: border-box; min-width: 160px; }
+.po-filters input[type="date"] { color-scheme: light; min-width: 140px; }
+.filter-group.filter-buttons { margin-left: auto; flex-direction: row; gap: 10px; }
+.po-filters button.filter-action-button { height: 38px; }
+.po-filters button#poFilterBtn { background-color: var(--primary-color); color: var(--white-color); }
+.po-filters button#poFilterBtn:hover:not(:disabled) { background-color: #004085; }
 
+/* PO Totals Area */
+.po-totals { margin-top: 15px; padding: 10px 15px; background-color: var(--light-gray); border: 1px solid var(--medium-gray); border-radius: 4px; text-align: right; font-size: 1em; font-weight: 600; }
 
-/* --- Layout Elements (Headers, Sections, Bars) --- */
-.breadcrumb {
-    margin-bottom: 20px;
-    font-size: 0.9em;
-    color: var(--dark-gray);
-}
-.breadcrumb a { color: var(--primary-color); }
-.breadcrumb span { color: var(--text-color); }
+/* Modal Styles (Generic) */
+.modal { display: none; position: fixed; z-index: 1050; left: 0; top: 0; width: 100%; height: 100%; overflow: hidden; background-color: rgba(0,0,0,0.5); align-items: flex-start; justify-content: center; padding: 3vh 15px 15px 15px; box-sizing: border-box; }
+.modal.active { display: flex; overflow-y: auto; }
+.modal-content { background-color: #fefefe; margin: auto; padding: 25px 30px; border: 1px solid #ccc; width: 90%; max-width: 500px; border-radius: 8px; position: relative; box-shadow: 0 5px 15px rgba(0,0,0,0.2); z-index: 1051; display: flex; flex-direction: column; max-height: calc(100vh - 6vh); }
+.modal-content.modal-lg { max-width: 850px; }
+.modal-content.modal-xl { max-width: 1100px; }
+.modal-content h2 { margin-top: 0; margin-bottom: 20px; text-align: center; border-bottom: 1px solid var(--medium-gray); padding-bottom: 15px; font-size: 1.4em; font-weight: 600; color: var(--secondary-color); }
+.close-btn { color: #aaa; position: absolute; top: 10px; right: 15px; font-size: 28px; font-weight: bold; cursor: pointer; line-height: 1; z-index: 1052; }
+.close-btn:hover, .close-btn:focus { color: var(--black-color); text-decoration: none; }
+.modal form .form-group { margin-bottom: 15px; }
+.modal form .form-group label { display: block; margin-bottom: 6px; font-weight: 500; font-size: 0.9em; }
+.modal form .form-group input[type="text"], .modal form .form-group input[type="tel"], .modal form .form-group input[type="email"], .modal form .form-group input[type="password"], .modal form .form-group select, .modal form .form-group textarea { width: 100%; padding: 9px 12px; border: 1px solid #ced4da; border-radius: 4px; font-size: 0.95em; box-sizing: border-box; transition: border-color 0.2s ease, box-shadow 0.2s ease; }
+.modal form .form-group textarea { resize: vertical; min-height: 60px; }
+.modal form .form-group input:focus, .modal form .form-group select:focus, .modal form .form-group textarea:focus { border-color: var(--primary-color); outline: 0; box-shadow: 0 0 0 0.2rem rgba(0, 86, 179, 0.2); }
+.modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: auto; padding-top: 15px; border-top: 1px solid var(--medium-gray); }
+.error-message { color: var(--danger-color); font-size: 0.88em; margin-top: 10px; text-align: center; width: 100%; }
 
-.page-header {
-    margin-bottom: 25px;
-    padding-bottom: 15px;
-    border-bottom: 2px solid var(--primary-color);
-}
-.page-header h1 {
-    margin: 0;
-    display: flex;
+/* Specific Modal Styles */
+/* Status Modal */
+#statusUpdateModal .modal-content { max-width: 450px; }
+#statusUpdateModal p { margin-bottom: 15px; font-size: 0.95em; text-align: center; }
+#statusUpdateModal p strong { font-weight: 600; color: var(--primary-color); }
+
+/* PO Details Modal */
+#poDetailsModal .po-details-container { margin-top: 15px; overflow-y: auto; padding-right: 10px; flex-grow: 1; }
+#poDetailsModal .details-table { width: 100%; border-collapse: collapse; font-size: 0.9em; margin-bottom: 20px; }
+#poDetailsModal .details-table th, #poDetailsModal .details-table td { border: 1px solid var(--medium-gray); padding: 8px 10px; text-align: left; vertical-align: top; }
+#poDetailsModal .details-table thead th { background-color: var(--light-gray); font-weight: 600; white-space: nowrap; position: sticky; top: 0; z-index: 1; }
+#poDetailsModal .details-table tbody tr:nth-child(even) { background-color: #f9f9f9; }
+#poDetailsModal .details-table td[style*="text-align: right"] { text-align: right; font-weight: 500; white-space: nowrap; }
+#poDetailsModal .details-table td:nth-child(1) { text-align: center; width: 30px; }
+#poDetailsModal .details-table td:nth-child(4), #poDetailsModal .details-table td:nth-child(5) { white-space: nowrap; }
+#poDetailsModal .po-notes-details { margin-top: 20px; padding: 15px; border: 1px solid #e0e0e0; border-radius: 4px; font-size: 0.9em; background-color: #fdfdfd; }
+#poDetailsModal .po-notes-details strong { display: block; margin-bottom: 8px; color: var(--secondary-color); font-weight: 600; }
+#poDetailsModal .po-notes-details p { margin: 0; line-height: 1.6; color: #555; }
+
+/* Suppliers List Modal Styles */
+#suppliersListModal .suppliers-modal-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--medium-gray); padding-bottom: 15px; margin-bottom: 15px; }
+#suppliersListModal .suppliers-modal-header h2 { border-bottom: none; padding-bottom: 0; margin-bottom: 0; text-align: left; }
+#suppliersListModal .suppliers-modal-header .button { padding: 7px 14px; font-size: 0.9em; }
+#suppliersListModal .suppliers-table-container { overflow-y: auto; max-height: calc(100vh - 300px); border: none; margin-bottom: 0; }
+
+/* PO Share Modal Styles */
+#poShareModal .modal-content { max-width: 900px; }
+#poShareModal #poShareScrollableContent { overflow-y: auto; max-height: calc(100vh - 230px); padding-right: 15px; margin-right: -15px; flex-grow: 1; }
+#poShareModal #poShareHeader { text-align: center; margin-bottom: 15px; padding-right: 15px; }
+#poShareModal #poShareModalTitle { font-size: 1.6em; color: var(--primary-color); margin-bottom: 10px; border-bottom: none; padding-bottom: 0; text-align: center; }
+
+/* --- Styles for poShareInfo (UPDATED) --- */
+#poShareModal #poShareInfo {
+    font-size: 1.1em; font-weight: 600; color: var(--secondary-color);
+    margin-bottom: 20px; padding: 12px 20px; background-color: var(--light-gray);
+    border-radius: 4px; border: 1px solid var(--medium-gray);
+    display: flex; /* Use flexbox */
+    justify-content: space-between; /* Push items to ends */
     align-items: center;
-    color: var(--primary-color);
+    flex-wrap: wrap; gap: 15px;
 }
-.page-header h1 i { margin-right: 12px; font-size: 0.9em; }
-
-.actions-bar {
-    margin-bottom: 25px;
-    padding: 15px;
-    background-color: var(--light-gray);
-    border-radius: 5px;
-    border: 1px solid var(--medium-gray);
-    display: flex;
-    flex-wrap: wrap; /* Allow buttons to wrap on smaller screens */
-    gap: 10px; /* Spacing between buttons */
-    align-items: center;
-}
-
-.section-container {
-    margin-bottom: 30px;
-    padding: 20px;
-    background-color: #fff; /* White background for sections */
-    border-radius: 6px;
-    border: 1px solid var(--medium-gray); /* Light border */
-    box-shadow: 0 1px 3px rgba(0,0,0,0.03); /* Very subtle shadow */
-}
-.section-container h2 { margin-top: 0; }
-.section-container h2 i { margin-right: 8px; }
-
-/* --- Tables --- */
-.table-container { overflow-x: auto; /* Allow horizontal scroll on small screens */ }
-
-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 15px;
-    font-size: 0.9em;
-}
-
-th, td {
-    padding: 12px 15px; /* Increased padding */
+#poShareModal #poShareInfo .po-info-left {
+    /* PO Number stays left */
     text-align: left;
-    border-bottom: 1px solid var(--medium-gray);
 }
-
-thead th {
-    background-color: var(--light-gray);
-    font-weight: 600;
-    color: var(--secondary-color);
-    white-space: nowrap; /* Prevent headers from wrapping */
-}
-
-tbody tr:hover { background-color: #f1f3f5; } /* Subtle hover effect */
-tbody td { color: var(--text-color); vertical-align: middle; }
-
-/* Table Actions column */
-td:last-child { white-space: nowrap; } /* Prevent action buttons wrapping */
-td .button { margin-right: 5px; padding: 6px 10px; font-size: 0.85em; }
-td .button:last-child { margin-right: 0; }
-
-/* --- Forms and Filters --- */
-.form-group { margin-bottom: 18px; }
-.form-group label {
-    display: block;
-    margin-bottom: 6px;
-    font-weight: 500;
-    color: var(--secondary-color);
-    font-size: 0.9em;
-}
-.form-group input[type="text"],
-.form-group input[type="email"],
-.form-group input[type="tel"],
-.form-group input[type="number"],
-.form-group input[type="date"],
-.form-group select,
-.form-group textarea {
-    width: 100%;
-    padding: 10px;
-    border: 1px solid #ced4da;
-    border-radius: 4px;
-    box-sizing: border-box;
-    font-size: 0.95em;
-    transition: border-color 0.2s ease, box-shadow 0.2s ease;
-}
-.form-group input:focus,
-.form-group select:focus,
-.form-group textarea:focus {
-    border-color: var(--primary-color);
-    box-shadow: 0 0 0 2px rgba(0, 86, 179, 0.2);
-    outline: none;
-}
-.form-group textarea { resize: vertical; min-height: 60px; }
-.form-group .required { color: var(--danger-color); margin-left: 2px; font-weight: bold; }
-
-
-.po-filters {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); /* Responsive grid */
-    gap: 15px;
-    margin-bottom: 20px;
-    padding: 15px;
-    background-color: var(--light-gray);
-    border: 1px solid var(--medium-gray);
-    border-radius: 5px;
-    align-items: end; /* Align items to bottom for button alignment */
-}
-.po-filters .filter-group { margin-bottom: 0; } /* Remove bottom margin in grid */
-.po-filters label { font-size: 0.85em; margin-bottom: 4px; }
-.po-filters input,
-.po-filters select { padding: 8px; font-size: 0.9em; }
-.po-filters .filter-buttons { grid-column: span 2; /* Make buttons span more space if needed */ justify-self: start; } /* Align buttons to the start */
-
-/* --- Modals --- */
-.modal {
-    display: none;
-    position: fixed;
-    z-index: 1000;
-    left: 0;
-    top: 0;
-    width: 100%;
-    height: 100%;
-    overflow: auto;
-    background-color: rgba(0, 0, 0, 0.5); /* Dim background */
-    backdrop-filter: blur(3px); /* Blur background */
-}
-
-.modal-content {
-    background-color: #fff;
-    margin: 5% auto; /* More top margin */
-    padding: 30px; /* Increased padding */
-    border-radius: 8px;
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
-    width: 80%;
-    max-width: 600px; /* Default max-width */
-    position: relative;
-    animation: fadeInModal 0.3s ease-out;
-}
-.modal-lg .modal-content { max-width: 900px; } /* Larger modal */
-.modal-xl .modal-content { max-width: 1200px; } /* Extra large modal */
-
-.close-btn {
-    color: #aaa;
-    position: absolute;
-    top: 15px;
-    right: 20px;
-    font-size: 28px;
-    font-weight: bold;
-    cursor: pointer;
-    transition: color 0.2s ease;
-}
-.close-btn:hover,
-.close-btn:focus { color: var(--black-color); }
-
-.modal h2 { margin-top: 0; border-bottom: 1px solid var(--medium-gray); padding-bottom: 15px; margin-bottom: 25px; }
-.modal-actions {
-    margin-top: 30px;
-    padding-top: 20px;
-    border-top: 1px solid var(--medium-gray);
-    text-align: right; /* Align buttons to the right */
-}
-.modal-actions .button { margin-left: 10px; }
-
-@keyframes fadeInModal {
-    from { opacity: 0; transform: translateY(-20px); }
-    to { opacity: 1; transform: translateY(0); }
-}
-
-/* --- Status Badges --- */
-.status-badge {
-    display: inline-block;
-    padding: 4px 10px;
-    font-size: 0.8em;
-    font-weight: 600;
-    border-radius: 12px; /* Pill shape */
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    text-align: center;
-    min-width: 80px; /* Ensure minimum width */
-}
-.status-badge.New { background-color: #e7f3ff; color: #0056b3; border: 1px solid #b3d7ff; }
-.status-badge.Sent { background-color: #fff0e0; color: #ff8c00; border: 1px solid #ffd7a3; }
-.status-badge.Printing { background-color: #eef7ff; color: #17a2b8; border: 1px solid #b8e6ef; }
-.status-badge.Product.Received { background-color: #e5f9ed; color: #28a745; border: 1px solid #b8e5c6; }
-.status-badge.PO.Paid { background-color: #e8e6f4; color: #6f42c1; border: 1px solid #c6bce6; }
-.status-badge.Cancel { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
-
-/* --- Payment Status Badges --- */
-.payment-status {
-    display: inline-block;
-    padding: 3px 8px;
-    font-size: 0.75em;
-    font-weight: 500;
-    border-radius: 4px;
-}
-.payment-status.Paid { background-color: var(--success-color); color: white; }
-.payment-status.Partial { background-color: var(--warning-color); color: #333; }
-.payment-status.Unpaid { background-color: var(--danger-color); color: white; }
-
-/* --- Specific Elements --- */
-/* Outstanding Balance */
-.outstanding-positive { color: var(--danger-color); font-weight: 600; }
-.outstanding-zero { color: var(--success-color); font-weight: 600; }
-.outstanding-credit { color: var(--info-color); font-weight: 600; } /* If supplier owes us */
-
-/* PO Totals */
-.po-totals {
-    margin-top: 20px;
-    padding: 15px;
-    background-color: var(--light-gray);
-    border: 1px solid var(--medium-gray);
-    border-radius: 5px;
+#poShareModal #poShareInfo .po-info-right {
+    /* Order Date will be on the right */
     text-align: right;
-    font-weight: 600;
-    font-size: 1.1em;
 }
+#poShareModal #poShareInfo span { white-space: nowrap; }
+#poShareModal #poShareInfo .po-number-large { font-size: 1.4em; color: var(--primary-color); font-weight: 700; }
+/* --- End of poShareInfo Update --- */
 
-/* Pagination Controls */
-#poPaginationControls {
-    text-align: center;
-    margin-top: 25px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 10px; /* Spacing between elements */
-}
-#poPaginationControls .button { padding: 6px 12px; font-size: 0.9em; }
-#pageInfo { font-size: 0.9em; font-weight: 500; color: var(--dark-gray); }
-#itemsPerPageSelect {
-    margin-left: 15px;
-    padding: 6px 10px;
-    height: auto; /* Adjust height */
-    font-size: 0.9em;
-    border-radius: 4px;
-    border: 1px solid #ccc;
-}
-
-/* Loading/Error Messages */
-.loading-message td, .error-message td {
-    text-align: center;
-    color: var(--dark-gray);
-    padding: 20px;
-    font-style: italic;
-}
-.error-message {
-    display: none; /* Hidden by default */
-    margin-top: 15px;
-    padding: 15px;
-    background-color: #f8d7da;
-    border: 1px solid #f5c6cb;
-    color: #721c24;
-    border-radius: 5px;
-}
-.error-message i { margin-right: 8px; }
-
-/* Spinner Icon */
-.fa-spinner { animation: spin 1.5s linear infinite; }
-@keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-}
-
-/* --- Table Sorting --- */
-thead th[data-sortable="true"] {
-    cursor: pointer;
-    position: relative;
-    padding-right: 25px; /* Space for arrow */
-}
-thead th[data-sortable="true"]::after {
-    content: '';
-    position: absolute;
-    right: 10px;
-    top: 50%;
-    margin-top: -8px; /* Adjust vertical position */
-    border: 5px solid transparent;
-    opacity: 0.3; /* Dim by default */
-}
-thead th[data-sortable="true"].sort-asc::after {
-    border-bottom-color: var(--dark-gray);
-    margin-top: -10px; /* Adjust for upward arrow */
-    opacity: 1;
-}
-thead th[data-sortable="true"].sort-desc::after {
-    border-top-color: var(--dark-gray);
-     margin-top: -3px; /* Adjust for downward arrow */
-     opacity: 1;
-}
-
-/* --- PO Batch Actions --- */
-.batch-actions-bar {
-    margin-bottom: 15px;
-    padding: 12px 15px;
-    background-color: #e9f5ff; /* Light blue */
-    border: 1px solid #b3d7ff; /* Blue border */
-    border-radius: 5px;
-    display: flex;
-    flex-wrap: wrap; /* Allow wrapping */
-    align-items: center;
-    gap: 10px; /* Spacing between items */
-}
-.batch-actions-bar select {
-    padding: 6px 10px;
-    height: auto;
-    font-size: 0.9em;
-    width: auto; /* Adjust width */
-    border-radius: 4px;
-    border: 1px solid #ccc;
-}
-.batch-actions-bar .button { margin-right: 5px; } /* Reduce margin for buttons in bar */
-.batch-actions-bar #poSelectedCount { font-weight: 600; margin-right: 15px; color: var(--secondary-color); }
-
-/* Table Checkbox Column */
-#poTable th:first-child, #poTable td:first-child {
-    width: 30px;
-    padding: 10px 5px;
-    text-align: center;
-}
-#poTable input[type="checkbox"] {
-    cursor: pointer;
-    width: 16px;
-    height: 16px;
-}
-
-/* Row Highlighting for Selected POs */
-#poTable tbody tr.selected-row {
-    background-color: #fff3cd !important; /* Light yellow background */
-    font-weight: 500; /* Slightly bolder */
-}
-#poTable tbody tr.selected-row td {
-   /* Optional: border or other styles for selected row cells */
-}
+#poShareModal #poShareGreeting { font-size: 1.05em; margin-bottom: 15px; color: var(--text-color); padding-right: 15px; }
+.po-share-divider { border: none; border-top: 1px solid var(--medium-gray); margin: 20px 0; }
+#poShareModal #poShareItemsContainer, #poShareModal #poShareTerms { padding-right: 15px; }
+#poShareModal #poShareItemsContainer h3, #poShareModal #poShareTerms h3 { font-size: 1.2em; color: var(--secondary-color); margin-bottom: 10px; font-weight: 600; }
+#poShareModal #poShareItemsContainer .details-table { font-size: 0.88em; }
+#poShareModal #poShareItemsContainer .details-table th, #poShareModal #poShareItemsContainer .details-table td { padding: 7px 9px; }
+#poShareModal #poShareTerms { margin-top: 15px; background-color: #fcfcfc; padding: 15px; border-radius: 4px; border: 1px solid #eee; }
+#poShareModal #poShareTermList { list-style-type: decimal; padding-left: 25px; margin: 0; font-size: 0.85em; color: #444; line-height: 1.6; }
+#poShareModal #poShareTermList li { margin-bottom: 6px; }
+#poShareModal .modal-actions { margin-top: 20px; }
+#poShareModal .modal-actions .copy-button, #poShareModal .modal-actions .print-button { margin-right: 10px; }
 
 
-/* --- PO Details Modal --- */
-.po-details-container {
-    margin-top: 20px;
-    max-height: 60vh; /* Limit height */
-    overflow-y: auto; /* Add scroll if content exceeds height */
-    padding-right: 10px; /* Space for scrollbar */
+/* --- Responsive Styles --- */
+@media (max-width: 992px) {
+    .main-content { max-width: 95%; }
+    .modal-content.modal-lg, .modal-content.modal-xl { max-width: 95%; }
+    .po-filters { gap: 10px; }
+    .filter-group.filter-buttons { margin-left: 0; width: 100%; justify-content: space-between; }
+    #poShareModal #poShareInfo { justify-content: center; }
 }
-.po-details-container h3 {
-    margin-top: 15px;
-    margin-bottom: 10px;
-    font-size: 1.1em;
-    color: var(--primary-color);
-    border-bottom: 1px solid var(--medium-gray);
-    padding-bottom: 5px;
+@media (max-width: 768px) {
+    .main-content { padding: 15px; margin: 10px auto;}
+    .actions-bar { flex-direction: column; align-items: stretch; }
+    .actions-bar .button, .actions-bar a.button { width: 100%; text-align: center; justify-content: center; }
+    .po-filters { flex-direction: column; align-items: stretch; }
+    .po-filters input[type="text"], .po-filters select, .po-filters input[type="date"], .po-filters button { width: 100%; }
+    .filter-group.filter-buttons { flex-direction: column; gap: 8px; }
+    .modal-content, .modal-content.modal-lg, .modal-content.modal-xl { width: 96%; padding: 20px; max-height: calc(100vh - 4vh); }
+    .modal-content h2 { font-size: 1.2em; }
+    #poDetailsModal .details-table, #poShareModal #poShareItemsContainer .details-table { font-size: 0.85em; }
+    #poDetailsModal .details-table th, #poDetailsModal .details-table td, #poShareModal #poShareItemsContainer .details-table th, #poShareModal #poShareItemsContainer .details-table td { padding: 6px 8px; }
+    .table-container { -webkit-overflow-scrolling: touch; }
+    table td.action-buttons { flex-wrap: wrap; justify-content: center;}
+    #suppliersListModal .suppliers-modal-header { flex-direction: column; align-items: flex-start; gap: 10px; }
+    #suppliersListModal .suppliers-modal-header .button { width: 100%; }
+    #poShareModal #poShareModalTitle { font-size: 1.4em; }
+    #poShareModal #poShareInfo { font-size: 1em; flex-direction: column; align-items: center; text-align: center; }
+    #poShareModal #poShareInfo .po-info-right { justify-content: center; }
+    #poShareModal #poShareScrollableContent { max-height: calc(100vh - 200px); }
 }
-.po-details-container p { margin-bottom: 8px; font-size: 0.95em; }
-.po-details-container p strong { font-weight: 600; color: var(--secondary-color); min-width: 120px; display: inline-block; }
-.po-details-container .details-table { margin-top: 15px; font-size: 0.9em; }
-.po-details-container .details-table th,
-.po-details-container .details-table td { padding: 8px 10px; }
-.po-details-container .details-table th { background-color: #f8f9fa; }
-.po-details-container .totals-section { margin-top: 20px; text-align: right; font-size: 1em; }
-.po-details-container .totals-section p { margin-bottom: 5px; }
-.po-details-container .totals-section strong { font-weight: 600; }
-.po-details-container .grand-total { font-size: 1.1em; font-weight: bold; color: var(--primary-color); border-top: 1px solid var(--medium-gray); padding-top: 10px; margin-top: 10px;}
-
-
-/* --- PO Share Modal Specific Styles --- */
-.po-share-modal-content {
-    max-width: 800px; /* Specific width for share modal */
-    position: relative;
-}
-
-#poShareScrollableContent {
-    max-height: calc(80vh - 150px); /* Adjust height based on header/footer */
-    overflow-y: auto;
-    padding: 20px;
-    margin: 0 -30px 0 -30px; /* Counteract modal-content padding for full width scroll */
-    padding: 0 30px; /* Add padding back inside */
-    border-bottom: 1px solid var(--medium-gray);
-    margin-bottom: 20px;
+@media (max-width: 480px) {
+    .page-header h1 { font-size: 1.4em; }
+    table th, table td { padding: 8px 6px; }
+    .status-badge { padding: 3px 8px; font-size: 0.75em;}
+    .modal-actions { flex-direction: column; gap: 8px; }
+    .modal-actions .button { width: 100%; }
+    #poShareModal .modal-actions .copy-button, #poShareModal .modal-actions .print-button { margin-right: 0; }
 }
 
-#poShareHeader {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start; /* Align items to top */
-    margin-bottom: 15px;
-    flex-wrap: wrap; /* Allow wrapping on small screens */
-}
-
-#poShareModalTitle {
-    margin: 0; /* Remove default margin */
-    border: none; /* Remove default border */
-    padding: 0; /* Remove default padding */
-    font-size: 1.6em;
-    color: var(--primary-color);
-    flex-basis: 50%; /* Allow title to take space */
-}
-
-#poShareInfo {
-    font-size: 0.9em;
-    text-align: right;
-    color: var(--dark-gray);
-    line-height: 1.6;
-    flex-basis: 45%; /* Allow info to take space */
-}
-#poShareInfo p { margin: 0 0 3px 0; } /* Reduce space between info lines */
-#poShareInfo strong { color: var(--secondary-color); font-weight: 600; }
-#poShareInfo .po-number-large {
-    font-size: 1.2em;
-    font-weight: bold;
-    color: var(--secondary-color);
-    display: block; /* Make PO number stand out */
-    margin-bottom: 5px;
-}
-
-#poShareGreeting {
-    margin-bottom: 20px;
-    font-size: 1em;
-    line-height: 1.6;
-}
-
-.po-share-divider {
-    border: 0;
-    border-top: 1px solid var(--medium-gray);
-    margin: 25px 0;
-}
-
-#poShareItemsContainer h3,
-#poShareTerms h3 {
-    font-size: 1.2em;
-    color: var(--primary-color);
-    margin-bottom: 15px;
-}
-
-#poShareItemsContainer .details-table { /* Reuse details table style */
-    margin-top: 0;
-    font-size: 0.9em;
-}
-#poShareItemsContainer .details-table th,
-#poShareItemsContainer .details-table td {
-    padding: 8px 10px;
-}
-#poShareItemsContainer .details-table th { background-color: #f8f9fa; }
-
-#poShareTerms {
-    margin-top: 20px;
-    font-size: 0.9em;
-}
-
-#poShareTermList {
-    padding-left: 20px;
-    line-height: 1.7;
-    color: var(--dark-gray);
-}
-#poShareTermList li { margin-bottom: 8px; }
-
-
-/* --- Print Styles for PO Share Modal --- */
+/* --- Print Specific Styles --- */
 @media print {
-    body * { visibility: hidden; } /* Hide everything */
-    .po-share-modal-content, .po-share-modal-content * { visibility: visible; } /* Show only modal content */
-    .po-share-modal-content {
-        position: absolute;
-        left: 0;
-        top: 0;
-        width: 100%;
-        max-width: 100%;
-        margin: 0;
-        padding: 10mm; /* Add print margins */
-        box-shadow: none;
-        border: none;
-        font-size: 10pt; /* Adjust base font size for print */
-        color: #000; /* Ensure black text */
-    }
-    .modal-actions, .close-btn { display: none; } /* Hide modal buttons/close */
-    #poShareScrollableContent { max-height: none; overflow: visible; padding: 0; margin: 0; border: none; }
-    #poShareHeader { page-break-after: avoid; }
-    #poShareModalTitle { font-size: 16pt; }
-    #poShareInfo { font-size: 9pt; }
-    #poShareInfo .po-number-large { font-size: 11pt; }
-    #poShareGreeting { font-size: 10pt; margin-bottom: 15px; }
-    .po-share-divider { margin: 15px 0; border-color: #ccc; }
-    #poShareItemsContainer h3, #poShareTerms h3 { font-size: 12pt; margin-bottom: 8px; border-bottom: 1px solid #eee; padding-bottom: 4px; }
-    #poShareItemsContainer .details-table { font-size: 9pt; border: 1px solid #ccc; width: 100%; border-collapse: collapse; }
-    #poShareItemsContainer .details-table th, #poShareItemsContainer .details-table td { border: 1px solid #ccc; padding: 5px 7px; background: #fff !important; color: #000 !important;} /* Override background/color for print */
-    #poShareItemsContainer .details-table thead th { background-color: #eee !important; }
-    #poShareTerms { font-size: 9pt; margin-top: 15px; }
-    #poShareTermList { padding-left: 15px; line-height: 1.5; }
-    #poShareTermList li { margin-bottom: 5px; }
-    a[href]:after { content: none !important; } /* Prevent URL display */
+    /* (Print styles remain the same as v9) */
+    body { background-color: #fff !important; color: #000 !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+    .container, .main-content { margin: 0 !important; padding: 0 !important; box-shadow: none !important; border: none !important; }
+    body > *:not(.printing-active-modal) { display: none !important; }
+    .printing-active-modal { display: block !important; position: relative !important; width: 100% !important; max-width: 100% !important; height: auto !important; max-height: none !important; box-shadow: none !important; border: none !important; margin: 0 !important; padding: 15px !important; overflow: visible !important; background-color: #fff !important; }
+    .printing-active-modal .modal-content { box-shadow: none !important; border: none !important; padding: 0 !important; margin: 0 !important; max-height: none !important; background-color: #fff !important; }
+    .printing-active-modal .modal-actions, .printing-active-modal .close-btn { display: none !important; }
+    .printing-active-modal #poShareScrollableContent { overflow-y: visible !important; max-height: none !important; padding-right: 0 !important; margin-right: 0 !important; }
+    body.printing-po-details #poDetailsModal { visibility: visible !important; }
+    body.printing-po-details #poDetailsModal .modal-content > *:not(#poDetailsModalTitle):not(#poDetailsContent) { display: none !important; }
+    body.printing-po-details #poDetailsModalTitle { display: block !important; text-align: left; border-bottom: 1px solid #ccc; padding-bottom: 10px; margin-bottom: 15px; font-size: 16pt; color: #000 !important; }
+    body.printing-po-details #poDetailsContent { display: block !important; overflow: visible !important; max-height: none !important; color: #000 !important; }
+    body.printing-po-details #poDetailsContent .details-table { width: 100%; border-collapse: collapse; font-size: 10pt; margin-bottom: 15px; border: 1px solid #ccc; color: #000 !important; }
+    body.printing-po-details #poDetailsContent .details-table th, body.printing-po-details #poDetailsContent .details-table td { border: 1px solid #ccc; padding: 6px 8px; text-align: left; vertical-align: top; color: #000 !important; background-color: #fff !important; word-break: break-word; }
+    body.printing-po-details #poDetailsContent .details-table thead th { background-color: #eee !important; font-weight: bold; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+    body.printing-po-details #poDetailsContent .details-table td[style*="text-align: right"] { text-align: right !important; }
+    body.printing-po-details #poDetailsContent .po-notes-details { display: block !important; margin-top: 20px; padding: 10px; border: 1px solid #ccc; font-size: 10pt; background-color: #fff !important; color: #000 !important; }
+    body.printing-po-details #poDetailsContent .po-notes-details strong { font-weight: bold; color: #000 !important; }
+    body.printing-po-details #poDetailsContent .po-notes-details p { color: #000 !important; }
+    body.printing-po-share #poShareModal { visibility: visible !important; }
+    body.printing-po-share #poShareModal .modal-content > *:not(#poShareScrollableContent) { display: none !important; }
+    body.printing-po-share #poShareModal #poShareScrollableContent > *:not(#poShareHeader):not(#poShareGreeting):not(#poShareItemsContainer):not(#poShareTerms) { display: none !important; }
+    body.printing-po-share #poShareHeader, body.printing-po-share #poShareGreeting, body.printing-po-share #poShareItemsContainer, body.printing-po-share #poShareTerms { display: block !important; padding-right: 0 !important; }
+    body.printing-po-share #poShareModalTitle { display: block !important; font-size: 18pt; text-align: center; margin-bottom: 10px; color: #000 !important; border-bottom: 1px solid #ccc; padding-bottom: 5px; }
+    body.printing-po-share #poShareInfo { display: flex !important; font-size: 11pt; border: 1px solid #ccc; padding: 8px; margin-bottom: 15px; background-color: #f8f8f8 !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; color: #000 !important; justify-content: space-between; flex-wrap: wrap; }
+    body.printing-po-share #poShareInfo .po-number-large { font-size: 1.2em; color: #000 !important; }
+    body.printing-po-share #poShareGreeting { display: block !important; font-size: 10pt; margin-bottom: 15px; color: #000 !important; }
+    body.printing-po-share .po-share-divider { display: none !important; }
+    body.printing-po-share #poShareItemsContainer h3, body.printing-po-share #poShareTerms h3 { display: block !important; font-size: 12pt; color: #000 !important; margin-bottom: 8px; border-bottom: 1px solid #eee; padding-bottom: 4px; }
+    body.printing-po-share #poShareItemsContainer .details-table { font-size: 9pt; border: 1px solid #ccc; width: 100%; border-collapse: collapse; }
+    body.printing-po-share #poShareItemsContainer .details-table th, body.printing-po-share #poShareItemsContainer .details-table td { border: 1px solid #ccc; padding: 5px 7px; background: #fff !important; color: #000 !important;}
+    body.printing-po-share #poShareItemsContainer .details-table thead th { background-color: #eee !important; }
+    body.printing-po-share #poShareTerms { display: block !important; border: none; padding: 0; margin-top: 15px; background: none !important; }
+    body.printing-po-share #poShareTermList { display: block !important; font-size: 9pt; color: #000 !important; list-style-position: outside; padding-left: 20px; }
+    body.printing-po-share #poShareTermList li { margin-bottom: 4px; }
+    a[href]:after { content: "" !important; }
 }
-
-
-/* Add a class to body during print preview preparation */
-body.preparing-po-share-print { visibility: hidden; }
-body.preparing-po-share-print .po-share-modal-content { visibility: visible; position: absolute; left: -9999px; top: -9999px; } /* Hide offscreen */
-
-/* Alternative Print Styling using a body class */
-body.printing-po-share {
-    padding: 10mm;
-    font-size: 10pt;
-    color: #000 !important; /* Force black text */
-    background-color: #fff !important; /* Force white background */
-}
-body.printing-po-share *, body.printing-po-share *:before, body.printing-po-share *:after {
-    background: transparent !important;
-    color: #000 !important;
-    box-shadow: none !important;
-    text-shadow: none !important;
-    border-color: #ccc !important; /* Use a light gray for borders */
-}
-body.printing-po-share #poShareHeader { display: block !important; margin-bottom: 15px; page-break-after: avoid; }
-body.printing-po-share #poShareModalTitle { display: block !important; font-size: 16pt; color: #000 !important; }
-body.printing-po-share #poShareInfo { display: block !important; font-size: 9pt; color: #555 !important; text-align: left; margin-top: 10px; }
-body.printing-po-share #poShareInfo p { margin-bottom: 3px !important; }
-body.printing-po-share #poShareInfo .po-number-large { font-size: 1.2em; color: #000 !important; }
-body.printing-po-share #poShareGreeting { display: block !important; font-size: 10pt; margin-bottom: 15px; color: #000 !important; }
-body.printing-po-share .po-share-divider { display: none !important; } /* Hide divider, use spacing */
-body.printing-po-share #poShareItemsContainer h3, body.printing-po-share #poShareTerms h3 { display: block !important; font-size: 12pt; color: #000 !important; margin-bottom: 8px; border-bottom: 1px solid #eee; padding-bottom: 4px; }
-body.printing-po-share #poShareItemsContainer .details-table { font-size: 9pt; border: 1px solid #ccc; width: 100%; border-collapse: collapse; }
-body.printing-po-share #poShareItemsContainer .details-table th, body.printing-po-share #poShareItemsContainer .details-table td { border: 1px solid #ccc; padding: 5px 7px; background: #fff !important; color: #000 !important;}
-body.printing-po-share #poShareItemsContainer .details-table thead th { background-color: #eee !important; }
-body.printing-po-share #poShareTerms { display: block !important; border: none; padding: 0; margin-top: 15px; font-size: 9pt; color: #000 !important; }
-body.printing-po-share #poShareTermList { display: block !important; padding-left: 15px; line-height: 1.5; }
-body.printing-po-share #poShareTermList li { margin-bottom: 5px; }
-body.printing-po-share a { color: #000 !important; text-decoration: none !important; }
+/* --- <<< Print Styles End >>> --- */
