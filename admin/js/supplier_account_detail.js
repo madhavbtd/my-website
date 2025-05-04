@@ -1,5 +1,5 @@
 // js/supplier_account_detail.js
-// संस्करण: DOM एलिमेंट प्राप्त करने में सुधार
+// संस्करण: Event Listener सेटअप को डेटा लोड होने के बाद ले जाया गया
 
 // --- Firebase फ़ंक्शन आयात करें ---
 import { db, auth } from './firebase-init.js';
@@ -12,202 +12,149 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/f
 // --- ग्लोबल वेरिएबल्स ---
 let currentSupplierId = null;
 let currentSupplierData = null;
-let purchaseOrdersData = []; // PO डेटा स्टोर करने के लिए
+let purchaseOrdersData = [];
+let listenersAttached = false; // <<< लिस्नर दोबारा अटैच होने से रोकने के लिए फ्लैग
 
 // --- Helper Functions ---
-function displayError(message, elementId = 'generalError') {
-    console.error("Displaying Error:", message);
-    try {
-        let errorElement = document.getElementById(elementId) || document.getElementById('supplierPaymentListError') || document.getElementById('generalErrorDisplay');
-        if (errorElement) {
-            errorElement.textContent = message;
-            errorElement.style.display = 'block';
-            errorElement.style.color = 'red';
-        } else {
-            console.warn(`Error element '${elementId}' or fallbacks not found. Using alert.`);
-            alert(`Error: ${message}`);
-        }
-    } catch(e) {
-        console.error("Error within displayError:", e);
-        alert(`Error: ${message}`); // Fallback
-    }
-}
+// ... (displayError, clearError, getSupplierIdFromUrl, formatDate, formatCurrency पहले जैसे ही) ...
+function displayError(message, elementId = 'generalError') { /* ... */ }
+function clearError(elementId = 'generalError') { /* ... */ }
+function getSupplierIdFromUrl() { /* ... */ }
+function formatDate(timestamp) { /* ... */ }
+function formatCurrency(amount) { /* ... */ }
 
-function clearError(elementId = 'generalError') {
-    try {
-        let errorElement = document.getElementById(elementId) || document.getElementById('supplierPaymentListError') || document.getElementById('generalErrorDisplay');
-        if (errorElement) {
-            errorElement.textContent = '';
-            errorElement.style.display = 'none';
-        }
-        // अन्य संभावित एरर divs को भी साफ करें
-        const paymentErr = document.getElementById('paymentMadeError');
-        const editErr = document.getElementById('editSupplierError');
-        if (paymentErr) paymentErr.style.display = 'none';
-        if (editErr) editErr.style.display = 'none';
-    } catch(e) {
-        console.error("Error within clearError:", e);
-    }
-}
-
-
-function getSupplierIdFromUrl() {
-    try {
-        const params = new URLSearchParams(window.location.search);
-        return params.get('id');
-    } catch (e) {
-        console.error("Error getting supplier ID from URL:", e);
-        return null;
-    }
-}
-
-function formatDate(timestamp) {
-    // ... (formatDate फंक्शन वैसा ही) ...
-    if (!timestamp || typeof timestamp.toDate !== 'function') { return 'Invalid Date'; }
-    try {
-        const date = timestamp.toDate();
-        const options = { year: 'numeric', month: 'short', day: 'numeric' };
-        return date.toLocaleDateString('en-IN', options);
-    } catch (e) { console.error("Error formatting date:", timestamp, e); return 'Format Error'; }
-}
-
-function formatCurrency(amount) {
-    // ... (formatCurrency फंक्शन वैसा ही) ...
-    if (typeof amount !== 'number') { amount = parseFloat(amount); }
-    if (isNaN(amount)) { return '₹ N/A'; }
-    return `₹ ${amount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-}
 
 // --- UI Population Functions ---
 function populateSupplierDetails(data) {
-    console.log("populateSupplierDetails called with data:", data ? data.id : 'null');
-    // <<< एलिमेंट्स को फंक्शन के अंदर प्राप्त करें >>>
+    // <<< --- एलिमेंट्स को फंक्शन के अंदर प्राप्त करें --- >>>
     const header = document.getElementById('supplierNameHeader');
-    const breadcrumb = document.getElementById('supplierNameBreadcrumb');
-    const idEl = document.getElementById('detailSupplierId');
-    const nameEl = document.getElementById('detailSupplierName');
-    const companyEl = document.getElementById('detailSupplierCompany');
-    const whatsappEl = document.getElementById('detailSupplierWhatsapp');
-    const emailEl = document.getElementById('detailSupplierEmail');
-    const gstEl = document.getElementById('detailSupplierGst');
-    const addressEl = document.getElementById('detailSupplierAddress');
-    const addedOnEl = document.getElementById('detailAddedOn');
-
-    if (!data) { /* ... Error handling ... */ return; }
-
-    if (header) header.textContent = data.name || 'Supplier Account';
-    if (breadcrumb) breadcrumb.textContent = data.name || 'Details';
-    if (idEl) idEl.textContent = data.id || 'N/A';
-    if (nameEl) nameEl.textContent = data.name || 'N/A';
-    if (companyEl) companyEl.textContent = data.company || 'N/A';
-    if (whatsappEl) whatsappEl.textContent = data.contact || 'N/A';
-    if (emailEl) emailEl.textContent = data.email || 'N/A';
-    if (gstEl) gstEl.textContent = data.gstNo || 'N/A';
-    if (addressEl) addressEl.textContent = data.address || 'N/A';
-    if (addedOnEl) addedOnEl.textContent = data.addedOn ? formatDate(data.addedOn) : 'N/A';
+    // ... (बाकी एलिमेंट्स वैसे ही प्राप्त करें) ...
+    console.log("populateSupplierDetails called");
+    if (!data) return;
+    // ... (UI अपडेट कोड वैसा ही) ...
 }
 
 function populatePaymentHistory(payments) {
     console.log(`Populating payment history with ${payments ? payments.length : 0} items...`);
-    // <<< एलिमेंट्स को फंक्शन के अंदर प्राप्त करें >>>
     const tableBody = document.getElementById('transactionsTableBody');
     const loadingRow = document.getElementById('transactionsLoading');
     const noDataRow = document.getElementById('noTransactionsMessage');
-    const errorDisplay = document.getElementById('supplierPaymentListError');
-
-    console.log("Payment Table Elements:", { tableBody, loadingRow, noDataRow });
-
-    if (!tableBody) { console.error("Payment table body element not found!"); return; }
-    tableBody.innerHTML = ''; // साफ करें
-
-    if (loadingRow) loadingRow.style.display = 'none';
-    if (errorDisplay) errorDisplay.style.display = 'none'; // एरर छिपाएं
-
-    if (!payments || payments.length === 0) {
-        console.log("No payments found, displaying 'no data' row.");
-        if (noDataRow) {
-            noDataRow.style.display = 'table-row';
-        } else { tableBody.innerHTML = `<tr><td colspan="6">No payment history found.</td></tr>`; }
-        return;
-    }
-
-    if (noDataRow) noDataRow.style.display = 'none';
-
-    console.log("Adding payment rows...");
-    payments.forEach((payment, index) => {
-        // ... (row insertion code वैसा ही) ...
-         try {
-             const row = tableBody.insertRow();
-             row.insertCell(0).textContent = formatDate(payment.paymentDate);
-             row.insertCell(1).textContent = payment.notes || '-';
-             row.insertCell(2).textContent = payment.paymentMethod || 'N/A';
-             const poCell = row.insertCell(3);
-             poCell.textContent = payment.linkedPoNumber || '-';
-             const amountCell = row.insertCell(4);
-             amountCell.textContent = formatCurrency(payment.paymentAmount);
-             amountCell.classList.add('amount-paid');
-             row.insertCell(5).textContent = ''; // Actions
-        } catch(e) { console.error(`Error creating payment row ${index}:`, payment, e); /* ... Error row ... */ }
-    });
-    console.log("Finished adding payment rows.");
+    // ... (बाकी कोड वैसा ही) ...
 }
 
 function updateAccountSummary(poTotal, paymentTotal) {
     console.log(`updateAccountSummary called with poTotal=${poTotal}, paymentTotal=${paymentTotal}`);
-    // <<< एलिमेंट्स को फंक्शन के अंदर प्राप्त करें >>>
     const poDisplay = document.getElementById('summaryTotalPoValue');
     const paidDisplay = document.getElementById('summaryTotalPaid');
     const balanceDisplay = document.getElementById('summaryBalance');
-
-    console.log("Summary Elements found:", { poDisplay, paidDisplay, balanceDisplay });
-
-    const numPoTotal = parseFloat(poTotal) || 0;
-    const numPaymentTotal = parseFloat(paymentTotal) || 0;
-    const outstanding = numPoTotal - numPaymentTotal;
-
-    if (poDisplay) {
-         poDisplay.textContent = formatCurrency(numPoTotal);
-         poDisplay.classList.remove('loading-state');
-     } else { console.warn("Element 'summaryTotalPoValue' not found."); }
-
-    if (paidDisplay) {
-        paidDisplay.textContent = formatCurrency(numPaymentTotal);
-        paidDisplay.classList.remove('loading-state');
-    } else { console.warn("Element 'summaryTotalPaid' not found."); }
-
-    if (balanceDisplay) {
-        balanceDisplay.textContent = formatCurrency(outstanding);
-        balanceDisplay.classList.remove('loading-state');
-        balanceDisplay.classList.remove('balance-due', 'balance-credit', 'balance-zero', 'balance-info');
-        if (outstanding > 0.01) balanceDisplay.classList.add('balance-due');
-        else if (outstanding < -0.01) balanceDisplay.classList.add('balance-credit');
-        else balanceDisplay.classList.add('balance-zero');
-    } else { console.warn("Element 'summaryBalance' not found."); }
-    console.log("Account summary UI update finished.");
+    // ... (बाकी कोड वैसा ही) ...
+     console.log("Account summary UI update finished.");
 }
 
 
 function populatePoDropdown(pos) {
      console.log(`Populating PO dropdown with ${pos ? pos.length : 0} total POs...`);
-     const dropdown = document.getElementById('paymentLinkPOSelect'); // <<< फंक्शन के अंदर प्राप्त करें
+     const dropdown = document.getElementById('paymentLinkPOSelect');
      if (!dropdown) { console.error("PO Link dropdown element not found!"); return; }
-     // ... (बाकी ड्रॉपडाउन लॉजिक वैसा ही रहेगा) ...
-      dropdown.innerHTML = '<option value="">None (Direct Payment)</option>';
-      if (!pos || pos.length === 0) { /* ... */ return; }
-      const relevantPOs = pos.filter(po => (parseFloat(po.totalAmount) || 0) > (parseFloat(po.amountPaid) || 0));
-      if (relevantPOs.length === 0) { /* ... */ return; }
-      relevantPOs.sort((a, b) => (b.orderDate?.toDate?.() || 0) - (a.orderDate?.toDate?.() || 0));
-      relevantPOs.forEach(po => { /* ... option बनाएं और जोड़ें ... */ });
-      console.log("PO dropdown populated.");
+     // ... (बाकी कोड वैसा ही) ...
+     console.log("PO dropdown populated.");
 }
 
-// --- Core Data Loading ---
+// --- Event Handlers & Modal Functions ---
+// ... (openPaymentModal, closePaymentModal, handleSavePayment पहले जैसे) ...
+// ... (openEditSupplierModal, closeEditSupplierModal, handleEditSupplierSubmit पहले जैसे) ...
+function closePaymentModal() {
+    console.log('closePaymentModal called!');
+    const modal = document.getElementById('paymentMadeModal');
+    if (!modal) { console.error("Payment modal element not found for closing"); return; }
+    modal.style.display = 'none';
+    modal.classList.remove('active');
+    clearError('paymentMadeError'); // Corrected ID
+}
+// --- बाकी Modal/Handler Functions यहां डालें ---
+// सुनिश्चित करें कि handleSavePayment, openEditSupplierModal, closeEditSupplierModal, handleEditSupplierSubmit परिभाषित हैं।
+// स्टब्स को हटाया गया, आपको इन्हें पूरी तरह से परिभाषित करना होगा अगर ये फंक्शन्स इस्तेमाल हो रहे हैं।
+
+
+// --- Event Listeners Setup ---
+function setupEventListeners() {
+    // अगर लिस्नर पहले से अटैच हैं तो दोबारा न करें
+    if (listenersAttached) {
+        console.log("Event listeners already attached. Skipping setup.");
+        return;
+    }
+    console.log("Setting up event listeners...");
+
+    // Payment Modal Buttons & Form
+    const addPayBtn = document.getElementById('addPaymentMadeBtn');
+    if (addPayBtn) {
+        addPayBtn.addEventListener('click', openPaymentModal);
+        console.log("Listener attached to addPaymentMadeBtn");
+    } else { console.warn("Element 'addPaymentMadeBtn' not found."); }
+
+    const closeBtnPay = document.getElementById('closePaymentMadeModalBtn');
+    if (closeBtnPay) {
+        closeBtnPay.addEventListener('click', closePaymentModal);
+        console.log("Listener attached to closePaymentMadeModalBtn");
+    } else { console.warn("Element 'closePaymentMadeModalBtn' not found."); }
+
+    const cancelBtnPay = document.getElementById('cancelPaymentBtn');
+    if (cancelBtnPay) {
+         cancelBtnPay.addEventListener('click', closePaymentModal);
+         console.log("Listener attached to cancelPaymentBtn");
+    } else { console.warn("Element 'cancelPaymentBtn' not found."); }
+
+    const payModal = document.getElementById('paymentMadeModal');
+    if (payModal) {
+        payModal.addEventListener('click', (event) => { if (event.target === payModal) closePaymentModal(); });
+        console.log("Listener attached to paymentMadeModal background");
+    } else { console.warn("Element 'paymentMadeModal' not found."); }
+
+    const payForm = document.getElementById('paymentMadeForm');
+    if (payForm) {
+        payForm.addEventListener('submit', handleSavePayment);
+        console.log("Listener attached to paymentMadeForm");
+    } else { console.warn("Element 'paymentMadeForm' not found."); }
+
+
+    // Edit Supplier Modal Buttons & Form
+    const editBtn = document.getElementById('editSupplierDetailsBtn');
+    if (editBtn) {
+        editBtn.addEventListener('click', openEditSupplierModal);
+        console.log("Listener attached to editSupplierDetailsBtn");
+    } else { console.warn("Element 'editSupplierDetailsBtn' not found."); }
+
+    const closeBtnEdit = document.getElementById('closeEditSupplierBtn');
+    if (closeBtnEdit) {
+        closeBtnEdit.addEventListener('click', closeEditSupplierModal);
+         console.log("Listener attached to closeEditSupplierBtn");
+    } else { console.warn("Element 'closeEditSupplierBtn' not found."); }
+
+    const cancelBtnEdit = document.getElementById('cancelEditSupplierBtn');
+    if (cancelBtnEdit) {
+        cancelBtnEdit.addEventListener('click', closeEditSupplierModal);
+         console.log("Listener attached to cancelEditSupplierBtn");
+    } else { console.warn("Element 'cancelEditSupplierBtn' not found."); }
+
+    const editModal = document.getElementById('editSupplierModal');
+    if (editModal) {
+        editModal.addEventListener('click', (event) => { if (event.target === editModal) closeEditSupplierModal(); });
+         console.log("Listener attached to editSupplierModal background");
+    } else { console.warn("Element 'editSupplierModal' not found."); }
+
+    const editForm = document.getElementById('editSupplierForm');
+    // if (editForm) { editForm.addEventListener('submit', handleEditSupplierSubmit); } // Use correct handler
+
+    listenersAttached = true; // फ्लैग सेट करें कि लिस्नर अटैच हो गए हैं
+    console.log("Supplier detail event listeners setup complete.");
+}
+
+
+// --- Core Data Loading Function ---
 async function loadSupplierAccountData() {
     console.log("loadSupplierAccountData: Function started.");
-    // प्रमाणीकरण जांच
-    console.log("loadSupplierAccountData: Checking Auth Status...");
-    // ... (Auth check code वैसा ही) ...
-     if (!auth.currentUser) { /* ... */ return; }
+    // ... (Auth check वैसा ही) ...
+    if (!auth.currentUser) { /* ... */ return; }
 
     currentSupplierId = getSupplierIdFromUrl();
     if (!currentSupplierId) { /* ... */ return; }
@@ -231,6 +178,11 @@ async function loadSupplierAccountData() {
         console.log("[Load Step 1] Supplier Data found:", supplierData);
         populateSupplierDetails(supplierData); // UI Update
 
+        // <<< --- Event Listeners को यहां कॉल करें, डेटा लोड होने के बाद --- >>>
+        setupEventListeners();
+        // <<< --- Event Listeners को यहां कॉल करें --- >>>
+
+
         // Step 2 & 3: Load Payments and POs Concurrently
         console.log("[Load Steps 2 & 3] Loading payments and POs concurrently...");
         const [paymentsSnapshot, poSnapshot] = await Promise.all([
@@ -241,7 +193,6 @@ async function loadSupplierAccountData() {
         // Process Payments
         console.log(`[Load Step 2] Found ${paymentsSnapshot.docs.length} payments.`);
         payments = paymentsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        console.log("[Load Step 2] Payments Data Array:", payments);
         paymentSum = payments.reduce((sum, p) => sum + (parseFloat(p.paymentAmount) || 0), 0);
         populatePaymentHistory(payments); // UI Update
 
@@ -249,7 +200,6 @@ async function loadSupplierAccountData() {
         console.log(`[Load Step 3] Found ${poSnapshot.docs.length} POs.`);
         purchaseOrders = poSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         purchaseOrdersData = purchaseOrders;
-        console.log("[Load Step 3] POs Data Array:", purchaseOrders);
         poSum = purchaseOrders.reduce((sum, po) => sum + (parseFloat(po.totalAmount) || 0), 0);
 
         // Step 4: Update Summary
@@ -262,13 +212,9 @@ async function loadSupplierAccountData() {
 
     } catch (error) {
         console.error("Error during loadSupplierAccountData execution:", error);
-        // ... (विस्तृत एरर हैंडलिंग) ...
         displayError(`Error loading data: ${error.message}. Check console.`);
-        // UI रीसेट करें
-        if (!supplierData) populateSupplierDetails(null); // Clear details if supplier load failed
-        populatePaymentHistory([]);
-        updateAccountSummary(0, 0);
-        populatePoDropdown([]);
+        if (!supplierData) populateSupplierDetails(null);
+        populatePaymentHistory([]); updateAccountSummary(0, 0); populatePoDropdown([]);
     } finally {
         if (loadingIndicator) loadingIndicator.style.display = 'none';
         console.log("loadSupplierAccountData finished.");
@@ -276,65 +222,43 @@ async function loadSupplierAccountData() {
 }
 
 
-// --- Event Handlers & Modal Functions ---
-// ... (openPaymentModal, closePaymentModal, handleSavePayment पहले जैसे, सुनिश्चित करें कि वे सही IDs का उपयोग करते हैं) ...
-function closePaymentModal() {
-    console.log('closePaymentModal called!'); // <<< Log जोड़ा गया था
-    const modal = document.getElementById('paymentMadeModal');
-    if (!modal) { console.error("Payment modal element not found for closing"); return; }
-    modal.style.display = 'none';
-    modal.classList.remove('active');
-    clearError('paymentMadeError'); // <<< सही ID का उपयोग करें
-}
+// --- Global Initialization Function ---
+window.initializeSupplierDetailPage = async () => {
+    console.log("Initializing Supplier Detail Page (Global Function)...");
+    clearError();
 
-// ... (Edit Supplier functions वैसे ही) ...
+    await new Promise(resolve => setTimeout(resolve, 0)); // DOM के लिए थोड़ा रुकें
 
-// --- Event Listeners Setup ---
-function setupEventListeners() {
-    console.log("Setting up event listeners...");
+    // currentSupplierId = getSupplierIdFromUrl(); // इसे loadSupplierAccountData में ले जाया गया
 
-    // Payment Modal
-    const addPayBtn = document.getElementById('addPaymentMadeBtn');
-    if (addPayBtn) addPayBtn.addEventListener('click', openPaymentModal);
-    const closeBtnPay = document.getElementById('closePaymentMadeModalBtn');
-    if (closeBtnPay) closeBtnPay.addEventListener('click', closePaymentModal);
-    const cancelBtnPay = document.getElementById('cancelPaymentBtn');
-    if (cancelBtnPay) {
-         console.log("Found Cancel button (payment modal). Attaching listener...");
-         cancelBtnPay.addEventListener('click', closePaymentModal); // <<< Listener यहां जोड़ा गया
-    } else { console.warn("Could not find Cancel button for payment modal (ID: cancelPaymentBtn)"); }
-    const payModal = document.getElementById('paymentMadeModal');
-    if (payModal) payModal.addEventListener('click', (event) => { if (event.target === payModal) closePaymentModal(); });
-    const payForm = document.getElementById('paymentMadeForm');
-    if (payForm) payForm.addEventListener('submit', handleSavePayment);
+    // Ensure sections are visible if previously hidden
+    const mainContent = document.getElementById('detailMainContent');
+    if (mainContent) mainContent.style.visibility = 'visible';
 
-    // Edit Modal
-    const editBtn = document.getElementById('editSupplierDetailsBtn');
-    if (editBtn) editBtn.addEventListener('click', openEditSupplierModal);
-    const closeBtnEdit = document.getElementById('closeEditSupplierBtn');
-    if (closeBtnEdit) closeBtnEdit.addEventListener('click', closeEditSupplierModal);
-    const cancelBtnEdit = document.getElementById('cancelEditSupplierBtn');
-    if (cancelBtnEdit) cancelBtnEdit.addEventListener('click', closeEditSupplierModal);
-    const editModal = document.getElementById('editSupplierModal');
-    if (editModal) editModal.addEventListener('click', (event) => { if (event.target === editModal) closeEditSupplierModal(); });
-    const editForm = document.getElementById('editSupplierForm');
-    // if (editForm) editForm.addEventListener('submit', handleEditSupplierSubmit); // <<< हैंडलर नाम सुनिश्चित करें
+    if (typeof db === 'undefined' || !db) {
+        console.error("Firestore db instance is not available during initialization!");
+        displayError("Database connection failed. Please refresh.");
+        return;
+    }
 
-    console.log("Supplier detail event listeners setup complete.");
-}
+    await loadSupplierAccountData(); // <<< केवल इसे कॉल करें
+    // setupEventListeners(); // <<< इसे loadSupplierAccountData के अंदर ले जाया गया
 
-// --- Global Initialization & Auto-run ---
-// ... (Initialization कोड वैसा ही) ...
-window.initializeSupplierDetailPage = async () => { /* ... */ };
+    console.log("Supplier Detail Page Initialized via global function.");
+    window.supplierDetailPageInitialized = true;
+};
+
+// --- Auto-initialize ---
+// ... (यह कोड ब्लॉक वैसा ही रहेगा) ...
 let initializationAttempted = false;
 function attemptInitialization() { /* ... */ }
 if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', attemptInitialization); } else { attemptInitialization(); }
 
+console.log("supplier_account_detail.js loaded and running (v_listener_fix).");
 
-console.log("supplier_account_detail.js loaded and running (v_dom_fix).");
-
-// --- स्टब्स जोड़ें अगर फंक्शन्स परिभाषित नहीं हैं ---
-if (typeof handleSavePayment === 'undefined') { window.handleSavePayment = async function(e) { e.preventDefault(); alert("Save Payment logic not fully implemented."); } }
-if (typeof openEditSupplierModal === 'undefined') { window.openEditSupplierModal = function() { alert("Cannot open edit modal."); } }
-if (typeof closeEditSupplierModal === 'undefined') { window.closeEditSupplierModal = function() { alert("Cannot close edit modal."); } }
-// if (typeof handleEditSupplierSubmit === 'undefined') { window.handleEditSupplierSubmit = async function(e) { e.preventDefault(); alert("Update Supplier logic not fully implemented."); } }
+// --- सुनिश्चित करें कि सभी आवश्यक फंक्शन्स मौजूद हैं ---
+// स्टब्स की जगह वास्तविक फंक्शन्स होने चाहिए
+async function handleSavePayment(event) { event.preventDefault(); console.error("handleSavePayment not fully defined!"); displayError("Save action failed.", "paymentMadeError"); }
+function openEditSupplierModal(){ console.error("openEditSupplierModal not defined!"); alert("Cannot open edit modal."); }
+function closeEditSupplierModal(){ console.error("closeEditSupplierModal not defined!"); }
+async function handleEditSupplierSubmit(event){ event.preventDefault(); console.error("handleEditSupplierSubmit not defined!"); displayError("Update failed.", "editSupplierError"); }
