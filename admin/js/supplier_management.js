@@ -238,7 +238,7 @@ async function displayPoList() {
 
     try {
         let conditions = [];
-        let baseQuery = collection(db, "purchaseOrders");
+        let baseQuery = collection(db, "purchase_orders")
         const searchTerm = poSearchInput.value.trim().toLowerCase();
         const supplierFilterId = poSupplierFilter.value; // Reads the selected supplier
         const statusFilter = poStatusFilter.value;
