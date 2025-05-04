@@ -9,7 +9,7 @@
     --warning-color: #ffc107;
     --info-color: #17a2b8;
     --purple-color: #6f42c1;
-    --copy-color: #5b21b6;
+    --copy-color: #5b21b6; /* For copy button */
     --light-gray: #f8f9fa;
     --medium-gray: #e9ecef;
     --dark-gray: #6c757d;
@@ -20,452 +20,629 @@
 }
 
 /* --- Base Styles (body, container, main-content) --- */
-body { font-family: var(--font-family); background-color: #f0f2f5; margin: 0; color: var(--text-color); line-height: 1.5; }
-.container { }
-.main-content { padding: 25px; box-sizing: border-box; max-width: 1500px; margin: 20px auto; }
+body {
+    font-family: var(--font-family);
+    background-color: #f0f2f5; /* Lighter background */
+    margin: 0;
+    color: var(--text-color);
+    line-height: 1.5;
+}
+
+.container {
+    /* Using main-content for max-width now */
+}
+
+.main-content {
+    padding: 25px;
+    box-sizing: border-box;
+    max-width: 1500px; /* Increased max-width */
+    margin: 20px auto; /* Center the content area */
+    background-color: var(--white-color); /* White background for content */
+    border-radius: 8px; /* Rounded corners */
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05); /* Subtle shadow */
+}
+
+/* --- Typography and Links --- */
+h1, h2, h3 {
+    color: var(--secondary-color);
+    margin-bottom: 0.75em;
+    font-weight: 600;
+}
+
+h1 { font-size: 1.8em; }
+h2 { font-size: 1.5em; margin-top: 1.5em; border-bottom: 1px solid var(--medium-gray); padding-bottom: 0.4em;}
+h3 { font-size: 1.2em; }
+
+a {
+    color: var(--primary-color);
+    text-decoration: none;
+    transition: color 0.2s ease;
+}
+a:hover { color: #003d80; text-decoration: underline; }
 
 /* --- Buttons --- */
 .button {
-    padding: 8px 15px;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 0.9em;
+    display: inline-block;
+    padding: 10px 18px;
+    font-size: 0.95em;
     font-weight: 500;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
     transition: background-color 0.2s ease, box-shadow 0.2s ease;
-    display: inline-flex;
-    align-items: center;
-    gap: 6px; /* Space between icon and text */
-    text-decoration: none; /* For anchor tags styled as buttons */
-    color: var(--white-color); /* Default text color for buttons */
+    text-align: center;
+    vertical-align: middle;
+    margin-right: 8px; /* Spacing between buttons */
+    line-height: 1.4; /* Ensure text aligns well */
 }
-.button:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-}
-.button:hover:not(:disabled) {
-    opacity: 0.9;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-}
+.button i { margin-right: 6px; } /* Icon spacing */
 
-.add-button { background-color: var(--success-color); }
-.edit-button { background-color: var(--warning-color); color: #333; } /* Often better contrast */
-.delete-button { background-color: var(--danger-color); }
-.view-button { background-color: var(--info-color); }
-.save-button { background-color: var(--primary-color); }
-.cancel-button { background-color: var(--dark-gray); }
-.print-button { background-color: var(--secondary-color); }
-.info-button { background-color: var(--purple-color); }
-.copy-button { background-color: var(--copy-color); }
+/* Button Variants */
+.add-new-button { background-color: var(--primary-color); color: var(--white-color); }
+.add-new-button:hover { background-color: #004a9a; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
 
-.button.icon-button {
-    padding: 6px 8px; /* Smaller padding for icon-only */
-    font-size: 0.8em; /* Adjust icon size slightly if needed */
-    margin: 0 2px; /* Spacing between action icons */
-}
-.button.icon-button i { /* Ensure icon doesn't have extra margin */
-    margin: 0;
-    font-size: 1em; /* Adjust icon size relative to button font-size */
-}
+.view-suppliers-button { background-color: var(--purple-color); color: var(--white-color); }
+.view-suppliers-button:hover { background-color: #5a3b9a; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
 
-/* --- Cards / Sections --- */
-.content-card {
-    background-color: var(--white-color);
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+.info-button { background-color: var(--info-color); color: var(--white-color); }
+.info-button:hover { background-color: #138496; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+
+.save-button { background-color: var(--success-color); color: var(--white-color); }
+.save-button:hover { background-color: #218838; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+
+.cancel-button { background-color: var(--dark-gray); color: var(--white-color); }
+.cancel-button:hover { background-color: #5a6268; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+
+.delete-button { background-color: var(--danger-color); color: var(--white-color); }
+.delete-button:hover { background-color: #c82333; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+
+.edit-button { background-color: var(--warning-color); color: #333; } /* Darker text for yellow */
+.edit-button:hover { background-color: #e0a800; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+
+.print-button { background-color: var(--secondary-color); color: var(--white-color); }
+.print-button:hover { background-color: #1d2b37; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+
+.filter-action-button { padding: 8px 15px; font-size: 0.9em; } /* Slightly smaller filter buttons */
+
+.small-button { padding: 5px 10px; font-size: 0.85em; }
+.small-button i { margin-right: 4px; }
+
+.button:disabled { background-color: #ccc; color: #666; cursor: not-allowed; box-shadow: none; }
+
+
+/* --- Layout Elements (Headers, Sections, Bars) --- */
+.breadcrumb {
+    margin-bottom: 20px;
+    font-size: 0.9em;
+    color: var(--dark-gray);
+}
+.breadcrumb a { color: var(--primary-color); }
+.breadcrumb span { color: var(--text-color); }
+
+.page-header {
     margin-bottom: 25px;
-    overflow: hidden; /* Important for tables inside */
+    padding-bottom: 15px;
+    border-bottom: 2px solid var(--primary-color);
 }
-.card-header {
-    padding: 15px 20px;
-    background-color: #f7f9fc; /* Slightly off-white header */
-    border-bottom: 1px solid var(--medium-gray);
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-.card-header h2, .card-header h3 {
+.page-header h1 {
     margin: 0;
-    font-size: 1.2em;
-    font-weight: 600;
-    color: var(--secondary-color);
-}
-.card-body {
-    padding: 20px;
-}
-.card-controls { /* For filters etc. above tables */
-    padding: 15px 20px;
-    border-bottom: 1px solid var(--medium-gray);
-    background-color: #fdfdff;
     display: flex;
-    flex-wrap: wrap;
-    gap: 15px;
+    align-items: center;
+    color: var(--primary-color);
+}
+.page-header h1 i { margin-right: 12px; font-size: 0.9em; }
+
+.actions-bar {
+    margin-bottom: 25px;
+    padding: 15px;
+    background-color: var(--light-gray);
+    border-radius: 5px;
+    border: 1px solid var(--medium-gray);
+    display: flex;
+    flex-wrap: wrap; /* Allow buttons to wrap on smaller screens */
+    gap: 10px; /* Spacing between buttons */
     align-items: center;
 }
+
+.section-container {
+    margin-bottom: 30px;
+    padding: 20px;
+    background-color: #fff; /* White background for sections */
+    border-radius: 6px;
+    border: 1px solid var(--medium-gray); /* Light border */
+    box-shadow: 0 1px 3px rgba(0,0,0,0.03); /* Very subtle shadow */
+}
+.section-container h2 { margin-top: 0; }
+.section-container h2 i { margin-right: 8px; }
 
 /* --- Tables --- */
-.table-container {
-    width: 100%;
-    overflow-x: auto; /* Enable horizontal scroll on small screens */
-}
+.table-container { overflow-x: auto; /* Allow horizontal scroll on small screens */ }
+
 table {
     width: 100%;
     border-collapse: collapse;
+    margin-top: 15px;
     font-size: 0.9em;
 }
+
 th, td {
-    padding: 10px 12px;
+    padding: 12px 15px; /* Increased padding */
     text-align: left;
     border-bottom: 1px solid var(--medium-gray);
-    vertical-align: middle;
 }
+
 thead th {
-    background-color: #f1f3f7;
+    background-color: var(--light-gray);
     font-weight: 600;
     color: var(--secondary-color);
-    white-space: nowrap;
-}
-tbody tr:hover {
-    background-color: var(--light-gray);
-}
-td.actions-cell {
-    text-align: center;
-    white-space: nowrap; /* Prevent action buttons wrapping */
-    width: 1%; /* Try to keep width minimal */
-}
-.loading-message, .error-message {
-    padding: 15px;
-    text-align: center;
-    color: var(--dark-gray);
-}
-.error-message {
-    color: var(--danger-color);
-    background-color: #f8d7da;
-    border: 1px solid #f5c6cb;
-    border-radius: 4px;
-    margin: 10px 0;
+    white-space: nowrap; /* Prevent headers from wrapping */
 }
 
-/* --- Modals (General) --- */
-.modal {
-    display: none; /* Hidden by default - JS sets to 'block' */
-    position: fixed; /* Stay in place */
-    z-index: 1050; /* Sit on top */
-    left: 0;
-    top: 0;
-    width: 100%;
-    height: 100%;
-    overflow: auto; /* Enable scroll if needed */
-    background-color: rgba(0, 0, 0, 0.5); /* Black w/ opacity (backdrop) */
-    animation: fadeIn 0.3s ease-out; /* Optional fade in animation */
-}
+tbody tr:hover { background-color: #f1f3f5; } /* Subtle hover effect */
+tbody td { color: var(--text-color); vertical-align: middle; }
 
-.modal-content {
-    background-color: #fff;
-    margin: 5% auto; /* Centered vertically (approx) and horizontally */
-    padding: 25px 30px;
-    border: 1px solid #e9ecef;
-    border-radius: 8px;
-    width: 90%; /* Responsive width */
-    max-width: 600px; /* Max width for standard modals */
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15);
-    animation: slideDown 0.4s ease-out; /* Optional slide down animation */
-    position: relative; /* Needed if using absolute positioned close button */
-}
+/* Table Actions column */
+td:last-child { white-space: nowrap; } /* Prevent action buttons wrapping */
+td .button { margin-right: 5px; padding: 6px 10px; font-size: 0.85em; }
+td .button:last-child { margin-right: 0; }
 
-/* Optional Animations */
-@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-@keyframes slideDown { from { transform: translateY(-30px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-
-.modal-header {
-    padding-bottom: 15px;
-    border-bottom: 1px solid var(--medium-gray);
-    margin-bottom: 20px;
-}
-.modal-header h3 {
-    margin: 0;
-    font-size: 1.3em;
-    color: var(--secondary-color);
-}
-.modal-body {
-    /* Styles for form content */
-}
-.modal-actions {
-    padding-top: 20px;
-    margin-top: 25px;
-    border-top: 1px solid var(--medium-gray);
-    text-align: right; /* Align buttons to the right */
-}
-.modal-actions .button {
-    margin-left: 10px; /* Spacing between action buttons */
-}
-
-/* --- Forms --- */
-.form-group {
-    margin-bottom: 18px;
-}
+/* --- Forms and Filters --- */
+.form-group { margin-bottom: 18px; }
 .form-group label {
     display: block;
     margin-bottom: 6px;
     font-weight: 500;
+    color: var(--secondary-color);
     font-size: 0.9em;
-    color: var(--dark-gray);
 }
 .form-group input[type="text"],
 .form-group input[type="email"],
 .form-group input[type="tel"],
 .form-group input[type="number"],
 .form-group input[type="date"],
-.form-group textarea,
-.form-group select {
+.form-group select,
+.form-group textarea {
     width: 100%;
-    padding: 9px 12px;
+    padding: 10px;
     border: 1px solid #ced4da;
     border-radius: 4px;
-    box-sizing: border-box; /* Include padding in width */
+    box-sizing: border-box;
     font-size: 0.95em;
     transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 .form-group input:focus,
-.form-group textarea:focus,
-.form-group select:focus {
+.form-group select:focus,
+.form-group textarea:focus {
     border-color: var(--primary-color);
     box-shadow: 0 0 0 2px rgba(0, 86, 179, 0.2);
     outline: none;
 }
-.form-group textarea {
-    resize: vertical; /* Allow vertical resize */
-    min-height: 60px;
-}
-.form-group input[type="hidden"] {
-    display: none;
-}
-.modal .error-message { /* Specific error styling inside modals */
-    margin-top: 15px;
-    margin-bottom: 0;
-    text-align: left;
-    padding: 10px 15px;
-}
+.form-group textarea { resize: vertical; min-height: 60px; }
+.form-group .required { color: var(--danger-color); margin-left: 2px; font-weight: bold; }
 
-/* --- Filters --- */
-.filter-controls {
-    display: flex;
-    flex-wrap: wrap;
+
+.po-filters {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); /* Responsive grid */
     gap: 15px;
-    align-items: flex-end; /* Align items to bottom for better look */
-    margin-bottom: 20px;
-    padding: 15px 20px;
-    background-color: #fdfdff; /* Slightly different background */
-    border-bottom: 1px solid var(--medium-gray);
-}
-.filter-group {
-    display: flex;
-    flex-direction: column;
-}
-.filter-group label {
-    margin-bottom: 5px;
-    font-size: 0.85em;
-    color: var(--dark-gray);
-}
-.filter-group input,
-.filter-group select {
-    padding: 6px 10px;
-    border: 1px solid #ced4da;
-    border-radius: 4px;
-    font-size: 0.9em;
-}
-.filter-group button {
-    margin-left: 5px; /* Space between last filter and button */
-}
-
-/* --- PO Specific Modals (Details, Share) --- */
-#poDetailsModal .modal-content,
-#poShareModal .modal-content {
-    max-width: 800px; /* Wider modals for PO details */
-}
-
-#poDetailsContent, #poShareContent {
-    font-size: 0.95em;
-    line-height: 1.6;
-}
-
-.details-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 15px 25px; /* Row and column gap */
-    margin-bottom: 20px;
-}
-.detail-item strong {
-    display: block;
-    color: var(--dark-gray);
-    font-size: 0.9em;
-    margin-bottom: 3px;
-}
-.detail-item span {
-    font-weight: 500;
-}
-
-.details-table {
-    width: 100%;
-    margin-top: 15px;
-    border-collapse: collapse;
-}
-.details-table th, .details-table td {
-    border: 1px solid var(--medium-gray);
-    padding: 8px 10px;
-    text-align: left;
-}
-.details-table th {
-    background-color: #f1f3f7;
-    font-weight: 600;
-}
-.details-table td.number-cell {
-    text-align: right;
-}
-.details-table tfoot td {
-    font-weight: bold;
-}
-
-#poShareInfo {
-    display: grid;
-    grid-template-columns: 1fr 1fr; /* Two columns */
-    gap: 20px;
     margin-bottom: 20px;
     padding: 15px;
-    border: 1px solid var(--medium-gray);
-    border-radius: 6px;
     background-color: var(--light-gray);
+    border: 1px solid var(--medium-gray);
+    border-radius: 5px;
+    align-items: end; /* Align items to bottom for button alignment */
 }
-.po-share-info-left, .po-share-info-right {
-    font-size: 0.9em;
+.po-filters .filter-group { margin-bottom: 0; } /* Remove bottom margin in grid */
+.po-filters label { font-size: 0.85em; margin-bottom: 4px; }
+.po-filters input,
+.po-filters select { padding: 8px; font-size: 0.9em; }
+.po-filters .filter-buttons { grid-column: span 2; /* Make buttons span more space if needed */ justify-self: start; } /* Align buttons to the start */
+
+/* --- Modals --- */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0, 0, 0, 0.5); /* Dim background */
+    backdrop-filter: blur(3px); /* Blur background */
 }
-.po-share-info-left p, .po-share-info-right p {
-    margin: 0 0 8px 0;
+
+.modal-content {
+    background-color: #fff;
+    margin: 5% auto; /* More top margin */
+    padding: 30px; /* Increased padding */
+    border-radius: 8px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+    width: 80%;
+    max-width: 600px; /* Default max-width */
+    position: relative;
+    animation: fadeInModal 0.3s ease-out;
 }
-.po-share-info-left strong, .po-share-info-right strong {
-    color: var(--dark-gray);
-    min-width: 80px; /* Align values */
+.modal-lg .modal-content { max-width: 900px; } /* Larger modal */
+.modal-xl .modal-content { max-width: 1200px; } /* Extra large modal */
+
+.close-btn {
+    color: #aaa;
+    position: absolute;
+    top: 15px;
+    right: 20px;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: color 0.2s ease;
+}
+.close-btn:hover,
+.close-btn:focus { color: var(--black-color); }
+
+.modal h2 { margin-top: 0; border-bottom: 1px solid var(--medium-gray); padding-bottom: 15px; margin-bottom: 25px; }
+.modal-actions {
+    margin-top: 30px;
+    padding-top: 20px;
+    border-top: 1px solid var(--medium-gray);
+    text-align: right; /* Align buttons to the right */
+}
+.modal-actions .button { margin-left: 10px; }
+
+@keyframes fadeInModal {
+    from { opacity: 0; transform: translateY(-20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* --- Status Badges --- */
+.status-badge {
     display: inline-block;
-}
-.po-share-info-right {
-    text-align: right;
-}
-.po-number-large {
-    font-size: 1.4em;
+    padding: 4px 10px;
+    font-size: 0.8em;
     font-weight: 600;
-    color: var(--primary-color);
-    margin-bottom: 10px !important;
+    border-radius: 12px; /* Pill shape */
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    text-align: center;
+    min-width: 80px; /* Ensure minimum width */
 }
+.status-badge.New { background-color: #e7f3ff; color: #0056b3; border: 1px solid #b3d7ff; }
+.status-badge.Sent { background-color: #fff0e0; color: #ff8c00; border: 1px solid #ffd7a3; }
+.status-badge.Printing { background-color: #eef7ff; color: #17a2b8; border: 1px solid #b8e6ef; }
+.status-badge.Product.Received { background-color: #e5f9ed; color: #28a745; border: 1px solid #b8e5c6; }
+.status-badge.PO.Paid { background-color: #e8e6f4; color: #6f42c1; border: 1px solid #c6bce6; }
+.status-badge.Cancel { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
 
-#poShareGreeting {
-    margin: 20px 0;
-    font-style: italic;
+/* --- Payment Status Badges --- */
+.payment-status {
+    display: inline-block;
+    padding: 3px 8px;
+    font-size: 0.75em;
+    font-weight: 500;
+    border-radius: 4px;
 }
+.payment-status.Paid { background-color: var(--success-color); color: white; }
+.payment-status.Partial { background-color: var(--warning-color); color: #333; }
+.payment-status.Unpaid { background-color: var(--danger-color); color: white; }
 
-hr.po-share-divider {
-    border: 0;
-    height: 1px;
-    background-color: var(--medium-gray);
-    margin: 25px 0;
-}
+/* --- Specific Elements --- */
+/* Outstanding Balance */
+.outstanding-positive { color: var(--danger-color); font-weight: 600; }
+.outstanding-zero { color: var(--success-color); font-weight: 600; }
+.outstanding-credit { color: var(--info-color); font-weight: 600; } /* If supplier owes us */
 
-#poShareItemsContainer h3, #poShareTerms h3 {
-    margin-bottom: 15px;
-    color: var(--secondary-color);
+/* PO Totals */
+.po-totals {
+    margin-top: 20px;
+    padding: 15px;
+    background-color: var(--light-gray);
+    border: 1px solid var(--medium-gray);
+    border-radius: 5px;
+    text-align: right;
+    font-weight: 600;
     font-size: 1.1em;
 }
 
-#poShareTermList {
-    padding-left: 20px; /* Indent list */
-    margin: 0;
-    font-size: 0.85em;
-    color: var(--dark-gray);
+/* Pagination Controls */
+#poPaginationControls {
+    text-align: center;
+    margin-top: 25px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px; /* Spacing between elements */
 }
-#poShareTermList li {
+#poPaginationControls .button { padding: 6px 12px; font-size: 0.9em; }
+#pageInfo { font-size: 0.9em; font-weight: 500; color: var(--dark-gray); }
+#itemsPerPageSelect {
+    margin-left: 15px;
+    padding: 6px 10px;
+    height: auto; /* Adjust height */
+    font-size: 0.9em;
+    border-radius: 4px;
+    border: 1px solid #ccc;
+}
+
+/* Loading/Error Messages */
+.loading-message td, .error-message td {
+    text-align: center;
+    color: var(--dark-gray);
+    padding: 20px;
+    font-style: italic;
+}
+.error-message {
+    display: none; /* Hidden by default */
+    margin-top: 15px;
+    padding: 15px;
+    background-color: #f8d7da;
+    border: 1px solid #f5c6cb;
+    color: #721c24;
+    border-radius: 5px;
+}
+.error-message i { margin-right: 8px; }
+
+/* Spinner Icon */
+.fa-spinner { animation: spin 1.5s linear infinite; }
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* --- Table Sorting --- */
+thead th[data-sortable="true"] {
+    cursor: pointer;
+    position: relative;
+    padding-right: 25px; /* Space for arrow */
+}
+thead th[data-sortable="true"]::after {
+    content: '';
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    margin-top: -8px; /* Adjust vertical position */
+    border: 5px solid transparent;
+    opacity: 0.3; /* Dim by default */
+}
+thead th[data-sortable="true"].sort-asc::after {
+    border-bottom-color: var(--dark-gray);
+    margin-top: -10px; /* Adjust for upward arrow */
+    opacity: 1;
+}
+thead th[data-sortable="true"].sort-desc::after {
+    border-top-color: var(--dark-gray);
+     margin-top: -3px; /* Adjust for downward arrow */
+     opacity: 1;
+}
+
+/* --- PO Batch Actions --- */
+.batch-actions-bar {
+    margin-bottom: 15px;
+    padding: 12px 15px;
+    background-color: #e9f5ff; /* Light blue */
+    border: 1px solid #b3d7ff; /* Blue border */
+    border-radius: 5px;
+    display: flex;
+    flex-wrap: wrap; /* Allow wrapping */
+    align-items: center;
+    gap: 10px; /* Spacing between items */
+}
+.batch-actions-bar select {
+    padding: 6px 10px;
+    height: auto;
+    font-size: 0.9em;
+    width: auto; /* Adjust width */
+    border-radius: 4px;
+    border: 1px solid #ccc;
+}
+.batch-actions-bar .button { margin-right: 5px; } /* Reduce margin for buttons in bar */
+.batch-actions-bar #poSelectedCount { font-weight: 600; margin-right: 15px; color: var(--secondary-color); }
+
+/* Table Checkbox Column */
+#poTable th:first-child, #poTable td:first-child {
+    width: 30px;
+    padding: 10px 5px;
+    text-align: center;
+}
+#poTable input[type="checkbox"] {
+    cursor: pointer;
+    width: 16px;
+    height: 16px;
+}
+
+/* Row Highlighting for Selected POs */
+#poTable tbody tr.selected-row {
+    background-color: #fff3cd !important; /* Light yellow background */
+    font-weight: 500; /* Slightly bolder */
+}
+#poTable tbody tr.selected-row td {
+   /* Optional: border or other styles for selected row cells */
+}
+
+
+/* --- PO Details Modal --- */
+.po-details-container {
+    margin-top: 20px;
+    max-height: 60vh; /* Limit height */
+    overflow-y: auto; /* Add scroll if content exceeds height */
+    padding-right: 10px; /* Space for scrollbar */
+}
+.po-details-container h3 {
+    margin-top: 15px;
+    margin-bottom: 10px;
+    font-size: 1.1em;
+    color: var(--primary-color);
+    border-bottom: 1px solid var(--medium-gray);
+    padding-bottom: 5px;
+}
+.po-details-container p { margin-bottom: 8px; font-size: 0.95em; }
+.po-details-container p strong { font-weight: 600; color: var(--secondary-color); min-width: 120px; display: inline-block; }
+.po-details-container .details-table { margin-top: 15px; font-size: 0.9em; }
+.po-details-container .details-table th,
+.po-details-container .details-table td { padding: 8px 10px; }
+.po-details-container .details-table th { background-color: #f8f9fa; }
+.po-details-container .totals-section { margin-top: 20px; text-align: right; font-size: 1em; }
+.po-details-container .totals-section p { margin-bottom: 5px; }
+.po-details-container .totals-section strong { font-weight: 600; }
+.po-details-container .grand-total { font-size: 1.1em; font-weight: bold; color: var(--primary-color); border-top: 1px solid var(--medium-gray); padding-top: 10px; margin-top: 10px;}
+
+
+/* --- PO Share Modal Specific Styles --- */
+.po-share-modal-content {
+    max-width: 800px; /* Specific width for share modal */
+    position: relative;
+}
+
+#poShareScrollableContent {
+    max-height: calc(80vh - 150px); /* Adjust height based on header/footer */
+    overflow-y: auto;
+    padding: 20px;
+    margin: 0 -30px 0 -30px; /* Counteract modal-content padding for full width scroll */
+    padding: 0 30px; /* Add padding back inside */
+    border-bottom: 1px solid var(--medium-gray);
+    margin-bottom: 20px;
+}
+
+#poShareHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start; /* Align items to top */
+    margin-bottom: 15px;
+    flex-wrap: wrap; /* Allow wrapping on small screens */
+}
+
+#poShareModalTitle {
+    margin: 0; /* Remove default margin */
+    border: none; /* Remove default border */
+    padding: 0; /* Remove default padding */
+    font-size: 1.6em;
+    color: var(--primary-color);
+    flex-basis: 50%; /* Allow title to take space */
+}
+
+#poShareInfo {
+    font-size: 0.9em;
+    text-align: right;
+    color: var(--dark-gray);
+    line-height: 1.6;
+    flex-basis: 45%; /* Allow info to take space */
+}
+#poShareInfo p { margin: 0 0 3px 0; } /* Reduce space between info lines */
+#poShareInfo strong { color: var(--secondary-color); font-weight: 600; }
+#poShareInfo .po-number-large {
+    font-size: 1.2em;
+    font-weight: bold;
+    color: var(--secondary-color);
+    display: block; /* Make PO number stand out */
     margin-bottom: 5px;
 }
 
-/* --- Global Notifications --- */
-#globalErrorDisplay, #globalSuccessDisplay {
-    padding: 15px 20px;
-    margin: 0 auto 20px auto; /* Centered with bottom margin */
-    max-width: 1200px; /* Limit width */
-    border-radius: 5px;
-    display: none; /* Hidden by default */
-    text-align: center;
-    font-weight: 500;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-}
-#globalErrorDisplay {
-    background-color: #f8d7da;
-    color: #721c24;
-    border: 1px solid #f5c6cb;
-}
-#globalSuccessDisplay {
-    background-color: #d4edda;
-    color: #155724;
-    border: 1px solid #c3e6cb;
+#poShareGreeting {
+    margin-bottom: 20px;
+    font-size: 1em;
+    line-height: 1.6;
 }
 
-/* --- Print Styles --- */
+.po-share-divider {
+    border: 0;
+    border-top: 1px solid var(--medium-gray);
+    margin: 25px 0;
+}
+
+#poShareItemsContainer h3,
+#poShareTerms h3 {
+    font-size: 1.2em;
+    color: var(--primary-color);
+    margin-bottom: 15px;
+}
+
+#poShareItemsContainer .details-table { /* Reuse details table style */
+    margin-top: 0;
+    font-size: 0.9em;
+}
+#poShareItemsContainer .details-table th,
+#poShareItemsContainer .details-table td {
+    padding: 8px 10px;
+}
+#poShareItemsContainer .details-table th { background-color: #f8f9fa; }
+
+#poShareTerms {
+    margin-top: 20px;
+    font-size: 0.9em;
+}
+
+#poShareTermList {
+    padding-left: 20px;
+    line-height: 1.7;
+    color: var(--dark-gray);
+}
+#poShareTermList li { margin-bottom: 8px; }
+
+
+/* --- Print Styles for PO Share Modal --- */
 @media print {
-    body { background-color: var(--white-color); font-size: 10pt; }
-    .main-content { padding: 0; margin: 0; max-width: 100%; }
-    .content-card { box-shadow: none; border: none; margin: 0; }
-    .card-header, .card-controls, .modal-actions, button, .actions-cell, /* Hide non-essentials */
-    #addSupplierBtn, #exportPoCsvBtn, /* Hide specific buttons */
-    #globalErrorDisplay, #globalSuccessDisplay, /* Hide notifications */
-    .filter-controls /* Hide filters */
-     { display: none !important; }
-
-    table { font-size: 9pt; }
-    th, td { padding: 5px 8px; }
-    tbody tr { page-break-inside: avoid; }
-    thead { display: table-header-group; } /* Repeat headers on each page */
-    .table-container { overflow: visible; }
-
-    /* PO Share Print Specifics */
-    #poShareModal { position: static; display: block !important; height: auto; width: auto; overflow: visible; background: none; animation: none; }
-    #poShareModal .modal-content { margin: 0; padding: 0; border: none; box-shadow: none; max-width: 100%; animation: none; }
-    #poShareInfo { grid-template-columns: 1fr 1fr; border: 1px solid #ccc; font-size: 9pt; background: #fff !important; }
-    #poShareInfo p { margin-bottom: 5px; }
-    #poShareInfo strong { color: #333 !important; }
-    #poShareInfo .po-number-large { font-size: 1.2em; color: #000 !important; }
-    #poShareGreeting { display: block !important; font-size: 10pt; margin-bottom: 15px; color: #000 !important; }
-    .po-share-divider { display: none !important; }
-    #poShareItemsContainer h3, #poShareTerms h3 { display: block !important; font-size: 12pt; color: #000 !important; margin-bottom: 8px; border-bottom: 1px solid #eee; padding-bottom: 4px; }
+    body * { visibility: hidden; } /* Hide everything */
+    .po-share-modal-content, .po-share-modal-content * { visibility: visible; } /* Show only modal content */
+    .po-share-modal-content {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        max-width: 100%;
+        margin: 0;
+        padding: 10mm; /* Add print margins */
+        box-shadow: none;
+        border: none;
+        font-size: 10pt; /* Adjust base font size for print */
+        color: #000; /* Ensure black text */
+    }
+    .modal-actions, .close-btn { display: none; } /* Hide modal buttons/close */
+    #poShareScrollableContent { max-height: none; overflow: visible; padding: 0; margin: 0; border: none; }
+    #poShareHeader { page-break-after: avoid; }
+    #poShareModalTitle { font-size: 16pt; }
+    #poShareInfo { font-size: 9pt; }
+    #poShareInfo .po-number-large { font-size: 11pt; }
+    #poShareGreeting { font-size: 10pt; margin-bottom: 15px; }
+    .po-share-divider { margin: 15px 0; border-color: #ccc; }
+    #poShareItemsContainer h3, #poShareTerms h3 { font-size: 12pt; margin-bottom: 8px; border-bottom: 1px solid #eee; padding-bottom: 4px; }
     #poShareItemsContainer .details-table { font-size: 9pt; border: 1px solid #ccc; width: 100%; border-collapse: collapse; }
-    #poShareItemsContainer .details-table th, #poShareItemsContainer .details-table td { border: 1px solid #ccc; padding: 5px 7px; background: #fff !important; color: #000 !important;}
+    #poShareItemsContainer .details-table th, #poShareItemsContainer .details-table td { border: 1px solid #ccc; padding: 5px 7px; background: #fff !important; color: #000 !important;} /* Override background/color for print */
     #poShareItemsContainer .details-table thead th { background-color: #eee !important; }
-    #poShareTerms { display: block !important; border: none; padding: 0; margin-top: 20px; font-size: 9pt; color: #333 !important; }
-    #poShareTermList { color: #333 !important; }
+    #poShareTerms { font-size: 9pt; margin-top: 15px; }
+    #poShareTermList { padding-left: 15px; line-height: 1.5; }
+    #poShareTermList li { margin-bottom: 5px; }
+    a[href]:after { content: none !important; } /* Prevent URL display */
 }
 
-/* Specific class for print view enhancement */
-body.printing-po-share { /* Applied via JS before printing */
-    background: white !important;
+
+/* Add a class to body during print preview preparation */
+body.preparing-po-share-print { visibility: hidden; }
+body.preparing-po-share-print .po-share-modal-content { visibility: visible; position: absolute; left: -9999px; top: -9999px; } /* Hide offscreen */
+
+/* Alternative Print Styling using a body class */
+body.printing-po-share {
+    padding: 10mm;
     font-size: 10pt;
+    color: #000 !important; /* Force black text */
+    background-color: #fff !important; /* Force white background */
 }
-body.printing-po-share .main-content, body.printing-po-share .modal { /* Reset padding/margin for print */
-    padding: 0 !important;
-    margin: 0 !important;
-    max-width: 100% !important;
+body.printing-po-share *, body.printing-po-share *:before, body.printing-po-share *:after {
+    background: transparent !important;
+    color: #000 !important;
     box-shadow: none !important;
-    border: none !important;
+    text-shadow: none !important;
+    border-color: #ccc !important; /* Use a light gray for borders */
 }
-body.printing-po-share #poShareModal { position: static !important; display: block !important; height: auto !important; width: auto !important; overflow: visible !important; background: none !important; animation: none !important; z-index: auto !important; }
-body.printing-po-share #poShareModal .modal-content { margin: 0 !important; padding: 1cm !important; /* Add print margin */ border: none !important; box-shadow: none !important; max-width: 100% !important; animation: none !important; }
-body.printing-po-share .modal-actions, body.printing-po-share .modal-header h3 /* Hide modal buttons/headers for print */ { display: none !important; }
-
-body.printing-po-share #poShareInfo { grid-template-columns: 1fr 1fr; border: 1px solid #ccc; font-size: 9pt; background: #fff !important; padding: 10px; }
-body.printing-po-share #poShareInfo p { margin-bottom: 5px; }
-body.printing-po-share #poShareInfo strong { color: #333 !important; }
+body.printing-po-share #poShareHeader { display: block !important; margin-bottom: 15px; page-break-after: avoid; }
+body.printing-po-share #poShareModalTitle { display: block !important; font-size: 16pt; color: #000 !important; }
+body.printing-po-share #poShareInfo { display: block !important; font-size: 9pt; color: #555 !important; text-align: left; margin-top: 10px; }
+body.printing-po-share #poShareInfo p { margin-bottom: 3px !important; }
 body.printing-po-share #poShareInfo .po-number-large { font-size: 1.2em; color: #000 !important; }
 body.printing-po-share #poShareGreeting { display: block !important; font-size: 10pt; margin-bottom: 15px; color: #000 !important; }
-body.printing-po-share .po-share-divider { display: none !important; }
+body.printing-po-share .po-share-divider { display: none !important; } /* Hide divider, use spacing */
 body.printing-po-share #poShareItemsContainer h3, body.printing-po-share #poShareTerms h3 { display: block !important; font-size: 12pt; color: #000 !important; margin-bottom: 8px; border-bottom: 1px solid #eee; padding-bottom: 4px; }
 body.printing-po-share #poShareItemsContainer .details-table { font-size: 9pt; border: 1px solid #ccc; width: 100%; border-collapse: collapse; }
 body.printing-po-share #poShareItemsContainer .details-table th, body.printing-po-share #poShareItemsContainer .details-table td { border: 1px solid #ccc; padding: 5px 7px; background: #fff !important; color: #000 !important;}
 body.printing-po-share #poShareItemsContainer .details-table thead th { background-color: #eee !important; }
-body.printing-po-share #poShareTerms { display: block !important; border: none; padding: 0; margin-top: 20px; font-size: 9pt; color: #333 !important; }
-body.printing-po-share #poShareTermList { color: #333 !important; }
+body.printing-po-share #poShareTerms { display: block !important; border: none; padding: 0; margin-top: 15px; font-size: 9pt; color: #000 !important; }
+body.printing-po-share #poShareTermList { display: block !important; padding-left: 15px; line-height: 1.5; }
+body.printing-po-share #poShareTermList li { margin-bottom: 5px; }
+body.printing-po-share a { color: #000 !important; text-decoration: none !important; }
