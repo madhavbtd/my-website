@@ -3,39 +3,45 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Supplier Account Details</title> <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <title>Supplier Account Details</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="css/supplier_management.css"> <link rel="stylesheet" href="css/index.css">
-    <style>
-        /* Temporary specific styles - Move to CSS later */
+    <link rel="stylesheet" href="css/supplier_management.css">
+    <link rel="stylesheet" href="css/index.css"> <link rel="stylesheet" href="css/customer_account_detail.css"> <style>
+        /* आप चाहें तो यहाँ या CSS फाइल में अस्थायी स्टाइल जोड़ सकते हैं */
         .info-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; margin-bottom: 25px; }
         .info-box { background-color: #fff; padding: 20px; border-radius: 6px; border: 1px solid #e9ecef; box-shadow: 0 1px 3px rgba(0,0,0,0.04); }
-        .info-box h2 { margin-top: 0; margin-bottom: 15px; font-size: 1.2em; color: var(--primary-color); border-bottom: 1px solid #eee; padding-bottom: 8px; }
+        .info-box h2 { margin-top: 0; margin-bottom: 15px; font-size: 1.2em; color: var(--primary-color); border-bottom: 1px solid #eee; padding-bottom: 8px; display: flex; align-items: center; gap: 8px; }
         .info-box p { margin-bottom: 8px; font-size: 0.95em; color: #343a40; }
         .info-box p strong { font-weight: 600; color: #495057; min-width: 120px; display: inline-block; }
-        .account-summary-box .balance-info { font-size: 1.3em; font-weight: 700; }
-        .balance-due { color: var(--danger-color); } /* Red for Payable */
-        .balance-credit { color: var(--success-color); } /* Green for Advance */
+        .account-summary-box .balance-info { font-size: 1.1em; font-weight: bold; } /* Increased font size */
+        .balance-due { color: var(--danger-color); } /* Red for Payable/Due */
+        .balance-credit { color: var(--success-color); } /* Green for Advance/Credit */
         .balance-info { color: var(--secondary-color); } /* Neutral for Zero */
-        .section-container h3 { margin-top: 0; margin-bottom: 15px; font-size: 1.3em; color: var(--secondary-color); }
+        .section-container h3 { margin-top: 30px; margin-bottom: 15px; font-size: 1.3em; color: var(--secondary-color); border-bottom: 1px solid #eee; padding-bottom: 10px; }
         .loading-state td, .loading-state span { color: #999; font-style: italic; }
-        .required { color: var(--danger-color); margin-left: 2px; } /* Style for required fields */
+        .required { color: var(--danger-color); margin-left: 2px; }
+        .actions-bar .button { margin-right: 10px; } /* Add some space between buttons */
+
+        /* आप नई बटन क्लास के लिए स्टाइल यहाँ या CSS फाइल में जोड़ सकते हैं */
+        .payment-button { background-color: #28a745; color: white; /* हरा रंग */}
+        .payment-button:hover { background-color: #218838; }
+        .edit-supplier-button { background-color: #17a2b8; color: white; /* टील/इन्फो रंग */}
+        .edit-supplier-button:hover { background-color: #117a8b; }
+
     </style>
 
     <script type="module">
         // Only import Auth and Init services here
         import { db, auth } from './js/firebase-init.js'; // Ensure correct path to your init file
         import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-        // Firestore functions will be imported directly in supplier_account_detail.js
 
-        // --- Auth Check ---
         try {
             if (!auth || !db) {
-                 // Critical error if Firebase isn't initialized
                  throw new Error("Firebase Auth or DB failed to initialize. Check firebase-init.js.");
             }
             onAuthStateChanged(auth, (user) => {
-                const contentArea = document.getElementById('detailMainContent'); // Target content area
+                const contentArea = document.getElementById('detailMainContent');
                 if (!contentArea) {
                     console.error("Critical Error: Main content area ('detailMainContent') not found.");
                     alert("Page structure error. Cannot load content.");
@@ -46,20 +52,15 @@
                     console.log("User not logged in. Redirecting...");
                     window.location.replace('login.html');
                 } else if (user) {
-                    console.log("Supplier Detail Auth OK (v3 HTML - Corrected):", user.uid);
-                    // Wait briefly for supplier_account_detail.js to load and define its function
+                    console.log("Supplier Detail Auth OK:", user.uid);
                      setTimeout(() => {
-                          // Check if the initialization function exists on window (it should be set by the other script)
                           if (typeof window.initializeSupplierDetailPage === 'function') {
-                              // Pass the imported db instance to the initialization function
-                              window.initializeSupplierDetailPage(user, db); // Pass db
+                              window.initializeSupplierDetailPage(); // Call the global init function
                           } else {
                               console.error("initializeSupplierDetailPage function not found! Check JS file name, path, and ensure it defines the function globally.");
                               contentArea.innerHTML = "<p class='error-message' style='padding:20px;'>Error initializing page script. Ensure 'js/supplier_account_detail.js' is loaded correctly and defines 'initializeSupplierDetailPage' globally.</p>";
-                              // Log potential issues
-                              console.log("Attempted to call window.initializeSupplierDetailPage. Is 'supplier_account_detail.js' loaded with 'defer'? Does it contain 'window.initializeSupplierDetailPage = initializeSupplierDetailPage;' at the end?");
                           }
-                      }, 150); // Slightly longer delay just in case
+                      }, 150);
 
                 } else if (!user && window.location.pathname.endsWith('login.html')) {
                     console.log("User not authenticated, on login page.");
@@ -88,10 +89,14 @@
             </div>
 
             <div class="actions-bar">
-                <button id="addPaymentMadeBtn" type="button" class="button success-button"><i class="fas fa-money-bill-wave"></i> Record Payment Made</button>
-                <button id="editSupplierDetailsBtn" type="button" class="button info-button"><i class="fas fa-edit"></i> Edit Supplier Details</button>
-                <a href="supplier_management.html" class="button cancel-button"><i class="fas fa-arrow-left"></i> Back to List</a>
-            </div>
+                <button id="addPaymentMadeBtn" type="button" class="button payment-button">
+                    <i class="fas fa-money-bill-wave"></i> भुगतान दर्ज करें
+                </button>
+                <button id="editSupplierDetailsBtn" type="button" class="button edit-supplier-button">
+                    <i class="fas fa-edit"></i> विवरण संपादित करें
+                </button>
+                <a href="supplier_management.html" class="button cancel-button"><i class="fas fa-arrow-left"></i> वापस लिस्ट पर</a>
+                </div>
 
             <div class="info-grid">
                 <div class="info-box">
@@ -108,11 +113,9 @@
                 <div class="info-box account-summary-box">
                     <h2><i class="fas fa-calculator"></i> Account Summary</h2>
                     <p><strong>Total PO Value:</strong> <span id="summaryTotalPoValue" class="loading-state">Calculating...</span></p>
-                    <p><strong>Total Payments Made:</strong> <span id="summaryTotalPaid" class="loading-state">Calculating...</span></p>
-                    <hr>
-                    <p><strong style="font-size: 1.1em;">Outstanding Balance:</strong>
-                        <span id="summaryBalance" class="balance-info loading-state" style="font-weight: 700; font-size: 1.3em;">Calculating...</span>
-                    </p>
+                    <p><strong>Total Payments Made:</strong> <span id="summaryTotalPaid" class="loading-state">Calculating...</span></p> <hr>
+                    <p><strong>Outstanding Balance:</strong>
+                        <span id="summaryBalance" class="balance-info loading-state" style="font-weight: 700; font-size: 1.3em;">Calculating...</span> </p>
                 </div>
             </div>
 
@@ -131,7 +134,7 @@
                         </tbody>
                     </table>
                 </div>
-            </div>
+                 </div>
 
             <div class="section-container">
                 <h3><i class="fas fa-hand-holding-usd"></i> Payments Made</h3>
@@ -140,53 +143,101 @@
                     <table id="supplierPaymentsTable">
                         <thead>
                             <tr>
-                                <th>Payment Date</th><th>Amount Paid</th><th>Method</th><th>Notes</th>
-                            </tr>
+                                <th>Payment Date</th><th>Amount Paid</th><th>Method</th><th>Notes</th><th>Actions</th> </tr>
                         </thead>
                         <tbody id="supplierPaymentsTableBody">
-                             <tr id="supplierPaymentLoading"><td colspan="4" style="text-align: center;" class="loading-state"><i class="fas fa-spinner fa-spin"></i> Loading payments...</td></tr>
-                        </tbody>
+                             <tr id="supplierPaymentLoading"><td colspan="5" style="text-align: center;" class="loading-state"><i class="fas fa-spinner fa-spin"></i> Loading payments...</td></tr> </tbody>
                     </table>
                 </div>
-            </div>
+                 </div>
 
-            <div id="addPaymentModal" class="modal">
-                 <div class="modal-content small-modal">
-                    <span class="close-btn" id="closePaymentModal" title="Close">&times;</span>
-                    <h2>Record Payment Made to <span id="paymentModalSupplierName">Supplier</span></h2>
-                    <form id="addPaymentForm">
-                        <div id="paymentFormError" class="error-message" style="display: none;"></div>
-                         <div class="form-group">
-                            <label for="paymentAmount">Amount Paid <span class="required">*</span>:</label>
-                            <input type="number" id="paymentAmount" step="0.01" required placeholder="e.g., 500.00">
-                        </div>
-                        <div class="form-group">
-                            <label for="paymentDate">Payment Date <span class="required">*</span>:</label>
-                            <input type="date" id="paymentDate" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="paymentMethod">Payment Method:</label>
-                            <select id="paymentMethod">
-                                <option value="Bank Transfer">Bank Transfer</option>
-                                <option value="Cash">Cash</option>
-                                <option value="Cheque">Cheque</option>
-                                <option value="UPI">UPI</option>
-                                <option value="Other">Other</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label for="paymentNotes">Notes:</label>
-                            <textarea id="paymentNotes" rows="2" placeholder="Optional reference or notes"></textarea>
-                        </div>
-                        <div class="modal-actions">
-                            <button type="submit" id="savePaymentBtn" class="button save-button"><i class="fas fa-save"></i> Save Payment</button>
-                            <button type="button" id="cancelPaymentBtn" class="button cancel-button">Cancel</button>
-                        </div>
-                    </form>
+        </div> </div> <div id="addPaymentModal" class="modal">
+         <div class="modal-content small-modal">
+            <span class="close-btn" id="closePaymentModal" title="Close">&times;</span>
+            <h2><i class="fas fa-money-bill-wave"></i> भुगतान दर्ज करें for <span id="paymentModalSupplierName">Supplier</span></h2>
+            <form id="addPaymentForm">
+                <div id="paymentFormError" class="error-message" style="display: none;"></div>
+                 <div class="form-group">
+                    <label for="paymentAmount">Amount Paid <span class="required">*</span>:</label>
+                    <input type="number" id="paymentAmount" step="0.01" required placeholder="e.g., 500.00">
                 </div>
-            </div>
+                <div class="form-group">
+                    <label for="paymentDate">Payment Date <span class="required">*</span>:</label>
+                    <input type="date" id="paymentDate" required>
+                </div>
+                 <div class="form-group">
+                    <label for="paymentPoSelect">Link to PO (Optional):</label>
+                    <select id="paymentPoSelect">
+                        <option value="">-- किसी PO से लिंक न करें --</option>
+                        </select>
+                    <small>अगर यह पेमेंट किसी खास PO के लिए है तो उसे चुनें।</small>
+                </div>
+                <div class="form-group">
+                    <label for="paymentMethod">Payment Method:</label>
+                    <select id="paymentMethod">
+                        <option value="Bank Transfer">Bank Transfer</option>
+                        <option value="Cash">Cash</option>
+                        <option value="Cheque">Cheque</option>
+                        <option value="UPI">UPI</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="paymentNotes">Notes:</label>
+                    <textarea id="paymentNotes" rows="2" placeholder="Optional reference or notes"></textarea>
+                </div>
+                <div class="modal-actions">
+                    <button type="submit" id="savePaymentBtn" class="button save-button"><i class="fas fa-save"></i> पेमेंट सेव करें</button>
+                    <button type="button" id="cancelPaymentBtn" class="button cancel-button">रद्द करें</button>
+                </div>
+            </form>
+        </div>
+    </div>
 
-        </div> </div> <script src="js/supplier_account_detail.js" type="module" defer></script>
+    <div id="editSupplierModal" class="modal">
+        <div class="modal-content"> <span class="close-btn" id="closeEditSupplierModal" title="Close">&times;</span>
+            <h2><i class="fas fa-edit"></i> सप्लायर विवरण संपादित करें</h2>
+            <form id="editSupplierForm">
+                 <div id="editSupplierFormError" class="error-message" style="display: none;"></div>
+                 <div class="form-group">
+                    <label for="editSupplierNameInput">Name <span class="required">*</span>:</label>
+                    <input type="text" id="editSupplierNameInput" required>
+                 </div>
+                 <div class="form-group">
+                    <label for="editSupplierCompanyInput">Company:</label>
+                    <input type="text" id="editSupplierCompanyInput">
+                 </div>
+                  <div class="form-group">
+                    <label for="editSupplierWhatsappInput">WhatsApp No <span class="required">*</span>:</label>
+                    <input type="tel" id="editSupplierWhatsappInput" required>
+                 </div>
+                 <div class="form-group">
+                    <label for="editSupplierContactInput">Contact No:</label>
+                    <input type="tel" id="editSupplierContactInput">
+                 </div>
+                 <div class="form-group">
+                    <label for="editSupplierEmailInput">Email:</label>
+                    <input type="email" id="editSupplierEmailInput">
+                 </div>
+                 <div class="form-group">
+                    <label for="editSupplierGstInput">GST No:</label>
+                    <input type="text" id="editSupplierGstInput">
+                 </div>
+                 <div class="form-group">
+                    <label for="editSupplierAddressInput">Address:</label>
+                    <textarea id="editSupplierAddressInput" rows="2"></textarea>
+                 </div>
+                 <input type="hidden" id="editingSupplierId">
+
+                <div class="modal-actions">
+                    <button type="submit" id="updateSupplierBtn" class="button save-button"><i class="fas fa-save"></i> अपडेट करें</button>
+                    <button type="button" id="cancelEditSupplierBtn" class="button cancel-button">रद्द करें</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    <script src="js/firebase-init.js" type="module"></script>
+    <script src="js/supplier_account_detail.js" type="module" defer></script>
 
 </body>
 </html>
