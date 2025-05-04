@@ -1,4 +1,11 @@
-// js/supplier_account_detail.js - v1 (Step 3: Load & Display Supplier Account Data)
+// js/supplier_account_detail.js - v2 (Use Direct Imports to fix DB functions error)
+
+// --- Import Firebase functions directly ---
+import { db } from './js/firebase-init.js'; // Assuming db is exported from here
+import {
+    doc, getDoc, collection, query, where, getDocs, orderBy, Timestamp,
+    addDoc, serverTimestamp // Ensure all needed functions are imported
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 // --- Global Variables ---
 let currentSupplierId = null;
@@ -6,15 +13,10 @@ let currentSupplierData = null;
 
 // --- DOM References ---
 // Ensure these IDs match your supplier_account_detail.html file
-// Header/Breadcrumb
 const supplierNameHeader = document.getElementById('supplierNameHeader');
 const supplierNameBreadcrumb = document.getElementById('supplierNameBreadcrumb');
-
-// Action Buttons
 const addPaymentMadeBtn = document.getElementById('addPaymentMadeBtn');
 const editSupplierDetailsBtn = document.getElementById('editSupplierDetailsBtn');
-
-// Supplier Info Box
 const detailSupplierId = document.getElementById('detailSupplierId');
 const detailSupplierName = document.getElementById('detailSupplierName');
 const detailSupplierCompany = document.getElementById('detailSupplierCompany');
@@ -22,23 +24,15 @@ const detailSupplierWhatsapp = document.getElementById('detailSupplierWhatsapp')
 const detailSupplierEmail = document.getElementById('detailSupplierEmail');
 const detailSupplierGst = document.getElementById('detailSupplierGst');
 const detailSupplierAddress = document.getElementById('detailSupplierAddress');
-
-// Account Summary Box
 const summaryTotalPoValue = document.getElementById('summaryTotalPoValue');
 const summaryTotalPaid = document.getElementById('summaryTotalPaid');
 const summaryBalance = document.getElementById('summaryBalance');
-
-// PO List
 const supplierPoTableBody = document.getElementById('supplierPoTableBody');
 const supplierPoLoading = document.getElementById('supplierPoLoading');
 const supplierPoListError = document.getElementById('supplierPoListError');
-
-// Payments List
 const supplierPaymentsTableBody = document.getElementById('supplierPaymentsTableBody');
 const supplierPaymentLoading = document.getElementById('supplierPaymentLoading');
 const supplierPaymentListError = document.getElementById('supplierPaymentListError');
-
-// Add Payment Modal Elements (Get references now for Step 4)
 const addPaymentModal = document.getElementById('addPaymentModal');
 const closePaymentModalBtn = document.getElementById('closePaymentModal');
 const cancelPaymentBtn = document.getElementById('cancelPaymentBtn');
@@ -51,22 +45,20 @@ const paymentNotesInput = document.getElementById('paymentNotes');
 const savePaymentBtn = document.getElementById('savePaymentBtn');
 const paymentFormError = document.getElementById('paymentFormError');
 
+
 // --- Utility Functions ---
-// (These should ideally be in a shared utils.js file, but including here for now)
 function escapeHtml(unsafe) { if (typeof unsafe !== 'string') { try { unsafe = String(unsafe ?? ''); } catch (e) { unsafe = ''; } } return unsafe.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;"); }
 function formatCurrency(amount) { const num = Number(amount); if (isNaN(num)) return 'N/A'; return num.toLocaleString('en-IN', { style: 'currency', currency: 'INR', minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
 function formatDate(timestamp) { if (!timestamp || typeof timestamp.toDate !== 'function') return '-'; try { return timestamp.toDate().toLocaleDateString('en-GB'); } catch (e) { console.error("Error formatting date:", e); return '-'; } }
 
 // --- Show/Hide Loading/Error ---
 function setLoadingState(tableBody, loadingRow, errorDiv, isLoading, message = 'Loading...') {
-    if (!tableBody || !loadingRow || !errorDiv) return;
+    if (!tableBody || !loadingRow || !errorDiv) { console.error("setLoadingState: Missing required element"); return; }
     if (isLoading) {
-        tableBody.innerHTML = ''; // Clear previous data
+        tableBody.innerHTML = '';
         loadingRow.style.display = 'table-row';
         const loadingCell = loadingRow.querySelector('td');
-        if (loadingCell) {
-             loadingCell.innerHTML = `<i class="fas fa-spinner fa-spin"></i> ${escapeHtml(message)}`;
-        }
+        if (loadingCell) { loadingCell.innerHTML = `<i class="fas fa-spinner fa-spin"></i> ${escapeHtml(message)}`; }
         errorDiv.style.display = 'none';
     } else {
         loadingRow.style.display = 'none';
@@ -74,109 +66,116 @@ function setLoadingState(tableBody, loadingRow, errorDiv, isLoading, message = '
 }
 function setSummaryLoadingState(isLoading){
      const loadingText = '<span class="loading-state">Calculating...</span>';
-     if(summaryTotalPoValue) summaryTotalPoValue.innerHTML = isLoading ? loadingText : formatCurrency(0);
-     if(summaryTotalPaid) summaryTotalPaid.innerHTML = isLoading ? loadingText : formatCurrency(0);
+     const zeroCurrency = formatCurrency(0);
+     if(summaryTotalPoValue) summaryTotalPoValue.innerHTML = isLoading ? loadingText : zeroCurrency;
+     if(summaryTotalPaid) summaryTotalPaid.innerHTML = isLoading ? loadingText : zeroCurrency;
      if(summaryBalance) {
-        summaryBalance.innerHTML = isLoading ? loadingText : formatCurrency(0);
-        summaryBalance.className = 'balance-info loading-state'; // Reset class
+        summaryBalance.innerHTML = isLoading ? loadingText : zeroCurrency;
+        summaryBalance.className = 'balance-info loading-state';
      }
 }
 function showError(errorDiv, message) {
     if (errorDiv) {
         errorDiv.textContent = message;
         errorDiv.style.display = message ? 'block' : 'none';
+    } else {
+        console.error("Error display element not found:", message);
     }
 }
 
 
 // --- Main Initialization Function ---
-async function initializeSupplierDetailPage(user) {
-    console.log("Initializing Supplier Detail Page...");
+// This function needs to be defined globally so the script in HTML can call it
+async function initializeSupplierDetailPage(user, database) { // Accept db instance
+    console.log("Initializing Supplier Detail Page v2...");
     const urlParams = new URLSearchParams(window.location.search);
     currentSupplierId = urlParams.get('id');
 
     if (!currentSupplierId) {
         console.error("Supplier ID missing from URL.");
-        document.getElementById('detailMainContent').innerHTML = "<p class='error-message' style='padding:20px;'>Error: Supplier ID not found in URL. Please go back to the supplier list and select a supplier.</p>";
+        const mainContent = document.getElementById('detailMainContent');
+        if(mainContent) mainContent.innerHTML = "<p class='error-message' style='padding:20px;'>Error: Supplier ID not found in URL.</p>";
+        return;
+    }
+    if (!database) { // Check if db instance was passed
+        console.error("Database instance not passed during initialization.");
+        const mainContent = document.getElementById('detailMainContent');
+        if(mainContent) mainContent.innerHTML = "<p class='error-message' style='padding:20px;'>Error: Database connection failed.</p>";
         return;
     }
 
     console.log("Supplier ID:", currentSupplierId);
-    // Setup basic event listeners
-    setupDetailEventListeners();
-    // Load all data for this supplier
-    await loadSupplierAccountData();
+    setupDetailEventListeners(); // Setup listeners
+    await loadSupplierAccountData(database); // Pass db instance to load data
 }
-// Make it accessible globally for the HTML script block
+// Assign to window so HTML can call it
 window.initializeSupplierDetailPage = initializeSupplierDetailPage;
 
 
 // --- Data Loading ---
-async function loadSupplierAccountData() {
-    if (!currentSupplierId || !window.db || !window.doc || !window.getDoc) {
-        console.error("Missing Supplier ID or DB functions for loading data.");
-        showError(supplierPoListError, "Initialization error."); // Show error in a visible place
-        showError(supplierPaymentListError, "Initialization error.");
-        setSummaryLoadingState(false);
-        return;
+async function loadSupplierAccountData(dbInstance) {
+    if (!currentSupplierId || !dbInstance) {
+         console.error("loadSupplierAccountData: Missing Supplier ID or DB instance.");
+         showError(supplierPoListError, "Initialization error.");
+         showError(supplierPaymentListError, "Initialization error.");
+         setSummaryLoadingState(false);
+         return;
     }
 
-    // Set initial loading states
     setLoadingState(supplierPoTableBody, supplierPoLoading, supplierPoListError, true, 'Loading POs...');
     setLoadingState(supplierPaymentsTableBody, supplierPaymentLoading, supplierPaymentListError, true, 'Loading payments...');
     setSummaryLoadingState(true);
-    // Clear supplier detail fields initially
-     displaySupplierDetails({}); // Pass empty object to clear fields
+    displaySupplierDetails({}); // Clear details initially
 
     try {
-        // 1. Fetch Supplier Details
+        // 1. Fetch Supplier Details (Using imported functions)
         console.log(`Workspaceing details for supplier ID: ${currentSupplierId}`);
-        const supplierRef = window.doc(window.db, "suppliers", currentSupplierId);
-        const supplierSnap = await window.getDoc(supplierRef);
+        const supplierRef = doc(dbInstance, "suppliers", currentSupplierId); // Use imported doc
+        const supplierSnap = await getDoc(supplierRef); // Use imported getDoc
 
         if (!supplierSnap.exists()) {
             throw new Error(`Supplier with ID ${currentSupplierId} not found.`);
         }
         currentSupplierData = { id: supplierSnap.id, ...supplierSnap.data() };
         console.log("Supplier Data:", currentSupplierData);
-        displaySupplierDetails(currentSupplierData); // Display supplier details
+        displaySupplierDetails(currentSupplierData);
 
         // 2. Fetch POs and Payments concurrently
         console.log("Fetching POs and Payments concurrently...");
         const [poResult, paymentResult] = await Promise.allSettled([
-            loadSupplierPOs(),
-            loadSupplierPayments()
+            loadSupplierPOs(dbInstance),
+            loadSupplierPayments(dbInstance)
         ]);
 
         let poTotal = 0;
         if (poResult.status === 'fulfilled') {
-            poTotal = poResult.value; // Function returns the total PO value
+            poTotal = poResult.value;
             console.log("PO Total Value:", poTotal);
+            showError(supplierPoListError, ''); // Clear PO error if successful
         } else {
             console.error("Failed to load POs:", poResult.reason);
-            showError(supplierPoListError, `Error loading POs: ${poResult.reason.message || 'Unknown error'}`);
+            showError(supplierPoListError, `Error loading POs: ${poResult.reason?.message || 'Unknown error'}`);
         }
 
         let paidTotal = 0;
         if (paymentResult.status === 'fulfilled') {
-            paidTotal = paymentResult.value; // Function returns the total paid amount
+            paidTotal = paymentResult.value;
             console.log("Total Payments Made:", paidTotal);
+            showError(supplierPaymentListError, ''); // Clear Payment error if successful
         } else {
             console.error("Failed to load payments:", paymentResult.reason);
-             // Handle specific index error for payments
-             if (paymentResult.reason.code === 'failed-precondition') {
-                 const errorMsg = `Error: Firestore index missing for 'supplier_payments'. Please create index on 'supplierId' (asc) and 'paymentDate' (desc).`;
+            if (paymentResult.reason?.code === 'failed-precondition') {
+                 const errorMsg = `Error: Firestore index missing for 'supplier_payments'. Create index on 'supplierId' (asc) and 'paymentDate' (desc).`;
                  console.error(errorMsg);
                  showError(supplierPaymentListError, errorMsg);
-             } else {
-                 showError(supplierPaymentListError, `Error loading payments: ${paymentResult.reason.message || 'Unknown error'}`);
-             }
+            } else {
+                 showError(supplierPaymentListError, `Error loading payments: ${paymentResult.reason?.message || 'Unknown error'}`);
+            }
         }
 
         // 3. Calculate and Display Balance
         calculateAndDisplayBalance(poTotal, paidTotal);
         setSummaryLoadingState(false); // Hide loading state for summary
-
 
     } catch (error) {
         console.error("Error loading supplier account data:", error);
@@ -184,7 +183,10 @@ async function loadSupplierAccountData() {
         if(mainContentArea){
             mainContentArea.innerHTML = `<p class='error-message' style='padding:20px;'>Error loading supplier data: ${escapeHtml(error.message)}</p>`;
         }
-        setSummaryLoadingState(false); // Hide loading state even on error
+        // Ensure loading states are turned off on error
+        setLoadingState(supplierPoTableBody, supplierPoLoading, supplierPoListError, false);
+        setLoadingState(supplierPaymentsTableBody, supplierPaymentLoading, supplierPaymentListError, false);
+        setSummaryLoadingState(false);
     }
 }
 
@@ -192,9 +194,13 @@ function displaySupplierDetails(supplierData) {
     const name = escapeHtml(supplierData.name || 'N/A');
     if(supplierNameHeader) supplierNameHeader.textContent = name;
     if(supplierNameBreadcrumb) supplierNameBreadcrumb.textContent = name;
-    document.title = `Account - ${name}`;
+    document.title = `Account - ${name}`; // Update page title
 
-    // Clear previous loading state by setting text content
+    // Clear potential "loading-state" class before setting text
+    [detailSupplierId, detailSupplierName, detailSupplierCompany, detailSupplierWhatsapp, detailSupplierEmail, detailSupplierGst, detailSupplierAddress].forEach(el => {
+        if (el) el.classList.remove('loading-state');
+    });
+
     if(detailSupplierId) detailSupplierId.textContent = escapeHtml(supplierData.id || 'N/A');
     if(detailSupplierName) detailSupplierName.textContent = name;
     if(detailSupplierCompany) detailSupplierCompany.textContent = escapeHtml(supplierData.companyName || '-');
@@ -207,11 +213,10 @@ function displaySupplierDetails(supplierData) {
      if(paymentModalSupplierName) paymentModalSupplierName.textContent = name;
 }
 
-async function loadSupplierPOs() {
-    // Check necessary functions/variables
-    if (!currentSupplierId || !window.db || !window.collection || !window.query || !window.where || !window.orderBy || !window.getDocs || !supplierPoTableBody || !supplierPoLoading || !supplierPoListError) {
+async function loadSupplierPOs(dbInstance) {
+    if (!currentSupplierId || !dbInstance || !collection || !query || !where || !orderBy || !getDocs || !supplierPoTableBody || !supplierPoLoading || !supplierPoListError) {
         console.error("loadSupplierPOs: Prerequisites missing.");
-        showError(supplierPoListError, "Could not load POs: Initialization error.");
+        showError(supplierPoListError, "Could not load POs: Init error.");
         return 0;
     }
 
@@ -219,13 +224,12 @@ async function loadSupplierPOs() {
     setLoadingState(supplierPoTableBody, supplierPoLoading, supplierPoListError, true, 'Loading POs...');
 
     try {
-        const q = window.query(
-            window.collection(window.db, "purchaseOrders"),
-            where("supplierId", "==", currentSupplierId),
-            orderBy("createdAt", "desc")
+        const q = query( // Use imported query
+            collection(dbInstance, "purchaseOrders"), // Use imported collection
+            where("supplierId", "==", currentSupplierId), // Use imported where
+            orderBy("createdAt", "desc") // Use imported orderBy
         );
-        const querySnapshot = await window.getDocs(q);
-
+        const querySnapshot = await getDocs(q); // Use imported getDocs
         setLoadingState(supplierPoTableBody, supplierPoLoading, supplierPoListError, false); // Stop loading
 
         if (querySnapshot.empty) {
@@ -234,14 +238,12 @@ async function loadSupplierPOs() {
             querySnapshot.forEach(docSnap => {
                 const po = docSnap.data();
                 const poId = docSnap.id;
-                // *** Balance Calculation Logic: Include PO value in total ***
-                // Decision: Sum all POs for now. Refine later to only sum 'Received' if needed.
                 totalValue += Number(po.totalAmount || 0);
 
                 const tr = supplierPoTableBody.insertRow();
                 tr.setAttribute('data-id', poId);
 
-                let paymentStatusText = po.paymentStatus || 'Pending'; // Placeholder for payment status
+                let paymentStatusText = po.paymentStatus || 'Pending';
                 let paymentStatusClass = paymentStatusText.toLowerCase().replace(/\s+/g, '-');
                 let statusText = po.status || 'Unknown';
                 let statusClass = statusText.toLowerCase().replace(/\s+/g, '-');
@@ -253,25 +255,23 @@ async function loadSupplierPOs() {
                     <td><span class="status-badge status-${statusClass}">${escapeHtml(statusText)}</span></td>
                     <td><span class="payment-badge payment-${paymentStatusClass}">${escapeHtml(paymentStatusText)}</span></td>
                  `;
-                // Add action buttons for PO row if needed
             });
         }
         console.log(`Loaded ${querySnapshot.size} POs for supplier ${currentSupplierId}`);
-        return totalValue; // Return total PO value
+        return totalValue;
 
     } catch (error) {
         console.error("Error loading supplier POs:", error);
         setLoadingState(supplierPoTableBody, supplierPoLoading, supplierPoListError, false);
         showError(supplierPoListError, `Error loading POs: ${error.message}`);
-        return 0; // Return 0 on error
+        return 0;
     }
 }
 
-async function loadSupplierPayments() {
-     // Check necessary functions/variables
-     if (!currentSupplierId || !window.db || !window.collection || !window.query || !window.where || !window.orderBy || !window.getDocs || !supplierPaymentsTableBody || !supplierPaymentLoading || !supplierPaymentListError) {
+async function loadSupplierPayments(dbInstance) {
+     if (!currentSupplierId || !dbInstance || !collection || !query || !where || !orderBy || !getDocs || !supplierPaymentsTableBody || !supplierPaymentLoading || !supplierPaymentListError) {
         console.error("loadSupplierPayments: Prerequisites missing.");
-        showError(supplierPaymentListError, "Could not load payments: Initialization error.");
+        showError(supplierPaymentListError, "Could not load payments: Init error.");
         return 0;
     }
 
@@ -279,13 +279,12 @@ async function loadSupplierPayments() {
     setLoadingState(supplierPaymentsTableBody, supplierPaymentLoading, supplierPaymentListError, true, 'Loading payments...');
 
     try {
-        const q = window.query(
-            window.collection(window.db, "supplier_payments"), // Query the new collection
-            where("supplierId", "==", currentSupplierId),
-            orderBy("paymentDate", "desc")
+        const q = query( // Use imported query
+            collection(dbInstance, "supplier_payments"), // Use imported collection
+            where("supplierId", "==", currentSupplierId), // Use imported where
+            orderBy("paymentDate", "desc") // Use imported orderBy
         );
-        const querySnapshot = await window.getDocs(q);
-
+        const querySnapshot = await getDocs(q); // Use imported getDocs
         setLoadingState(supplierPaymentsTableBody, supplierPaymentLoading, supplierPaymentListError, false); // Stop loading
 
         if (querySnapshot.empty) {
@@ -294,7 +293,7 @@ async function loadSupplierPayments() {
             querySnapshot.forEach(docSnap => {
                 const payment = docSnap.data();
                 const paymentId = docSnap.id;
-                totalPaid += Number(payment.paymentAmount || 0); // Sum payment amount
+                totalPaid += Number(payment.paymentAmount || 0);
 
                 const tr = supplierPaymentsTableBody.insertRow();
                 tr.setAttribute('data-id', paymentId);
@@ -305,11 +304,10 @@ async function loadSupplierPayments() {
                     <td>${escapeHtml(payment.paymentMethod || '-')}</td>
                     <td>${escapeHtml(payment.notes || '-')}</td>
                  `;
-                // Add action buttons (e.g., delete payment) if needed later
             });
         }
         console.log(`Loaded ${querySnapshot.size} payments for supplier ${currentSupplierId}`);
-        return totalPaid; // Return total paid amount
+        return totalPaid;
 
     } catch (error) {
         console.error("Error loading supplier payments:", error);
@@ -321,110 +319,82 @@ async function loadSupplierPayments() {
             showError(supplierPaymentListError, `Error loading payments: ${error.message}`);
         }
         setLoadingState(supplierPaymentsTableBody, supplierPaymentLoading, supplierPaymentListError, false);
-        return 0; // Return 0 on error
+        return 0;
     }
 }
 
 function calculateAndDisplayBalance(poTotal, paidTotal) {
-    const balance = poTotal - paidTotal; // Positive means we owe supplier
-
+    const balance = poTotal - paidTotal;
     if(summaryTotalPoValue) summaryTotalPoValue.textContent = formatCurrency(poTotal);
     if(summaryTotalPaid) summaryTotalPaid.textContent = formatCurrency(paidTotal);
 
     if (summaryBalance) {
         summaryBalance.classList.remove('loading-state', 'balance-due', 'balance-credit', 'balance-info');
         const tolerance = 0.01;
-
-        if (balance > tolerance) { // We Owe (Debit balance from our perspective, but Credit for supplier)
-            summaryBalance.textContent = formatCurrency(balance) + " Payable"; // Text indicating amount to pay
-            summaryBalance.classList.add('balance-due'); // Show in Red (we need to pay)
-        } else if (balance < -tolerance) { // Supplier Owes Us / Advance Paid
-            summaryBalance.textContent = formatCurrency(Math.abs(balance)) + " Advance"; // Text indicating advance
-            summaryBalance.classList.add('balance-credit'); // Show in Green (we have credit)
-        } else { // Zero balance
+        if (balance > tolerance) {
+            summaryBalance.textContent = formatCurrency(balance) + " Payable";
+            summaryBalance.classList.add('balance-due');
+        } else if (balance < -tolerance) {
+            summaryBalance.textContent = formatCurrency(Math.abs(balance)) + " Advance";
+            summaryBalance.classList.add('balance-credit');
+        } else {
             summaryBalance.textContent = formatCurrency(0);
-            summaryBalance.classList.add('balance-info'); // Neutral color
+            summaryBalance.classList.add('balance-info');
         }
     }
      console.log(`Balance Calculated: PO Total=${poTotal}, Paid Total=${paidTotal}, Balance=${balance}`);
 }
 
-
 // --- Event Listeners ---
 function setupDetailEventListeners() {
-    // Add Payment Modal Open Button
-    if (addPaymentMadeBtn) {
-        addPaymentMadeBtn.addEventListener('click', openAddPaymentModal);
-    }
-
-    // Add Payment Modal Close/Cancel Buttons
+    if (addPaymentMadeBtn) addPaymentMadeBtn.addEventListener('click', openAddPaymentModal);
     if (closePaymentModalBtn) closePaymentModalBtn.addEventListener('click', closeAddPaymentModal);
     if (cancelPaymentBtn) cancelPaymentBtn.addEventListener('click', closeAddPaymentModal);
-    if (addPaymentModal) {
-        addPaymentModal.addEventListener('click', (event) => {
-            if (event.target === addPaymentModal) closeAddPaymentModal();
-        });
-    }
-
-    // Add Payment Form Submit (Logic will be added in Step 4)
-    if (addPaymentForm) {
-        addPaymentForm.addEventListener('submit', handleSavePayment); // Defined below (basic implementation for now)
-    }
-
-    // Edit Supplier Button (Placeholder)
-     if (editSupplierDetailsBtn) {
-        editSupplierDetailsBtn.addEventListener('click', () => {
-            if (currentSupplierData) {
-                 alert("Edit Supplier functionality needs to connect to the supplier edit modal. This could involve making the modal function global or redirecting.");
-                // Example redirection (if supplier_management handles #edit=ID):
-                // window.location.href = `supplier_management.html#edit=${currentSupplierId}`;
-            }
-        });
-    }
-    console.log("Detail Page Event Listeners Setup.");
+    if (addPaymentModal) addPaymentModal.addEventListener('click', (event) => { if (event.target === addPaymentModal) closeAddPaymentModal(); });
+    if (addPaymentForm) addPaymentForm.addEventListener('submit', handleSavePayment);
+    if (editSupplierDetailsBtn) editSupplierDetailsBtn.addEventListener('click', () => { alert("Edit Supplier needs implementation."); });
+    console.log("Detail Page Event Listeners Setup v2.");
 }
 
 // --- Add Payment Modal Functions ---
 function openAddPaymentModal() {
-    if (!addPaymentModal || !currentSupplierData) {
-        alert("Cannot open payment modal."); return;
-    }
+    if (!addPaymentModal || !currentSupplierData) { alert("Cannot open payment modal."); return; }
     addPaymentForm.reset();
     if(paymentFormError) paymentFormError.style.display = 'none';
     if(paymentModalSupplierName) paymentModalSupplierName.textContent = currentSupplierData.name || '';
     if(paymentDateInput) { try { paymentDateInput.valueAsDate = new Date(); } catch(e){} }
     if(savePaymentBtn) { savePaymentBtn.disabled = false; savePaymentBtn.innerHTML = '<i class="fas fa-save"></i> Save Payment'; }
     addPaymentModal.classList.add('active');
-    paymentAmountInput.focus();
+    if (paymentAmountInput) paymentAmountInput.focus();
 }
-
 function closeAddPaymentModal() {
     if (addPaymentModal) { addPaymentModal.classList.remove('active'); }
 }
 
-// --- Save Payment Function (STEP 4 - Basic Implementation) ---
+// --- Save Payment Function ---
 async function handleSavePayment(event) {
     event.preventDefault();
-    // Use globally defined functions via window object
-    if (!currentSupplierId || !window.db || !window.collection || !window.addDoc || !window.Timestamp || !window.serverTimestamp) {
+    // Check for imported functions and currentSupplierId
+    if (!currentSupplierId || !db || !collection || !addDoc || !Timestamp || !serverTimestamp) {
          showPaymentFormError("Error: DB functions missing or Supplier ID invalid.");
+         console.error("DB Check Failed:", { db, collection, addDoc, Timestamp, serverTimestamp });
          return;
     }
-
+     if (!paymentAmountInput || !paymentDateInput || !paymentMethodSelect || !paymentNotesInput) {
+         showPaymentFormError("Error: Payment form elements missing."); return;
+     }
     const amount = parseFloat(paymentAmountInput.value);
     const date = paymentDateInput.value;
     const method = paymentMethodSelect.value;
     const notes = paymentNotesInput.value.trim();
-
-    // Basic Validation
-    if (isNaN(amount) || amount <= 0) { showPaymentFormError("Please enter a valid positive payment amount."); paymentAmountInput.focus(); return; }
-    if (!date) { showPaymentFormError("Please select a payment date."); paymentDateInput.focus(); return; }
+    // Validation
+    if (isNaN(amount) || amount <= 0) { showPaymentFormError("Enter valid positive amount."); paymentAmountInput.focus(); return; }
+    if (!date) { showPaymentFormError("Select payment date."); paymentDateInput.focus(); return; }
 
     if(savePaymentBtn) { savePaymentBtn.disabled = true; savePaymentBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...'; }
     showPaymentFormError('');
-
     try {
-        const paymentDateTimestamp = window.Timestamp.fromDate(new Date(date + 'T00:00:00')); // Use window.Timestamp
+        const paymentDateTimestamp = Timestamp.fromDate(new Date(date + 'T00:00:00')); // Use imported Timestamp
         const paymentData = {
             supplierId: currentSupplierId,
             supplierName: currentSupplierData?.name || null,
@@ -432,38 +402,25 @@ async function handleSavePayment(event) {
             paymentDate: paymentDateTimestamp,
             paymentMethod: method,
             notes: notes || null,
-            createdAt: window.serverTimestamp() // Use window.serverTimestamp
+            createdAt: serverTimestamp() // Use imported serverTimestamp
         };
-
-        // Add to the 'supplier_payments' collection
-        const docRef = await window.addDoc(window.collection(window.db, "supplier_payments"), paymentData);
+        console.log("Saving payment data v2:", paymentData);
+        // Use imported functions directly, passing the imported db instance
+        const docRef = await addDoc(collection(db, "supplier_payments"), paymentData); // Use imported functions
         console.log("Payment recorded successfully with ID:", docRef.id);
         alert("Payment recorded successfully!");
-
         closeAddPaymentModal();
-
-        // Refresh payments list and summary only after successful save
-        await loadSupplierAccountData(); // Reload all account data to update summary and lists
-
+        await loadSupplierAccountData(db); // Reload data, pass imported db
     } catch (error) {
         console.error("Error saving payment:", error);
         showPaymentFormError(`Error saving payment: ${error.message}`);
     } finally {
-         if(savePaymentBtn) {
-            savePaymentBtn.disabled = false;
-            savePaymentBtn.innerHTML = '<i class="fas fa-save"></i> Save Payment';
-        }
+         if(savePaymentBtn) { savePaymentBtn.disabled = false; savePaymentBtn.innerHTML = '<i class="fas fa-save"></i> Save Payment'; }
     }
 }
 
-function showPaymentFormError(message) {
-    if (paymentFormError) {
-        paymentFormError.textContent = message;
-        paymentFormError.style.display = message ? 'block' : 'none';
-    } else {
-        if(message) alert(message); // Fallback
-    }
-}
+// (showPaymentFormError remains the same)
+function showPaymentFormError(message) { if (paymentFormError) { paymentFormError.textContent = message; paymentFormError.style.display = message ? 'block' : 'none'; } else { if(message) alert(message); } }
 
-
-console.log("supplier_account_detail.js v1 loaded.");
+// --- Script Load Confirmation ---
+console.log("supplier_account_detail.js v2 (Direct Imports) loaded.");

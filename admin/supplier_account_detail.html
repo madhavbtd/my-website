@@ -3,76 +3,75 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Supplier Account Details</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <title>Supplier Account Details</title> <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/supplier_management.css"> <link rel="stylesheet" href="css/index.css">
     <style>
-        /* Temporary styles specific to this page, move to CSS file later */
+        /* Temporary specific styles - Move to CSS later */
         .info-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; margin-bottom: 25px; }
         .info-box { background-color: #fff; padding: 20px; border-radius: 6px; border: 1px solid #e9ecef; box-shadow: 0 1px 3px rgba(0,0,0,0.04); }
         .info-box h2 { margin-top: 0; margin-bottom: 15px; font-size: 1.2em; color: var(--primary-color); border-bottom: 1px solid #eee; padding-bottom: 8px; }
         .info-box p { margin-bottom: 8px; font-size: 0.95em; color: #343a40; }
         .info-box p strong { font-weight: 600; color: #495057; min-width: 120px; display: inline-block; }
-        .account-summary-box .balance-info { font-size: 1.3em; }
-        .balance-due { color: var(--danger-color); } /* Red for due */
-        .balance-credit { color: var(--success-color); } /* Green for credit */
+        .account-summary-box .balance-info { font-size: 1.3em; font-weight: 700; }
+        .balance-due { color: var(--danger-color); } /* Red for Payable */
+        .balance-credit { color: var(--success-color); } /* Green for Advance */
+        .balance-info { color: var(--secondary-color); } /* Neutral for Zero */
         .section-container h3 { margin-top: 0; margin-bottom: 15px; font-size: 1.3em; color: var(--secondary-color); }
         .loading-state td, .loading-state span { color: #999; font-style: italic; }
+        .required { color: var(--danger-color); margin-left: 2px; } /* Style for required fields */
     </style>
 
     <script type="module">
-        // Basic Firebase setup (similar to other pages)
-        import { db, auth } from './js/firebase-init.js'; // Ensure correct path
+        // Only import Auth and Init services here
+        import { db, auth } from './js/firebase-init.js'; // Ensure correct path to your init file
         import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-        import { doc, getDoc, collection, query, where, getDocs, orderBy, Timestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-
-        // --- Global Functions for this page ---
-        // Make DB functions accessible to the detail page script
-        window.db = db;
-        window.doc = doc;
-        window.getDoc = getDoc;
-        window.collection = collection;
-        window.query = query;
-        window.where = where;
-        window.getDocs = getDocs;
-        window.orderBy = orderBy;
-        window.Timestamp = Timestamp;
+        // Firestore functions will be imported directly in supplier_account_detail.js
 
         // --- Auth Check ---
         try {
-            if (!auth) throw new Error("Firebase Auth failed to initialize.");
+            if (!auth || !db) {
+                 // Critical error if Firebase isn't initialized
+                 throw new Error("Firebase Auth or DB failed to initialize. Check firebase-init.js.");
+            }
             onAuthStateChanged(auth, (user) => {
+                const contentArea = document.getElementById('detailMainContent'); // Target content area
+                if (!contentArea) {
+                    console.error("Critical Error: Main content area ('detailMainContent') not found.");
+                    alert("Page structure error. Cannot load content.");
+                    return;
+                }
+
                 if (!user && !window.location.pathname.endsWith('login.html')) {
+                    console.log("User not logged in. Redirecting...");
                     window.location.replace('login.html');
                 } else if (user) {
-                    console.log("Supplier Detail Auth OK:", user.uid);
-                    // Initialize the detail page script after auth is confirmed
-                    if (typeof initializeSupplierDetailPage === 'function') {
-                         initializeSupplierDetailPage(user);
-                    } else {
-                         // Wait briefly for the JS file to potentially load
-                         setTimeout(() => {
-                             if (typeof initializeSupplierDetailPage === 'function') {
-                                 initializeSupplierDetailPage(user);
-                             } else {
-                                 console.error("initializeSupplierDetailPage function not found!");
-                                 alert("Error initializing page script.");
-                             }
-                         }, 250);
-                    }
+                    console.log("Supplier Detail Auth OK (v3 HTML):", user.uid);
+                    // Wait briefly for supplier_account_detail.js to load and define its function
+                     setTimeout(() => {
+                          // Check if the initialization function exists on window (it should be set by the other script)
+                          if (typeof window.initializeSupplierDetailPage === 'function') {
+                              // Pass the imported db instance to the initialization function
+                              window.initializeSupplierDetailPage(user, db); // Pass db
+                          } else {
+                              console.error("initializeSupplierDetailPage function not found! Check script loading order/defer attribute in supplier_account_detail.js.");
+                              contentArea.innerHTML = "<p class='error-message' style='padding:20px;'>Error initializing page script. Please ensure 'supplier_account_detail.js' is loaded correctly.</p>";
+                          }
+                      }, 100); // Small delay
+
+                } else if (!user && window.location.pathname.endsWith('login.html')) {
+                    // User is not logged in but on the login page, do nothing here
+                    console.log("User not authenticated, on login page.");
                 }
             });
         } catch (e) {
-            console.error("Auth Error (Supplier Detail):", e);
-            alert(`Authentication Error: ${e.message}`);
-            // Handle error display, maybe disable page content
+            console.error("Auth Setup Error (Supplier Detail):", e);
+            alert(`Authentication Setup Error: ${e.message}`);
             const contentArea = document.getElementById('detailMainContent');
-            if(contentArea) contentArea.innerHTML = "<p class='error-message'>Authentication Failed. Cannot load page.</p>";
+            if(contentArea) contentArea.innerHTML = "<p class='error-message' style='padding:20px;'>Authentication Failed. Cannot load page.</p>";
         }
     </script>
-
-</head>
+    </head>
 <body>
     <div class="container">
         <div class="main-content" id="detailMainContent">
@@ -103,12 +102,11 @@
                     <p><strong>Email:</strong> <span id="detailSupplierEmail" class="loading-state">...</span></p>
                     <p><strong>GST No:</strong> <span id="detailSupplierGst" class="loading-state">...</span></p>
                     <p><strong>Address:</strong> <span id="detailSupplierAddress" class="loading-state">...</span></p>
-                    </div>
+                </div>
 
                 <div class="info-box account-summary-box">
                     <h2><i class="fas fa-calculator"></i> Account Summary</h2>
-                    <p><strong>Total PO Value (Received):</strong> <span id="summaryTotalPoValue" class="loading-state">Calculating...</span></p>
-                    <p><strong>Total Payments Made:</strong> <span id="summaryTotalPaid" class="loading-state">Calculating...</span></p>
+                    <p><strong>Total PO Value:</strong> <span id="summaryTotalPoValue" class="loading-state">Calculating...</span></p> <p><strong>Total Payments Made:</strong> <span id="summaryTotalPaid" class="loading-state">Calculating...</span></p>
                     <hr>
                     <p><strong style="font-size: 1.1em;">Outstanding Balance:</strong>
                         <span id="summaryBalance" class="balance-info loading-state" style="font-weight: 700; font-size: 1.3em;">Calculating...</span>
@@ -163,7 +161,7 @@
 
             <div id="addPaymentModal" class="modal">
                  <div class="modal-content small-modal">
-                    <span class="close-btn" id="closePaymentModal">&times;</span>
+                    <span class="close-btn" id="closePaymentModal" title="Close">&times;</span>
                     <h2>Record Payment Made to <span id="paymentModalSupplierName">Supplier</span></h2>
                     <form id="addPaymentForm">
                         <div id="paymentFormError" class="error-message" style="display: none;"></div>
