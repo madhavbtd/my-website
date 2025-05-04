@@ -6,48 +6,278 @@
     <title>Supplier & PO Management</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="css/supplier_management.css"> <link rel="stylesheet" href="css/index.css">
-    <script type="module">
-        // Firebase Auth Check (remains same)
-        import { auth } from './js/firebase-init.js';
+    <link rel="stylesheet" href="css/supplier_management.css">
+    <link rel="stylesheet" href="css/index.css"> <script type="module">
+        // --- Firebase Auth Check ---
+        import { auth } from './js/firebase-init.js'; // Make sure this path is correct
         import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-        try { if (!auth) { throw new Error("Auth failed."); } onAuthStateChanged(auth, (user) => { if (!user && !window.location.pathname.endsWith('login.html')) { window.location.replace('login.html'); } else if (user) { console.log("Auth OK:", user.uid); } }); } catch(e) { console.error("Auth Err:", e); try{ document.getElementById('main-content').innerHTML = `<div class="error-message">App Error: ${e.message}</div>`; } catch{} }
+
+        // --- Global Error Display ---
+        function displayGlobalError(message) {
+            try {
+                const mainContent = document.getElementById('main-content');
+                if (mainContent) {
+                    // Clear previous content and show error
+                    mainContent.innerHTML = `<div class="error-message" style="display: block; margin: 20px; padding: 15px; background-color: #f8d7da; border: 1px solid #f5c2c7; color: #721c24; border-radius: 5px;"><strong>Error:</strong> ${message}</div>`;
+                } else {
+                    alert(`Critical Error: ${message}`);
+                }
+            } catch (e) {
+                console.error("Error displaying global error:", e);
+                alert(`Critical Error: ${message}`);
+            }
+        }
+        window.displayGlobalError = displayGlobalError; // Make it globally accessible if needed elsewhere
+
+        // --- Auth Logic ---
+        try {
+            if (!auth) {
+                throw new Error("Firebase Auth failed to initialize. Check firebase-init.js.");
+            }
+            onAuthStateChanged(auth, (user) => {
+                const mainContent = document.getElementById('main-content');
+                if (!mainContent) {
+                    console.error("Main content area not found on auth check.");
+                    return; // Cannot proceed without main content area
+                }
+
+                if (!user && !window.location.pathname.endsWith('login.html')) {
+                    console.log("User not logged in. Redirecting...");
+                    window.location.replace('login.html');
+                } else if (user) {
+                    console.log("User authenticated:", user.uid);
+                    // Trigger page initialization after auth is confirmed
+                    if (typeof initializeSupplierManagementPage === 'function') {
+                        initializeSupplierManagementPage(user); // Call the init function from supplier_management.js
+                    } else {
+                        // Use setTimeout to ensure JS file might load slightly later
+                        setTimeout(() => {
+                            if (typeof initializeSupplierManagementPage === 'function') {
+                                initializeSupplierManagementPage(user);
+                            } else {
+                                console.error("initializeSupplierManagementPage function not found after delay. Ensure supplier_management.js is loaded correctly and the function is defined.");
+                                displayGlobalError("Page initialization failed. Function missing in supplier_management.js.");
+                            }
+                        }, 200); // Wait 200ms
+                    }
+                } else if (!user && window.location.pathname.endsWith('login.html')) {
+                     console.log("User not logged in, on login page.");
+                }
+            });
+        } catch (e) {
+            console.error("Firebase Auth Setup Error:", e);
+            displayGlobalError(`Authentication Setup Error: ${e.message}. Please check your Firebase configuration and initialization script (firebase-init.js).`);
+        }
     </script>
 </head>
 <body>
-     <div class="container">
-         <div class="main-content" id="main-content">
-            <div class="page-header"> <h1><i class="fas fa-truck"></i> Supplier & PO Management</h1> </div>
-            <div class="breadcrumb"> <a href="index.html">Dashboard</a> / <span>Suppliers & POs</span> </div>
-            <div class="actions-bar"> <button id="viewSuppliersBtn" class="button view-suppliers-button"><i class="fas fa-users"></i> View Suppliers List</button> <a href="new_po.html" id="createPoBtn" class="button add-new-button" style="background-color: var(--primary-color);"><i class="fas fa-file-alt"></i> Create New PO</a> </div>
+    <div class="container">
+        <div class="main-content" id="main-content">
+            <div class="breadcrumb">
+                <a href="index.html">Dashboard</a> /
+                <span>Supplier & PO Management</span>
+            </div>
 
-            <div class="section-container" id="pos-section">
-                <h2><i class="fas fa-file-invoice-dollar"></i> Purchase Orders</h2>
-                <div class="po-filters">
-                    <div class="filter-group"> <label for="poSearchInput">Search:</label> <input type="text" id="poSearchInput" placeholder="PO# or Supplier..."> </div>
-                    <div class="filter-group"> <label for="poStatusFilter">Status:</label> <select id="poStatusFilter"> <option value="">All Status</option> <option value="New">New</option> <option value="Sent">Sent</option> <option value="Printing">Printing</option> <option value="Received">Received</option> <option value="Product Received">Product Received</option> <option value="PO Paid">PO Paid</option> <option value="Cancel">Cancel</option> </select> </div>
-                    <div class="filter-group"> <label for="poStartDateFilter">From Date:</label> <input type="date" id="poStartDateFilter" class="date-filter"> </div>
-                    <div class="filter-group"> <label for="poEndDateFilter">To Date:</label> <input type="date" id="poEndDateFilter" class="date-filter"> </div>
-                    <div class="filter-group filter-buttons"> <button id="poFilterBtn" class="button filter-action-button"><i class="fas fa-filter"></i> Apply Filters</button> <button id="poClearFilterBtn" class="button cancel-button filter-action-button"><i class="fas fa-times"></i> Clear Filters</button> </div>
+            <div class="page-header">
+                <h1><i class="fas fa-users-cog"></i> Supplier & PO Management</h1>
+            </div>
+
+            <div class="actions-bar">
+                <a href="new_po.html" class="button add-new-button"><i class="fas fa-plus"></i> Add New PO</a>
+                <button id="addNewSupplierBtn" type="button" class="button view-suppliers-button"><i class="fas fa-user-plus"></i> Add New Supplier</button>
+                <button id="exportPoCsvBtn" type="button" class="button info-button" style="background-color: var(--info-color); color: white;">
+                    <i class="fas fa-file-csv"></i> Export POs (CSV)
+                </button>
                 </div>
-                <div class="table-container">
-                    <table id="poTable">
-                        <thead> <tr> <th>PO Number</th> <th>Supplier</th> <th>Order Date</th> <th>Status</th> <th>Amount</th> <th>Quantity Info</th> <th>Print Sizes (WxH Unit)</th> <th>Actions</th> </tr> </thead>
-                        <tbody id="poTableBody"> <tr><td colspan="8">Initializing...</td></tr> </tbody>
+
+            <div class="section-container" id="suppliersListSection">
+                <h2><i class="fas fa-address-book"></i> Suppliers List</h2>
+                 <div class="table-container">
+                    <table id="supplierTable">
+                        <thead>
+                            <tr>
+                                <th>Supplier Name</th>
+                                <th>Contact</th>
+                                <th>Outstanding Balance</th> <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="supplierTableBody">
+                            <tr id="supplierLoadingMessage">
+                                <td colspan="4" style="text-align: center; color: #6c757d; padding: 15px;">
+                                    <i class="fas fa-spinner fa-spin"></i> Loading suppliers...
+                                </td>
+                            </tr>
+                            </tbody>
                     </table>
                 </div>
-                <div id="poTotalsDisplay" class="po-totals"></div>
+                 <div id="supplierListError" class="error-message" style="display: none; margin-top: 10px;"></div>
             </div>
+            <div class="section-container" id="poListSection">
+                <h2><i class="fas fa-file-invoice-dollar"></i> Purchase Orders (POs)</h2>
+
+                <div class="po-filters">
+                    <div class="filter-group">
+                        <label for="poSearchInput">Search PO# / Item:</label>
+                        <input type="text" id="poSearchInput" placeholder="Enter PO Number or Item Name">
+                    </div>
+                     <div class="filter-group">
+                        <label for="poSupplierFilter">Filter by Supplier:</label>
+                        <select id="poSupplierFilter">
+                            <option value="">All Suppliers</option>
+                            </select>
+                    </div>
+                    <div class="filter-group">
+                        <label for="poStatusFilter">Filter by Status:</label>
+                        <select id="poStatusFilter">
+                            <option value="">All Statuses</option>
+                            <option value="New">New</option>
+                            <option value="Sent">Sent</option>
+                            <option value="Printing">Printing</option>
+                             <option value="Product Received">Product Received</option> <option value="PO Paid">PO Paid</option> <option value="Cancel">Cancel</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label for="poStartDateFilter">From Date:</label>
+                        <input type="date" id="poStartDateFilter" class="date-filter">
+                    </div>
+                    <div class="filter-group">
+                        <label for="poEndDateFilter">To Date:</label>
+                        <input type="date" id="poEndDateFilter" class="date-filter">
+                    </div>
+                    <div class="filter-group filter-buttons">
+                        <button id="poFilterBtn" type="button" class="button filter-action-button"><i class="fas fa-filter"></i> Apply Filters</button>
+                        <button id="poClearFilterBtn" type="button" class="button cancel-button filter-action-button"><i class="fas fa-times"></i> Clear Filters</button>
+                    </div>
+                </div>
+                 <div id="poBatchActionsBar" class="batch-actions-bar" style="display: none; margin-bottom: 15px; padding: 10px; background-color: #e9f5ff; border: 1px solid #b3d7ff; border-radius: 5px; flex-wrap: wrap; align-items: center; gap: 10px;">
+                    <span id="poSelectedCount" style="font-weight: 600; margin-right: 15px;">0 POs selected</span>
+                    <select id="batchUpdateStatusSelect" style="padding: 5px 8px; height: 32px; font-size: 0.9em; width: auto; border-radius: 4px; border: 1px solid #ccc;">
+                        <option value="">-- Batch Update Status --</option>
+                        <option value="Sent">Sent</option>
+                        <option value="Printing">Printing</option>
+                        <option value="Product Received">Product Received</option>
+                        <option value="PO Paid">PO Paid</option>
+                        <option value="Cancel">Cancel</option>
+                    </select>
+                    <button id="batchApplyStatusBtn" type="button" class="button info-button small-button" disabled><i class="fas fa-sync-alt"></i> Apply Status</button>
+                    <button id="batchMarkReceivedBtn" type="button" class="button success-button small-button"><i class="fas fa-check-circle"></i> Mark Received</button>
+                    <button id="batchDeletePoBtn" type="button" class="button delete-button small-button"><i class="fas fa-trash-alt"></i> Delete Selected</button>
+                    <button id="deselectAllPoBtn" type="button" class="button cancel-button small-button"><i class="fas fa-times"></i> Deselect All</button>
+                 </div>
+                 <div class="table-container">
+                    <table id="poTable">
+                        <thead>
+                            <tr>
+                                <th style="width: 30px; padding: 10px 5px; text-align: center;"><input type="checkbox" id="selectAllPoCheckbox" title="Select/Deselect All POs"></th>
+                                <th data-sortable="true" data-sort-key="poNumber">PO #</th>
+                                <th data-sortable="true" data-sort-key="orderDate">Order Date</th>
+                                <th data-sortable="true" data-sort-key="supplierName">Supplier</th>
+                                <th data-sortable="true" data-sort-key="totalAmount" style="text-align: right;">Total Amount</th>
+                                <th data-sortable="true" data-sort-key="status">Status</th>
+                                <th data-sortable="true" data-sort-key="paymentStatus">Payment Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="poTableBody">
+                            <tr id="poLoadingMessage">
+                                <td colspan="8" style="text-align: center; color: #6c757d; padding: 15px;"> <i class="fas fa-spinner fa-spin"></i> Loading purchase orders...
+                                </td>
+                            </tr>
+                            </tbody>
+                    </table>
+                </div>
+                <div id="poListError" class="error-message" style="display: none; margin-top: 10px;"></div>
+                <div class="po-totals" id="poTotalsDisplay" style="font-size: 1em;"> Loading totals...
+                </div>
+                <div id="poPaginationControls" style="text-align: center; margin-top: 20px; display: flex; justify-content: center; align-items: center; gap: 10px;">
+                     <button id="prevPageBtn" class="button small-button" disabled>&laquo; Previous</button>
+                     <span id="pageInfo" style="font-size: 0.9em; font-weight: 500;">Page 1 of 1</span>
+                     <button id="nextPageBtn" class="button small-button" disabled>Next &raquo;</button>
+                     <select id="itemsPerPageSelect" style="margin-left: 15px; padding: 5px 8px; height: 32px; font-size: 0.9em; border-radius: 4px; border: 1px solid #ccc;">
+                         <option value="10">10 per page</option>
+                         <option value="25" selected>25 per page</option>
+                         <option value="50">50 per page</option>
+                     </select>
+                 </div>
+            </div>
+            </div> </div> <div id="supplierModal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" id="closeSupplierModal" title="Close">&times;</span>
+            <h2 id="supplierModalTitle">Add New Supplier</h2>
+            <div id="supplierFormError" class="error-message" style="display: none;"></div> <form id="supplierForm">
+                <input type="hidden" id="editSupplierId"> <div class="form-group">
+                    <label for="supplierNameInput">Supplier Name <span class="required">*</span>:</label>
+                    <input type="text" id="supplierNameInput" required>
+                </div>
+                <div class="form-group">
+                    <label for="supplierCompanyInput">Company Name:</label>
+                    <input type="text" id="supplierCompanyInput">
+                </div>
+                <div class="form-group">
+                    <label for="supplierWhatsappInput">WhatsApp No:</label>
+                    <input type="tel" id="supplierWhatsappInput">
+                </div>
+                <div class="form-group">
+                    <label for="supplierEmailInput">Email:</label>
+                    <input type="email" id="supplierEmailInput">
+                </div>
+                <div class="form-group">
+                    <label for="supplierAddressInput">Address:</label>
+                    <textarea id="supplierAddressInput" rows="2"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="supplierGstInput">GST No:</label>
+                    <input type="text" id="supplierGstInput">
+                </div>
+                <div class="modal-actions">
+                    <button type="button" id="cancelSupplierBtn" class="button cancel-button">Cancel</button>
+                    <button type="submit" id="saveSupplierBtn" class="button save-button">Save Supplier</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="statusUpdateModal" class="modal">
+         <div class="modal-content" style="max-width: 450px;">
+             <span class="close-btn" id="closeStatusModal">&times;</span>
+             <h2 id="statusModalTitle">Update PO Status</h2>
+             <form id="statusUpdateForm">
+                 <input type="hidden" id="statusUpdatePOId">
+                 <p>Current Status: <strong id="currentPOStatus">Loading...</strong></p>
+                 <div class="form-group">
+                     <label for="statusSelect">New Status *</label>
+                     <select id="statusSelect" required>
+                         <option value="">-- Select Status --</option>
+                         <option value="New">New</option>
+                         <option value="Sent">Sent</option>
+                         <option value="Printing">Printing</option>
+                         <option value="Product Received">Product Received</option>
+                         <option value="PO Paid">PO Paid</option>
+                         <option value="Cancel">Cancel</option>
+                     </select>
+                 </div>
+                 <div class="modal-actions">
+                     <button type="button" id="cancelStatusBtn" class="button cancel-button">Cancel</button>
+                     <button type="submit" id="saveStatusBtn" class="button save-button">Update Status</button>
+                 </div>
+                 <div id="statusErrorMsg" class="error-message" style="display: none;"></div>
+             </form>
          </div>
      </div>
 
-     <div id="supplierModal" class="modal"> <div class="modal-content"> <span class="close-btn" id="closeSupplierModal">&times;</span> <h2 id="supplierModalTitle">Add New Supplier</h2> <form id="supplierForm"> <input type="hidden" id="supplierIdInput"> <div class="form-group"><label for="supplierNameInput">Supplier Name *</label><input type="text" id="supplierNameInput" required></div> <div class="form-group"><label for="supplierCompanyInput">Company Name</label><input type="text" id="supplierCompanyInput"></div> <div class="form-group"><label for="supplierWhatsappInput">WhatsApp No</label><input type="tel" id="supplierWhatsappInput"></div> <div class="form-group"><label for="supplierEmailInput">Email</label><input type="email" id="supplierEmailInput"></div> <div class="form-group"><label for="supplierAddressInput">Address</label><textarea id="supplierAddressInput" rows="2"></textarea></div> <div class="form-group"><label for="supplierGstInput">GST No</label><input type="text" id="supplierGstInput"></div> <div class="modal-actions"> <button type="button" id="cancelSupplierBtn" class="button cancel-button">Cancel</button> <button type="submit" id="saveSupplierBtn" class="button save-button">Save Supplier</button> </div> <div id="supplierErrorMsg" class="error-message" style="display: none;"></div> </form> </div> </div>
-     <div id="statusUpdateModal" class="modal"> <div class="modal-content"> <span class="close-btn" id="closeStatusModal">&times;</span> <h2 id="statusModalTitle">Update PO Status</h2> <form id="statusUpdateForm"> <input type="hidden" id="statusUpdatePOId"> <p>Current Status: <strong id="currentPOStatus"></strong></p> <div class="form-group"> <label for="statusSelect">New Status *</label> <select id="statusSelect" required> <option value="">-- Select Status --</option> <option value="New">New</option> <option value="Sent">Sent</option> <option value="Printing">Printing</option> <option value="Received">Received</option> <option value="Product Received">Product Received</option> <option value="PO Paid">PO Paid</option> <option value="Cancel">Cancel</option> </select> </div> <div class="modal-actions"> <button type="button" id="cancelStatusBtn" class="button cancel-button">Cancel</button> <button type="submit" id="saveStatusBtn" class="button save-button">Update Status</button> </div> <div id="statusErrorMsg" class="error-message" style="display: none;"></div> </form> </div> </div>
-     <div id="poDetailsModal" class="modal"> <div class="modal-content modal-lg"> <span class="close-btn" id="closePoDetailsModal">&times;</span> <h2 id="poDetailsModalTitle">Purchase Order Items</h2> <div id="poDetailsContent" class="po-details-container"> <p>Loading details...</p> </div> <div class="modal-actions"> <button type="button" id="printPoDetailsBtn" class="button print-button"> <i class="fas fa-print"></i> Print Details </button> <button type="button" id="closePoDetailsBtn" class="button cancel-button">Close</button> </div> </div> </div>
-     <div id="suppliersListModal" class="modal modal-xl"> <div class="modal-content"> <span class="close-btn" id="closeSuppliersListModal">&times;</span> <div class="suppliers-modal-header"> <h2><i class="fas fa-users"></i> Suppliers List</h2> <button id="addSupplierInModalBtn" class="button add-new-button"><i class="fas fa-plus"></i> Add New Supplier</button> </div> <div class="table-container suppliers-table-container"> <table id="supplierTableModal"> <thead> <tr> <th>Name</th> <th>Company</th> <th>WhatsApp No</th> <th>Email</th> <th>Actions</th> </tr> </thead> <tbody id="supplierTableBodyModal"> <tr><td colspan="5">Loading Suppliers...</td></tr> </tbody> </table> </div> <div class="modal-actions"> <button type="button" id="closeSuppliersListBtnBottom" class="button cancel-button">Close</button> </div> </div> </div>
+     <div id="poDetailsModal" class="modal modal-lg"> <div class="modal-content">
+              <span class="close-btn" id="closePoDetailsModal">&times;</span>
+              <h2 id="poDetailsModalTitle">Purchase Order Items</h2>
+              <div id="poDetailsContent" class="po-details-container">
+                  <p>Loading details...</p>
+              </div>
+              <div class="modal-actions">
+                  <button type="button" id="printPoDetailsBtn" class="button print-button"><i class="fas fa-print"></i> Print Details</button>
+                  <button type="button" id="closePoDetailsBtn" class="button cancel-button">Close</button> </div>
+          </div>
+      </div>
 
-    <div id="poShareModal" class="modal">
-        <div class="modal-content modal-lg po-share-modal-content">
+      <div id="poShareModal" class="modal modal-lg"> <div class="modal-content modal-lg po-share-modal-content">
             <span class="close-btn" id="closePoShareModal">&times;</span>
             <div id="poShareScrollableContent">
                 <div id="poShareHeader">
@@ -69,10 +299,7 @@
                 </div>
             </div>
             <div class="modal-actions">
-                <button type="button" id="copyPoShareModalBtn" class="button copy-button" data-poid="">
-                    <i class="fas fa-copy"></i> Copy Content
-                </button>
-                <button type="button" id="printPoShareModalBtn" class="button print-button"><i class="fas fa-print"></i> Print PO</button>
+                 <button type="button" id="emailPoShareModalBtn" class="button info-button"><i class="fas fa-envelope"></i> Email PO</button> <button type="button" id="printPoShareModalBtn" class="button print-button"><i class="fas fa-print"></i> Print PO</button>
                 <button type="button" id="closePoShareModalBtn" class="button cancel-button">Close</button>
             </div>
         </div>
@@ -80,7 +307,9 @@
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
-    <script src="js/supplier_management.js" type="module" defer></script>
+
+    <script src="js/firebase-init.js" type="module"></script>
+    <script src="js/utils.js" type="module"></script> <script src="js/supplier_management.js" type="module"></script>
 
 </body>
 </html>
