@@ -1,5 +1,5 @@
 // js/supplier_account_detail.js
-// Version updated by Gemini to fix Account Summary display and initializeSupplierDetailPage error
+// Version updated by Gemini to fix Account Summary display, initializeSupplierDetailPage error, and correct HTML IDs
 
 // --- Import Firebase functions directly ---
 import { db } from './firebase-init.js'; // Use relative path from within JS folder
@@ -30,19 +30,20 @@ const detailSupplierAddress = document.getElementById('detailSupplierAddress');
 
 // Account Summary Elements
 const summaryTotalPoValue = document.getElementById('summaryTotalPoValue');
-// Corrected ID based on previous discussion (assuming it's summaryTotalPaymentsMade in HTML)
-const summaryTotalPaymentsMade = document.getElementById('summaryTotalPaymentsMade'); // <<< Check if this ID is correct in your HTML
-const summaryOutstandingBalance = document.getElementById('summaryOutstandingBalance');
+const summaryTotalPaymentsMade = document.getElementById('summaryTotalPaid'); // <<< ID CHANGE APPLIED >>> (Matches HTML ID)
+const summaryOutstandingBalance = document.getElementById('summaryBalance');    // <<< ID CHANGE APPLIED >>> (Matches HTML ID)
 
 // PO Table Elements
-const poTableBody = document.getElementById('poTableBody'); // <<< Check if this ID is correct in your HTML ('supplierPoTableBody'?)
-const poLoadingMessage = document.getElementById('poLoadingMessage'); // <<< Check if this ID is correct in your HTML ('supplierPoLoading'?)
-const poListError = document.getElementById('poListError'); // <<< Check if this ID is correct in your HTML ('supplierPoListError'?)
+// Assuming IDs based on previous HTML snippet (verify if different)
+const poTableBody = document.getElementById('supplierPoTableBody');
+const poLoadingMessage = document.getElementById('supplierPoLoading');
+const poListError = document.getElementById('supplierPoListError');
 
 // Payments Table Elements
-const paymentsTableBody = document.getElementById('paymentsTableBody'); // <<< Check if this ID is correct in your HTML ('supplierPaymentsTableBody'?)
-const paymentsLoadingMessage = document.getElementById('paymentsLoadingMessage'); // <<< Check if this ID is correct in your HTML ('supplierPaymentLoading'?)
-const paymentsListError = document.getElementById('paymentsListError'); // <<< Check if this ID is correct in your HTML ('supplierPaymentListError'?)
+// Assuming IDs based on previous HTML snippet (verify if different)
+const paymentsTableBody = document.getElementById('supplierPaymentsTableBody');
+const paymentsLoadingMessage = document.getElementById('supplierPaymentLoading');
+const paymentsListError = document.getElementById('supplierPaymentListError');
 
 // Add Payment Modal Elements
 const addPaymentModal = document.getElementById('addPaymentModal');
@@ -60,7 +61,7 @@ const paymentFormError = document.getElementById('paymentFormError');
 
 // --- Helper Functions ---
 
-// Function to display errors to the user (you might want to improve this)
+// Function to display errors to the user
 function displayError(message, elementId = null) {
     console.error("Error:", message);
     if (elementId) {
@@ -68,17 +69,19 @@ function displayError(message, elementId = null) {
         if (errorElement) {
             errorElement.textContent = message;
             errorElement.style.display = 'block';
-            // Hide associated loading message if applicable
-            const loadingId = elementId.replace('Error', 'Loading'); // Guess loading ID
+            const loadingId = elementId.replace('Error', 'Loading');
             const loadingElement = document.getElementById(loadingId);
             if(loadingElement) loadingElement.style.display = 'none';
         } else {
-            alert(message); // Fallback
+            alert(message);
         }
     } else {
-        alert(message); // Fallback alert
+        alert(message);
     }
 }
+
+// Function to escape HTML
+const escapeHtml = (unsafe) => typeof unsafe === 'string' ? unsafe.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;") : unsafe;
 
 // --- Get Supplier ID from URL ---
 function getSupplierIdFromUrl() {
@@ -94,7 +97,6 @@ async function loadSupplierAccountData(dbInstance) {
     }
     console.log("Loading supplier data for ID:", currentSupplierId);
 
-    // Reset UI elements
     resetUI();
     let totalPoValueNum = 0;
     let totalPaymentsNum = 0;
@@ -111,27 +113,25 @@ async function loadSupplierAccountData(dbInstance) {
         } else {
             console.error("Supplier not found in database.");
             displayError("Supplier not found. Cannot load account details.", "supplierNameHeader");
-            // Clear summary if supplier not found
             if (summaryTotalPoValue) summaryTotalPoValue.textContent = '₹0.00';
             if (summaryTotalPaymentsMade) summaryTotalPaymentsMade.textContent = '₹0.00';
             if (summaryOutstandingBalance) summaryOutstandingBalance.textContent = '₹0.00';
-            return; // Stop if supplier doesn't exist
+            return;
         }
 
-        // 2. Fetch Purchase Orders (POs) for this supplier
-        // Use specific PO table IDs if they differ from the generic ones above
-        const poTableBodyElem = poTableBody || document.getElementById('supplierPoTableBody');
-        const poLoadingElem = poLoadingMessage || document.getElementById('supplierPoLoading');
-        const poErrorElem = poListError || document.getElementById('supplierPoListError');
+        // 2. Fetch Purchase Orders (POs)
+        const poTableBodyElem = poTableBody; // Use variable defined above
+        const poLoadingElem = poLoadingMessage;
+        const poErrorElem = poListError;
 
-        if (poLoadingElem) poLoadingElem.style.display = 'table-row'; // Show loading in table
+        if (poLoadingElem) poLoadingElem.style.display = 'table-row';
         if (poErrorElem) poErrorElem.style.display = 'none';
-        if (poTableBodyElem) poTableBodyElem.innerHTML = ''; // Clear previous POs
+        if (poTableBodyElem) poTableBodyElem.innerHTML = '';
 
         const poQuery = query(
-            collection(dbInstance, "purchaseOrders"), // Correct collection name? Should it be 'purchaseOrders'?
+            collection(dbInstance, "purchaseOrders"), // Ensure correct collection name
             where("supplierId", "==", currentSupplierId),
-            orderBy("orderDate", "desc") // Show newest first
+            orderBy("orderDate", "desc")
         );
         const poSnapshot = await getDocs(poQuery);
         console.log(`Found ${poSnapshot.size} POs for this supplier.`);
@@ -142,28 +142,26 @@ async function loadSupplierAccountData(dbInstance) {
             poSnapshot.forEach(doc => {
                 const po = doc.data();
                 const poId = doc.id;
-                displayPurchaseOrder(po, poId, poTableBodyElem); // Pass table body element
+                displayPurchaseOrder(po, poId, poTableBodyElem);
                 const amount = Number(po.totalAmount) || 0;
                 totalPoValueNum += amount;
             });
         }
         if (poLoadingElem) poLoadingElem.style.display = 'none';
 
+        // 3. Fetch Payments Made
+        const paymentsTableBodyElem = paymentsTableBody; // Use variable defined above
+        const paymentsLoadingElem = paymentsLoadingMessage;
+        const paymentsErrorElem = paymentsListError;
 
-        // 3. Fetch Payments Made to this supplier
-        // Use specific Payment table IDs if they differ
-        const paymentsTableBodyElem = paymentsTableBody || document.getElementById('supplierPaymentsTableBody');
-        const paymentsLoadingElem = paymentsLoadingMessage || document.getElementById('supplierPaymentLoading');
-        const paymentsErrorElem = paymentsListError || document.getElementById('supplierPaymentListError');
-
-        if (paymentsLoadingElem) paymentsLoadingElem.style.display = 'table-row'; // Show loading
+        if (paymentsLoadingElem) paymentsLoadingElem.style.display = 'table-row';
         if (paymentsErrorElem) paymentsErrorElem.style.display = 'none';
-        if (paymentsTableBodyElem) paymentsTableBodyElem.innerHTML = ''; // Clear previous payments
+        if (paymentsTableBodyElem) paymentsTableBodyElem.innerHTML = '';
 
         const paymentQuery = query(
             collection(dbInstance, "supplier_payments"),
             where("supplierId", "==", currentSupplierId),
-            orderBy("paymentDate", "desc") // Show newest first
+            orderBy("paymentDate", "desc")
         );
         const paymentSnapshot = await getDocs(paymentQuery);
         console.log(`Found ${paymentSnapshot.size} payments for this supplier.`);
@@ -174,7 +172,7 @@ async function loadSupplierAccountData(dbInstance) {
             paymentSnapshot.forEach(doc => {
                 const payment = doc.data();
                 const paymentId = doc.id;
-                displayPaymentMade(payment, paymentId, paymentsTableBodyElem); // Pass table body element
+                displayPaymentMade(payment, paymentId, paymentsTableBodyElem);
                  const amount = Number(payment.paymentAmount) || 0;
                  totalPaymentsNum += amount;
             });
@@ -186,35 +184,27 @@ async function loadSupplierAccountData(dbInstance) {
         console.log("Calculated Summary:", { totalPO: totalPoValueNum, totalPaid: totalPaymentsNum, balance: outstandingBalanceNum });
 
         // --- Update Account Summary UI ---
-        // (This is the block that fixes the summary display)
+        // Uses corrected element IDs defined at the top
         if (summaryTotalPoValue) {
             summaryTotalPoValue.textContent = `₹${totalPoValueNum.toFixed(2)}`;
-        } else {
-            console.warn("Element with ID 'summaryTotalPoValue' not found.");
-        }
+        } else { console.warn("Element with ID 'summaryTotalPoValue' not found."); }
 
-        if (summaryTotalPaymentsMade) {
+        if (summaryTotalPaymentsMade) { // Now points to getElementById('summaryTotalPaid')
             summaryTotalPaymentsMade.textContent = `₹${totalPaymentsNum.toFixed(2)}`;
-        } else {
-            console.warn("Element with ID 'summaryTotalPaymentsMade' not found.");
-        }
+        } else { console.warn("Element with ID 'summaryTotalPaid' not found."); } // Updated warning
 
-        if (summaryOutstandingBalance) {
+        if (summaryOutstandingBalance) { // Now points to getElementById('summaryBalance')
             summaryOutstandingBalance.textContent = `₹${outstandingBalanceNum.toFixed(2)}`;
-            // Optional: Add color coding for the balance
             summaryOutstandingBalance.style.color = outstandingBalanceNum > 0 ? 'var(--danger-color, #dc3545)' : 'var(--success-color, #28a745)';
-            summaryOutstandingBalance.style.fontWeight = 'bold'; // Make it stand out
-        } else {
-            console.warn("Element with ID 'summaryOutstandingBalance' not found.");
-        }
+            summaryOutstandingBalance.style.fontWeight = 'bold';
+        } else { console.warn("Element with ID 'summaryBalance' not found."); } // Updated warning
         console.log('Final Account Summary Calculated and Displayed:', { totalPO: totalPoValueNum, totalPaid: totalPaymentsNum, balance: outstandingBalanceNum });
 
 
     } catch (error) {
         console.error("Error loading supplier account data:", error);
-        // Use specific error elements if available
-        const poErrorElem = poListError || document.getElementById('supplierPoListError');
-        const paymentsErrorElem = paymentsListError || document.getElementById('supplierPaymentListError');
+        const poErrorElem = poListError;
+        const paymentsErrorElem = paymentsListError;
 
         if (error.code === 'failed-precondition') {
              const indexErrorMsg = "Error: Database index missing. Check Firestore console.";
@@ -225,13 +215,11 @@ async function loadSupplierAccountData(dbInstance) {
              displayError(`Error loading POs: ${error.message}`, poErrorElem ? poErrorElem.id : null);
              displayError(`Error loading Payments: ${error.message}`, paymentsErrorElem ? paymentsErrorElem.id : null);
         }
-        // Hide loading messages on error
-        const poLoadingElem = poLoadingMessage || document.getElementById('supplierPoLoading');
-        const paymentsLoadingElem = paymentsLoadingMessage || document.getElementById('supplierPaymentLoading');
+        const poLoadingElem = poLoadingMessage;
+        const paymentsLoadingElem = paymentsLoadingMessage;
         if (poLoadingElem) poLoadingElem.style.display = 'none';
         if (paymentsLoadingElem) paymentsLoadingElem.style.display = 'none';
 
-        // Also clear summary on error
         if (summaryTotalPoValue) summaryTotalPoValue.textContent = 'Error';
         if (summaryTotalPaymentsMade) summaryTotalPaymentsMade.textContent = 'Error';
         if (summaryOutstandingBalance) summaryOutstandingBalance.textContent = 'Error';
@@ -247,61 +235,56 @@ function resetUI() {
     if (detailSupplierId) detailSupplierId.textContent = 'Loading...';
     if (detailSupplierName) detailSupplierName.textContent = '-';
     if (detailSupplierCompany) detailSupplierCompany.textContent = '-';
-    if (detailSupplierWhatsapp) detailSupplierWhatsapp.textContent = '-';
+    if (detailSupplierWhatsapp) detailSupplierWhatsapp.textContent = '-'; // Keep only text now
     if (detailSupplierEmail) detailSupplierEmail.textContent = '-';
     if (detailSupplierGst) detailSupplierGst.textContent = '-';
     if (detailSupplierAddress) detailSupplierAddress.textContent = '-';
 
-    // Reset Summary - Set to loading or initial zero
-    if (summaryTotalPoValue) summaryTotalPoValue.textContent = 'Calculating...'; // Show calculation in progress
-    if (summaryTotalPaymentsMade) summaryTotalPaymentsMade.textContent = 'Calculating...';
-    if (summaryOutstandingBalance) summaryOutstandingBalance.textContent = 'Calculating...';
+    // Reset Summary
+    if (summaryTotalPoValue) summaryTotalPoValue.textContent = 'Calculating...';
+    if (summaryTotalPaymentsMade) summaryTotalPaymentsMade.textContent = 'Calculating...'; // Use correct variable
+    if (summaryOutstandingBalance) summaryOutstandingBalance.textContent = 'Calculating...'; // Use correct variable
 
-    // Clear tables and ensure loading messages are handled by loadSupplierAccountData
-    const poTableBodyElem = poTableBody || document.getElementById('supplierPoTableBody');
-    const paymentsTableBodyElem = paymentsTableBody || document.getElementById('supplierPaymentsTableBody');
-    if (poTableBodyElem) poTableBodyElem.innerHTML = '';
-    if (paymentsTableBodyElem) paymentsTableBodyElem.innerHTML = '';
-    // Loading/Error display is handled within loadSupplierAccountData
+    // Clear tables
+    if (poTableBody) poTableBody.innerHTML = '';
+    if (paymentsTableBody) paymentsTableBody.innerHTML = '';
+    if (poLoadingMessage) poLoadingMessage.style.display = 'table-row';
+    if (paymentsLoadingMessage) paymentsLoadingMessage.style.display = 'table-row';
+    if (poListError) poListError.style.display = 'none';
+    if (paymentsListError) paymentsListError.style.display = 'none';
 }
 
 // --- Display Supplier Details ---
 function displaySupplierDetails(data) {
     if (!data) return;
-    // Use escapeHtml for safety, though less critical for data you trust
-    const escapeHtml = (unsafe) => typeof unsafe === 'string' ? unsafe.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;") : unsafe;
-
     const name = escapeHtml(data.name) || 'N/A';
     if (supplierNameHeader) supplierNameHeader.textContent = `Account: ${name}`;
     if (supplierNameBreadcrumb) supplierNameBreadcrumb.textContent = name;
-    if (detailSupplierId) detailSupplierId.textContent = escapeHtml(currentSupplierId) || 'N/A'; // Display the actual ID
+    if (detailSupplierId) detailSupplierId.textContent = escapeHtml(currentSupplierId) || 'N/A';
     if (detailSupplierName) detailSupplierName.textContent = name;
-    if (detailSupplierCompany) detailSupplierCompany.textContent = escapeHtml(data.companyName || data.company) || '-'; // Check for companyName too
+    if (detailSupplierCompany) detailSupplierCompany.textContent = escapeHtml(data.companyName || data.company) || '-';
+    // --- WhatsApp: Display only text, no logo/link ---
     if (detailSupplierWhatsapp) {
-        const whatsappNum = escapeHtml(data.whatsappNo || data.whatsapp); // Check for whatsappNo too
-        detailSupplierWhatsapp.innerHTML = whatsappNum ? `<a href="https://wa.me/${whatsappNum.replace(/\D/g, '')}" target="_blank">${whatsappNum} <i class="fab fa-whatsapp" style="color: green;"></i></a>` : '-';
+        const whatsappNum = escapeHtml(data.whatsappNo || data.whatsapp);
+        detailSupplierWhatsapp.textContent = whatsappNum || '-'; // <<< Displays only text
     }
+    // --- End WhatsApp change ---
     if (detailSupplierEmail) {
          const emailAddr = escapeHtml(data.email);
-         detailSupplierEmail.innerHTML = emailAddr ? `<a href="mailto:${emailAddr}">${emailAddr}</a>` : '-';
+         detailSupplierEmail.innerHTML = emailAddr ? `<a href="mailto:${emailAddr}">${emailAddr}</a>` : '-'; // Keep email link
     }
     if (detailSupplierGst) detailSupplierGst.textContent = escapeHtml(data.gstNo) || '-';
     if (detailSupplierAddress) detailSupplierAddress.textContent = escapeHtml(data.address) || '-';
-
-    // Update payment modal name as well
     if(paymentModalSupplierName) paymentModalSupplierName.textContent = name;
 }
 
 // --- Display Purchase Order Row ---
 function displayPurchaseOrder(po, id, tableBodyElement) {
-    // Use the passed tableBodyElement or fallback to the global variable
-    const targetTableBody = tableBodyElement || poTableBody || document.getElementById('supplierPoTableBody');
+    const targetTableBody = tableBodyElement || poTableBody;
     if (!targetTableBody || !po) return;
-
     const row = targetTableBody.insertRow();
-    row.setAttribute('data-id', id); // Add ID for potential future actions
+    row.setAttribute('data-id', id);
 
-    // Robust date handling
     let formattedDate = 'N/A';
     try {
         const orderDate = po.orderDate?.toDate ? po.orderDate.toDate() : (po.orderDate ? new Date(po.orderDate) : null);
@@ -311,32 +294,26 @@ function displayPurchaseOrder(po, id, tableBodyElement) {
     } catch(e) { console.warn("Could not format PO date:", po.orderDate, e); }
 
     const formattedAmount = `₹${(Number(po.totalAmount) || 0).toFixed(2)}`;
-    const status = po.status || 'Unknown';
-    const paymentStatus = po.paymentStatus || 'Pending';
-
-     // Use escapeHtml for potentially user-entered data like poNumber
-     const escapeHtml = (unsafe) => typeof unsafe === 'string' ? unsafe.replace(/</g, "&lt;").replace(/>/g, "&gt;") : unsafe;
-     const poNumberDisplay = escapeHtml(po.poNumber) || `ID:${id.substring(0, 6)}...`;
+    const status = escapeHtml(po.status) || 'Unknown';
+    const paymentStatus = escapeHtml(po.paymentStatus) || 'Pending';
+    const poNumberDisplay = escapeHtml(po.poNumber) || `ID:${id.substring(0, 6)}...`;
 
     row.innerHTML = `
         <td>${poNumberDisplay}</td>
         <td>${formattedDate}</td>
         <td style="text-align: right;">${formattedAmount}</td>
-        <td><span class="status-badge status-${status.toLowerCase().replace(/\s+/g, '-')}">${escapeHtml(status)}</span></td>
-        <td><span class="status-badge payment-status-${paymentStatus.toLowerCase().replace(/\s+/g, '-')}">${escapeHtml(paymentStatus)}</span></td>
+        <td><span class="status-badge status-${status.toLowerCase().replace(/\s+/g, '-')}">${status}</span></td>
+        <td><span class="status-badge payment-status-${paymentStatus.toLowerCase().replace(/\s+/g, '-')}">${paymentStatus}</span></td>
     `;
 }
 
 // --- Display Payment Made Row ---
 function displayPaymentMade(payment, id, tableBodyElement) {
-     // Use the passed tableBodyElement or fallback to the global variable
-    const targetTableBody = tableBodyElement || paymentsTableBody || document.getElementById('supplierPaymentsTableBody');
+    const targetTableBody = tableBodyElement || paymentsTableBody;
     if (!targetTableBody || !payment) return;
-
     const row = targetTableBody.insertRow();
-    row.setAttribute('data-id', id); // Add ID for potential future actions
+    row.setAttribute('data-id', id);
 
-    // Robust date handling
     let formattedDate = 'N/A';
      try {
          const paymentDate = payment.paymentDate?.toDate ? payment.paymentDate.toDate() : (payment.paymentDate ? new Date(payment.paymentDate) : null);
@@ -345,10 +322,7 @@ function displayPaymentMade(payment, id, tableBodyElement) {
         }
     } catch (e) { console.warn("Could not format Payment date:", payment.paymentDate, e); }
 
-
     const formattedAmount = `₹${(Number(payment.paymentAmount) || 0).toFixed(2)}`;
-    // Use escapeHtml for potentially user-entered data
-     const escapeHtml = (unsafe) => typeof unsafe === 'string' ? unsafe.replace(/</g, "&lt;").replace(/>/g, "&gt;") : unsafe;
     const method = escapeHtml(payment.paymentMethod) || 'N/A';
     const notes = escapeHtml(payment.notes) || '-';
 
@@ -364,18 +338,14 @@ function displayPaymentMade(payment, id, tableBodyElement) {
 
 // --- Setup Event Listeners ---
 function setupEventListeners() {
-    // Ensure elements exist before adding listeners
-    if (addPaymentMadeBtn) {
-        addPaymentMadeBtn.addEventListener('click', openAddPaymentModal);
-    } else { console.warn("Add Payment button not found."); }
+    if (addPaymentMadeBtn) { addPaymentMadeBtn.addEventListener('click', openAddPaymentModal); }
+    else { console.warn("Add Payment button not found."); }
 
     if (editSupplierDetailsBtn) {
         editSupplierDetailsBtn.addEventListener('click', () => {
             if (currentSupplierId) {
                  window.location.href = `supplier_management.html?edit=${currentSupplierId}`;
-            } else {
-                alert("Cannot edit: Supplier ID is missing.");
-            }
+            } else { alert("Cannot edit: Supplier ID is missing."); }
         });
     } else { console.warn("Edit Supplier Details button not found."); }
 
@@ -397,11 +367,9 @@ function openAddPaymentModal() {
     if (currentSupplierData && paymentModalSupplierName) {
          paymentModalSupplierName.textContent = currentSupplierData.name || 'Selected Supplier';
     } else if (paymentModalSupplierName) {
-        paymentModalSupplierName.textContent = 'Supplier'; // Default
+        paymentModalSupplierName.textContent = 'Supplier';
     }
     if (addPaymentForm) addPaymentForm.reset();
-
-    // Set today's date correctly for input type="date"
     if (paymentDateInput) {
         try {
             const today = new Date();
@@ -411,20 +379,14 @@ function openAddPaymentModal() {
             paymentDateInput.value = `${year}-${month}-${day}`;
         } catch (e) { console.warn("Could not set default payment date:", e); }
     }
-
     if (paymentFormError) paymentFormError.style.display = 'none';
     if(savePaymentBtn) { savePaymentBtn.disabled = false; savePaymentBtn.innerHTML = '<i class="fas fa-save"></i> Save Payment'; }
-
-    addPaymentModal.classList.add('active'); // Use class to show/hide modal if CSS is set up for it
-    // addPaymentModal.style.display = 'block'; // Fallback display style
+    addPaymentModal.classList.add('active');
     if(paymentAmountInput) paymentAmountInput.focus();
 }
 
 function closeAddPaymentModal() {
-    if (addPaymentModal) {
-        addPaymentModal.classList.remove('active'); // Use class to show/hide modal
-        // addPaymentModal.style.display = 'none'; // Fallback display style
-    }
+    if (addPaymentModal) { addPaymentModal.classList.remove('active'); }
 }
 
 async function handleSavePayment(event) {
@@ -438,11 +400,10 @@ async function handleSavePayment(event) {
      }
 
     const amount = parseFloat(paymentAmountInput.value);
-    const date = paymentDateInput.value; // YYYY-MM-DD string
+    const date = paymentDateInput.value;
     const method = paymentMethodSelect.value;
     const notes = paymentNotesInput ? paymentNotesInput.value.trim() : '';
 
-    // Basic Validation
     if (isNaN(amount) || amount <= 0) { showPaymentFormError("Please enter a valid payment amount."); paymentAmountInput.focus(); return; }
     if (!date) { showPaymentFormError("Please select a payment date."); paymentDateInput.focus(); return; }
 
@@ -453,11 +414,8 @@ async function handleSavePayment(event) {
     showPaymentFormError('');
 
     try {
-        // Convert date string to Firestore Timestamp
-        // Create date object carefully to avoid timezone issues if possible
-        // Setting time to noon avoids most timezone day-shift issues
-        const dateParts = date.split('-'); // [YYYY, MM, DD]
-        const paymentDateObject = new Date(Date.UTC(dateParts[0], dateParts[1] - 1, dateParts[2], 12, 0, 0)); // Noon UTC
+        const dateParts = date.split('-');
+        const paymentDateObject = new Date(Date.UTC(dateParts[0], dateParts[1] - 1, dateParts[2], 12, 0, 0));
         const paymentDateTimestamp = Timestamp.fromDate(paymentDateObject);
 
         const paymentData = {
@@ -470,16 +428,13 @@ async function handleSavePayment(event) {
             createdAt: serverTimestamp()
         };
 
-        // Ensure db instance is valid
         if (!db) throw new Error("Database connection is not available.");
 
         const docRef = await addDoc(collection(db, "supplier_payments"), paymentData);
         console.log("Payment recorded successfully: ID:", docRef.id);
         alert("Payment recorded successfully!");
-
         closeAddPaymentModal();
-        // Reload only necessary data - avoid full page reload if possible
-        await loadSupplierAccountData(db); // Reload all data for simplicity now
+        await loadSupplierAccountData(db);
 
     } catch (error) {
         console.error("Error saving payment:", error);
@@ -499,14 +454,13 @@ function showPaymentFormError(message) {
         paymentFormError.style.display = message ? 'block' : 'none';
     } else {
         console.error("Payment Form Error Element not found! Message:", message);
-        if(message) alert(message); // Fallback
+        if(message) alert(message);
     }
 }
 
-// --- GEMINI ADDED CODE: Global Initialization Function ---
+// --- Global Initialization Function ---
 /**
  * Initializes the Supplier Detail Page.
- * This function should be called when the page is ready (e.g., by HTML script tag).
  */
 window.initializeSupplierDetailPage = async () => {
     console.log("Initializing Supplier Detail Page (Global Function)...");
@@ -520,7 +474,6 @@ window.initializeSupplierDetailPage = async () => {
     }
     console.log("Supplier ID:", currentSupplierId);
 
-    // Check if Firestore db object is available
     if (typeof db === 'undefined' || !db) {
         console.error("Firestore database instance (db) is not available. Check firebase-init.js and imports.");
         alert("Error: Database connection failed. Check console.");
@@ -528,12 +481,9 @@ window.initializeSupplierDetailPage = async () => {
         return;
     }
 
-    // Load main data first
     await loadSupplierAccountData(db);
-    // Setup listeners after trying to load initial data
     setupEventListeners();
 
-    // Set today's date as default for payment date input
     if (paymentDateInput) {
         try {
             const today = new Date();
@@ -541,30 +491,24 @@ window.initializeSupplierDetailPage = async () => {
             const month = (today.getMonth() + 1).toString().padStart(2, '0');
             const day = today.getDate().toString().padStart(2, '0');
             paymentDateInput.value = `${year}-${month}-${day}`;
-        } catch (e) {
-            console.warn("Could not set default payment date:", e);
-        }
+        } catch (e) { console.warn("Could not set default payment date:", e); }
     }
     console.log("Supplier Detail Page Initialized via global function.");
-    window.supplierDetailPageInitialized = true; // Mark as initialized
+    window.supplierDetailPageInitialized = true;
 };
 
-// --- GEMINI ADDED CODE: Auto-initialize ---
-// This ensures the function runs even if not explicitly called by HTML,
-// assuming the script is loaded type=module and defer.
+// --- Auto-initialize ---
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => {
-         // Prevent double initialization if called by HTML AND this listener
          if (!window.supplierDetailPageInitialized) {
             window.initializeSupplierDetailPage();
          }
     });
 } else {
-    // DOMContentLoaded has already fired
     if (!window.supplierDetailPageInitialized) {
         window.initializeSupplierDetailPage();
     }
 }
-// --- End GEMINI ADDED CODE ---
+// --- End Auto-initialize ---
 
-console.log("supplier_account_detail.js loaded and running (with global init).");
+console.log("supplier_account_detail.js loaded and running (with global init & ID fix).");
