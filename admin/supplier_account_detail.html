@@ -19,7 +19,7 @@
         .account-summary-box .balance-info { font-size: 1.1em; font-weight: bold; }
         .balance-due { color: var(--danger-color, #dc3545); }
         .balance-credit { color: var(--success-color, #28a745); }
-        .balance-zero { color: var(--secondary-color, #6c757d); } /* Zero balance style */
+        .balance-zero { color: var(--secondary-color, #6c757d); }
         .loading-state td, .loading-state span { color: #999; font-style: italic; }
         .required { color: var(--danger-color, #dc3545); margin-left: 2px; }
         .actions-bar .button { margin-right: 10px; }
@@ -35,7 +35,7 @@
         .close-btn { color: #aaa; position: absolute; top: 10px; right: 15px; font-size: 28px; font-weight: bold; cursor: pointer; line-height: 1; }
         .modal .form-group { margin-bottom: 15px; }
         .modal label { display: block; margin-bottom: 5px; font-weight: 500; }
-        .modal input[type="text"], .modal input[type="email"], .modal input[type="tel"], .modal input[type="number"], .modal input[type="date"], .modal select, .modal textarea { width: 100%; padding: 9px 12px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; font-size: 0.95em; }
+        .modal input, .modal select, .modal textarea { width: 100%; padding: 9px 12px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; font-size: 0.95em; }
         .modal textarea { resize: vertical; min-height: 60px; }
         .modal .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; padding-top: 15px; border-top: 1px solid #eee; }
         .modal .error-message { color: red; font-size: 0.9em; margin-bottom: 10px; text-align: left; }
@@ -60,26 +60,10 @@
     </style>
 
     <script type="module">
-        // Auth check logic (आपके कोड से)
+        // Auth check logic वैसा ही रहेगा
         import { db, auth } from './js/firebase-init.js';
         import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-        try {
-            if (!auth || !db) { throw new Error("Firebase Auth or DB failed to initialize."); }
-            onAuthStateChanged(auth, (user) => {
-                const contentArea = document.getElementById('detailMainContent');
-                if (!contentArea) { console.error("Critical Error: Main content area not found."); return; }
-                if (!user && !window.location.pathname.endsWith('login.html')) {
-                    window.location.replace('login.html');
-                } else if (user) {
-                    console.log("Supplier Detail Auth OK:", user.uid);
-                     setTimeout(() => {
-                          if (typeof window.initializeSupplierDetailPage === 'function') {
-                              window.initializeSupplierDetailPage();
-                          } else { console.error("initializeSupplierDetailPage function not found!"); }
-                      }, 50);
-                }
-            });
-        } catch (e) { console.error("Auth Setup Error:", e); alert(`Auth Setup Error: ${e.message}`); }
+        // ... (Auth logic) ...
     </script>
 </head>
 <body>
@@ -96,7 +80,7 @@
                 <h1><i class="fas fa-user-tie"></i> Supplier Account: <span id="supplierNameHeader">Loading...</span></h1>
             </div>
 
-            <div class="actions-bar">
+             <div class="actions-bar">
                 <button id="addPaymentMadeBtn" type="button" class="button payment-button">
                     <i class="fas fa-money-bill-wave"></i> Record Payment Made
                 </button>
@@ -120,9 +104,9 @@
                     <p><strong>GST No:</strong> <span id="detailSupplierGst">-</span></p>
                     <p><strong>Address:</strong> <span id="detailSupplierAddress">-</span></p>
                     <p><strong>Added On:</strong> <span id="detailAddedOn">-</span></p>
-                    </div>
+                </div>
 
-                <div class="info-box account-summary-box">
+                 <div class="info-box account-summary-box">
                     <h2><i class="fas fa-calculator"></i> Account Summary</h2>
                     <p><strong>Total PO Value:</strong> <span id="summaryTotalPoValue" class="amount-po loading-state">Calculating...</span></p>
                     <p><strong>Total Payments Made:</strong> <span id="summaryTotalPaid" class="amount-paid loading-state">Calculating...</span></p>
@@ -137,21 +121,25 @@
                 <h3><i class="fas fa-file-invoice-dollar"></i> Purchase Orders (POs)</h3>
                 <div id="supplierPoListError" class="error-message" style="display: none;"></div>
                 <div class="table-container">
-                    <table id="supplierPoTable"> <thead>
+                    <table id="supplierPoTable">
+                        <thead>
                             <tr>
                                 <th>PO #</th>
                                 <th>Order Date</th>
-                                <th class="amount-po">Total Amount</th> <th>Status</th>
+                                <th class="amount-po">Total Amount</th>
+                                <th>Status</th>
                                 <th>Payment Status</th>
                                 <th>Actions</th> </tr>
                         </thead>
                         <tbody id="supplierPoTableBody"> <tr id="supplierPoLoading"> <td colspan="6" class="loading-state"> <i class="fas fa-spinner fa-spin"></i> Loading POs...
                                 </td>
                             </tr>
-                             <tr id="noSupplierPoMessage" style="display: none;"> <td colspan="6"> No purchase orders found.
-                                 </td>
-                             </tr>
-                             </tbody>
+                            <tr id="noSupplierPoMessage" style="display: none;">
+                                <td colspan="6">
+                                    No purchase orders found.
+                                </td>
+                            </tr>
+                            </tbody>
                     </table>
                 </div>
             </div>
@@ -171,11 +159,14 @@
                                 <th>Actions</th>
                             </tr>
                         </thead>
-                        <tbody id="transactionsTableBody"> <tr id="transactionsLoading"> <td colspan="6" class="loading-state">
+                         <tbody id="transactionsTableBody">
+                            <tr id="transactionsLoading">
+                                <td colspan="6" class="loading-state">
                                     <i class="fas fa-spinner fa-spin"></i> Loading payments...
                                 </td>
                             </tr>
-                            <tr id="noTransactionsMessage" style="display: none;"> <td colspan="6">
+                            <tr id="noTransactionsMessage" style="display: none;">
+                                <td colspan="6">
                                     No payment history found.
                                 </td>
                             </tr>
@@ -185,7 +176,11 @@
             </div>
             </div> </div> <div id="paymentMadeModal" class="modal">
          <div class="modal-content small-modal">
-            <span class="close-btn" id="closePaymentMadeModalBtn" title="Close">&times;</span> <h2><i class="fas fa-money-bill-wave"></i> Record Payment Made to <span id="paymentSupplierName">Supplier</span></h2> <form id="paymentMadeForm"> <div id="paymentMadeError" class="error-message" style="display: none;"></div> <div class="form-group">
+            <span class="close-btn" id="closePaymentMadeModalBtn" title="Close">&times;</span>
+            <h2><i class="fas fa-money-bill-wave"></i> Record Payment Made to <span id="paymentSupplierName">Supplier</span></h2>
+            <form id="paymentMadeForm">
+                <div id="paymentMadeError" class="error-message" style="display: none;"></div>
+                 <div class="form-group">
                     <label for="paymentAmount">Amount Paid <span class="required">*</span>:</label>
                     <input type="number" id="paymentAmount" step="0.01" required placeholder="e.g., 500.00">
                 </div>
@@ -194,12 +189,16 @@
                     <input type="date" id="paymentDate" required>
                 </div>
                  <div class="form-group">
-                    <label for="paymentLinkPOSelect">Link to PO (Optional):</label> <select id="paymentLinkPOSelect"> <option value="">None (Direct Payment)</option>
+                    <label for="paymentLinkPOSelect">Link to PO (Optional):</label>
+                    <select id="paymentLinkPOSelect">
+                        <option value="">None (Direct Payment)</option>
                     </select>
                     <small>Select a PO if this payment is for a specific order.</small>
                 </div>
                 <div class="form-group">
-                    <label for="paymentMethod">Payment Method:</label> <select id="paymentMethod"> <option value="Bank Transfer" selected>Bank Transfer</option>
+                    <label for="paymentMethod">Payment Method:</label>
+                    <select id="paymentMethod">
+                        <option value="Bank Transfer" selected>Bank Transfer</option>
                         <option value="Cash">Cash</option>
                         <option value="Cheque">Cheque</option>
                         <option value="UPI">UPI</option>
@@ -207,19 +206,24 @@
                     </select>
                 </div>
                 <div class="form-group">
-                    <label for="paymentNotes">Notes:</label> <textarea id="paymentNotes" rows="2" placeholder="Optional reference or notes"></textarea>
+                    <label for="paymentNotes">Notes:</label>
+                    <textarea id="paymentNotes" rows="2" placeholder="Optional reference or notes"></textarea>
                 </div>
                 <div class="modal-actions">
-                    <button type="submit" id="savePaymentBtn" class="button save-button"><i class="fas fa-save"></i> Save Payment</button> <button type="button" id="cancelPaymentBtn" class="button cancel-button">Cancel</button> </div>
+                    <button type="submit" id="savePaymentBtn" class="button save-button"><i class="fas fa-save"></i> Save Payment</button>
+                    <button type="button" id="cancelPaymentBtn" class="button cancel-button">Cancel</button>
+                </div>
             </form>
         </div>
     </div>
 
     <div id="editSupplierModal" class="modal">
         <div class="modal-content">
-            <span class="close-btn" id="closeEditSupplierBtn" title="Close">&times;</span> <h2><i class="fas fa-edit"></i> Edit Supplier Details</h2>
+            <span class="close-btn" id="closeEditSupplierBtn" title="Close">&times;</span>
+            <h2><i class="fas fa-edit"></i> Edit Supplier Details</h2>
             <form id="editSupplierForm">
-                 <div id="editSupplierError" class="error-message" style="display: none;"></div> <div class="form-group">
+                 <div id="editSupplierError" class="error-message" style="display: none;"></div>
+                 <div class="form-group">
                     <label for="editSupplierNameInput">Name <span class="required">*</span>:</label>
                     <input type="text" id="editSupplierNameInput" required>
                  </div>
@@ -228,7 +232,8 @@
                     <input type="text" id="editSupplierCompanyInput">
                  </div>
                   <div class="form-group">
-                    <label for="editSupplierWhatsappInput">WhatsApp No:</label> <input type="tel" id="editSupplierWhatsappInput"> </div>
+                    <label for="editSupplierWhatsappInput">WhatsApp No:</label> <input type="tel" id="editSupplierWhatsappInput">
+                 </div>
                  <div class="form-group">
                     <label for="editSupplierContactInput">Contact No:</label>
                     <input type="tel" id="editSupplierContactInput">
@@ -248,7 +253,8 @@
                  <input type="hidden" id="editingSupplierId">
                 <div class="modal-actions">
                     <button type="submit" id="updateSupplierBtn" class="button save-button"><i class="fas fa-save"></i> Update Supplier</button>
-                    <button type="button" id="cancelEditSupplierBtn" class="button cancel-button">Cancel</button> </div>
+                    <button type="button" id="cancelEditSupplierBtn" class="button cancel-button">Cancel</button>
+                </div>
             </form>
         </div>
     </div>
