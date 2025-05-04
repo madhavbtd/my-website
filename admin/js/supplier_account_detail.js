@@ -1,5 +1,5 @@
 // js/supplier_account_detail.js
-// Version with Edit Supplier Modal Logic and PO Link Logic Added
+// Version with Edit Supplier Modal Logic, PO Link Logic Added, and URL ID fix
 
 // --- Import Firebase functions directly ---
 import { db } from './firebase-init.js'; // Use relative path from within JS folder
@@ -64,10 +64,14 @@ const editSupplierAddressInput = document.getElementById('editSupplierAddressInp
 const editSupplierError = document.getElementById('editSupplierError');
 
 // --- Utility Functions ---
+
+// ***** UPDATED FUNCTION *****
 function getSupplierIdFromUrl() {
     const params = new URLSearchParams(window.location.search);
-    return params.get('supplierId');
+    // Look for 'id' parameter instead of 'supplierId'
+    return params.get('id'); // <-- यह बदली हुई लाइन है
 }
+// ***** END OF UPDATED FUNCTION *****
 
 function formatDate(timestamp) {
     if (!timestamp) return 'N/A';
@@ -113,7 +117,15 @@ function displayError(message, elementId = 'generalErrorDisplay') {
         errorElement.style.color = 'red'; // Basic styling
         errorElement.style.marginBottom = '15px';
     } else {
-        alert(`Error: ${message}`); // Fallback
+        // Fallback if specific error element doesn't exist
+        // Find a general error area or use alert
+        const generalErrorArea = document.querySelector('.error-message-area'); // Add a div with this class to your HTML
+        if (generalErrorArea) {
+            generalErrorArea.textContent = message;
+            generalErrorArea.style.display = 'block';
+        } else {
+            alert(`Error: ${message}`); // Last resort
+        }
     }
 }
 
@@ -123,6 +135,12 @@ function clearError(elementId = 'generalErrorDisplay') {
         errorElement.textContent = '';
         errorElement.style.display = 'none';
     }
+     // Also clear general error area if used
+     const generalErrorArea = document.querySelector('.error-message-area');
+     if (generalErrorArea) {
+         generalErrorArea.textContent = '';
+         generalErrorArea.style.display = 'none';
+     }
 }
 
 
@@ -131,14 +149,16 @@ function clearError(elementId = 'generalErrorDisplay') {
 // Load Supplier Details
 async function loadSupplierDetails(supplierId) {
     if (!db) { displayError("Firestore not initialized."); return null; }
-    if (!supplierId) { displayError("Supplier ID not provided."); return null; }
+    if (!supplierId) { displayError("Supplier ID not provided."); return null; } // This check should now pass
+
+    console.log("Attempting to load details for supplier ID:", supplierId); // Add log
 
     try {
         const supplierRef = doc(db, "suppliers", supplierId);
         const docSnap = await getDoc(supplierRef);
 
         if (docSnap.exists()) {
-            console.log("Supplier Data:", docSnap.data());
+            console.log("Supplier Data found:", docSnap.data());
             return { id: docSnap.id, ...docSnap.data() };
         } else {
             displayError(`Supplier with ID ${supplierId} not found.`);
@@ -279,7 +299,7 @@ function updateTransactionsTable(transactions) {
         const row = transactionsTableBody.insertRow();
         // Ensure consistent data access (e.g., tx.paymentDate or tx.date)
         const paymentDate = tx.paymentDate || tx.createdAt; // Use paymentDate if available, else createdAt
-        const description = tx.notes || tx.description || 'Payment Received'; // Adjust description logic as needed
+        const description = tx.notes || tx.description || 'Payment Recorded'; // Default description
         const amount = tx.amountPaid || tx.amount || 0; // Ensure amount field is consistent
         const mode = tx.paymentMode || 'N/A';
         const linkedPO = tx.linkedPoId ? `PO-${tx.linkedPoId.substring(0, 6)}...` : 'N/A'; // Display linked PO ID concisely
@@ -290,7 +310,7 @@ function updateTransactionsTable(transactions) {
         row.insertCell().textContent = linkedPO; // Add cell for Linked PO
         const amountCell = row.insertCell();
         amountCell.textContent = formatCurrency(amount);
-        amountCell.classList.add('amount-paid'); // Add class for styling
+        amountCell.classList.add('amount-paid'); // Add class for styling (assuming this class exists in CSS)
          // Add action cell if needed (e.g., view details, delete - implement logic separately)
         // row.insertCell().innerHTML = `<button class="button small-button" onclick="viewTransaction('${tx.id}')">View</button>`;
          row.insertCell().textContent = ''; // Placeholder for actions
@@ -334,12 +354,18 @@ function calculateAndDisplaySummary(pos, transactions) {
 
 // --- Main Data Loading Orchestration ---
 async function loadSupplierAccountData() {
+    // Clear previous errors first
+    clearError(); // Clear general errors
+    clearError('paymentMadeError');
+    clearError('editSupplierError');
+
+
     if (!currentSupplierId || !db) {
         console.error("Cannot load data: Supplier ID or DB missing.");
-        displayError("Initialization failed. Cannot load supplier data.");
+        // Error already displayed by initializeSupplierDetailPage if ID is missing
         return;
     }
-    console.log("Loading data for ID:", currentSupplierId);
+    console.log("Loading account data for ID:", currentSupplierId);
 
     try {
         // Load data concurrently
@@ -430,23 +456,23 @@ function setupEventListeners() {
 
 // Function to load POs for the payment link dropdown
 async function loadPOsForPaymentLink(supplierId) {
-    console.log("Loading supplier POs data for PaymentLink dropdown...", supplierId); // Line 496
+    console.log("Loading supplier POs data for PaymentLink dropdown...", supplierId);
     paymentLinkPOSelect.innerHTML = '<option value="">-- Loading POs --</option>';
     paymentLinkPOSelect.disabled = true;
     let poList = [];
     try {
-        if (!db) throw new Error("Firestore db instance is not available."); // Line 500
-        if (!supplierId) throw new Error("Supplier ID is missing for PO query."); // Line 501
+        if (!db) throw new Error("Firestore db instance is not available.");
+        if (!supplierId) throw new Error("Supplier ID is missing for PO query."); // This check should now pass
 
-        const q = query(collection(db, "purchaseOrders"), // Line 503 - QUERYING FIRESTORE
+        const q = query(collection(db, "purchaseOrders"),
                       where("supplierId", "==", supplierId),
                       where("paymentStatus", "!=", "Paid")
-                      // orderBy("orderDate", "desc") // <-- STEP 2: इस लाइन को कमेंट कर दिया गया है
+                      // orderBy("orderDate", "desc") // <-- orderBy is still commented out from Step 2
                      );
 
-        console.log("Executing Simplified Query:", q); // Log the simplified query
+        console.log("Executing Simplified Query for Payment Link:", q); // Log the query being executed
 
-        const querySnapshot = await getDocs(q); // Line 508 - GETTING DOCS
+        const querySnapshot = await getDocs(q);
         querySnapshot.forEach((doc) => {
              // Include only relevant info for the dropdown
              const poData = doc.data();
@@ -456,9 +482,9 @@ async function loadPOsForPaymentLink(supplierId) {
                  totalAmount: poData.totalAmount || 0,
                  orderDate: poData.orderDate
              });
-        }); // Line 511
+        });
 
-        console.log("Supplier POs Data (for PaymentLink):", poList); // Line 513
+        console.log("Supplier POs Data (for PaymentLink):", poList);
 
         if (poList.length > 0) {
             // Sort POs by date if needed (since orderBy is removed from query)
@@ -474,24 +500,23 @@ async function loadPOsForPaymentLink(supplierId) {
             });
              paymentLinkPOSelect.disabled = false; // Enable dropdown
         } else {
-           paymentLinkPOSelect.innerHTML = '<option value="">-- No open POs found --</option>'; // Line 523
+           paymentLinkPOSelect.innerHTML = '<option value="">-- No open POs found --</option>';
            paymentLinkPOSelect.disabled = true;
         }
     } catch (error) {
-        console.error("Error loading POs for payment link:", error); // Line 526
+        console.error("Error loading POs for payment link:", error);
         paymentLinkPOSelect.innerHTML = '<option value="">-- Error loading POs --</option>';
          paymentLinkPOSelect.disabled = true; // Keep disabled on error
     }
-    // finally {
-       // This check might be causing issues if options are technically present but represent "no POs" or "error"
-       // paymentLinkPOSelect.disabled = (paymentLinkPOSelect.options.length <= 1 || paymentLinkPOSelect.firstElementChild?.value === "");
-    // }
 }
 
 
 async function openPaymentMadeModal() {
     if (!currentSupplierData) {
-        displayError("Cannot record payment: Supplier data not loaded.");
+        // Check if the ID is missing - error already shown during page load
+        if (!currentSupplierId) return;
+        // If ID exists but data failed to load for other reasons
+        displayError("Cannot record payment: Supplier data not loaded or failed to load.", 'paymentMadeError');
         return;
     }
     clearError('paymentMadeError'); // Clear previous errors
@@ -510,7 +535,15 @@ async function openPaymentMadeModal() {
         paymentSupplierName.textContent = currentSupplierData.name || 'Supplier';
     }
     // Load POs for the dropdown *before* showing the modal
-    await loadPOsForPaymentLink(currentSupplierId); // Pass current supplier ID
+    // Ensure currentSupplierId has a valid value here
+    if (currentSupplierId) {
+        await loadPOsForPaymentLink(currentSupplierId); // Pass current supplier ID
+    } else {
+         console.error("Cannot load POs, supplier ID is still missing when opening payment modal.");
+         paymentLinkPOSelect.innerHTML = '<option value="">-- Error (Missing Supplier ID) --</option>';
+         paymentLinkPOSelect.disabled = true;
+    }
+
     if (paymentMadeModal) paymentMadeModal.style.display = 'flex';
 }
 
@@ -541,7 +574,8 @@ async function updatePOPaymentStatus(poId, paymentId, amountJustPaid) {
 
         const newPaidAmount = currentPaidAmount + amountJustPaid;
         let newPaymentStatus = 'Partially Paid';
-        if (newPaidAmount >= totalAmount) {
+        // Use a small tolerance for floating point comparisons
+        if (newPaidAmount >= totalAmount - 0.001) {
             newPaymentStatus = 'Paid';
         }
 
@@ -604,7 +638,8 @@ async function handlePaymentMadeSubmit(event) {
         const year = parseInt(dateParts[0], 10);
         const month = parseInt(dateParts[1], 10) - 1; // Adjust month index
         const day = parseInt(dateParts[2], 10);
-        const localDate = new Date(year, month, day);
+        // Ensure the date is treated as local, avoid potential UTC shift from just new Date(string)
+        const localDate = new Date(Date.UTC(year, month, day));
         paymentDateTimestamp = Timestamp.fromDate(localDate);
 
     } catch (e) {
@@ -643,10 +678,11 @@ async function handlePaymentMadeSubmit(event) {
                  // Log error, maybe inform user? Payment is saved, but PO link failed.
                  console.warn(`Payment ${newPaymentRef.id} saved, but failed to update linked PO ${linkedPoId}. Manual update might be needed.`);
                  // Optionally display a non-blocking warning to the user
+                 displayError("Payment saved, but failed to update linked PO status.", 'paymentMadeError'); // Inform user
              }
          }
 
-        // 3. Reload data and close modal on success
+        // 3. Reload data and close modal on success (or partial success if PO update failed)
         closePaymentMadeModal();
         await loadSupplierAccountData(); // Reload all data to reflect changes
 
@@ -663,7 +699,8 @@ async function handlePaymentMadeSubmit(event) {
 
 function openEditSupplierModal() {
     if (!currentSupplierData) {
-        alert("Supplier data not loaded yet. Please wait and try again.");
+         if (!currentSupplierId) return; // Error already shown
+        alert("Supplier data not loaded yet or failed to load. Cannot edit.");
         return;
     }
     clearError('editSupplierError'); // Clear previous errors
@@ -705,7 +742,7 @@ async function handleEditSupplierSubmit(event) {
         gstNo: editSupplierGstInput.value.trim().toUpperCase(),
         address: editSupplierAddressInput.value.trim(),
          // Keep track of the last update time
-         // updatedAt: serverTimestamp() // Use serverTimestamp for accuracy
+         updatedAt: serverTimestamp() // Use serverTimestamp for accuracy
     };
 
      // Basic Validation (Example)
@@ -743,20 +780,72 @@ async function handleEditSupplierSubmit(event) {
 // --- Global Initialization Function ---
 window.initializeSupplierDetailPage = async () => {
     console.log("Initializing Supplier Detail Page (Global Function)...");
-    currentSupplierId = getSupplierIdFromUrl();
-    if (!currentSupplierId) { displayError("Supplier ID missing. Cannot load details."); return; }
-    console.log("Supplier ID:", currentSupplierId);
-    if (typeof db === 'undefined' || !db) { displayError("Database connection failed."); return; }
-    await loadSupplierAccountData(db);
+    // Clear previous errors on re-init
+    clearError();
+    clearError('paymentMadeError');
+    clearError('editSupplierError');
+
+    currentSupplierId = getSupplierIdFromUrl(); // Function now uses 'id'
+    if (!currentSupplierId) {
+        displayError("Supplier ID missing in URL. Cannot load details.");
+        // Hide main content sections if ID is missing?
+        const detailsSection = document.querySelector('.info-grid');
+        const transactionsSection = document.querySelector('.card.table-card');
+        if(detailsSection) detailsSection.style.display = 'none';
+        if(transactionsSection) transactionsSection.style.display = 'none';
+        if(supplierNameHeader) supplierNameHeader.textContent = "Error";
+        if(supplierNameBreadcrumb) supplierNameBreadcrumb.textContent = "Invalid Supplier";
+        return;
+    }
+    console.log("Supplier ID found in URL:", currentSupplierId);
+
+    // Ensure sections are visible if previously hidden
+    const detailsSection = document.querySelector('.info-grid');
+    const transactionsSection = document.querySelector('.card.table-card');
+    if(detailsSection) detailsSection.style.display = 'grid'; // Or 'flex', depends on your CSS
+    if(transactionsSection) transactionsSection.style.display = 'block'; // Or 'flex'
+
+
+    if (typeof db === 'undefined' || !db) {
+        displayError("Database connection failed."); return;
+    }
+
+    await loadSupplierAccountData(); // Pass db implicitely via global scope (or pass explicitly)
     setupEventListeners();
-    if (paymentDateInput) { try { const today=new Date(); const y=today.getFullYear(); const m=(today.getMonth()+1).toString().padStart(2,'0'); const d=today.getDate().toString().padStart(2,'0'); paymentDateInput.value=`${y}-${m}-${d}`; } catch(e){} }
+
+    // Set default date for payment modal (might be better inside openPaymentMadeModal)
+    if (paymentDateInput) {
+        try {
+             const today=new Date();
+             const y=today.getFullYear();
+             const m=(today.getMonth()+1).toString().padStart(2,'0');
+             const d=today.getDate().toString().padStart(2,'0');
+             paymentDateInput.value=`${y}-${m}-${d}`;
+         } catch(e){ console.error("Error setting default payment date:", e); }
+     }
+
     console.log("Supplier Detail Page Initialized via global function.");
     window.supplierDetailPageInitialized = true;
 };
 
 // --- Auto-initialize ---
-if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', () => { if (!window.supplierDetailPageInitialized) { window.initializeSupplierDetailPage(); } }); }
-else { if (!window.supplierDetailPageInitialized) { window.initializeSupplierDetailPage(); } }
+// Ensures initialization runs even if script loads after DOMContentLoaded
+let initializationAttempted = false;
+function attemptInitialization() {
+    if (!initializationAttempted && (document.readyState === 'interactive' || document.readyState === 'complete')) {
+         console.log(`DOM ready state is: ${document.readyState}. Initializing page...`);
+         initializationAttempted = true; // Prevent multiple runs
+         if (!window.supplierDetailPageInitialized) { // Double check flag just in case
+            window.initializeSupplierDetailPage();
+         }
+    }
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', attemptInitialization);
+} else {
+    attemptInitialization(); // Already loaded or interactive
+}
 // --- End Auto-initialize ---
 
-console.log("supplier_account_detail.js loaded and running (Edit + PO Link Logic).");
+console.log("supplier_account_detail.js loaded and running (Edit + PO Link Logic + URL ID Fix).");
