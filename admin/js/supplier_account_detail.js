@@ -1,23 +1,25 @@
 // js/supplier_account_detail.js
-// Version with Edit Supplier Modal Logic, PO Link Logic Added, and URL ID fix
+// संस्करण: प्रमाणीकरण लॉगिंग और बेहतर त्रुटि प्रबंधन शामिल है
 
-// --- Import Firebase functions directly ---
-import { db } from './firebase-init.js'; // Use relative path from within JS folder
+// --- Firebase फ़ंक्शन सीधे आयात करें ---
+import { db, auth } from './firebase-init.js'; // <<< auth को यहां आयात करना सुनिश्चित करें
 import {
     doc, getDoc, collection, query, where, getDocs, orderBy, Timestamp,
-    addDoc, serverTimestamp, updateDoc // <<< updateDoc शामिल है
+    addDoc, serverTimestamp, updateDoc, runTransaction
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js"; // <<< Auth स्थिति परिवर्तन सुनने के लिए
 
-// --- Global Variables ---
+// --- ग्लोबल वेरिएबल्स ---
 let currentSupplierId = null;
-let currentSupplierData = null;
+let currentSupplierData = null; // सप्लायर का पूरा डेटा स्टोर करने के लिए
+let purchaseOrdersData = []; // लोड किए गए POs को स्टोर करने के लिए
 
-// --- DOM References ---
-// (IDs should match your supplier_account_detail.html file)
+// --- DOM रेफरेंसेस ---
+// (IDs आपकी supplier_account_detail.html फ़ाइल से मेल खानी चाहिए)
 const supplierNameHeader = document.getElementById('supplierNameHeader');
-const supplierNameBreadcrumb = document.getElementById('supplierNameBreadcrumb');
+const supplierNameBreadcrumb = document.getElementById('supplierNameBreadcrumb'); // अगर ब्रेडक्रम्ब है
 const addPaymentMadeBtn = document.getElementById('addPaymentMadeBtn');
-const editSupplierDetailsBtn = document.getElementById('editSupplierDetailsBtn'); // Button to open edit modal
+const editSupplierDetailsBtn = document.getElementById('editSupplierDetailsBtn'); // संपादन मोड खोलने के लिए बटन
 
 // Supplier Details Display Elements
 const detailSupplierId = document.getElementById('detailSupplierId');
@@ -26,77 +28,95 @@ const detailSupplierCompany = document.getElementById('detailSupplierCompany');
 const detailSupplierWhatsapp = document.getElementById('detailSupplierWhatsapp');
 const detailSupplierEmail = document.getElementById('detailSupplierEmail');
 const detailSupplierGst = document.getElementById('detailSupplierGst');
-const detailSupplierAddress = document.getElementById('detailSupplierAddress');
-const detailCreatedAt = document.getElementById('detailCreatedAt');
-const detailTotalAmount = document.getElementById('detailTotalAmount');
-const detailPaidAmount = document.getElementById('detailPaidAmount');
-const detailPendingAmount = document.getElementById('detailPendingAmount');
+const detailSupplierAddress = document.getElementById('detailSupplierAddress'); // <<< Address ID जोड़ा गया
+const detailAddedOn = document.getElementById('detailAddedOn'); // <<< Added On ID जोड़ा गया
 
-// Transactions Table
-const transactionsTableBody = document.getElementById('transactionsTableBody');
-const transactionsLoading = document.getElementById('transactionsLoading');
-const noTransactionsMessage = document.getElementById('noTransactionsMessage');
+// Account Summary Display Elements
+const totalPoValueDisplay = document.getElementById('totalPoValue');
+const totalPaymentsMadeDisplay = document.getElementById('totalPaymentsMade');
+const outstandingBalanceDisplay = document.getElementById('outstandingBalance');
 
-// Payment Made Modal Elements
+// Payment Modal Elements
 const paymentMadeModal = document.getElementById('paymentMadeModal');
-const closePaymentMadeModalBtn = document.getElementById('closePaymentMadeModalBtn');
 const paymentMadeForm = document.getElementById('paymentMadeForm');
-const paymentAmountInput = document.getElementById('paymentAmount');
 const paymentDateInput = document.getElementById('paymentDate');
-const paymentModeInput = document.getElementById('paymentMode');
+const paymentAmountInput = document.getElementById('paymentAmount');
+const paymentMethodInput = document.getElementById('paymentMethod');
 const paymentNotesInput = document.getElementById('paymentNotes');
-const paymentLinkPOSelect = document.getElementById('paymentLinkPOSelect'); // Dropdown for PO link
-const paymentMadeError = document.getElementById('paymentMadeError'); // Error display for payment modal
-const paymentSupplierName = document.getElementById('paymentSupplierName');
+const poLinkDropdown = document.getElementById('poLink'); // PO लिंक ड्रॉपडाउन
+const closePaymentModalBtn = document.getElementById('closePaymentModalBtn');
+const paymentErrorDiv = document.getElementById('paymentError'); // पेमेंट फॉर्म में एरर के लिए
+
+// Transaction History Elements
+const supplierPaymentList = document.getElementById('supplierPaymentList'); // पेमेंट लिस्ट tbody
+const supplierPaymentListError = document.getElementById('supplierPaymentListError'); // पेमेंट लिस्ट एरर मैसेज
 
 // Edit Supplier Modal Elements
 const editSupplierModal = document.getElementById('editSupplierModal');
-const closeEditSupplierBtn = document.getElementById('closeEditSupplierBtn'); // Top 'x' button
-const cancelEditSupplierBtn = document.getElementById('cancelEditSupplierBtn'); // Bottom 'Cancel' button
 const editSupplierForm = document.getElementById('editSupplierForm');
-const editingSupplierIdInput = document.getElementById('editingSupplierId');
 const editSupplierNameInput = document.getElementById('editSupplierNameInput');
 const editSupplierCompanyInput = document.getElementById('editSupplierCompanyInput');
 const editSupplierContactInput = document.getElementById('editSupplierContactInput');
 const editSupplierEmailInput = document.getElementById('editSupplierEmailInput');
 const editSupplierGstInput = document.getElementById('editSupplierGstInput');
 const editSupplierAddressInput = document.getElementById('editSupplierAddressInput');
-const editSupplierError = document.getElementById('editSupplierError');
+const editingSupplierIdInput = document.getElementById('editingSupplierId'); // हिडन इनपुट ID के लिए
+const updateSupplierBtn = document.getElementById('updateSupplierBtn');
+const cancelEditSupplierBtn = document.getElementById('cancelEditSupplierBtn');
+const editSupplierErrorDiv = document.getElementById('editSupplierError'); // संपादन फॉर्म में एरर के लिए
 
-// --- Utility Functions ---
+// Loading Indicator
+const loadingIndicator = document.getElementById('loadingIndicator'); // <<< लोडिंग इंडिकेटर
 
-// ***** UPDATED FUNCTION *****
+// --- Helper Functions ---
+function displayError(message, elementId = 'generalError') {
+    console.error("Displaying Error:", message);
+    const errorElement = document.getElementById(elementId) || document.getElementById('supplierPaymentListError'); // Fallback
+    if (errorElement) {
+        errorElement.textContent = message;
+        errorElement.style.display = 'block';
+    } else {
+        alert(`Error: ${message}`); // Fallback alert
+    }
+    // Hide specific list errors if a general error occurs
+    if (elementId === 'generalError' && supplierPaymentListError) {
+         supplierPaymentListError.style.display = 'none';
+    }
+}
+
+function clearError(elementId = 'generalError') {
+    const errorElement = document.getElementById(elementId) || document.getElementById('supplierPaymentListError');
+    if (errorElement) {
+        errorElement.textContent = '';
+        errorElement.style.display = 'none';
+    }
+    if (supplierPaymentListError) supplierPaymentListError.style.display = 'none'; // Clear payment list error too
+    if (paymentErrorDiv) paymentErrorDiv.style.display = 'none';
+    if (editSupplierErrorDiv) editSupplierErrorDiv.style.display = 'none';
+}
+
 function getSupplierIdFromUrl() {
     const params = new URLSearchParams(window.location.search);
-    // Look for 'id' parameter instead of 'supplierId'
-    return params.get('id'); // <-- यह बदली हुई लाइन है
+    return params.get('id');
 }
-// ***** END OF UPDATED FUNCTION *****
 
 function formatDate(timestamp) {
     if (!timestamp) return 'N/A';
     try {
-        // Assuming timestamp is a Firebase Timestamp object
+        // Firestore Timestamp को JavaScript Date ऑब्जेक्ट में बदलें
         const date = timestamp.toDate();
-        const day = String(date.getDate()).padStart(2, '0');
-        const month = String(date.getMonth() + 1).padStart(2, '0'); // Months are 0-based
-        const year = date.getFullYear();
-        return `${day}/${month}/${year}`;
+        const options = { year: 'numeric', month: 'short', day: 'numeric' }; // , hour: '2-digit', minute: '2-digit' };
+        return date.toLocaleDateString('en-IN', options);
     } catch (e) {
-        console.error("Error formatting date:", e, timestamp);
-        // Fallback for potential string or number timestamps (adjust if needed)
-        if (typeof timestamp === 'string' || typeof timestamp === 'number') {
-            try {
-                const date = new Date(timestamp);
-                const day = String(date.getDate()).padStart(2, '0');
-                const month = String(date.getMonth() + 1).padStart(2, '0');
-                const year = date.getFullYear();
-                return `${day}/${month}/${year}`;
-            } catch (innerE) {
-                 return 'Invalid Date';
-            }
+        console.error("Error formatting date:", timestamp, e);
+        // अगर यह पहले से ही Date ऑब्जेक्ट या स्ट्रिंग है
+        try {
+            const date = new Date(timestamp);
+             const options = { year: 'numeric', month: 'short', day: 'numeric' };
+             return date.toLocaleDateString('en-IN', options);
+        } catch (e2) {
+             return 'Invalid Date';
         }
-        return 'Invalid Date';
     }
 }
 
@@ -104,748 +124,523 @@ function formatCurrency(amount) {
     if (typeof amount !== 'number') {
         amount = parseFloat(amount);
     }
-    return isNaN(amount) ? '₹0.00' : `₹${amount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-}
-
-function displayError(message, elementId = 'generalErrorDisplay') {
-    // TODO: Implement a more robust error display mechanism if needed
-    console.error("Display Error:", message);
-    const errorElement = document.getElementById(elementId);
-    if (errorElement) {
-        errorElement.textContent = message;
-        errorElement.style.display = 'block';
-        errorElement.style.color = 'red'; // Basic styling
-        errorElement.style.marginBottom = '15px';
-    } else {
-        // Fallback if specific error element doesn't exist
-        // Find a general error area or use alert
-        const generalErrorArea = document.querySelector('.error-message-area'); // Add a div with this class to your HTML
-        if (generalErrorArea) {
-            generalErrorArea.textContent = message;
-            generalErrorArea.style.display = 'block';
-        } else {
-            alert(`Error: ${message}`); // Last resort
-        }
+    if (isNaN(amount)) {
+        return '₹ N/A';
     }
+    return `₹ ${amount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
-function clearError(elementId = 'generalErrorDisplay') {
-    const errorElement = document.getElementById(elementId);
-    if (errorElement) {
-        errorElement.textContent = '';
-        errorElement.style.display = 'none';
-    }
-     // Also clear general error area if used
-     const generalErrorArea = document.querySelector('.error-message-area');
-     if (generalErrorArea) {
-         generalErrorArea.textContent = '';
-         generalErrorArea.style.display = 'none';
-     }
-}
-
-
-// --- Core Data Loading Functions ---
-
-// Load Supplier Details
-async function loadSupplierDetails(supplierId) {
-    if (!db) { displayError("Firestore not initialized."); return null; }
-    if (!supplierId) { displayError("Supplier ID not provided."); return null; } // This check should now pass
-
-    console.log("Attempting to load details for supplier ID:", supplierId); // Add log
-
+// --- Core Data Loading Function ---
+async function loadSupplierAccountData(dbInstance) {
+    // <<< --- प्रमाणीकरण स्थिति जांच --- >>>
+    console.log("loadSupplierAccountData: Checking Auth Status...");
     try {
-        const supplierRef = doc(db, "suppliers", supplierId);
-        const docSnap = await getDoc(supplierRef);
-
-        if (docSnap.exists()) {
-            console.log("Supplier Data found:", docSnap.data());
-            return { id: docSnap.id, ...docSnap.data() };
-        } else {
-            displayError(`Supplier with ID ${supplierId} not found.`);
-            // Optionally redirect or display a more prominent error
-            if(supplierNameHeader) supplierNameHeader.textContent = "Supplier Not Found";
-            if(supplierNameBreadcrumb) supplierNameBreadcrumb.textContent = "Not Found";
-            return null;
-        }
-    } catch (error) {
-        console.error("Error getting supplier document:", error);
-        displayError("Failed to load supplier details. Please try again.");
-        return null;
-    }
-}
-
-// Load Supplier Transactions (PO Payments)
-async function loadSupplierTransactions(supplierId) {
-     if (!db) { displayError("Firestore not initialized."); return []; } // Return empty array on error
-     if (!supplierId) { displayError("Supplier ID not provided for transactions."); return []; }
-
-    transactionsLoading.style.display = 'block';
-    noTransactionsMessage.style.display = 'none';
-    transactionsTableBody.innerHTML = ''; // Clear previous transactions
-
-    try {
-        const paymentsRef = collection(db, "supplierPayments");
-        // Query payments made TO this specific supplier
-        const q = query(paymentsRef, where("supplierId", "==", supplierId), orderBy("paymentDate", "desc"));
-        const querySnapshot = await getDocs(q);
-
-        const transactions = [];
-        querySnapshot.forEach((doc) => {
-            transactions.push({ id: doc.id, ...doc.data() });
+        // सुनो कि क्या auth तैयार है
+        await new Promise((resolve, reject) => {
+             const unsubscribe = onAuthStateChanged(auth, (user) => {
+                 unsubscribe(); // Listener हटा दें
+                 resolve(user);
+             }, (error) => {
+                 reject(error);
+             });
+             // टाइमआउट जोड़ें अगर auth कभी रेडी नहीं होता है
+             setTimeout(() => reject(new Error("Auth state check timed out")), 5000);
         });
 
-        console.log("Supplier Transactions:", transactions);
-        return transactions;
+        console.log("Current Auth User (after check):", auth.currentUser); // <<< यह लाइन महत्वपूर्ण है
+        if (!auth.currentUser) {
+            console.error("USER NOT LOGGED IN according to auth.currentUser!");
+            displayError("User not authenticated. Please log in to view details.");
+            if (loadingIndicator) loadingIndicator.style.display = 'none';
+            return; // आगे न बढ़ें
+        } else {
+             console.log("User authenticated with UID:", auth.currentUser.uid);
+        }
+    } catch (authError) {
+        console.error("Error checking auth status:", authError);
+        displayError(`Authentication check failed: ${authError.message}`);
+         if (loadingIndicator) loadingIndicator.style.display = 'none';
+        return; // आगे न बढ़ें
+    }
+    // <<< --- प्रमाणीकरण स्थिति जांच समाप्त --- >>>
+
+    if (!currentSupplierId) {
+         console.error("Supplier ID is missing when loadSupplierAccountData is called.");
+         displayError("Supplier ID missing.");
+         if (loadingIndicator) loadingIndicator.style.display = 'none';
+         return;
+    }
+    if (!dbInstance) {
+         console.error("Firestore dbInstance is not available!");
+         displayError("Database connection failed.");
+          if (loadingIndicator) loadingIndicator.style.display = 'none';
+         return;
+    }
+
+    console.log(`Loading account data for ID: ${currentSupplierId}`);
+    if (loadingIndicator) loadingIndicator.style.display = 'block';
+    clearError(); // पिछली एरर साफ करें
+
+    let supplierData = null;
+    let payments = [];
+    let purchaseOrders = [];
+    let paymentSum = 0;
+    let poSum = 0;
+
+    try {
+        // 1. सप्लायर डिटेल्स लोड करें
+        console.log(`Attempting to load details for supplier ID: ${currentSupplierId}`);
+        const supplierRef = doc(dbInstance, "suppliers", currentSupplierId);
+        const supplierSnap = await getDoc(supplierRef);
+
+        if (supplierSnap.exists()) {
+            supplierData = { id: supplierSnap.id, ...supplierSnap.data() };
+            currentSupplierData = supplierData; // ग्लोबल वेरिएबल में सेव करें
+            console.log("Supplier Data found:", supplierData);
+            populateSupplierDetails(supplierData);
+        } else {
+            console.error("Supplier not found with ID:", currentSupplierId);
+            displayError("Supplier not found.");
+             if (loadingIndicator) loadingIndicator.style.display = 'none';
+            return; // सप्लायर नहीं मिला तो आगे नहीं बढ़ सकते
+        }
+
+        // 2. सप्लायर पेमेंट्स लोड करें (जहां एरर आ रहा था)
+        console.log("Attempting to load supplier payments...");
+        const paymentsQuery = query(
+            collection(dbInstance, "supplier_payments"), // सही कलेक्शन नाम
+            where("supplierId", "==", currentSupplierId), // सुनिश्चित करें 'supplierId' फ़ील्ड मौजूद है
+            orderBy("paymentDate", "desc")             // सुनिश्चित करें 'paymentDate' फ़ील्ड मौजूद है
+        );
+        // क्वेरी करने से ठीक पहले प्रमाणीकरण की फिर से जाँच करें (डीबगिंग के लिए)
+        console.log("Auth status just before payment query:", auth.currentUser ? auth.currentUser.uid : 'null');
+
+        const paymentsSnapshot = await getDocs(paymentsQuery); // <<-- यहीं पर एरर आता है
+        console.log(`Successfully queried supplier payments. Found ${paymentsSnapshot.docs.length} payments.`);
+
+        payments = paymentsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        paymentSum = payments.reduce((sum, payment) => sum + (parseFloat(payment.paymentAmount) || 0), 0);
+        populatePaymentHistory(payments);
+
+        // 3. सप्लायर Purchase Orders (POs) लोड करें
+        console.log("Attempting to load supplier POs...");
+        const poQuery = query(
+            collection(dbInstance, "purchaseOrders"), // सही कलेक्शन नाम 'purchaseOrders'
+            where("supplierId", "==", currentSupplierId) // सुनिश्चित करें 'supplierId' फ़ील्ड मौजूद है
+            // orderBy("orderDate", "desc") // यदि आवश्यक हो तो सॉर्ट करें
+        );
+        const poSnapshot = await getDocs(poQuery);
+        console.log(`Successfully queried purchase orders. Found ${poSnapshot.docs.length} POs.`);
+        purchaseOrders = poSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        purchaseOrdersData = purchaseOrders; // ड्रॉपडाउन के लिए सेव करें
+        poSum = purchaseOrders.reduce((sum, po) => sum + (parseFloat(po.totalAmount) || 0), 0);
+        // POs को यहां टेबल में नहीं दिखा रहे हैं, केवल सारांश के लिए उपयोग कर रहे हैं
+
+        // 4. खाता सारांश अपडेट करें
+        console.log("Calculating Summary - POs:", { count: purchaseOrders.length, totalAmount: poSum });
+        console.log("Calculating Summary - Payments:", { count: payments.length, totalPaid: paymentSum });
+        updateAccountSummary(poSum, paymentSum, supplierData.pendingAmount); // सप्लायर के डेटा से पेंडिंग अमाउंट लें (अगर है)
+
+        // 5. PO ड्रॉपडाउन पॉप्युलेट करें (पेमेंट मोड के लिए)
+        populatePoDropdown(purchaseOrders);
+
 
     } catch (error) {
-        console.error("Error getting supplier transactions:", error);
-        displayError("Failed to load transaction history.");
-        return []; // Return empty array on error
+        console.error("Error in loadSupplierAccountData:", error);
+        if (error.code === 'permission-denied' || (error.message && error.message.toLowerCase().includes("permission"))) {
+             console.error("PERMISSION DENIED - Check Firestore rules AND authentication status!");
+             displayError("Failed to load data due to permissions. Ensure you are logged in and rules are correct.");
+             // विशेष रूप से पेमेंट लिस्ट के लिए एरर दिखाएं
+             if (supplierPaymentListError) {
+                supplierPaymentListError.textContent = "Failed to load transaction history due to permissions.";
+                supplierPaymentListError.style.display = 'block';
+             }
+        } else if (error.message && error.message.toLowerCase().includes("index")) {
+             console.error("MISSING INDEX - Firestore likely requires an index for this query. Check the console error details for a link to create it.");
+             displayError("Database query error: Missing index. Please contact support.");
+        } else if (error.message && error.message.toLowerCase().includes("auth state check timed out")) {
+             displayError("Authentication check failed. Please try refreshing the page or logging in again.");
+        }
+         else {
+            displayError(`Error loading supplier data: ${error.message}`);
+        }
     } finally {
-         transactionsLoading.style.display = 'none';
-    }
-}
-
-// Load Supplier Purchase Orders (for summary calculation)
-async function loadSupplierPOs(supplierId) {
-    if (!db) { displayError("Firestore not initialized."); return []; }
-    if (!supplierId) { displayError("Supplier ID not provided for POs."); return []; }
-
-    try {
-        const posRef = collection(db, "purchaseOrders");
-        // Query POs created FOR this supplier
-        const q = query(posRef, where("supplierId", "==", supplierId));
-        const querySnapshot = await getDocs(q);
-
-        const pos = [];
-        querySnapshot.forEach((doc) => {
-            pos.push({ id: doc.id, ...doc.data() });
-        });
-
-        console.log("Supplier POs:", pos);
-        return pos;
-
-    } catch (error) {
-        console.error("Error getting supplier POs:", error);
-        displayError("Failed to load purchase order history.");
-        return []; // Return empty array on error
+        if (loadingIndicator) loadingIndicator.style.display = 'none';
+        console.log("loadSupplierAccountData finished.");
     }
 }
 
 
-// --- UI Update Functions ---
+// --- UI Population Functions ---
+function populateSupplierDetails(data) {
+    if (!data) return;
+    console.log("Populating supplier details for:", data.name);
+    if (supplierNameHeader) supplierNameHeader.textContent = data.name || 'Supplier Account';
+    if (supplierNameBreadcrumb) supplierNameBreadcrumb.textContent = data.name || 'Details'; // अगर ब्रेडक्रम्ब है
 
-function updateSupplierDetailsUI(supplierData) {
-    if (!supplierData) {
-        // Handle case where supplier data couldn't be loaded
-        if (supplierNameHeader) supplierNameHeader.textContent = "Supplier Details";
-        if (supplierNameBreadcrumb) supplierNameBreadcrumb.textContent = "Error Loading";
-        // Clear or hide detail fields
-        if (detailSupplierId) detailSupplierId.textContent = 'N/A';
-        if (detailSupplierName) detailSupplierName.textContent = 'N/A';
-        if (detailSupplierCompany) detailSupplierCompany.textContent = 'N/A';
-        if (detailSupplierWhatsapp) detailSupplierWhatsapp.textContent = 'N/A';
-        if (detailSupplierEmail) detailSupplierEmail.textContent = 'N/A';
-        if (detailSupplierGst) detailSupplierGst.textContent = 'N/A';
-        if (detailSupplierAddress) detailSupplierAddress.textContent = 'N/A';
-        if (detailCreatedAt) detailCreatedAt.textContent = 'N/A';
+    if (detailSupplierId) detailSupplierId.textContent = data.id || 'N/A';
+    if (detailSupplierName) detailSupplierName.textContent = data.name || 'N/A';
+    if (detailSupplierCompany) detailSupplierCompany.textContent = data.company || 'N/A';
+    if (detailSupplierWhatsapp) detailSupplierWhatsapp.textContent = data.contact || 'N/A'; // Assume contact is WhatsApp
+    if (detailSupplierEmail) detailSupplierEmail.textContent = data.email || 'N/A';
+    if (detailSupplierGst) detailSupplierGst.textContent = data.gstNo || 'N/A';
+    if (detailSupplierAddress) detailSupplierAddress.textContent = data.address || 'N/A';
+    if (detailAddedOn) detailAddedOn.textContent = data.addedOn ? formatDate(data.addedOn) : 'N/A';
+}
+
+function populatePaymentHistory(payments) {
+    if (!supplierPaymentList) return;
+    supplierPaymentList.innerHTML = ''; // पुरानी लिस्ट साफ करें
+    if (payments.length === 0) {
+        supplierPaymentList.innerHTML = '<tr><td colspan="5">No payments recorded yet.</td></tr>';
+        if (supplierPaymentListError) supplierPaymentListError.style.display = 'none'; // कोई एरर नहीं है अगर लिस्ट खाली है
         return;
     }
 
-     // Update header and breadcrumb
-    if(supplierNameHeader) supplierNameHeader.textContent = `Supplier Account: ${supplierData.name || 'N/A'}`;
-    if(supplierNameBreadcrumb) supplierNameBreadcrumb.textContent = supplierData.name || 'N/A';
+    if (supplierPaymentListError) supplierPaymentListError.style.display = 'none'; // अगर पेमेंट्स हैं तो एरर छिपाएं
 
-    // Update detail fields
-    if (detailSupplierId) detailSupplierId.textContent = supplierData.id || 'N/A';
-    if (detailSupplierName) detailSupplierName.textContent = supplierData.name || 'N/A';
-    if (detailSupplierCompany) detailSupplierCompany.textContent = supplierData.companyName || 'N/A';
-
-    // Format WhatsApp link (basic example)
-    if (detailSupplierWhatsapp) {
-        if (supplierData.contactNo) {
-             // Basic formatting check, can be improved
-            const whatsappNumber = supplierData.contactNo.replace(/[^0-9]/g, '');
-            detailSupplierWhatsapp.innerHTML = `<a href="https://wa.me/${whatsappNumber}" target="_blank">${supplierData.contactNo} <i class="fab fa-whatsapp"></i></a>`;
-        } else {
-            detailSupplierWhatsapp.textContent = 'N/A';
+    payments.forEach(payment => {
+        const row = supplierPaymentList.insertRow();
+        row.insertCell(0).textContent = payment.id || 'N/A'; // या एक बेहतर पेमेंट ID दिखाएं
+        row.insertCell(1).textContent = formatDate(payment.paymentDate);
+        row.insertCell(2).textContent = formatCurrency(payment.paymentAmount);
+        row.insertCell(3).textContent = payment.paymentMethod || 'N/A';
+        // PO लिंक को संभालें
+        const poCell = row.insertCell(4);
+        if (payment.linkedPoId && payment.linkedPoNumber) {
+            // लिंक बनाएं अगर ID और नंबर दोनों मौजूद हैं
+             poCell.innerHTML = `<a href="purchase_order_detail.html?id=${payment.linkedPoId}" title="View PO Details">${payment.linkedPoNumber}</a>`;
+             // आप चाहें तो यहां poCell.textContent = payment.linkedPoNumber; भी रख सकते हैं अगर लिंक नहीं बनाना
+        } else if (payment.linkedPoNumber) {
+            poCell.textContent = payment.linkedPoNumber; // केवल नंबर दिखाएं अगर ID नहीं है
         }
-    }
-
-    if (detailSupplierEmail) {
-        if (supplierData.email) {
-            detailSupplierEmail.innerHTML = `<a href="mailto:${supplierData.email}">${supplierData.email}</a>`;
-        } else {
-            detailSupplierEmail.textContent = 'N/A';
+         else {
+             poCell.textContent = 'N/A';
         }
-    }
-
-    if (detailSupplierGst) detailSupplierGst.textContent = supplierData.gstNo || 'N/A';
-    if (detailSupplierAddress) detailSupplierAddress.textContent = supplierData.address || 'N/A';
-    if (detailCreatedAt) detailCreatedAt.textContent = formatDate(supplierData.createdAt);
+        // row.insertCell(5).textContent = payment.notes || '-'; // नोट्स अगर दिखाना चाहें
+    });
 }
 
-function updateTransactionsTable(transactions) {
-    transactionsTableBody.innerHTML = ''; // Clear existing rows
+function updateAccountSummary(poTotal, paymentTotal, pendingFromSupplierDoc = null) {
+    if (totalPoValueDisplay) totalPoValueDisplay.textContent = formatCurrency(poTotal);
+    if (totalPaymentsMadeDisplay) totalPaymentsMadeDisplay.textContent = formatCurrency(paymentTotal);
 
-    if (!transactions || transactions.length === 0) {
-        noTransactionsMessage.style.display = 'table-row';
-        return;
+    // बकाया राशि की गणना: PO Total - Payment Total
+    // या सप्लायर डॉक्यूमेंट से सीधे पेंडिंग अमाउंट लें अगर वह अधिक विश्वसनीय है
+    let outstanding = 0;
+    if (pendingFromSupplierDoc !== null && !isNaN(parseFloat(pendingFromSupplierDoc))) {
+        outstanding = parseFloat(pendingFromSupplierDoc);
+        console.log("Using pending amount from supplier document:", outstanding);
+    } else {
+         outstanding = poTotal - paymentTotal;
+         console.log("Calculated pending amount (PO Total - Payment Total):", outstanding);
     }
 
-    noTransactionsMessage.style.display = 'none';
+    if (outstandingBalanceDisplay) outstandingBalanceDisplay.textContent = formatCurrency(outstanding);
+}
 
-    transactions.forEach(tx => {
-        const row = transactionsTableBody.insertRow();
-        // Ensure consistent data access (e.g., tx.paymentDate or tx.date)
-        const paymentDate = tx.paymentDate || tx.createdAt; // Use paymentDate if available, else createdAt
-        const description = tx.notes || tx.description || 'Payment Recorded'; // Default description
-        const amount = tx.amountPaid || tx.amount || 0; // Ensure amount field is consistent
-        const mode = tx.paymentMode || 'N/A';
-        const linkedPO = tx.linkedPoId ? `PO-${tx.linkedPoId.substring(0, 6)}...` : 'N/A'; // Display linked PO ID concisely
+function populatePoDropdown(pos) {
+    if (!poLinkDropdown) return;
+    poLinkDropdown.innerHTML = '<option value="">None (Direct Payment)</option>'; // डिफ़ॉल्ट ऑप्शन
 
-        row.insertCell().textContent = formatDate(paymentDate);
-        row.insertCell().textContent = description;
-        row.insertCell().textContent = mode;
-        row.insertCell().textContent = linkedPO; // Add cell for Linked PO
-        const amountCell = row.insertCell();
-        amountCell.textContent = formatCurrency(amount);
-        amountCell.classList.add('amount-paid'); // Add class for styling (assuming this class exists in CSS)
-         // Add action cell if needed (e.g., view details, delete - implement logic separately)
-        // row.insertCell().innerHTML = `<button class="button small-button" onclick="viewTransaction('${tx.id}')">View</button>`;
-         row.insertCell().textContent = ''; // Placeholder for actions
+    // केवल 'Pending' या 'Partially Paid' POs दिखाएं
+    const relevantPOs = pos.filter(po =>
+        po.status === 'Pending' || po.status === 'Partially Paid'
+    );
+
+    if (relevantPOs.length === 0) {
+         poLinkDropdown.innerHTML += '<option value="" disabled>No pending POs found</option>';
+         return;
+    }
+
+    relevantPOs.forEach(po => {
+        const option = document.createElement('option');
+        option.value = po.id; // PO ID को वैल्यू बनाएं
+        // ऑप्शन टेक्स्ट में PO नंबर और बकाया राशि दिखाएं
+        const amountDue = (parseFloat(po.totalAmount) || 0) - (parseFloat(po.amountPaid) || 0);
+        option.textContent = `${po.poNumber || po.id} (Due: ${formatCurrency(amountDue)})`;
+        // अतिरिक्त डेटा स्टोर करें यदि आवश्यक हो (जैसे PO नंबर)
+        option.dataset.poNumber = po.poNumber || '';
+        option.dataset.totalAmount = po.totalAmount || 0;
+        option.dataset.amountPaid = po.amountPaid || 0;
+        poLinkDropdown.appendChild(option);
     });
 }
 
 
-function calculateAndDisplaySummary(pos, transactions) {
-    console.log("Calculating Summary - POs:", pos, "Transactions:", transactions);
-    let totalAmountFromPOs = 0;
-    let totalPaidAmount = 0;
-
-    // Calculate total amount from all POs for this supplier
-    if (Array.isArray(pos)) {
-        pos.forEach(po => {
-            totalAmountFromPOs += parseFloat(po.totalAmount || 0);
-        });
-    }
-
-    // Calculate total amount paid from transactions
-    if (Array.isArray(transactions)) {
-        transactions.forEach(tx => {
-            totalPaidAmount += parseFloat(tx.amountPaid || tx.amount || 0);
-        });
-    }
-
-    const pendingAmount = totalAmountFromPOs - totalPaidAmount;
-
-    console.log("Summary Calculation - Total PO Amount:", totalAmountFromPOs, "Total Paid:", totalPaidAmount, "Pending:", pendingAmount);
-
-    if (detailTotalAmount) detailTotalAmount.textContent = formatCurrency(totalAmountFromPOs);
-    if (detailPaidAmount) detailPaidAmount.textContent = formatCurrency(totalPaidAmount);
-    if (detailPendingAmount) {
-        detailPendingAmount.textContent = formatCurrency(pendingAmount);
-        // Optionally add styling based on pending amount
-        detailPendingAmount.style.color = pendingAmount > 0 ? 'var(--danger-color)' : 'var(--success-color)';
-    }
-
-     return { totalAmountFromPOs, totalPaidAmount, pendingAmount };
-}
-
-// --- Main Data Loading Orchestration ---
-async function loadSupplierAccountData() {
-    // Clear previous errors first
-    clearError(); // Clear general errors
-    clearError('paymentMadeError');
-    clearError('editSupplierError');
-
-
-    if (!currentSupplierId || !db) {
-        console.error("Cannot load data: Supplier ID or DB missing.");
-        // Error already displayed by initializeSupplierDetailPage if ID is missing
-        return;
-    }
-    console.log("Loading account data for ID:", currentSupplierId);
-
+// --- Event Handlers ---
+function openPaymentModal() {
+    if (!paymentMadeModal) return;
+    clearError('paymentError'); // पुराना एरर साफ करें
+    paymentMadeForm.reset(); // फॉर्म रीसेट करें
+    // ड्रॉपडाउन को नवीनतम POs से री-पॉप्युलेट करें (अगर आवश्यक हो)
+    populatePoDropdown(purchaseOrdersData);
+     // आज की तारीख सेट करें
     try {
-        // Load data concurrently
-        const [supplierData, transactions, pos] = await Promise.all([
-            loadSupplierDetails(currentSupplierId),
-            loadSupplierTransactions(currentSupplierId),
-            loadSupplierPOs(currentSupplierId) // Load POs for summary
-        ]);
+        const today = new Date();
+        const year = today.getFullYear();
+        const month = (today.getMonth() + 1).toString().padStart(2, '0');
+        const day = today.getDate().toString().padStart(2, '0');
+        if (paymentDateInput) paymentDateInput.value = `${year}-${month}-${day}`;
+    } catch(e) { console.error("Error setting default payment date", e); }
 
-        console.log("Data fetched:", { supplierData, transactions, pos });
-
-        currentSupplierData = supplierData; // Store for later use (e.g., modals)
-
-        // Update UI sections
-        updateSupplierDetailsUI(supplierData);
-        updateTransactionsTable(transactions);
-
-        // Calculate and display summary using fetched POs and Transactions
-        const summary = calculateAndDisplaySummary(pos, transactions);
-        console.log("Final Account Summary Calculated and Displayed:", summary);
-
-
-    } catch (error) {
-        console.error("Error loading supplier account data:", error);
-        displayError("An error occurred while loading the supplier account details. Please check the console and try again.");
-        // Optionally clear UI fields on major error
-        updateSupplierDetailsUI(null);
-        updateTransactionsTable([]);
-        calculateAndDisplaySummary([], []);
-    }
+    paymentMadeModal.style.display = 'block';
 }
 
-
-// --- Event Listeners Setup ---
-function setupEventListeners() {
-    // Button to open "Record Payment Made" modal
-    if (addPaymentMadeBtn) {
-        addPaymentMadeBtn.addEventListener('click', openPaymentMadeModal);
-    }
-
-    // Close "Record Payment Made" modal
-    if (closePaymentMadeModalBtn) {
-        closePaymentMadeModalBtn.addEventListener('click', closePaymentMadeModal);
-    }
-     if (paymentMadeModal) {
-        paymentMadeModal.addEventListener('click', (event) => {
-            if (event.target === paymentMadeModal) { // Click outside the content
-                closePaymentMadeModal();
-            }
-        });
-    }
-
-    // Handle "Record Payment Made" form submission
-    if (paymentMadeForm) {
-        paymentMadeForm.addEventListener('submit', handlePaymentMadeSubmit);
-    }
-
-    // Button to open "Edit Supplier" modal
-    if (editSupplierDetailsBtn) {
-        editSupplierDetailsBtn.addEventListener('click', openEditSupplierModal);
-    }
-
-    // Close "Edit Supplier" modal (using 'x' and 'Cancel' buttons)
-    if (closeEditSupplierBtn) {
-        closeEditSupplierBtn.addEventListener('click', closeEditSupplierModal);
-    }
-    if (cancelEditSupplierBtn) {
-        cancelEditSupplierBtn.addEventListener('click', closeEditSupplierModal);
-    }
-     if (editSupplierModal) {
-        editSupplierModal.addEventListener('click', (event) => {
-            if (event.target === editSupplierModal) { // Click outside the content
-                closeEditSupplierModal();
-            }
-        });
-    }
-
-     // Handle "Edit Supplier" form submission
-     if (editSupplierForm) {
-        editSupplierForm.addEventListener('submit', handleEditSupplierSubmit);
-     }
-
-    console.log("Event Listeners Setup.");
-}
-
-
-// --- PAYMENT MADE MODAL LOGIC ---
-
-// Function to load POs for the payment link dropdown
-async function loadPOsForPaymentLink(supplierId) {
-    console.log("Loading supplier POs data for PaymentLink dropdown...", supplierId);
-    paymentLinkPOSelect.innerHTML = '<option value="">-- Loading POs --</option>';
-    paymentLinkPOSelect.disabled = true;
-    let poList = [];
-    try {
-        if (!db) throw new Error("Firestore db instance is not available.");
-        if (!supplierId) throw new Error("Supplier ID is missing for PO query."); // This check should now pass
-
-        const q = query(collection(db, "purchaseOrders"),
-                      where("supplierId", "==", supplierId),
-                      where("paymentStatus", "!=", "Paid")
-                      // orderBy("orderDate", "desc") // <-- orderBy is still commented out from Step 2
-                     );
-
-        console.log("Executing Simplified Query for Payment Link:", q); // Log the query being executed
-
-        const querySnapshot = await getDocs(q);
-        querySnapshot.forEach((doc) => {
-             // Include only relevant info for the dropdown
-             const poData = doc.data();
-             poList.push({
-                 id: doc.id,
-                 poNumber: poData.poNumber || `PO-${doc.id.substring(0,4)}`, // Use poNumber field if exists
-                 totalAmount: poData.totalAmount || 0,
-                 orderDate: poData.orderDate
-             });
-        });
-
-        console.log("Supplier POs Data (for PaymentLink):", poList);
-
-        if (poList.length > 0) {
-            // Sort POs by date if needed (since orderBy is removed from query)
-            poList.sort((a, b) => (b.orderDate?.toDate?.() || 0) - (a.orderDate?.toDate?.() || 0));
-
-            paymentLinkPOSelect.innerHTML = '<option value="">-- Select PO (Optional) --</option>'; // Default option
-             poList.forEach(po => {
-                const option = document.createElement('option');
-                option.value = po.id;
-                // Display PO number, date, and amount
-                option.textContent = `${po.poNumber} (${formatDate(po.orderDate)}) - ${formatCurrency(po.totalAmount)}`;
-                paymentLinkPOSelect.appendChild(option);
-            });
-             paymentLinkPOSelect.disabled = false; // Enable dropdown
-        } else {
-           paymentLinkPOSelect.innerHTML = '<option value="">-- No open POs found --</option>';
-           paymentLinkPOSelect.disabled = true;
-        }
-    } catch (error) {
-        console.error("Error loading POs for payment link:", error);
-        paymentLinkPOSelect.innerHTML = '<option value="">-- Error loading POs --</option>';
-         paymentLinkPOSelect.disabled = true; // Keep disabled on error
-    }
-}
-
-
-async function openPaymentMadeModal() {
-    if (!currentSupplierData) {
-        // Check if the ID is missing - error already shown during page load
-        if (!currentSupplierId) return;
-        // If ID exists but data failed to load for other reasons
-        displayError("Cannot record payment: Supplier data not loaded or failed to load.", 'paymentMadeError');
-        return;
-    }
-    clearError('paymentMadeError'); // Clear previous errors
-    paymentMadeForm.reset(); // Reset form fields
-     // Set default date to today if needed
-     if (paymentDateInput && !paymentDateInput.value) {
-        try {
-             const today = new Date();
-             const year = today.getFullYear();
-             const month = (today.getMonth() + 1).toString().padStart(2, '0');
-             const day = today.getDate().toString().padStart(2, '0');
-             paymentDateInput.value = `${year}-${month}-${day}`;
-         } catch(e) { console.error("Error setting default date:", e); }
-     }
-    if (paymentSupplierName) {
-        paymentSupplierName.textContent = currentSupplierData.name || 'Supplier';
-    }
-    // Load POs for the dropdown *before* showing the modal
-    // Ensure currentSupplierId has a valid value here
-    if (currentSupplierId) {
-        await loadPOsForPaymentLink(currentSupplierId); // Pass current supplier ID
-    } else {
-         console.error("Cannot load POs, supplier ID is still missing when opening payment modal.");
-         paymentLinkPOSelect.innerHTML = '<option value="">-- Error (Missing Supplier ID) --</option>';
-         paymentLinkPOSelect.disabled = true;
-    }
-
-    if (paymentMadeModal) paymentMadeModal.style.display = 'flex';
-}
-
-function closePaymentMadeModal() {
+function closePaymentModal() {
     if (paymentMadeModal) paymentMadeModal.style.display = 'none';
-    clearError('paymentMadeError');
 }
 
-// Function to update PO status after payment is linked
-async function updatePOPaymentStatus(poId, paymentId, amountJustPaid) {
-     if (!db || !poId || !paymentId || typeof amountJustPaid !== 'number') {
-        console.error("Missing data for PO status update:", { poId, paymentId, amountJustPaid });
-        return false; // Indicate failure
-    }
-     console.log(`Updating PO ${poId} after payment ${paymentId} of amount ${amountJustPaid}`);
-    try {
-        const poRef = doc(db, "purchaseOrders", poId);
-        const poSnap = await getDoc(poRef);
-
-        if (!poSnap.exists()) {
-            console.error(`PO ${poId} not found for updating payment status.`);
-            return false;
-        }
-
-        const poData = poSnap.data();
-        const currentPaidAmount = parseFloat(poData.paidAmount || 0);
-        const totalAmount = parseFloat(poData.totalAmount || 0);
-
-        const newPaidAmount = currentPaidAmount + amountJustPaid;
-        let newPaymentStatus = 'Partially Paid';
-        // Use a small tolerance for floating point comparisons
-        if (newPaidAmount >= totalAmount - 0.001) {
-            newPaymentStatus = 'Paid';
-        }
-
-        // Prepare update data
-        const updateData = {
-            paidAmount: newPaidAmount,
-            paymentStatus: newPaymentStatus,
-            // Optionally, store references to payments linked to this PO
-            // linkedPaymentIds: arrayUnion(paymentId) // Use arrayUnion to add paymentId to an array
-        };
-
-        await updateDoc(poRef, updateData);
-        console.log(`PO ${poId} status updated successfully. New status: ${newPaymentStatus}, Paid Amount: ${newPaidAmount}`);
-        return true; // Indicate success
-
-    } catch (error) {
-        console.error(`Error updating PO ${poId} payment status:`, error);
-        // Maybe display a specific error to the user?
-        return false; // Indicate failure
-    }
-}
-
-
-async function handlePaymentMadeSubmit(event) {
+async function handleSavePayment(event) {
     event.preventDefault();
-    clearError('paymentMadeError');
-    if (!db || !currentSupplierId) {
-        displayError("Database connection or Supplier ID missing.", 'paymentMadeError');
+    if (!currentSupplierId) {
+        displayError("Supplier ID not set.", 'paymentError');
+        return;
+    }
+    clearError('paymentError');
+
+    const paymentData = {
+        supplierId: currentSupplierId,
+        supplierName: currentSupplierData?.name || 'N/A', // सप्लायर का नाम जोड़ें
+        paymentAmount: parseFloat(paymentAmountInput.value),
+        paymentDate: Timestamp.fromDate(new Date(paymentDateInput.value + "T00:00:00")), // टाइमज़ोन समस्या से बचने के लिए
+        paymentMethod: paymentMethodInput.value,
+        notes: paymentNotesInput.value || '',
+        linkedPoId: poLinkDropdown.value || null, // लिंक किए गए PO की ID
+        linkedPoNumber: poLinkDropdown.selectedOptions[0]?.dataset?.poNumber || null, // लिंक किए गए PO का नंबर
+        createdAt: serverTimestamp() // रिकॉर्ड बनाने का समय
+    };
+
+    if (isNaN(paymentData.paymentAmount) || paymentData.paymentAmount <= 0) {
+        displayError("Please enter a valid positive payment amount.", 'paymentError');
+        return;
+    }
+    if (!paymentData.paymentDate || isNaN(paymentData.paymentDate.toDate())) {
+        displayError("Please select a valid payment date.", 'paymentError');
+        return;
+    }
+     if (!paymentData.paymentMethod) {
+        displayError("Please select a payment method.", 'paymentError');
         return;
     }
 
-    const amountPaid = parseFloat(paymentAmountInput.value);
-    const paymentDateStr = paymentDateInput.value; // YYYY-MM-DD format
-    const paymentMode = paymentModeInput.value;
-    const notes = paymentNotesInput.value.trim();
-    const linkedPoId = paymentLinkPOSelect.value; // Get selected PO ID
-
-    // Basic Validation
-    if (isNaN(amountPaid) || amountPaid <= 0) {
-        displayError("Please enter a valid positive payment amount.", 'paymentMadeError');
-        return;
-    }
-    if (!paymentDateStr) {
-        displayError("Please select a payment date.", 'paymentMadeError');
-        return;
-    }
-     if (!paymentMode) {
-        displayError("Please select a payment mode.", 'paymentMadeError');
-        return;
-    }
-
-
-    // Convert date string to Firebase Timestamp
-    let paymentDateTimestamp;
-    try {
-        // Important: Create date in UTC to avoid timezone issues if possible,
-        // or ensure consistent handling based on your needs.
-        // new Date(YYYY, MM-1, DD) - Month is 0-indexed
-        const dateParts = paymentDateStr.split('-');
-        const year = parseInt(dateParts[0], 10);
-        const month = parseInt(dateParts[1], 10) - 1; // Adjust month index
-        const day = parseInt(dateParts[2], 10);
-        // Ensure the date is treated as local, avoid potential UTC shift from just new Date(string)
-        const localDate = new Date(Date.UTC(year, month, day));
-        paymentDateTimestamp = Timestamp.fromDate(localDate);
-
-    } catch (e) {
-         console.error("Error parsing payment date:", e);
-         displayError("Invalid payment date format.", 'paymentMadeError');
-         return;
-    }
-
-    console.log("Payment Data:", { amountPaid, paymentDateTimestamp, paymentMode, notes, linkedPoId });
-
-    // TODO: Add loading indicator / disable submit button
-    const submitButton = paymentMadeForm.querySelector('button[type="submit"]');
-    if(submitButton) submitButton.disabled = true;
-
+    console.log("Saving Payment:", paymentData);
+    const saveButton = paymentMadeForm.querySelector('button[type="submit"]');
+    saveButton.disabled = true;
+    saveButton.textContent = 'Saving...';
 
     try {
-        // 1. Add payment document to supplierPayments collection
-        const paymentData = {
-            supplierId: currentSupplierId,
-            supplierName: currentSupplierData?.name || 'Unknown', // Store supplier name for easier display
-            amountPaid: amountPaid,
-            paymentDate: paymentDateTimestamp,
-            paymentMode: paymentMode,
-            notes: notes,
-            linkedPoId: linkedPoId || null, // Store linked PO ID, or null if none
-            createdAt: serverTimestamp() // Record when the payment was logged
-        };
-        const newPaymentRef = await addDoc(collection(db, "supplierPayments"), paymentData);
-        console.log("Payment recorded successfully with ID:", newPaymentRef.id);
+        await runTransaction(db, async (transaction) => {
+            // 1. नया पेमेंट डॉक्यूमेंट बनाएं
+            const paymentRef = doc(collection(db, "supplier_payments")); // नया रेफेरेंस बनाएं
+            transaction.set(paymentRef, paymentData); // ट्रांजेक्शन में सेट करें
 
-         // 2. If a PO was linked, update the PO's payment status
-         let poUpdateSuccess = true; // Assume success if no PO linked
-         if (linkedPoId) {
-             poUpdateSuccess = await updatePOPaymentStatus(linkedPoId, newPaymentRef.id, amountPaid);
-              if (!poUpdateSuccess) {
-                 // Log error, maybe inform user? Payment is saved, but PO link failed.
-                 console.warn(`Payment ${newPaymentRef.id} saved, but failed to update linked PO ${linkedPoId}. Manual update might be needed.`);
-                 // Optionally display a non-blocking warning to the user
-                 displayError("Payment saved, but failed to update linked PO status.", 'paymentMadeError'); // Inform user
-             }
-         }
+            // 2. अगर PO लिंक किया गया है, तो PO को अपडेट करें
+            if (paymentData.linkedPoId) {
+                const poRef = doc(db, "purchaseOrders", paymentData.linkedPoId);
+                const poDoc = await transaction.get(poRef); // ट्रांजेक्शन में पढ़ें
 
-        // 3. Reload data and close modal on success (or partial success if PO update failed)
-        closePaymentMadeModal();
-        await loadSupplierAccountData(); // Reload all data to reflect changes
+                if (!poDoc.exists()) {
+                    throw new Error(`Linked Purchase Order with ID ${paymentData.linkedPoId} not found.`);
+                }
+
+                const poData = poDoc.data();
+                const currentPaid = parseFloat(poData.amountPaid) || 0;
+                const totalAmount = parseFloat(poData.totalAmount) || 0;
+                const newPaidAmount = currentPaid + paymentData.paymentAmount;
+
+                let newStatus = poData.status;
+                if (newPaidAmount >= totalAmount) {
+                    newStatus = 'Paid';
+                } else if (newPaidAmount > 0) {
+                    newStatus = 'Partially Paid';
+                }
+
+                console.log(`Updating PO ${paymentData.linkedPoId}: New Paid Amount: ${newPaidAmount}, New Status: ${newStatus}`);
+                transaction.update(poRef, {
+                    amountPaid: newPaidAmount,
+                    status: newStatus,
+                    lastPaymentDate: paymentData.paymentDate // अंतिम पेमेंट की तारीख अपडेट करें
+                });
+            }
+
+            // 3. सप्लायर के पेंडिंग अमाउंट को अपडेट करें (वैकल्पिक लेकिन अनुशंसित)
+            const supplierRef = doc(db, "suppliers", currentSupplierId);
+            const supplierDoc = await transaction.get(supplierRef); // ट्रांजेक्शन में पढ़ें
+            if (supplierDoc.exists()) {
+                const currentPending = parseFloat(supplierDoc.data().pendingAmount) || 0;
+                // मान लें कि पेंडिंग अमाउंट से पेमेंट घटाना है
+                // नोट: यह गणना जटिल हो सकती है अगर PO वैल्यू शामिल नहीं है
+                // बेहतर होगा अगर आप केवल PO टोटल और पेमेंट टोटल से गणना करें
+                // फिलहाल, हम केवल दिखाने के लिए इसे अपडेट नहीं कर रहे हैं, आप इसे अपनी लॉजिक के अनुसार जोड़ सकते हैं
+                // const newPendingAmount = currentPending - paymentData.paymentAmount;
+                // transaction.update(supplierRef, { pendingAmount: newPendingAmount });
+                console.log("Supplier pending amount update skipped in this transaction example.");
+            }
+        });
+
+        console.log("Payment saved successfully and PO updated (if linked).");
+        closePaymentModal();
+        // डेटा को रीफ्रेश करें ताकि अपडेटेड पेमेंट और सारांश दिखे
+        await loadSupplierAccountData(db);
 
     } catch (error) {
         console.error("Error saving payment:", error);
-        displayError(`Failed to save payment: ${error.message}`, 'paymentMadeError');
+        displayError(`Failed to save payment: ${error.message}`, 'paymentError');
     } finally {
-         // Re-enable submit button
-         if(submitButton) submitButton.disabled = false;
+        saveButton.disabled = false;
+        saveButton.textContent = 'Save Payment';
     }
 }
 
+
 // --- EDIT SUPPLIER MODAL LOGIC ---
-
 function openEditSupplierModal() {
-    if (!currentSupplierData) {
-         if (!currentSupplierId) return; // Error already shown
-        alert("Supplier data not loaded yet or failed to load. Cannot edit.");
-        return;
+    if (!editSupplierModal || !currentSupplierData) {
+         console.error("Edit modal or supplier data not available.");
+         return;
     }
-    clearError('editSupplierError'); // Clear previous errors
+    clearError('editSupplierError'); // पिछला एरर साफ करें
 
-    // Populate the form with current supplier data
-    editingSupplierIdInput.value = currentSupplierId; // Store ID in hidden field
+    // मौजूदा डेटा से फॉर्म भरें
     editSupplierNameInput.value = currentSupplierData.name || '';
-    editSupplierCompanyInput.value = currentSupplierData.companyName || '';
-    editSupplierContactInput.value = currentSupplierData.contactNo || '';
+    editSupplierCompanyInput.value = currentSupplierData.company || '';
+    editSupplierContactInput.value = currentSupplierData.contact || '';
     editSupplierEmailInput.value = currentSupplierData.email || '';
     editSupplierGstInput.value = currentSupplierData.gstNo || '';
     editSupplierAddressInput.value = currentSupplierData.address || '';
+    editingSupplierIdInput.value = currentSupplierId; // हिडन इनपुट में ID सेट करें
 
-    if (editSupplierModal) editSupplierModal.style.display = 'flex';
+    editSupplierModal.style.display = 'block';
 }
 
 function closeEditSupplierModal() {
     if (editSupplierModal) editSupplierModal.style.display = 'none';
-    clearError('editSupplierError');
 }
 
-async function handleEditSupplierSubmit(event) {
+async function handleUpdateSupplier(event) {
     event.preventDefault();
     clearError('editSupplierError');
-    if (!db) { displayError("Database not initialized.", 'editSupplierError'); return; }
-
     const supplierIdToUpdate = editingSupplierIdInput.value;
+
     if (!supplierIdToUpdate) {
-        displayError("Cannot update: Supplier ID is missing.", 'editSupplierError');
+        displayError("Supplier ID missing. Cannot update.", 'editSupplierError');
         return;
     }
 
-    // Get updated data from form
     const updatedData = {
         name: editSupplierNameInput.value.trim(),
-        companyName: editSupplierCompanyInput.value.trim(),
-        contactNo: editSupplierContactInput.value.trim(),
-        email: editSupplierEmailInput.value.trim().toLowerCase(),
-        gstNo: editSupplierGstInput.value.trim().toUpperCase(),
+        company: editSupplierCompanyInput.value.trim(),
+        contact: editSupplierContactInput.value.trim(),
+        email: editSupplierEmailInput.value.trim(),
+        gstNo: editSupplierGstInput.value.trim(),
         address: editSupplierAddressInput.value.trim(),
-         // Keep track of the last update time
-         updatedAt: serverTimestamp() // Use serverTimestamp for accuracy
+        // आप चाहें तो lastUpdated फ़ील्ड भी जोड़ सकते हैं:
+        // lastUpdated: serverTimestamp()
     };
 
-     // Basic Validation (Example)
-    if (!updatedData.name) { displayError("Supplier Name cannot be empty.", 'editSupplierError'); return; }
-    if (updatedData.email && !/\S+@\S+\.\S+/.test(updatedData.email)) { // Basic email format check
-         displayError("Please enter a valid email address.", 'editSupplierError');
-         return;
-     }
-      // Add more validation as needed (e.g., GST format, phone number format)
+    if (!updatedData.name) {
+         displayError("Supplier name is required.", 'editSupplierError');
+        return;
+    }
 
-
-     // TODO: Add loading indicator / disable submit button
-     const submitButton = editSupplierForm.querySelector('#updateSupplierBtn');
-     if(submitButton) submitButton.disabled = true;
+    console.log("Updating supplier:", supplierIdToUpdate, "with data:", updatedData);
+    updateSupplierBtn.disabled = true;
+    updateSupplierBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Updating...';
 
     try {
         const supplierRef = doc(db, "suppliers", supplierIdToUpdate);
-        await updateDoc(supplierRef, updatedData); // Use updateDoc to update fields
+        await updateDoc(supplierRef, updatedData);
 
-        console.log("Supplier updated successfully:", supplierIdToUpdate);
-        closeEditSupplierModal(); // Close modal on success
-        await loadSupplierAccountData(); // Reload data to show changes
+        console.log("Supplier updated successfully!");
+        closeEditSupplierModal();
+        // पेज पर डेटा रीफ्रेश करें
+        await loadSupplierAccountData(db);
 
     } catch (error) {
         console.error("Error updating supplier:", error);
         displayError(`Failed to update supplier: ${error.message}`, 'editSupplierError');
     } finally {
-         // Re-enable submit button
-         if(submitButton) submitButton.disabled = false;
+        updateSupplierBtn.disabled = false;
+        updateSupplierBtn.innerHTML = '<i class="fas fa-save"></i> Update Supplier';
     }
 }
 // --- EDIT SUPPLIER MODAL LOGIC END ---
 
 
+// --- Event Listeners Setup ---
+function setupEventListeners() {
+    // Payment Modal Buttons
+    if (addPaymentMadeBtn) addPaymentMadeBtn.addEventListener('click', openPaymentModal);
+    if (closePaymentModalBtn) closePaymentModalBtn.addEventListener('click', closePaymentModal);
+    if (paymentMadeModal) paymentMadeModal.addEventListener('click', (event) => { if (event.target === paymentMadeModal) closePaymentModal(); }); // पृष्ठभूमि क्लिक
+    if (paymentMadeForm) paymentMadeForm.addEventListener('submit', handleSavePayment);
+
+    // Edit Supplier Modal Buttons
+    if (editSupplierDetailsBtn) editSupplierDetailsBtn.addEventListener('click', openEditSupplierModal);
+    if (cancelEditSupplierBtn) cancelEditSupplierBtn.addEventListener('click', closeEditSupplierModal);
+    if (editSupplierModal) editSupplierModal.addEventListener('click', (event) => { if (event.target === editSupplierModal) closeEditSupplierModal(); }); // पृष्ठभूमि क्लिक
+    if (editSupplierForm) editSupplierForm.addEventListener('submit', handleUpdateSupplier);
+
+    console.log("Supplier detail event listeners setup.");
+}
+
+
 // --- Global Initialization Function ---
 window.initializeSupplierDetailPage = async () => {
     console.log("Initializing Supplier Detail Page (Global Function)...");
-    // Clear previous errors on re-init
-    clearError();
-    clearError('paymentMadeError');
-    clearError('editSupplierError');
-
-    currentSupplierId = getSupplierIdFromUrl(); // Function now uses 'id'
+    currentSupplierId = getSupplierIdFromUrl();
     if (!currentSupplierId) {
-        displayError("Supplier ID missing in URL. Cannot load details.");
-        // Hide main content sections if ID is missing?
-        const detailsSection = document.querySelector('.info-grid');
-        const transactionsSection = document.querySelector('.card.table-card');
-        if(detailsSection) detailsSection.style.display = 'none';
-        if(transactionsSection) transactionsSection.style.display = 'none';
-        if(supplierNameHeader) supplierNameHeader.textContent = "Error";
-        if(supplierNameBreadcrumb) supplierNameBreadcrumb.textContent = "Invalid Supplier";
-        return;
+         console.error("Supplier ID missing from URL.");
+         displayError("Supplier ID missing. Cannot load details.");
+         return;
     }
-    console.log("Supplier ID found in URL:", currentSupplierId);
+    console.log("Supplier ID from URL:", currentSupplierId);
 
-    // Ensure sections are visible if previously hidden
-    const detailsSection = document.querySelector('.info-grid');
-    const transactionsSection = document.querySelector('.card.table-card');
-    if(detailsSection) detailsSection.style.display = 'grid'; // Or 'flex', depends on your CSS
-    if(transactionsSection) transactionsSection.style.display = 'block'; // Or 'flex'
-
-
-    if (typeof db === 'undefined' || !db) {
-        displayError("Database connection failed."); return;
+    // सुनिश्चित करें कि db परिभाषित है और फिर डेटा लोड करें
+    if (typeof db !== 'undefined' && db) {
+        await loadSupplierAccountData(db); // डेटा लोड करें (जिसमें प्रमाणीकरण जांच शामिल है)
+    } else {
+        console.error("Firestore db instance is not available during initialization!");
+        displayError("Database connection failed. Please refresh.");
+        return; // आगे न बढ़ें अगर db नहीं है
     }
 
-    await loadSupplierAccountData(); // Pass db implicitely via global scope (or pass explicitly)
+    // इवेंट लिस्टनर्स केवल डेटा लोड होने के बाद सेट करें (या जरूरत के अनुसार पहले)
     setupEventListeners();
 
-    // Set default date for payment modal (might be better inside openPaymentMadeModal)
+    // आज की तारीख पेमेंट मोड में सेट करें (अगर इनपुट मौजूद है)
     if (paymentDateInput) {
-        try {
-             const today=new Date();
-             const y=today.getFullYear();
-             const m=(today.getMonth()+1).toString().padStart(2,'0');
-             const d=today.getDate().toString().padStart(2,'0');
-             paymentDateInput.value=`${y}-${m}-${d}`;
-         } catch(e){ console.error("Error setting default payment date:", e); }
+         try {
+             const today = new Date();
+             const y = today.getFullYear();
+             const m = (today.getMonth() + 1).toString().padStart(2, '0');
+             const d = today.getDate().toString().padStart(2, '0');
+             paymentDateInput.value = `${y}-${m}-${d}`;
+         } catch (e) {
+             console.warn("Could not set default payment date", e);
+         }
      }
 
     console.log("Supplier Detail Page Initialized via global function.");
-    window.supplierDetailPageInitialized = true;
+    window.supplierDetailPageInitialized = true; // फ्लैग सेट करें कि इनिशियलाइज़ेशन हो गया है
 };
 
 // --- Auto-initialize ---
-// Ensures initialization runs even if script loads after DOMContentLoaded
-let initializationAttempted = false;
-function attemptInitialization() {
-    if (!initializationAttempted && (document.readyState === 'interactive' || document.readyState === 'complete')) {
-         console.log(`DOM ready state is: ${document.readyState}. Initializing page...`);
-         initializationAttempted = true; // Prevent multiple runs
-         if (!window.supplierDetailPageInitialized) { // Double check flag just in case
-            window.initializeSupplierDetailPage();
-         }
-    }
-}
-
+// सुनिश्चित करें कि पेज लोड होने पर इनिशियलाइज़ेशन फंक्शन कॉल हो
+// DOMContentLoaded का उपयोग करना सुरक्षित है
 if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', attemptInitialization);
+    document.addEventListener('DOMContentLoaded', () => {
+        if (!window.supplierDetailPageInitialized) { // दोबारा इनिशियलाइज़ेशन से बचें
+             window.initializeSupplierDetailPage();
+        }
+    });
 } else {
-    attemptInitialization(); // Already loaded or interactive
+     // DOM पहले से ही लोड हो चुका है
+     if (!window.supplierDetailPageInitialized) { // दोबारा इनिशियलाइज़ेशन से बचें
+        window.initializeSupplierDetailPage();
+    }
 }
 // --- End Auto-initialize ---
 
-console.log("supplier_account_detail.js loaded and running (Edit + PO Link Logic + URL ID Fix).");
+console.log("supplier_account_detail.js loaded and running (Auth Logging Added).");
