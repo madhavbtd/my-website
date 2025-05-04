@@ -5,13 +5,14 @@ let currentSupplierId = null;
 let currentSupplierData = null;
 
 // --- DOM References ---
+// Ensure these IDs match your supplier_account_detail.html file
 // Header/Breadcrumb
 const supplierNameHeader = document.getElementById('supplierNameHeader');
 const supplierNameBreadcrumb = document.getElementById('supplierNameBreadcrumb');
 
 // Action Buttons
 const addPaymentMadeBtn = document.getElementById('addPaymentMadeBtn');
-const editSupplierDetailsBtn = document.getElementById('editSupplierDetailsBtn'); // Placeholder for edit functionality
+const editSupplierDetailsBtn = document.getElementById('editSupplierDetailsBtn');
 
 // Supplier Info Box
 const detailSupplierId = document.getElementById('detailSupplierId');
@@ -37,7 +38,7 @@ const supplierPaymentsTableBody = document.getElementById('supplierPaymentsTable
 const supplierPaymentLoading = document.getElementById('supplierPaymentLoading');
 const supplierPaymentListError = document.getElementById('supplierPaymentListError');
 
-// Add Payment Modal
+// Add Payment Modal Elements (Get references now for Step 4)
 const addPaymentModal = document.getElementById('addPaymentModal');
 const closePaymentModalBtn = document.getElementById('closePaymentModal');
 const cancelPaymentBtn = document.getElementById('cancelPaymentBtn');
@@ -51,30 +52,32 @@ const savePaymentBtn = document.getElementById('savePaymentBtn');
 const paymentFormError = document.getElementById('paymentFormError');
 
 // --- Utility Functions ---
-// (Copied from supplier_management.js - ensure consistency or use utils.js)
+// (These should ideally be in a shared utils.js file, but including here for now)
 function escapeHtml(unsafe) { if (typeof unsafe !== 'string') { try { unsafe = String(unsafe ?? ''); } catch (e) { unsafe = ''; } } return unsafe.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;"); }
 function formatCurrency(amount) { const num = Number(amount); if (isNaN(num)) return 'N/A'; return num.toLocaleString('en-IN', { style: 'currency', currency: 'INR', minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
 function formatDate(timestamp) { if (!timestamp || typeof timestamp.toDate !== 'function') return '-'; try { return timestamp.toDate().toLocaleDateString('en-GB'); } catch (e) { console.error("Error formatting date:", e); return '-'; } }
 
 // --- Show/Hide Loading/Error ---
 function setLoadingState(tableBody, loadingRow, errorDiv, isLoading, message = 'Loading...') {
+    if (!tableBody || !loadingRow || !errorDiv) return;
     if (isLoading) {
-        if (tableBody) tableBody.innerHTML = ''; // Clear previous data
-        if (loadingRow) {
-             loadingRow.style.display = 'table-row';
-             loadingRow.querySelector('td').innerHTML = `<i class="fas fa-spinner fa-spin"></i> ${escapeHtml(message)}`;
+        tableBody.innerHTML = ''; // Clear previous data
+        loadingRow.style.display = 'table-row';
+        const loadingCell = loadingRow.querySelector('td');
+        if (loadingCell) {
+             loadingCell.innerHTML = `<i class="fas fa-spinner fa-spin"></i> ${escapeHtml(message)}`;
         }
-        if(errorDiv) errorDiv.style.display = 'none';
+        errorDiv.style.display = 'none';
     } else {
-        if (loadingRow) loadingRow.style.display = 'none';
+        loadingRow.style.display = 'none';
     }
 }
 function setSummaryLoadingState(isLoading){
      const loadingText = '<span class="loading-state">Calculating...</span>';
-     if(summaryTotalPoValue) summaryTotalPoValue.innerHTML = isLoading ? loadingText : '₹ 0.00';
-     if(summaryTotalPaid) summaryTotalPaid.innerHTML = isLoading ? loadingText : '₹ 0.00';
+     if(summaryTotalPoValue) summaryTotalPoValue.innerHTML = isLoading ? loadingText : formatCurrency(0);
+     if(summaryTotalPaid) summaryTotalPaid.innerHTML = isLoading ? loadingText : formatCurrency(0);
      if(summaryBalance) {
-        summaryBalance.innerHTML = isLoading ? loadingText : '₹ 0.00';
+        summaryBalance.innerHTML = isLoading ? loadingText : formatCurrency(0);
         summaryBalance.className = 'balance-info loading-state'; // Reset class
      }
 }
@@ -94,25 +97,27 @@ async function initializeSupplierDetailPage(user) {
 
     if (!currentSupplierId) {
         console.error("Supplier ID missing from URL.");
-        document.getElementById('detailMainContent').innerHTML = "<p class='error-message'>Error: Supplier ID not found in URL. Please go back to the supplier list and select a supplier.</p>";
+        document.getElementById('detailMainContent').innerHTML = "<p class='error-message' style='padding:20px;'>Error: Supplier ID not found in URL. Please go back to the supplier list and select a supplier.</p>";
         return;
     }
 
     console.log("Supplier ID:", currentSupplierId);
-
-    // Setup basic event listeners (modal open/close, etc.)
+    // Setup basic event listeners
     setupDetailEventListeners();
-
     // Load all data for this supplier
     await loadSupplierAccountData();
 }
-window.initializeSupplierDetailPage = initializeSupplierDetailPage; // Make it accessible globally
+// Make it accessible globally for the HTML script block
+window.initializeSupplierDetailPage = initializeSupplierDetailPage;
 
 
 // --- Data Loading ---
 async function loadSupplierAccountData() {
-    if (!currentSupplierId || !window.db) {
-        console.error("Missing Supplier ID or DB connection for loading data.");
+    if (!currentSupplierId || !window.db || !window.doc || !window.getDoc) {
+        console.error("Missing Supplier ID or DB functions for loading data.");
+        showError(supplierPoListError, "Initialization error."); // Show error in a visible place
+        showError(supplierPaymentListError, "Initialization error.");
+        setSummaryLoadingState(false);
         return;
     }
 
@@ -120,20 +125,24 @@ async function loadSupplierAccountData() {
     setLoadingState(supplierPoTableBody, supplierPoLoading, supplierPoListError, true, 'Loading POs...');
     setLoadingState(supplierPaymentsTableBody, supplierPaymentLoading, supplierPaymentListError, true, 'Loading payments...');
     setSummaryLoadingState(true);
-
+    // Clear supplier detail fields initially
+     displaySupplierDetails({}); // Pass empty object to clear fields
 
     try {
         // 1. Fetch Supplier Details
+        console.log(`Workspaceing details for supplier ID: ${currentSupplierId}`);
         const supplierRef = window.doc(window.db, "suppliers", currentSupplierId);
         const supplierSnap = await window.getDoc(supplierRef);
 
         if (!supplierSnap.exists()) {
-            throw new Error("Supplier not found.");
+            throw new Error(`Supplier with ID ${currentSupplierId} not found.`);
         }
         currentSupplierData = { id: supplierSnap.id, ...supplierSnap.data() };
-        displaySupplierDetails(currentSupplierData);
+        console.log("Supplier Data:", currentSupplierData);
+        displaySupplierDetails(currentSupplierData); // Display supplier details
 
         // 2. Fetch POs and Payments concurrently
+        console.log("Fetching POs and Payments concurrently...");
         const [poResult, paymentResult] = await Promise.allSettled([
             loadSupplierPOs(),
             loadSupplierPayments()
@@ -142,17 +151,26 @@ async function loadSupplierAccountData() {
         let poTotal = 0;
         if (poResult.status === 'fulfilled') {
             poTotal = poResult.value; // Function returns the total PO value
+            console.log("PO Total Value:", poTotal);
         } else {
             console.error("Failed to load POs:", poResult.reason);
-            showError(supplierPoListError, `Error loading POs: ${poResult.reason.message}`);
+            showError(supplierPoListError, `Error loading POs: ${poResult.reason.message || 'Unknown error'}`);
         }
 
         let paidTotal = 0;
         if (paymentResult.status === 'fulfilled') {
             paidTotal = paymentResult.value; // Function returns the total paid amount
+            console.log("Total Payments Made:", paidTotal);
         } else {
             console.error("Failed to load payments:", paymentResult.reason);
-            showError(supplierPaymentListError, `Error loading payments: ${paymentResult.reason.message}`);
+             // Handle specific index error for payments
+             if (paymentResult.reason.code === 'failed-precondition') {
+                 const errorMsg = `Error: Firestore index missing for 'supplier_payments'. Please create index on 'supplierId' (asc) and 'paymentDate' (desc).`;
+                 console.error(errorMsg);
+                 showError(supplierPaymentListError, errorMsg);
+             } else {
+                 showError(supplierPaymentListError, `Error loading payments: ${paymentResult.reason.message || 'Unknown error'}`);
+             }
         }
 
         // 3. Calculate and Display Balance
@@ -162,7 +180,10 @@ async function loadSupplierAccountData() {
 
     } catch (error) {
         console.error("Error loading supplier account data:", error);
-        document.getElementById('detailMainContent').innerHTML = `<p class='error-message'>Error loading supplier data: ${error.message}</p>`;
+        const mainContentArea = document.getElementById('detailMainContent');
+        if(mainContentArea){
+            mainContentArea.innerHTML = `<p class='error-message' style='padding:20px;'>Error loading supplier data: ${escapeHtml(error.message)}</p>`;
+        }
         setSummaryLoadingState(false); // Hide loading state even on error
     }
 }
@@ -171,9 +192,10 @@ function displaySupplierDetails(supplierData) {
     const name = escapeHtml(supplierData.name || 'N/A');
     if(supplierNameHeader) supplierNameHeader.textContent = name;
     if(supplierNameBreadcrumb) supplierNameBreadcrumb.textContent = name;
-    document.title = `Account - ${name}`; // Update page title
+    document.title = `Account - ${name}`;
 
-    if(detailSupplierId) detailSupplierId.textContent = escapeHtml(supplierData.id);
+    // Clear previous loading state by setting text content
+    if(detailSupplierId) detailSupplierId.textContent = escapeHtml(supplierData.id || 'N/A');
     if(detailSupplierName) detailSupplierName.textContent = name;
     if(detailSupplierCompany) detailSupplierCompany.textContent = escapeHtml(supplierData.companyName || '-');
     if(detailSupplierWhatsapp) detailSupplierWhatsapp.textContent = escapeHtml(supplierData.whatsappNo || '-');
@@ -181,11 +203,18 @@ function displaySupplierDetails(supplierData) {
     if(detailSupplierGst) detailSupplierGst.textContent = escapeHtml(supplierData.gstNo || '-');
     if(detailSupplierAddress) detailSupplierAddress.textContent = escapeHtml(supplierData.address || '-');
 
-    // Update payment modal title as well
+    // Update payment modal title
      if(paymentModalSupplierName) paymentModalSupplierName.textContent = name;
 }
 
 async function loadSupplierPOs() {
+    // Check necessary functions/variables
+    if (!currentSupplierId || !window.db || !window.collection || !window.query || !window.where || !window.orderBy || !window.getDocs || !supplierPoTableBody || !supplierPoLoading || !supplierPoListError) {
+        console.error("loadSupplierPOs: Prerequisites missing.");
+        showError(supplierPoListError, "Could not load POs: Initialization error.");
+        return 0;
+    }
+
     let totalValue = 0;
     setLoadingState(supplierPoTableBody, supplierPoLoading, supplierPoListError, true, 'Loading POs...');
 
@@ -193,39 +222,42 @@ async function loadSupplierPOs() {
         const q = window.query(
             window.collection(window.db, "purchaseOrders"),
             where("supplierId", "==", currentSupplierId),
-            orderBy("createdAt", "desc") // Show newest POs first
+            orderBy("createdAt", "desc")
         );
         const querySnapshot = await window.getDocs(q);
 
-        setLoadingState(supplierPoTableBody, supplierPoLoading, supplierPoListError, false); // Stop loading indicator
+        setLoadingState(supplierPoTableBody, supplierPoLoading, supplierPoListError, false); // Stop loading
 
         if (querySnapshot.empty) {
-            supplierPoTableBody.innerHTML = '<tr><td colspan="5" style="text-align: center;">No purchase orders found for this supplier.</td></tr>';
+            supplierPoTableBody.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 15px;">No purchase orders found for this supplier.</td></tr>';
         } else {
             querySnapshot.forEach(docSnap => {
                 const po = docSnap.data();
                 const poId = docSnap.id;
-                totalValue += Number(po.totalAmount || 0); // Sum up total amount for balance
+                // *** Balance Calculation Logic: Include PO value in total ***
+                // Decision: Sum all POs for now. Refine later to only sum 'Received' if needed.
+                totalValue += Number(po.totalAmount || 0);
 
                 const tr = supplierPoTableBody.insertRow();
                 tr.setAttribute('data-id', poId);
 
-                // Add Payment Status based on PO data (Placeholder)
-                let paymentStatusText = po.paymentStatus || 'Pending';
+                let paymentStatusText = po.paymentStatus || 'Pending'; // Placeholder for payment status
                 let paymentStatusClass = paymentStatusText.toLowerCase().replace(/\s+/g, '-');
+                let statusText = po.status || 'Unknown';
+                let statusClass = statusText.toLowerCase().replace(/\s+/g, '-');
 
                 tr.innerHTML = `
                     <td>${escapeHtml(po.poNumber || 'N/A')}</td>
                     <td>${formatDate(po.orderDate || po.createdAt)}</td>
                     <td style="text-align: right;">${formatCurrency(po.totalAmount || 0)}</td>
-                    <td><span class="status-badge status-${(po.status || 'unknown').toLowerCase().replace(/\s+/g, '-')}">${escapeHtml(po.status || 'Unknown')}</span></td>
+                    <td><span class="status-badge status-${statusClass}">${escapeHtml(statusText)}</span></td>
                     <td><span class="payment-badge payment-${paymentStatusClass}">${escapeHtml(paymentStatusText)}</span></td>
                  `;
-                // Add action buttons if needed later
+                // Add action buttons for PO row if needed
             });
         }
         console.log(`Loaded ${querySnapshot.size} POs for supplier ${currentSupplierId}`);
-        return totalValue; // Return total value for balance calculation
+        return totalValue; // Return total PO value
 
     } catch (error) {
         console.error("Error loading supplier POs:", error);
@@ -236,27 +268,33 @@ async function loadSupplierPOs() {
 }
 
 async function loadSupplierPayments() {
+     // Check necessary functions/variables
+     if (!currentSupplierId || !window.db || !window.collection || !window.query || !window.where || !window.orderBy || !window.getDocs || !supplierPaymentsTableBody || !supplierPaymentLoading || !supplierPaymentListError) {
+        console.error("loadSupplierPayments: Prerequisites missing.");
+        showError(supplierPaymentListError, "Could not load payments: Initialization error.");
+        return 0;
+    }
+
     let totalPaid = 0;
     setLoadingState(supplierPaymentsTableBody, supplierPaymentLoading, supplierPaymentListError, true, 'Loading payments...');
 
     try {
-        // Query the NEW supplier_payments collection
         const q = window.query(
-            window.collection(window.db, "supplier_payments"), // Use the new collection name
+            window.collection(window.db, "supplier_payments"), // Query the new collection
             where("supplierId", "==", currentSupplierId),
-            orderBy("paymentDate", "desc") // Show most recent payments first
+            orderBy("paymentDate", "desc")
         );
         const querySnapshot = await window.getDocs(q);
 
         setLoadingState(supplierPaymentsTableBody, supplierPaymentLoading, supplierPaymentListError, false); // Stop loading
 
         if (querySnapshot.empty) {
-            supplierPaymentsTableBody.innerHTML = '<tr><td colspan="4" style="text-align: center;">No payments recorded for this supplier yet.</td></tr>';
+            supplierPaymentsTableBody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 15px;">No payments recorded yet.</td></tr>';
         } else {
             querySnapshot.forEach(docSnap => {
                 const payment = docSnap.data();
                 const paymentId = docSnap.id;
-                totalPaid += Number(payment.paymentAmount || 0); // Sum up paid amount
+                totalPaid += Number(payment.paymentAmount || 0); // Sum payment amount
 
                 const tr = supplierPaymentsTableBody.insertRow();
                 tr.setAttribute('data-id', paymentId);
@@ -271,13 +309,12 @@ async function loadSupplierPayments() {
             });
         }
         console.log(`Loaded ${querySnapshot.size} payments for supplier ${currentSupplierId}`);
-        return totalPaid; // Return total paid for balance calculation
+        return totalPaid; // Return total paid amount
 
     } catch (error) {
         console.error("Error loading supplier payments:", error);
-         // Check for index missing error specifically
         if (error.code === 'failed-precondition') {
-             const errorMsg = `Error: Firestore index missing for 'supplier_payments' collection. Please create an index on 'supplierId' (ascending) and 'paymentDate' (descending) in your Firestore console.`;
+             const errorMsg = `Error: Firestore index missing for 'supplier_payments'. Create index on 'supplierId' (asc) and 'paymentDate' (desc).`;
              console.error(errorMsg);
              showError(supplierPaymentListError, errorMsg);
         } else {
@@ -289,26 +326,27 @@ async function loadSupplierPayments() {
 }
 
 function calculateAndDisplayBalance(poTotal, paidTotal) {
-    const balance = poTotal - paidTotal;
+    const balance = poTotal - paidTotal; // Positive means we owe supplier
 
     if(summaryTotalPoValue) summaryTotalPoValue.textContent = formatCurrency(poTotal);
     if(summaryTotalPaid) summaryTotalPaid.textContent = formatCurrency(paidTotal);
 
     if (summaryBalance) {
-        summaryBalance.classList.remove('loading-state', 'balance-due', 'balance-credit', 'balance-info'); // Clear classes
-        const tolerance = 0.01; // Tolerance for floating point comparison
+        summaryBalance.classList.remove('loading-state', 'balance-due', 'balance-credit', 'balance-info');
+        const tolerance = 0.01;
 
-        if (balance > tolerance) { // Supplier needs to be paid (Due)
-            summaryBalance.textContent = formatCurrency(balance) + " Dr"; // Amount we Owe
-            summaryBalance.classList.add('balance-due'); // Show in red
-        } else if (balance < -tolerance) { // We overpaid or have credit
-            summaryBalance.textContent = formatCurrency(Math.abs(balance)) + " Cr"; // Amount in Credit
-            summaryBalance.classList.add('balance-credit'); // Show in green
+        if (balance > tolerance) { // We Owe (Debit balance from our perspective, but Credit for supplier)
+            summaryBalance.textContent = formatCurrency(balance) + " Payable"; // Text indicating amount to pay
+            summaryBalance.classList.add('balance-due'); // Show in Red (we need to pay)
+        } else if (balance < -tolerance) { // Supplier Owes Us / Advance Paid
+            summaryBalance.textContent = formatCurrency(Math.abs(balance)) + " Advance"; // Text indicating advance
+            summaryBalance.classList.add('balance-credit'); // Show in Green (we have credit)
         } else { // Zero balance
             summaryBalance.textContent = formatCurrency(0);
             summaryBalance.classList.add('balance-info'); // Neutral color
         }
     }
+     console.log(`Balance Calculated: PO Total=${poTotal}, Paid Total=${paidTotal}, Balance=${balance}`);
 }
 
 
@@ -320,107 +358,81 @@ function setupDetailEventListeners() {
     }
 
     // Add Payment Modal Close/Cancel Buttons
-    if (closePaymentModalBtn) {
-        closePaymentModalBtn.addEventListener('click', closeAddPaymentModal);
-    }
-    if (cancelPaymentBtn) {
-        cancelPaymentBtn.addEventListener('click', closeAddPaymentModal);
-    }
-    if (addPaymentModal) { // Close if clicking outside the content
+    if (closePaymentModalBtn) closePaymentModalBtn.addEventListener('click', closeAddPaymentModal);
+    if (cancelPaymentBtn) cancelPaymentBtn.addEventListener('click', closeAddPaymentModal);
+    if (addPaymentModal) {
         addPaymentModal.addEventListener('click', (event) => {
-            if (event.target === addPaymentModal) {
-                closeAddPaymentModal();
-            }
+            if (event.target === addPaymentModal) closeAddPaymentModal();
         });
     }
 
-    // Add Payment Form Submit (Placeholder for Step 4)
+    // Add Payment Form Submit (Logic will be added in Step 4)
     if (addPaymentForm) {
-        addPaymentForm.addEventListener('submit', handleSavePayment); // Function defined below
+        addPaymentForm.addEventListener('submit', handleSavePayment); // Defined below (basic implementation for now)
     }
 
-    // Edit Supplier Button (Placeholder - needs implementation)
+    // Edit Supplier Button (Placeholder)
      if (editSupplierDetailsBtn) {
         editSupplierDetailsBtn.addEventListener('click', () => {
             if (currentSupplierData) {
-                // Option 1: Redirect back to supplier_management with an edit flag/modal open
-                // window.location.href = `supplier_management.html#edit=${currentSupplierId}`; // Needs handling on that page
-                // Option 2: Reuse the supplier modal from supplier_management.js (Requires importing/making it global or duplicating)
-                alert("Edit Supplier functionality needs to be implemented (e.g., reusing the modal).");
-                // Example if modal function was globally available/imported:
-                // openSupplierModal('edit', currentSupplierData, currentSupplierId);
-            } else {
-                alert("Supplier data not loaded yet.");
+                 alert("Edit Supplier functionality needs to connect to the supplier edit modal. This could involve making the modal function global or redirecting.");
+                // Example redirection (if supplier_management handles #edit=ID):
+                // window.location.href = `supplier_management.html#edit=${currentSupplierId}`;
             }
         });
     }
+    console.log("Detail Page Event Listeners Setup.");
 }
 
 // --- Add Payment Modal Functions ---
 function openAddPaymentModal() {
     if (!addPaymentModal || !currentSupplierData) {
-        alert("Cannot open payment modal. Supplier data missing or modal element not found.");
-        return;
+        alert("Cannot open payment modal."); return;
     }
-    console.log("Opening Add Payment modal.");
-    addPaymentForm.reset(); // Clear the form
+    addPaymentForm.reset();
     if(paymentFormError) paymentFormError.style.display = 'none';
     if(paymentModalSupplierName) paymentModalSupplierName.textContent = currentSupplierData.name || '';
-    if(paymentDateInput) { try { paymentDateInput.valueAsDate = new Date(); } catch(e){} } // Default to today
-    if(savePaymentBtn) {
-        savePaymentBtn.disabled = false;
-        savePaymentBtn.innerHTML = '<i class="fas fa-save"></i> Save Payment';
-    }
+    if(paymentDateInput) { try { paymentDateInput.valueAsDate = new Date(); } catch(e){} }
+    if(savePaymentBtn) { savePaymentBtn.disabled = false; savePaymentBtn.innerHTML = '<i class="fas fa-save"></i> Save Payment'; }
     addPaymentModal.classList.add('active');
     paymentAmountInput.focus();
 }
 
 function closeAddPaymentModal() {
-    if (addPaymentModal) {
-        addPaymentModal.classList.remove('active');
-    }
+    if (addPaymentModal) { addPaymentModal.classList.remove('active'); }
 }
 
-// --- Save Payment Function (STEP 4 - Placeholder Logic) ---
+// --- Save Payment Function (STEP 4 - Basic Implementation) ---
 async function handleSavePayment(event) {
     event.preventDefault();
-     if (!currentSupplierId || !window.db || !window.collection || !window.addDoc || !window.Timestamp || !window.serverTimestamp) {
-         showPaymentFormError("Error: Database functions missing or Supplier ID invalid.");
+    // Use globally defined functions via window object
+    if (!currentSupplierId || !window.db || !window.collection || !window.addDoc || !window.Timestamp || !window.serverTimestamp) {
+         showPaymentFormError("Error: DB functions missing or Supplier ID invalid.");
          return;
-     }
+    }
 
     const amount = parseFloat(paymentAmountInput.value);
     const date = paymentDateInput.value;
     const method = paymentMethodSelect.value;
     const notes = paymentNotesInput.value.trim();
 
-    if (isNaN(amount) || amount <= 0) {
-        showPaymentFormError("Please enter a valid positive payment amount.");
-        paymentAmountInput.focus();
-        return;
-    }
-    if (!date) {
-        showPaymentFormError("Please select a payment date.");
-        paymentDateInput.focus();
-        return;
-    }
+    // Basic Validation
+    if (isNaN(amount) || amount <= 0) { showPaymentFormError("Please enter a valid positive payment amount."); paymentAmountInput.focus(); return; }
+    if (!date) { showPaymentFormError("Please select a payment date."); paymentDateInput.focus(); return; }
 
-    if(savePaymentBtn) {
-        savePaymentBtn.disabled = true;
-        savePaymentBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
-    }
-    showPaymentFormError(''); // Clear previous errors
+    if(savePaymentBtn) { savePaymentBtn.disabled = true; savePaymentBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...'; }
+    showPaymentFormError('');
 
     try {
-        const paymentDateTimestamp = Timestamp.fromDate(new Date(date + 'T00:00:00')); // Store date only
+        const paymentDateTimestamp = window.Timestamp.fromDate(new Date(date + 'T00:00:00')); // Use window.Timestamp
         const paymentData = {
             supplierId: currentSupplierId,
-            supplierName: currentSupplierData?.name || null, // Store name for easier display later
+            supplierName: currentSupplierData?.name || null,
             paymentAmount: amount,
             paymentDate: paymentDateTimestamp,
             paymentMethod: method,
             notes: notes || null,
-            createdAt: serverTimestamp() // Record when the payment was logged
+            createdAt: window.serverTimestamp() // Use window.serverTimestamp
         };
 
         // Add to the 'supplier_payments' collection
@@ -430,11 +442,8 @@ async function handleSavePayment(event) {
 
         closeAddPaymentModal();
 
-        // Refresh payments list and summary after saving
-        const paidTotal = await loadSupplierPayments(); // Reload payments
-        const currentPoTotalText = summaryTotalPoValue?.textContent || '₹ 0';
-        const currentPoTotal = parseFloat(currentPoTotalText.replace(/[^0-9.-]+/g,"")) || 0;
-        calculateAndDisplayBalance(currentPoTotal, paidTotal); // Recalculate balance
+        // Refresh payments list and summary only after successful save
+        await loadSupplierAccountData(); // Reload all account data to update summary and lists
 
     } catch (error) {
         console.error("Error saving payment:", error);
