@@ -194,7 +194,7 @@ function displaySupplierDetails(supplierData) {
     const name = escapeHtml(supplierData.name || 'N/A');
     if(supplierNameHeader) supplierNameHeader.textContent = name;
     if(supplierNameBreadcrumb) supplierNameBreadcrumb.textContent = name;
-    document.title = `Account - ${name}`; // Update page title
+    document.title = `Account - ${name}`;
 
     // Clear potential "loading-state" class before setting text
     [detailSupplierId, detailSupplierName, detailSupplierCompany, detailSupplierWhatsapp, detailSupplierEmail, detailSupplierGst, detailSupplierAddress].forEach(el => {
@@ -235,6 +235,7 @@ async function loadSupplierPOs(dbInstance) {
         if (querySnapshot.empty) {
             supplierPoTableBody.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 15px;">No purchase orders found for this supplier.</td></tr>';
         } else {
+             supplierPoTableBody.innerHTML = ''; // Clear loading row before adding data
             querySnapshot.forEach(docSnap => {
                 const po = docSnap.data();
                 const poId = docSnap.id;
@@ -290,6 +291,7 @@ async function loadSupplierPayments(dbInstance) {
         if (querySnapshot.empty) {
             supplierPaymentsTableBody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 15px;">No payments recorded yet.</td></tr>';
         } else {
+             supplierPaymentsTableBody.innerHTML = ''; // Clear loading row
             querySnapshot.forEach(docSnap => {
                 const payment = docSnap.data();
                 const paymentId = docSnap.id;
@@ -371,7 +373,7 @@ function closeAddPaymentModal() {
     if (addPaymentModal) { addPaymentModal.classList.remove('active'); }
 }
 
-// --- Save Payment Function ---
+// --- Save Payment Function (Uses imported functions) ---
 async function handleSavePayment(event) {
     event.preventDefault();
     // Check for imported functions and currentSupplierId
