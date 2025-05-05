@@ -1,4 +1,4 @@
-// js/supplier_management.js - v28 (Fix Copy T&C, Fix Print Blank Page - Cleaned)
+// js/supplier_management.js - v29 Final (Fix Copy T&C, Enhance Print - Cleaned)
 
 import { db, auth } from './firebase-init.js';
 import {
@@ -6,7 +6,7 @@ import {
     query, orderBy, where, Timestamp, serverTimestamp, limit, onSnapshot
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-// DOM Elements (No changes needed here, assuming they exist from previous HTML)
+// --- DOM Elements ---
 const poTableBody = document.getElementById('poTableBody');
 const poSearchInput = document.getElementById('poSearchInput');
 const poSupplierFilter = document.getElementById('poSupplierFilter');
@@ -73,6 +73,7 @@ const poShareInfo = document.getElementById('poShareInfo');
 const poShareGreeting = document.getElementById('poShareGreeting');
 const poShareItemsContainer = document.getElementById('poShareItemsContainer');
 const poShareTermList = document.getElementById('poShareTermList');
+const poShareScrollableContent = document.getElementById('poShareScrollableContent');
 const closePoShareModalTopBtn = document.getElementById('closePoShareModalTopBtn');
 const closePoShareModalBtn = document.getElementById('closePoShareModalBtn');
 const printPoShareModalBtn = document.getElementById('printPoShareModalBtn');
@@ -109,53 +110,25 @@ function showSupplierListError(message) { displayError(message, 'supplierListErr
 
 // --- Supplier List Functions ---
 async function displaySupplierTable() {
-    if (!supplierTableBody || !supplierLoadingMessage) { console.error("Supplier table body missing"); return; }
+    if (!supplierTableBody || !supplierLoadingMessage) { return; }
     if (!db || !collection || !getDocs || !query || !orderBy) { showSupplierListError("Error: DB functions missing."); return; }
-    showSupplierListError('');
-    supplierLoadingMessage.style.display = 'table-row';
-    supplierTableBody.innerHTML = '';
-    suppliersDataCache = [];
+    showSupplierListError(''); supplierLoadingMessage.style.display = 'table-row'; supplierTableBody.innerHTML = ''; suppliersDataCache = [];
     try {
-        const q = query(collection(db, "suppliers"), orderBy("name_lowercase"));
-        const querySnapshot = await getDocs(q);
+        const q = query(collection(db, "suppliers"), orderBy("name_lowercase")); const querySnapshot = await getDocs(q);
         supplierLoadingMessage.style.display = 'none';
-        if (querySnapshot.empty) {
-            supplierTableBody.innerHTML = '<tr><td colspan="4" class="no-results">No suppliers found.</td></tr>';
-        } else {
+        if (querySnapshot.empty) { supplierTableBody.innerHTML = '<tr><td colspan="4" class="no-results">No suppliers found.</td></tr>'; }
+        else {
             querySnapshot.forEach((docSnapshot) => {
-                const supplier = docSnapshot.data();
-                const supplierId = docSnapshot.id;
-                suppliersDataCache.push({ id: supplierId, ...supplier });
-                const tr = document.createElement('tr');
-                tr.setAttribute('data-id', supplierId);
-                tr.setAttribute('title', 'Click to view account details');
-                tr.classList.add('clickable-row');
-                const name = escapeHtml(supplier.name || 'N/A');
-                const contact = escapeHtml(supplier.whatsappNo || supplier.contactNo || '-');
-                tr.innerHTML = `
-                    <td>${name}</td>
-                    <td>${contact}</td>
-                    <td class="supplier-balance">Loading...</td>
-                    <td class="action-buttons">
-                        <button class="button edit-supplier-btn small-button" data-id="${supplierId}" title="Edit Supplier"><i class="fas fa-edit"></i></button>
-                    </td>`;
-                supplierTableBody.appendChild(tr);
-                 calculateAndDisplaySupplierBalance(supplierId, tr.querySelector('.supplier-balance'));
-            });
-            populateSupplierFilterDropdown();
+                const supplier = docSnapshot.data(); const supplierId = docSnapshot.id; suppliersDataCache.push({ id: supplierId, ...supplier });
+                const tr = document.createElement('tr'); tr.setAttribute('data-id', supplierId); tr.setAttribute('title', 'Click to view account details'); tr.classList.add('clickable-row');
+                const name = escapeHtml(supplier.name || 'N/A'); const contact = escapeHtml(supplier.whatsappNo || supplier.contactNo || '-');
+                tr.innerHTML = `<td>${name}</td><td>${contact}</td><td class="supplier-balance">Loading...</td><td class="action-buttons"><button class="button edit-supplier-btn small-button" data-id="${supplierId}" title="Edit Supplier"><i class="fas fa-edit"></i></button></td>`;
+                supplierTableBody.appendChild(tr); calculateAndDisplaySupplierBalance(supplierId, tr.querySelector('.supplier-balance'));
+            }); populateSupplierFilterDropdown();
         }
-    } catch (error) {
-        console.error("Error fetching suppliers: ", error);
-        showSupplierListError(`Error loading suppliers: ${error.message}`);
-        populateSupplierFilterDropdown();
-    }
+    } catch (error) { console.error("Error fetching suppliers: ", error); showSupplierListError(`Error loading suppliers: ${error.message}`); populateSupplierFilterDropdown(); }
 }
-async function calculateAndDisplaySupplierBalance(supplierId, balanceCellElement) {
-    if (!balanceCellElement) return;
-    balanceCellElement.textContent = '₹ --.--';
-    balanceCellElement.style.textAlign = 'right';
-    // TODO: Implement efficient balance calculation later if needed
-}
+async function calculateAndDisplaySupplierBalance(supplierId, balanceCellElement) { if (!balanceCellElement) return; balanceCellElement.textContent = '₹ --.--'; balanceCellElement.style.textAlign = 'right'; }
 function populateSupplierFilterDropdown() {
     if (!poSupplierFilter) return; const selectedVal = poSupplierFilter.value;
     poSupplierFilter.innerHTML = '<option value="">All Suppliers</option>';
@@ -164,36 +137,25 @@ function populateSupplierFilterDropdown() {
     if (poSupplierFilter.querySelector(`option[value="${selectedVal}"]`)) { poSupplierFilter.value = selectedVal; } else { poSupplierFilter.value = ""; }
 }
 function handleSupplierTableActions(event) {
-    const targetButton = event.target.closest('button.edit-supplier-btn');
-    if (!targetButton) return;
-    event.stopPropagation();
-    const supplierId = targetButton.dataset.id; if (!supplierId) return;
+    const targetButton = event.target.closest('button.edit-supplier-btn'); if (!targetButton) return;
+    event.stopPropagation(); const supplierId = targetButton.dataset.id; if (!supplierId) return;
     const supplierData = suppliersDataCache.find(s => s.id === supplierId);
-    if (supplierData) { openSupplierModal('edit', supplierData, supplierId); }
-    else { console.warn(`Supplier ${supplierId} not found in cache for edit.`); }
+    if (supplierData) { openSupplierModal('edit', supplierData, supplierId); } else { console.warn(`Supplier ${supplierId} not found in cache for edit.`); }
 }
 function handleSupplierRowClick(event) {
-    const row = event.target.closest('tr');
-    if (event.target.closest('button')) { return; }
-    const supplierId = row?.dataset.id;
-    if (supplierId) { window.location.href = `supplier_account_detail.html?id=${supplierId}`; }
+    const row = event.target.closest('tr'); if (event.target.closest('button')) { return; }
+    const supplierId = row?.dataset.id; if (supplierId) { window.location.href = `supplier_account_detail.html?id=${supplierId}`; }
 }
 
 // --- Supplier Modal/CRUD Functions ---
 function openSupplierModal(mode = 'add', supplierData = null, supplierId = null) {
-     if (!supplierModal || !supplierForm || !supplierModalTitle || !supplierFormError || !editSupplierIdInput || !supplierNameInput || !deleteSupplierFromModalBtn) {
-        console.error("Supplier modal elements missing!"); alert("Cannot open supplier form."); return;
-     }
-     supplierForm.reset(); showSupplierFormError(''); currentEditingSupplierId = null;
-     deleteSupplierFromModalBtn.style.display = 'none';
+     if (!supplierModal || !supplierForm || !supplierModalTitle || !supplierFormError || !editSupplierIdInput || !supplierNameInput || !deleteSupplierFromModalBtn) { console.error("Supplier modal elements missing!"); alert("Cannot open supplier form."); return; }
+     supplierForm.reset(); showSupplierFormError(''); currentEditingSupplierId = null; deleteSupplierFromModalBtn.style.display = 'none';
      if (mode === 'edit' && supplierData && supplierId) {
          supplierModalTitle.textContent = 'Edit Supplier'; editSupplierIdInput.value = supplierId; currentEditingSupplierId = supplierId;
          supplierNameInput.value = supplierData.name || ''; supplierCompanyInput.value = supplierData.companyName || ''; supplierWhatsappInput.value = supplierData.whatsappNo || ''; supplierEmailInput.value = supplierData.email || ''; supplierAddressInput.value = supplierData.address || ''; supplierGstInput.value = supplierData.gstNo || '';
-         deleteSupplierFromModalBtn.style.display = 'inline-flex';
-         deleteSupplierFromModalBtn.dataset.name = supplierData.name || supplierId;
-     } else {
-         supplierModalTitle.textContent = 'Add New Supplier'; editSupplierIdInput.value = '';
-     }
+         deleteSupplierFromModalBtn.style.display = 'inline-flex'; deleteSupplierFromModalBtn.dataset.name = supplierData.name || supplierId;
+     } else { supplierModalTitle.textContent = 'Add New Supplier'; editSupplierIdInput.value = ''; }
      supplierModal.style.display = 'block';
 }
 function closeSupplierModal() { if (supplierModal) { supplierModal.style.display = 'none'; } }
@@ -220,6 +182,7 @@ async function handleAddSupplierSubmit(event) {
 async function deleteSupplier(supplierId, supplierName) {
      if (!db || !doc || !deleteDoc) { alert("Error: Functions missing for deleting supplier."); return; }
      try {
+         console.log(`Attempting to delete ONLY supplier document: ${supplierId}`);
          await deleteDoc(doc(db, "suppliers", supplierId));
          alert(`Supplier "${escapeHtml(supplierName || supplierId)}" deleted successfully. Associated POs and Payments are NOT deleted.`);
          suppliersDataCache = suppliersDataCache.filter(s => s.id !== supplierId);
@@ -227,8 +190,7 @@ async function deleteSupplier(supplierId, supplierName) {
      } catch (error) { console.error("Error deleting supplier: ", error); alert("Error deleting supplier: " + error.message); }
 }
 function handleDeleteSupplierFromModal() {
-     const supplierId = editSupplierIdInput.value;
-     const supplierName = deleteSupplierFromModalBtn.dataset.name || supplierId;
+     const supplierId = editSupplierIdInput.value; const supplierName = deleteSupplierFromModalBtn.dataset.name || supplierId;
      if (!supplierId) { alert("Cannot delete: Supplier ID not found."); return; }
      if (confirm(`WARNING!\nAre you absolutely sure you want to delete supplier "${escapeHtml(supplierName)}"?\n\nAssociated Purchase Orders and Payments WILL NOT be deleted.\nThis action cannot be undone.`)) {
          closeSupplierModal(); deleteSupplier(supplierId, supplierName);
@@ -246,8 +208,8 @@ async function displayPoList() {
         let conditions = []; let baseQuery = collection(db, "purchaseOrders");
         const searchTerm = poSearchInput.value.trim().toLowerCase(); const supplierFilterId = poSupplierFilter.value; const statusFilter = poStatusFilter.value; const startDateVal = poStartDateFilter.value; const endDateVal = poEndDateFilter.value;
         if (supplierFilterId) { conditions.push(where("supplierId", "==", supplierFilterId)); } if (statusFilter) { conditions.push(where("status", "==", statusFilter)); }
-        if (startDateVal) { try { conditions.push(where("orderDate", ">=", Timestamp.fromDate(new Date(startDateVal + 'T00:00:00')))); } catch (e) { console.warn("Invalid start date"); } }
-        if (endDateVal) { try { conditions.push(where("orderDate", "<=", Timestamp.fromDate(new Date(endDateVal + 'T23:59:59')))); } catch (e) { console.warn("Invalid end date"); } }
+        if (startDateVal) { try { conditions.push(where("orderDate", ">=", Timestamp.fromDate(new Date(startDateVal + 'T00:00:00')))); } catch (e) {} }
+        if (endDateVal) { try { conditions.push(where("orderDate", "<=", Timestamp.fromDate(new Date(endDateVal + 'T23:59:59')))); } catch (e) {} }
         const sortFieldMapping = { poNumber: 'poNumber', orderDate: 'orderDate', supplierName: 'supplierName', totalAmount: 'totalAmount', status: 'status', paymentStatus: 'paymentStatus' };
         const firestoreSortField = sortFieldMapping[currentPoSortField] || 'createdAt'; const firestoreSortDirection = currentPoSortDirection || 'desc';
         let sortClauses = [orderBy(firestoreSortField, firestoreSortDirection)]; if (firestoreSortField !== 'createdAt') { sortClauses.push(orderBy('createdAt', 'desc')); }
@@ -269,17 +231,12 @@ async function displayPoList() {
             let supplierLink = po.supplierId ? `<a href="supplier_account_detail.html?id=${po.supplierId}" class="supplier-link" title="View Supplier: ${escapeHtml(supplierName)}">${escapeHtml(supplierName)}</a>` : escapeHtml(supplierName);
             let itemsHtml = 'N/A';
             if (po.items && po.items.length > 0) {
-                const firstItem = po.items[0];
-                const firstItemName = escapeHtml(firstItem.productName || 'Item');
+                const firstItem = po.items[0]; const firstItemName = escapeHtml(firstItem.productName || 'Item');
                 if (po.items.length === 1) {
                     const qty = escapeHtml(firstItem.quantity || '?'); let sizeText = '';
-                    if (firstItem.unitType === 'Sq Feet' && firstItem.width && firstItem.height) {
-                         const width = escapeHtml(firstItem.width); const height = escapeHtml(firstItem.height); const unit = escapeHtml(firstItem.dimensionUnit || 'units'); sizeText = ` [${width} x ${height} ${unit}]`;
-                    }
+                    if (firstItem.unitType === 'Sq Feet' && firstItem.width && firstItem.height) { const width = escapeHtml(firstItem.width); const height = escapeHtml(firstItem.height); const unit = escapeHtml(firstItem.dimensionUnit || 'units'); sizeText = ` [${width} x ${height} ${unit}]`; }
                     itemsHtml = `<span class="product-name-display">${firstItemName}</span> (Qty: ${qty})${sizeText}`;
-                } else {
-                    itemsHtml = `<span class="product-name-display">${firstItemName}</span> <button class="button see-more-items-btn small-button text-button" data-action="see-more-items" data-id="${poId}">${po.items.length - 1} more</button>`;
-                }
+                } else { itemsHtml = `<span class="product-name-display">${firstItemName}</span> <button class="button see-more-items-btn small-button text-button" data-action="see-more-items" data-id="${poId}">${po.items.length - 1} more</button>`; }
             }
             const tr = document.createElement('tr'); tr.setAttribute('data-id', poId);
              tr.innerHTML = `
@@ -300,12 +257,7 @@ async function displayPoList() {
              poTableBody.appendChild(tr);
         });
         if (poTotalsDisplay) poTotalsDisplay.textContent = `Total PO Value (Displayed): ${formatCurrency(grandTotalAmount)}`;
-    } catch (error) {
-        console.error("Error fetching/displaying POs: ", error);
-        if (error.code === 'failed-precondition') { showPoListError(`Error: Firestore index missing. Check console.`); }
-        else { showPoListError(`Error loading POs: ${error.message}`); }
-        if (poTotalsDisplay) poTotalsDisplay.textContent = 'Error loading totals';
-    }
+    } catch (error) { console.error("Error fetching/displaying POs: ", error); if (error.code === 'failed-precondition') { showPoListError(`Error: Firestore index missing. Check console.`); } else { showPoListError(`Error loading POs: ${error.message}`); } if (poTotalsDisplay) poTotalsDisplay.textContent = 'Error loading totals'; }
 }
 
 // --- PO Table Sorting Logic ---
@@ -331,7 +283,7 @@ function updateSortIndicators() {
 // --- PO Table Action Handling ---
 async function handlePOTableActions(event) {
     const actionElement = event.target.closest('button[data-action]'); const targetCell = event.target.closest('td');
-    if (targetCell && targetCell.classList.contains('po-number-link')) { const row = targetCell.closest('tr'); const poId = row?.dataset.id; if (poId) { openPoShareModal(poId); } return; }
+    if (targetCell && targetCell.classList.contains('po-number-link')) { const row = targetCell.closest('tr'); const poId = row?.dataset.id; if (poId) { openPoShareModal(poId); } return; } // Open Share modal
     if (!actionElement) return;
     const action = actionElement.dataset.action; const poId = actionElement.dataset.id; const poNumber = actionElement.dataset.number;
     if (!action || !poId) { console.error("Action button missing action or PO ID.", { action, poId }); return; }
@@ -402,7 +354,7 @@ async function handleStatusUpdate(event) {
 
 // --- PO Share Modal Functions ---
 async function openPoShareModal(poId) {
-    if (!poShareModal || !poShareModalTitle || !poShareInfo || !poShareGreeting || !poShareItemsContainer || !poShareTermList || !copyPoShareModalBtn) { console.error("PO Share modal elements not found!"); alert("Error: Cannot open PO Share view."); return; }
+    if (!poShareModal || !poShareModalTitle || !poShareInfo || !poShareGreeting || !poShareItemsContainer || !poShareTermList || !copyPoShareModalBtn) { console.error("PO Share modal elements missing!"); alert("Error: Cannot open PO Share view."); return; }
     poShareModalTitle.textContent = "Purchase Order"; poShareInfo.innerHTML = 'Loading PO info...'; poShareGreeting.innerHTML = 'Loading greeting...';
     poShareItemsContainer.innerHTML = '<h3>Items</h3><p><i class="fas fa-spinner fa-spin"></i> Loading items...</p>'; poShareTermList.innerHTML = '<li>Loading T&C...</li>';
     copyPoShareModalBtn.dataset.poid = ''; copyPoShareModalBtn.disabled = true; copyPoShareModalBtn.innerHTML = '<i class="fas fa-copy"></i> Copy Content'; copyPoShareModalBtn.classList.remove('copied', 'copying');
@@ -411,8 +363,7 @@ async function openPoShareModal(poId) {
         const poRef = doc(db, "purchaseOrders", poId); const poDocSnap = await getDoc(poRef);
         if (!poDocSnap.exists()) { throw new Error(`Could not find Purchase Order with ID: ${escapeHtml(poId)}`); }
         const poData = poDocSnap.data(); cachedPOs[poId] = poData;
-        let supplierName = "Supplier";
-        if (poData.supplierId) { try { const supplierRef = doc(db, "suppliers", poData.supplierId); const supplierDocSnap = await getDoc(supplierRef); if (supplierDocSnap.exists()) { supplierName = supplierDocSnap.data().name || supplierName; } else { supplierName = poData.supplierName || supplierName; } } catch (supplierError) { supplierName = poData.supplierName || supplierName; } } else { supplierName = poData.supplierName || supplierName; }
+        let supplierName = "Supplier"; if (poData.supplierId) { try { const supplierRef = doc(db, "suppliers", poData.supplierId); const supplierDocSnap = await getDoc(supplierRef); if (supplierDocSnap.exists()) { supplierName = supplierDocSnap.data().name || supplierName; } else { supplierName = poData.supplierName || supplierName; } } catch (supplierError) { supplierName = poData.supplierName || supplierName; } } else { supplierName = poData.supplierName || supplierName; }
         const poNumberDisplay = poData.poNumber ? `<span class="po-number-large">#${escapeHtml(poData.poNumber)}</span>` : 'N/A'; let orderDateStr = 'N/A'; if (poData.orderDate?.toDate) { try { orderDateStr = poData.orderDate.toDate().toLocaleDateString('en-GB'); } catch (e) {} }
         poShareInfo.innerHTML = `<span class="po-info-left">PO Number: ${poNumberDisplay}</span><span class="po-info-right"><span>Order Date: ${orderDateStr}</span></span>`;
         poShareGreeting.innerHTML = `Dear ${escapeHtml(supplierName)},<br>This Purchase Order is being shared with you. Please review the details below.`;
@@ -437,6 +388,16 @@ async function handleCopyPoShareContent(event) {
         const poRef = doc(db, "purchaseOrders", poId); const poDocSnap = await getDoc(poRef); if (!poDocSnap.exists()) { throw new Error("PO data not found."); } const poData = poDocSnap.data();
         let supplierName = "Supplier"; if (poData.supplierId) { try { const supplierRef = doc(db, "suppliers", poData.supplierId); const supplierDocSnap = await getDoc(supplierRef); if (supplierDocSnap.exists()) { supplierName = supplierDocSnap.data().name || supplierName; } else { supplierName = poData.supplierName || supplierName; } } catch (supplierError) { supplierName = poData.supplierName || supplierName; } } else { supplierName = poData.supplierName || supplierName; }
         let orderDateStr = 'N/A'; if (poData.orderDate?.toDate) { try { orderDateStr = poData.orderDate.toDate().toLocaleDateString('en-GB'); } catch(e){} }
+        // Get dynamic T&C content
+        const termListElement = document.getElementById('poShareTermList');
+        let termsHTML = termListElement ? termListElement.innerHTML : '<ol><li>Default T&C...</li></ol>'; // Fallback
+        let termsText = '';
+        if (termListElement) {
+            termsText = Array.from(termListElement.querySelectorAll('li')).map((li, index) => `${index + 1}. ${li.textContent.trim()}`).join('\n');
+        } else {
+            termsText = '1. Default T&C...';
+        }
+
         // Generate HTML Content
         let htmlContent = `<p><strong>Purchase Order #${escapeHtml(poData.poNumber || 'N/A')}</strong></p><p><strong>Order Date:</strong> ${orderDateStr}</p><hr><p>Dear ${escapeHtml(supplierName)},<br>This Purchase Order is being shared with you. Please review the details below.</p><hr><h3>Items</h3>`;
         if (poData.items && poData.items.length > 0) {
@@ -444,57 +405,68 @@ async function handleCopyPoShareContent(event) {
             poData.items.forEach((item, index) => { let detailStr = ''; const qty = item.quantity || '?'; const itemUnitType = item.unitType || 'Qty'; if (itemUnitType === 'Sq Feet') { const w = item.width || '?'; const h = item.height || '?'; const u = item.dimensionUnit || 'units'; const printSqFt = item.printSqFt ? parseFloat(item.printSqFt).toFixed(2) : '?'; detailStr = `Qty: ${escapeHtml(qty)} (${escapeHtml(w)}x${escapeHtml(h)} ${escapeHtml(u)})<br>Print Area: ${escapeHtml(printSqFt)} sqft`; } else { detailStr = `Qty: ${escapeHtml(qty)}`; } htmlContent += `<tr><td>${index + 1}</td><td>${escapeHtml(item.productName || 'N/A')}</td><td>${escapeHtml(itemUnitType)}</td><td>${detailStr}</td><td>${item.rate?.toFixed(2) ?? 'N/A'}</td><td>${escapeHtml(item.partyName || '-')}</td><td>${escapeHtml(item.designDetails || '-')}</td><td align="right">${item.itemAmount?.toFixed(2) ?? 'N/A'}</td></tr>`; });
             htmlContent += `</tbody></table>`;
         } else { htmlContent += `<p>No items found.</p>`; }
-        // Ensure T&C are added
-        htmlContent += `<hr><h3>Terms & Conditions</h3><ol><li>Ensure prompt delivery of the order.</li><li>The supplied material must match the approved sample and specifications.</li><li>Maintain the specified quality standards.</li><li>Payment may be withheld or rejected for defective/substandard goods.</li></ol>`;
+        htmlContent += `<hr><h3>Terms & Conditions</h3><ol>${termsHTML}</ol>`; // Append dynamic T&C HTML
         // Generate Plain Text Content
         let textContent = `Purchase Order #${poData.poNumber || 'N/A'}\nOrder Date: ${orderDateStr}\n\nDear ${supplierName},\nThis Purchase Order is being shared with you...\n\nItems:\n`;
         if (poData.items && poData.items.length > 0) { textContent += poData.items.map((item, index) => { let detailText = ''; const itemUnitType = item.unitType || 'Qty'; if(itemUnitType === 'Sq Feet') { const w = item.width || '?'; const h = item.height || '?'; const u = item.dimensionUnit || 'units'; detailText = ` (${w}x${h} ${u})`; } return `${index + 1}. ${item.productName || 'N/A'} - Qty: ${item.quantity || '?'}${detailText}`; }).join('\n'); } else { textContent += 'No items.'; }
-        // Ensure T&C are added
-        textContent += `\n\nTerms & Conditions:\n1. Ensure prompt delivery of the order.\n2. The supplied material must match the approved sample and specifications.\n3. Maintain the specified quality standards.\n4. Payment may be withheld or rejected for defective/substandard goods.`;
-        // Log content before copying
-        console.log("HTML Content to Copy:\n", htmlContent);
-        console.log("Text Content to Copy:\n", textContent);
+        textContent += `\n\nTerms & Conditions:\n${termsText}`; // Append dynamic T&C Text
+        // console.log("HTML Content to Copy:\n", htmlContent); // Uncomment for debugging
+        // console.log("Text Content to Copy:\n", textContent); // Uncomment for debugging
         const htmlBlob = new Blob([htmlContent], { type: 'text/html' }); const textBlob = new Blob([textContent], { type: 'text/plain' }); const clipboardItem = new ClipboardItem({ 'text/html': htmlBlob, 'text/plain': textBlob });
         await navigator.clipboard.write([clipboardItem]); button.innerHTML = '<i class="fas fa-check"></i> Copied!'; button.classList.add('copied');
     } catch (error) { console.error("Copy failed: ", error); alert("Error: Could not copy. " + error.message); button.innerHTML = '<i class="fas fa-copy"></i> Copy Content'; }
     finally { button.classList.remove('copying'); setTimeout(() => { if (button.classList.contains('copied')) { button.innerHTML = '<i class="fas fa-copy"></i> Copy Content'; button.classList.remove('copied'); button.disabled = false; } else { button.innerHTML = '<i class="fas fa-copy"></i> Copy Content'; button.disabled = false; } }, 2000); }
 }
 function handlePrintPoShare() {
-    const modalContent = document.getElementById('poShareScrollableContent'); // Get the scrollable content div
-    if (!poShareModal || !modalContent || !poShareModal.classList.contains('active')) {
+    const modalContentElement = document.getElementById('poShareScrollableContent');
+    if (!poShareModal || !modalContentElement || !poShareModal.classList.contains('active')) {
          alert("Please open the PO Share view first or wait for content to load."); return;
     }
     try {
-         const poNumber = cachedPOs[copyPoShareModalBtn?.dataset?.poid]?.poNumber || 'PO'; // Get PO number for title
+         const poIdForTitle = copyPoShareModalBtn?.dataset?.poid || '';
+         const poNumber = cachedPOs[poIdForTitle]?.poNumber || 'PO';
          const printWindow = window.open('', '_blank', 'height=800,width=800');
          printWindow.document.write('<html><head><title>Print Purchase Order - ' + escapeHtml(poNumber) + '</title>');
-         // Link the existing CSS file for consistent styling
-         const styles = Array.from(document.styleSheets).map(sheet => sheet.href ? `<link rel="stylesheet" href="${sheet.href}">` : '').join('');
-         printWindow.document.write(styles);
-         // Add basic print styles inline
-         printWindow.document.write('<style>body{margin:20px; font-family: Poppins, sans-serif;} @media print { body { margin: 0; } .modal-actions, .close-btn { display: none !important; } }</style>');
+         // Embed crucial print styles directly
+         printWindow.document.write(`
+             <style>
+                 body { margin: 20px; font-family: 'Poppins', sans-serif; line-height: 1.5; color: #333; }
+                 h2, h3 { color: #0056b3; margin-bottom: 10px; }
+                 hr { border: none; border-top: 1px dashed #ccc; margin: 15px 0; }
+                 table.details-table { width: 100%; border-collapse: collapse; font-size: 9pt; margin-bottom: 15px; }
+                 table.details-table th, table.details-table td { border: 1px solid #ccc; padding: 6px 8px; text-align: left; }
+                 table.details-table thead th { background-color: #eee; font-weight: bold; }
+                 #poShareInfo { font-size: 11pt; font-weight: 600; margin-bottom: 15px; padding: 10px; background-color: #f8f8f8; border: 1px solid #ccc; border-radius: 4px; display: flex; justify-content: space-between; flex-wrap: wrap; }
+                 #poShareInfo .po-number-large { font-size: 1.2em; color: #0056b3; }
+                 #poShareGreeting { font-size: 10pt; margin-bottom: 15px; }
+                 #poShareTerms { margin-top: 15px; }
+                 #poShareTermList { list-style-type: decimal; padding-left: 20px; margin: 0; font-size: 9pt; }
+                 #poShareTermList li { margin-bottom: 4px; }
+                 @media print {
+                     body { margin: 0; }
+                     .no-print { display: none !important; } /* Class for elements to hide in print */
+                 }
+             </style>
+         `);
          printWindow.document.write('</head><body>');
-         // Write only the content needed for printing
-         printWindow.document.write('<div class="po-share-print-content">'); // Wrapper for print content
+         // Write only the necessary content from the modal
          printWindow.document.write(document.getElementById('poShareHeader').innerHTML);
          printWindow.document.write(document.getElementById('poShareGreeting').innerHTML);
          printWindow.document.write('<hr class="po-share-divider">');
          printWindow.document.write(document.getElementById('poShareItemsContainer').innerHTML);
          printWindow.document.write('<hr class="po-share-divider">');
          printWindow.document.write(document.getElementById('poShareTerms').innerHTML);
-         printWindow.document.write('</div>'); // Close wrapper
          printWindow.document.write('</body></html>');
          printWindow.document.close();
-         printWindow.focus(); // Focus the new window
-         // Use setTimeout to allow content to render before printing
+         printWindow.focus();
          setTimeout(() => {
-             printWindow.print();
-             printWindow.close(); // Close the window after printing
-         }, 500); // Delay can be adjusted
+             try { printWindow.print(); } catch (e) { console.error("Print command failed:", e); alert("Printing failed. Please try again or use browser's print option."); }
+             setTimeout(() => { try { printWindow.close(); } catch (e) {} }, 200); // Close after a short delay
+         }, 1000); // Increased delay to 1 second
 
      } catch (error) {
-         console.error("Error during printing:", error);
-         alert("Could not print the PO. Please try again or check the console.");
+         console.error("Error preparing print window:", error);
+         alert("Could not prepare the print view. Please check the console.");
      }
 }
 
@@ -644,4 +616,4 @@ function setupEventListeners() {
     if (exportPoCsvBtn) exportPoCsvBtn.addEventListener('click', () => { alert("CSV Export needs implementation."); });
 }
 
-window.initializeSupplierManagementPage = initializeSupplierManagementPage;
+window.initializeSupplierManagementPage = initializeSupplierManagementPage;S
