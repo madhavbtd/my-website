@@ -15,52 +15,51 @@
         // firebase-init.js से जरूरी चीजें इम्पोर्ट करें
         import { db, auth } from './js/firebase-init.js';
         import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-        // supplier_account_detail.js के लिए जरूरी मॉड्यूल्स को ग्लोबल बनाएं (यदि सीधे इम्पोर्ट नहीं किया गया है)
+        // जरूरी मॉड्यूल्स को ग्लोबल बनाएं (यदि आवश्यक हो)
         window.db = db;
-        window.auth = auth; // Make auth available if needed by detail script directly
+        window.auth = auth;
 
         // Auth स्थिति बदलनe पर सुनें
         onAuthStateChanged(auth, (user) => {
             const body = document.body;
             const content = document.getElementById('supplierAccountDetailContent');
-            const loadingIndicator = document.getElementById('loadingIndicator'); // Assume a loading indicator element exists
+            const loadingIndicator = document.getElementById('loadingIndicator');
 
             if (user) {
                 // User is signed in.
                 console.log("Auth state: User signed in.", user.uid);
-                body.classList.remove('auth-error'); // Error क्लास हटाएं (यदि हो)
-                if (loadingIndicator) loadingIndicator.style.display = 'flex'; // लोडर दिखाएं
+                body.classList.remove('auth-error');
+                if (loadingIndicator) loadingIndicator.style.display = 'flex';
 
-                // Initialize the detail page logic AFTER auth is confirmed
-                // Dynamically import and call the initialization function
+                // === MODIFIED IMPORT AND CALL LOGIC ===
                 import('./js/supplier_account_detail.js')
-                    .then(({ initializeSupplierDetailPage }) => {
-                        if (typeof initializeSupplierDetailPage === 'function') {
-                            initializeSupplierDetailPage(); // पेज इनिशियलाइज़ करें
+                    .then((module) => { // Get the entire module object
+                        console.log("JS module loaded:", module); // Log the module object for debugging
+                        // Check if the function exists on the module object
+                        if (module && typeof module.initializeSupplierDetailPage === 'function') {
+                            module.initializeSupplierDetailPage(); // Call the function via the module object
                         } else {
-                            console.error("initializeSupplierDetailPage function not found in module.");
-                            if (content) content.innerHTML = '<p class="error-message">Error loading page logic. Please refresh.</p>';
-                            body.style.visibility = 'visible'; // Show body with error
+                            console.error("initializeSupplierDetailPage function not found in the loaded module object.");
+                            if (content) content.innerHTML = '<p class="error-message">Error loading page logic (function missing). Please refresh.</p>';
+                            body.style.visibility = 'visible';
                             if (loadingIndicator) loadingIndicator.style.display = 'none';
                         }
                     })
                     .catch(error => {
                         console.error("Error importing supplier_account_detail.js:", error);
-                        if (content) content.innerHTML = '<p class="error-message">Failed to load page script. Please check console and refresh.</p>';
-                        body.style.visibility = 'visible'; // Show body with error
+                        if (content) content.innerHTML = `<p class="error-message">Failed to load page script: ${error.message}. Please check console and refresh.</p>`;
+                        body.style.visibility = 'visible';
                         if (loadingIndicator) loadingIndicator.style.display = 'none';
                     });
+                // === END OF MODIFIED LOGIC ===
 
             } else {
                 // User is signed out.
                 console.log("Auth state: User signed out.");
-                if (loadingIndicator) loadingIndicator.style.display = 'none'; // लोडर छिपाएं
-                // Redirect to login page or show an error message
+                if (loadingIndicator) loadingIndicator.style.display = 'none';
                 body.classList.add('auth-error');
-                body.style.visibility = 'visible'; // Make body visible to show error/redirect message
-                content.innerHTML = '<p class="error-message">You are not signed in. <a href="login.html">Please log in</a>.</p>';
-                // Optional: Redirect after a delay
-                // setTimeout(() => { window.location.href = 'login.html'; }, 3000);
+                body.style.visibility = 'visible';
+                if (content) content.innerHTML = '<p class="error-message">You are not signed in. <a href="login.html">Please log in</a>.</p>';
             }
         });
     </script>
@@ -74,6 +73,8 @@
             z-index: 9999; font-size: 1.2em; color: #333; display: none; /* Initially hidden */
         }
         #loadingIndicator i { margin-right: 10px; }
+        body { visibility: hidden; /* Hide body initially */ }
+        body.auth-error { visibility: visible; }
     </style>
 
 </head>
@@ -83,7 +84,7 @@
         <i class="fas fa-spinner fa-spin"></i> Loading Supplier Details...
     </div>
 
-    <div id="supplierAccountDetailContent" style="visibility: hidden;">
+    <div id="supplierAccountDetailContent">
         <div class="container">
             <div class="page-header">
                 <h1>Supplier Account: <span id="supplierNameHeader">...</span></h1>
@@ -96,8 +97,9 @@
                 <button type="button" id="editSupplierBtn" class="button info-button" disabled><i class="fas fa-edit"></i> Edit Details</button>
                 <button type="button" id="recordPaymentBtn" class="button success-button" disabled><i class="fas fa-money-bill-wave"></i> Record Payment</button>
                 <button type="button" id="addAdjustmentBtn" class="button purple-button" disabled><i class="fas fa-balance-scale"></i> Add Adjustment</button>
-                <button type="button" id="toggleStatusBtn" class="button" disabled><i class="fas fa-power-off"></i> Toggle Status</button> <button type="button" id="deleteSupplierBtn" class="button danger-button" disabled><i class="fas fa-trash-alt"></i> Delete Supplier</button>
-                </div>
+                <button type="button" id="toggleStatusBtn" class="button" disabled><i class="fas fa-power-off"></i> Toggle Status</button>
+                <button type="button" id="deleteSupplierBtn" class="button danger-button" disabled><i class="fas fa-trash-alt"></i> Delete Supplier</button>
+            </div>
 
             <div class="info-grid">
                 <div class="info-box" id="supplierDetailsBox">
@@ -172,7 +174,8 @@
             </div>
 
         </div> </div> <div id="editSupplierModal" class="modal">
-        <div class="modal-content modal-lg"> <span class="close-btn" id="closeEditSupplierModal" title="Close">&times;</span>
+        <div class="modal-content modal-lg">
+            <span class="close-btn" title="Close">&times;</span>
             <h2><i class="fas fa-edit info-icon"></i> Edit Supplier Details</h2>
             <form id="editSupplierForm">
                 <div class="form-group">
@@ -199,25 +202,26 @@
                     <label for="editSupplierGst">GST No</label>
                     <input type="text" id="editSupplierGst">
                 </div>
-                <div class="form-group form-group-address">
+                <div class="form-group">
                     <label for="editSupplierAddress">Address</label>
                     <textarea id="editSupplierAddress" rows="3"></textarea>
                 </div>
-                <div class="form-group form-group-remarks">
+                <div class="form-group">
                     <label for="editSupplierRemarks">Remarks/Notes</label>
                     <textarea id="editSupplierRemarks" rows="3"></textarea>
                 </div>
                 <div id="editSupplierError" class="error-message hidden"></div>
                 <div class="modal-actions">
-                    <button type="button" id="cancelEditSupplierBtn" class="button cancel-button">Cancel</button>
-                    <button type="submit" id="saveSupplierChangesBtn" class="button primary-button"><i class="fas fa-save"></i> Save Changes</button>
+                    <button type="button" class="button cancel-button">Cancel</button>
+                    <button type="submit" id="saveSupplierChangesBtn" class="button warning-button"><i class="fas fa-save"></i> Save Changes</button>
                 </div>
             </form>
         </div>
     </div>
 
     <div id="recordPaymentModal" class="modal">
-        <div class="modal-content small-modal"> <span class="close-btn" id="closeRecordPaymentModal" title="Close">&times;</span>
+        <div class="modal-content small-modal">
+            <span class="close-btn" title="Close">&times;</span>
             <h2><i class="fas fa-money-bill-wave success-icon"></i> Record Payment</h2>
             <form id="recordPaymentForm">
                 <div class="form-group">
@@ -234,7 +238,7 @@
                 </div>
                  <div id="recordPaymentError" class="error-message hidden"></div>
                 <div class="modal-actions">
-                    <button type="button" id="cancelRecordPaymentBtn" class="button cancel-button">Cancel</button>
+                    <button type="button" class="button cancel-button">Cancel</button>
                     <button type="submit" id="submitPaymentBtn" class="button success-button"><i class="fas fa-check"></i> Record Payment</button>
                 </div>
             </form>
@@ -243,7 +247,7 @@
 
     <div id="addAdjustmentModal" class="modal">
         <div class="modal-content small-modal">
-            <span class="close-btn" id="closeAddAdjustmentModal" title="Close">&times;</span>
+            <span class="close-btn" title="Close">&times;</span>
             <h2><i class="fas fa-balance-scale purple-icon"></i> Add Ledger Adjustment</h2>
             <form id="addAdjustmentForm">
                  <div class="form-group">
@@ -272,7 +276,7 @@
                 </div>
                  <div id="addAdjustmentError" class="error-message hidden"></div>
                 <div class="modal-actions">
-                    <button type="button" id="cancelAddAdjustmentBtn" class="button cancel-button">Cancel</button>
+                    <button type="button" class="button cancel-button">Cancel</button>
                     <button type="submit" id="submitAdjustmentBtn" class="button purple-button"><i class="fas fa-check"></i> Add Adjustment</button>
                 </div>
             </form>
@@ -281,15 +285,16 @@
 
     <div id="confirmToggleStatusModal" class="modal">
         <div class="modal-content small-modal">
-            <span class="close-btn" id="closeConfirmToggleStatusModal" title="Close">&times;</span>
+            <span class="close-btn" title="Close">&times;</span>
             <h2><i class="fas fa-power-off warning-icon"></i> Confirm Status Change</h2>
             <p>Are you sure you want to change the status of supplier: <strong id="toggleSupplierName"></strong> to <strong id="toggleSupplierNewStatus"></strong>?</p>
-            <div id="toggleStatusWarning" class="warning-message hidden"></div> <div class="confirmation-check">
+            <div id="toggleStatusWarning" class="warning-message hidden"></div>
+             <div class="confirmation-check">
                  <input type="checkbox" id="confirmToggleStatusCheckbox">
                  <label for="confirmToggleStatusCheckbox">I understand and want to change the status.</label>
              </div>
             <div class="modal-actions">
-                <button type="button" id="cancelToggleStatusBtn" class="button cancel-button">Cancel</button>
+                <button type="button" class="button cancel-button">Cancel</button>
                 <button type="button" id="confirmToggleStatusBtn" class="button warning-button" disabled><i class="fas fa-check"></i> Confirm Change</button>
             </div>
         </div>
@@ -297,7 +302,7 @@
 
     <div id="confirmDeleteSupplierModal" class="modal">
         <div class="modal-content small-modal">
-            <span class="close-btn" id="closeConfirmDeleteSupplierModal" title="Close">&times;</span>
+            <span class="close-btn" title="Close">&times;</span>
             <h2><i class="fas fa-trash-alt danger-icon"></i> Confirm Delete Supplier</h2>
             <p>Are you absolutely sure you want to permanently delete the supplier: <strong id="deleteSupplierName"></strong>?</p>
             <p class="warning-message">This action cannot be undone. Associated POs and payments will NOT be deleted automatically.</p>
@@ -306,7 +311,7 @@
                 <label for="confirmDeleteSupplierCheckbox">I understand the consequences and want to permanently delete this supplier.</label>
             </div>
             <div class="modal-actions">
-                <button type="button" id="cancelSupplierDeleteBtn" class="button cancel-button">Cancel</button>
+                <button type="button" class="button cancel-button">Cancel</button>
                 <button type="button" id="confirmSupplierDeleteBtn" class="button danger-button" disabled><i class="fas fa-trash-alt"></i> Delete Permanently</button>
             </div>
         </div>
