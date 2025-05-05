@@ -1,4 +1,4 @@
-// js/supplier_management.js - v25 (User Requests Implemented - Cleaned)
+// js/supplier_management.js - v25 (Cleaned + User Requests Implemented)
 
 import { db, auth } from './firebase-init.js';
 import {
@@ -224,15 +224,13 @@ async function displayPoList() {
                 const firstItem = po.items[0];
                 const firstItemName = escapeHtml(firstItem.productName || 'Item');
                 if (po.items.length === 1) {
-                    const qty = escapeHtml(firstItem.quantity || '?');
-                    let sizeText = '';
+                    const qty = escapeHtml(firstItem.quantity || '?'); let sizeText = '';
                     if (firstItem.unitType === 'Sq Feet' && firstItem.width && firstItem.height) {
-                         const width = escapeHtml(firstItem.width); const height = escapeHtml(firstItem.height); const unit = escapeHtml(firstItem.dimensionUnit || 'units');
-                         sizeText = ` [${width} x ${height} ${unit}]`;
+                         const width = escapeHtml(firstItem.width); const height = escapeHtml(firstItem.height); const unit = escapeHtml(firstItem.dimensionUnit || 'units'); sizeText = ` [${width} x ${height} ${unit}]`;
                     }
-                    itemsHtml = `${firstItemName} (Qty: ${qty})${sizeText}`;
+                    itemsHtml = `<strong>${firstItemName}</strong> (Qty: ${qty})${sizeText}`;
                 } else {
-                    itemsHtml = `${firstItemName} <button class="button see-more-items-btn small-button text-button" data-action="see-more-items" data-id="${poId}">${po.items.length - 1} more</button>`;
+                    itemsHtml = `<strong>${firstItemName}</strong> <button class="button see-more-items-btn small-button text-button" data-action="see-more-items" data-id="${poId}">${po.items.length - 1} more</button>`;
                 }
             }
             const tr = document.createElement('tr'); tr.setAttribute('data-id', poId);
@@ -256,7 +254,7 @@ async function displayPoList() {
         if (poTotalsDisplay) poTotalsDisplay.textContent = `Total PO Value (Displayed): ${formatCurrency(grandTotalAmount)}`;
     } catch (error) {
         console.error("Error fetching/displaying POs: ", error);
-        if (error.code === 'failed-precondition') { showPoListError(`Error: Firestore index missing. Check console. Details: ${error.message}`); }
+        if (error.code === 'failed-precondition') { showPoListError(`Error: Firestore index missing. Check console.`); }
         else { showPoListError(`Error loading POs: ${error.message}`); }
         if (poTotalsDisplay) poTotalsDisplay.textContent = 'Error loading totals';
     }
@@ -382,12 +380,8 @@ async function openSeeMoreItemsModal(poId) {
         let poData = cachedPOs[poId]; if (!poData) { const poSnap = await getDoc(doc(db, "purchaseOrders", poId)); if (poSnap.exists()) poData = poSnap.data(); } if (!poData || !poData.items || poData.items.length === 0) { throw new Error("No items found for this PO."); }
         let itemsTableHtml = `<table class="details-table"><thead><tr><th>#</th><th>Item Name</th><th>Quantity</th><th>Size</th><th>Rate</th><th>Amount</th></tr></thead><tbody>`;
         poData.items.forEach((item, index) => {
-            const itemTotal = (item.quantity || 0) * (item.rate || 0);
-            let sizeText = '-';
-             if (item.unitType === 'Sq Feet' && item.width && item.height) {
-                 const width = escapeHtml(item.width); const height = escapeHtml(item.height); const unit = escapeHtml(item.dimensionUnit || 'units');
-                 sizeText = `${width} x ${height} ${unit}`;
-            }
+            const itemTotal = (item.quantity || 0) * (item.rate || 0); let sizeText = '-';
+             if (item.unitType === 'Sq Feet' && item.width && item.height) { const width = escapeHtml(item.width); const height = escapeHtml(item.height); const unit = escapeHtml(item.dimensionUnit || 'units'); sizeText = `${width} x ${height} ${unit}`; }
             itemsTableHtml += `<tr><td>${index + 1}</td><td>${escapeHtml(item.productName || 'N/A')}</td><td style="text-align: right;">${escapeHtml(item.quantity || 0)}</td><td>${sizeText}</td><td style="text-align: right;">${formatCurrency(item.rate || 0)}</td><td style="text-align: right;">${formatCurrency(itemTotal)}</td></tr>`;
         });
         itemsTableHtml += `</tbody></table>`;

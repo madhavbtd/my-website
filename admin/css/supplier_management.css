@@ -17,6 +17,9 @@
     --box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
     --selected-row-bg: #e0ecf8;
     --primary-color-light: #e6f0ff;
+    --scrollbar-track-color: #f1f1f1;
+    --scrollbar-thumb-color: #c1c1c1;
+    --scrollbar-thumb-hover-color: #a8a8a8;
 }
 
 body { font-family: var(--font-family); background-color: #f0f2f5; margin: 0; color: var(--text-color); line-height: 1.5; }
@@ -78,7 +81,11 @@ body { font-family: var(--font-family); background-color: #f0f2f5; margin: 0; co
 .section-container h2 { margin-top: 0; margin-bottom: 20px; font-size: 1.4em; color: var(--secondary-color); border-bottom: 1px solid var(--medium-gray); padding-bottom: 12px; font-weight: 600; }
 .section-container h2 i { margin-right: 10px; color: var(--primary-color); }
 
-.table-container { width: 100%; overflow-x: auto; border: 1px solid var(--medium-gray); border-radius: var(--border-radius); margin-bottom: 15px; background-color: var(--white-color); }
+.table-container { width: 100%; overflow-x: auto; border: 1px solid var(--medium-gray); border-radius: var(--border-radius); margin-bottom: 15px; background-color: var(--white-color); overflow-y: hidden; }
+
+#suppliersListSection .table-container { max-height: 18em; overflow-y: auto; }
+#poListSection .table-container { max-height: 60vh; overflow-y: auto; }
+
 table { width: 100%; border-collapse: collapse; font-size: 0.9em; }
 table thead { background-color: var(--light-gray); border-bottom: 2px solid var(--medium-gray); }
 table th, table td { border: 1px solid #e0e0e0; padding: 10px 12px; text-align: left; vertical-align: middle; }
@@ -120,37 +127,22 @@ a.supplier-link:hover { text-decoration: underline; color: #003d80; }
 
 .po-totals { margin-top: 15px; padding: 10px 15px; background-color: var(--light-gray); border: 1px solid var(--medium-gray); border-radius: var(--border-radius); text-align: right; font-size: 1em; font-weight: 600; }
 
-.batch-actions-bar {
-    display: none;
-    align-items: center;
-    justify-content: space-between;
-    padding: 10px 15px;
-    background-color: var(--primary-color-light);
-    border: 1px solid var(--primary-color);
-    border-radius: var(--border-radius);
-    margin-bottom: 15px;
-    flex-wrap: wrap;
-    gap: 10px;
-}
-.batch-actions-bar #poSelectedCount {
-    font-weight: 600;
-    color: var(--primary-color);
-    font-size: 0.9em;
-    margin-right: 15px;
-}
-.batch-actions-bar > div {
-     display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
-}
-.batch-actions-bar select {
-    padding: 5px 8px; height: 32px; font-size: 0.9em; width: auto; border-radius: 4px; border: 1px solid #ccc; margin-right: 5px; flex-shrink: 0;
-}
-.batch-actions-bar .button.small-button {
-    height: 32px; flex-shrink: 0;
-}
-.batch-actions-bar .delete-button:disabled,
-.batch-actions-bar .info-button:disabled {
-    opacity: 0.6; cursor: not-allowed;
-}
+.batch-actions-bar { display: none; align-items: center; justify-content: space-between; padding: 10px 15px; background-color: var(--primary-color-light); border: 1px solid var(--primary-color); border-radius: var(--border-radius); margin-bottom: 15px; flex-wrap: wrap; gap: 10px; box-shadow: none; }
+.batch-actions-bar #poSelectedCount { font-weight: 600; color: var(--primary-color); font-size: 0.9em; margin-right: 15px; }
+.batch-actions-bar > div { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.batch-actions-bar select { padding: 6px 10px; height: 34px; font-size: 0.85em; width: auto; border-radius: var(--border-radius); border: 1px solid #ced4da; margin-right: 5px; flex-shrink: 0; font-family: var(--font-family); }
+.batch-actions-bar .button.small-button { height: 34px; flex-shrink: 0; padding: 5px 12px; font-size: 0.85em; box-shadow: none; }
+.batch-actions-bar .button.small-button:hover { box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+.batch-actions-bar .info-button { background-color: var(--info-color); }
+.batch-actions-bar .info-button:hover:not(:disabled) { background-color: #117a8b; }
+.batch-actions-bar .success-button { background-color: var(--success-color); }
+.batch-actions-bar .success-button:hover:not(:disabled) { background-color: #218838; }
+.batch-actions-bar .delete-button { background-color: var(--danger-color); }
+.batch-actions-bar .delete-button:hover:not(:disabled) { background-color: #c82333; }
+.batch-actions-bar .cancel-button { background-color: var(--secondary-color); }
+.batch-actions-bar .cancel-button:hover:not(:disabled) { background-color: #5a6268; }
+.batch-actions-bar .button:disabled { background-color: #adb5bd !important; color: #fff !important; cursor: not-allowed; opacity: 0.6; box-shadow: none; transform: none; }
+.batch-actions-bar .button:disabled:hover { background-color: #adb5bd !important; }
 
 .modal { display: none; position: fixed; z-index: 1050; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.6); align-items: center; justify-content: center; padding: 15px; box-sizing: border-box; }
 .modal.active { display: flex; }
@@ -177,11 +169,11 @@ a.supplier-link:hover { text-decoration: underline; color: #003d80; }
 .modal .error-message[style*="block"] { display: block !important; }
 
 #statusUpdateModal { align-items: center; justify-content: center; }
-#statusUpdateModal .modal-content { max-width: 450px; overflow: visible; max-height: none; padding: 0; } /* Adjusted */
+#statusUpdateModal .modal-content { max-width: 450px; overflow: visible; max-height: none; padding: 0; }
 #statusUpdateModal .modal-header, #statusUpdateModal .modal-actions { position: static; }
 #statusUpdateModal .modal-header { border-radius: var(--border-radius) var(--border-radius) 0 0; }
 #statusUpdateModal .modal-actions { border-radius: 0 0 var(--border-radius) var(--border-radius); }
-#statusUpdateModal .modal-body { padding: 15px 20px; } /* Add padding to body */
+#statusUpdateModal .modal-body { padding: 15px 20px; }
 #statusUpdateModal .modal-header h2 { text-align: center; border-bottom: none; margin-bottom: 0; }
 #statusUpdateModal p { margin-bottom: 15px; font-size: 0.95em; text-align: center; }
 #statusUpdateModal p strong { font-weight: 600; color: var(--primary-color); }
@@ -197,6 +189,12 @@ a.supplier-link:hover { text-decoration: underline; color: #003d80; }
 #poItemsModal .modal-content { max-width: 850px; }
 #poItemsModal .details-table th:nth-child(1), #poItemsModal .details-table td:nth-child(1) { width: 30px; text-align: center;}
 #poItemsModal .details-table th:nth-child(4), #poItemsModal .details-table td:nth-child(4) { width: 120px; } /* Size column width */
+
+.table-container::-webkit-scrollbar, .modal-body::-webkit-scrollbar { width: 8px; height: 8px; }
+.table-container::-webkit-scrollbar-track, .modal-body::-webkit-scrollbar-track { background: var(--scrollbar-track-color); border-radius: 4px; }
+.table-container::-webkit-scrollbar-thumb, .modal-body::-webkit-scrollbar-thumb { background-color: var(--scrollbar-thumb-color); border-radius: 4px; border: 2px solid var(--scrollbar-track-color); }
+.table-container::-webkit-scrollbar-thumb:hover, .modal-body::-webkit-scrollbar-thumb:hover { background-color: var(--scrollbar-thumb-hover-color); }
+.table-container, .modal-body { scrollbar-width: thin; scrollbar-color: var(--scrollbar-thumb-color) var(--scrollbar-track-color); }
 
 @media (max-width: 992px) {
     .main-content { max-width: 95%; }
@@ -218,6 +216,7 @@ a.supplier-link:hover { text-decoration: underline; color: #003d80; }
     .details-table th, .details-table td { padding: 6px 8px; }
     .table-container { -webkit-overflow-scrolling: touch; }
     table td.action-buttons { flex-wrap: wrap; justify-content: center;}
+    .batch-actions-bar > div { flex-direction: column; align-items: stretch; }
 }
 @media (max-width: 480px) {
     .page-header h1 { font-size: 1.4em; }
@@ -230,7 +229,7 @@ a.supplier-link:hover { text-decoration: underline; color: #003d80; }
 @media print {
     body { background-color: #fff !important; color: #000 !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
     .container, .main-content, .actions-bar, .po-filters, .section-container h2, .breadcrumb, .po-totals, .po-pagination-controls, .modal, #poBatchActionsBar { display: none !important; }
-    .section-container, .table-container, #poTable { display: block !important; width: 100% !important; box-shadow: none !important; border: none !important; margin: 0 !important; padding: 0 !important; overflow: visible !important; }
+    .section-container, .table-container, #poTable { display: block !important; width: 100% !important; box-shadow: none !important; border: none !important; margin: 0 !important; padding: 0 !important; overflow: visible !important; max-height: none !important; }
     #poTable thead { display: table-header-group; }
     #poTable th, #poTable td { border: 1px solid #ccc !important; font-size: 9pt !important; color: #000 !important; background-color: #fff !important; }
     #poTable th { background-color: #eee !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
