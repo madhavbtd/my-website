@@ -11,35 +11,9 @@
     <script type="module">
         import { auth } from './js/firebase-init.js';
         import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-
-        function displayGlobalError(message) {
-            try {
-                const mainContent = document.getElementById('main-content');
-                if (mainContent) {
-                    mainContent.innerHTML = `<div class="error-message" style="display: block; margin: 20px; padding: 15px; background-color: #f8d7da; border: 1px solid #f5c2c7; color: #721c24; border-radius: 5px;"><strong>Error:</strong> ${message}</div>`;
-                } else { alert(`Critical Error: ${message}`); }
-            } catch (e) { console.error("Error displaying global error:", e); alert(`Critical Error: ${message}`); }
-        }
-        window.displayGlobalError = displayGlobalError;
-
-        try {
-            if (!auth) { throw new Error("Firebase Auth failed to initialize."); }
-            onAuthStateChanged(auth, (user) => {
-                const mainContent = document.getElementById('main-content');
-                if (!mainContent) { console.error("Main content area not found."); return; }
-                // Only handle redirect if not logged in
-                if (!user && !window.location.pathname.endsWith('login.html')) {
-                     console.log("User not logged in, redirecting from supplier_management.html inline script.");
-                     window.location.replace('login.html');
-                }
-                // DO NOT call initializeSupplierManagementPage here anymore
-            });
-        } catch (e) {
-            console.error("Firebase Auth Setup Error:", e);
-            displayGlobalError(`Authentication Setup Error: ${e.message}.`);
-        }
+        function displayGlobalError(message) { try { const mainContent = document.getElementById('main-content'); if (mainContent) { mainContent.innerHTML = `<div class="error-message" style="display: block; margin: 20px; padding: 15px; background-color: #f8d7da; border: 1px solid #f5c2c7; color: #721c24; border-radius: 5px;"><strong>Error:</strong> ${message}</div>`; } else { alert(`Critical Error: ${message}`); } } catch (e) { console.error("Error displaying global error:", e); alert(`Critical Error: ${message}`); } } window.displayGlobalError = displayGlobalError; try { if (!auth) { throw new Error("Firebase Auth failed to initialize."); } onAuthStateChanged(auth, (user) => { const mainContent = document.getElementById('main-content'); if (!mainContent) { console.error("Main content area not found."); return; } if (!user && !window.location.pathname.endsWith('login.html')) { window.location.replace('login.html'); } else if (user) { if (typeof initializeSupplierManagementPage === 'function') { initializeSupplierManagementPage(user); } else { setTimeout(() => { if (typeof initializeSupplierManagementPage === 'function') { initializeSupplierManagementPage(user); } else { console.error("initializeSupplierManagementPage function not found."); displayGlobalError("Page initialization failed."); } }, 200); } } }); } catch (e) { console.error("Firebase Auth Setup Error:", e); displayGlobalError(`Authentication Setup Error: ${e.message}.`); }
     </script>
-    </head>
+</head>
 <body>
     <div class="container">
         <div class="main-content" id="main-content">
@@ -181,7 +155,10 @@
                      </select>
                  </div>
             </div>
-        </div> </div> <div id="supplierModal" class="modal">
+        </div>
+    </div>
+
+    <div id="supplierModal" class="modal">
         <div class="modal-content">
              <div class="modal-header">
                 <h2 id="supplierModalTitle">Add New Supplier</h2>
@@ -222,6 +199,7 @@
             </div>
         </div>
     </div>
+
     <div id="statusUpdateModal" class="modal">
          <div class="modal-content" style="max-width: 450px;">
              <div class="modal-header">
@@ -250,7 +228,8 @@
                      <button type="submit" id="saveStatusBtn" class="button save-button" form="statusUpdateForm">Update Status</button>
               </div>
          </div>
-    </div>
+     </div>
+
     <div id="poItemsModal" class="modal modal-lg">
         <div class="modal-content">
             <div class="modal-header">
@@ -265,8 +244,9 @@
             </div>
         </div>
     </div>
+
     <div id="poShareModal" class="modal modal-lg">
-         <div class="modal-content">
+        <div class="modal-content">
             <div class="modal-header">
                  <h2 id="poShareModalTitle">Purchase Order</h2>
                  <button type="button" class="close-button" id="closePoShareModalTopBtn">&times;</button>
@@ -302,7 +282,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
     <script src="js/firebase-init.js" type="module"></script>
-    <script src="js/supplier_management.js" type="module" defer></script>
+    <script src="js/supplier_management.js" type="module"></script>
 
 </body>
 </html>
