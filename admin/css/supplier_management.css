@@ -108,9 +108,10 @@ table th.sort-asc .sort-indicator, table th.sort-desc .sort-indicator { color: v
 table tbody tr:nth-child(even) { background-color: #fdfdfd; }
 table tbody tr:hover { background-color: #f1f5f9; }
 table tbody tr.selected-row { background-color: var(--selected-row-bg) !important; font-weight: 500; }
-#supplierTableBody tr.clickable-row:hover { cursor: pointer; background-color: var(--primary-color-light) !important; }
+#supplierTableBody tr.clickable-row:not(:has(button:hover)):hover { cursor: pointer; background-color: var(--primary-color-light) !important; }
 #supplierTable th:nth-child(3), #supplierTable td:nth-child(3) { text-align: right; }
 .supplier-balance { text-align: right; font-weight: 500; }
+.no-results td { text-align: center !important; color: var(--dark-gray); font-style: italic; padding: 15px !important;}
 
 .product-name-display { font-weight: 600; color: var(--text-color); margin-right: 5px; }
 #poTableBody td:nth-child(6) { font-weight: 400; }
@@ -176,8 +177,7 @@ a.supplier-link:hover { text-decoration: underline; color: #003d80; }
 
 .modal-body { padding: 15px 20px; overflow-y: auto; flex-grow: 1; }
 .modal-actions { display: flex; justify-content: flex-end; gap: 10px; padding: 10px 20px; border-top: 1px solid var(--medium-gray); background-color: var(--light-gray); flex-shrink: 0; border-radius: 0 0 var(--border-radius) var(--border-radius); position: sticky; bottom: 0; z-index: 10; }
-/* Specific style for delete button in modal */
-.modal-actions .delete-button { background-color: var(--danger-color); margin-right: auto; /* Push delete to the left */ }
+.modal-actions .delete-button { background-color: var(--danger-color); margin-right: auto; }
 .modal-actions .delete-button:hover:not(:disabled) { background-color: #c82333; }
 
 .modal form .form-group { margin-bottom: 15px; }
