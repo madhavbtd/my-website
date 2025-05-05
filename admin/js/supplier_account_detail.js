@@ -1,4 +1,4 @@
-// js/supplier_account_detail.js - v7 (Merged Customer Features + Supplier Logic)
+// js/supplier_account_detail.js - v8 (Theming & Layout Updates Integrated)
 
 // --- Firebase Imports ---
 // Ensure ALL necessary functions are imported or globally available via firebase-init.js
@@ -6,12 +6,10 @@ import { db, auth } from './firebase-init.js';
 import {
     doc, getDoc, collection, query, where, getDocs, orderBy as firestoreOrderBy, // Renamed orderBy
     Timestamp, addDoc, serverTimestamp, updateDoc, deleteDoc, runTransaction, writeBatch
-    // arrayUnion might be needed if status history is implemented for suppliers
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
 // --- Global State ---
-let initializationAttempted = false;
 let currentSupplierId = null;
 let currentSupplierData = null;
 let purchaseOrdersData = [];
@@ -21,323 +19,1035 @@ let listenersAttached = false;
 let supplierDetailPageInitialized = false;
 let isRefreshingData = false; // Flag to prevent concurrent refreshes
 
-// --- Helper Functions ---
-function displayError(message, elementId = 'generalErrorDisplay') { /* ... (Same as previous version) ... */ console.error("Displaying Error:", message, "Target Element ID:", elementId); try { let errorElement = document.getElementById('generalErrorDisplay'); if (!errorElement) { if (elementId === 'paymentMadeError') errorElement = document.getElementById('paymentMadeError'); else if (elementId === 'editSupplierError') errorElement = document.getElementById('editSupplierError'); else if (elementId === 'supplierPaymentListError') errorElement = document.getElementById('supplierPaymentListError'); else if (elementId === 'supplierPoListError') errorElement = document.getElementById('supplierPoListError'); else if (elementId === 'accountSummaryError') errorElement = document.getElementById('accountSummaryError'); else if (elementId === 'supplierAdjustmentError') errorElement = document.getElementById('supplierAdjustmentError'); else if (elementId === 'supplierLedgerError') errorElement = document.getElementById('supplierLedgerError'); } if (errorElement) { errorElement.textContent = `Error: ${message}`; errorElement.style.display = 'block'; errorElement.style.color = 'red'; console.log("Error displayed in element:", errorElement.id); } else { console.warn(`Error element '${elementId}' or fallback 'generalErrorDisplay' not found. Using alert.`); alert(`Error: ${message}`); } } catch(e) { console.error("Error within displayError function itself:", e); alert(`Critical Error: ${message}`); } }
-function clearError(elementId = 'generalErrorDisplay') { /* ... (Same as previous version) ... */ try { let errorElement = document.getElementById(elementId); if (elementId === 'generalErrorDisplay') { const specificErrors = ['paymentMadeError', 'editSupplierError', 'supplierPaymentListError', 'supplierPoListError', 'accountSummaryError', 'supplierAdjustmentError', 'supplierLedgerError']; specificErrors.forEach(id => { const el = document.getElementById(id); if (el) { el.textContent = ''; el.style.display = 'none'; } }); } if (errorElement) { errorElement.textContent = ''; errorElement.style.display = 'none'; } } catch(e) { console.error("Error within clearError:", e); } }
-function getSupplierIdFromUrl() { /* ... (Same as previous version) ... */ try { const params = new URLSearchParams(window.location.search); return params.get('id'); } catch (e) { console.error("Error getting supplier ID from URL:", e); displayError("Could not read supplier ID from page address."); return null; } }
-function formatDate(timestamp, includeTime = false) { /* ... (Same as previous version) ... */ if (!timestamp || typeof timestamp.toDate !== 'function') { return '-'; } try { const date = timestamp.toDate(); const optionsDate = { year: 'numeric', month: 'short', day: 'numeric', timeZone: 'Asia/Kolkata' }; const optionsTime = { hour: 'numeric', minute: '2-digit', hour12: true, timeZone: 'Asia/Kolkata' }; const formattedDate = date.toLocaleDateString('en-IN', optionsDate); if (includeTime) { return `${formattedDate}, ${date.toLocaleTimeString('en-IN', optionsTime)}`; } return formattedDate; } catch (e) { console.error("Error formatting date:", timestamp, e); return 'Format Error'; } }
-function formatCurrency(amount) { /* ... (Same as previous version) ... */ try { let numAmount = typeof amount === 'number' ? amount : parseFloat(amount); if (isNaN(numAmount)) { return '₹ --.--'; } return `₹ ${numAmount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`; } catch (e) { console.error("Error formatting currency:", amount, e); return '₹ Format Error'; } }
-function getStatusClass(status) { /* ... (Same as previous version) ... */ if (!status) return 'status-unknown'; const normalizedStatus = status.toLowerCase().replace(/\s+/g, '-'); switch (normalizedStatus) { case 'new': return 'status-new'; case 'sent': return 'status-sent'; case 'printing': return 'status-printing'; case 'product-received': return 'status-product-received'; case 'po-paid': return 'status-po-paid'; case 'cancel': return 'status-cancel'; default: return 'status-unknown'; } }
-function getPaymentStatusClass(status) { /* ... (Same as previous version) ... */ if (!status) return 'payment-status-pending'; const normalizedStatus = status.toLowerCase().replace(/\s+/g, '-'); switch (normalizedStatus) { case 'pending': return 'payment-status-pending'; case 'partially-paid': return 'payment-status-partially-paid'; case 'paid': return 'payment-status-paid'; default: return 'payment-status-pending'; } }
-function escapeHtml(unsafe) { /* ... (Same as previous version) ... */ if (typeof unsafe !== 'string') { unsafe = String(unsafe || ''); } return unsafe.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;"); }
-
-// --- UI Population Functions ---
-function populateSupplierDetails(data) {
-    console.log("Populating supplier details with data:", data);
-    const elements = { // IDs from updated HTML
-        supplierNameHeader: document.getElementById('supplierNameHeader'),
-        supplierNameBreadcrumb: document.getElementById('supplierNameBreadcrumb'),
-        detailSupplierId: document.getElementById('detailSupplierId'),
-        detailSupplierName: document.getElementById('detailSupplierName'),
-        detailSupplierCompany: document.getElementById('detailSupplierCompany'),
-        detailSupplierWhatsapp: document.getElementById('detailSupplierWhatsapp'),
-        detailSupplierContact: document.getElementById('detailSupplierContact'),
-        detailSupplierEmail: document.getElementById('detailSupplierEmail'),
-        detailSupplierGst: document.getElementById('detailSupplierGst'),
-        detailSupplierAddress: document.getElementById('detailSupplierAddress'),
-        detailAddedOn: document.getElementById('detailAddedOn'),
-        supplierStatusBadge: document.getElementById('supplierStatusBadge'), // New
-        supplierRemarksNotes: document.getElementById('supplierRemarksNotes') // New
-    };
-    // Check if all required elements exist
-    for (const key in elements) { if (!elements[key]) { console.warn(`Supplier Detail element missing: ${key}`); } }
-
-    // Populate safely
-    const status = data?.status || 'active'; // Default to active
-    if (elements.supplierStatusBadge) {
-        elements.supplierStatusBadge.textContent = status.charAt(0).toUpperCase() + status.slice(1);
-        elements.supplierStatusBadge.className = 'status-badge'; // Reset
-        elements.supplierStatusBadge.classList.add(`status-${status.toLowerCase()}`); // Use customer CSS convention
+// --- Helper Function: Set Modal Theme ---
+/**
+ * Sets the theme class for a modal element.
+ * @param {HTMLElement} modalElement The modal element.
+ * @param {string|null} themeSuffix The suffix for the theme class (e.g., 'warning', 'info') or null to remove themes.
+ */
+function setModalTheme(modalElement, themeSuffix) {
+    if (!modalElement) return;
+    // Remove existing theme classes
+    modalElement.className = modalElement.className.replace(/modal-theme-\w+/g, '').trim();
+    // Add the new theme class if provided
+    if (themeSuffix) {
+        modalElement.classList.add(`modal-theme-${themeSuffix}`);
     }
-    if (elements.supplierRemarksNotes) { elements.supplierRemarksNotes.textContent = data?.notes || 'No remarks.'; } // Use 'notes' field like customer
-
-    if (elements.supplierNameHeader) elements.supplierNameHeader.textContent = data?.name || 'Details';
-    if (elements.supplierNameBreadcrumb) elements.supplierNameBreadcrumb.textContent = data?.name || 'Details';
-    if (elements.detailSupplierId) elements.detailSupplierId.textContent = currentSupplierId || 'N/A';
-    if (elements.detailSupplierName) elements.detailSupplierName.textContent = data?.name || 'N/A';
-    if (elements.detailSupplierCompany) elements.detailSupplierCompany.textContent = data?.companyName || 'N/A';
-    if (elements.detailSupplierWhatsapp) elements.detailSupplierWhatsapp.textContent = data?.whatsappNo || 'N/A';
-    if (elements.detailSupplierContact) elements.detailSupplierContact.textContent = data?.contact || 'N/A';
-    if (elements.detailSupplierEmail) elements.detailSupplierEmail.textContent = data?.email || 'N/A';
-    if (elements.detailSupplierGst) elements.detailSupplierGst.textContent = data?.gstNo || 'N/A';
-    if (elements.detailSupplierAddress) elements.detailSupplierAddress.textContent = data?.address || 'N/A';
-    if (elements.detailAddedOn) elements.detailAddedOn.textContent = data?.createdAt ? formatDate(data.createdAt) : 'N/A';
-
-    // Update toggle button text based on status
-    const toggleStatusBtn = document.getElementById('toggleSupplierStatusBtn'); // Correct ID
-    const toggleStatusBtnSpan = toggleStatusBtn ? toggleStatusBtn.querySelector('span') : null;
-     if (toggleStatusBtn && toggleStatusBtnSpan) {
-         const isInactive = status !== 'active';
-         toggleStatusBtnSpan.textContent = isInactive ? 'Enable Account' : 'Disable Account';
-         toggleStatusBtn.querySelector('i').className = isInactive ? 'fas fa-toggle-off' : 'fas fa-toggle-on';
-         // Use classes based on customer theme button styles
-         toggleStatusBtn.className = `button status-toggle-button ${isInactive ? 'enable' : 'disable'}`;
-     }
 }
 
-function populatePaymentHistory(payments) {
-    // ... (Keep existing function, IDs match HTML) ...
-     console.log("Populating payment history"); const tableBody = document.getElementById('transactionsTableBody'); const loadingRow = document.getElementById('transactionsLoading'); const noDataRow = document.getElementById('noTransactionsMessage'); const errorDisplay = document.getElementById('supplierPaymentListError'); if (!tableBody) { console.error("Payment history table body ('transactionsTableBody') not found!"); if(errorDisplay) displayError("Could not display payment history (UI element missing).", 'supplierPaymentListError'); return; } tableBody.innerHTML = ''; if (errorDisplay) errorDisplay.style.display = 'none'; if (loadingRow) loadingRow.style.display = 'none'; if (!payments || payments.length === 0) { if (noDataRow) { noDataRow.style.display = 'table-row'; } else { tableBody.innerHTML = '<tr><td colspan="6" style="text-align: center;">No payment history found.</td></tr>'; } return; } if (noDataRow) noDataRow.style.display = 'none'; payments.sort((a, b) => (b.paymentDate?.toDate?.() || 0) - (a.paymentDate?.toDate?.() || 0)); payments.forEach((payment) => { try { const row = tableBody.insertRow(); row.insertCell(0).textContent = formatDate(payment.paymentDate, true); row.insertCell(1).textContent = payment.notes || payment.description || payment.reference || '-'; row.insertCell(2).textContent = payment.paymentMethod || payment.mode || 'N/A'; let linkedPoDisplay = '-'; if (Array.isArray(payment.linkedPoNumbers) && payment.linkedPoNumbers.length > 0) { linkedPoDisplay = payment.linkedPoNumbers.join(', '); } else if (payment.linkedPoNumber) { linkedPoDisplay = payment.linkedPoNumber; } row.insertCell(3).textContent = linkedPoDisplay; const amountCell = row.insertCell(4); amountCell.textContent = formatCurrency(payment.paymentAmount); amountCell.classList.add('amount-paid'); row.insertCell(5); } catch(e) { console.error(`Error creating payment row:`, payment, e); } });
-}
-
-function populatePoHistoryTable(pos) {
-    // ... (Keep existing function, IDs match HTML) ...
-     console.log("Populating PO history"); const tableBody = document.getElementById('supplierPoTableBody'); const loadingRow = document.getElementById('supplierPoLoading'); const noDataRow = document.getElementById('noSupplierPoMessage'); const errorDisplay = document.getElementById('supplierPoListError'); if (!tableBody) { console.error("PO history table body ('supplierPoTableBody') not found!"); if (errorDisplay) displayError("Could not display PO history (UI element missing).", 'supplierPoListError'); return; } tableBody.innerHTML = ''; if (errorDisplay) errorDisplay.style.display = 'none'; if (loadingRow) loadingRow.style.display = 'none'; if (!pos || pos.length === 0) { if (noDataRow) { noDataRow.style.display = 'table-row'; } else { tableBody.innerHTML = '<tr><td colspan="6" style="text-align: center;">No purchase orders found.</td></tr>'; } return; } if (noDataRow) noDataRow.style.display = 'none'; pos.sort((a, b) => (b.orderDate?.toDate?.() || 0) - (a.orderDate?.toDate?.() || 0)); pos.forEach((po) => { try { const row = tableBody.insertRow(); row.insertCell(0).textContent = po.poNumber || `PO-${po.id.substring(0, 6)}`; row.insertCell(1).textContent = formatDate(po.orderDate); const amountCell = row.insertCell(2); amountCell.textContent = formatCurrency(po.totalAmount); amountCell.classList.add('amount-po'); const statusCell = row.insertCell(3); const statusSpan = document.createElement('span'); statusSpan.className = `status-badge ${getStatusClass(po.status)}`; statusSpan.textContent = po.status || 'Unknown'; statusCell.appendChild(statusSpan); const paymentStatusCell = row.insertCell(4); const paymentStatusSpan = document.createElement('span'); paymentStatusSpan.className = `status-badge ${getPaymentStatusClass(po.paymentStatus)}`; paymentStatusSpan.textContent = po.paymentStatus || 'Pending'; paymentStatusCell.appendChild(paymentStatusSpan); row.insertCell(5); } catch (e) { console.error(`Error creating PO row:`, po, e); } });
-}
-
-function populatePoCheckboxListForPayment(pos) {
-    // ... (Keep existing function, IDs match HTML) ...
-    const listContainer = document.getElementById('paymentLinkPOList'); if (!listContainer) { console.error("PO Checkbox list container ('paymentLinkPOList') not found!"); return; } listContainer.innerHTML = ''; if (!pos || pos.length === 0) { listContainer.innerHTML = '<p>No POs found.</p>'; return; } const openPOs = pos.filter(po => { const total = parseFloat(po.totalAmount) || 0; const paid = parseFloat(po.amountPaid) || 0; return po.paymentStatus !== 'Paid' && (isNaN(paid) || total - paid > 0.01); }); if (openPOs.length === 0) { listContainer.innerHTML = '<p>No open POs found.</p>'; return; } openPOs.sort((a, b) => (a.orderDate?.toDate?.() || 0) - (b.orderDate?.toDate?.() || 0)); openPOs.forEach((po) => { const total = parseFloat(po.totalAmount) || 0; const paid = parseFloat(po.amountPaid) || 0; const balance = total - paid; const div = document.createElement('div'); div.className = 'po-checkbox-item'; const checkboxId = `po_link_${po.id}`; const checkbox = document.createElement('input'); checkbox.type = 'checkbox'; checkbox.id = checkboxId; checkbox.name = 'linkedPOs'; checkbox.value = po.id; checkbox.dataset.poNumber = po.poNumber || `PO-${po.id.substring(0, 6)}`; checkbox.dataset.poBalance = balance.toFixed(2); const label = document.createElement('label'); label.htmlFor = checkboxId; label.innerHTML = `<span class="po-number">${po.poNumber || po.id.substring(0, 6)}</span> <span class="po-date">(${formatDate(po.orderDate)})</span> <span class="po-balance">Balance: ${formatCurrency(balance)}</span>`; div.appendChild(checkbox); div.appendChild(label); listContainer.appendChild(div); });
-}
-
-// --- Data Fetching Helpers (Adapted for Supplier) ---
-async function getSupplierTotalPoValue(supplierId) { /* ... (Keep existing) ... */ let total = 0; try { const q = query(collection(db, "purchaseOrders"), where("supplierId", "==", supplierId)); const snapshot = await getDocs(q); snapshot.forEach(doc => { total += Number(doc.data().totalAmount || 0); }); console.log(`Workspaceed Total PO Value: ${total}`); return total; } catch (error) { console.error("Error fetching PO total:", error); return 0; } }
-async function getSupplierTotalPaymentAmount(supplierId) { /* ... (Keep existing) ... */ let total = 0; try { const q = query(collection(db, "supplier_payments"), where("supplierId", "==", supplierId)); const snapshot = await getDocs(q); snapshot.forEach(doc => { total += Number(doc.data().paymentAmount || 0); }); console.log(`Workspaceed Total Payment Amount: ${total}`); return total; } catch (error) { console.error("Error fetching payment total:", error); return 0; } }
-async function getSupplierAdjustmentTotals(supplierId) { /* ... (Keep existing) ... */ let totalDebit = 0; let totalCredit = 0; try { const q = query(collection(db, "supplierAccountAdjustments"), where("supplierId", "==", supplierId)); const snapshot = await getDocs(q); snapshot.forEach(doc => { const adj = doc.data(); const amount = Number(adj.amount || 0); if (adj.adjustmentType === 'debit') { totalDebit += amount; } else if (adj.adjustmentType === 'credit') { totalCredit += amount; } }); console.log(`Workspaceed Adjustment Totals: Debit=${totalDebit}, Credit=${totalCredit}`); return { totalDebit, totalCredit }; } catch (error) { if (error.code === 'failed-precondition') { console.warn("Firestore index missing for supplierAccountAdjustments by supplierId."); } else { console.error("Error fetching adjustment totals:", error); } return { totalDebit: 0, totalCredit: 0 }; } }
-
-// --- Account Summary Update (Adapted for Supplier) ---
-async function updateSupplierAccountSummary(supplierId) {
-    console.log(`Updating account summary for supplier: ${supplierId}`);
-    const summaryTotalPoValue = document.getElementById('summaryTotalPoValue');
-    const summaryTotalPaid = document.getElementById('summaryTotalPaid');
-    const summaryBalance = document.getElementById('summaryBalance');
-    if (!summaryTotalPoValue || !summaryTotalPaid || !summaryBalance) { console.error("Account summary elements missing!"); return; }
-    summaryTotalPoValue.textContent = "Calculating..."; summaryTotalPaid.textContent = "Calculating..."; summaryBalance.textContent = "Calculating...";
-    summaryBalance.className = 'balance-info loading-state'; clearError('accountSummaryError');
+// --- Helper Functions ---
+function displayError(message, elementId = 'generalErrorDisplay') {
+    console.error("Displaying Error:", message, "Target Element ID:", elementId);
     try {
-        const [poTotal, paymentTotal, adjustmentTotals] = await Promise.all([ getSupplierTotalPoValue(supplierId), getSupplierTotalPaymentAmount(supplierId), getSupplierAdjustmentTotals(supplierId) ]);
-        // Balance Logic: Payable = PO Total + Adjustments(Debit) - Payments - Adjustments(Credit)
-        const totalDebits = poTotal + adjustmentTotals.totalDebit; // Amount you owe / PO value
-        const totalCredits = paymentTotal + adjustmentTotals.totalCredit; // Amount you paid / Got credit
-        const finalBalance = totalDebits - totalCredits; // Positive = You Owe (Payable), Negative = Supplier Owes You (Credit)
-        summaryTotalPoValue.textContent = formatCurrency(poTotal);
-        summaryTotalPaid.textContent = formatCurrency(paymentTotal);
-        summaryBalance.classList.remove('loading-state', 'balance-due', 'balance-credit', 'balance-zero');
-        if (finalBalance > 0.005) { summaryBalance.textContent = formatCurrency(finalBalance) + " Payable"; summaryBalance.classList.add('balance-due'); }
-        else if (finalBalance < -0.005) { summaryBalance.textContent = formatCurrency(Math.abs(finalBalance)) + " Credit"; summaryBalance.classList.add('balance-credit'); }
-        else { summaryBalance.textContent = formatCurrency(0); summaryBalance.classList.add('balance-zero'); }
-        console.log(`Account summary updated. Final Balance: ${finalBalance}`);
-    } catch (error) { console.error("Error updating account summary:", error); displayError(`Error calculating summary: ${error.message}`, 'accountSummaryError'); summaryTotalPoValue.textContent = "Error"; summaryTotalPaid.textContent = "Error"; summaryBalance.textContent = "Error"; summaryBalance.classList.add('balance-due'); }
-    finally { summaryTotalPoValue.classList.remove('loading-state'); summaryTotalPaid.classList.remove('loading-state'); }
-}
-
-
-// --- Account Ledger (Adapted for Supplier) ---
-async function loadSupplierAccountLedger(supplierId) {
-    console.log(`Loading account ledger for supplier: ${supplierId}`);
-    const accountLedgerTableBody = document.getElementById('accountLedgerTableBody'); // Correct ID
-    if (!accountLedgerTableBody) { console.error("Ledger table body missing."); return; }
-    clearError('supplierLedgerError');
-    accountLedgerTableBody.innerHTML = `<tr><td colspan="5" style="text-align: center;" class="loading-state">Loading ledger...</td></tr>`;
-    let transactions = [];
-    try {
-        // 1. Fetch POs (Debit - Increases amount payable by you)
-        const poQuery = query(collection(db, "purchaseOrders"), where("supplierId", "==", supplierId), firestoreOrderBy("orderDate", "asc"));
-        const poSnapshot = await getDocs(poQuery);
-        poSnapshot.forEach(doc => {
-            const po = doc.data();
-            transactions.push({ date: po.orderDate, type: 'po', description: `PO #${po.poNumber || doc.id.substring(0,6)}`, debitAmount: Number(po.totalAmount || 0), creditAmount: 0, docId: doc.id });
-        });
-        // 2. Fetch Payments (Credit - Decreases amount payable by you)
-        const paymentQuery = query(collection(db, "supplier_payments"), where("supplierId", "==", supplierId), firestoreOrderBy("paymentDate", "asc"));
-        const paymentSnapshot = await getDocs(paymentQuery);
-        paymentSnapshot.forEach(doc => {
-            const payment = doc.data();
-            transactions.push({ date: payment.paymentDate, type: 'payment', description: `Payment Sent (${payment.paymentMethod || 'N/A'}) ${payment.notes ? '- '+payment.notes : ''}`, debitAmount: 0, creditAmount: Number(payment.paymentAmount || 0), docId: doc.id });
-        });
-        // 3. Fetch Adjustments
-        const adjQuery = query(collection(db, "supplierAccountAdjustments"), where("supplierId", "==", supplierId), firestoreOrderBy("adjustmentDate", "asc"));
-        const adjSnapshot = await getDocs(adjQuery);
-        adjSnapshot.forEach(doc => {
-            const adj = doc.data();
-            const amount = Number(adj.amount || 0);
-            const typeText = adj.adjustmentType === 'debit' ? 'Debit' : 'Credit';
-            // Debit Adjustment increases amount payable
-            // Credit Adjustment decreases amount payable
-            transactions.push({ date: adj.adjustmentDate, type: 'adjustment', description: `Adjustment (${typeText})${adj.remarks ? ': ' + adj.remarks : ''}`, debitAmount: adj.adjustmentType === 'debit' ? amount : 0, creditAmount: adj.adjustmentType === 'credit' ? amount : 0, docId: doc.id });
-        });
-        // 4. Sort All Transactions
-        transactions.sort((a, b) => { const dateA = a.date?.toDate ? a.date.toDate().getTime() : 0; const dateB = b.date?.toDate ? b.date.toDate().getTime() : 0; if (dateA === dateB) { if (a.debitAmount > 0 && b.creditAmount > 0) return -1; if (a.creditAmount > 0 && b.debitAmount > 0) return 1; } return dateA - dateB; });
-        // 5. Render Ledger
-        accountLedgerTableBody.innerHTML = '';
-        let runningBalance = 0; // Positive = Payable, Negative = Credit
-        if (transactions.length === 0) { accountLedgerTableBody.innerHTML = `<tr><td colspan="5" style="text-align: center;">No transactions found.</td></tr>`; }
-        else {
-            transactions.forEach(tx => {
-                runningBalance = runningBalance + tx.debitAmount - tx.creditAmount;
-                const row = accountLedgerTableBody.insertRow();
-                row.insertCell(0).textContent = tx.date?.toDate ? formatDate(tx.date.toDate()) : 'N/A';
-                const descCell = row.insertCell(1); descCell.textContent = escapeHtml(tx.description); descCell.title = tx.description; // Tooltip
-                const debitCell = row.insertCell(2); debitCell.textContent = tx.debitAmount > 0 ? formatCurrency(tx.debitAmount) : '-'; debitCell.classList.add('amount-po'); // Style debit like PO amount
-                const creditCell = row.insertCell(3); creditCell.textContent = tx.creditAmount > 0 ? formatCurrency(tx.creditAmount) : '-'; creditCell.classList.add('amount-paid'); // Style credit like payment amount
-                const cellBalance = row.insertCell(4);
-                cellBalance.classList.remove('ledger-balance-positive', 'ledger-balance-negative', 'ledger-balance-zero');
-                if (runningBalance > 0.005) { cellBalance.textContent = formatCurrency(runningBalance) + " Payable"; cellBalance.classList.add('ledger-balance-negative'); } // Payable = Red
-                else if (runningBalance < -0.005) { cellBalance.textContent = formatCurrency(Math.abs(runningBalance)) + " Credit"; cellBalance.classList.add('ledger-balance-positive'); } // Credit = Green
-                else { cellBalance.textContent = formatCurrency(0); cellBalance.classList.add('ledger-balance-zero'); }
-            });
+        let errorElement = document.getElementById(elementId);
+        if (!errorElement && elementId === 'generalErrorDisplay') {
+            // Fallback if generalErrorDisplay isn't found (might be early error)
+            errorElement = document.body.insertBefore(document.createElement('div'), document.body.firstChild);
+            errorElement.id = 'generalErrorDisplay';
+            errorElement.className = 'error-message-area'; // Apply styling
+            errorElement.style.margin = '15px'; // Ensure visibility
         }
-        console.log(`Ledger rendered. Final running balance: ${runningBalance}`);
-    } catch (error) { console.error("Error loading account ledger:", error); if(error.code === 'failed-precondition'){ const msg = `Error loading ledger: Firestore Index required. Check console.`; displayError(msg, 'supplierLedgerError'); accountLedgerTableBody.innerHTML = `<tr><td colspan="5" style="text-align: center;">${msg}</td></tr>`; } else{ displayError(`Error loading ledger: ${error.message}`, 'supplierLedgerError'); accountLedgerTableBody.innerHTML = `<tr><td colspan="5" style="text-align: center;">Error loading ledger.</td></tr>`; } }
+
+        if (errorElement) {
+            errorElement.textContent = message;
+            errorElement.style.display = 'block';
+             // Scroll into view if it's a specific modal error area
+            if (elementId !== 'generalErrorDisplay' && elementId !== 'ledgerErrorDisplay') {
+                 errorElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        } else {
+            console.error(`Error display element with ID '${elementId}' not found.`);
+            alert("An error occurred: " + message); // Fallback alert
+        }
+    } catch (e) {
+        console.error("Error displaying error:", e);
+        alert("A critical error occurred displaying an error message: " + message);
+    }
 }
 
-// --- Core Data Loading (Supplier Page) ---
-async function loadSupplierPageData() {
-    // ... (Keep existing function, it calls the individual load functions) ...
-     console.log("loadSupplierPageData called"); if (!currentSupplierId) { console.error("Supplier ID is null"); displayError("Cannot load data: Supplier ID is missing."); return; } if (!db) { displayError("Database connection failed."); return; } if (isRefreshingData) { console.log("Data refresh already in progress."); return; } isRefreshingData = true; const loadingIndicator = document.getElementById('loadingIndicator'); if (loadingIndicator) loadingIndicator.style.display = 'block'; clearError(); try { console.log("Fetching core supplier details for ID:", currentSupplierId); const supplierRef = doc(db, "suppliers", currentSupplierId); const supplierSnap = await getDoc(supplierRef); if (!supplierSnap.exists()) { throw new Error("Supplier not found in database."); } currentSupplierData = { id: supplierSnap.id, ...supplierSnap.data() }; populateSupplierDetails(currentSupplierData); const status = currentSupplierData.status || 'active'; if (editSupplierDetailsBtn) editSupplierDetailsBtn.disabled = false; if (addPaymentMadeBtn) addPaymentMadeBtn.disabled = (status !== 'active'); if (addSupplierAdjustmentBtn) addSupplierAdjustmentBtn.disabled = false; if (toggleSupplierStatusBtn) toggleSupplierStatusBtn.disabled = false; if (deleteSupplierBtn) deleteSupplierBtn.disabled = false; if (addNewPoLink) { addNewPoLink.href = `new_po.html?supplierId=${encodeURIComponent(currentSupplierId)}&supplierName=${encodeURIComponent(currentSupplierData.name || '')}`; addNewPoLink.classList.remove('disabled'); if (status !== 'active') addNewPoLink.classList.add('disabled'); } console.log("Fetching POs, Payments, Ledger, Summary..."); await Promise.all([ loadSupplierPoHistory(currentSupplierId), loadSupplierPaymentHistory(currentSupplierId), loadSupplierAccountLedger(currentSupplierId), updateSupplierAccountSummary(currentSupplierId) ]); console.log("All supplier page data fetched and displayed."); } catch (error) { console.error("Error loading supplier page data:", error); displayError(`Error loading data: ${error.message}.`); populateSupplierDetails(null); if(supplierPoTableBody) supplierPoTableBody.innerHTML = '<tr><td colspan="6" style="text-align: center;">Error loading POs.</td></tr>'; if(transactionsTableBody) transactionsTableBody.innerHTML = '<tr><td colspan="6" style="text-align: center;">Error loading payments.</td></tr>'; if(accountLedgerTableBody) accountLedgerTableBody.innerHTML = '<tr><td colspan="5" style="text-align: center;">Error loading ledger.</td></tr>'; if(summaryBalance) summaryBalance.textContent = "Error"; const buttons = document.querySelectorAll('.actions-bar .button, .actions-bar a.button'); buttons.forEach(btn => btn.disabled = true); } finally { if (loadingIndicator) loadingIndicator.style.display = 'none'; isRefreshingData = false; }
+
+function clearError(elementId = 'generalErrorDisplay') {
+    const errorElement = document.getElementById(elementId);
+    if (errorElement) {
+        errorElement.textContent = '';
+        errorElement.style.display = 'none';
+    }
 }
-async function loadSupplierPoHistory(supplierId) { /* ... (Keep existing) ... */ try { const q = query(collection(db, "purchaseOrders"), where("supplierId", "==", supplierId), firestoreOrderBy("orderDate", "desc")); const snapshot = await getDocs(q); purchaseOrdersData = snapshot.docs.map(d => ({ id: d.id, ...d.data() })); populatePoHistoryTable(purchaseOrdersData); } catch (error) { console.error("Error loading PO history:", error); displayError("Could not load PO History.", "supplierPoListError"); populatePoHistoryTable([]); } }
-async function loadSupplierPaymentHistory(supplierId) { /* ... (Keep existing) ... */ try { const q = query(collection(db, "supplier_payments"), where("supplierId", "==", supplierId), firestoreOrderBy("paymentDate", "desc")); const snapshot = await getDocs(q); supplierPaymentsData = snapshot.docs.map(d => ({ id: d.id, ...d.data() })); populatePaymentHistory(supplierPaymentsData); } catch (error) { console.error("Error loading Payment history:", error); displayError("Could not load Payment History.", "supplierPaymentListError"); populatePaymentHistory([]); } }
 
-// --- Refresh Data Function ---
-async function refreshSupplierPageData() { /* ... (Keep existing) ... */ console.log("Refreshing supplier page data..."); await loadSupplierPageData(); }
+function formatDate(date) {
+    if (!date) return 'N/A';
+    // Assuming date is a Firestore Timestamp or JS Date object
+    const jsDate = (date instanceof Timestamp) ? date.toDate() : date;
+    if (!(jsDate instanceof Date) || isNaN(jsDate)) {
+       return 'Invalid Date';
+    }
+    return jsDate.toLocaleDateString('en-GB'); // dd/mm/yyyy format
+}
 
-// --- Modal Functions & Handlers ---
-// Add Payment Modal
-function openPaymentModal(){ /* Keep existing */ if (!currentSupplierData) { alert("Supplier data not loaded yet."); return; } const paymentMadeModal=document.getElementById('paymentMadeModal'); const paymentMadeForm=document.getElementById('paymentMadeForm'); const paymentSupplierName=document.getElementById('paymentSupplierName'); if(!paymentMadeModal || !paymentMadeForm || !paymentSupplierName) { console.error("Payment modal elements missing."); return; } clearError('paymentMadeError'); paymentMadeForm.reset(); paymentSupplierName.textContent = currentSupplierData.name || 'Supplier'; try { paymentMadeForm.querySelector('#paymentDate').valueAsDate = new Date(); } catch(e){ paymentMadeForm.querySelector('#paymentDate').value = new Date().toISOString().slice(0,10); } populatePoCheckboxListForPayment(purchaseOrdersData); paymentMadeModal.classList.add('active'); }
-function closePaymentModal(){ /* Keep existing */ if (paymentMadeModal) paymentMadeModal.classList.remove('active'); }
-async function handleSavePayment(event) { /* Keep existing, calls refresh */ event.preventDefault(); if (!currentSupplierId || !db) { displayError("Cannot save payment.", "paymentMadeError"); return; } const amountInput = document.getElementById('paymentAmount'); const dateInput = document.getElementById('paymentDate'); const methodInput = document.getElementById('paymentMethod'); const notesInput = document.getElementById('paymentNotes'); const poListContainer = document.getElementById('paymentLinkPOList'); const saveBtn = document.getElementById('savePaymentBtn'); if (!amountInput || !dateInput || !methodInput || !notesInput || !poListContainer || !saveBtn) { displayError("Payment form elements missing.", "paymentMadeError"); return; } const amount = parseFloat(amountInput.value); const paymentDateStr = dateInput.value; const method = methodInput.value; const notes = notesInput.value.trim(); if (isNaN(amount) || amount <= 0) { displayError("Please enter a valid positive payment amount.", "paymentMadeError"); amountInput.focus(); return; } if (!paymentDateStr) { displayError("Please select a payment date.", "paymentMadeError"); dateInput.focus(); return; } if (!method) { displayError("Please select a payment method.", "paymentMadeError"); methodInput.focus(); return; } const selectedCheckboxes = poListContainer.querySelectorAll('input[name="linkedPOs"]:checked'); const linkedPoIds = Array.from(selectedCheckboxes).map(cb => cb.value); const linkedPoNumbers = Array.from(selectedCheckboxes).map(cb => cb.dataset.poNumber); saveBtn.disabled = true; saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...'; clearError('paymentMadeError'); try { const localDate = new Date(paymentDateStr + 'T00:00:00'); const paymentDate = Timestamp.fromDate(localDate); const paymentData = { supplierId: currentSupplierId, supplierName: currentSupplierData?.name || 'N/A', paymentAmount: amount, paymentDate: paymentDate, paymentMethod: method, notes: notes, createdAt: serverTimestamp(), linkedPoIds: linkedPoIds || [], linkedPoNumbers: linkedPoNumbers || [] }; const paymentDocRef = await addDoc(collection(db, "supplier_payments"), paymentData); console.log("Payment recorded:", paymentDocRef.id); if (linkedPoIds.length > 0) { console.warn(`TODO: Update PO status logic needed for ${linkedPoIds.length} POs`); } closePaymentModal(); alert("Payment recorded successfully!"); await refreshSupplierPageData(); } catch (error) { console.error("Error saving payment:", error); displayError(`Failed to save payment: ${error.message}`, "paymentMadeError"); } finally { saveBtn.disabled = false; saveBtn.innerHTML = '<i class="fas fa-save"></i> Save Payment'; } }
+function formatCurrency(amount) {
+    if (amount == null || isNaN(amount)) {
+        return '₹ 0.00';
+    }
+    // Format as Indian Rupees (₹)
+    return `₹ ${parseFloat(amount).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+}
 
-// Edit Supplier Modal
-function openEditSupplierModal(){ /* Keep existing, added notes */ const editSupplierModal=document.getElementById('editSupplierModal'); const editSupplierForm=document.getElementById('editSupplierForm'); const editSupplierNotes = document.getElementById('editSupplierNotes'); if(!editSupplierModal || !editSupplierForm || !currentSupplierData || !currentSupplierId){ console.error("Edit modal elements missing."); return; } clearError('editSupplierError'); editSupplierForm.reset(); document.getElementById('editingSupplierId').value = currentSupplierId; document.getElementById('editSupplierNameInput').value = currentSupplierData.name || ''; document.getElementById('editSupplierCompanyInput').value = currentSupplierData.companyName || ''; document.getElementById('editSupplierWhatsappInput').value = currentSupplierData.whatsappNo || ''; document.getElementById('editSupplierContactInput').value = currentSupplierData.contact || ''; document.getElementById('editSupplierEmailInput').value = currentSupplierData.email || ''; document.getElementById('editSupplierGstInput').value = currentSupplierData.gstNo || ''; document.getElementById('editSupplierAddressInput').value = currentSupplierData.address || ''; if(editSupplierNotes) editSupplierNotes.value = currentSupplierData.notes || ''; editSupplierModal.classList.add('active'); }
-function closeEditSupplierModal(){ /* Keep existing */ if (editSupplierModal) editSupplierModal.classList.remove('active'); }
-async function handleEditSupplierSubmit(event){ /* Keep existing, added notes, calls refresh */ event.preventDefault(); if (!currentSupplierId || !db) { displayError("Cannot update supplier.", "editSupplierError"); return; } const form = event.target; const saveBtn = document.getElementById('updateSupplierBtn'); if(!form || !saveBtn) { displayError("Edit form error.", "editSupplierError"); return; } const updatedData = { name: form.querySelector('#editSupplierNameInput')?.value.trim(), name_lowercase: form.querySelector('#editSupplierNameInput')?.value.trim().toLowerCase(), companyName: form.querySelector('#editSupplierCompanyInput')?.value.trim(), whatsappNo: form.querySelector('#editSupplierWhatsappInput')?.value.trim(), contact: form.querySelector('#editSupplierContactInput')?.value.trim(), email: form.querySelector('#editSupplierEmailInput')?.value.trim(), gstNo: form.querySelector('#editSupplierGstInput')?.value.trim(), address: form.querySelector('#editSupplierAddressInput')?.value.trim(), notes: form.querySelector('#editSupplierNotes')?.value.trim() || null, updatedAt: serverTimestamp() }; if (!updatedData.name) { displayError("Supplier Name is required.", "editSupplierError"); return; } saveBtn.disabled = true; saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Updating...'; clearError('editSupplierError'); try { const supplierRef = doc(db, "suppliers", currentSupplierId); await updateDoc(supplierRef, updatedData); console.log("Supplier details updated."); alert("Supplier details updated successfully!"); closeEditSupplierModal(); await refreshSupplierPageData(); } catch(error) { console.error("Error updating supplier:", error); displayError(`Failed to update: ${error.message}`, "editSupplierError"); } finally { saveBtn.disabled = false; saveBtn.innerHTML = '<i class="fas fa-save"></i> Update Supplier'; } }
+function formatTimestampToInput(timestamp) {
+    if (timestamp && timestamp.toDate) {
+        const date = timestamp.toDate();
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    }
+    // Return today's date if no timestamp provided
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, '0');
+    const day = String(today.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+}
 
-// --- Add Adjustment Modal Functions (NEW - Adapted for Supplier) ---
-function openAddSupplierAdjustmentModal() { /* Keep existing */ const addSupplierAdjustmentModal=document.getElementById('addSupplierAdjustmentModal'); const adjustmentSupplierName=document.getElementById('adjustmentSupplierName'); const addSupplierAdjustmentForm=document.getElementById('addSupplierAdjustmentForm'); const supplierAdjustmentDate=document.getElementById('supplierAdjustmentDate'); const supplierAdjustmentTypeDebit=document.getElementById('supplierAdjustmentTypeDebit'); const saveSupplierAdjustmentBtn=document.getElementById('saveSupplierAdjustmentBtn'); if(!addSupplierAdjustmentModal || !currentSupplierData){ alert("Cannot open add adjustment modal."); return; } console.log("Opening Add Supplier Adjustment modal."); addSupplierAdjustmentForm.reset(); if(adjustmentSupplierName) adjustmentSupplierName.textContent = currentSupplierData.name || ''; if(supplierAdjustmentDate) try { supplierAdjustmentDate.valueAsDate = new Date(); } catch(e){ supplierAdjustmentDate.value = new Date().toISOString().slice(0,10); } if(supplierAdjustmentTypeDebit) supplierAdjustmentTypeDebit.checked = true; if(saveSupplierAdjustmentBtn) { saveSupplierAdjustmentBtn.disabled = false; saveSupplierAdjustmentBtn.innerHTML = '<i class="fas fa-save"></i> Save Adjustment'; } clearError('supplierAdjustmentError'); addSupplierAdjustmentModal.classList.add('active'); }
-function closeAddSupplierAdjustmentModal() { /* Keep existing */ if (addSupplierAdjustmentModal) addSupplierAdjustmentModal.classList.remove('active'); }
-async function handleSaveSupplierAdjustment(event) { /* Keep existing, calls refresh */ event.preventDefault(); if (!addDoc || !collection || !Timestamp || !currentSupplierId) { alert("DB function missing or Supplier ID missing."); return; } const supplierAdjustmentAmount=document.getElementById('supplierAdjustmentAmount'); const supplierAdjustmentDate=document.getElementById('supplierAdjustmentDate'); const supplierAdjustmentTypeDebit=document.getElementById('supplierAdjustmentTypeDebit'); const supplierAdjustmentTypeCredit=document.getElementById('supplierAdjustmentTypeCredit'); const supplierAdjustmentRemarks=document.getElementById('supplierAdjustmentRemarks'); const saveSupplierAdjustmentBtn=document.getElementById('saveSupplierAdjustmentBtn'); const amount = parseFloat(supplierAdjustmentAmount.value); const date = supplierAdjustmentDate.value; const type = supplierAdjustmentTypeDebit.checked ? 'debit' : (supplierAdjustmentTypeCredit.checked ? 'credit' : null); const remarks = supplierAdjustmentRemarks.value.trim(); if (!type) { displayError("Please select adjustment type.", "supplierAdjustmentError"); return; } if (isNaN(amount) || amount <= 0) { displayError("Please enter a valid positive adjustment amount.", "supplierAdjustmentError"); return; } if (!date) { displayError("Please select an adjustment date.", "supplierAdjustmentError"); return; } saveSupplierAdjustmentBtn.disabled = true; saveSupplierAdjustmentBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...'; try { const adjustmentDateTimestamp = Timestamp.fromDate(new Date(date + 'T00:00:00')); const adjustmentData = { supplierId: currentSupplierId, supplierName: currentSupplierData?.name || 'N/A', amount: amount, adjustmentType: type, adjustmentDate: adjustmentDateTimestamp, remarks: remarks || null, createdAt: Timestamp.now() }; const docRef = await addDoc(collection(db, "supplierAccountAdjustments"), adjustmentData); console.log("Supplier Adjustment added:", docRef.id); alert("Account adjustment added successfully!"); closeAddSupplierAdjustmentModal(); await refreshSupplierPageData(); } catch (error) { console.error("Error saving supplier adjustment:", error); displayError(`Error saving adjustment: ${error.message}`, "supplierAdjustmentError"); } finally { saveSupplierAdjustmentBtn.disabled = false; saveSupplierAdjustmentBtn.innerHTML = '<i class="fas fa-save"></i> Save Adjustment'; } }
+function sanitizeInput(value) {
+    // Basic sanitization: trim whitespace
+    return value ? value.trim() : '';
+}
 
-// --- Toggle Status Functions (NEW - Adapted for Supplier) ---
-function handleToggleSupplierStatus() { /* Keep existing */ if(!currentSupplierId || !currentSupplierData){ alert("Supplier data not loaded."); return; } const currentStatus = currentSupplierData.status || 'active'; const isDisabling = currentStatus === 'active'; const actionText = isDisabling ? 'disable' : 'enable'; const newStatus = isDisabling ? 'inactive' : 'active'; openConfirmToggleSupplierModal(actionText, newStatus); }
-function openConfirmToggleSupplierModal(action, newStatus) { /* Keep existing */ const confirmToggleSupplierStatusModal=document.getElementById('confirmToggleSupplierStatusModal'); const toggleSupplierActionText=document.getElementById('toggleSupplierActionText'); const toggleSupplierName=document.getElementById('toggleSupplierName'); const confirmToggleSupplierCheckbox=document.getElementById('confirmToggleSupplierCheckbox'); const confirmSupplierToggleBtn=document.getElementById('confirmSupplierToggleBtn'); const toggleSupplierWarningMessage=document.getElementById('toggleSupplierWarningMessage'); const toggleSupplierCheckboxLabel=document.getElementById('toggleSupplierCheckboxLabel'); const confirmSupplierToggleBtnText=document.getElementById('confirmSupplierToggleBtnText'); if(!confirmToggleSupplierStatusModal || !toggleSupplierActionText || !toggleSupplierName || !confirmToggleSupplierCheckbox || !confirmSupplierToggleBtn || !toggleSupplierWarningMessage || !toggleSupplierCheckboxLabel || !confirmSupplierToggleBtnText){ console.error("Toggle confirm modal elements missing!"); return; } console.log(`Opening confirm toggle modal. Action: ${action}, New Status: ${newStatus}`); toggleSupplierActionText.textContent = action; toggleSupplierName.textContent = currentSupplierData?.name || 'this supplier'; toggleSupplierWarningMessage.style.display = (action === 'disable') ? 'block' : 'none'; toggleSupplierCheckboxLabel.textContent = `I understand and want to ${action} this account.`; confirmSupplierToggleBtnText.textContent = action.charAt(0).toUpperCase() + action.slice(1) + ' Account'; const icon = confirmSupplierToggleBtn.querySelector('i'); confirmSupplierToggleBtn.className = `button status-toggle-button ${action === 'disable' ? 'disable' : 'enable'}`; if (icon) icon.className = `fas ${action === 'disable' ? 'fa-toggle-off' : 'fa-toggle-on'}`; confirmToggleSupplierCheckbox.checked = false; confirmSupplierToggleBtn.disabled = true; confirmSupplierToggleBtn.dataset.newStatus = newStatus; confirmToggleSupplierStatusModal.classList.add('active'); }
-function closeConfirmToggleSupplierModal() { /* Keep existing */ const confirmToggleSupplierStatusModal=document.getElementById('confirmToggleSupplierStatusModal'); if (confirmToggleSupplierStatusModal) confirmToggleSupplierStatusModal.classList.remove('active');}
-async function executeToggleSupplierStatus(newStatus) { /* Keep existing, calls loadSupplierPageData */ if(!updateDoc || !doc || !Timestamp || !currentSupplierId){ alert("DB function missing."); return; } const button = document.getElementById('confirmSupplierToggleBtn'); button.disabled = true; const originalHTML = button.innerHTML; button.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Processing...`; try { const supplierRef = doc(db, "suppliers", currentSupplierId); await updateDoc(supplierRef, { status: newStatus, updatedAt: Timestamp.now() }); console.log(`Supplier status successfully changed to ${newStatus}.`); alert(`Supplier account status changed to ${newStatus}.`); closeConfirmToggleSupplierModal(); await loadSupplierPageData(); /* <<< Reload Data */ } catch (error) { console.error("Error toggling supplier status:", error); alert(`Error changing status: ${error.message}`); } finally { button.disabled = false; button.innerHTML = originalHTML; } }
+function validateMobileNumber(mobile) {
+    // Simple validation: Checks if it's 10 digits
+    const mobileRegex = /^\d{10}$/;
+    return mobileRegex.test(mobile);
+}
 
-// --- Delete Supplier Functions (NEW - Adapted for Supplier) ---
-function handleDeleteSupplier() { /* Keep existing */ if(!currentSupplierId || !currentSupplierData){ alert("Supplier data not loaded."); return; } openConfirmDeleteSupplierModal(); }
-function openConfirmDeleteSupplierModal() { /* Keep existing */ const confirmDeleteSupplierModal=document.getElementById('confirmDeleteSupplierModal'); const deleteSupplierName=document.getElementById('deleteSupplierName'); const confirmDeleteSupplierCheckbox=document.getElementById('confirmDeleteSupplierCheckbox'); const confirmSupplierDeleteBtn=document.getElementById('confirmSupplierDeleteBtn'); if(!confirmDeleteSupplierModal || !deleteSupplierName || !confirmDeleteSupplierCheckbox || !confirmSupplierDeleteBtn){ console.error("Delete confirm modal elements missing!"); return; } console.log("Opening delete supplier confirmation modal."); deleteSupplierName.textContent = currentSupplierData?.name || 'this supplier'; confirmDeleteSupplierCheckbox.checked = false; confirmSupplierDeleteBtn.disabled = true; confirmDeleteSupplierModal.classList.add('active'); }
-function closeConfirmDeleteSupplierModal() { /* Keep existing */ const confirmDeleteSupplierModal=document.getElementById('confirmDeleteSupplierModal'); if (confirmDeleteSupplierModal) confirmDeleteSupplierModal.classList.remove('active');}
-async function executeDeleteSupplier() { /* Keep existing */ if(!deleteDoc || !doc || !currentSupplierId){ alert("DB function missing."); return; } const supplierName = currentSupplierData?.name || `ID: ${currentSupplierId}`; console.log(`Executing permanent deletion for supplier ${currentSupplierId}`); const button = document.getElementById('confirmSupplierDeleteBtn'); button.disabled = true; const originalHTML = button.innerHTML; button.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Deleting...`; try { await deleteDoc(doc(db, "suppliers", currentSupplierId)); console.log("Supplier deleted successfully."); alert(`Supplier "${supplierName}" has been permanently deleted.`); closeConfirmDeleteSupplierModal(); window.location.href = 'supplier_management.html'; } catch (error) { console.error("Error deleting supplier:", error); alert(`Error deleting supplier: ${error.message}`); button.disabled = false; button.innerHTML = originalHTML; } }
+function validateEmail(email) {
+    // Simple validation: Checks for a basic email pattern
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+}
+
+// --- Data Loading Functions ---
+
+async function fetchSupplierDetails(supplierId) {
+    console.log("Fetching supplier details for ID:", supplierId);
+    const docRef = doc(db, "suppliers", supplierId);
+    try {
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+            console.log("Supplier data found:", docSnap.data());
+            currentSupplierData = { id: docSnap.id, ...docSnap.data() };
+            return currentSupplierData;
+        } else {
+            console.error("No such supplier found!");
+            throw new Error("Supplier not found.");
+        }
+    } catch (error) {
+        console.error("Error fetching supplier details:", error);
+        throw error; // Re-throw to be caught by caller
+    }
+}
+
+async function fetchPurchaseOrders(supplierId) {
+    console.log("Fetching purchase orders for supplier ID:", supplierId);
+    const q = query(collection(db, "purchase_orders"), where("supplierId", "==", supplierId), firestoreOrderBy("poDate", "desc"));
+    try {
+        const querySnapshot = await getDocs(q);
+        purchaseOrdersData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        console.log("Fetched POs:", purchaseOrdersData);
+        return purchaseOrdersData;
+    } catch (error) {
+        console.error("Error fetching purchase orders:", error);
+        throw error;
+    }
+}
+
+async function fetchSupplierPayments(supplierId) {
+    console.log("Fetching payments for supplier ID:", supplierId);
+     const q = query(collection(db, "supplier_payments"), where("supplierId", "==", supplierId), firestoreOrderBy("paymentDate", "desc"));
+    try {
+        const querySnapshot = await getDocs(q);
+        supplierPaymentsData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        console.log("Fetched Payments:", supplierPaymentsData);
+        return supplierPaymentsData;
+    } catch (error) {
+        console.error("Error fetching supplier payments:", error);
+        throw error;
+    }
+}
+
+async function fetchSupplierAdjustments(supplierId) {
+    console.log("Fetching adjustments for supplier ID:", supplierId);
+    const q = query(collection(db, "supplier_adjustments"), where("supplierId", "==", supplierId), firestoreOrderBy("adjustmentDate", "desc"));
+    try {
+        const querySnapshot = await getDocs(q);
+        supplierAdjustmentsData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        console.log("Fetched Adjustments:", supplierAdjustmentsData);
+        return supplierAdjustmentsData;
+    } catch (error) {
+        console.error("Error fetching supplier adjustments:", error);
+        throw error;
+    }
+}
 
 
-// --- Event Listeners Setup (MERGED) ---
+// --- UI Update Functions ---
+
+function displaySupplierDetails(supplierData) {
+    console.log("Displaying supplier details:", supplierData);
+    if (!supplierData) {
+        console.warn("No supplier data to display.");
+        return;
+    }
+
+    // Header and Breadcrumb
+    document.getElementById('supplierNameHeader').textContent = supplierData.name || 'N/A';
+    document.getElementById('breadcrumbSupplierName').textContent = supplierData.name || 'Details';
+
+    // Supplier Details Box
+    document.getElementById('supplierContactPerson').textContent = supplierData.contactPerson || '-';
+    document.getElementById('supplierMobile').textContent = supplierData.mobileNumber || 'N/A';
+    document.getElementById('supplierEmail').textContent = supplierData.email || '-';
+    document.getElementById('supplierAddress').textContent = supplierData.address || '-';
+    document.getElementById('supplierGst').textContent = supplierData.gstNumber || '-';
+    document.getElementById('supplierPan').textContent = supplierData.panNumber || '-';
+    document.getElementById('supplierCreationDate').textContent = formatDate(supplierData.createdAt) || 'N/A';
+
+    // Status Badge
+    const statusBadge = document.getElementById('supplierStatusBadge');
+    statusBadge.textContent = supplierData.status === 'active' ? 'Active' : 'Inactive';
+    statusBadge.className = `status-badge status-${supplierData.status}`; // Add status-specific class
+
+     // Remarks/Notes Box
+    document.getElementById('supplierRemarksNotes').textContent = supplierData.remarks || 'No remarks added.';
+
+    // Update Toggle Button text and class based on status
+    updateToggleButton(supplierData.status);
+}
+
+function updateToggleButton(status) {
+    const toggleBtn = document.getElementById('toggleStatusBtn');
+    if (toggleBtn) {
+        if (status === 'active') {
+            toggleBtn.innerHTML = '<i class="fas fa-power-off"></i> Disable Account';
+            toggleBtn.classList.remove('enable');
+            toggleBtn.classList.add('disable');
+            toggleBtn.title = 'Disable this supplier account';
+        } else {
+            toggleBtn.innerHTML = '<i class="fas fa-check-circle"></i> Enable Account';
+            toggleBtn.classList.remove('disable');
+            toggleBtn.classList.add('enable');
+            toggleBtn.title = 'Enable this supplier account';
+        }
+    }
+}
+
+function calculateAndDisplaySummary(pos, payments, adjustments) {
+    console.log("Calculating summary with:", { pos, payments, adjustments });
+    let totalPoValue = 0;
+    let totalPaid = 0;
+    let totalAdjustments = 0;
+    let lastPaymentDate = null;
+    let lastPoDate = null;
+
+    // Calculate total PO value and find last PO date
+    pos.forEach(po => {
+        totalPoValue += parseFloat(po.totalAmount || 0);
+        const poDate = po.poDate; // Assuming poDate is Firestore Timestamp or JS Date
+        if (poDate && (!lastPoDate || poDate > lastPoDate)) {
+            lastPoDate = poDate;
+        }
+    });
+
+    // Calculate total paid and find last payment date
+    payments.forEach(payment => {
+        totalPaid += parseFloat(payment.amountPaid || 0);
+        const paymentDate = payment.paymentDate; // Assuming paymentDate is Firestore Timestamp or JS Date
+        if (paymentDate && (!lastPaymentDate || paymentDate > lastPaymentDate)) {
+            lastPaymentDate = paymentDate;
+        }
+    });
+
+    // Calculate total adjustments (Credit increases balance, Debit decreases balance from SUPPLIER perspective)
+    // So, from OUR perspective (how much we owe):
+    // Credit Adjustment (e.g., discount) REDUCES what we owe.
+    // Debit Adjustment (e.g., return) INCREASES what we owe.
+    adjustments.forEach(adj => {
+         const amount = parseFloat(adj.amount || 0);
+         if (adj.type === 'credit') { // Credit reduces what we owe
+             totalAdjustments -= amount;
+         } else if (adj.type === 'debit') { // Debit increases what we owe
+             totalAdjustments += amount;
+         }
+     });
+
+    // Calculate balance due (Amount we owe = Total PO Value - Total Paid + Total Adjustments)
+    // NOTE: This logic assumes POs increase the amount we owe. Adjustments are handled above.
+    const balanceDue = totalPoValue - totalPaid + totalAdjustments;
+
+    // Display Summaries
+    document.getElementById('summaryTotalPoValue').textContent = formatCurrency(totalPoValue);
+    document.getElementById('summaryTotalPaid').textContent = formatCurrency(totalPaid);
+     document.getElementById('summaryTotalAdjustments').textContent = formatCurrency(totalAdjustments); // Display net adjustments
+    document.getElementById('summaryLastPaymentDate').textContent = formatDate(lastPaymentDate);
+    document.getElementById('summaryLastPoDate').textContent = formatDate(lastPoDate);
+
+    // Display Balance Due
+    const balanceElement = document.getElementById('summaryBalance');
+    balanceElement.textContent = formatCurrency(balanceDue);
+
+    // Style Balance Due based on value
+     balanceElement.classList.remove('balance-positive', 'balance-negative', 'balance-zero');
+    if (balanceDue > 0) {
+        balanceElement.classList.add('balance-negative'); // We owe money (negative for our cashflow)
+        balanceElement.title = "Amount payable to supplier";
+    } else if (balanceDue < 0) {
+        balanceElement.classList.add('balance-positive'); // Supplier owes us / Advance paid (positive for our cashflow)
+        balanceElement.title = "Amount receivable from supplier / Advance";
+    } else {
+        balanceElement.classList.add('balance-zero'); // Settled
+        balanceElement.title = "Account settled";
+    }
+}
+
+function buildLedgerEntries(pos, payments, adjustments) {
+    console.log("Building ledger entries from:", { pos, payments, adjustments });
+    let ledger = [];
+
+    // Add POs (Increase amount we owe - Credit Balance)
+    pos.forEach(po => {
+        ledger.push({
+            date: po.poDate instanceof Timestamp ? po.poDate : Timestamp.fromDate(new Date(po.poDate || Date.now())), // Ensure Timestamp for sorting
+            type: 'PO',
+            details: `PO #${po.poNumber || 'N/A'}`,
+            debit: 0,
+            credit: parseFloat(po.totalAmount || 0),
+            refId: po.id, // Add refId
+            sortKey: (po.poDate instanceof Timestamp ? po.poDate : Timestamp.fromDate(new Date(po.poDate || Date.now()))).toMillis() + '_po_' + po.id // Unique sort key
+        });
+    });
+
+    // Add Payments (Decrease amount we owe - Debit Balance)
+    payments.forEach(payment => {
+        ledger.push({
+            date: payment.paymentDate instanceof Timestamp ? payment.paymentDate : Timestamp.fromDate(new Date(payment.paymentDate || Date.now())),
+            type: 'Payment',
+            details: `${payment.paymentMethod || 'Payment'} ${payment.reference ? '- ' + payment.reference : ''}`,
+            debit: parseFloat(payment.amountPaid || 0),
+            credit: 0,
+            refId: payment.id,
+             sortKey: (payment.paymentDate instanceof Timestamp ? payment.paymentDate : Timestamp.fromDate(new Date(payment.paymentDate || Date.now()))).toMillis() + '_pay_' + payment.id
+        });
+    });
+
+    // Add Adjustments
+    adjustments.forEach(adj => {
+         const amount = parseFloat(adj.amount || 0);
+         let debit = 0;
+         let credit = 0;
+         // From OUR perspective (amount we owe):
+         // Credit Adj (discount): Reduces what we owe (Debit balance)
+         // Debit Adj (return): Increases what we owe (Credit balance)
+         if (adj.type === 'credit') {
+             debit = amount; // Reduces balance we owe
+         } else { // debit type adjustment
+             credit = amount; // Increases balance we owe
+         }
+        ledger.push({
+            date: adj.adjustmentDate instanceof Timestamp ? adj.adjustmentDate : Timestamp.fromDate(new Date(adj.adjustmentDate || Date.now())),
+            type: 'Adjustment',
+            details: `${adj.type.charAt(0).toUpperCase() + adj.type.slice(1)}: ${adj.reason || ''}`,
+            debit: debit,
+            credit: credit,
+            refId: adj.id,
+            sortKey: (adj.adjustmentDate instanceof Timestamp ? adj.adjustmentDate : Timestamp.fromDate(new Date(adj.adjustmentDate || Date.now()))).toMillis() + '_adj_' + adj.id
+        });
+    });
+
+    // Sort ledger entries chronologically by date, then by type (PO -> Adj -> Pay), then ID for stability
+    // Using the precomputed sortKey for efficiency and accuracy
+    ledger.sort((a, b) => {
+        if (a.date.seconds !== b.date.seconds) {
+            return a.date.seconds - b.date.seconds;
+        }
+         // If dates are the same, potentially sort by milliseconds if available
+         if (a.date.nanoseconds !== b.date.nanoseconds) {
+             return a.date.nanoseconds - b.date.nanoseconds;
+         }
+         // If timestamps are identical, sort by type: PO (Credit > 0), Adjustment (Debit or Credit), Payment (Debit > 0)
+         // This order ensures balance calculation starts correctly if timestamps are same.
+         const typeOrder = { 'PO': 1, 'Adjustment': 2, 'Payment': 3 };
+         const orderA = typeOrder[a.type] || 99;
+         const orderB = typeOrder[b.type] || 99;
+         if (orderA !== orderB) {
+             return orderA - orderB;
+         }
+         // Final fallback sort by refId for stability
+         return a.refId.localeCompare(b.refId);
+
+    });
+
+
+    // Calculate running balance
+    let runningBalance = 0;
+    ledger.forEach(entry => {
+        runningBalance += entry.credit;
+        runningBalance -= entry.debit;
+        entry.balance = runningBalance;
+    });
+
+    console.log("Built and sorted ledger:", ledger);
+    return ledger;
+}
+
+
+function displayLedger(ledger) {
+    console.log("Displaying ledger:", ledger);
+    const tableBody = document.getElementById('accountLedgerTableBody');
+    const emptyMsg = document.getElementById('ledgerEmptyMessage');
+    const loadingIndicator = document.getElementById('ledgerLoadingIndicator');
+    const errorDisplay = document.getElementById('ledgerErrorDisplay');
+
+    if (loadingIndicator) loadingIndicator.style.display = 'none'; // Hide loading indicator
+    clearError('ledgerErrorDisplay'); // Clear previous errors
+    tableBody.innerHTML = ''; // Clear previous entries
+
+    if (!ledger || ledger.length === 0) {
+        if (emptyMsg) emptyMsg.style.display = 'block';
+        return;
+    }
+
+    if (emptyMsg) emptyMsg.style.display = 'none';
+
+    ledger.forEach(entry => {
+        const row = tableBody.insertRow();
+        row.insertCell(0).textContent = formatDate(entry.date);
+        row.insertCell(1).textContent = entry.type;
+        row.insertCell(2).textContent = entry.details;
+        row.insertCell(3).textContent = entry.debit > 0 ? formatCurrency(entry.debit) : '-';
+        row.insertCell(4).textContent = entry.credit > 0 ? formatCurrency(entry.credit) : '-';
+        row.insertCell(5).textContent = formatCurrency(entry.balance);
+
+         // Add classes for styling cells
+        row.cells[3].classList.add('number-cell');
+        row.cells[4].classList.add('number-cell');
+        row.cells[5].classList.add('number-cell', 'balance-cell'); // Add balance-cell class
+
+        // Style balance cell based on value (optional, can be done via CSS too)
+        row.cells[5].classList.remove('balance-positive', 'balance-negative', 'balance-zero');
+        if (entry.balance < 0) {
+            row.cells[5].classList.add('balance-positive'); // Supplier owes us
+        } else if (entry.balance > 0) {
+             row.cells[5].classList.add('balance-negative'); // We owe supplier
+        } else {
+            row.cells[5].classList.add('balance-zero');
+        }
+    });
+}
+
+// --- Modal Handling ---
+
+function openModal(modalId) {
+    const modal = document.getElementById(modalId);
+    if (modal) {
+        console.log(`Opening modal: ${modalId}`);
+        modal.style.display = 'flex'; // Use flex to center content
+    } else {
+        console.error(`Modal with ID ${modalId} not found.`);
+    }
+}
+
+function closeModalById(modalId) {
+    const modal = document.getElementById(modalId);
+    if (modal) {
+        console.log(`Closing modal: ${modalId}`);
+        modal.style.display = 'none';
+        setModalTheme(modal, null); // Remove theme class on close
+
+        // Clear any error messages within this modal
+        const errorElement = modal.querySelector('.error-message');
+        if (errorElement) {
+            errorElement.textContent = '';
+            errorElement.style.display = 'none';
+        }
+        // Reset specific forms if needed (e.g., payment, adjustment)
+        const form = modal.querySelector('form');
+        if (form) {
+            form.reset();
+            // Special handling for checkboxes or other elements if needed
+            if (modalId === 'confirmToggleModal' || modalId === 'confirmDeleteSupplierModal') {
+                const checkbox = modal.querySelector('input[type="checkbox"]');
+                const confirmBtn = modal.querySelector('.confirm-button, .danger-button');
+                if (checkbox) checkbox.checked = false;
+                if (confirmBtn) confirmBtn.disabled = true;
+            }
+             // Set date fields back to today after reset if they exist
+             const dateInputs = form.querySelectorAll('input[type="date"]');
+             dateInputs.forEach(input => {
+                 input.value = formatTimestampToInput(null); // Sets to today
+             });
+        }
+    } else {
+         console.warn(`Modal with ID ${modalId} not found for closing.`);
+    }
+}
+
+// Specific Modal Open Functions (Integrate Theming)
+
+function openEditModal() {
+    if (!currentSupplierData) {
+        displayError("Supplier data not loaded. Cannot open edit modal.");
+        return;
+    }
+    clearError('editSupplierError');
+    // Populate form fields
+    document.getElementById('editSupplierName').value = currentSupplierData.name || '';
+    document.getElementById('editSupplierContactPerson').value = currentSupplierData.contactPerson || '';
+    document.getElementById('editSupplierMobile').value = currentSupplierData.mobileNumber || '';
+    document.getElementById('editSupplierEmail').value = currentSupplierData.email || '';
+    document.getElementById('editSupplierAddress').value = currentSupplierData.address || '';
+    document.getElementById('editSupplierGst').value = currentSupplierData.gstNumber || '';
+    document.getElementById('editSupplierPan').value = currentSupplierData.panNumber || '';
+    document.getElementById('editSupplierRemarks').value = currentSupplierData.remarks || '';
+
+    const modalElement = document.getElementById('editSupplierModal');
+    setModalTheme(modalElement, 'info'); // Set info theme
+    openModal('editSupplierModal');
+}
+
+function openRecordPaymentModal() {
+    if (!currentSupplierData) {
+        displayError("Supplier data not loaded. Cannot open payment modal.");
+        return;
+    }
+    clearError('paymentMadeError');
+    document.getElementById('paymentSupplierName').textContent = currentSupplierData.name || 'Supplier';
+    // Reset form (handled by closeModalById on close, but good practice here too)
+    const form = document.getElementById('recordPaymentForm');
+     if (form) {
+         form.reset();
+         // Set date to today
+         document.getElementById('paymentDate').value = formatTimestampToInput(null);
+     }
+
+    const modalElement = document.getElementById('recordPaymentModal');
+    setModalTheme(modalElement, 'success'); // Set success theme
+    openModal('recordPaymentModal');
+}
+
+function openAddAdjustmentModal() {
+    if (!currentSupplierData) {
+        displayError("Supplier data not loaded. Cannot open adjustment modal.");
+        return;
+    }
+    clearError('adjustmentError');
+    document.getElementById('adjustmentSupplierName').textContent = currentSupplierData.name || 'Supplier';
+    // Reset form
+    const form = document.getElementById('addSupplierAdjustmentForm');
+     if (form) {
+         form.reset();
+         // Set date to today and default radio
+         document.getElementById('adjustmentDate').value = formatTimestampToInput(null);
+         document.getElementById('adjustmentTypeDebit').checked = true; // Default to debit
+     }
+
+    const modalElement = document.getElementById('addAdjustmentModal');
+    setModalTheme(modalElement, 'warning'); // Set warning theme
+    openModal('addAdjustmentModal');
+}
+
+function openToggleModal() {
+    if (!currentSupplierData) {
+        displayError("Supplier data not loaded. Cannot open toggle status modal.");
+        return;
+    }
+     clearError('toggleError');
+    const isCurrentlyActive = currentSupplierData.status === 'active';
+    const actionText = isCurrentlyActive ? 'Disable' : 'Enable';
+    const targetStatus = isCurrentlyActive ? 'inactive' : 'active';
+    const theme = isCurrentlyActive ? 'secondary' : 'success'; // Theme based on action
+
+    document.getElementById('toggleActionText').textContent = actionText.toLowerCase();
+    document.getElementById('toggleSupplierName').textContent = currentSupplierData.name || 'Supplier';
+    document.getElementById('toggleModalTitle').innerHTML = `<i class="fas ${isCurrentlyActive ? 'fa-power-off' : 'fa-check-circle'}"></i> Confirm ${actionText}`;
+
+    // Show warning if disabling
+    const warningMsg = document.getElementById('toggleStatusWarning');
+     if (isCurrentlyActive) {
+         warningMsg.textContent = 'Disabling the supplier will prevent adding new POs for them.';
+         warningMsg.style.display = 'block';
+     } else {
+         warningMsg.style.display = 'none';
+     }
+
+    // Reset checkbox and button state
+    const checkbox = document.getElementById('confirmToggleCheckbox');
+    const confirmBtn = document.getElementById('confirmToggleBtn');
+    if (checkbox) checkbox.checked = false;
+    if (confirmBtn) {
+         confirmBtn.disabled = true;
+         // Store target status in button's dataset for the handler
+         confirmBtn.dataset.targetStatus = targetStatus;
+         // Update button text/icon (optional, CSS theme handles color)
+         confirmBtn.innerHTML = `<i class="fas fa-check"></i> Confirm ${actionText}`;
+     }
+
+    const modalElement = document.getElementById('confirmToggleModal');
+    setModalTheme(modalElement, theme); // Set theme based on action
+    openModal('confirmToggleModal');
+}
+
+function openConfirmDeleteSupplierModal() {
+     if (!currentSupplierData) {
+         displayError("Supplier data not loaded. Cannot open delete confirmation.");
+         return;
+     }
+     clearError('deleteError');
+     document.getElementById('deleteSupplierName').textContent = currentSupplierData.name || 'Supplier';
+
+     // Reset checkbox and button state
+    const checkbox = document.getElementById('confirmDeleteSupplierCheckbox');
+    const confirmBtn = document.getElementById('confirmSupplierDeleteBtn');
+    if (checkbox) checkbox.checked = false;
+    if (confirmBtn) confirmBtn.disabled = true;
+
+    const modalElement = document.getElementById('confirmDeleteSupplierModal');
+    setModalTheme(modalElement, 'danger'); // Set danger theme
+    openModal('confirmDeleteSupplierModal');
+}
+
+// --- Form Submit Handlers ---
+
+async function handleEditSupplierSubmit(event) {
+    event.preventDefault();
+    clearError('editSupplierError');
+    const form = event.target;
+    const saveButton = form.querySelector('button[type="submit"]');
+    saveButton.disabled = true;
+    saveButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+
+    // Get updated data, sanitize, and validate
+    const name = sanitizeInput(document.getElementById('editSupplierName').value);
+    const contactPerson = sanitizeInput(document.getElementById('editSupplierContactPerson').value);
+    const mobile = sanitizeInput(document.getElementById('editSupplierMobile').value);
+    const email = sanitizeInput(document.getElementById('editSupplierEmail').value);
+    const address = sanitizeInput(document.getElementById('editSupplierAddress').value);
+    const gst = sanitizeInput(document.getElementById('editSupplierGst').value);
+    const pan = sanitizeInput(document.getElementById('editSupplierPan').value);
+    const remarks = sanitizeInput(document.getElementById('editSupplierRemarks').value);
+
+    // Basic Validation
+    if (!name || !mobile) {
+        displayError("Supplier Name and Mobile Number are required.", 'editSupplierError');
+        saveButton.disabled = false;
+        saveButton.innerHTML = '<i class="fas fa-save"></i> Save Changes';
+        return;
+    }
+     if (!validateMobileNumber(mobile)) {
+        displayError("Please enter a valid 10-digit Mobile Number.", 'editSupplierError');
+        saveButton.disabled = false;
+         saveButton.innerHTML = '<i class="fas fa-save"></i> Save Changes';
+        return;
+    }
+    if (email && !validateEmail(email)) {
+        displayError("Please enter a valid Email address.", 'editSupplierError');
+        saveButton.disabled = false;
+        saveButton.innerHTML = '<i class="fas fa-save"></i> Save Changes';
+        return;
+    }
+    // Add more validation as needed (GST format, PAN format etc.)
+
+    const updatedData = {
+        name: name,
+        contactPerson: contactPerson,
+        mobileNumber: mobile,
+        email: email,
+        address: address,
+        gstNumber: gst,
+        panNumber: pan,
+        remarks: remarks,
+        updatedAt: serverTimestamp() // Track last update
+    };
+
+    try {
+        const supplierRef = doc(db, "suppliers", currentSupplierId);
+        await updateDoc(supplierRef, updatedData);
+        console.log("Supplier details updated successfully.");
+        closeModalById('editSupplierModal');
+        await refreshSupplierData(); // Refresh data on page
+         // Show success feedback (optional)
+        displaySuccessMessage("Supplier details updated successfully.");
+    } catch (error) {
+        console.error("Error updating supplier:", error);
+        displayError(`Failed to update supplier: ${error.message}`, 'editSupplierError');
+         saveButton.disabled = false;
+         saveButton.innerHTML = '<i class="fas fa-save"></i> Save Changes';
+    }
+}
+
+async function handleRecordPaymentSubmit(event) {
+    event.preventDefault();
+    clearError('paymentMadeError');
+    const form = event.target;
+    const saveButton = form.querySelector('button[type="submit"]');
+    saveButton.disabled = true;
+    saveButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Recording...';
+
+    const amountPaid = parseFloat(document.getElementById('paymentAmountPaid').value);
+    const paymentDateStr = document.getElementById('paymentDate').value;
+    const paymentMethod = document.getElementById('paymentMethod').value;
+    const reference = sanitizeInput(document.getElementById('paymentReference').value);
+
+    // Validation
+    if (isNaN(amountPaid) || amountPaid <= 0) {
+        displayError("Please enter a valid positive Amount Paid.", 'paymentMadeError');
+        saveButton.disabled = false;
+        saveButton.innerHTML = '<i class="fas fa-check-circle"></i> Record Payment';
+        return;
+    }
+     if (!paymentDateStr) {
+        displayError("Please select a Payment Date.", 'paymentMadeError');
+        saveButton.disabled = false;
+        saveButton.innerHTML = '<i class="fas fa-check-circle"></i> Record Payment';
+        return;
+    }
+    const paymentDate = Timestamp.fromDate(new Date(paymentDateStr)); // Convert string to Timestamp
+
+    const paymentData = {
+        supplierId: currentSupplierId,
+        supplierName: currentSupplierData?.name || 'Unknown', // Store name for easier querying if needed
+        amountPaid: amountPaid,
+        paymentDate: paymentDate,
+        paymentMethod: paymentMethod,
+        reference: reference,
+        recordedAt: serverTimestamp()
+    };
+
+    try {
+        const docRef = await addDoc(collection(db, "supplier_payments"), paymentData);
+        console.log("Payment recorded successfully with ID: ", docRef.id);
+        closeModalById('recordPaymentModal');
+        await refreshSupplierData(); // Refresh data on page
+         // Show success feedback (optional)
+         displaySuccessMessage("Payment recorded successfully.");
+    } catch (error) {
+        console.error("Error recording payment:", error);
+        displayError(`Failed to record payment: ${error.message}`, 'paymentMadeError');
+        saveButton.disabled = false;
+        saveButton.innerHTML = '<i class="fas fa-check-circle"></i> Record Payment';
+    }
+}
+
+async function handleAddAdjustmentSubmit(event) {
+    event.preventDefault();
+    clearError('adjustmentError');
+    const form = event.target;
+    const saveButton = form.querySelector('button[type="submit"]');
+    saveButton.disabled = true;
+    saveButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Adding...';
+
+    const adjustmentType = form.querySelector('input[name="adjustmentType"]:checked').value;
+    const amount = parseFloat(document.getElementById('adjustmentAmount').value);
+    const adjustmentDateStr = document.getElementById('adjustmentDate').value;
+    const reason = sanitizeInput(document.getElementById('adjustmentReason').value);
+
+    // Validation
+    if (!adjustmentType) {
+         displayError("Please select an Adjustment Type.", 'adjustmentError');
+         saveButton.disabled = false;
+         saveButton.innerHTML = '<i class="fas fa-plus-circle"></i> Add Adjustment';
+         return;
+    }
+    if (isNaN(amount) || amount <= 0) {
+        displayError("Please enter a valid positive Adjustment Amount.", 'adjustmentError');
+        saveButton.disabled = false;
+        saveButton.innerHTML = '<i class="fas fa-plus-circle"></i> Add Adjustment';
+        return;
+    }
+     if (!adjustmentDateStr) {
+        displayError("Please select an Adjustment Date.", 'adjustmentError');
+        saveButton.disabled = false;
+        saveButton.innerHTML = '<i class="fas fa-plus-circle"></i> Add Adjustment';
+        return;
+    }
+     if (!reason) {
+        displayError("Please enter a Reason/Description for the adjustment.", 'adjustmentError');
+        saveButton.disabled = false;
+        saveButton.innerHTML = '<i class="fas fa-plus-circle"></i> Add Adjustment';
+        return;
+    }
+     const adjustmentDate = Timestamp.fromDate(new Date(adjustmentDateStr)); // Convert string to Timestamp
+
+    const adjustmentData = {
+        supplierId: currentSupplierId,
+        supplierName: currentSupplierData?.name || 'Unknown',
+        type: adjustmentType, // 'debit' or 'credit'
+        amount: amount,
+        adjustmentDate: adjustmentDate,
+        reason: reason,
+        recordedAt: serverTimestamp()
+    };
+
+    try {
+        const docRef = await addDoc(collection(db, "supplier_adjustments"), adjustmentData);
+        console.log("Adjustment added successfully with ID: ", docRef.id);
+        closeModalById('addAdjustmentModal');
+        await refreshSupplierData(); // Refresh data on page
+         // Show success feedback (optional)
+         displaySuccessMessage("Account adjustment added successfully.");
+    } catch (error) {
+        console.error("Error adding adjustment:", error);
+        displayError(`Failed to add adjustment: ${error.message}`, 'adjustmentError');
+        saveButton.disabled = false;
+        saveButton.innerHTML = '<i class="fas fa-plus-circle"></i> Add Adjustment';
+    }
+}
+
+// --- Action Handlers (Toggle, Delete) ---
+
+async function handleToggleStatus() {
+    const confirmBtn = document.getElementById('confirmToggleBtn');
+    const targetStatus = confirmBtn.dataset.targetStatus; // Get target status stored earlier
+
+     if (!targetStatus || (targetStatus !== 'active' && targetStatus !== 'inactive')) {
+         displayError("Invalid target status.", 'toggleError');
+         return;
+     }
+
+    clearError('toggleError');
+    confirmBtn.disabled = true;
+    confirmBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Updating...';
+
+    try {
+        const supplierRef = doc(db, "suppliers", currentSupplierId);
+        await updateDoc(supplierRef, {
+            status: targetStatus,
+            updatedAt: serverTimestamp()
+        });
+        console.log(`Supplier status updated to ${targetStatus}.`);
+        closeModalById('confirmToggleModal');
+        await refreshSupplierData(); // Refresh data and button text/style
+        displaySuccessMessage(`Supplier account successfully ${targetStatus === 'active' ? 'enabled' : 'disabled'}.`);
+    } catch (error) {
+        console.error("Error updating supplier status:", error);
+        displayError(`Failed to update status: ${error.message}`, 'toggleError');
+        // Re-enable button with original text/icon based on ACTUAL current status before failed attempt
+         const actionText = targetStatus === 'active' ? 'Enable' : 'Disable'; // Action user was trying to do
+         confirmBtn.innerHTML = `<i class="fas fa-check"></i> Confirm ${actionText}`;
+        confirmBtn.disabled = false; // Re-enable on error for retry
+        // We need to re-enable the checkbox listener indirectly by resetting the button state.
+         const checkbox = document.getElementById('confirmToggleCheckbox');
+         if (checkbox) checkbox.checked = false; // Ensure checkbox needs re-checking
+         confirmBtn.disabled = true; // Keep disabled until checkbox checked again
+
+    }
+}
+
+async function handleDeleteSupplier() {
+    const confirmBtn = document.getElementById('confirmSupplierDeleteBtn');
+    clearError('deleteError');
+    confirmBtn.disabled = true;
+    confirmBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Deleting...';
+
+     // Add a small delay to prevent accidental double-clicks and show progress
+    await new Promise(resolve => setTimeout(resolve, 300));
+
+    try {
+        const supplierRef = doc(db, "suppliers", currentSupplierId);
+        await deleteDoc(supplierRef);
+        console.log("Supplier deleted successfully.");
+        // Redirect back to supplier list page after deletion
+        displaySuccessMessage("Supplier deleted successfully. Redirecting...", 'generalErrorDisplay'); // Display message on main page
+        setTimeout(() => {
+            window.location.href = 'supplier_management.html';
+        }, 2000); // Redirect after 2 seconds
+        // Note: Associated data (POs, payments, adjustments) is NOT deleted here. Handle cleanup separately if needed.
+
+    } catch (error) {
+        console.error("Error deleting supplier:", error);
+        displayError(`Failed to delete supplier: ${error.message}`, 'deleteError');
+        // Re-enable button
+        confirmBtn.innerHTML = '<i class="fas fa-trash-alt"></i> Delete Permanently';
+         // Re-enable checkbox listener indirectly
+         const checkbox = document.getElementById('confirmDeleteSupplierCheckbox');
+         if (checkbox) checkbox.checked = false;
+         confirmBtn.disabled = true; // Keep disabled until checkbox checked again
+    }
+}
+
+// --- Data Refresh Logic ---
+async function refreshSupplierData() {
+     if (isRefreshingData) {
+         console.log("Data refresh already in progress. Skipping.");
+         return;
+     }
+     console.log("Refreshing all supplier page data...");
+     isRefreshingData = true;
+     const loadingIndicator = document.getElementById('pageLoadingIndicator'); // Assuming a page-level indicator exists
+     if (loadingIndicator) loadingIndicator.style.display = 'flex';
+     clearError('generalErrorDisplay');
+     clearError('ledgerErrorDisplay'); // Clear specific error areas too
+
+    try {
+        if (!currentSupplierId) throw new Error("Supplier ID is missing.");
+
+        // Fetch all data concurrently
+        const [supplierData, pos, payments, adjustments] = await Promise.all([
+            fetchSupplierDetails(currentSupplierId),
+            fetchPurchaseOrders(currentSupplierId),
+            fetchSupplierPayments(currentSupplierId),
+            fetchSupplierAdjustments(currentSupplierId)
+        ]);
+
+        // Update UI
+        displaySupplierDetails(supplierData);
+        calculateAndDisplaySummary(pos, payments, adjustments);
+        const ledger = buildLedgerEntries(pos, payments, adjustments);
+        displayLedger(ledger);
+
+        console.log("Data refresh complete.");
+
+    } catch (error) {
+        console.error("Error refreshing supplier data:", error);
+        displayError(`Failed to load supplier details: ${error.message}`, 'generalErrorDisplay');
+        // Optionally clear parts of the UI or show specific error messages
+        document.getElementById('supplierAccountDetailContent').style.visibility = 'visible'; // Ensure content area is visible to show error
+        document.getElementById('supplierNameHeader').textContent = 'Error Loading';
+
+    } finally {
+        if (loadingIndicator) loadingIndicator.style.display = 'none';
+        isRefreshingData = false; // Release lock
+    }
+}
+
+// --- Success Message ---
+let successTimeout;
+function displaySuccessMessage(message, elementId = 'generalErrorDisplay') {
+    const successElement = document.getElementById(elementId);
+    if (successElement) {
+        successElement.textContent = message;
+        successElement.style.display = 'block';
+        successElement.classList.remove('error-message'); // Ensure it's not styled as error
+        successElement.classList.add('success-message'); // Add success styling class (define in CSS)
+
+        // Clear previous timeout if exists
+        if (successTimeout) clearTimeout(successTimeout);
+
+        // Automatically hide after 5 seconds
+        successTimeout = setTimeout(() => {
+            successElement.textContent = '';
+            successElement.style.display = 'none';
+             successElement.classList.remove('success-message');
+        }, 5000);
+    } else {
+        console.log("Success:", message); // Fallback log
+    }
+}
+
+// --- Event Listeners Setup ---
 function setupEventListeners() {
-    if (listenersAttached) { console.log("Listeners already attached."); return; }
-    console.log("Setting up MERGED event listeners...");
+    console.log("Setting up event listeners...");
 
-    // --- Supplier Core Buttons ---
-    const addPayBtn = document.getElementById('addPaymentMadeBtn');
-    const editSupplierBtn = document.getElementById('editSupplierDetailsBtn');
-    const backBtn = document.querySelector('a.back-button'); // Use class
-    const addPOBtn = document.getElementById('addNewPoLink');
+    // Action Buttons
+    document.getElementById('editSupplierBtn')?.addEventListener('click', openEditModal);
+    document.getElementById('recordPaymentBtn')?.addEventListener('click', openRecordPaymentModal);
+    document.getElementById('addAdjustmentBtn')?.addEventListener('click', openAddAdjustmentModal);
+    document.getElementById('toggleStatusBtn')?.addEventListener('click', openToggleModal);
+    document.getElementById('deleteSupplierBtn')?.addEventListener('click', openConfirmDeleteSupplierModal);
 
-    if (addPayBtn) addPayBtn.addEventListener('click', openPaymentModal); else console.warn("Add Payment Btn not found");
-    if (editSupplierBtn) editSupplierBtn.addEventListener('click', openEditSupplierModal); else console.warn("Edit Supplier Details Btn not found");
-    if (backBtn) backBtn.addEventListener('click', (e) => { e.preventDefault(); window.location.href = 'supplier_management.html'; }); else console.warn("Back to List Btn not found");
-    if (!addPOBtn) console.warn("Add New PO Link not found");
+    // Modal Close Buttons
+    document.getElementById('closeEditSupplierModal')?.addEventListener('click', () => closeModalById('editSupplierModal'));
+    document.getElementById('cancelEditSupplier')?.addEventListener('click', () => closeModalById('editSupplierModal'));
+    document.getElementById('closeRecordPaymentModal')?.addEventListener('click', () => closeModalById('recordPaymentModal'));
+    document.getElementById('cancelPaymentBtn')?.addEventListener('click', () => closeModalById('recordPaymentModal'));
+    document.getElementById('closeAdjustmentModal')?.addEventListener('click', () => closeModalById('addAdjustmentModal'));
+    document.getElementById('cancelAdjustmentBtn')?.addEventListener('click', () => closeModalById('addAdjustmentModal'));
+    document.getElementById('closeConfirmToggleModal')?.addEventListener('click', () => closeModalById('confirmToggleModal'));
+    document.getElementById('cancelToggleBtn')?.addEventListener('click', () => closeModalById('confirmToggleModal'));
+    document.getElementById('closeConfirmDeleteSupplierModal')?.addEventListener('click', () => closeModalById('confirmDeleteSupplierModal'));
+    document.getElementById('cancelSupplierDeleteBtn')?.addEventListener('click', () => closeModalById('confirmDeleteSupplierModal'));
 
-    // --- Added Feature Buttons ---
-    const addAdjBtn = document.getElementById('addSupplierAdjustmentBtn');
-    const toggleStatusBtn = document.getElementById('toggleSupplierStatusBtn');
-    const delSupplierBtn = document.getElementById('deleteSupplierBtn');
+    // Modal Forms
+    document.getElementById('editSupplierForm')?.addEventListener('submit', handleEditSupplierSubmit);
+    document.getElementById('recordPaymentForm')?.addEventListener('submit', handleRecordPaymentSubmit);
+    document.getElementById('addSupplierAdjustmentForm')?.addEventListener('submit', handleAddAdjustmentSubmit);
 
-    if (addAdjBtn) addAdjBtn.addEventListener('click', openAddSupplierAdjustmentModal); else console.warn("Add Supplier Adjustment Btn not found");
-    if (toggleStatusBtn) toggleStatusBtn.addEventListener('click', handleToggleSupplierStatus); else console.warn("Toggle Supplier Status Btn not found");
-    if (delSupplierBtn) delSupplierBtn.addEventListener('click', handleDeleteSupplier); else console.warn("Delete Supplier Btn not found");
+    // Confirmation Modal Buttons & Checkboxes
+    const confirmToggleCheckbox = document.getElementById('confirmToggleCheckbox');
+    const confirmToggleBtn = document.getElementById('confirmToggleBtn');
+    confirmToggleCheckbox?.addEventListener('change', () => {
+        if (confirmToggleBtn) confirmToggleBtn.disabled = !confirmToggleCheckbox.checked;
+    });
+    confirmToggleBtn?.addEventListener('click', handleToggleStatus);
 
-    // --- Payment Modal ---
-    const closeBtnPay = document.getElementById('closePaymentMadeModalBtn');
-    const cancelBtnPay = document.getElementById('cancelPaymentBtn');
-    const payModal = document.getElementById('paymentMadeModal');
-    const payForm = document.getElementById('paymentMadeForm');
-    if (closeBtnPay) closeBtnPay.addEventListener('click', closePaymentModal); else console.warn("Close Payment Modal Btn not found");
-    if (cancelBtnPay) cancelBtnPay.addEventListener('click', closePaymentModal); else console.warn("Cancel Payment Btn not found");
-    if (payModal) payModal.addEventListener('click', (event) => { if (event.target === payModal) closePaymentModal(); }); else console.warn("Payment Modal not found");
-    if (payForm) payForm.addEventListener('submit', handleSavePayment); else console.warn("Payment Form not found");
+    const confirmDeleteCheckbox = document.getElementById('confirmDeleteSupplierCheckbox');
+    const confirmDeleteBtn = document.getElementById('confirmSupplierDeleteBtn');
+    confirmDeleteCheckbox?.addEventListener('change', () => {
+        if (confirmDeleteBtn) confirmDeleteBtn.disabled = !confirmDeleteCheckbox.checked;
+    });
+    confirmDeleteBtn?.addEventListener('click', handleDeleteSupplier);
 
-    // --- Edit Supplier Modal ---
-    const closeEditBtn = document.getElementById('closeEditSupplierBtn');
-    const cancelEditBtn = document.getElementById('cancelEditSupplierBtn');
-    const editModal = document.getElementById('editSupplierModal');
-    const editForm = document.getElementById('editSupplierForm');
-    if (closeEditBtn) closeEditBtn.addEventListener('click', closeEditSupplierModal); else console.warn("Close Edit Supplier Btn not found");
-    if (cancelEditBtn) cancelEditBtn.addEventListener('click', closeEditSupplierModal); else console.warn("Cancel Edit Supplier Btn not found");
-    if (editModal) editModal.addEventListener('click', (event) => { if (event.target === editModal) closeEditSupplierModal(); }); else console.warn("Edit Supplier Modal not found");
-    if (editForm) editForm.addEventListener('submit', handleEditSupplierSubmit); else console.warn("Edit Supplier Form not found");
-
-    // --- Add Adjustment Modal ---
-    const closeAdjModal = document.getElementById('closeSupplierAdjustmentModal');
-    const cancelAdjBtn = document.getElementById('cancelSupplierAdjustmentBtn');
-    const adjModal = document.getElementById('addSupplierAdjustmentModal');
-    const adjForm = document.getElementById('addSupplierAdjustmentForm');
-    if(closeAdjModal) closeAdjModal.addEventListener('click', closeAddSupplierAdjustmentModal); else console.warn("Close Adjustment Modal Btn not found");
-    if(cancelAdjBtn) cancelAdjBtn.addEventListener('click', closeAddSupplierAdjustmentModal); else console.warn("Cancel Adjustment Btn not found");
-    if(adjModal) adjModal.addEventListener('click', (e) => { if(e.target === adjModal) closeAddSupplierAdjustmentModal(); }); else console.warn("Adjustment Modal not found");
-    if(adjForm) adjForm.addEventListener('submit', handleSaveSupplierAdjustment); else console.warn("Adjustment Form not found");
-
-    // --- Confirm Toggle Status Modal ---
-    const closeConfirmToggleModal = document.getElementById('closeConfirmToggleSupplierModal');
-    const cancelToggleBtn = document.getElementById('cancelSupplierToggleBtn');
-    const confirmToggleModal = document.getElementById('confirmToggleSupplierStatusModal');
-    const confirmToggleChk = document.getElementById('confirmToggleSupplierCheckbox');
-    const confirmToggleActionBtn = document.getElementById('confirmSupplierToggleBtn');
-    if(closeConfirmToggleModal) closeConfirmToggleModal.addEventListener('click', closeConfirmToggleSupplierModal); else console.warn("Close Confirm Toggle Modal Btn not found");
-    if(cancelToggleBtn) cancelToggleBtn.addEventListener('click', closeConfirmToggleSupplierModal); else console.warn("Cancel Toggle Btn not found");
-    if(confirmToggleModal) confirmToggleModal.addEventListener('click', (e) => { if(e.target === confirmToggleModal) closeConfirmToggleSupplierModal(); }); else console.warn("Confirm Toggle Modal not found");
-    if(confirmToggleChk) confirmToggleChk.addEventListener('change', () => { if(confirmToggleActionBtn) confirmToggleActionBtn.disabled = !confirmToggleChk.checked; }); else console.warn("Confirm Toggle Checkbox not found");
-    if(confirmToggleActionBtn) confirmToggleActionBtn.addEventListener('click', () => { const newStatus = confirmToggleActionBtn.dataset.newStatus; if(confirmToggleChk.checked && newStatus){ executeToggleSupplierStatus(newStatus); } }); else console.warn("Confirm Toggle Action Btn not found");
-
-    // --- Confirm Delete Modal ---
-    const closeConfirmDeleteModal = document.getElementById('closeConfirmDeleteSupplierModal');
-    const cancelDeleteBtn = document.getElementById('cancelSupplierDeleteBtn');
-    const confirmDeleteModal = document.getElementById('confirmDeleteSupplierModal');
-    const confirmDeleteChk = document.getElementById('confirmDeleteSupplierCheckbox');
-    const confirmDeleteActionBtn = document.getElementById('confirmSupplierDeleteBtn');
-    if(closeConfirmDeleteModal) closeConfirmDeleteModal.addEventListener('click', closeConfirmDeleteSupplierModal); else console.warn("Close Confirm Delete Modal Btn not found");
-    if(cancelDeleteBtn) cancelDeleteBtn.addEventListener('click', closeConfirmDeleteSupplierModal); else console.warn("Cancel Delete Btn not found");
-    if(confirmDeleteModal) confirmDeleteModal.addEventListener('click', (e) => { if(e.target === confirmDeleteModal) closeConfirmDeleteSupplierModal(); }); else console.warn("Confirm Delete Modal not found");
-    if(confirmDeleteChk) confirmDeleteChk.addEventListener('change', () => { if(confirmDeleteActionBtn) confirmDeleteActionBtn.disabled = !confirmDeleteChk.checked; }); else console.warn("Confirm Delete Checkbox not found");
-    if(confirmDeleteActionBtn) confirmDeleteActionBtn.addEventListener('click', () => { if(confirmDeleteChk.checked){ executeDeleteSupplier(); } }); else console.warn("Confirm Delete Action Btn not found");
+     // Close modal if clicking outside the content area
+     const modals = document.querySelectorAll('.modal');
+     modals.forEach(modal => {
+         modal.addEventListener('click', (event) => {
+             // Check if the click is directly on the modal backdrop (the .modal element)
+             if (event.target === modal) {
+                 closeModalById(modal.id);
+             }
+         });
+     });
 
     listenersAttached = true;
-    console.log("MERGED event listeners setup complete.");
+    console.log("Event listeners attached.");
 }
 
-// --- Global Initialization & Auto-run ---
-// Ensure this runs only once after DOM is ready and auth state is known
-function attemptInitialization() {
-    console.log("Attempting initialization (v7 - Merged)...");
-    if (initializationAttempted) { console.log("Initialization already attempted."); return; }
-    initializationAttempted = true;
-    // Ensure the main init function is defined before calling
-    if (typeof window.initializeSupplierDetailPage === 'function') {
-        console.log("Calling initializeSupplierDetailPage...");
-        window.initializeSupplierDetailPage(); // Auth check should be handled within or by the inline script
-    } else {
-        console.error("Initialization function (window.initializeSupplierDetailPage) not found!");
-        displayError("Page initialization function failed to load.");
+
+// --- Initialization ---
+function getSupplierIdFromUrl() {
+    const params = new URLSearchParams(window.location.search);
+    return params.get('id');
+}
+
+async function loadSupplierPageData() {
+     // Called by initializeSupplierDetailPage after listeners are set
+     console.log("loadSupplierPageData called.");
+     const pageLoadingIndicator = document.getElementById('pageLoadingIndicator');
+     const ledgerLoadingIndicator = document.getElementById('ledgerLoadingIndicator');
+
+     // Show loading indicators
+     if (pageLoadingIndicator) pageLoadingIndicator.style.display = 'flex';
+     if (ledgerLoadingIndicator) ledgerLoadingIndicator.style.display = 'block'; // Use block for table message
+     document.getElementById('accountLedgerTableBody').innerHTML = ''; // Clear ledger while loading
+     if (document.getElementById('ledgerEmptyMessage')) document.getElementById('ledgerEmptyMessage').style.display = 'none';
+
+
+     await refreshSupplierData(); // Use the main refresh function
+
+     // Hide loading indicators (handled within refreshSupplierData's finally block)
+}
+
+
+// --- Main Exported Function ---
+// This function is called by the inline script in supplier_account_detail.html AFTER auth is confirmed
+export function initializeSupplierDetailPage() {
+    console.log("initializeSupplierDetailPage called.");
+
+    if (supplierDetailPageInitialized) {
+        console.log("Supplier detail page already initialized. Skipping.");
+        // Optionally trigger a data refresh if needed on re-visit?
+        // refreshSupplierData();
+        return;
     }
-}
-
-// Main initialization function for this page (now includes auth check assumption)
-window.initializeSupplierDetailPage = (user) => { // Accept user object if passed by auth check
-     console.log("initializeSupplierDetailPage called (v7 - Merged)");
-     if (supplierDetailPageInitialized) { console.log("Supplier detail page already initialized."); return; }
 
      currentSupplierId = getSupplierIdFromUrl();
-     if (!currentSupplierId) { displayError("Supplier ID missing from URL."); return; }
-     console.log("Supplier ID:", currentSupplierId);
+    if (!currentSupplierId) {
+        displayError("No supplier ID found in URL. Cannot load details.");
+        document.getElementById('pageLoadingIndicator').style.display = 'none'; // Hide loading
+        // Consider redirecting or showing a more permanent error message
+        document.getElementById('supplierAccountDetailContent').innerHTML = `<div class="error-message-area" style="display:block; text-align: center; padding: 20px;">Invalid Request: Supplier ID is missing. <a href="supplier_management.html">Go back to list</a>.</div>`;
+        document.getElementById('supplierAccountDetailContent').style.visibility = 'visible';
+        return;
+    }
+    console.log("Initializing page for supplier ID:", currentSupplierId);
 
      const mainContent = document.getElementById('supplierAccountDetailContent');
      if (mainContent) { mainContent.style.visibility = 'visible'; }
@@ -369,4 +1079,4 @@ if (document.readyState === 'loading') {
     // attemptInitialization(); // Let Auth script call initializeSupplierDetailPage
 }
 
-console.log("supplier_account_detail.js (v7 - Merged) script loaded.");
+console.log("supplier_account_detail.js (v8 - Theming) script loaded.");
