@@ -1,51 +1,40 @@
 /* css/supplier_account_detail.css */
-/* VERSION: Includes fixes for action bar button visibility and customer modal styles */
-/* Based on customer page theme and supplier page structure */
-/* Includes styles for Ledger, Adjustment, Toggle, Delete features */
+/* VERSION: Stabilized - Reduced Conflicts, Prioritizes Functionality */
 
-/* --- Root Variables (Combined & Refined) --- */
+/* --- Root Variables --- */
 :root {
     --primary-color: #0056b3;
-    --secondary-color: #2c3e50; /* Used for back button, cancel button */
+    --secondary-color: #2c3e50;
     --success-color: #28a745;
     --danger-color: #dc3545;
     --warning-color: #ffc107;
-    --info-color: #17a2b8;    /* Used for Edit button */
-    --purple-color: #6f42c1; /* Original supplier color for Add Adjustment */
+    --info-color: #17a2b8;
+    --purple-color: #6f42c1;
     --light-bg: #f8f9fa;
-    --medium-gray: #e9ecef;  /* Original border reference */
-    --light-border: #eee;    /* Lighter border like customer page */
-    --input-border: #ccc;    /* Input border like customer page */
+    --medium-gray: #e9ecef;
+    --light-border: #dee2e6; /* Slightly darker than medium-gray */
+    --input-border: #ced4da; /* Standard input border */
     --dark-gray: #6c757d;
-    --text-color: #212529;     /* Darker text like customer page */
+    --text-color: #212529;
     --text-muted: #6c757d;
     --white-color: #ffffff;
-    --black-color: #000000; /* For text on yellow buttons */
+    --black-color: #000000;
     --font-family: 'Poppins', sans-serif;
-    --border-radius: 6px;     /* Customer page radius */
-    --input-border-radius: 4px; /* Customer page input radius */
-    --box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-    --modal-shadow: 0 5px 20px rgba(0,0,0,0.25); /* Customer modal shadow */
+    --border-radius: 6px;
+    --input-border-radius: 4px;
+    --box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08); /* Subtle shadow */
+    --modal-shadow: 0 5px 15px rgba(0, 0, 0, 0.2); /* Slightly reduced modal shadow */
 }
 
 /* --- Base & Typography --- */
 body {
     font-family: var(--font-family);
     color: var(--text-color);
-    background-color: #f4f7f9; /* Slightly off-white background */
+    background-color: #f4f7f9;
     margin: 0;
     padding: 0;
     line-height: 1.6;
-    visibility: hidden; /* Hide until JS confirms auth */
-}
-
-body.auth-error {
-    visibility: visible; /* Show if auth fails */
-}
-
-/* Hide content until loaded */
-#supplierAccountDetailContent {
-    visibility: hidden; /* Hide main content until JS loads data */
+    /* Visibility managed by JS */
 }
 
 /* --- General Layout --- */
@@ -59,21 +48,24 @@ body.auth-error {
 }
 
 /* --- Header Styles --- */
-.header, .page-header { /* Handle both potential header classes */
+.page-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
     padding: 20px 0;
     border-bottom: 1px solid var(--medium-gray);
     margin-bottom: 25px;
+    flex-wrap: wrap; /* Allow wrapping */
+    gap: 15px; /* Add gap for wrapping */
 }
-.header h1, .page-header h1 {
+.page-header h1 {
     font-size: 1.8em;
     margin: 0;
     font-weight: 600;
     color: var(--primary-color);
+    word-break: break-word; /* Prevent long names breaking layout */
 }
-.header .back-button, .page-header .back-button {
+.page-header .back-button {
     background-color: var(--secondary-color);
     color: var(--white-color);
     padding: 8px 15px;
@@ -84,12 +76,14 @@ body.auth-error {
     align-items: center;
     gap: 8px;
     transition: background-color 0.2s ease;
+    border: none; /* Ensure button style */
+    cursor: pointer; /* Ensure button style */
 }
-.header .back-button:hover, .page-header .back-button:hover {
-    background-color: #1e2a38; /* Darker shade */
+.page-header .back-button:hover {
+    background-color: #1e2a38;
 }
 
-/* --- Action Bar --- */
+/* --- Action Bar - STABLE --- */
 .actions-bar {
     display: flex;
     align-items: center;
@@ -100,12 +94,11 @@ body.auth-error {
     border: 1px solid var(--medium-gray);
     border-radius: var(--border-radius);
     margin-bottom: 25px;
-    min-height: 50px;
+    min-height: 50px; /* Prevent collapse when empty */
 }
 
-/* Base style for buttons in action bar - Includes Opacity Fix */
-.actions-bar .button,
-.actions-bar a.button {
+/* Base Action Button Style */
+.actions-bar .button { /* Specificity: Targeting buttons directly inside .actions-bar */
     min-width: 140px;
     height: 40px;
     box-sizing: border-box;
@@ -114,47 +107,47 @@ body.auth-error {
     justify-content: center;
     padding: 8px 15px;
     font-weight: 500;
-    border: none;
-    color: white; /* Default text color - overridden by specific rules */
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    border: none; /* No border for action buttons */
+    color: white; /* Default text color - overridden below */
+    box-shadow: var(--box-shadow);
     transition: all 0.2s ease;
     text-decoration: none;
     cursor: pointer;
     font-family: var(--font-family);
     border-radius: var(--border-radius);
     gap: 8px;
-    opacity: 1; /* <<< IMPORTANT FIX: Ensure enabled buttons are fully opaque */
-    /* No default background-color here */
+    opacity: 1; /* CRITICAL: Enabled buttons are fully opaque */
+    background-color: var(--secondary-color); /* Default background if specific color fails */
 }
 
-/* Specific Button Colors */
+/* Specific Action Button Colors */
 .actions-bar #editSupplierBtn { background-color: var(--info-color); color: white; }
 .actions-bar #recordPaymentBtn { background-color: var(--success-color); color: white; }
-.actions-bar #addAdjustmentBtn { background-color: var(--purple-color); color: white; } /* Purple for supplier adjustment */
-.actions-bar #toggleStatusBtn.disable-button { background-color: var(--warning-color); color: var(--black-color); } /* Yellow background, dark text */
-.actions-bar #toggleStatusBtn.enable-button { background-color: var(--success-color); color: white; } /* Green background, white text */
+.actions-bar #addAdjustmentBtn { background-color: var(--purple-color); color: white; }
+.actions-bar #toggleStatusBtn.disable-button { background-color: var(--warning-color); color: var(--black-color); } /* Class added by JS */
+.actions-bar #toggleStatusBtn.enable-button { background-color: var(--success-color); color: white; } /* Class added by JS */
 .actions-bar #deleteSupplierBtn { background-color: var(--danger-color); color: white; }
 
-/* Hover states */
-.actions-bar .button:hover:not(:disabled),
-.actions-bar a.button:hover:not(:disabled) {
+/* Action Button Hover State (Only when NOT disabled) */
+.actions-bar .button:not(:disabled):hover {
     transform: translateY(-2px);
     box-shadow: 0 4px 8px rgba(0,0,0,0.15);
-    filter: brightness(95%); /* Slightly darken on hover */
+    filter: brightness(95%);
 }
 
-/* Disabled Button Styles (WITHOUT !important) */
-.actions-bar .button:disabled,
-.actions-bar a.button.disabled {
-    background-color: #adb5bd; /* Grey background */
-    color: #ffffff;           /* White text */
-    cursor: not-allowed;       /* Not-allowed cursor */
-    opacity: 0.65;             /* <<< Opacity applies ONLY when disabled */
-    transform: none;           /* No transform */
-    box-shadow: none;          /* No shadow */
-    border-color: transparent; /* No border */
-    filter: none;              /* Remove hover filter if applied */
+/* Action Button Disabled State */
+.actions-bar .button:disabled {
+    background-color: #adb5bd !important; /* Grey background - IMPORTANT to override defaults */
+    color: #ffffff !important;           /* White text - IMPORTANT */
+    cursor: not-allowed;
+    opacity: 0.65 !important; /* CRITICAL: Disabled buttons are faded - IMPORTANT */
+    transform: none;
+    box-shadow: none;
+    filter: none; /* Remove hover filter */
+    border: none; /* Ensure no border appears */
 }
+/* Add !important sparingly, but here it ensures the disabled visual state overrides everything else */
+
 
 /* --- Info Grid Layout --- */
 .info-grid {
@@ -169,6 +162,8 @@ body.auth-error {
     border-radius: var(--border-radius);
     padding: 20px 25px;
     box-shadow: var(--box-shadow);
+    display: flex; /* Use flexbox for better alignment */
+    flex-direction: column; /* Stack elements vertically */
 }
 .info-box h2 {
     font-size: 1.15em;
@@ -176,14 +171,14 @@ body.auth-error {
     margin-top: 0;
     margin-bottom: 20px;
     padding-bottom: 12px;
-    border-bottom: 1px solid var(--light-border); /* Lighter border */
+    border-bottom: 1px solid var(--light-border);
     display: flex;
     align-items: center;
     gap: 10px;
     font-weight: 600;
 }
 .info-box h2 i {
-    color: var(--primary-color);
+    color: inherit; /* Inherit color from h2 */
     opacity: 0.8;
 }
 .info-box p {
@@ -191,11 +186,12 @@ body.auth-error {
     font-size: 0.95em;
     line-height: 1.6;
     color: #555;
+    word-break: break-word; /* Prevent long content overflowing */
 }
 .info-box p strong {
     font-weight: 600;
     color: var(--text-color);
-    min-width: 110px;
+    min-width: 110px; /* Align keys */
     display: inline-block;
     margin-right: 5px;
 }
@@ -223,11 +219,11 @@ body.auth-error {
 
 
 /* --- History Section & Tables --- */
-.history-section, .section-container { /* Apply to both classes */
+.history-section {
     margin-top: 30px;
     margin-bottom: 30px;
 }
-.history-section h2, .section-container h2 {
+.history-section h2 {
     font-size: 1.2em;
     margin-bottom: 15px;
     padding-bottom: 10px;
@@ -238,22 +234,22 @@ body.auth-error {
     gap: 10px;
     font-weight: 600;
 }
-.history-section h2 i, .section-container h2 i {
+.history-section h2 i {
     opacity: 0.9;
 }
 
 .table-container {
-    max-height: 350px;
+    max-height: 350px; /* Limit height and enable scroll */
     overflow-y: auto;
     border: 1px solid var(--medium-gray);
     border-radius: var(--border-radius);
     margin-bottom: 30px;
     background-color: var(--white-color);
-    padding: 0;
+    padding: 0; /* Remove padding if added */
 }
 
 /* Base Table Styles */
-.history-section table, .section-container table {
+.history-section table {
     width: 100%;
     border-collapse: collapse;
     border: none;
@@ -261,104 +257,101 @@ body.auth-error {
 }
 
 /* Table Header */
-.history-section thead th, .section-container thead th {
+.history-section thead th {
     background-color: var(--light-bg);
     padding: 12px 15px;
     text-align: left;
     font-weight: 600;
     color: var(--text-color);
     border-bottom: 2px solid var(--medium-gray);
-    position: sticky;
+    position: sticky; /* Make header sticky within scrollable container */
     top: 0;
-    z-index: 1;
+    z-index: 1; /* Ensure header stays above scrolling content */
 }
 
 /* Table Body */
-.history-section tbody tr, .section-container tbody tr {
-    border-bottom: 1px solid #eff2f5;
+.history-section tbody tr {
+    border-bottom: 1px solid var(--light-border); /* Use lighter border for rows */
     transition: background-color 0.15s ease;
 }
-.history-section tbody tr:last-child, .section-container tbody tr:last-child {
+.history-section tbody tr:last-child {
     border-bottom: none;
 }
-.history-section tbody tr:hover, .section-container tbody tr:hover {
-    background-color: #f5f8fa;
+.history-section tbody tr:hover {
+    background-color: #f5f8fa; /* Slightly lighter hover */
 }
 
 /* Table Cells */
-.history-section td, .section-container td {
+.history-section td {
     padding: 10px 15px;
     text-align: left;
     vertical-align: middle;
     color: var(--text-muted);
     line-height: 1.4;
+    word-break: break-word; /* Prevent long text breaking layout */
 }
 
 /* Specific Column Styles */
+/* Style important columns */
 #purchaseOrdersTable td:nth-child(1), /* PO Date/Number */
 #supplierLedgerTable td:nth-child(1) /* Ledger Date */ {
     font-weight: 500;
     color: var(--text-color);
+    white-space: nowrap; /* Prevent date wrapping */
 }
-
-/* Right align currency columns */
-#purchaseOrdersTable th:nth-child(4), #purchaseOrdersTable td:nth-child(4), /* PO Amount */
-#supplierPaymentsTable th:nth-child(3), #supplierPaymentsTable td:nth-child(3), /* Payment Amount */
-#supplierLedgerTable th:nth-child(3), #supplierLedgerTable td:nth-child(3), /* Debit */
-#supplierLedgerTable th:nth-child(4), #supplierLedgerTable td:nth-child(4), /* Credit */
-#supplierLedgerTable th:nth-child(5), #supplierLedgerTable td:nth-child(5) /* Balance */ {
-    text-align: right;
-    white-space: nowrap;
-}
+/* Right align numeric columns */
+.text-right { text-align: right !important; white-space: nowrap; }
 
 /* Ledger Balance Colors */
 #supplierLedgerTable td.ledger-balance-negative { color: var(--danger-color); font-weight: 500; }
 #supplierLedgerTable td.ledger-balance-positive { color: var(--success-color); font-weight: 500; }
 #supplierLedgerTable td.ledger-balance-zero { color: var(--text-muted); font-weight: normal; }
+.text-center { text-align: center !important; }
+.small { font-size: 0.8em; }
 
-/* Custom Scrollbar */
+/* Custom Scrollbar for Table Container */
 .table-container::-webkit-scrollbar { width: 8px; }
 .table-container::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 10px; }
 .table-container::-webkit-scrollbar-thumb { background: #ccc; border-radius: 10px; }
 .table-container::-webkit-scrollbar-thumb:hover { background: #aaa; }
 
 
-/* === MODAL STYLES (Updated based on Customer CSS) === */
+/* === MODAL STYLES (Cleaned & Isolated) === */
 .modal {
-    display: none;
+    display: none; /* Hidden by default */
     position: fixed;
     z-index: 1050;
     left: 0;
     top: 0;
     width: 100%;
     height: 100%;
-    overflow: auto;
-    background-color: rgba(0,0,0,0.55); /* Customer background */
-    align-items: center;
-    justify-content: center;
-    padding: 15px; /* Customer padding */
+    overflow-y: auto; /* Allow modal scrolling */
+    background-color: rgba(0, 0, 0, 0.55);
+    align-items: center; /* Vertically center */
+    justify-content: center; /* Horizontally center */
+    padding: 20px; /* Add padding for smaller screens */
     box-sizing: border-box;
 }
 .modal.active {
-    display: flex;
+    display: flex; /* Show when active */
 }
 .modal-content {
     background-color: var(--white-color);
-    margin: auto;
-    padding: 25px 30px; /* Customer padding */
-    /* border: 1px solid var(--medium-gray); <<< Removed border */
-    width: 90%;
-    max-width: 600px; /* Customer default max-width */
+    margin: auto; /* Helps centering */
+    padding: 25px 30px;
+    border: none; /* Removed border like customer page */
+    width: 90%; /* Responsive width */
+    max-width: 600px; /* Default max-width */
     border-radius: var(--border-radius);
     position: relative;
-    box-shadow: var(--modal-shadow); /* Customer shadow */
+    box-shadow: var(--modal-shadow);
     z-index: 1051;
     animation: slideIn 0.3s ease-out;
+    max-height: calc(100vh - 40px); /* Limit height to prevent overflow */
+    overflow-y: auto; /* Enable scrolling within modal content if needed */
 }
 /* Specific Modal Sizes */
-.modal-content.small-modal {
-    max-width: 480px; /* Customer small modal size */
-}
+.modal-content.small-modal { max-width: 480px; }
 .modal-content.modal-lg { max-width: 800px; }
 .modal-content.modal-xl { max-width: 1140px; }
 
@@ -375,47 +368,46 @@ body.auth-error {
     background: none;
     border: none;
     padding: 0;
+    z-index: 1052; /* Ensure it's above content */
 }
-.close-btn:hover, .close-btn:focus { color: var(--black-color); }
+.close-btn:hover, .close-btn:focus { color: var(--black-color); text-decoration: none; }
 
 /* Modal Header */
-.modal-header { /* Optional header div */
-    border-bottom: 1px solid var(--light-border); /* Lighter border */
-    padding-bottom: 15px;
-    margin-bottom: 25px;
-}
-.modal-header h2,
-.modal h2 { /* Apply to h2 directly too */
+.modal h2 { /* Style h2 directly */
     margin-top: 0;
-    margin-bottom: 25px; /* Default margin */
+    margin-bottom: 25px;
     font-size: 1.3em;
     font-weight: 600;
     color: #333;
-    text-align: center; /* Customer alignment */
-    justify-content: center; /* Customer alignment */
+    text-align: center;
     display: flex;
     align-items: center;
+    justify-content: center;
     gap: 10px;
-    border-bottom: 1px solid var(--light-border); /* Lighter border */
+    border-bottom: 1px solid var(--light-border);
     padding-bottom: 15px;
 }
-.modal-header h2 { margin-bottom: 0; padding-bottom: 0; border-bottom: none; } /* Reset if in .modal-header */
-
-.modal h2 i, .modal-header h2 i { font-size: 1.1em; opacity: 0.9; }
-.modal h2 .info-icon, .modal-header .info-icon { color: var(--info-color); }
-.modal h2 .success-icon, .modal-header .success-icon { color: var(--success-color); }
-.modal h2 .warning-icon, .modal-header .warning-icon { color: var(--warning-color); }
-.modal h2 .danger-icon, .modal-header .danger-icon { color: var(--danger-color); }
-.modal h2 .purple-icon, .modal-header .purple-icon { color: var(--purple-color); }
-
+.modal h2 i { font-size: 1.1em; opacity: 0.9; }
+/* Icon Colors */
+.modal h2 .info-icon { color: var(--info-color); }
+.modal h2 .success-icon { color: var(--success-color); }
+.modal h2 .warning-icon { color: var(--warning-color); }
+.modal h2 .danger-icon { color: var(--danger-color); }
+.modal h2 .purple-icon { color: var(--purple-color); }
 
 /* Modal Form Styles */
-.modal .form-group { margin-bottom: 18px; } /* Customer spacing */
+/* Target forms within specific modals for isolation */
+#editSupplierForm, #recordPaymentForm, #addAdjustmentForm {
+    display: flex;
+    flex-direction: column;
+    gap: 18px; /* Spacing between form groups */
+}
+.modal .form-group { margin-bottom: 0; } /* Remove bottom margin if using gap */
 .modal .form-group label {
     display: block;
-    margin-bottom: 8px; /* Customer spacing */
+    margin-bottom: 8px;
     font-weight: 500;
-    color: #444; /* Customer color */
+    color: #444;
     font-size: 0.9em;
 }
 .modal .form-group input[type="text"],
@@ -426,62 +418,54 @@ body.auth-error {
 .modal .form-group select,
 .modal .form-group textarea {
     font-size: 0.95em;
-    padding: 10px 14px; /* Customer padding */
-    border: 1px solid var(--input-border); /* Lighter border */
-    border-radius: var(--input-border-radius); /* Customer radius */
+    padding: 10px 14px;
+    border: 1px solid var(--input-border);
+    border-radius: var(--input-border-radius);
     width: 100%;
     box-sizing: border-box;
     transition: border-color 0.2s ease, box-shadow 0.2s ease;
     font-family: var(--font-family);
+    background-color: var(--white-color); /* Ensure background */
+    color: var(--text-color); /* Ensure text color */
 }
 .modal .form-group input:focus,
 .modal .form-group select:focus,
 .modal .form-group textarea:focus {
     border-color: var(--primary-color);
-    box-shadow: 0 0 0 0.2rem rgba(0, 86, 179, 0.25); /* Customer focus */
+    box-shadow: 0 0 0 0.2rem rgba(0, 86, 179, 0.25);
     outline: none;
 }
 .modal .form-group .required { color: var(--danger-color); margin-left: 3px; font-weight: bold; }
-.modal .form-group textarea { resize: vertical; min-height: 70px; }
-.modal .form-group input[type="radio"] { margin-right: 5px; vertical-align: middle; cursor: pointer;}
-.modal .form-group label[for*="adjustmentType"] {
-    margin-right: 15px;
-    font-weight: normal;
-    font-size: 0.95em;
-    display: inline-block;
-    margin-bottom: 0;
-    cursor: pointer;
-}
-#addAdjustmentForm .form-group div { margin-top: 5px; line-height: 1.5; }
-#addAdjustmentForm .form-group p { font-size: 0.8em; color: var(--text-muted); margin-top: 5px; margin-bottom: 0; }
+.modal .form-group textarea { resize: vertical; min-height: 80px; }
 
-/* Edit Supplier Modal - Grid Layout Option (like customer page) - CURRENTLY DISABLED */
-/* Uncomment and adjust HTML structure if needed for 2-column layout */
-/*
-#editSupplierForm { display: grid; grid-template-columns: 1fr 1fr; gap: 0px 25px; align-items: start; }
-#editSupplierForm .form-group { margin-bottom: 20px; }
-#editSupplierForm .form-row { display: contents; }
-#editSupplierForm .form-group-address, #editSupplierForm .form-group-remarks { grid-column: 1 / -1; }
-#editSupplierForm .modal-actions { grid-column: 1 / -1; }
-#editSupplierModal .modal-content { max-width: 750px; }
-*/
+/* Adjustment Modal Specific Radio Styles */
+#addAdjustmentForm .form-group div { margin-top: 5px; line-height: 1.5; display: flex; align-items: center; gap: 8px;}
+#addAdjustmentForm .form-group input[type="radio"] { width: auto; margin: 0; cursor: pointer; }
+#addAdjustmentForm .form-group label[for*="adjustmentType"] { margin-bottom: 0; font-weight: normal; cursor: pointer; }
+#addAdjustmentForm .form-group p { font-size: 0.8em; color: var(--text-muted); margin-top: 8px; margin-bottom: 0; }
 
-/* Confirmation Modals (Toggle/Delete) Styling */
+/* Confirmation Modal Styles (Toggle/Delete) */
 .confirmation-check {
     margin-top: 25px;
     margin-bottom: 25px;
     display: flex;
-    align-items: flex-start;
+    align-items: flex-start; /* Align checkbox top */
     gap: 10px;
     background-color: var(--light-bg);
     padding: 15px;
     border-radius: var(--border-radius);
     border: 1px solid var(--medium-gray);
 }
-.confirmation-check input[type="checkbox"] { transform: scale(1.1); cursor: pointer; margin: 0; margin-top: 3px; flex-shrink: 0; }
+.confirmation-check input[type="checkbox"] {
+    transform: scale(1.1);
+    cursor: pointer;
+    margin: 0;
+    margin-top: 3px; /* Align slightly with text */
+    flex-shrink: 0;
+}
 .confirmation-check label { font-size: 0.9em; color: #333; cursor: pointer; margin: 0; font-weight: 500; line-height: 1.4; }
 
-.warning-message {
+.warning-message { /* General warning box style */
     font-weight: 500;
     background-color: #fff3cd;
     border: 1px solid #ffeeba;
@@ -493,15 +477,11 @@ body.auth-error {
     font-size: 0.9em;
     text-align: center;
 }
-#confirmDeleteSupplierModal .warning-message { color: var(--danger-color); background-color: #f8d7da; border-color: #f5c6cb; }
-#confirmToggleSupplierBtn:disabled, /* Keep using :disabled selector */
-#confirmDeleteSupplierBtn:disabled {
-    background-color: #adb5bd;
-    cursor: not-allowed;
-    opacity: 0.65;
+#confirmDeleteSupplierModal .warning-message { /* Specific delete warning */
+     color: var(--danger-color); background-color: #f8d7da; border-color: #f5c6cb;
 }
 
-/* Error Message Styling */
+/* Error Message Styling (Shared by Modals and Page) */
 .error-message {
     color: var(--danger-color);
     background-color: #f8d7da;
@@ -512,87 +492,100 @@ body.auth-error {
     margin-bottom: 15px;
     font-size: 0.9em;
     text-align: center;
+    display: block; /* Ensure it takes space */
 }
-.error-message.hidden { display: none; }
-#generalErrorDisplay { margin-bottom: 20px; }
+.error-message.hidden { display: none; } /* Class to hide */
+#generalErrorDisplay { margin-bottom: 20px; } /* Spacing for page error */
 
-/* Modal Actions (Footer Buttons) */
+/* Modal Actions (Footer Buttons) - ISOLATED */
 .modal .modal-actions {
-    margin-top: 30px; /* Customer spacing */
+    margin-top: 30px;
     padding-top: 20px;
-    border-top: 1px solid var(--light-border); /* Lighter border */
+    border-top: 1px solid var(--light-border);
     display: flex;
-    justify-content: flex-end;
+    justify-content: flex-end; /* Align buttons right */
+    flex-wrap: wrap; /* Allow wrapping */
     gap: 10px;
 }
+/* Base style for buttons INSIDE modal-actions */
 .modal .modal-actions .button {
     font-weight: 500;
-    padding: 10px 20px; /* Customer padding */
-    height: auto;
-    min-width: 100px; /* Customer min-width */
-    opacity: 1; /* Ensure modal buttons are opaque */
+    padding: 10px 20px;
+    height: auto; /* Auto height based on padding */
+    min-width: 100px;
+    border-radius: var(--border-radius);
+    border: none; /* Ensure no default border */
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    opacity: 1; /* Ensure opaque */
+    line-height: 1.5; /* Ensure text fits */
 }
 
-/* Define modal action button colors consistently */
-.modal .button.primary-button { background-color: var(--primary-color); color: white; }
-.modal .button.primary-button:hover { background-color: #00418a; }
-.modal .button.success-button { background-color: var(--success-color); color: white; }
-.modal .button.success-button:hover { background-color: #1e7e34; }
-.modal .button.info-button { background-color: var(--info-color); color: white; }
-.modal .button.info-button:hover { background-color: #117a8b; }
-.modal .button.warning-button { background-color: var(--warning-color); color: var(--black-color); } /* Dark text */
-.modal .button.warning-button:hover { background-color: #e0a800; color: var(--black-color); } /* Dark text */
-.modal .button.danger-button { background-color: var(--danger-color); color: white; }
-.modal .button.danger-button:hover { background-color: #bd2130; }
-.modal .button.purple-button { background-color: var(--purple-color); color: white; } /* Added purple */
-.modal .button.purple-button:hover { background-color: #5a32a3; }
-.modal .button.cancel-button { background-color: var(--secondary-color); color: white; } /* Secondary as cancel */
-.modal .button.cancel-button:hover { background-color: #5a6268; }
-.modal .button.light-button { background-color: var(--light-bg); color: var(--text-color); border: 1px solid #ccc; } /* Define light */
-.modal .button.light-button:hover { background-color: #e2e6ea; }
-/* Disabled styles for modal buttons (if needed, though HTML disabled attribute is preferred) */
+/* Specific Modal Button Colors */
+.modal .modal-actions .button.primary-button { background-color: var(--primary-color); color: white; }
+.modal .modal-actions .button.primary-button:hover { background-color: #00418a; }
+.modal .modal-actions .button.success-button { background-color: var(--success-color); color: white; }
+.modal .modal-actions .button.success-button:hover { background-color: #1e7e34; }
+.modal .modal-actions .button.info-button { background-color: var(--info-color); color: white; }
+.modal .modal-actions .button.info-button:hover { background-color: #117a8b; }
+.modal .modal-actions .button.warning-button { background-color: var(--warning-color); color: var(--black-color); }
+.modal .modal-actions .button.warning-button:hover { background-color: #e0a800; }
+.modal .modal-actions .button.danger-button { background-color: var(--danger-color); color: white; }
+.modal .modal-actions .button.danger-button:hover { background-color: #bd2130; }
+.modal .modal-actions .button.purple-button { background-color: var(--purple-color); color: white; }
+.modal .modal-actions .button.purple-button:hover { background-color: #5a32a3; }
+.modal .modal-actions .button.cancel-button { background-color: var(--secondary-color); color: white; }
+.modal .modal-actions .button.cancel-button:hover { background-color: #5a6268; }
+
+/* Disabled State for Modal Buttons */
+/* NOTE: Using HTML 'disabled' attribute is preferred and handled by this */
 .modal .modal-actions .button:disabled {
-    background-color: #adb5bd;
-    color: #ffffff;
+    background-color: #adb5bd !important; /* Use important to ensure override */
+    color: #ffffff !important;
     cursor: not-allowed;
-    opacity: 0.65;
-    border-color: transparent;
+    opacity: 0.65 !important;
+    box-shadow: none;
+    transform: none;
+    filter: none;
+    border: none;
 }
+
+/* --- Utility Classes --- */
+.hidden { display: none !important; } /* Utility to hide elements */
 
 /* --- Responsive Adjustments --- */
 @media (max-width: 992px) {
     .container { padding: 0 15px; }
-    .header h1, .page-header h1 { font-size: 1.6em; }
+    .page-header h1 { font-size: 1.6em; }
     .info-grid { grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; }
 }
 
 @media (max-width: 768px) {
-    .header, .page-header { flex-direction: column; align-items: flex-start; gap: 15px; }
+    .page-header { align-items: flex-start; } /* Align items start on wrap */
     .actions-bar { flex-direction: column; align-items: stretch; padding: 15px; }
-    .actions-bar .button, .actions-bar a.button { width: 100%; text-align: center; justify-content: center; }
-    .modal-content, .modal-content.modal-lg, .modal-content.modal-xl {
-        width: 95%; /* Wider modals */
-        max-height: calc(95vh); /* Limit height on small screens */
-        padding: 20px; /* Adjust padding */
-    }
-    .modal-content h2, .modal-header h2 { font-size: 1.1em; }
-    .section-container table, .history-section table { font-size: 0.85em; }
-    .section-container td, .section-container th, .history-section td, .history-section th { padding: 8px 10px; }
+    .actions-bar .button { width: 100%; } /* Full width buttons */
+    .modal-content { width: 95%; padding: 20px; }
+    .modal h2 { font-size: 1.1em; }
+    .history-section table { font-size: 0.85em; }
+    .history-section td, .history-section th { padding: 8px 10px; }
     .info-grid { grid-template-columns: 1fr; } /* Stack info boxes */
     .info-box h2 { font-size: 1.05em; }
     .info-box p { font-size: 0.88em; }
 }
 
 @media (max-width: 480px) {
-    .header h1, .page-header h1 { font-size: 1.4em; }
-    .actions-bar .button, .actions-bar a.button { padding: 8px 12px; font-size: 0.9em; gap: 5px; }
-    .section-container td, .section-container th, .history-section td, .history-section th { padding: 6px 8px; }
-    .status-badge, .payment-badge { padding: 3px 8px; font-size: 0.75em; }
+    .page-header h1 { font-size: 1.4em; }
+    .actions-bar .button { padding: 10px 12px; font-size: 0.9em; } /* Slightly larger padding */
+    .history-section td, .history-section th { padding: 6px 8px; }
+    .status-badge { padding: 3px 8px; font-size: 0.75em;}
     .modal .modal-actions { flex-direction: column; gap: 8px; } /* Stack buttons */
-    .modal .modal-actions .button { width: 100%; justify-content: center; }
+    .modal .modal-actions .button { width: 100%; }
     .modal-content { padding: 15px; }
-    .modal h2, .modal-header h2 { font-size: 1em; margin-bottom: 15px; padding-bottom: 10px; }
-    .modal .form-group { margin-bottom: 15px; }
+    .modal h2 { font-size: 1em; margin-bottom: 15px; padding-bottom: 10px; }
     .modal .form-group label { margin-bottom: 5px; font-size: 0.85em; }
     .modal .form-group input, .modal .form-group select, .modal .form-group textarea { padding: 8px 12px; font-size: 0.9em; }
     .modal .modal-actions { margin-top: 20px; padding-top: 15px; }
@@ -600,6 +593,6 @@ body.auth-error {
 
 /* Animation */
 @keyframes slideIn {
-  from { transform: translateY(-30px); opacity: 0; }
+  from { transform: translateY(-20px); opacity: 0; }
   to { transform: translateY(0); opacity: 1; }
 }
