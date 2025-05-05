@@ -1,24 +1,28 @@
 /* css/supplier_account_detail.css */
-/* Styles for supplier_account_detail.html page */
+/* Styles specifically for supplier_account_detail.html page */
+/* Based on customer page theme and supplier page structure */
+/* Includes styles for Ledger, Adjustment, Toggle, Delete features */
+/* Updated: Only Modal styles improved, rest retained from original */
 
-/* --- Root Variables --- */
+/* --- Root Variables (Combined & Refined) --- */
 :root {
     --primary-color: #0056b3;
-    --secondary-color: #6c757d; /* Muted gray */
+    --secondary-color: #2c3e50; /* Used for back button etc */
     --success-color: #28a745;
     --danger-color: #dc3545;
     --warning-color: #ffc107;
-    --info-color: #17a2b8;
-    --light-bg: #f8f9fa;
-    --medium-gray: #e9ecef;
-    --dark-gray: #495057;
-    --text-color: #212529;
+    --info-color: #17a2b8;    /* Used for Edit button */
+    --purple-color: #6f42c1; /* Original supplier color */
+    --light-bg: #f8f9fa;   /* Use light-gray */
+    --medium-gray: #e9ecef;  /* Use for borders */
+    --dark-gray: #6c757d;    /* Use as text-muted */
+    --text-color: #212529;     /* Darker text like customer page */
     --text-muted: #6c757d;
     --white-color: #ffffff;
     --black-color: #000000;
     --font-family: 'Poppins', sans-serif;
-    --border-radius: 6px;
-    --box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    --border-radius: 6px;     /* Customer page radius */
+    --box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1); /* Subtle shadow */
     --input-border-color: #ced4da;
     --input-focus-border-color: #86b7fe;
     --input-focus-box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
@@ -38,9 +42,10 @@ body {
     max-width: 1200px;
     margin: 20px auto;
     padding: 20px;
-    background-color: var(--white-color);
+    background-color: var(--white-color); /* White container */
     border-radius: var(--border-radius);
     box-shadow: var(--box-shadow);
+    position: relative; /* For potential absolute positioned elements */
 }
 
 /* --- Loading Overlay --- */
@@ -50,22 +55,28 @@ body {
     left: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(255, 255, 255, 0.8);
-    display: flex;
+    background-color: rgba(255, 255, 255, 0.85); /* Slightly more opaque */
+    display: none; /* Hidden by default */
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    z-index: 1050; /* High z-index to be on top */
+    z-index: 1060; /* Higher than modals */
+    color: var(--primary-color);
+    text-align: center;
 }
 
-.spinner {
-    border: 4px solid rgba(0, 0, 0, 0.1);
-    width: 36px;
-    height: 36px;
+.loading-overlay .spinner {
+    border: 4px solid rgba(0, 86, 179, 0.2); /* Lighter border */
+    width: 40px;
+    height: 40px;
     border-radius: 50%;
     border-left-color: var(--primary-color);
-    animation: spin 1s ease infinite;
+    animation: spin 1s linear infinite; /* Smooth linear spin */
     margin-bottom: 15px;
+}
+.loading-overlay p {
+    font-size: 1.1em;
+    font-weight: 500;
 }
 
 @keyframes spin {
@@ -73,55 +84,57 @@ body {
     100% { transform: rotate(360deg); }
 }
 
-/* --- Header & Actions --- */
-.header {
+/* --- Header & Actions Bar --- */
+.header, .page-header /* Use common class if applicable */ {
     display: flex;
     justify-content: space-between;
     align-items: center;
     margin-bottom: 25px;
-    flex-wrap: wrap; /* Allow wrapping on smaller screens */
-    border-bottom: 1px solid var(--medium-gray);
     padding-bottom: 15px;
+    border-bottom: 1px solid var(--medium-gray);
+    flex-wrap: wrap; /* Allow wrapping */
+    gap: 15px; /* Gap between items */
 }
 
-.header h1 {
+.header h1, .page-header h1 {
     color: var(--primary-color);
     margin: 0;
     font-size: 1.8em;
+    font-weight: 600;
     flex-grow: 1; /* Allow title to take space */
-    min-width: 200px; /* Prevent title from getting too small */
 }
 
 .back-button {
     display: inline-flex;
     align-items: center;
     padding: 8px 15px;
-    background-color: var(--secondary-color);
+    background-color: var(--secondary-color); /* Consistent button color */
     color: var(--white-color);
     border: none;
     border-radius: var(--border-radius);
     text-decoration: none;
     font-size: 0.9em;
-    margin-right: 15px;
+    font-weight: 500;
     transition: background-color 0.2s ease;
+    gap: 8px;
+    order: -1; /* Ensure it appears first on wrap */
 }
-
 .back-button i {
-    margin-right: 8px;
+    margin-right: 0; /* Gap handles spacing */
 }
-
 .back-button:hover {
-    background-color: var(--dark-gray);
+    background-color: #1d2a36; /* Darker shade */
 }
 
 .actions-bar {
     display: flex;
     gap: 10px;
     flex-wrap: wrap; /* Allow buttons to wrap */
-    justify-content: flex-end; /* Align buttons to the right */
+    align-items: center; /* Align items vertically */
+    justify-content: flex-end; /* Align to the right */
 }
 
-/* --- Buttons --- */
+/* --- Buttons (General) --- */
 .button {
     display: inline-flex;
     align-items: center;
@@ -133,38 +146,72 @@ body {
     font-size: 0.9em;
     font-weight: 500;
     text-decoration: none; /* For <a> tags styled as buttons */
-    transition: background-color 0.2s ease, box-shadow 0.2s ease;
-    gap: 8px; /* Space between icon and text */
-    white-space: nowrap; /* Prevent text wrapping */
+    transition: background-color 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
+    gap: 8px;
+    white-space: nowrap;
+    line-height: 1.4; /* Ensure text vertical alignment */
 }
-
 .button i {
     font-size: 1.1em; /* Slightly larger icons */
+     margin-right: 0; /* Gap handles spacing */
 }
-
 .button:disabled {
-    opacity: 0.6;
+    opacity: 0.65;
     cursor: not-allowed;
+    box-shadow: none;
 }
 
+/* Specific Button Colors */
 .primary-button { background-color: var(--primary-color); color: var(--white-color); }
 .primary-button:hover:not(:disabled) { background-color: #004080; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
 
 .secondary-button { background-color: var(--secondary-color); color: var(--white-color); }
-.secondary-button:hover:not(:disabled) { background-color: var(--dark-gray); box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+.secondary-button:hover:not(:disabled) { background-color: #1d2a36; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+
+.success-button { background-color: var(--success-color); color: var(--white-color); }
+.success-button:hover:not(:disabled) { background-color: #218838; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
 
 .danger-button { background-color: var(--danger-color); color: var(--white-color); }
 .danger-button:hover:not(:disabled) { background-color: #c82333; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
 
+.warning-button { background-color: var(--warning-color); color: var(--text-color); }
+.warning-button:hover:not(:disabled) { background-color: #e0a800; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+
 .info-button { background-color: var(--info-color); color: var(--white-color); }
 .info-button:hover:not(:disabled) { background-color: #138496; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
 
-.cancel-button { background-color: #f8f9fa; color: var(--text-color); border: 1px solid var(--medium-gray); }
-.cancel-button:hover:not(:disabled) { background-color: #e2e6ea; }
+.cancel-button, .light-button { background-color: var(--light-bg); color: var(--text-color); border: 1px solid var(--medium-gray); }
+.cancel-button:hover:not(:disabled), .light-button:hover:not(:disabled) { background-color: #e2e6ea; }
 
+/* --- Error Message Display --- */
+.error-message, .success-message, .info-message {
+    padding: 12px 18px;
+    border-radius: var(--border-radius);
+    margin: 15px 0; /* Add margin automatically */
+    border: 1px solid transparent;
+    font-size: 0.95em;
+    display: none; /* Hidden by default, shown by JS */
+}
 
-/* --- Info & Summary Grid --- */
-.info-summary-grid {
+.error-message {
+    color: #721c24;
+    background-color: #f8d7da;
+    border-color: #f5c6cb;
+    display: block; /* Override if needed, JS controls actual visibility */
+}
+.success-message {
+    color: #155724;
+    background-color: #d4edda;
+    border-color: #c3e6cb;
+}
+.info-message {
+    color: #0c5460;
+    background-color: #d1ecf1;
+    border-color: #bee5eb;
+}
+
+/* --- Main Content Layout --- */
+.info-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
     gap: 20px;
@@ -189,25 +236,30 @@ body {
     display: flex;
     align-items: center;
     gap: 10px;
+    font-weight: 600;
 }
 
 .info-box p {
     margin: 8px 0;
     font-size: 0.95em;
     color: var(--dark-gray);
+    line-height: 1.7;
+    display: flex; /* Align label and value */
+    flex-wrap: wrap;
 }
 .info-box p strong {
      color: var(--text-color);
-     min-width: 120px; /* Align values */
+     min-width: 120px; /* Adjust as needed */
      display: inline-block;
+     margin-right: 8px;
+     font-weight: 500;
 }
 .info-box span {
     color: var(--text-color);
-}
-#supplierInfoDetails p, #supplierSummaryDetails p {
-    line-height: 1.7;
+    word-break: break-word; /* Prevent long text overflow */
 }
 
+/* Summary Box Specifics */
 .summary-box .balance {
     margin-top: 15px;
     padding-top: 10px;
@@ -215,14 +267,18 @@ body {
 }
 .summary-box #summaryCurrentBalance {
     font-size: 1.3em;
-    color: var(--danger-color); /* Highlight balance due */
+    font-weight: 700; /* Bolder balance */
+    color: var(--danger-color); /* Default to danger (due) */
+}
+.summary-box #summaryCurrentBalance.credit-balance {
+     color: var(--success-color); /* Green for credit */
 }
 .summary-box small {
     font-size: 0.8em;
     color: var(--text-muted);
 }
 
-/* --- Section Containers & Tables --- */
+/* --- Section Containers (Tables) --- */
 .section-container {
     background-color: var(--white-color);
     border: 1px solid var(--medium-gray);
@@ -240,6 +296,7 @@ body {
     display: flex;
     align-items: center;
     gap: 10px;
+    font-weight: 600;
 }
 
 .table-responsive {
@@ -250,43 +307,62 @@ table {
     width: 100%;
     border-collapse: collapse;
     margin-top: 15px;
+    font-size: 0.9em; /* Base table font size */
 }
 
 th, td {
     padding: 12px 15px;
     text-align: left;
     border-bottom: 1px solid var(--medium-gray);
-    font-size: 0.9em;
+    vertical-align: middle; /* Align content vertically */
 }
 
 thead th {
-    background-color: #f8f9fa; /* Light gray header */
+    background-color: var(--light-bg); /* Light gray header */
     font-weight: 600;
     color: var(--dark-gray);
+    white-space: nowrap; /* Prevent header wrapping */
 }
 
 tbody tr:hover {
-    background-color: #f1f3f5;
+    background-color: #f1f3f5; /* Subtle hover */
 }
-
 tbody td {
-    vertical-align: middle;
+    color: var(--text-color);
+}
+tbody tr td:last-child {
+    /* Optional: Style last cell differently (e.g., Notes) */
+    color: var(--text-muted);
+    font-size: 0.95em;
+}
+table .actions-cell { /* For potential action buttons in rows */
+    white-space: nowrap;
+    text-align: right;
+}
+table .actions-cell .button {
+    padding: 4px 8px;
+    font-size: 0.85em;
+    margin-left: 5px;
 }
 
-/* Status Badges (Optional) */
+/* Status Badges */
 .status-badge {
     padding: 4px 10px;
-    border-radius: 12px; /* Pill shape */
+    border-radius: 12px;
     font-size: 0.8em;
     font-weight: 500;
     color: var(--white-color);
     text-align: center;
     white-space: nowrap;
+    text-transform: capitalize;
 }
-.status-paid { background-color: var(--success-color); }
-.status-pending { background-color: var(--warning-color); color: var(--text-color); }
-.status-cancelled { background-color: var(--danger-color); }
+.status-paid, .status-completed { background-color: var(--success-color); }
+.status-pending, .status-processing { background-color: var(--warning-color); color: var(--text-color); }
+.status-cancelled, .status-failed { background-color: var(--danger-color); }
 .status-draft { background-color: var(--secondary-color); }
+.status-shipped { background-color: var(--info-color); }
+.status-delivered { background-color: var(--purple-color); }
+
 
 /* Ledger Entry Types */
 .ledger-type-payment { color: var(--success-color); font-weight: 500;}
@@ -295,142 +371,149 @@ tbody td {
 .ledger-type-po { color: var(--info-color); font-weight: 500;}
 
 
-/* --- Modals --- */
+/* --- NEW/IMPROVED Modal Styles START --- */
+/* Replace existing modal styles with these */
+
 .modal {
-    display: none; /* Hidden by default */
+    display: none; /* Hidden by default - JS will change this */
     position: fixed; /* Stay in place */
-    z-index: 1000; /* Sit on top */
+    z-index: 1050; /* Sit on top */
     left: 0;
     top: 0;
     width: 100%;
     height: 100%;
-    overflow: auto; /* Enable scroll if needed */
-    background-color: rgba(0, 0, 0, 0.6); /* Black w/ opacity */
-    animation: fadeIn 0.3s ease-out; /* Fade in animation */
+    overflow: hidden; /* Prevent background scroll */
+    background-color: rgba(0, 0, 0, 0.6); /* Darker overlay */
+    justify-content: center; /* Center content horizontally */
+    align-items: center; /* Center content vertically */
+    /* animation: fadeIn 0.3s ease-out; */ /* Optional fade-in */
+}
+
+/* This class can be added by JS to show the modal */
+/* Ensure your JS adds/removes this class or sets display: flex ! */
+.modal.modal-open {
+    display: flex;
 }
 
 .modal-content {
     background-color: var(--white-color);
-    margin: 10% auto; /* Vertically center somewhat */
-    padding: 0; /* Remove padding, use header/body/actions */
-    border: 1px solid var(--medium-gray);
-    border-radius: var(--border-radius);
-    width: 80%; /* Default width */
-    max-width: 600px; /* Max width for standard modals */
+    border-radius: var(--border-radius); /* Use existing border radius */
     box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-    position: relative;
-    animation: slideIn 0.3s ease-out; /* Slide in animation */
+    width: 90%; /* Responsive width */
+    max-width: 600px; /* Max width for standard modals */
+    position: relative; /* For close button positioning */
     display: flex;
     flex-direction: column;
+    overflow: hidden; /* Contain elements */
+    /* animation: slideIn 0.3s ease-out; */ /* Optional slide-in */
+    max-height: 90vh; /* Prevent modal from being too tall */
 }
 
 .modal-content.small-modal {
-    max-width: 500px;
+    max-width: 500px; /* Smaller width for confirmation dialogs */
 }
 
+/* Modal Header */
 .modal-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
     padding: 15px 20px;
     border-bottom: 1px solid var(--medium-gray);
-    background-color: #f8f9fa; /* Light header */
-    border-top-left-radius: var(--border-radius);
-    border-top-right-radius: var(--border-radius);
+    background-color: var(--light-bg); /* Light background for header */
+    flex-shrink: 0; /* Prevent header from shrinking */
 }
 
 .modal-header h2 {
     margin: 0;
-    font-size: 1.25em;
-    color: var(--primary-color);
+    font-size: 1.25em; /* Slightly larger heading */
+    color: var(--primary-color); /* Use primary color for heading */
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 10px; /* Space between icon and text if needed */
+    font-weight: 600;
 }
-.modal-header h2 .danger-icon {
+.modal-header h2 .danger-icon { /* Specific styling for delete icon */
     color: var(--danger-color);
 }
 
-
+/* Modal Body */
 .modal-body {
     padding: 20px;
-    overflow-y: auto; /* Scroll body if content overflows */
-    max-height: 60vh; /* Limit body height */
+    overflow-y: auto; /* Enable scrolling for content */
+    flex-grow: 1; /* Allow body to take available space */
 }
 
-.modal-actions {
-    display: flex;
-    justify-content: flex-end; /* Align buttons to the right */
-    padding: 15px 20px;
-    border-top: 1px solid var(--medium-gray);
-    background-color: #f8f9fa; /* Light footer */
-    gap: 10px;
-    border-bottom-left-radius: var(--border-radius);
-    border-bottom-right-radius: var(--border-radius);
-}
-
-
-.close-btn {
-    color: #aaa;
+/* Close Button */
+.modal .close-btn { /* Use specific selector */
+    color: var(--dark-gray); /* Muted color */
     font-size: 28px;
     font-weight: bold;
     cursor: pointer;
-    line-height: 1; /* Ensure proper vertical alignment */
+    line-height: 1;
     padding: 0 5px;
+    position: absolute; /* Position relative to modal-content */
+    top: 10px;
+    right: 15px;
+    transition: color 0.2s ease;
+    background: none; /* Remove default button styles */
+    border: none;
 }
 
-.close-btn:hover,
-.close-btn:focus {
+.modal .close-btn:hover,
+.modal .close-btn:focus {
     color: var(--black-color);
     text-decoration: none;
 }
 
-/* Form Styling within Modals */
-.form-group {
+/* Modal Form Styling */
+.modal .form-group { /* Target form groups only inside modals */
     margin-bottom: 15px;
 }
 
-.form-group label {
+.modal .form-group label {
     display: block;
     margin-bottom: 5px;
     font-weight: 500;
     font-size: 0.9em;
+    color: var(--text-color);
 }
 
-.form-group input[type="text"],
-.form-group input[type="number"],
-.form-group input[type="date"],
-.form-group input[type="email"],
-.form-group textarea {
+.modal .form-group input[type="text"],
+.modal .form-group input[type="number"],
+.modal .form-group input[type="date"],
+.modal .form-group input[type="email"],
+.modal .form-group textarea {
     width: 100%;
-    padding: 10px;
-    border: 1px solid var(--input-border-color);
+    padding: 10px 12px;
+    border: 1px solid var(--input-border-color, #ced4da); /* Use variable or fallback */
     border-radius: var(--border-radius);
     font-size: 0.95em;
-    box-sizing: border-box; /* Include padding and border in element's total width and height */
+    box-sizing: border-box;
     transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
-.form-group input:focus,
-.form-group textarea:focus {
-    border-color: var(--input-focus-border-color);
+.modal .form-group input:focus,
+.modal .form-group textarea:focus {
+    border-color: var(--input-focus-border-color, #86b7fe); /* Use variable or fallback */
     outline: 0;
-    box-shadow: var(--input-focus-box-shadow);
+    box-shadow: var(--input-focus-box-shadow, 0 0 0 0.25rem rgba(13, 110, 253, 0.25)); /* Use variable or fallback */
 }
 
-.form-group textarea {
-    resize: vertical; /* Allow vertical resize */
-    min-height: 60px;
+.modal .form-group textarea {
+    resize: vertical;
+    min-height: 70px;
 }
 
-.form-group small {
+.modal .form-group small {
     display: block;
     margin-top: 5px;
     font-size: 0.8em;
     color: var(--text-muted);
 }
 
-.modal-error {
+/* Modal Error Message Styling */
+.modal-error { /* Specific class for errors inside modals */
     background-color: #f8d7da;
     color: #721c24;
     border: 1px solid #f5c6cb;
@@ -438,10 +521,31 @@ tbody td {
     border-radius: var(--border-radius);
     margin-bottom: 15px;
     font-size: 0.9em;
+    display: none; /* Hidden by default, shown by JS */
 }
 
-/* Delete Confirmation Styles */
-.warning-message {
+/* Modal Actions (Footer) */
+.modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    padding: 15px 20px;
+    border-top: 1px solid var(--medium-gray);
+    background-color: var(--light-bg); /* Light background for footer */
+    gap: 10px;
+    flex-shrink: 0; /* Prevent footer from shrinking */
+}
+
+/* Ensure buttons inside modal actions use standard button styles */
+/* Inherit global button styles defined elsewhere */
+.modal-actions .button { }
+
+/* Optional: Override specific buttons if needed */
+.modal-actions .cancel-button {
+     /* Keep using the general .cancel-button style unless overridden */
+}
+
+/* Delete Confirmation Specific Styles */
+.modal .warning-message { /* Target warning only inside modals */
     background-color: #fff3cd;
     color: #856404;
     border: 1px solid #ffeeba;
@@ -454,76 +558,111 @@ tbody td {
     align-items: center;
     gap: 10px;
 }
-.warning-message i {
+.modal .warning-message i {
     font-size: 1.2em;
 }
 
-.confirmation-check {
+.modal .confirmation-check { /* Target checkbox only inside modals */
     margin-top: 20px;
     display: flex;
     align-items: center;
 }
 
-.confirmation-check input[type="checkbox"] {
+.modal .confirmation-check input[type="checkbox"] {
     margin-right: 10px;
-    width: 18px; /* Custom size */
-    height: 18px; /* Custom size */
+    width: 18px;
+    height: 18px;
     cursor: pointer;
+    flex-shrink: 0; /* Prevent checkbox from shrinking */
 }
 
-.confirmation-check label {
+.modal .confirmation-check label {
     font-size: 0.9em;
     color: var(--dark-gray);
     cursor: pointer;
+    margin-bottom: 0; /* Override potential default label margin */
+    line-height: 1.4; /* Better alignment with checkbox */
 }
 
+/* --- NEW/IMPROVED Modal Styles END --- */
 
-/* --- Error Message Display --- */
-.error-message {
-    color: var(--danger-color);
-    background-color: #f8d7da;
-    border: 1px solid #f5c6cb;
-    padding: 10px 15px;
+
+/* --- Forms (General - outside modals) --- */
+/* Reuse styles if applicable or define specific ones */
+.form-section {
+    background: #fff;
+    padding: 20px;
     border-radius: var(--border-radius);
-    margin: 15px 0;
+    margin-bottom: 20px;
+    border: 1px solid var(--medium-gray);
 }
-
-
-/* --- Animations --- */
-@keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
+.form-section h2 {
+    margin-top: 0;
+    margin-bottom: 20px;
+    font-size: 1.3em;
+    color: var(--primary-color);
 }
-
-@keyframes slideIn {
-    from { transform: translateY(-30px); opacity: 0; }
-    to { transform: translateY(0); opacity: 1; }
+.form-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    margin-bottom: 15px;
 }
+.form-row .form-group {
+    flex: 1; /* Allow groups to grow */
+    min-width: 200px; /* Prevent groups from becoming too narrow */
+    margin-bottom: 0; /* Remove bottom margin if using gap */
+}
+.form-group {
+    /* General form group styling if needed */
+    margin-bottom: 15px; /* Default margin */
+}
+.form-group label {
+    /* General label styling if needed */
+}
+/* Input styling defined within modal section is specific */
+/* Add general input styling if needed outside modals */
+
 
 /* --- Responsiveness --- */
 @media (max-width: 992px) {
     .container { margin: 15px; padding: 15px; }
-    .header h1 { font-size: 1.6em; }
-    .actions-bar { justify-content: flex-start; margin-top: 10px;} /* Stack below header */
+    .header h1, .page-header h1 { font-size: 1.6em; }
+    .actions-bar { justify-content: flex-start; } /* Align buttons left on smaller screens */
 }
 
 @media (max-width: 768px) {
-    .header { flex-direction: column; align-items: flex-start; }
-    .actions-bar { width: 100%; margin-top: 15px; justify-content: space-between;} /* Space out buttons */
-    .actions-bar .button { flex-grow: 1; text-align: center; } /* Make buttons take equal width */
-    .info-summary-grid { grid-template-columns: 1fr; } /* Stack info boxes */
-    .modal-content { width: 90%; margin: 15% auto; }
-    th, td { padding: 10px 8px; font-size: 0.85em; }
-    .button { padding: 8px 12px; font-size: 0.85em; }
+    .header, .page-header { flex-direction: column; align-items: flex-start; }
+    .actions-bar { width: 100%; margin-top: 15px; justify-content: space-between; flex-direction: row; /* Keep buttons in a row initially */ }
+    /* Make buttons distribute space or stack */
+    /* Option 1: Distribute space */
+     .actions-bar .button, .actions-bar a.button { flex-grow: 1; }
+    /* Option 2: Allow stacking (remove flex-grow, rely on wrap) */
+    /* .actions-bar .button, .actions-bar a.button { flex-grow: 0; } */
+
+    .info-grid { grid-template-columns: 1fr; } /* Stack info boxes */
+    .modal-content { width: 90%; }
+    th, td { padding: 10px 8px; font-size: 0.88em; } /* Slightly adjust padding/font */
+    .button { padding: 8px 12px; font-size: 0.88em; }
 }
 
+@media (max-width: 576px) { /* Extra breakpoint for smaller devices */
+     .header h1, .page-header h1 { font-size: 1.5em; }
+     .actions-bar { flex-direction: column; align-items: stretch; padding: 15px; }
+     .actions-bar .button, .actions-bar a.button { width: 100%; text-align: center; justify-content: center; }
+     .modal-content, .modal-content.modal-lg, .modal-content.modal-xl { width: 95%; max-height: calc(95vh); }
+     .modal-content h2, .modal-header h2 { font-size: 1.1em; }
+     .section-container table, .history-section table { font-size: 0.85em; }
+     .section-container td, .section-container th, .history-section td, .history-section th { padding: 8px 10px; }
+     .info-grid { grid-template-columns: 1fr; }
+     .info-box h2 { font-size: 1.05em; }
+     .info-box p { font-size: 0.88em; }
+}
 @media (max-width: 480px) {
-    .header h1 { font-size: 1.4em; }
-    .actions-bar { flex-direction: column; gap: 8px; }
-    .actions-bar .button { width: 100%; }
-    .modal-content { width: 95%; margin: 20% auto; }
+    .header h1, .page-header h1 { font-size: 1.4em; }
+    .actions-bar .button, .actions-bar a.button { padding: 8px 12px; font-size: 0.9em; gap: 5px; }
+    .section-container td, .section-container th, .history-section td, .history-section th { padding: 6px 8px; }
+    .status-badge, .payment-badge { padding: 3px 8px; font-size: 0.75em;}
     .modal-actions { flex-direction: column; }
-    .modal-actions .button { width: 100%; }
-    .modal-header h2 { font-size: 1.1em; }
-    th, td { font-size: 0.8em; }
+    .modal-actions .button { width: 100%; } /* Stack buttons in modal footer */
 }
