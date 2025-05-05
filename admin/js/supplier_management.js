@@ -1,4 +1,4 @@
-// js/supplier_management.js - v26 (Final User Requests - Cleaned)
+// js/supplier_management.js - v27 (Supplier List Updates - Cleaned)
 
 import { db, auth } from './firebase-init.js';
 import {
@@ -42,6 +42,7 @@ const supplierModalTitle = document.getElementById('supplierModalTitle');
 const closeSupplierModalBtn = document.getElementById('closeSupplierModal');
 const cancelSupplierBtn = document.getElementById('cancelSupplierBtn');
 const saveSupplierBtn = document.getElementById('saveSupplierBtn');
+const deleteSupplierFromModalBtn = document.getElementById('deleteSupplierFromModalBtn'); // <<< नया बटन एलिमेंट
 const supplierForm = document.getElementById('supplierForm');
 const editSupplierIdInput = document.getElementById('editSupplierId');
 const supplierNameInput = document.getElementById('supplierNameInput');
@@ -72,10 +73,10 @@ const poShareInfo = document.getElementById('poShareInfo');
 const poShareGreeting = document.getElementById('poShareGreeting');
 const poShareItemsContainer = document.getElementById('poShareItemsContainer');
 const poShareTermList = document.getElementById('poShareTermList');
-const closePoShareModalTopBtn = document.getElementById('closePoShareModalTopBtn'); // Renamed in newer HTML
+const closePoShareModalTopBtn = document.getElementById('closePoShareModalTopBtn');
 const closePoShareModalBtn = document.getElementById('closePoShareModalBtn');
 const printPoShareModalBtn = document.getElementById('printPoShareModalBtn');
-const copyPoShareModalBtn = document.getElementById('copyPoShareModalBtn'); // Assume copy button exists
+const copyPoShareModalBtn = document.getElementById('copyPoShareModalBtn');
 const exportPoCsvBtn = document.getElementById('exportPoCsvBtn');
 
 // --- Global State ---
@@ -104,37 +105,84 @@ function clearError(elementId = 'poListError') { const errorElement = document.g
 function showSupplierFormError(message) { displayError(message, 'supplierFormError'); }
 function showStatusError(message) { displayError(message, 'statusErrorMsg'); }
 function showPoListError(message) { displayError(message, 'poListError'); if (poLoadingMessage) poLoadingMessage.style.display = 'none'; if (poTableBody) poTableBody.innerHTML = ''; }
+function showSupplierListError(message) { displayError(message, 'supplierListError'); if (supplierLoadingMessage) supplierLoadingMessage.style.display = 'none'; if (supplierTableBody) supplierTableBody.innerHTML = ''; }
+
 
 // --- Supplier List Functions ---
 async function displaySupplierTable() {
-    if (!db || !collection || !getDocs || !query || !orderBy) { console.error("DB functions missing for supplier list."); return; }
+    if (!supplierTableBody || !supplierLoadingMessage) { console.error("Supplier table body missing"); return; }
+    if (!db || !collection || !getDocs || !query || !orderBy) { showSupplierListError("Error: DB functions missing."); return; }
+    showSupplierListError('');
+    supplierLoadingMessage.style.display = 'table-row';
+    supplierTableBody.innerHTML = '';
     suppliersDataCache = [];
     try {
         const q = query(collection(db, "suppliers"), orderBy("name_lowercase"));
         const querySnapshot = await getDocs(q);
-        querySnapshot.forEach((docSnapshot) => { suppliersDataCache.push({ id: docSnapshot.id, ...docSnapshot.data() }); });
-        populateSupplierFilterDropdown();
-        if (supplierTableBody && supplierLoadingMessage) {
-             supplierLoadingMessage.style.display = 'none'; supplierTableBody.innerHTML = '';
-            if (suppliersDataCache.length === 0) { supplierTableBody.innerHTML = '<tr><td colspan="4">No suppliers found.</td></tr>'; }
-            else {
-                 suppliersDataCache.forEach(supplier => {
-                     const tr = document.createElement('tr'); tr.setAttribute('data-id', supplier.id);
-                     tr.innerHTML = `
-                         <td><a href="supplier_account_detail.html?id=${supplier.id}" class="supplier-link">${escapeHtml(supplier.name || 'N/A')}</a></td>
-                         <td>${escapeHtml(supplier.whatsappNo || supplier.contactNo || '-')}</td>
-                         <td>Calculating...</td>
-                         <td class="action-buttons">
-                             <a href="supplier_account_detail.html?id=${supplier.id}" class="button view-account-button small-button" title="View Account Details"><i class="fas fa-eye"></i></a>
-                             <button class="button edit-supplier-btn small-button" data-id="${supplier.id}" title="Edit Supplier"><i class="fas fa-edit"></i></button>
-                             <button class="button delete-supplier-btn small-button" data-id="${supplier.id}" data-name="${escapeHtml(supplier.name || '')}" title="Delete Supplier"><i class="fas fa-trash-alt"></i></button>
-                         </td>`;
-                      supplierTableBody.appendChild(tr);
-                 });
-            }
+        supplierLoadingMessage.style.display = 'none';
+        if (querySnapshot.empty) {
+            supplierTableBody.innerHTML = '<tr><td colspan="4" class="no-results">No suppliers found.</td></tr>'; // Adjusted colspan
+        } else {
+            querySnapshot.forEach((docSnapshot) => {
+                const supplier = docSnapshot.data();
+                const supplierId = docSnapshot.id;
+                suppliersDataCache.push({ id: supplierId, ...supplier });
+                const tr = document.createElement('tr');
+                tr.setAttribute('data-id', supplierId);
+                tr.setAttribute('title', 'Click to view account details'); // Add tooltip for row click
+                tr.classList.add('clickable-row'); // Add class for styling/event targeting
+
+                const name = escapeHtml(supplier.name || 'N/A');
+                const contact = escapeHtml(supplier.whatsappNo || supplier.contactNo || '-');
+                // Delete button is removed from here
+                tr.innerHTML = `
+                    <td>${name}</td>
+                    <td>${contact}</td>
+                    <td class="supplier-balance">Loading...</td>
+                    <td class="action-buttons">
+                        <button class="button edit-supplier-btn small-button" data-id="${supplierId}" title="Edit Supplier"><i class="fas fa-edit"></i></button>
+                    </td>`;
+                supplierTableBody.appendChild(tr);
+                 // Asynchronously calculate and display balance for this row
+                 calculateAndDisplaySupplierBalance(supplierId, tr.querySelector('.supplier-balance'));
+            });
+            populateSupplierFilterDropdown();
         }
-    } catch (error) { console.error("Error fetching suppliers for cache: ", error); showPoListError(`Error loading suppliers: ${error.message}`); populateSupplierFilterDropdown(); }
+    } catch (error) {
+        console.error("Error fetching suppliers: ", error);
+        showSupplierListError(`Error loading suppliers: ${error.message}`);
+        populateSupplierFilterDropdown();
+    }
 }
+
+async function calculateAndDisplaySupplierBalance(supplierId, balanceCellElement) {
+    if (!balanceCellElement) return;
+    // TODO: Implement efficient balance calculation.
+    // This likely involves querying 'purchaseOrders' and 'supplier_payments' collections
+    // filtered by supplierId, summing totals, and calculating the difference.
+    // For performance on large datasets, consider storing pre-calculated balances
+    // directly on the supplier document and updating it via Cloud Functions on PO/Payment changes.
+    // Placeholder implementation:
+    balanceCellElement.textContent = '₹ --.--'; // Show placeholder until calculated
+    balanceCellElement.style.textAlign = 'right';
+    // Example (Inefficient - requires N+1 reads):
+    // try {
+    //     const poQuery = query(collection(db, "purchaseOrders"), where("supplierId", "==", supplierId));
+    //     const paymentQuery = query(collection(db, "supplier_payments"), where("supplierId", "==", supplierId));
+    //     const [poSnapshot, paymentSnapshot] = await Promise.all([getDocs(poQuery), getDocs(paymentQuery)]);
+    //     const totalPoValue = poSnapshot.docs.reduce((sum, doc) => sum + (Number(doc.data().totalAmount) || 0), 0);
+    //     const totalPaid = paymentSnapshot.docs.reduce((sum, doc) => sum + (Number(doc.data().paymentAmount) || 0), 0);
+    //     const balance = totalPoValue - totalPaid;
+    //     balanceCellElement.textContent = formatCurrency(balance);
+    //     balanceCellElement.classList.remove('balance-loading');
+    //     // Add classes based on balance (e.g., 'balance-due', 'balance-credit') if desired
+    // } catch (error) {
+    //     console.error(`Error calculating balance for supplier ${supplierId}:`, error);
+    //     balanceCellElement.textContent = 'Error';
+    //     balanceCellElement.classList.remove('balance-loading');
+    // }
+}
+
 function populateSupplierFilterDropdown() {
     if (!poSupplierFilter) return; const selectedVal = poSupplierFilter.value;
     poSupplierFilter.innerHTML = '<option value="">All Suppliers</option>';
@@ -142,21 +190,45 @@ function populateSupplierFilterDropdown() {
     sortedSuppliers.forEach(supplier => { const option = document.createElement('option'); option.value = supplier.id; option.textContent = escapeHtml(supplier.name || supplier.id); poSupplierFilter.appendChild(option); });
     if (poSupplierFilter.querySelector(`option[value="${selectedVal}"]`)) { poSupplierFilter.value = selectedVal; } else { poSupplierFilter.value = ""; }
 }
+
+// Handles ONLY Edit button clicks now in the supplier table
 function handleSupplierTableActions(event) {
-    const targetButton = event.target.closest('button[data-id]'); if (!targetButton) return;
+    const targetButton = event.target.closest('button.edit-supplier-btn'); // Only look for edit button
+    if (!targetButton) return;
+    event.stopPropagation(); // <<< Stop event from bubbling up to the row click listener
     const supplierId = targetButton.dataset.id; if (!supplierId) return;
-    if (targetButton.classList.contains('edit-supplier-btn')) { const supplierData = suppliersDataCache.find(s => s.id === supplierId); if (supplierData) { openSupplierModal('edit', supplierData, supplierId); } else { console.warn(`Supplier ${supplierId} not found in cache`); } }
-    else if (targetButton.classList.contains('delete-supplier-btn')) { const supplierName = targetButton.dataset.name || supplierId; deleteSupplier(supplierId, supplierName); }
+    const supplierData = suppliersDataCache.find(s => s.id === supplierId);
+    if (supplierData) { openSupplierModal('edit', supplierData, supplierId); }
+    else { console.warn(`Supplier ${supplierId} not found in cache for edit.`); /* Add fetch fallback if needed */ }
+}
+
+// Handles clicks on the supplier table row (for navigation)
+function handleSupplierRowClick(event) {
+    const row = event.target.closest('tr');
+    // Ignore clicks on buttons within the row
+    if (event.target.closest('button')) { return; }
+    const supplierId = row?.dataset.id;
+    if (supplierId) {
+        window.location.href = `supplier_account_detail.html?id=${supplierId}`;
+    }
 }
 
 // --- Supplier Modal/CRUD Functions ---
 function openSupplierModal(mode = 'add', supplierData = null, supplierId = null) {
-     if (!supplierModal || !supplierForm || !supplierModalTitle || !supplierFormError || !editSupplierIdInput || !supplierNameInput) { console.error("Supplier modal elements missing!"); alert("Cannot open supplier form."); return; }
+     if (!supplierModal || !supplierForm || !supplierModalTitle || !supplierFormError || !editSupplierIdInput || !supplierNameInput || !deleteSupplierFromModalBtn) {
+        console.error("Supplier modal elements missing!"); alert("Cannot open supplier form."); return;
+     }
      supplierForm.reset(); showSupplierFormError(''); currentEditingSupplierId = null;
+     deleteSupplierFromModalBtn.style.display = 'none'; // Hide delete button by default
+
      if (mode === 'edit' && supplierData && supplierId) {
          supplierModalTitle.textContent = 'Edit Supplier'; editSupplierIdInput.value = supplierId; currentEditingSupplierId = supplierId;
          supplierNameInput.value = supplierData.name || ''; supplierCompanyInput.value = supplierData.companyName || ''; supplierWhatsappInput.value = supplierData.whatsappNo || ''; supplierEmailInput.value = supplierData.email || ''; supplierAddressInput.value = supplierData.address || ''; supplierGstInput.value = supplierData.gstNo || '';
-     } else { supplierModalTitle.textContent = 'Add New Supplier'; editSupplierIdInput.value = ''; }
+         deleteSupplierFromModalBtn.style.display = 'inline-flex'; // Show delete button only in edit mode
+         deleteSupplierFromModalBtn.dataset.name = supplierData.name || supplierId; // Store name for confirmation
+     } else {
+         supplierModalTitle.textContent = 'Add New Supplier'; editSupplierIdInput.value = '';
+     }
      supplierModal.style.display = 'block';
 }
 function closeSupplierModal() { if (supplierModal) { supplierModal.style.display = 'none'; } }
@@ -180,16 +252,42 @@ async function handleAddSupplierSubmit(event) {
     } catch (error) { console.error("Error saving supplier: ", error); showSupplierFormError("Error saving supplier: " + error.message); }
     finally { if(saveSupplierBtn) { saveSupplierBtn.disabled = false; saveSupplierBtn.textContent = 'Save Supplier'; } }
 }
+// Updated deleteSupplier function to only delete the supplier document
 async function deleteSupplier(supplierId, supplierName) {
      if (!db || !doc || !deleteDoc) { alert("Error: Functions missing for deleting supplier."); return; }
-     if (confirm(`Are you sure you want to delete supplier "${escapeHtml(supplierName || supplierId)}"? This cannot be undone.`)) {
-         try {
-             await deleteDoc(doc(db, "suppliers", supplierId)); alert(`Supplier "${escapeHtml(supplierName || supplierId)}" deleted successfully.`);
-             suppliersDataCache = suppliersDataCache.filter(s => s.id !== supplierId);
-             await displaySupplierTable(); populateSupplierFilterDropdown(); await displayPoList();
-         } catch (error) { console.error("Error deleting supplier: ", error); alert("Error deleting supplier: " + error.message); }
+     // Warning already shown via modal button click handler
+
+     try {
+         await deleteDoc(doc(db, "suppliers", supplierId));
+         alert(`Supplier "${escapeHtml(supplierName || supplierId)}" deleted successfully. Associated POs and Payments are NOT deleted.`);
+         // Remove from cache and refresh UI
+         suppliersDataCache = suppliersDataCache.filter(s => s.id !== supplierId);
+         await displaySupplierTable();
+         populateSupplierFilterDropdown();
+         await displayPoList(); // Refresh PO list as supplier names might change
+
+     } catch (error) {
+         console.error("Error deleting supplier: ", error);
+         alert("Error deleting supplier: " + error.message);
      }
 }
+// Handler for the delete button inside the modal
+function handleDeleteSupplierFromModal() {
+     const supplierId = editSupplierIdInput.value;
+     const supplierName = deleteSupplierFromModalBtn.dataset.name || supplierId;
+     if (!supplierId) {
+         alert("Cannot delete: Supplier ID not found.");
+         return;
+     }
+     // Stronger confirmation message
+     if (confirm(`WARNING!\nAre you absolutely sure you want to delete supplier "${escapeHtml(supplierName)}"?\n\nAssociated Purchase Orders and Payments WILL NOT be deleted.\nThis action cannot be undone.`)) {
+         closeSupplierModal(); // Close modal before deleting
+         deleteSupplier(supplierId, supplierName);
+     } else {
+          // User cancelled
+     }
+}
+
 
 // --- PO List Functions ---
 async function displayPoList() {
@@ -356,7 +454,7 @@ async function handleStatusUpdate(event) {
     finally { saveStatusBtn.disabled = false; saveStatusBtn.textContent = 'Update Status'; }
 }
 
-// --- PO Share Modal Functions (Restored) ---
+// --- PO Share Modal Functions ---
 async function openPoShareModal(poId) {
     if (!poShareModal || !poShareModalTitle || !poShareInfo || !poShareGreeting || !poShareItemsContainer || !poShareTermList || !copyPoShareModalBtn) {
         console.error("PO Share modal elements not found!"); alert("Error: Cannot open PO Share view."); return;
@@ -411,17 +509,10 @@ async function handleCopyPoShareContent(event) {
     finally { button.classList.remove('copying'); setTimeout(() => { if (button.classList.contains('copied')) { button.innerHTML = '<i class="fas fa-copy"></i> Copy Content'; button.classList.remove('copied'); button.disabled = false; } else { button.innerHTML = '<i class="fas fa-copy"></i> Copy Content'; button.disabled = false; } }, 2000); }
 }
 function handlePrintPoShare() {
-     // Ensure the modal is populated before printing
      const contentPresent = poShareInfo.innerHTML && !poShareInfo.innerHTML.includes('Loading');
-     if (poShareModal && poShareModal.classList.contains('active') && contentPresent) {
-         document.body.classList.add('printing-po-share'); // Add class to body
-         window.print();
-         document.body.classList.remove('printing-po-share'); // Remove class after print
-     } else {
-         alert("Please open the PO Share view first or wait for content to load.");
-     }
+     if (poShareModal && poShareModal.classList.contains('active') && contentPresent) { document.body.classList.add('printing-po-share'); window.print(); document.body.classList.remove('printing-po-share'); }
+     else { alert("Please open the PO Share view first or wait for content to load."); }
  }
-
 
 // --- See More Items Modal Functions ---
 async function openSeeMoreItemsModal(poId) {
@@ -536,12 +627,16 @@ async function initializeSupplierManagementPage(user) {
     catch (error) { console.error("Error during initial data load:", error); }
 }
 function setupEventListeners() {
-    if (supplierTableBody) { supplierTableBody.addEventListener('click', handleSupplierTableActions); }
+    if (supplierTableBody) {
+        supplierTableBody.addEventListener('click', handleSupplierTableActions); // For Edit button
+        supplierTableBody.addEventListener('click', handleSupplierRowClick);    // For Row navigation
+    }
     if (addNewSupplierBtn) addNewSupplierBtn.addEventListener('click', () => openSupplierModal('add'));
     if (closeSupplierModalBtn) closeSupplierModalBtn.addEventListener('click', closeSupplierModal);
     if (cancelSupplierBtn) cancelSupplierBtn.addEventListener('click', closeSupplierModal);
     if (supplierForm) supplierForm.addEventListener('submit', handleAddSupplierSubmit);
     if (supplierModal) supplierModal.addEventListener('click', (event) => { if (event.target === supplierModal) closeSupplierModal(); });
+    if (deleteSupplierFromModalBtn) deleteSupplierFromModalBtn.addEventListener('click', handleDeleteSupplierFromModal); // Listener for modal delete
     if (poFilterBtn) { poFilterBtn.addEventListener('click', () => { poPagination.currentPage = 1; poPagination.lastVisibleDoc = null; displayPoList(); }); }
     if (poClearFilterBtn) { poClearFilterBtn.addEventListener('click', () => { if(poSearchInput) poSearchInput.value = ''; if(poSupplierFilter) poSupplierFilter.value = ''; if(poStatusFilter) poStatusFilter.value = ''; if(poStartDateFilter) poStartDateFilter.value = ''; if(poEndDateFilter) poEndDateFilter.value = ''; currentPoSortField = 'createdAt'; currentPoSortDirection = 'desc'; updateSortIndicators(); poPagination.currentPage = 1; poPagination.lastVisibleDoc = null; displayPoList(); }); }
     if (poSearchInput) { poSearchInput.addEventListener('keypress', (event) => { if (event.key === 'Enter') { event.preventDefault(); if (poFilterBtn) { poFilterBtn.click(); } else { poPagination.currentPage = 1; poPagination.lastVisibleDoc = null; displayPoList(); } } }); }
@@ -552,13 +647,12 @@ function setupEventListeners() {
     if (cancelStatusBtn) cancelStatusBtn.addEventListener('click', closeStatusModal);
     if (statusUpdateForm) statusUpdateForm.addEventListener('submit', handleStatusUpdate);
     if (statusUpdateModal) statusUpdateModal.addEventListener('click', (event) => { if (event.target === statusUpdateModal) closeStatusModal(); });
-    // PO Share Modal Listeners (Restored)
-    if (closePoShareModalTopBtn) closePoShareModalTopBtn.addEventListener('click', closePoShareModalFunction); // Use correct ID if changed in HTML
+    // PO Share Modal Listeners
+    if (closePoShareModalTopBtn) closePoShareModalTopBtn.addEventListener('click', closePoShareModalFunction);
     if (closePoShareModalBtn) closePoShareModalBtn.addEventListener('click', closePoShareModalFunction);
     if (poShareModal) poShareModal.addEventListener('click', (event) => { if (event.target === poShareModal) closePoShareModalFunction(); });
-    if (printPoShareModalBtn) printPoShareModalBtn.addEventListener('click', handlePrintPoShare); // Use specific print handler
+    if (printPoShareModalBtn) printPoShareModalBtn.addEventListener('click', handlePrintPoShare);
     if (copyPoShareModalBtn) copyPoShareModalBtn.addEventListener('click', handleCopyPoShareContent);
-
     // PO Items Modal (See More) Listeners
     if (closePoItemsModalBtn) closePoItemsModalBtn.addEventListener('click', closePoItemsModal);
     if (closePoItemsModalBottomBtn) closePoItemsModalBottomBtn.addEventListener('click', closePoItemsModal);
