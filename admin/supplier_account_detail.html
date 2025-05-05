@@ -1,334 +1,94 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Supplier Account Details</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-
-    <link rel="stylesheet" href="css/supplier_account_detail.css">
-    <script type="module">
-        import { db, auth } from './js/firebase-init.js'; // Assuming firebase-init exports db and auth
-        import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-        // Make Firestore functions globally available for supplier_account_detail.js
-         window.db = db;
-         // Ensure ALL necessary functions are available IF NOT exported/imported via firebase-init.js
-         // Make sure these are available or imported in supplier_account_detail.js
-         /*
-         window.doc = window.doc;
-         window.getDoc = window.getDoc;
-         window.collection = window.collection;
-         window.query = query;
-         window.where = where;
-         window.getDocs = getDocs;
-         window.orderBy = firestoreOrderBy; // Use alias if needed
-         window.updateDoc = updateDoc;
-         window.deleteDoc = deleteDoc;
-         window.Timestamp = Timestamp;
-         window.addDoc = addDoc;
-         window.serverTimestamp = serverTimestamp;
-         window.runTransaction = runTransaction;
-         window.writeBatch = writeBatch;
-         */
-
-        try {
-            if (!auth || !db) { throw new Error("Firebase Auth or DB failed to initialize."); }
-            onAuthStateChanged(auth, (user) => {
-                const contentArea = document.getElementById('supplierAccountDetailContent'); // Use the main content ID below
-                if (!contentArea) { console.error("Critical Error: Main content area ('supplierAccountDetailContent') not found."); return; }
-                if (!user && !window.location.pathname.endsWith('login.html')) {
-                    window.location.replace('login.html');
-                } else if (user) {
-                    console.log("Supplier Detail Auth OK:", user.uid);
-                     requestAnimationFrame(() => { // Use rAF instead of setTimeout
-                          if (typeof window.initializeSupplierDetailPage === 'function') {
-                              window.initializeSupplierDetailPage(user); // Pass user if needed by JS
-                          } else { console.error("initializeSupplierDetailPage function not found!"); }
-                      });
-                }
-            });
-        } catch (e) { console.error("Auth Setup Error:", e); alert(`Auth Setup Error: ${e.message}`); }
-    </script>
-</head>
-<body>
-    <div class="container" id="supplierAccountDetailContent">
-        <div class="header">
-             <i class="fas fa-user-tie header-icon"></i> <h1>Supplier Account: <span id="supplierNameHeader">Loading...</span></h1>
-        </div>
-
-        <div class="breadcrumb-container"> <a href="index.html">Dashboard</a> /
-            <a href="supplier_management.html">Suppliers</a> /
-            <span id="supplierNameBreadcrumb">Loading...</span>
-        </div>
-
-        <div class="actions-bar">
-            <button id="editSupplierDetailsBtn" type="button" class="button edit-button" disabled>
-                <i class="fas fa-edit"></i> Edit Details
-            </button>
-            <button id="addPaymentMadeBtn" type="button" class="button payment-button" disabled>
-                <i class="fas fa-money-bill-wave"></i> Record Payment
-            </button>
-            <button id="addSupplierAdjustmentBtn" type="button" class="button adjustment-button" disabled>
-                <i class="fas fa-balance-scale"></i> Add Adjustment
-            </button>
-            <button id="toggleSupplierStatusBtn" type="button" class="button status-toggle-button" disabled> <i class="fas fa-toggle-on"></i> <span id="toggleSupplierStatusBtnText">Loading...</span>
-            </button>
-            <button id="deleteSupplierBtn" type="button" class="button delete-button" disabled>
-                 <i class="fas fa-user-times"></i> Delete Supplier
-            </button>
-             <a href="new_po.html" id="addNewPoLink" class="button primary-button disabled"><i class="fas fa-plus-circle"></i> Add New PO</a>
-             <a href="supplier_management.html" class="button back-button"><i class="fas fa-arrow-left"></i> Back to List</a>
-        </div>
-
-        <div id="generalErrorDisplay" class="error-message-area" style="display: none;"></div>
-        <div id="loadingIndicator" style="text-align: center; padding: 20px; display: none;"><i class="fas fa-spinner fa-spin fa-2x"></i> Loading...</div>
-
-        <div class="info-grid">
-            <div class="info-box">
-                <h2><i class="fas fa-info-circle"></i> Supplier Details</h2>
-                <p><strong>Supplier ID:</strong> <span id="detailSupplierId">-</span></p>
-                <p><strong>Name:</strong> <span id="detailSupplierName">-</span></p>
-                <p><strong>Company:</strong> <span id="detailSupplierCompany">-</span></p>
-                <p><strong>WhatsApp:</strong> <span id="detailSupplierWhatsapp">-</span></p>
-                <p><strong>Contact No:</strong> <span id="detailSupplierContact">-</span></p>
-                <p><strong>Email:</strong> <span id="detailSupplierEmail">-</span></p>
-                <p><strong>GST No:</strong> <span id="detailSupplierGst">-</span></p>
-                <p><strong>Address:</strong> <span id="detailSupplierAddress">-</span></p>
-                <p><strong>Added On:</strong> <span id="detailAddedOn">-</span></p>
-                <p><strong>Account Status:</strong> <span id="supplierStatusBadge" class="status-badge">...</span></p>
-             </div>
-
-            <div class="info-box">
-                <h2><i class="fas fa-calculator"></i> Account Summary</h2>
-                <p><strong>Total PO Value:</strong> <span id="summaryTotalPoValue" class="amount-po loading-state">Calculating...</span></p>
-                <p><strong>Total Payments Made:</strong> <span id="summaryTotalPaid" class="amount-paid loading-state">Calculating...</span></p>
-                <hr style="border: none; border-top: 1px solid var(--border-color); margin: 15px 0;">
-                <p><strong>Outstanding Balance:</strong>
-                    <span id="summaryBalance" class="balance-info loading-state">Calculating...</span>
-                </p>
-                <div id="accountSummaryError" class="error-message" style="display: none; margin-top: 10px;"></div>
+<div id="editSupplierModal" class="modal">
+        <div class="modal-content large-modal"> <div class="modal-header">
+                <h2><i class="fas fa-edit info-icon"></i> Edit Supplier Details</h2>
+                <span class="close-btn" id="closeEditSupplierModal" title="Close">&times;</span>
             </div>
-             <div class="info-box">
-                 <h2><i class="fas fa-sticky-note"></i> Remarks / Notes</h2>
-                 <p id="supplierRemarksNotes" style="display: block; white-space: pre-wrap; min-height: 50px;">...</p>
-             </div>
-        </div>
-
-        <div class="history-section"> <h2><i class="fas fa-file-invoice-dollar"></i> Purchase Orders (POs)</h2>
-            <div id="supplierPoListError" class="error-message" style="display: none;"></div>
-            <div class="table-container">
-                <table id="supplierPoTable" class="details-table"> <thead>
-                        <tr>
-                            <th>PO #</th>
-                            <th>Order Date</th>
-                            <th class="amount-po">Total Amount</th>
-                            <th>Status</th>
-                            <th>Payment Status</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody id="supplierPoTableBody">
-                        <tr id="supplierPoLoading"> <td colspan="6" class="loading-state" style="text-align: center;"> <i class="fas fa-spinner fa-spin"></i> Loading POs...</td> </tr>
-                        <tr id="noSupplierPoMessage" style="display: none;"> <td colspan="6" style="text-align: center;"> No purchase orders found.</td> </tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-
-        <div class="history-section">
-            <h2><i class="fas fa-book-open"></i> Account Ledger</h2>
-            <div id="supplierLedgerError" class="error-message" style="display: none;"></div>
-            <div class="table-container ledger-table-container">
-                <table id="accountLedgerTable"> <thead>
-                        <tr>
-                            <th>Date</th>
-                            <th>Description</th>
-                            <th style="text-align: right;">Debit (₹)</th> <th style="text-align: right;">Credit (₹)</th> <th style="text-align: right;">Balance (₹)</th>
-                        </tr>
-                    </thead>
-                    <tbody id="accountLedgerTableBody"> <tr><td colspan="5" style="text-align: center;" class="loading-state">Loading ledger...</td></tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-
-        <div class="history-section">
-            <h2><i class="fas fa-hand-holding-usd"></i> Payment History</h2>
-             <div id="supplierPaymentListError" class="error-message" style="display: none;"></div>
-            <div class="table-container">
-                <table id="supplierPaymentsTable" class="details-table">
-                     <thead>
-                        <tr>
-                            <th>Payment Date</th>
-                            <th>Description / Notes</th>
-                            <th>Method</th>
-                            <th>Linked PO</th>
-                            <th class="amount-paid">Amount Paid</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody id="transactionsTableBody"> <tr id="transactionsLoading"> <td colspan="6" class="loading-state" style="text-align: center;"> <i class="fas fa-spinner fa-spin"></i> Loading payments...</td> </tr>
-                        <tr id="noTransactionsMessage" style="display: none;"> <td colspan="6" style="text-align: center;"> No payment history found.</td> </tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-
-    </div> <div id="paymentMadeModal" class="modal">
-         <div class="modal-content small-modal">
-            <span class="close-btn" id="closePaymentMadeModalBtn" title="Close">&times;</span>
-            <h2><i class="fas fa-money-bill-wave success-icon"></i> Record Payment Made to <span id="paymentSupplierName">Supplier</span></h2>
-            <form id="paymentMadeForm">
-                <div id="paymentMadeError" class="error-message" style="display: none;"></div>
-                <div class="form-group">
-                    <label for="paymentAmount">Amount Paid <span class="required">*</span>:</label>
-                    <input type="number" id="paymentAmount" step="0.01" required placeholder="e.g., 500.00">
-                </div>
-                <div class="form-group">
-                    <label for="paymentDate">Payment Date <span class="required">*</span>:</label>
-                    <input type="date" id="paymentDate" required>
-                </div>
-                <div class="form-group">
-                     <label for="paymentLinkPOList">Link to Purchase Order(s) (Optional):</label>
-                     <div id="paymentLinkPOList">
-                         <p class="loading-state">Loading available POs...</p>
-                     </div>
-                     <small>Select POs if this payment applies to specific orders.</small>
-                 </div>
-                <div class="form-group">
-                    <label for="paymentMethod">Payment Method:</label>
-                    <select id="paymentMethod">
-                         <option value="">Select Method</option>
-                         <option value="Bank Transfer">Bank Transfer</option>
-                         <option value="Cash">Cash</option>
-                         <option value="Cheque">Cheque</option>
-                         <option value="UPI">UPI</option>
-                         <option value="Other">Other</option>
-                     </select>
-                </div>
-                <div class="form-group">
-                    <label for="paymentNotes">Notes:</label>
-                    <textarea id="paymentNotes" rows="2" placeholder="Optional reference or notes"></textarea>
-                </div>
-                <div class="modal-actions">
-                    <button type="submit" id="savePaymentBtn" class="button save-button"><i class="fas fa-save"></i> Save Payment</button>
-                    <button type="button" id="cancelPaymentBtn" class="button cancel-button">Cancel</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <div id="editSupplierModal" class="modal">
-        <div class="modal-content">
-            <span class="close-btn" id="closeEditSupplierBtn" title="Close">&times;</span>
-            <h2><i class="fas fa-edit info-icon"></i> Edit Supplier Details</h2>
             <form id="editSupplierForm">
-                 <div id="editSupplierError" class="error-message" style="display: none;"></div>
-                 <div class="form-group">
-                    <label for="editSupplierNameInput">Name <span class="required">*</span>:</label>
-                    <input type="text" id="editSupplierNameInput" required>
-                 </div>
-                 <div class="form-group">
-                    <label for="editSupplierCompanyInput">Company:</label>
-                    <input type="text" id="editSupplierCompanyInput">
-                 </div>
-                  <div class="form-group">
-                    <label for="editSupplierWhatsappInput">WhatsApp No:</label>
-                    <input type="tel" id="editSupplierWhatsappInput">
-                 </div>
-                 <div class="form-group">
-                    <label for="editSupplierContactInput">Contact No:</label>
-                    <input type="tel" id="editSupplierContactInput">
-                 </div>
-                 <div class="form-group">
-                    <label for="editSupplierEmailInput">Email:</label>
-                    <input type="email" id="editSupplierEmailInput">
-                 </div>
-                 <div class="form-group">
-                    <label for="editSupplierGstInput">GST No:</label>
-                    <input type="text" id="editSupplierGstInput">
-                 </div>
-                 <div class="form-group">
-                    <label for="editSupplierAddressInput">Address:</label>
-                    <textarea id="editSupplierAddressInput" rows="2"></textarea>
-                 </div>
-                 <div class="form-group"> <label for="editSupplierNotes">Remarks / Notes:</label>
-                     <textarea id="editSupplierNotes" rows="2"></textarea>
-                 </div>
-                 <input type="hidden" id="editingSupplierId">
+                <div class="modal-body">
+                    <div id="editSupplierError" class="message-area error-message d-none"></div>
+
+                    <input type="hidden" id="editSupplierId"> <label for="editSupplierName">Full Name *</label>
+                    <input type="text" id="editSupplierName" required>
+
+                    <label for="editWhatsappNo">WhatsApp No *</label>
+                    <input type="tel" id="editWhatsappNo" required pattern="[0-9]{10,15}"> <label for="editContactNo">Contact No (Optional)</label>
+                    <input type="tel" id="editContactNo" pattern="[0-9]{10,15}">
+
+                    <label for="editEmail">Email (Optional)</label>
+                    <input type="email" id="editEmail">
+
+                    <label for="editCity">City (Optional)</label>
+                    <input type="text" id="editCity">
+
+                    <label for="editState">State (Optional)</label>
+                    <input type="text" id="editState">
+
+                    <label for="editAddress">Address (Optional)</label>
+                    <textarea id="editAddress"></textarea>
+
+                    <label for="editGstin">GSTIN (Optional)</label>
+                    <input type="text" id="editGstin" pattern="^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$"> <label for="editRemarks">Remarks / Notes (Optional)</label>
+                    <textarea id="editRemarks"></textarea>
+                </div>
                 <div class="modal-actions">
-                    <button type="submit" id="updateSupplierBtn" class="button save-button"><i class="fas fa-save"></i> Update Supplier</button>
                     <button type="button" id="cancelEditSupplierBtn" class="button cancel-button">Cancel</button>
+                    <button type="submit" class="button primary-button"><i class="fas fa-save"></i> Update Supplier</button>
                 </div>
             </form>
         </div>
     </div>
 
-    <div id="addSupplierAdjustmentModal" class="modal">
-        <div class="modal-content small-modal">
-            <span class="close-btn" id="closeSupplierAdjustmentModal" title="Close">&times;</span>
-            <h2><i class="fas fa-balance-scale warning-icon"></i> Add Account Adjustment for <span id="adjustmentSupplierName">Supplier</span></h2>
-            <form id="addSupplierAdjustmentForm">
-                 <div id="supplierAdjustmentError" class="error-message" style="display: none;"></div>
-                 <div class="form-group">
-                    <label>Type <span class="required">*</span>:</label>
-                    <div>
-                        <input type="radio" id="supplierAdjustmentTypeDebit" name="supplierAdjustmentType" value="debit" checked>
-                        <label for="supplierAdjustmentTypeDebit">Debit (-)</label>
-                        <input type="radio" id="supplierAdjustmentTypeCredit" name="supplierAdjustmentType" value="credit">
-                        <label for="supplierAdjustmentTypeCredit">Credit (+)</label>
+    <div id="addAdjustmentModal" class="modal">
+        <div class="modal-content"> <div class="modal-header">
+                <h2><i class="fas fa-calculator warning-icon"></i> Add Account Adjustment</h2>
+                <span class="close-btn" id="closeAddAdjustmentModal" title="Close">&times;</span>
+            </div>
+            <form id="addAdjustmentForm">
+                <div class="modal-body">
+                     <div id="addAdjustmentError" class="message-area error-message d-none"></div>
+
+                    <p>Adjusting account for: <strong id="adjustmentSupplierName"></strong></p>
+
+                    <label>Type *</label>
+                    <div class="radio-group">
+                        <input type="radio" id="adjustmentTypeDebit" name="adjustmentType" value="Debit" required checked>
+                        <label for="adjustmentTypeDebit">Debit (-)</label>
+                        <input type="radio" id="adjustmentTypeCredit" name="adjustmentType" value="Credit">
+                        <label for="adjustmentTypeCredit">Credit (+)</label>
                     </div>
-                    <p class="help-text">Debit increases amount payable by you, Credit decreases amount payable.</p>
-                </div>
-                <div class="form-group">
-                    <label for="supplierAdjustmentAmount">Amount <span class="required">*</span>:</label>
-                    <input type="number" id="supplierAdjustmentAmount" step="0.01" required placeholder="e.g., 100.00">
-                </div>
-                <div class="form-group">
-                    <label for="supplierAdjustmentDate">Adjustment Date <span class="required">*</span>:</label>
-                    <input type="date" id="supplierAdjustmentDate" required>
-                </div>
-                <div class="form-group">
-                    <label for="supplierAdjustmentRemarks">Remarks:</label>
-                    <textarea id="supplierAdjustmentRemarks" rows="2" placeholder="Reason for adjustment (Optional)"></textarea>
+                    <small class="text-muted d-block mb-3">Debit increases amount due from supplier, Credit decreases amount due.</small>
+
+
+                    <label for="adjustmentAmount">Amount *</label>
+                    <input type="number" id="adjustmentAmount" required min="0.01" step="0.01">
+
+                    <label for="adjustmentDate">Adjustment Date *</label>
+                    <input type="date" id="adjustmentDate" required>
+
+                    <label for="adjustmentReason">Reason for Adjustment (Optional)</label>
+                    <textarea id="adjustmentReason" placeholder="E.g., Goods returned, Discount applied, Opening balance adjustment..."></textarea>
                 </div>
                 <div class="modal-actions">
-                    <button type="submit" id="saveSupplierAdjustmentBtn" class="button save-button" style="background-color: var(--warning-color); color: #212529;"><i class="fas fa-save"></i> Save Adjustment</button>
-                    <button type="button" id="cancelSupplierAdjustmentBtn" class="button cancel-button">Cancel</button>
+                    <button type="button" id="cancelAddAdjustmentBtn" class="button cancel-button">Cancel</button>
+                    <button type="submit" class="button primary-button"><i class="fas fa-save"></i> Save Adjustment</button>
                 </div>
             </form>
-        </div>
-    </div>
-
-     <div id="confirmToggleSupplierStatusModal" class="modal">
-        <div class="modal-content small-modal">
-            <span class="close-btn" id="closeConfirmToggleSupplierModal" title="Close">&times;</span>
-             <h2><i class="fas fa-user-cog warning-icon"></i> Confirm Account Status Change</h2>
-            <p>Are you sure you want to <strong id="toggleSupplierActionText"></strong> the account for supplier: <strong id="toggleSupplierName"></strong>?</p>
-            <p class="warning-message" id="toggleSupplierWarningMessage" style="display:none;">Disabling might restrict certain actions like creating new POs.</p>
-            <div class="confirmation-check">
-                <input type="checkbox" id="confirmToggleSupplierCheckbox">
-                <label for="confirmToggleSupplierCheckbox" id="toggleSupplierCheckboxLabel">I understand and want to change the status.</label>
-            </div>
-            <div class="modal-actions">
-                <button type="button" id="cancelSupplierToggleBtn" class="button cancel-button">Cancel</button>
-                <button type="button" id="confirmSupplierToggleBtn" class="button" disabled><i class=""></i> <span id="confirmSupplierToggleBtnText">Confirm</span></button>
-            </div>
         </div>
     </div>
 
     <div id="confirmDeleteSupplierModal" class="modal">
-        <div class="modal-content small-modal">
-            <span class="close-btn" id="closeConfirmDeleteSupplierModal" title="Close">&times;</span>
-            <h2><i class="fas fa-trash-alt danger-icon"></i> Confirm Delete Supplier</h2>
-            <p>Are you absolutely sure you want to permanently delete the supplier: <strong id="deleteSupplierName"></strong>?</p>
-            <p class="warning-message">This action cannot be undone. Associated POs and payments will NOT be deleted automatically.</p>
-            <div class="confirmation-check">
-                <input type="checkbox" id="confirmDeleteSupplierCheckbox">
-                <label for="confirmDeleteSupplierCheckbox">I understand the consequences and want to permanently delete this supplier.</label>
+        <div class="modal-content small-modal"> <div class="modal-header">
+                 <h2><i class="fas fa-exclamation-triangle danger-icon"></i> Confirm Delete Supplier</h2>
+                 <span class="close-btn" id="closeConfirmDeleteSupplierModal" title="Close">&times;</span>
+            </div>
+            <div class="modal-body">
+                <p>Are you absolutely sure you want to permanently delete the supplier: <strong id="deleteSupplierName" class="font-weight-bold"></strong>?</p>
+                <p class="danger-message"> <i class="fas fa-info-circle"></i> This action cannot be undone. Associated POs and payments will NOT be deleted automatically.
+                </p>
+                <div class="confirmation-check">
+                    <input type="checkbox" id="confirmDeleteSupplierCheckbox" style="width: auto; margin-top: 4px;"> <label for="confirmDeleteSupplierCheckbox">I understand the consequences and want to permanently delete this supplier.</label>
+                </div>
+                 <div id="deleteSupplierError" class="message-area error-message d-none mt-3"></div>
             </div>
             <div class="modal-actions">
                 <button type="button" id="cancelSupplierDeleteBtn" class="button cancel-button">Cancel</button>
@@ -337,7 +97,8 @@
         </div>
     </div>
 
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script> <script src="js/firebase-init.js" type="module"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="js/firebase-init.js" type="module"></script>
     <script src="js/supplier_account_detail.js" type="module" defer></script>
 
 </body>
