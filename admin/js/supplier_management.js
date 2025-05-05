@@ -1,3 +1,5 @@
+// js/supplier_management.js - v25 (User Requests Implemented - Cleaned)
+
 import { db, auth } from './firebase-init.js';
 import {
     collection, addDoc, doc, getDoc, getDocs, updateDoc, deleteDoc, writeBatch,
@@ -101,7 +103,7 @@ function showPoListError(message) { displayError(message, 'poListError'); if (po
 
 // --- Supplier List Functions ---
 async function displaySupplierTable() {
-    if (!db || !collection || !getDocs || !query || !orderBy) { console.error("Error: DB functions missing for supplier list."); return; }
+    if (!db || !collection || !getDocs || !query || !orderBy) { console.error("DB functions missing for supplier list."); return; }
     suppliersDataCache = [];
     try {
         const q = query(collection(db, "suppliers"), orderBy("name_lowercase"));
@@ -110,7 +112,7 @@ async function displaySupplierTable() {
         populateSupplierFilterDropdown();
         if (supplierTableBody && supplierLoadingMessage) {
              supplierLoadingMessage.style.display = 'none'; supplierTableBody.innerHTML = '';
-            if (suppliersDataCache.length === 0) { supplierTableBody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 15px;">No suppliers found.</td></tr>'; }
+            if (suppliersDataCache.length === 0) { supplierTableBody.innerHTML = '<tr><td colspan="4">No suppliers found.</td></tr>'; }
             else {
                  suppliersDataCache.forEach(supplier => {
                      const tr = document.createElement('tr'); tr.setAttribute('data-id', supplier.id);
@@ -127,13 +129,10 @@ async function displaySupplierTable() {
                  });
             }
         }
-    } catch (error) {
-        console.error("Error fetching suppliers for cache: ", error); showPoListError(`Error loading suppliers: ${error.message}`); populateSupplierFilterDropdown();
-    }
+    } catch (error) { console.error("Error fetching suppliers for cache: ", error); showPoListError(`Error loading suppliers: ${error.message}`); populateSupplierFilterDropdown(); }
 }
 function populateSupplierFilterDropdown() {
-    if (!poSupplierFilter) return;
-    const selectedVal = poSupplierFilter.value;
+    if (!poSupplierFilter) return; const selectedVal = poSupplierFilter.value;
     poSupplierFilter.innerHTML = '<option value="">All Suppliers</option>';
     const sortedSuppliers = [...suppliersDataCache].sort((a, b) => (a.name_lowercase || '').localeCompare(b.name_lowercase || ''));
     sortedSuppliers.forEach(supplier => { const option = document.createElement('option'); option.value = supplier.id; option.textContent = escapeHtml(supplier.name || supplier.id); poSupplierFilter.appendChild(option); });
@@ -213,7 +212,7 @@ async function displayPoList() {
                 return (po.poNumber?.toString().toLowerCase().includes(searchTerm) || supplierName.includes(searchTerm) || itemNames.includes(searchTerm));
             });
         }
-        if (filteredDocs.length === 0) { poTableBody.innerHTML = `<tr><td colspan="9" style="text-align: center; padding: 15px;">No POs found matching your criteria.</td></tr>`; if (poTotalsDisplay) poTotalsDisplay.textContent = 'Total PO Value: ₹ 0.00'; return; }
+        if (filteredDocs.length === 0) { poTableBody.innerHTML = `<tr><td colspan="9">No POs found matching your criteria.</td></tr>`; if (poTotalsDisplay) poTotalsDisplay.textContent = 'Total PO Value: ₹ 0.00'; return; }
         filteredDocs.forEach(docRef_po => {
             const po = docRef_po.data(); const poId = docRef_po.id; cachedPOs[poId] = po;
             let supplierName = suppliersDataCache.find(s => s.id === po.supplierId)?.name || po.supplierName || 'Unknown'; let orderDateStr = formatDate(po.orderDate || po.createdAt);
@@ -222,9 +221,19 @@ async function displayPoList() {
             let supplierLink = po.supplierId ? `<a href="supplier_account_detail.html?id=${po.supplierId}" class="supplier-link" title="View Supplier: ${escapeHtml(supplierName)}">${escapeHtml(supplierName)}</a>` : escapeHtml(supplierName);
             let itemsHtml = 'N/A';
             if (po.items && po.items.length > 0) {
-                const firstItemName = escapeHtml(po.items[0].productName || 'Item');
-                if (po.items.length === 1) { itemsHtml = firstItemName; }
-                else { itemsHtml = `${firstItemName} <button class="button see-more-items-btn small-button text-button" data-action="see-more-items" data-id="${poId}">See More (${po.items.length})</button>`; }
+                const firstItem = po.items[0];
+                const firstItemName = escapeHtml(firstItem.productName || 'Item');
+                if (po.items.length === 1) {
+                    const qty = escapeHtml(firstItem.quantity || '?');
+                    let sizeText = '';
+                    if (firstItem.unitType === 'Sq Feet' && firstItem.width && firstItem.height) {
+                         const width = escapeHtml(firstItem.width); const height = escapeHtml(firstItem.height); const unit = escapeHtml(firstItem.dimensionUnit || 'units');
+                         sizeText = ` [${width} x ${height} ${unit}]`;
+                    }
+                    itemsHtml = `${firstItemName} (Qty: ${qty})${sizeText}`;
+                } else {
+                    itemsHtml = `${firstItemName} <button class="button see-more-items-btn small-button text-button" data-action="see-more-items" data-id="${poId}">${po.items.length - 1} more</button>`;
+                }
             }
             const tr = document.createElement('tr'); tr.setAttribute('data-id', poId);
              tr.innerHTML = `
@@ -371,8 +380,16 @@ async function openSeeMoreItemsModal(poId) {
     poItemsModalTitle.textContent = `Items for PO #${poId.substring(0, 6)}...`; poItemsModalContent.innerHTML = '<p>Loading items...</p>'; poItemsModal.style.display = 'block';
     try {
         let poData = cachedPOs[poId]; if (!poData) { const poSnap = await getDoc(doc(db, "purchaseOrders", poId)); if (poSnap.exists()) poData = poSnap.data(); } if (!poData || !poData.items || poData.items.length === 0) { throw new Error("No items found for this PO."); }
-        let itemsTableHtml = `<table class="details-table"><thead><tr><th>#</th><th>Item Name</th><th>Quantity</th><th>Rate</th><th>Amount</th></tr></thead><tbody>`;
-        poData.items.forEach((item, index) => { const itemTotal = (item.quantity || 0) * (item.rate || 0); itemsTableHtml += `<tr><td>${index + 1}</td><td>${escapeHtml(item.productName || 'N/A')}</td><td style="text-align: right;">${escapeHtml(item.quantity || 0)}</td><td style="text-align: right;">${formatCurrency(item.rate || 0)}</td><td style="text-align: right;">${formatCurrency(itemTotal)}</td></tr>`; });
+        let itemsTableHtml = `<table class="details-table"><thead><tr><th>#</th><th>Item Name</th><th>Quantity</th><th>Size</th><th>Rate</th><th>Amount</th></tr></thead><tbody>`;
+        poData.items.forEach((item, index) => {
+            const itemTotal = (item.quantity || 0) * (item.rate || 0);
+            let sizeText = '-';
+             if (item.unitType === 'Sq Feet' && item.width && item.height) {
+                 const width = escapeHtml(item.width); const height = escapeHtml(item.height); const unit = escapeHtml(item.dimensionUnit || 'units');
+                 sizeText = `${width} x ${height} ${unit}`;
+            }
+            itemsTableHtml += `<tr><td>${index + 1}</td><td>${escapeHtml(item.productName || 'N/A')}</td><td style="text-align: right;">${escapeHtml(item.quantity || 0)}</td><td>${sizeText}</td><td style="text-align: right;">${formatCurrency(item.rate || 0)}</td><td style="text-align: right;">${formatCurrency(itemTotal)}</td></tr>`;
+        });
         itemsTableHtml += `</tbody></table>`;
         poItemsModalContent.innerHTML = itemsTableHtml;
     } catch (error) { console.error(`Error loading items for PO ${poId}:`, error); poItemsModalContent.innerHTML = `<p style="color: red;">Error loading items: ${error.message}</p>`; }
@@ -500,5 +517,4 @@ function setupEventListeners() {
     if (exportPoCsvBtn) exportPoCsvBtn.addEventListener('click', () => { alert("CSV Export needs implementation."); });
 }
 
-// Make initialization function global if called from HTML
 window.initializeSupplierManagementPage = initializeSupplierManagementPage;

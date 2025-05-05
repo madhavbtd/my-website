@@ -9,31 +9,10 @@
     <link rel="stylesheet" href="css/supplier_management.css">
     <link rel="stylesheet" href="css/index.css">
     <script type="module">
+        // Auth check code (No changes needed here)
         import { auth } from './js/firebase-init.js';
         import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-
-        function displayGlobalError(message) {
-            try {
-                const mainContent = document.getElementById('main-content');
-                if (mainContent) {
-                    mainContent.innerHTML = `<div class="error-message" style="display: block; margin: 20px; padding: 15px; background-color: #f8d7da; border: 1px solid #f5c2c7; color: #721c24; border-radius: 5px;"><strong>Error:</strong> ${message}</div>`;
-                } else { alert(`Critical Error: ${message}`); }
-            } catch (e) { console.error("Error displaying global error:", e); alert(`Critical Error: ${message}`); }
-        }
-        window.displayGlobalError = displayGlobalError;
-
-        try {
-            if (!auth) { throw new Error("Firebase Auth failed to initialize. Check firebase-init.js."); }
-            onAuthStateChanged(auth, (user) => {
-                const mainContent = document.getElementById('main-content');
-                if (!mainContent) { console.error("Main content area not found on auth check."); return; }
-                if (!user && !window.location.pathname.endsWith('login.html')) { window.location.replace('login.html'); }
-                else if (user) {
-                    if (typeof initializeSupplierManagementPage === 'function') { initializeSupplierManagementPage(user); }
-                    else { setTimeout(() => { if (typeof initializeSupplierManagementPage === 'function') { initializeSupplierManagementPage(user); } else { console.error("initializeSupplierManagementPage function not found after delay."); displayGlobalError("Page initialization failed."); } }, 200); }
-                }
-            });
-        } catch (e) { console.error("Firebase Auth Setup Error:", e); displayGlobalError(`Authentication Setup Error: ${e.message}.`); }
+        function displayGlobalError(message) { try { const mainContent = document.getElementById('main-content'); if (mainContent) { mainContent.innerHTML = `<div class="error-message" style="display: block; margin: 20px; padding: 15px; background-color: #f8d7da; border: 1px solid #f5c2c7; color: #721c24; border-radius: 5px;"><strong>Error:</strong> ${message}</div>`; } else { alert(`Critical Error: ${message}`); } } catch (e) { console.error("Error displaying global error:", e); alert(`Critical Error: ${message}`); } } window.displayGlobalError = displayGlobalError; try { if (!auth) { throw new Error("Firebase Auth failed to initialize."); } onAuthStateChanged(auth, (user) => { const mainContent = document.getElementById('main-content'); if (!mainContent) { console.error("Main content area not found."); return; } if (!user && !window.location.pathname.endsWith('login.html')) { window.location.replace('login.html'); } else if (user) { if (typeof initializeSupplierManagementPage === 'function') { initializeSupplierManagementPage(user); } else { setTimeout(() => { if (typeof initializeSupplierManagementPage === 'function') { initializeSupplierManagementPage(user); } else { console.error("initializeSupplierManagementPage function not found."); displayGlobalError("Page initialization failed."); } }, 200); } } }); } catch (e) { console.error("Firebase Auth Setup Error:", e); displayGlobalError(`Authentication Setup Error: ${e.message}.`); }
     </script>
 </head>
 <body>
