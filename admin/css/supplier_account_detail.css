@@ -1,71 +1,59 @@
-/* css/supplier_account_detail.css - Final Revised Version */
+/* css/supplier_account_detail.css */
+/* Styles specifically for supplier_account_detail.html page */
+/* Based on customer page theme and supplier page structure */
+/* Includes styles for Ledger, Adjustment, Toggle, Delete features */
 
-/* --- Global Reset & Box Sizing --- */
-*, *::before, *::after {
-    box-sizing: border-box;
-}
-
-html {
-    scrollbar-width: thin;
-    scrollbar-color: var(--scrollbar-thumb-color, #c1c1c1) var(--scrollbar-track-color, #f1f1f1);
-    font-size: 16px; /* Base font size */
-}
-
-html::-webkit-scrollbar { width: 8px; height: 8px; }
-html::-webkit-scrollbar-track { background: var(--scrollbar-track-color, #f1f1f1); }
-html::-webkit-scrollbar-thumb { background-color: var(--scrollbar-thumb-color, #c1c1c1); border-radius: 4px; border: 2px solid var(--scrollbar-track-color, #f1f1f1); }
-html::-webkit-scrollbar-thumb:hover { background-color: var(--scrollbar-thumb-hover-color, #a8a8a8); }
-
-/* --- Root Variables --- */
+/* --- Root Variables (Combined & Refined) --- */
 :root {
     --primary-color: #0056b3;
-    --secondary-color: #2c3e50;
+    --secondary-color: #2c3e50; /* Used for back button etc */
     --success-color: #28a745;
     --danger-color: #dc3545;
     --warning-color: #ffc107;
-    --info-color: #17a2b8;
-    --purple-color: #6f42c1;
-    --light-bg: #f8f9fa;
-    --medium-gray: #e9ecef;
-    --dark-gray: #6c757d;
-    --text-color: #212529;
+    --info-color: #17a2b8;    /* Used for Edit button */
+    --purple-color: #6f42c1; /* Original supplier color */
+    --light-bg: #f8f9fa;   /* Use light-gray */
+    --medium-gray: #e9ecef;  /* Use for borders */
+    --dark-gray: #6c757d;    /* Use as text-muted */
+    --text-color: #212529;     /* Darker text like customer page */
     --text-muted: #6c757d;
     --white-color: #ffffff;
     --black-color: #000000;
     --font-family: 'Poppins', sans-serif;
-    --border-radius: 6px;
-    --box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-    --border-color: #dee2e6;
-    --header-height: 60px;
-    --sidebar-width: 250px;
-    --modal-button-border-radius: 25px; /* Variable for rounded buttons in modals */
+    --border-radius: 6px;     /* Customer page radius */
+    --box-shadow: 0 2px 5px rgba(0, 0, 0, 0.08); /* Softer shadow */
+    --border-color: #dee2e6; /* Customer page border color */
+    --selected-row-bg: #e0ecf8;
+    --primary-color-light: #e6f0ff;
+    --scrollbar-track-color: #f1f1f1;
+    --scrollbar-thumb-color: #c1c1c1;
+    --scrollbar-thumb-hover-color: #a8a8a8;
 }
 
 /* --- Base Styles --- */
 body, input, button, select, textarea { font-family: var(--font-family); }
-body { background-color: var(--light-bg); margin: 0; padding: 0; color: var(--text-color); line-height: 1.6; font-size: 15px; min-height: 100vh; width: 100%; }
+body { background-color: #f0f2f5; margin: 0; color: var(--text-color); line-height: 1.5; font-size: 15px; }
+html { scrollbar-width: thin; scrollbar-color: var(--scrollbar-thumb-color) var(--scrollbar-track-color); }
+html::-webkit-scrollbar { width: 8px; height: 8px; }
+html::-webkit-scrollbar-track { background: var(--scrollbar-track-color); }
+html::-webkit-scrollbar-thumb { background-color: var(--scrollbar-thumb-color); border-radius: 4px; border: 2px solid var(--scrollbar-track-color); }
+html::-webkit-scrollbar-thumb:hover { background-color: var(--scrollbar-thumb-hover-color); }
 
 /* --- Layout --- */
-.container {
+.container { /* Styles for the main page wrapper */
     max-width: 1400px;
-    width: 95%;
-    margin: 20px auto;
-    padding: 25px;
+    margin: 15px auto;
+    padding: 25px; /* Padding inside container */
     background-color: var(--white-color);
     border-radius: 8px;
-    box-shadow: var(--box-shadow);
-    border: 1px solid var(--border-color);
-    display: block;
+    box-shadow: 0 3px 12px rgba(0, 0, 0, 0.07);
+    border: 1px solid var(--medium-gray);
+    box-sizing: border-box;
 }
-#supplierAccountDetailContent { /* ID for the main container */
-    visibility: hidden; /* Initially hidden, shown by JS */
-}
-
-.header { display: flex; align-items: center; gap: 15px; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid var(--border-color); }
+.header { display: flex; align-items: center; gap: 15px; margin-bottom: 15px; padding-bottom: 15px; border-bottom: 1px solid var(--border-color); }
 .header .header-icon { font-size: 1.8em; color: var(--primary-color); }
 .header h1 { margin: 0; font-size: 1.7em; color: var(--primary-color); font-weight: 600; }
 .header h1 span { font-weight: 600; }
-
 .breadcrumb-container { font-size: 0.9em; color: var(--text-muted); margin-bottom: 20px; }
 .breadcrumb-container a { color: var(--primary-color); text-decoration: none; }
 .breadcrumb-container a:hover { text-decoration: underline; }
@@ -73,45 +61,28 @@ body { background-color: var(--light-bg); margin: 0; padding: 0; color: var(--te
 .breadcrumb-container span::before { content: "/"; margin-right: 5px; color: var(--text-muted); }
 
 /* --- Action Bar --- */
-.actions-bar { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; padding: 15px 20px; background-color: var(--light-bg); border: 1px solid var(--border-color); border-radius: var(--border-radius); margin-bottom: 25px; }
-
-/* --- Buttons (General) --- */
-.button { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 10px 18px; border: none; border-radius: var(--border-radius); cursor: pointer; font-size: 0.95em; font-weight: 500; text-decoration: none; transition: background-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease; box-shadow: 0 1px 3px rgba(0,0,0,0.1); text-align: center; vertical-align: middle; white-space: nowrap; }
-.button i { font-size: 1em; vertical-align: middle; line-height: 1; }
-.button:hover:not(:disabled) { box-shadow: 0 2px 5px rgba(0,0,0,0.15); transform: translateY(-1px); }
-.button:disabled { background-color: #cccccc !important; color: #666666 !important; cursor: not-allowed; box-shadow: none; border-color: transparent !important; opacity: 0.65; }
-.button:disabled i { color: #666666 !important; }
-/* Specific button types */
-.primary-button { background-color: var(--primary-color); color: var(--white-color); }
-.primary-button:hover:not(:disabled) { background-color: #004085; }
-.secondary-button { background-color: var(--secondary-color); color: var(--white-color); }
-.secondary-button:hover:not(:disabled) { background-color: #1a2531; }
-.success-button { background-color: var(--success-color); color: var(--white-color); }
-.success-button:hover:not(:disabled) { background-color: #218838; }
-.danger-button { background-color: var(--danger-color); color: var(--white-color); }
-.danger-button:hover:not(:disabled) { background-color: #c82333; }
-.warning-button { background-color: var(--warning-color); color: var(--text-color); }
-.warning-button:hover:not(:disabled) { background-color: #e0a800; }
-.info-button { background-color: var(--info-color); color: var(--white-color); }
-.info-button:hover:not(:disabled) { background-color: #138496; }
-.light-button { background-color: var(--light-bg); color: var(--text-color); border: 1px solid var(--medium-gray); box-shadow: none; }
-.light-button:hover:not(:disabled) { background-color: #e2e6ea; }
-.cancel-button { /* General Cancel Button - Grey */ background-color: var(--dark-gray); color: var(--white-color); box-shadow: none; }
-.cancel-button:hover:not(:disabled) { background-color: #5a6268; }
-/* Action bar specific button overrides */
-.actions-bar .button, .actions-bar a.button { min-width: 140px; }
+.actions-bar { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; padding: 15px 20px; background-color: var(--light-bg); border: 1px solid var(--border-color); border-radius: var(--border-radius); margin-bottom: 25px; min-height: 50px; }
+.actions-bar .button, .actions-bar a.button { min-width: 140px; height: 40px; box-sizing: border-box; display: inline-flex; align-items: center; justify-content: center; padding: 8px 15px; font-weight: 500; border: none; color: white; box-shadow: 0 2px 4px rgba(0,0,0,0.1); transition: all 0.2s ease; text-decoration: none; cursor: pointer; font-family: var(--font-family); border-radius: var(--border-radius); gap: 8px; }
+.actions-bar .button:hover:not(:disabled), .actions-bar a.button:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.15); }
+.actions-bar .button:disabled, .actions-bar a.button.disabled { background-color: #adb5bd !important; color: #fff !important; cursor: not-allowed; opacity: 0.65; transform: none; box-shadow: none; border-color: transparent !important; }
+/* Button Colors */
 .actions-bar .payment-button { background-color: var(--success-color); }
+.actions-bar .payment-button:hover:not(:disabled) { background-color: #1e7e34; }
 .actions-bar .edit-button { background-color: var(--info-color); }
+.actions-bar .edit-button:hover:not(:disabled) { background-color: #117a8b; }
 .actions-bar .back-button { background-color: var(--secondary-color); }
+.actions-bar .back-button:hover:not(:disabled) { background-color: #5a6268; }
 .actions-bar .adjustment-button { background-color: var(--warning-color); color: var(--text-color); }
-.actions-bar .status-toggle-button.enable { background-color: var(--success-color); }
-.actions-bar .status-toggle-button.disable { background-color: var(--warning-color); color: var(--text-color); }
+.actions-bar .adjustment-button:hover:not(:disabled) { background-color: #e0a800; }
+.actions-bar .status-toggle-button.enable { background-color: var(--success-color); } /* Class set by JS */
+.actions-bar .status-toggle-button.disable { background-color: var(--warning-color); color: var(--text-color); } /* Class set by JS */
 .actions-bar .delete-button { background-color: var(--danger-color); }
-.actions-bar .primary-button { background-color: var(--primary-color); }
-
+.actions-bar .delete-button:hover:not(:disabled) { background-color: #bd2130; }
+.actions-bar .primary-button { background-color: var(--primary-color); } /* For Add New PO Link */
+.actions-bar .primary-button:hover:not(:disabled) { background-color: #00418a; }
 
 /* --- Info Grid --- */
-.info-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 25px; margin-bottom: 30px; width: 100%; }
+.info-grid { display: grid !important; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 25px; margin-bottom: 30px; }
 .info-box { background-color: var(--white-color); border: 1px solid var(--border-color); border-radius: var(--border-radius); padding: 20px 25px; box-shadow: var(--box-shadow); }
 .info-box h2 { font-size: 1.15em; color: var(--primary-color); margin-top: 0; margin-bottom: 20px; padding-bottom: 12px; border-bottom: 1px solid #eee; display: flex; align-items: center; gap: 10px; font-weight: 600; }
 .info-box h2 i { color: var(--primary-color); opacity: 0.8; }
@@ -119,32 +90,48 @@ body { background-color: var(--light-bg); margin: 0; padding: 0; color: var(--te
 .info-box p:last-child { margin-bottom: 0; }
 .info-box p strong { font-weight: 600; color: var(--text-color); min-width: 110px; display: inline-block; margin-right: 5px; }
 .info-box p span { word-break: break-word; text-align: right; }
-#summaryBalance.balance-due { color: var(--danger-color); font-weight: bold;}
-#summaryBalance.balance-credit { color: var(--success-color); font-weight: bold;}
-#summaryBalance.balance-zero { color: var(--text-muted); font-weight: normal; }
+/* Account Summary Specific Styles */
+#summaryTotalPoValue, #summaryTotalPaid { font-weight: 500; }
+#summaryBalance { font-weight: bold; }
+#summaryBalance.balance-due { color: var(--danger-color); } /* Used by JS */
+#summaryBalance.balance-credit { color: var(--success-color); } /* Used by JS */
+#summaryBalance.balance-zero { color: var(--text-muted); font-weight: normal; } /* Used by JS */
+/* Supplier Status Badge */
 #supplierStatusBadge { font-weight: 500; padding: 3px 10px; border-radius: 12px; font-size: 0.8em; color: white; background-color: var(--secondary-color); white-space: nowrap; display: inline-block; line-height: 1.2; text-align: center; vertical-align: middle; text-transform: capitalize; }
 #supplierStatusBadge.status-active { background-color: var(--success-color); }
 #supplierStatusBadge.status-inactive { background-color: var(--secondary-color); }
+/* Remarks/Notes Box */
 #supplierRemarksNotes { display: block; white-space: pre-wrap; font-size: 0.95em; color: #555; line-height: 1.6; min-height: 50px; }
 
 
 /* --- History/Table Section --- */
-.history-section { margin-top: 30px; }
-.history-section h2 { font-size: 1.2em; margin-top: 0; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 2px solid var(--primary-color); color: var(--primary-color); display: flex; align-items: center; gap: 10px; font-weight: 600; }
-.history-section h2 i { opacity: 0.9; }
+.history-section { /* Use this wrapper class now */ margin-top: 30px; }
+.history-section h2, .section-container h3 { /* Style both H2 & H3 */ font-size: 1.2em; margin-top: 0; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 2px solid var(--primary-color); color: var(--primary-color); display: flex; align-items: center; gap: 10px; font-weight: 600; }
+.history-section h2 i, .section-container h3 i { opacity: 0.9; }
 .table-container { max-height: 400px; overflow-y: auto; border: 1px solid var(--border-color); border-radius: var(--border-radius); margin-bottom: 30px; background-color: #fff; padding: 0; overflow-x: auto; }
-table.details-table, #accountLedgerTable { width: 100%; border-collapse: collapse; border: none; font-size: 0.9em; }
+table.details-table, /* Target specific tables */
+#accountLedgerTable {
+    width: 100%;
+    border-collapse: collapse;
+    border: none;
+    font-size: 0.9em;
+}
 thead th { background-color: var(--light-bg); padding: 12px 15px; text-align: left; font-weight: 600; color: var(--text-color); border-bottom: 2px solid var(--border-color); position: sticky; top: 0; z-index: 1; }
 tbody tr { border-bottom: 1px solid #eff2f5; transition: background-color 0.15s ease; }
 tbody tr:last-child { border-bottom: none; }
 tbody tr:hover { background-color: #f5f8fa; }
 td { padding: 10px 15px; text-align: left; vertical-align: middle; color: var(--text-muted); line-height: 1.4; }
-.amount-po, .amount-paid, .number-cell, #accountLedgerTable td:nth-child(3), #accountLedgerTable td:nth-child(4), #accountLedgerTable td:nth-child(5) { text-align: right !important; white-space: nowrap; color: var(--text-color); font-weight: 500; }
+/* Align amounts */
+.amount-po, .amount-paid, .number-cell,
+#accountLedgerTable td:nth-child(3), /* Ledger Debit */
+#accountLedgerTable td:nth-child(4), /* Ledger Credit */
+#accountLedgerTable td:nth-child(5) /* Ledger Balance */ { text-align: right !important; white-space: nowrap; color: var(--text-color); font-weight: 500; }
 .amount-paid { color: var(--success-color); }
-#accountLedgerTable td:nth-child(5).ledger-balance-negative { color: var(--danger-color); font-weight: bold; }
-#accountLedgerTable td:nth-child(5).ledger-balance-positive { color: var(--success-color); font-weight: bold; }
+#accountLedgerTable td:nth-child(5).ledger-balance-negative { color: var(--danger-color); } /* Ledger specific balance colors */
+#accountLedgerTable td:nth-child(5).ledger-balance-positive { color: var(--success-color); }
 #accountLedgerTable td:nth-child(5).ledger-balance-zero { color: var(--text-muted); font-weight: normal; }
-/* Status Badge Styles */
+
+/* Status Badges (Copied from supplier_management.css) */
 .status-badge, .payment-badge { padding: 4px 10px; font-size: 0.8em; border-radius: 12px; font-weight: 500; white-space: nowrap; display: inline-block; text-transform: capitalize; text-align: center; border: 1px solid transparent;}
 .status-new { background-color: #cfe2ff; color: #0a58ca; border-color: #b6d4fe;}
 .status-sent { background-color: #e2e3e5; color: #41464b; border-color: #d3d6d8;}
@@ -158,100 +145,37 @@ td { padding: 10px 15px; text-align: left; vertical-align: middle; color: var(--
 
 
 /* === Modal Styles === */
-.modal { display: none; position: fixed; z-index: 1050; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.55); align-items: center; justify-content: center; padding: 15px; }
+.modal { display: none; position: fixed; z-index: 1050; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.55); align-items: center; justify-content: center; padding: 15px; box-sizing: border-box; }
 .modal.active { display: flex; }
 .modal-content { background-color: #fff; margin: auto; padding: 0; border: none; width: 90%; max-width: 600px; border-radius: var(--border-radius); position: relative; box-shadow: 0 5px 20px rgba(0,0,0,0.25); z-index: 1051; display: flex; flex-direction: column; max-height: 85vh; overflow: hidden; }
 .modal-content.small-modal { max-width: 500px; }
 .modal-header { padding: 12px 20px; border-bottom: 1px solid var(--border-color); background-color: var(--light-bg); border-radius: var(--border-radius) var(--border-radius) 0 0; flex-shrink: 0; display: flex; justify-content: space-between; align-items: center; }
-.modal-header h2 { margin: 0; font-size: 1.2em; font-weight: 600; color: var(--primary-color); /* Changed back to primary color */ text-align: left; display: flex; align-items: center; gap: 10px; padding-right: 30px; font-family: var(--font-family); /* Ensure Poppins */ }
+.modal-header h2 { margin: 0; font-size: 1.2em; font-weight: 600; color: var(--secondary-color); text-align: left; display: flex; align-items: center; gap: 10px; padding-right: 30px; }
 /* Icon Colors */
 .modal-header h2 .info-icon { color: var(--info-color); }
 .modal-header h2 .success-icon { color: var(--success-color); }
 .modal-header h2 .warning-icon { color: var(--warning-color); }
 .modal-header h2 .danger-icon { color: var(--danger-color); }
-.modal-header h2 #paymentSupplierName, .modal-header h2 #adjustmentSupplierName, .modal-header h2 #toggleSupplierName, .modal-header h2 #deleteSupplierName { color: var(--primary-color); font-weight: 700; margin-left: 5px; }
+.modal-header h2 #paymentSupplierName,
+.modal-header h2 #adjustmentSupplierName,
+.modal-header h2 #toggleSupplierName,
+.modal-header h2 #deleteSupplierName { color: var(--primary-color); font-weight: 700; margin-left: 5px; }
 .close-btn { color: var(--text-muted); position: absolute; top: 8px; right: 8px; font-size: 24px; font-weight: bold; cursor: pointer; line-height: 1; background: none; border: none; padding: 5px; z-index: 10; }
 .close-btn:hover, .close-btn:focus { color: var(--danger-color); }
 .modal-body { padding: 20px 25px; overflow-y: auto; flex-grow: 1; }
-
-/* Modal Actions (Consistent Button Styling) */
 .modal-actions { margin-top: 0; padding: 12px 25px; border-top: 1px solid var(--border-color); display: flex; justify-content: flex-end; gap: 10px; background-color: var(--light-bg); border-radius: 0 0 var(--border-radius) var(--border-radius); flex-shrink: 0; }
-.modal-actions .button { /* General style for buttons inside ANY modal actions */
-    font-weight: 500;
-    padding: 9px 18px; /* Slightly adjusted padding */
-    height: auto;
-    min-width: 100px;
-    border-radius: var(--modal-button-border-radius); /* Use variable for rounded corners */
-    color: var(--white-color); /* Default white text */
-    border: none; /* Ensure no border */
-}
-/* Specific button colors within modals */
-.modal-actions .save-button,
-.modal-actions #savePaymentBtn,
-.modal-actions #updateSupplierBtn,
-.modal-actions #confirmSupplierToggleBtn.enable /* If enable class is used */ {
-    background-color: var(--success-color);
-    color: var(--white-color);
-}
-.modal-actions .save-button:hover:not(:disabled),
-.modal-actions #savePaymentBtn:hover:not(:disabled),
-.modal-actions #updateSupplierBtn:hover:not(:disabled),
-.modal-actions #confirmSupplierToggleBtn.enable:hover:not(:disabled) {
-    background-color: #218838; /* Darker green */
-}
-.modal-actions .cancel-button,
-.modal-actions #cancelPaymentBtn, /* Target specific IDs too for override safety */
-.modal-actions #cancelEditSupplierBtn,
-.modal-actions #cancelSupplierAdjustmentBtn,
-.modal-actions #cancelSupplierToggleBtn,
-.modal-actions #cancelSupplierDeleteBtn {
-    background-color: var(--primary-color); /* Blue for cancel */
-    color: var(--white-color);
-    /* Remove !important if no longer needed, specificity should be enough */
-}
-.modal-actions .cancel-button:hover:not(:disabled),
-.modal-actions #cancelPaymentBtn:hover:not(:disabled),
-.modal-actions #cancelEditSupplierBtn:hover:not(:disabled),
-.modal-actions #cancelSupplierAdjustmentBtn:hover:not(:disabled),
-.modal-actions #cancelSupplierToggleBtn:hover:not(:disabled),
-.modal-actions #cancelSupplierDeleteBtn:hover:not(:disabled) {
-    background-color: #004085; /* Darker blue */
-}
-.modal-actions .danger-button,
-.modal-actions #confirmSupplierDeleteBtn {
-    background-color: var(--danger-color);
-    color: var(--white-color);
-}
-.modal-actions .danger-button:hover:not(:disabled),
-.modal-actions #confirmSupplierDeleteBtn:hover:not(:disabled) {
-    background-color: #c82333; /* Darker red */
-}
-/* Special case for Add Adjustment Save button */
-#addSupplierAdjustmentModal .modal-actions #saveSupplierAdjustmentBtn {
-    background-color: var(--warning-color);
-    color: var(--text-color); /* Dark text on yellow */
-}
-#addSupplierAdjustmentModal .modal-actions #saveSupplierAdjustmentBtn:hover:not(:disabled) {
-    background-color: #e0a800;
-}
-/* Ensure icons inherit button color */
-.modal-actions .button i {
-    color: inherit;
-}
-
-/* Modal Forms */
-.modal .form-group {
-    margin-bottom: 20px; /* Increased margin for better spacing */
-}
+.modal-actions .button { font-weight: 500; padding: 8px 18px; height: auto; min-width: 100px; }
+.modal .form-group { margin-bottom: 15px; }
 .modal .form-group label { display: block; margin-bottom: 6px; font-weight: 500; color: #444; font-size: 0.9em; }
-.modal .form-group label .required { color: var(--danger-color); margin-left: 2px; font-weight: bold; }
-.modal .form-group input[type="text"], .modal .form-group input[type="tel"], .modal .form-group input[type="email"], .modal .form-group input[type="number"], .modal .form-group input[type="date"], .modal .form-group select, .modal .form-group textarea { font-size: 0.95em; padding: 10px 14px; border: 1px solid #ccc; border-radius: var(--border-radius); width: 100%; transition: border-color 0.2s ease, box-shadow 0.2s ease; font-family: var(--font-family); height: 40px; background-color: #fff; }
+.modal .form-group label .required { color: var(--danger-color); margin-left: 3px; font-weight: bold; }
+.modal .form-group input[type="text"], .modal .form-group input[type="tel"], .modal .form-group input[type="email"], .modal .form-group input[type="number"], .modal .form-group input[type="date"], .modal .form-group select, .modal .form-group textarea { font-size: 0.95em; padding: 10px 14px; border: 1px solid #ccc; border-radius: var(--border-radius); width: 100%; box-sizing: border-box; transition: border-color 0.2s ease, box-shadow 0.2s ease; font-family: var(--font-family); height: 40px; background-color: #fff; }
 .modal .form-group textarea { resize: vertical; min-height: 65px; height: auto; }
-.modal .form-group select { appearance: none; background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%236C757D%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E'); background-repeat: no-repeat; background-position: right 10px center; background-size: 9px 9px; padding-right: 30px; cursor: pointer; }
+.modal .form-group select { -webkit-appearance: none; -moz-appearance: none; appearance: none; background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%236C757D%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E'); background-repeat: no-repeat; background-position: right 10px center; background-size: 9px 9px; padding-right: 30px; cursor: pointer; }
 .modal .form-group input:focus, .modal .form-group select:focus, .modal .form-group textarea:focus { border-color: var(--primary-color); box-shadow: 0 0 0 0.2rem rgba(0, 86, 179, 0.25); outline: none; }
-.modal .error-message { color: var(--danger-color); background-color: #f8d7da; border: 1px solid var(--danger-color); border-radius: var(--border-radius); padding: 8px 12px; font-size: 0.88em; margin-top: 10px; text-align: center; width: 100%; display: none; }
+.modal .error-message { color: var(--danger-color); background-color: #f8d7da; border: 1px solid var(--danger-color); border-radius: var(--border-radius); padding: 8px 12px; font-size: 0.88em; margin-top: 10px; text-align: center; width: 100%; box-sizing: border-box; display: none; }
 .modal .error-message[style*="block"] { display: block !important; }
 .modal small { font-size: 0.85em; color: var(--text-muted); margin-top: 5px; display: block; }
+/* Radio button styling */
 .modal .form-group input[type="radio"] { margin-right: 5px; vertical-align: middle; cursor: pointer; accent-color: var(--primary-color); }
 .modal .form-group label[for*="adjustmentType"], .modal .form-group label[for*="supplierAdjustmentType"] { margin-right: 15px; font-weight: normal; font-size: 0.95em; display: inline-block; margin-bottom: 0; cursor: pointer; }
 #addSupplierAdjustmentForm .form-group div:has(input[type="radio"]) { margin-top: 5px; line-height: 1.5; }
@@ -260,20 +184,19 @@ td { padding: 10px 15px; text-align: left; vertical-align: middle; color: var(--
 #paymentLinkPOList { max-height: 150px; overflow-y: auto; border: 1px solid var(--border-color); padding: 10px; border-radius: var(--border-radius); background-color: var(--light-bg); margin-top: 5px; }
 #paymentLinkPOList p { font-size: 0.9em; color: var(--text-muted); margin: 5px 0; font-style: italic; }
 #paymentLinkPOList .po-checkbox-item { margin-bottom: 5px; padding: 6px 10px; border-radius: 3px; cursor: pointer; transition: background-color 0.2s ease; display: flex; align-items: center; background-color: #fff; border: 1px solid transparent; }
-#paymentLinkPOList .po-checkbox-item:hover { background-color: var(--primary-color-light, #e6f0ff); border-color: #b3d7ff; }
+#paymentLinkPOList .po-checkbox-item:hover { background-color: var(--primary-color-light); border-color: #b3d7ff; }
 #paymentLinkPOList input[type="checkbox"] { margin-right: 10px; vertical-align: middle; accent-color: var(--primary-color); cursor: pointer; transform: scale(1); flex-shrink: 0; }
 #paymentLinkPOList label { font-weight: normal; font-size: 0.9em; display: inline-block; margin-bottom: 0; cursor: pointer; vertical-align: middle; flex-grow: 1; line-height: 1.4; }
 #paymentLinkPOList label .po-number { font-weight: 600; color: var(--text-color); }
 #paymentLinkPOList label .po-date { color: var(--text-muted); margin-left: 6px; font-size: 0.9em; }
 #paymentLinkPOList label .po-balance { color: var(--text-muted); margin-left: 10px; font-style: normal; font-size: 0.9em; white-space: nowrap; }
-
 /* Confirmation Modals */
 .confirmation-check { margin-top: 25px; margin-bottom: 25px; display: flex; align-items: flex-start; gap: 10px; background-color: #f8f9fa; padding: 15px; border-radius: var(--border-radius); border: 1px solid var(--border-color); }
 .confirmation-check input[type="checkbox"] { transform: scale(1.1); cursor: pointer; margin: 0; margin-top: 3px; flex-shrink: 0; accent-color: var(--primary-color); }
 .confirmation-check label { font-size: 0.9em; color: #333; cursor: pointer; margin: 0; font-weight: 500; line-height: 1.4; }
 .warning-message { font-weight: 500; color: #856404; background-color: #fff3cd; border: 1px solid #ffeeba; border-radius: var(--border-radius); padding: 12px 18px; margin-top: 15px; margin-bottom: 20px; font-size: 0.9em; text-align: center; }
-#confirmDeleteSupplierModal .warning-message { color: var(--danger-color); background-color: #f8d7da; border: 1px solid #f5c6cb; }
-#confirmSupplierToggleBtn:disabled, #confirmSupplierDeleteBtn:disabled { background-color: #adb5bd !important; cursor: not-allowed; opacity: 0.65; border-color: transparent !important; }
+#confirmDeleteModal .warning-message, #confirmDeleteSupplierModal .warning-message { color: var(--danger-color); background-color: #f8d7da; border: 1px solid #f5c6cb; }
+#confirmToggleBtn:disabled, #confirmDeleteBtn:disabled, #confirmSupplierToggleBtn:disabled, #confirmSupplierDeleteBtn:disabled { background-color: #adb5bd !important; cursor: not-allowed; opacity: 0.65; border-color: transparent !important; }
 
 
 /* --- Utility Styles --- */
@@ -284,35 +207,6 @@ td { padding: 10px 15px; text-align: left; vertical-align: middle; color: var(--
 #loadingIndicator i { margin-right: 8px; }
 
 /* --- Responsive --- */
-@media (max-width: 992px) {
-    .container { margin: 10px; max-width: 95%; width: auto; padding: 20px 15px; }
-    .modal-content.modal-lg, .modal-content.modal-xl { max-width: 95%; }
-    .info-grid { grid-template-columns: 1fr; }
-    .actions-bar { justify-content: flex-start; }
-}
-@media (max-width: 768px) {
-    body { font-size: 14px; }
-    .container { padding: 15px; }
-    .actions-bar { flex-direction: column; align-items: stretch; padding: 15px; }
-    .actions-bar .button, .actions-bar a.button { width: 100%; text-align: center; justify-content: center; }
-    .modal-content, .modal-content.modal-lg, .modal-content.modal-xl { width: 95%; max-height: calc(95vh); }
-    .modal-content h2, .modal-header h2 { font-size: 1.1em; }
-    td, th { padding: 8px 10px; }
-    .info-box h2 { font-size: 1.05em; }
-    .info-box p { font-size: 0.9em; }
-}
-@media (max-width: 480px) {
-    .header h1, .page-header h1 { font-size: 1.3em; }
-    .actions-bar .button, .actions-bar a.button { padding: 9px 12px; font-size: 0.9em; gap: 6px; }
-    td, th { padding: 6px 8px; }
-    .status-badge, .payment-badge { padding: 3px 8px; font-size: 0.75em;}
-    .modal-actions { flex-direction: column; gap: 8px; }
-    .modal-actions .button { width: 100%; justify-content: center; } /* Full width modal buttons */
-    .info-box p { flex-direction: column; align-items: flex-start; gap: 2px; }
-    .info-box p span { text-align: left; }
-    .modal-body { padding: 15px; }
-    .modal-header { padding: 10px 15px; }
-    .modal-actions { padding: 10px 15px; }
-    #paymentLinkPOList label .po-balance { display: block; margin-left: 0; margin-top: 3px; }
-    #recordPaymentModal .modal-actions.flex-column .button { width: 100%; justify-content: center; }
-}
+@media (max-width: 992px) { .container { margin: 10px; max-width: none; padding: 0 10px; } .modal-content.modal-lg, .modal-content.modal-xl { max-width: 95%; } .info-grid { grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); } }
+@media (max-width: 768px) { body { font-size: 14px; } .container { padding: 15px; } .actions-bar { flex-direction: column; align-items: stretch; padding: 15px; } .actions-bar .button, .actions-bar a.button { width: 100%; text-align: center; justify-content: center; } .modal-content, .modal-content.modal-lg, .modal-content.modal-xl { width: 95%; max-height: calc(95vh); } .modal-content h2, .modal-header h2 { font-size: 1.1em; } .section-container table, .history-section table { font-size: 0.85em; } .section-container td, .section-container th, .history-section td, .history-section th { padding: 8px 10px; } .info-grid { grid-template-columns: 1fr; } .info-box h2 { font-size: 1.05em; } .info-box p { font-size: 0.88em; } }
+@media (max-width: 480px) { .header h1, .page-header h1 { font-size: 1.4em; } .actions-bar .button, .actions-bar a.button { padding: 8px 12px; font-size: 0.9em; gap: 5px; } .section-container td, .section-container th, .history-section td, .history-section th { padding: 6px 8px; } .status-badge, .payment-badge { padding: 3px 8px; font-size: 0.75em;} .modal-actions { flex-direction: column; gap: 8px; } .modal-actions .button { width: 100%; justify-content: center; } .info-box p { flex-direction: column; align-items: flex-start; gap: 2px; border-bottom: none; } .info-box p span { text-align: left; } .modal-body { padding: 15px; } .modal-header { padding: 10px 15px; } .modal-actions { padding: 10px 15px; } .modal form .form-group select { background-position: right 10px center; padding-right: 30px;} #paymentLinkPOList label .po-balance { display: block; margin-left: 0; margin-top: 3px; } }
