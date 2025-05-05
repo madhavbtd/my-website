@@ -9,7 +9,6 @@
     <link rel="stylesheet" href="css/supplier_management.css">
     <link rel="stylesheet" href="css/index.css">
     <script type="module">
-        // Auth check code (No changes needed here)
         import { auth } from './js/firebase-init.js';
         import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
         function displayGlobalError(message) { try { const mainContent = document.getElementById('main-content'); if (mainContent) { mainContent.innerHTML = `<div class="error-message" style="display: block; margin: 20px; padding: 15px; background-color: #f8d7da; border: 1px solid #f5c2c7; color: #721c24; border-radius: 5px;"><strong>Error:</strong> ${message}</div>`; } else { alert(`Critical Error: ${message}`); } } catch (e) { console.error("Error displaying global error:", e); alert(`Critical Error: ${message}`); } } window.displayGlobalError = displayGlobalError; try { if (!auth) { throw new Error("Firebase Auth failed to initialize."); } onAuthStateChanged(auth, (user) => { const mainContent = document.getElementById('main-content'); if (!mainContent) { console.error("Main content area not found."); return; } if (!user && !window.location.pathname.endsWith('login.html')) { window.location.replace('login.html'); } else if (user) { if (typeof initializeSupplierManagementPage === 'function') { initializeSupplierManagementPage(user); } else { setTimeout(() => { if (typeof initializeSupplierManagementPage === 'function') { initializeSupplierManagementPage(user); } else { console.error("initializeSupplierManagementPage function not found."); displayGlobalError("Page initialization failed."); } }, 200); } } }); } catch (e) { console.error("Firebase Auth Setup Error:", e); displayGlobalError(`Authentication Setup Error: ${e.message}.`); }
@@ -101,7 +100,7 @@
 
                  <div id="poBatchActionsBar" class="batch-actions-bar" style="display: none;">
                     <span id="poSelectedCount">0 POs selected</span>
-                     <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                     <div >
                         <select id="batchUpdateStatusSelect" title="Select status to apply">
                             <option value="">-- Batch Update Status --</option>
                             <option value="Sent">Sent</option>
@@ -230,22 +229,6 @@
          </div>
      </div>
 
-     <div id="poDetailsModal" class="modal modal-lg">
-          <div class="modal-content">
-              <div class="modal-header">
-                <h2 id="poDetailsModalTitle">Purchase Order Items</h2>
-                <button type="button" class="close-button" id="closePoDetailsModal">&times;</button>
-              </div>
-              <div id="poDetailsContent" class="modal-body po-details-container">
-                  <p>Loading details...</p>
-              </div>
-              <div class="modal-actions">
-                  <button type="button" id="printPoDetailsBtn" class="button print-button"><i class="fas fa-print"></i> Print Details</button>
-                  <button type="button" id="closePoDetailsBtn" class="button cancel-button">Close</button>
-              </div>
-          </div>
-      </div>
-
     <div id="poItemsModal" class="modal modal-lg">
         <div class="modal-content">
             <div class="modal-header">
@@ -257,6 +240,40 @@
             </div>
             <div class="modal-actions">
                 <button type="button" class="button cancel-button" id="closePoItemsModalBottomBtn">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="poShareModal" class="modal modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                 <h2 id="poShareModalTitle">Purchase Order</h2>
+                 <button type="button" class="close-button" id="closePoShareModalTopBtn">&times;</button>
+            </div>
+            <div id="poShareScrollableContent" class="modal-body">
+                <div id="poShareHeader" style="text-align: center; margin-bottom: 15px;">
+                    <div id="poShareInfo"> Loading... </div>
+                </div>
+                <p id="poShareGreeting">Loading greeting...</p>
+                <hr class="po-share-divider">
+                <div id="poShareItemsContainer">
+                    <h3>Items</h3>
+                    <p>Loading items...</p>
+                </div>
+                <hr class="po-share-divider">
+                <div id="poShareTerms">
+                    <h3>Terms & Conditions</h3>
+                    <ol id="poShareTermList">
+                        <li>Loading T&C...</li>
+                    </ol>
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button type="button" id="copyPoShareModalBtn" class="button copy-button" data-poid="">
+                    <i class="fas fa-copy"></i> Copy Content
+                </button>
+                <button type="button" id="printPoShareModalBtn" class="button print-button"><i class="fas fa-print"></i> Print PO</button>
+                <button type="button" id="closePoShareModalBtn" class="button cancel-button">Close</button>
             </div>
         </div>
     </div>

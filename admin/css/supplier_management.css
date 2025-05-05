@@ -20,7 +20,14 @@
     --scrollbar-track-color: #f1f1f1;
     --scrollbar-thumb-color: #c1c1c1;
     --scrollbar-thumb-hover-color: #a8a8a8;
+    --copy-color: #5b21b6; /* Kept from v10 for share modal */
 }
+
+html { scrollbar-width: thin; scrollbar-color: var(--scrollbar-thumb-color) var(--scrollbar-track-color); }
+html::-webkit-scrollbar { width: 8px; height: 8px; }
+html::-webkit-scrollbar-track { background: var(--scrollbar-track-color); }
+html::-webkit-scrollbar-thumb { background-color: var(--scrollbar-thumb-color); border-radius: 4px; border: 2px solid var(--scrollbar-track-color); }
+html::-webkit-scrollbar-thumb:hover { background-color: var(--scrollbar-thumb-hover-color); }
 
 body { font-family: var(--font-family); background-color: #f0f2f5; margin: 0; color: var(--text-color); line-height: 1.5; }
 .container { }
@@ -55,6 +62,11 @@ body { font-family: var(--font-family); background-color: #f0f2f5; margin: 0; co
 .info-button { background-color: var(--info-color); color: var(--white-color); }
 .info-button:hover:not(:disabled) { background-color: #117a8b; }
 .filter-action-button { height: 38px; }
+.copy-button { background-color: var(--copy-color); color: var(--white-color); }
+.copy-button:hover:not(:disabled) { background-color: #4c1d95; }
+.copy-button i { margin-right: 6px; }
+.copy-button.copying { background-color: var(--warning-color); color: #333; cursor: wait; }
+.copy-button.copied { background-color: var(--success-color); color: var(--white-color); }
 
 .action-buttons { display: flex; gap: 5px; justify-content: flex-start; flex-wrap: nowrap; align-items: center; }
 .action-buttons .button, .action-buttons a.button { padding: 5px 9px; font-size: 0.85em; gap: 4px; border-radius: 4px; line-height: 1; box-shadow: none; text-decoration: none; }
@@ -82,7 +94,6 @@ body { font-family: var(--font-family); background-color: #f0f2f5; margin: 0; co
 .section-container h2 i { margin-right: 10px; color: var(--primary-color); }
 
 .table-container { width: 100%; overflow-x: auto; border: 1px solid var(--medium-gray); border-radius: var(--border-radius); margin-bottom: 15px; background-color: var(--white-color); overflow-y: hidden; }
-
 #suppliersListSection .table-container { max-height: 18em; overflow-y: auto; }
 #poListSection .table-container { max-height: 60vh; overflow-y: auto; }
 
@@ -98,6 +109,11 @@ table tbody tr:nth-child(even) { background-color: #fdfdfd; }
 table tbody tr:hover { background-color: #f1f5f9; }
 table tbody tr.selected-row { background-color: var(--selected-row-bg) !important; font-weight: 500; }
 #supplierTable th:nth-child(3), #supplierTable td:nth-child(3) { text-align: right; }
+
+.product-name-display { font-weight: 600; color: var(--text-color); margin-right: 5px; }
+#poTableBody td:nth-child(6) { font-weight: 400; }
+#poTableBody td:nth-child(6) .product-name-display { font-weight: 600; }
+#poTableBody td:nth-child(6) .see-more-items-btn { font-weight: 500; }
 
 #poTableBody td.po-number-link { color: var(--primary-color); font-weight: 600; cursor: pointer; text-decoration: none; }
 #poTableBody td.po-number-link:hover { text-decoration: underline; color: #003d80; }
@@ -188,13 +204,34 @@ a.supplier-link:hover { text-decoration: underline; color: #003d80; }
 .po-notes-details p { margin: 0; line-height: 1.5; }
 #poItemsModal .modal-content { max-width: 850px; }
 #poItemsModal .details-table th:nth-child(1), #poItemsModal .details-table td:nth-child(1) { width: 30px; text-align: center;}
-#poItemsModal .details-table th:nth-child(4), #poItemsModal .details-table td:nth-child(4) { width: 120px; } /* Size column width */
+#poItemsModal .details-table th:nth-child(4), #poItemsModal .details-table td:nth-child(4) { width: 120px; }
 
-.table-container::-webkit-scrollbar, .modal-body::-webkit-scrollbar { width: 8px; height: 8px; }
-.table-container::-webkit-scrollbar-track, .modal-body::-webkit-scrollbar-track { background: var(--scrollbar-track-color); border-radius: 4px; }
-.table-container::-webkit-scrollbar-thumb, .modal-body::-webkit-scrollbar-thumb { background-color: var(--scrollbar-thumb-color); border-radius: 4px; border: 2px solid var(--scrollbar-track-color); }
-.table-container::-webkit-scrollbar-thumb:hover, .modal-body::-webkit-scrollbar-thumb:hover { background-color: var(--scrollbar-thumb-hover-color); }
-.table-container, .modal-body { scrollbar-width: thin; scrollbar-color: var(--scrollbar-thumb-color) var(--scrollbar-track-color); }
+#poShareModal .modal-content { max-width: 900px; }
+#poShareModal #poShareScrollableContent { overflow-y: auto; max-height: calc(90vh - 130px); padding-right: 5px; flex-grow: 1; }
+#poShareModal #poShareHeader { text-align: center; margin-bottom: 15px; padding: 0 15px; }
+#poShareModal #poShareModalTitle { font-size: 1.5em; color: var(--primary-color); margin-bottom: 10px; border-bottom: none; padding-bottom: 0; text-align: center; }
+#poShareModal #poShareInfo { font-size: 1.05em; font-weight: 600; color: var(--secondary-color); margin-bottom: 15px; padding: 10px 15px; background-color: var(--light-gray); border-radius: 4px; border: 1px solid var(--medium-gray); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
+#poShareModal #poShareInfo .po-info-left { text-align: left; }
+#poShareModal #poShareInfo .po-info-right { text-align: right; }
+#poShareModal #poShareInfo span { white-space: nowrap; }
+#poShareModal #poShareInfo .po-number-large { font-size: 1.3em; color: var(--primary-color); font-weight: 700; }
+#poShareModal #poShareGreeting { font-size: 1em; margin-bottom: 15px; color: var(--text-color); padding: 0 15px; }
+.po-share-divider { border: none; border-top: 1px dashed var(--medium-gray); margin: 15px 0; }
+#poShareModal #poShareItemsContainer, #poShareModal #poShareTerms { padding: 0 15px; }
+#poShareModal #poShareItemsContainer h3, #poShareModal #poShareTerms h3 { font-size: 1.15em; color: var(--secondary-color); margin-bottom: 10px; font-weight: 600; }
+#poShareModal #poShareItemsContainer .details-table { font-size: 0.85em; }
+#poShareModal #poShareItemsContainer .details-table th, #poShareModal #poShareItemsContainer .details-table td { padding: 6px 8px; }
+#poShareModal #poShareTerms { margin-top: 15px; padding: 10px 15px; border-radius: 4px; }
+#poShareModal #poShareTermList { list-style-type: decimal; padding-left: 20px; margin: 0; font-size: 0.85em; color: #444; line-height: 1.5; }
+#poShareModal #poShareTermList li { margin-bottom: 5px; }
+#poShareModal .modal-actions { margin-top: 15px; }
+#poShareModal .modal-actions .copy-button, #poShareModal .modal-actions .print-button { margin-right: 10px; }
+
+.table-container::-webkit-scrollbar, .modal-body::-webkit-scrollbar, #poShareScrollableContent::-webkit-scrollbar { width: 8px; height: 8px; }
+.table-container::-webkit-scrollbar-track, .modal-body::-webkit-scrollbar-track, #poShareScrollableContent::-webkit-scrollbar-track { background: var(--scrollbar-track-color); border-radius: 4px; }
+.table-container::-webkit-scrollbar-thumb, .modal-body::-webkit-scrollbar-thumb, #poShareScrollableContent::-webkit-scrollbar-thumb { background-color: var(--scrollbar-thumb-color); border-radius: 4px; border: 2px solid var(--scrollbar-track-color); }
+.table-container::-webkit-scrollbar-thumb:hover, .modal-body::-webkit-scrollbar-thumb:hover, #poShareScrollableContent::-webkit-scrollbar-thumb:hover { background-color: var(--scrollbar-thumb-hover-color); }
+.table-container, .modal-body, #poShareScrollableContent { scrollbar-width: thin; scrollbar-color: var(--scrollbar-thumb-color) var(--scrollbar-track-color); }
 
 @media (max-width: 992px) {
     .main-content { max-width: 95%; }
@@ -202,6 +239,7 @@ a.supplier-link:hover { text-decoration: underline; color: #003d80; }
     .po-filters { gap: 10px; }
     .filter-group.filter-buttons { margin-left: 0; width: 100%; justify-content: space-between; }
     .batch-actions-bar { flex-direction: column; align-items: stretch; }
+    #poShareModal #poShareInfo { justify-content: center; }
 }
 @media (max-width: 768px) {
     .main-content { padding: 15px; margin: 10px auto;}
@@ -217,6 +255,10 @@ a.supplier-link:hover { text-decoration: underline; color: #003d80; }
     .table-container { -webkit-overflow-scrolling: touch; }
     table td.action-buttons { flex-wrap: wrap; justify-content: center;}
     .batch-actions-bar > div { flex-direction: column; align-items: stretch; }
+    #poShareModal #poShareModalTitle { font-size: 1.4em; }
+    #poShareModal #poShareInfo { font-size: 1em; flex-direction: column; align-items: center; text-align: center; }
+    #poShareModal #poShareInfo .po-info-right { justify-content: center; }
+    #poShareModal #poShareScrollableContent { max-height: calc(100vh - 180px); }
 }
 @media (max-width: 480px) {
     .page-header h1 { font-size: 1.4em; }
@@ -224,26 +266,32 @@ a.supplier-link:hover { text-decoration: underline; color: #003d80; }
     .status-badge, .payment-badge { padding: 3px 8px; font-size: 0.75em;}
     .modal-actions { flex-direction: column; gap: 8px; }
     .modal-actions .button { width: 100%; }
+    #poShareModal .modal-actions .copy-button, #poShareModal .modal-actions .print-button { margin-right: 0; }
 }
 
 @media print {
     body { background-color: #fff !important; color: #000 !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
     .container, .main-content, .actions-bar, .po-filters, .section-container h2, .breadcrumb, .po-totals, .po-pagination-controls, .modal, #poBatchActionsBar { display: none !important; }
-    .section-container, .table-container, #poTable { display: block !important; width: 100% !important; box-shadow: none !important; border: none !important; margin: 0 !important; padding: 0 !important; overflow: visible !important; max-height: none !important; }
-    #poTable thead { display: table-header-group; }
-    #poTable th, #poTable td { border: 1px solid #ccc !important; font-size: 9pt !important; color: #000 !important; background-color: #fff !important; }
-    #poTable th { background-color: #eee !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-    #poTable .action-buttons, #poTable input[type="checkbox"] { display: none !important; }
-    .status-badge, .payment-badge { border: 1px solid #ccc !important; background-color: #fff !important; color: #000 !important; padding: 2px 4px !important; border-radius: 0 !important; }
-    a.supplier-link { color: #000 !important; text-decoration: none !important; }
-    body.printing-po-details #poDetailsModal { visibility: visible !important; position: static !important; display: block !important; width: 100% !important; height: auto !important; box-shadow: none !important; border: none !important; overflow: visible !important; background-color: #fff !important; padding: 0 !important; margin: 0 !important; }
-    body.printing-po-details #poDetailsModal .modal-content { box-shadow: none !important; border: none !important; padding: 0 !important; margin: 0 !important; max-height: none !important; }
-    body.printing-po-details #poDetailsModal .modal-header, body.printing-po-details #poDetailsModal .modal-actions, body.printing-po-details #poDetailsModal .close-btn { display: none !important; }
-    body.printing-po-details #poDetailsModal .modal-body { padding: 0 !important; overflow: visible !important; }
-    body.printing-po-details #poDetailsModal h2 { font-size: 16pt; text-align: left; border-bottom: 1px solid #ccc; padding-bottom: 10px; margin-bottom: 15px; color: #000 !important; }
-    body.printing-po-details #poDetailsModal .details-table { font-size: 10pt; border: 1px solid #ccc; }
-    body.printing-po-details #poDetailsModal .details-table th, body.printing-po-details #poDetailsModal .details-table td { border: 1px solid #ccc; background: #fff !important; color: #000 !important; }
-    body.printing-po-details #poDetailsModal .details-table thead th { background-color: #eee !important; }
-    body.printing-po-details #poDetailsModal .po-notes-details { border: 1px solid #ccc; font-size: 10pt; background: #fff !important; color: #000 !important;}
+    body > *:not(.printing-active-modal) { display: none !important; }
+    .printing-active-modal { display: block !important; position: relative !important; width: 100% !important; max-width: 100% !important; height: auto !important; max-height: none !important; box-shadow: none !important; border: none !important; margin: 0 !important; padding: 15px !important; overflow: visible !important; background-color: #fff !important; }
+    .printing-active-modal .modal-content { box-shadow: none !important; border: none !important; padding: 0 !important; margin: 0 !important; max-height: none !important; background-color: #fff !important; }
+    .printing-active-modal .modal-actions, .printing-active-modal .close-btn { display: none !important; }
+    .printing-active-modal #poShareScrollableContent { overflow-y: visible !important; max-height: none !important; padding-right: 0 !important; margin-right: 0 !important; }
+    body.printing-po-share #poShareModal { visibility: visible !important; }
+    body.printing-po-share #poShareModal .modal-content > *:not(#poShareScrollableContent) { display: none !important; }
+    body.printing-po-share #poShareModal #poShareScrollableContent > *:not(#poShareHeader):not(#poShareGreeting):not(#poShareItemsContainer):not(#poShareTerms) { display: none !important; }
+    body.printing-po-share #poShareHeader, body.printing-po-share #poShareGreeting, body.printing-po-share #poShareItemsContainer, body.printing-po-share #poShareTerms { display: block !important; padding-right: 0 !important; }
+    body.printing-po-share #poShareModalTitle { display: block !important; font-size: 18pt; text-align: center; margin-bottom: 10px; color: #000 !important; border-bottom: 1px solid #ccc; padding-bottom: 5px; }
+    body.printing-po-share #poShareInfo { display: flex !important; font-size: 11pt; border: 1px solid #ccc; padding: 8px; margin-bottom: 15px; background-color: #f8f8f8 !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; color: #000 !important; justify-content: space-between; flex-wrap: wrap; }
+    body.printing-po-share #poShareInfo .po-number-large { font-size: 1.2em; color: #000 !important; }
+    body.printing-po-share #poShareGreeting { display: block !important; font-size: 10pt; margin-bottom: 15px; color: #000 !important; }
+    body.printing-po-share .po-share-divider { display: none !important; }
+    body.printing-po-share #poShareItemsContainer h3, body.printing-po-share #poShareTerms h3 { display: block !important; font-size: 12pt; color: #000 !important; margin-bottom: 8px; border-bottom: 1px solid #eee; padding-bottom: 4px; }
+    body.printing-po-share #poShareItemsContainer .details-table { font-size: 9pt; border: 1px solid #ccc; width: 100%; border-collapse: collapse; }
+    body.printing-po-share #poShareItemsContainer .details-table th, body.printing-po-share #poShareItemsContainer .details-table td { border: 1px solid #ccc; padding: 5px 7px; background: #fff !important; color: #000 !important;}
+    body.printing-po-share #poShareItemsContainer .details-table thead th { background-color: #eee !important; }
+    body.printing-po-share #poShareTerms { display: block !important; border: none; padding: 0; margin-top: 15px; background: none !important; }
+    body.printing-po-share #poShareTermList { display: block !important; font-size: 9pt; color: #000 !important; list-style-position: outside; padding-left: 20px; }
+    body.printing-po-share #poShareTermList li { margin-bottom: 4px; }
     a[href]:after { content: "" !important; }
 }
