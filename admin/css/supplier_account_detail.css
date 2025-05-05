@@ -147,7 +147,26 @@ td { padding: 10px 15px; text-align: left; vertical-align: middle; color: var(--
 /* === Modal Styles === */
 .modal { display: none; position: fixed; z-index: 1050; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.55); align-items: center; justify-content: center; padding: 15px; box-sizing: border-box; }
 .modal.active { display: flex; }
-.modal-content { background-color: #fff; margin: auto; padding: 0; border: none; width: 90%; max-width: 600px; border-radius: var(--border-radius); position: relative; box-shadow: 0 5px 20px rgba(0,0,0,0.25); z-index: 1051; display: flex; flex-direction: column; max-height: 85vh; overflow: hidden; }
+
+/* Updated Padding in the .modal-content rule below */
+.modal-content {
+    background-color: #fff;
+    margin: auto;
+    /* padding: 30px; */ /* <<<--- Original Value */
+    padding: 40px;    /* <<<--- UPDATED Value for more internal space */
+    border: none;
+    width: 90%;
+    max-width: 600px;
+    border-radius: var(--border-radius);
+    position: relative;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.25);
+    z-index: 1051;
+    display: flex;
+    flex-direction: column;
+    max-height: 85vh;
+    overflow: hidden;
+}
+
 .modal-content.small-modal { max-width: 500px; }
 .modal-header { padding: 12px 20px; border-bottom: 1px solid var(--border-color); background-color: var(--light-bg); border-radius: var(--border-radius) var(--border-radius) 0 0; flex-shrink: 0; display: flex; justify-content: space-between; align-items: center; }
 .modal-header h2 { margin: 0; font-size: 1.2em; font-weight: 600; color: var(--secondary-color); text-align: left; display: flex; align-items: center; gap: 10px; padding-right: 30px; }
@@ -207,6 +226,46 @@ td { padding: 10px 15px; text-align: left; vertical-align: middle; color: var(--
 #loadingIndicator i { margin-right: 8px; }
 
 /* --- Responsive --- */
-@media (max-width: 992px) { .container { margin: 10px; max-width: none; padding: 0 10px; } .modal-content.modal-lg, .modal-content.modal-xl { max-width: 95%; } .info-grid { grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); } }
-@media (max-width: 768px) { body { font-size: 14px; } .container { padding: 15px; } .actions-bar { flex-direction: column; align-items: stretch; padding: 15px; } .actions-bar .button, .actions-bar a.button { width: 100%; text-align: center; justify-content: center; } .modal-content, .modal-content.modal-lg, .modal-content.modal-xl { width: 95%; max-height: calc(95vh); } .modal-content h2, .modal-header h2 { font-size: 1.1em; } .section-container table, .history-section table { font-size: 0.85em; } .section-container td, .section-container th, .history-section td, .history-section th { padding: 8px 10px; } .info-grid { grid-template-columns: 1fr; } .info-box h2 { font-size: 1.05em; } .info-box p { font-size: 0.88em; } }
-@media (max-width: 480px) { .header h1, .page-header h1 { font-size: 1.4em; } .actions-bar .button, .actions-bar a.button { padding: 8px 12px; font-size: 0.9em; gap: 5px; } .section-container td, .section-container th, .history-section td, .history-section th { padding: 6px 8px; } .status-badge, .payment-badge { padding: 3px 8px; font-size: 0.75em;} .modal-actions { flex-direction: column; gap: 8px; } .modal-actions .button { width: 100%; justify-content: center; } .info-box p { flex-direction: column; align-items: flex-start; gap: 2px; border-bottom: none; } .info-box p span { text-align: left; } .modal-body { padding: 15px; } .modal-header { padding: 10px 15px; } .modal-actions { padding: 10px 15px; } .modal form .form-group select { background-position: right 10px center; padding-right: 30px;} #paymentLinkPOList label .po-balance { display: block; margin-left: 0; margin-top: 3px; } }
+@media (max-width: 992px) {
+    .container { margin: 10px; max-width: none; padding: 0 10px; }
+    .modal-content.modal-lg, .modal-content.modal-xl { max-width: 95%; }
+    .info-grid { grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); }
+}
+
+/* Updated Padding in the @media rule below */
+@media (max-width: 768px) {
+    body { font-size: 14px; }
+    .container { padding: 15px; }
+    .actions-bar { flex-direction: column; align-items: stretch; padding: 15px; }
+    .actions-bar .button, .actions-bar a.button { width: 100%; text-align: center; justify-content: center; }
+
+    .modal-content, .modal-content.modal-lg, .modal-content.modal-xl {
+        width: 95%;
+        max-height: calc(95vh);
+        /* padding: 20px; */ /* <<<--- Original Value for small screens */
+        padding: 30px;    /* <<<--- UPDATED Value for small screens */
+    }
+
+    .modal-content h2, .modal-header h2 { font-size: 1.1em; }
+    .section-container table, .history-section table { font-size: 0.85em; }
+    .section-container td, .section-container th, .history-section td, .history-section th { padding: 8px 10px; }
+    .info-grid { grid-template-columns: 1fr; }
+    .info-box h2 { font-size: 1.05em; }
+    .info-box p { font-size: 0.88em; }
+}
+
+@media (max-width: 480px) {
+    .header h1, .page-header h1 { font-size: 1.4em; }
+    .actions-bar .button, .actions-bar a.button { padding: 8px 12px; font-size: 0.9em; gap: 5px; }
+    .section-container td, .section-container th, .history-section td, .history-section th { padding: 6px 8px; }
+    .status-badge, .payment-badge { padding: 3px 8px; font-size: 0.75em;}
+    .modal-actions { flex-direction: column; gap: 8px; }
+    .modal-actions .button { width: 100%; justify-content: center; }
+    .info-box p { flex-direction: column; align-items: flex-start; gap: 2px; border-bottom: none; }
+    .info-box p span { text-align: left; }
+    .modal-body { padding: 15px; } /* Consider if this needs update? Let's keep main padding change for now */
+    .modal-header { padding: 10px 15px; }
+    .modal-actions { padding: 10px 15px; }
+    .modal form .form-group select { background-position: right 10px center; padding-right: 30px;}
+    #paymentLinkPOList label .po-balance { display: block; margin-left: 0; margin-top: 3px; }
+}
