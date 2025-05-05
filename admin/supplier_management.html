@@ -7,67 +7,33 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/supplier_management.css">
-    <link rel="stylesheet" href="css/index.css"> <script type="module">
-        // --- Firebase Auth Check ---
-        import { auth } from './js/firebase-init.js'; // Make sure this path is correct
+    <link rel="stylesheet" href="css/index.css">
+    <script type="module">
+        import { auth } from './js/firebase-init.js';
         import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
-        // --- Global Error Display ---
         function displayGlobalError(message) {
             try {
                 const mainContent = document.getElementById('main-content');
                 if (mainContent) {
-                    // Clear previous content and show error
                     mainContent.innerHTML = `<div class="error-message" style="display: block; margin: 20px; padding: 15px; background-color: #f8d7da; border: 1px solid #f5c2c7; color: #721c24; border-radius: 5px;"><strong>Error:</strong> ${message}</div>`;
-                } else {
-                    alert(`Critical Error: ${message}`);
-                }
-            } catch (e) {
-                console.error("Error displaying global error:", e);
-                alert(`Critical Error: ${message}`);
-            }
+                } else { alert(`Critical Error: ${message}`); }
+            } catch (e) { console.error("Error displaying global error:", e); alert(`Critical Error: ${message}`); }
         }
-        window.displayGlobalError = displayGlobalError; // Make it globally accessible if needed elsewhere
+        window.displayGlobalError = displayGlobalError;
 
-        // --- Auth Logic ---
         try {
-            if (!auth) {
-                throw new Error("Firebase Auth failed to initialize. Check firebase-init.js.");
-            }
+            if (!auth) { throw new Error("Firebase Auth failed to initialize. Check firebase-init.js."); }
             onAuthStateChanged(auth, (user) => {
                 const mainContent = document.getElementById('main-content');
-                if (!mainContent) {
-                    console.error("Main content area not found on auth check.");
-                    return; // Cannot proceed without main content area
-                }
-
-                if (!user && !window.location.pathname.endsWith('login.html')) {
-                    console.log("User not logged in. Redirecting...");
-                    window.location.replace('login.html');
-                } else if (user) {
-                    console.log("User authenticated:", user.uid);
-                    // Trigger page initialization after auth is confirmed
-                    if (typeof initializeSupplierManagementPage === 'function') {
-                        initializeSupplierManagementPage(user); // Call the init function from supplier_management.js
-                    } else {
-                        // Use setTimeout to ensure JS file might load slightly later
-                        setTimeout(() => {
-                            if (typeof initializeSupplierManagementPage === 'function') {
-                                initializeSupplierManagementPage(user);
-                            } else {
-                                console.error("initializeSupplierManagementPage function not found after delay. Ensure supplier_management.js is loaded correctly and the function is defined.");
-                                displayGlobalError("Page initialization failed. Function missing in supplier_management.js.");
-                            }
-                        }, 200); // Wait 200ms
-                    }
-                } else if (!user && window.location.pathname.endsWith('login.html')) {
-                     console.log("User not logged in, on login page.");
+                if (!mainContent) { console.error("Main content area not found on auth check."); return; }
+                if (!user && !window.location.pathname.endsWith('login.html')) { window.location.replace('login.html'); }
+                else if (user) {
+                    if (typeof initializeSupplierManagementPage === 'function') { initializeSupplierManagementPage(user); }
+                    else { setTimeout(() => { if (typeof initializeSupplierManagementPage === 'function') { initializeSupplierManagementPage(user); } else { console.error("initializeSupplierManagementPage function not found after delay."); displayGlobalError("Page initialization failed."); } }, 200); }
                 }
             });
-        } catch (e) {
-            console.error("Firebase Auth Setup Error:", e);
-            displayGlobalError(`Authentication Setup Error: ${e.message}. Please check your Firebase configuration and initialization script (firebase-init.js).`);
-        }
+        } catch (e) { console.error("Firebase Auth Setup Error:", e); displayGlobalError(`Authentication Setup Error: ${e.message}.`); }
     </script>
 </head>
 <body>
@@ -108,7 +74,7 @@
                                     <i class="fas fa-spinner fa-spin"></i> Loading suppliers...
                                 </td>
                             </tr>
-                            </tbody>
+                        </tbody>
                     </table>
                 </div>
                  <div id="supplierListError" class="error-message" style="display: none; margin-top: 10px;"></div>
@@ -119,14 +85,14 @@
 
                 <div class="po-filters">
                     <div class="filter-group">
-                        <label for="poSearchInput">Search PO# / Item / Supplier:</label> {/* Updated Label */}
-                        <input type="text" id="poSearchInput" placeholder="Enter PO Number, Item or Supplier Name"> {/* Updated Placeholder */}
+                        <label for="poSearchInput">Search PO# / Item / Supplier:</label>
+                        <input type="text" id="poSearchInput" placeholder="Enter PO Number, Item or Supplier Name">
                     </div>
                      <div class="filter-group">
                         <label for="poSupplierFilter">Filter by Supplier:</label>
                         <select id="poSupplierFilter">
                             <option value="">All Suppliers</option>
-                            </select>
+                        </select>
                     </div>
                     <div class="filter-group">
                         <label for="poStatusFilter">Filter by Status:</label>
@@ -156,7 +122,7 @@
 
                  <div id="poBatchActionsBar" class="batch-actions-bar" style="display: none;">
                     <span id="poSelectedCount">0 POs selected</span>
-                     <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;"> {/* Wrapper for controls */}
+                     <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
                         <select id="batchUpdateStatusSelect" title="Select status to apply">
                             <option value="">-- Batch Update Status --</option>
                             <option value="Sent">Sent</option>
@@ -166,7 +132,7 @@
                             <option value="Cancel">Cancel</option>
                         </select>
                         <button id="batchApplyStatusBtn" type="button" class="button info-button small-button" disabled><i class="fas fa-sync-alt"></i> Apply Status</button>
-                        <button id="batchMarkReceivedBtn" type="button" class="button success-button small-button" disabled><i class="fas fa-check-circle"></i> Mark Received</button> {/* Keep or remove based on need */}
+                        <button id="batchMarkReceivedBtn" type="button" class="button success-button small-button" disabled><i class="fas fa-check-circle"></i> Mark Received</button>
                         <button id="batchDeletePoBtn" type="button" class="button delete-button small-button" disabled><i class="fas fa-trash-alt"></i> Delete Selected</button>
                         <button id="deselectAllPoBtn" type="button" class="button cancel-button small-button"><i class="fas fa-times"></i> Deselect All</button>
                     </div>
@@ -181,7 +147,7 @@
                                 <th data-sortable="true" data-sort-key="orderDate">Order Date</th>
                                 <th data-sortable="true" data-sort-key="supplierName">Supplier</th>
                                 <th data-sortable="true" data-sort-key="totalAmount" style="text-align: right;">Total Amount</th>
-                                <th>Products</th> {/* <<< नया कॉलम हैडर */}
+                                <th>Products</th>
                                 <th data-sortable="true" data-sort-key="status">Status</th>
                                 <th data-sortable="true" data-sort-key="paymentStatus">Payment Status</th>
                                 <th>Actions</th>
@@ -193,7 +159,7 @@
                                     <i class="fas fa-spinner fa-spin"></i> Loading purchase orders...
                                 </td>
                             </tr>
-                            </tbody>
+                        </tbody>
                     </table>
                 </div>
                 <div id="poListError" class="error-message" style="display: none; margin-top: 10px;"></div>
@@ -202,7 +168,7 @@
 
                 <div id="poPaginationControls" style="text-align: center; margin-top: 20px; display: none; justify-content: center; align-items: center; gap: 10px;">
                      <button id="prevPageBtn" class="button small-button" disabled>&laquo; Previous</button>
-                     <span id="pageInfo" style="font-size: 0.9em; font-weight: 500;">Page 1 of 1</span>
+                     <span id="pageInfo">Page 1 of 1</span>
                      <button id="nextPageBtn" class="button small-button" disabled>Next &raquo;</button>
                      <select id="itemsPerPageSelect" style="margin-left: 15px; padding: 5px 8px; height: 32px; font-size: 0.9em; border-radius: 4px; border: 1px solid #ccc;">
                          <option value="10">10 per page</option>
@@ -210,7 +176,11 @@
                          <option value="50">50 per page</option>
                      </select>
                  </div>
-            </div> </div> </div> <div id="supplierModal" class="modal">
+            </div>
+        </div>
+    </div>
+
+    <div id="supplierModal" class="modal">
         <div class="modal-content">
              <div class="modal-header">
                 <h2 id="supplierModalTitle">Add New Supplier</h2>
@@ -251,7 +221,9 @@
         </div>
     </div>
 
-    <div id="statusUpdateModal" class="modal"> <div class="modal-content" style="max-width: 450px;"> <div class="modal-header">
+    <div id="statusUpdateModal" class="modal">
+         <div class="modal-content" style="max-width: 450px;">
+             <div class="modal-header">
                  <h2 id="statusModalTitle">Update PO Status</h2>
                   <button type="button" class="close-button" id="closeStatusModal">&times;</button>
              </div>
@@ -312,7 +284,6 @@
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
-
     <script src="js/firebase-init.js" type="module"></script>
     <script src="js/supplier_management.js" type="module"></script>
 
