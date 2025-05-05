@@ -1,16 +1,14 @@
-// js/supplier_management.js - v23 (Fix handleSupplierTableActions error, Refined PO Load)
-// ****** डिबगिंग लॉग्स के साथ संशोधित ******
+// js/supplier_management.js - v24 (User Requests Implemented + Debug Logs Refined)
 
 // --- Imports ---
-// import { generatePoPdf } from './utils.js'; // Ensure this utility exists if uncommented
+// import { generatePoPdf } from './utils.js'; // PDF हटाया गया
 import { db, auth } from './firebase-init.js';
 import {
-    collection, addDoc, doc, getDoc, getDocs, updateDoc, deleteDoc,
+    collection, addDoc, doc, getDoc, getDocs, updateDoc, deleteDoc, writeBatch,
     query, orderBy, where, Timestamp, serverTimestamp, limit, onSnapshot
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 // --- DOM Elements ---
-// (Keep all DOM element variables exactly as defined in v22)
 // PO Section
 const poTableBody = document.getElementById('poTableBody');
 const poSearchInput = document.getElementById('poSearchInput');
@@ -33,17 +31,17 @@ const poBatchActionsBar = document.getElementById('poBatchActionsBar');
 const poSelectedCount = document.getElementById('poSelectedCount');
 const batchUpdateStatusSelect = document.getElementById('batchUpdateStatusSelect');
 const batchApplyStatusBtn = document.getElementById('batchApplyStatusBtn');
-const batchMarkReceivedBtn = document.getElementById('batchMarkReceivedBtn');
+const batchMarkReceivedBtn = document.getElementById('batchMarkReceivedBtn'); // Keep if needed or remove if combined with status update
 const batchDeletePoBtn = document.getElementById('batchDeletePoBtn');
 const deselectAllPoBtn = document.getElementById('deselectAllPoBtn');
 const poTableHeader = document.querySelector('#poTable thead');
 
 // Supplier Section
-const suppliersListSection = document.getElementById('suppliersListSection');
-const supplierTableBody = document.getElementById('supplierTableBody');
-const supplierLoadingMessage = document.getElementById('supplierLoadingMessage');
-const supplierListError = document.getElementById('supplierListError');
-const addNewSupplierBtn = document.getElementById('addNewSupplierBtn');
+const suppliersListSection = document.getElementById('suppliersListSection'); // Assume exists for suppliers table
+const supplierTableBody = document.getElementById('supplierTableBody'); // Assume exists for suppliers table
+const supplierLoadingMessage = document.getElementById('supplierLoadingMessage'); // Assume exists for suppliers table
+const supplierListError = document.getElementById('supplierListError'); // Assume exists for suppliers table
+const addNewSupplierBtn = document.getElementById('addNewSupplierBtn'); // Keep this button
 
 // Supplier Modal
 const supplierModal = document.getElementById('supplierModal');
@@ -52,14 +50,14 @@ const closeSupplierModalBtn = document.getElementById('closeSupplierModal');
 const cancelSupplierBtn = document.getElementById('cancelSupplierBtn');
 const saveSupplierBtn = document.getElementById('saveSupplierBtn');
 const supplierForm = document.getElementById('supplierForm');
-const editSupplierIdInput = document.getElementById('editSupplierId');
+const editSupplierIdInput = document.getElementById('editSupplierId'); // Changed from 'supplierIdInput'
 const supplierNameInput = document.getElementById('supplierNameInput');
 const supplierCompanyInput = document.getElementById('supplierCompanyInput');
 const supplierWhatsappInput = document.getElementById('supplierWhatsappInput');
 const supplierEmailInput = document.getElementById('supplierEmailInput');
 const supplierAddressInput = document.getElementById('supplierAddressInput');
 const supplierGstInput = document.getElementById('supplierGstInput');
-const supplierFormError = document.getElementById('supplierFormError');
+const supplierFormError = document.getElementById('supplierFormError'); // Changed from 'supplierErrorMsg'
 
 // Status Update Modal
 const statusUpdateModal = document.getElementById('statusUpdateModal');
@@ -77,101 +75,107 @@ const statusErrorMsg = document.getElementById('statusErrorMsg');
 const poDetailsModal = document.getElementById('poDetailsModal');
 const poDetailsModalTitle = document.getElementById('poDetailsModalTitle');
 const closePoDetailsModalBtn = document.getElementById('closePoDetailsModal');
-const closePoDetailsBtn = document.getElementById('closePoDetailsModalBottomBtn');
+const closePoDetailsBtn = document.getElementById('closePoDetailsBtn'); // Bottom button
 const poDetailsContent = document.getElementById('poDetailsContent');
 const printPoDetailsBtn = document.getElementById('printPoDetailsBtn');
 
-// PO Share Modal
-const poShareModal = document.getElementById('poShareModal');
-const poShareModalTitle = document.getElementById('poShareModalTitle');
-const closePoShareModal = document.getElementById('closePoShareModalTopBtn');
-const closePoShareModalBtn = document.getElementById('closePoShareModalBtn');
-const printPoShareModalBtn = document.getElementById('printPoShareModalBtn');
-const emailPoShareModalBtn = document.getElementById('emailPoShareModalBtn');
+// PO Items Modal (See More) - Get elements
+const poItemsModal = document.getElementById('poItemsModal');
+const poItemsModalTitle = document.getElementById('poItemsModalTitle');
+const poItemsModalContent = document.getElementById('poItemsModalContent');
+const closePoItemsModalBtn = document.getElementById('closePoItemsModalBtn'); // Top close button
+const closePoItemsModalBottomBtn = document.getElementById('closePoItemsModalBottomBtn'); // Bottom close button
 
 // Export Button
 const exportPoCsvBtn = document.getElementById('exportPoCsvBtn');
 
 
 // --- Global State ---
-// (Keep global state variables exactly as defined in v22)
 let currentEditingSupplierId = null;
 let suppliersDataCache = [];
 let cachedPOs = {};
 let currentPoQuery = null;
 let poQueryUnsubscribe = null;
-let poPagination = { currentPage: 1, itemsPerPage: 25, lastVisibleDoc: null, firstVisibleDoc: null, totalItems: 0, hasNextPage: false, hasPrevPage: false }; // Added default values
+let poPagination = { currentPage: 1, itemsPerPage: 25, lastVisibleDoc: null, firstVisibleDoc: null, totalItems: 0, hasNextPage: false, hasPrevPage: false };
 let selectedPoIds = new Set();
 let currentPoSortField = 'createdAt';
 let currentPoSortDirection = 'desc';
 
 
 // --- Utility Functions ---
-// (Keep escapeHtml, formatCurrency, formatDate as they were)
 function escapeHtml(unsafe) { if (typeof unsafe !== 'string') { try { unsafe = String(unsafe ?? ''); } catch (e) { unsafe = ''; } } return unsafe.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;"); }
 function formatCurrency(amount) { const num = Number(amount); if (isNaN(num)) return 'N/A'; return num.toLocaleString('en-IN', { style: 'currency', currency: 'INR', minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
 function formatDate(timestamp) { if (!timestamp || typeof timestamp.toDate !== 'function') return '-'; try { return timestamp.toDate().toLocaleDateString('en-GB'); } catch (e) { console.error("Error formatting date:", e); return '-'; } }
-function displayError(message) { alert(message); /* Replace with a better UI element later */ }
-
 
 // --- Error Display Functions ---
-// (Keep showSupplierListError, showPoListError, showSupplierFormError, showStatusError as they were)
-function showSupplierListError(message) { if(supplierListError) { supplierListError.textContent = message; supplierListError.style.display = message ? 'block' : 'none'; } if(supplierLoadingMessage) supplierLoadingMessage.style.display = 'none'; if(supplierTableBody) supplierTableBody.innerHTML = ''; }
-function showPoListError(message) { if(poListError) { poListError.textContent = message; poListError.style.display = message ? 'block' : 'none'; } if(poLoadingMessage) poLoadingMessage.style.display = 'none'; if(poTableBody) poTableBody.innerHTML = ''; }
-function showSupplierFormError(message) { if(supplierFormError) { supplierFormError.textContent = message; supplierFormError.style.display = message ? 'block' : 'none'; } }
-function showStatusError(message) { if(statusErrorMsg) { statusErrorMsg.textContent = message; statusErrorMsg.style.display = message ? 'block' : 'none'; } }
+function displayError(message, elementId = 'poListError') {
+    const errorElement = document.getElementById(elementId);
+    if (errorElement) {
+        errorElement.textContent = message;
+        errorElement.style.display = message ? 'block' : 'none';
+        errorElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    } else {
+        console.error(`Error element with ID '${elementId}' not found. Message:`, message);
+        alert(message); // Fallback alert
+    }
+}
+function clearError(elementId = 'poListError') { const errorElement = document.getElementById(elementId); if (errorElement) { errorElement.textContent = ''; errorElement.style.display = 'none'; } }
+function showSupplierFormError(message) { displayError(message, 'supplierFormError'); }
+function showStatusError(message) { displayError(message, 'statusErrorMsg'); }
+function showPoListError(message) { displayError(message, 'poListError'); if (poLoadingMessage) poLoadingMessage.style.display = 'none'; if (poTableBody) poTableBody.innerHTML = ''; }
 
 
-// --- Supplier List Functions ---
-// (Keep displaySupplierTable and populateSupplierFilterDropdown as they were)
+// --- Supplier List Functions (If Supplier Table exists) ---
 async function displaySupplierTable() {
-    if (!supplierTableBody || !supplierLoadingMessage) { console.error("Supplier table body missing"); return; }
-    if (!db || !collection || !getDocs || !query || !orderBy) { showSupplierListError("Error: DB functions missing."); return; }
-    showSupplierListError('');
-    supplierLoadingMessage.style.display = 'table-row';
-    supplierTableBody.innerHTML = '';
-    suppliersDataCache = [];
+    // Keep this function to load suppliers, used for PO filter and supplier links
+    if (!db || !collection || !getDocs || !query || !orderBy) {
+        console.error("Error: DB functions missing for supplier list."); return;
+    }
+    console.log("Loading suppliers for cache and filter...");
+    suppliersDataCache = []; // Clear cache before reload
     try {
         const q = query(collection(db, "suppliers"), orderBy("name_lowercase"));
         const querySnapshot = await getDocs(q);
-        supplierLoadingMessage.style.display = 'none';
-        if (querySnapshot.empty) {
-            supplierTableBody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 15px;">No suppliers found.</td></tr>';
-        } else {
-            querySnapshot.forEach((docSnapshot) => {
-                const supplier = docSnapshot.data();
-                const supplierId = docSnapshot.id;
-                suppliersDataCache.push({ id: supplierId, ...supplier });
-                const tr = document.createElement('tr');
-                tr.setAttribute('data-id', supplierId);
-                const name = escapeHtml(supplier.name || 'N/A');
-                const contact = escapeHtml(supplier.whatsappNo || supplier.contactNo || '-');
-                const balancePlaceholder = `<span class="balance-loading" style="font-style: italic; color: #999;">Calculating...</span>`;
-                // *** Ensure button HTML is correct here ***
-                tr.innerHTML = `
-                    <td>${name}</td>
-                    <td>${contact}</td>
-                    <td class="supplier-balance-cell">${balancePlaceholder}</td>
-                    <td class="action-buttons">
-                        <button class="button view-account-button small-button" data-id="${supplierId}" title="View Account Details"><i class="fas fa-eye"></i></button>
-                        <button class="button edit-button small-button" data-id="${supplierId}" title="Edit Supplier"><i class="fas fa-edit"></i></button>
-                        <button class="button delete-button small-button" data-id="${supplierId}" data-name="${escapeHtml(supplier.name || '')}" title="Delete Supplier"><i class="fas fa-trash-alt"></i></button>
-                    </td>`;
-                supplierTableBody.appendChild(tr);
-            });
-            populateSupplierFilterDropdown();
-            // updateSupplierBalances(suppliersDataCache); // TODO later
+        querySnapshot.forEach((docSnapshot) => {
+            suppliersDataCache.push({ id: docSnapshot.id, ...docSnapshot.data() });
+        });
+        populateSupplierFilterDropdown(); // Populate filter dropdown
+        console.log(`Loaded ${suppliersDataCache.length} suppliers into cache.`);
+
+        // If there's a dedicated supplier table to display:
+        if (supplierTableBody && supplierLoadingMessage) {
+             supplierLoadingMessage.style.display = 'none';
+             supplierTableBody.innerHTML = ''; // Clear loading/previous
+            if (suppliersDataCache.length === 0) {
+                 supplierTableBody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 15px;">No suppliers found.</td></tr>';
+            } else {
+                 suppliersDataCache.forEach(supplier => {
+                     // ... Code to render supplier row in supplierTableBody ...
+                     // Example:
+                     const tr = document.createElement('tr');
+                     tr.setAttribute('data-id', supplier.id);
+                     tr.innerHTML = `
+                         <td><a href="supplier_account_detail.html?id=${supplier.id}" class="supplier-link">${escapeHtml(supplier.name || 'N/A')}</a></td>
+                         <td>${escapeHtml(supplier.whatsappNo || supplier.contactNo || '-')}</td>
+                         <td>Calculating...</td>
+                         <td class="action-buttons">
+                             <a href="supplier_account_detail.html?id=${supplier.id}" class="button view-account-button small-button" title="View Account Details"><i class="fas fa-eye"></i></a>
+                             <button class="button edit-supplier-btn small-button" data-id="${supplier.id}" title="Edit Supplier"><i class="fas fa-edit"></i></button>
+                             <button class="button delete-supplier-btn small-button" data-id="${supplier.id}" data-name="${escapeHtml(supplier.name || '')}" title="Delete Supplier"><i class="fas fa-trash-alt"></i></button>
+                         </td>`;
+                      supplierTableBody.appendChild(tr);
+                 });
+            }
         }
-        console.log(`Displayed ${querySnapshot.size} suppliers.`);
+
     } catch (error) {
-        console.error("Error fetching suppliers: ", error);
-        showSupplierListError(`Error loading suppliers: ${error.message}`);
-        populateSupplierFilterDropdown(); // Populate even on error
+        console.error("Error fetching suppliers for cache: ", error);
+        showPoListError(`Error loading suppliers: ${error.message}`); // Show error in PO section as it affects filter
+        populateSupplierFilterDropdown(); // Populate even on error (with empty list)
     }
 }
 function populateSupplierFilterDropdown() {
-    // (Keep this function exactly as it was in v23)
-     if (!poSupplierFilter) return;
+    if (!poSupplierFilter) return;
     const selectedVal = poSupplierFilter.value;
     poSupplierFilter.innerHTML = '<option value="">All Suppliers</option>';
     const sortedSuppliers = [...suppliersDataCache].sort((a, b) => (a.name_lowercase || '').localeCompare(b.name_lowercase || ''));
@@ -181,115 +185,209 @@ function populateSupplierFilterDropdown() {
         option.textContent = escapeHtml(supplier.name || supplier.id);
         poSupplierFilter.appendChild(option);
     });
+    // Restore previous selection if possible
     if (poSupplierFilter.querySelector(`option[value="${selectedVal}"]`)) { poSupplierFilter.value = selectedVal; }
     else { poSupplierFilter.value = ""; }
     console.log("Supplier filter dropdown populated.");
 }
-
-// --- handleSupplierTableActions (Keep the updated version from last response) ---
+// Handler for supplier table actions (Edit/Delete supplier buttons)
 function handleSupplierTableActions(event) {
-    const targetButton = event.target.closest('button[data-id]'); // Target button with data-id
+    const targetButton = event.target.closest('button[data-id]');
     if (!targetButton) return;
 
     const supplierId = targetButton.dataset.id;
-    if (!supplierId) {
-        console.error("Action button clicked, but Supplier ID missing from data-id attribute.");
-        return;
-    }
-    console.log(`Action button clicked: Supplier ID = ${supplierId}, Classes = ${targetButton.className}`); // Debug Log
+    if (!supplierId) return;
 
-    if (targetButton.classList.contains('view-account-button')) {
-        console.log(`Navigating to account details for supplier: ${supplierId}`);
-        try {
-            window.location.href = `supplier_account_detail.html?id=${supplierId}`; // Navigation line
-        } catch (navError) { console.error("Navigation Error:", navError); alert("Could not navigate."); }
-    } else if (targetButton.classList.contains('edit-button')) {
+    if (targetButton.classList.contains('edit-supplier-btn')) {
         console.log(`Opening edit modal for supplier: ${supplierId}`);
         const supplierData = suppliersDataCache.find(s => s.id === supplierId);
         if (supplierData) { openSupplierModal('edit', supplierData, supplierId); }
-        else { /* Fetch fallback */ }
-    } else if (targetButton.classList.contains('delete-button')) {
+        else { console.warn(`Supplier ${supplierId} not found in cache`); /* Fetch fallback? */ }
+    } else if (targetButton.classList.contains('delete-supplier-btn')) {
         console.log(`Initiating delete for supplier: ${supplierId}`);
         const supplierName = targetButton.dataset.name || supplierId;
         deleteSupplier(supplierId, supplierName);
-    } else { console.log("Clicked on an unknown action button:", targetButton.className); }
+    }
 }
 
 
 // --- Supplier Modal/CRUD Functions ---
-// (Keep openSupplierModal, closeSupplierModal, saveSupplier, deleteSupplier as they were)
-// Placeholder functions - Replace with actual implementation
-function openSupplierModal(mode = 'add', supplierData = null, supplierId = null) { console.warn("openSupplierModal needs implementation"); /* ... actual logic ... */ }
-function closeSupplierModal() { console.warn("closeSupplierModal needs implementation"); /* ... actual logic ... */ }
-async function saveSupplier(event) { event.preventDefault(); console.warn("saveSupplier needs implementation"); /* ... actual logic ... */ }
-async function deleteSupplier(supplierId, supplierName) { console.warn("deleteSupplier needs implementation"); /* ... actual logic ... */ }
+function openSupplierModal(mode = 'add', supplierData = null, supplierId = null) {
+     if (!supplierModal || !supplierForm || !supplierModalTitle || !supplierFormError || !editSupplierIdInput || !supplierNameInput /*... etc */) {
+        console.error("Supplier modal elements missing!"); alert("Cannot open supplier form."); return;
+     }
+     supplierForm.reset();
+     showSupplierFormError(''); // Clear previous errors
+     currentEditingSupplierId = null;
+
+     if (mode === 'edit' && supplierData && supplierId) {
+         supplierModalTitle.textContent = 'Edit Supplier';
+         editSupplierIdInput.value = supplierId; // Use the hidden input
+         currentEditingSupplierId = supplierId;
+         supplierNameInput.value = supplierData.name || '';
+         supplierCompanyInput.value = supplierData.companyName || ''; // Match HTML ID if different
+         supplierWhatsappInput.value = supplierData.whatsappNo || ''; // Match HTML ID
+         supplierEmailInput.value = supplierData.email || ''; // Match HTML ID
+         supplierAddressInput.value = supplierData.address || ''; // Match HTML ID
+         supplierGstInput.value = supplierData.gstNo || ''; // Match HTML ID
+     } else {
+         supplierModalTitle.textContent = 'Add New Supplier';
+         editSupplierIdInput.value = ''; // Clear hidden input for add mode
+     }
+     supplierModal.style.display = 'block'; // Show the modal
+}
+function closeSupplierModal() { if (supplierModal) { supplierModal.style.display = 'none'; } }
+async function handleAddSupplierSubmit(event) {
+    event.preventDefault();
+    if (!db || !collection || !addDoc || !doc || !updateDoc || !serverTimestamp || !Timestamp) { // Added Timestamp
+        showSupplierFormError("Error: Database functions missing."); return;
+    }
+    if (!saveSupplierBtn || !supplierNameInput || !supplierFormError /* Add other inputs */) {
+        alert("Error: Cannot save supplier due to missing form elements."); return;
+    }
+
+    const supplierName = supplierNameInput.value.trim();
+    if (!supplierName) {
+        showSupplierFormError("Supplier Name is required."); supplierNameInput.focus(); return;
+    }
+
+    const supplierData = {
+        name: supplierName,
+        name_lowercase: supplierName.toLowerCase(), // For case-insensitive sorting/searching
+        companyName: supplierCompanyInput.value.trim(),
+        whatsappNo: supplierWhatsappInput.value.trim(),
+        email: supplierEmailInput.value.trim(),
+        address: supplierAddressInput.value.trim(),
+        gstNo: supplierGstInput.value.trim(),
+        updatedAt: serverTimestamp() // Update timestamp on save
+    };
+
+    saveSupplierBtn.disabled = true; saveSupplierBtn.textContent = 'Saving...';
+    showSupplierFormError('');
+
+    try {
+        const supplierIdToUse = editSupplierIdInput.value; // Get ID from hidden input
+
+        if (supplierIdToUse) { // Editing existing supplier
+            const supplierRef = doc(db, "suppliers", supplierIdToUse);
+            await updateDoc(supplierRef, supplierData);
+            console.log("Supplier updated with ID: ", supplierIdToUse);
+            // Update cache if needed
+            const index = suppliersDataCache.findIndex(s => s.id === supplierIdToUse);
+            if (index > -1) suppliersDataCache[index] = { ...suppliersDataCache[index], ...supplierData };
+
+        } else { // Adding new supplier
+            supplierData.createdAt = serverTimestamp(); // Add created timestamp only for new
+            const docRef = await addDoc(collection(db, "suppliers"), supplierData);
+            console.log("Supplier added with ID: ", docRef.id);
+            // Add to cache
+             suppliersDataCache.push({ id: docRef.id, ...supplierData, createdAt: Timestamp.now() }); // Approximate createdAt
+        }
+
+        closeSupplierModal();
+        await displaySupplierTable(); // Refresh supplier list table if it exists
+        populateSupplierFilterDropdown(); // Refresh filter dropdown
+
+    } catch (error) {
+        console.error("Error saving supplier: ", error);
+        showSupplierFormError("Error saving supplier: " + error.message);
+    } finally {
+        if(saveSupplierBtn) { saveSupplierBtn.disabled = false; saveSupplierBtn.textContent = 'Save Supplier'; }
+    }
+}
+async function deleteSupplier(supplierId, supplierName) {
+     if (!db || !doc || !deleteDoc) { alert("Error: Functions missing for deleting supplier."); return; }
+     if (confirm(`Are you sure you want to delete supplier "${escapeHtml(supplierName || supplierId)}"? This cannot be undone.`)) {
+         console.log(`Attempting to delete supplier: ${supplierId}`);
+         try {
+             await deleteDoc(doc(db, "suppliers", supplierId));
+             console.log("Supplier deleted: ", supplierId);
+             alert(`Supplier "${escapeHtml(supplierName || supplierId)}" deleted successfully.`);
+             // Remove from cache and refresh UI
+             suppliersDataCache = suppliersDataCache.filter(s => s.id !== supplierId);
+             await displaySupplierTable(); // Refresh supplier table if exists
+             populateSupplierFilterDropdown(); // Refresh filter dropdown
+             await displayPoList(); // Refresh PO list as supplier names might change to 'Unknown'
+
+         } catch (error) {
+             console.error("Error deleting supplier: ", error);
+             alert("Error deleting supplier: " + error.message);
+         }
+     } else { console.log("Supplier delete cancelled."); }
+}
 
 
 // --- PO List Functions ---
-// (Keep displayPoList as it was in v23 - includes filter/sort query building)
 async function displayPoList() {
     if (!poTableBody || !poLoadingMessage) return;
     if (!db || !collection || !getDocs || !query || !orderBy || !where || !doc || !getDoc || !Timestamp || !limit) { showPoListError("Error: DB functions missing."); return; }
-    showPoListError('');
+    showPoListError(''); // Clear previous errors
     poLoadingMessage.style.display = 'table-row';
     poTableBody.innerHTML = '';
     if (poTotalsDisplay) poTotalsDisplay.textContent = 'Loading totals...';
-    if (poPaginationControls) poPaginationControls.style.display = 'none';
+    if (poPaginationControls) poPaginationControls.style.display = 'none'; // Hide pagination initially
     selectedPoIds.clear();
     updateBatchActionBar();
     if (selectAllPoCheckbox) selectAllPoCheckbox.checked = false;
 
     try {
+        // Build Firestore query (conditions, sorting)
         let conditions = [];
         let baseQuery = collection(db, "purchaseOrders");
         const searchTerm = poSearchInput.value.trim().toLowerCase();
-        const supplierFilterId = poSupplierFilter.value; // Reads the selected supplier
+        const supplierFilterId = poSupplierFilter.value;
         const statusFilter = poStatusFilter.value;
         const startDateVal = poStartDateFilter.value;
         const endDateVal = poEndDateFilter.value;
 
-        // Build Conditions
         if (supplierFilterId) { conditions.push(where("supplierId", "==", supplierFilterId)); }
         if (statusFilter) { conditions.push(where("status", "==", statusFilter)); }
-        if (startDateVal) { try { conditions.push(where("orderDate", ">=", Timestamp.fromDate(new Date(startDateVal + 'T00:00:00')))); } catch (e) {} }
-        if (endDateVal) { try { conditions.push(where("orderDate", "<=", Timestamp.fromDate(new Date(endDateVal + 'T23:59:59')))); } catch (e) {} }
+        if (startDateVal) { try { conditions.push(where("orderDate", ">=", Timestamp.fromDate(new Date(startDateVal + 'T00:00:00')))); } catch (e) { console.warn("Invalid start date"); } }
+        if (endDateVal) { try { conditions.push(where("orderDate", "<=", Timestamp.fromDate(new Date(endDateVal + 'T23:59:59')))); } catch (e) { console.warn("Invalid end date"); } }
 
-        // Build Sorting
         const sortFieldMapping = { poNumber: 'poNumber', orderDate: 'orderDate', supplierName: 'supplierName', totalAmount: 'totalAmount', status: 'status', paymentStatus: 'paymentStatus' };
         const firestoreSortField = sortFieldMapping[currentPoSortField] || 'createdAt';
         const firestoreSortDirection = currentPoSortDirection || 'desc';
         let sortClauses = [orderBy(firestoreSortField, firestoreSortDirection)];
-        if (firestoreSortField !== 'createdAt') { sortClauses.push(orderBy('createdAt', 'desc')); }
+        if (firestoreSortField !== 'createdAt') { sortClauses.push(orderBy('createdAt', 'desc')); } // Secondary sort
 
-        // Build Query
-        const queryLimit = 100; // Placeholder limit
-        currentPoQuery = query(baseQuery, ...conditions, ...sortClauses, limit(queryLimit));
+        // --- Query Building ---
+        // For now, load all matching documents. Pagination can be added later.
+        currentPoQuery = query(baseQuery, ...conditions, ...sortClauses); // Removed limit for now
 
-        // Fetch and Display
         const querySnapshot = await getDocs(currentPoQuery);
         poLoadingMessage.style.display = 'none';
         let filteredDocs = querySnapshot.docs;
         let grandTotalAmount = 0;
-        cachedPOs = {};
+        cachedPOs = {}; // Clear cache
 
-        if (searchTerm) { // Basic client-side search
-             filteredDocs = filteredDocs.filter(docRef_po => {
+        // Apply client-side search (basic example)
+        if (searchTerm) {
+            filteredDocs = filteredDocs.filter(docRef_po => {
                 const po = docRef_po.data();
-                return po.poNumber?.toString().toLowerCase().includes(searchTerm);
+                const supplierName = suppliersDataCache.find(s => s.id === po.supplierId)?.name?.toLowerCase() || '';
+                const itemNames = (po.items || []).map(item => item.productName?.toLowerCase() || '').join(' ');
+                return (
+                    po.poNumber?.toString().toLowerCase().includes(searchTerm) ||
+                    supplierName.includes(searchTerm) ||
+                    itemNames.includes(searchTerm)
+                );
             });
         }
 
         if (filteredDocs.length === 0) {
-             poTableBody.innerHTML = `<tr><td colspan="8" style="text-align: center; padding: 15px;">No POs found.</td></tr>`; // colspan=8
-             if (poTotalsDisplay) poTotalsDisplay.textContent = 'Total PO Value: ₹ 0.00';
-             return;
+            // Adjusted colspan based on new HTML structure (9 columns including checkbox and new Products)
+            poTableBody.innerHTML = `<tr><td colspan="9" style="text-align: center; padding: 15px;">No POs found matching your criteria.</td></tr>`;
+            if (poTotalsDisplay) poTotalsDisplay.textContent = 'Total PO Value: ₹ 0.00';
+            return;
         }
 
-        // Loop and render rows (HTML structure as before)
+        // Render rows
         filteredDocs.forEach(docRef_po => {
             const po = docRef_po.data();
             const poId = docRef_po.id;
-            cachedPOs[poId] = po;
+            cachedPOs[poId] = po; // Update cache
+
             let supplierName = suppliersDataCache.find(s => s.id === po.supplierId)?.name || po.supplierName || 'Unknown';
             let orderDateStr = formatDate(po.orderDate || po.createdAt);
             let statusText = po.status || 'Unknown';
@@ -299,31 +397,46 @@ async function displayPoList() {
             let amount = po.totalAmount || 0;
             let amountStr = formatCurrency(amount);
             grandTotalAmount += amount;
+
+            // Supplier Link (Request #7)
+            let supplierLink = po.supplierId ?
+               `<a href="supplier_account_detail.html?id=${po.supplierId}" class="supplier-link" title="View Supplier: ${escapeHtml(supplierName)}">${escapeHtml(supplierName)}</a>` :
+               escapeHtml(supplierName);
+
+            // Products Column Logic (Request #4)
+            let itemsHtml = 'N/A';
+            if (po.items && po.items.length > 0) {
+                const firstItemName = escapeHtml(po.items[0].productName || 'Item'); // Use productName
+                if (po.items.length === 1) {
+                    itemsHtml = firstItemName;
+                } else {
+                    itemsHtml = `${firstItemName} <button class="button see-more-items-btn small-button text-button" data-action="see-more-items" data-id="${poId}">See More (${po.items.length})</button>`;
+                }
+            }
+
             const tr = document.createElement('tr');
             tr.setAttribute('data-id', poId);
-            // *** Ensure the row HTML matches the header (8 data cells + 1 checkbox cell) ***
-            tr.innerHTML = `
+             // Row HTML including new 'Products' column, removed Share/PDF, added supplier link
+             tr.innerHTML = `
                 <td style="text-align: center;"><input type="checkbox" class="po-select-checkbox" value="${poId}"></td>
                 <td class="po-number-link" title="View PO Details">${escapeHtml(po.poNumber || 'N/A')}</td>
                 <td>${orderDateStr}</td>
-                <td>${escapeHtml(supplierName)}</td>
+                <td>${supplierLink}</td> {/* <<< Supplier Link */}
                 <td style="text-align: right;">${amountStr}</td>
+                <td>${itemsHtml}</td> {/* <<< Products Column */}
                 <td><span class="status-badge status-${statusClass}">${escapeHtml(statusText)}</span></td>
                 <td><span class="payment-badge payment-${paymentStatusClass}">${escapeHtml(paymentStatusText)}</span></td>
-                <td class="action-buttons" data-po-id="${poId}">
-                    ${statusText === 'Sent' || statusText === 'Printing' ? `<button class="button mark-received-btn small-button success-button" data-action="mark-received" data-id="${poId}" title="Mark as Received"><i class="fas fa-check"></i></button>` : ''}
+                <td class="action-buttons">
+                     ${statusText === 'Sent' || statusText === 'Printing' ? `<button class="button mark-received-btn small-button success-button" data-action="mark-received" data-id="${poId}" title="Mark as Received"><i class="fas fa-check"></i></button>` : ''}
                     <button class="button edit-button small-button" data-action="edit-po" data-id="${poId}" title="Edit PO"><i class="fas fa-edit"></i></button>
                     <button class="button status-button small-button" data-action="change-status-modal" data-id="${poId}" data-number="${escapeHtml(po.poNumber)}" data-status="${escapeHtml(statusText)}" title="Update Status"><i class="fas fa-sync-alt"></i></button>
-                    <button class="button share-button small-button" data-action="share-po" data-id="${poId}" title="Share PO"><i class="fas fa-share-alt"></i></button>
-                    <button class="button pdf-button small-button" data-action="generate-pdf" data-id="${poId}" title="Generate PDF"><i class="fas fa-file-pdf"></i></button>
+                    {/* Share/PDF Buttons Removed */}
                     <button class="button delete-button small-button" data-action="delete-po" data-id="${poId}" data-number="${escapeHtml(po.poNumber)}" title="Delete PO"><i class="fas fa-trash-alt"></i></button>
                 </td>`;
-            poTableBody.appendChild(tr);
+             poTableBody.appendChild(tr);
         });
 
-
         if (poTotalsDisplay) poTotalsDisplay.textContent = `Total PO Value (Displayed): ${formatCurrency(grandTotalAmount)}`;
-        // updatePaginationControls(querySnapshot); // TODO later
         console.log(`Displayed ${filteredDocs.length} POs.`);
 
     } catch (error) {
@@ -335,378 +448,414 @@ async function displayPoList() {
 }
 
 
-// --- PO Table Sorting Logic (handlePoSort, updateSortIndicators) ---
-// (Keep these functions exactly as they were in v23)
-function handlePoSort(event) { const header = event.target.closest('th[data-sortable="true"]'); if (!header) return; const sortKey = header.dataset.sortKey; if (!sortKey) return; let newDirection; if (currentPoSortField === sortKey) { newDirection = currentPoSortDirection === 'asc' ? 'desc' : 'asc'; } else { newDirection = 'asc'; } currentPoSortField = sortKey; currentPoSortDirection = newDirection; console.log(`Sorting POs by: ${currentPoSortField}, Dir: ${currentPoSortDirection}`); updateSortIndicators(); displayPoList(); }
-function updateSortIndicators() { if (!poTableHeader) return; poTableHeader.querySelectorAll('th[data-sortable="true"]').forEach(th => { th.classList.remove('sort-asc', 'sort-desc'); th.querySelector('.sort-indicator')?.remove(); if (th.dataset.sortKey === currentPoSortField) { const indicator = document.createElement('span'); indicator.classList.add('sort-indicator'); if (currentPoSortDirection === 'asc') { th.classList.add('sort-asc'); indicator.innerHTML = ' &uarr;'; } else { th.classList.add('sort-desc'); indicator.innerHTML = ' &darr;'; } th.appendChild(indicator); } }); }
+// --- PO Table Sorting Logic ---
+function handlePoSort(event) {
+    const header = event.target.closest('th[data-sortable="true"]');
+    if (!header) return;
+    const sortKey = header.dataset.sortKey;
+    if (!sortKey) return;
+    let newDirection;
+    if (currentPoSortField === sortKey) { newDirection = currentPoSortDirection === 'asc' ? 'desc' : 'asc'; }
+    else { newDirection = 'asc'; } // Default to ascending for new column
+    currentPoSortField = sortKey;
+    currentPoSortDirection = newDirection;
+    console.log(`Sorting POs by: ${currentPoSortField}, Dir: ${currentPoSortDirection}`);
+    updateSortIndicators();
+    displayPoList(); // Re-fetch and display sorted list
+}
+function updateSortIndicators() {
+    if (!poTableHeader) return;
+    poTableHeader.querySelectorAll('th[data-sortable="true"]').forEach(th => {
+        th.classList.remove('sort-asc', 'sort-desc');
+        th.querySelector('.sort-indicator')?.remove(); // Remove existing indicator
+        if (th.dataset.sortKey === currentPoSortField) {
+            const indicator = document.createElement('span');
+            indicator.classList.add('sort-indicator');
+            if (currentPoSortDirection === 'asc') { th.classList.add('sort-asc'); indicator.innerHTML = ' &uarr;'; }
+            else { th.classList.add('sort-desc'); indicator.innerHTML = ' &darr;'; }
+            th.appendChild(indicator);
+        }
+    });
+}
 
 
-// --- PO Table Action Handling (handlePOTableActions) ---
-// ****** डिबगिंग लॉग्स के साथ संशोधित ******
+// --- PO Table Action Handling ---
 async function handlePOTableActions(event) {
-    const actionElement = event.target.closest('button[data-action]'); // <<< Target button by data-action
+    const actionElement = event.target.closest('button[data-action]'); // Target buttons with data-action
     const targetCell = event.target.closest('td');
 
-    // Handle click on PO Number for details (assuming this is desired)
+    // Handle click on PO Number for details (using existing details modal)
     if (targetCell && targetCell.classList.contains('po-number-link')) {
         const row = targetCell.closest('tr');
         const poId = row?.dataset.id;
         if (poId) {
             console.log(`PO Number clicked, opening details for PO: ${poId}`);
-            openPoDetailsModal(poId); // <<< Call details modal
+            openPoDetailsModal(poId); // Open the existing details modal
         }
-        return; // Stop further processing
-    }
-
-    // Handle clicks on action buttons
-    if (!actionElement) {
-        // console.log("Click was not on an action button."); // Optional log
         return;
     }
+
+    if (!actionElement) return; // Exit if not an action button
 
     const action = actionElement.dataset.action;
     const poId = actionElement.dataset.id;
-    const poNumber = actionElement.dataset.number; // Used for delete confirmation, status modal title
+    const poNumber = actionElement.dataset.number; // Used for confirmation messages
 
-    if (!action || !poId) {
-        console.error("Action button clicked, but action or PO ID missing.", { action, poId });
-        return;
-    }
+    if (!action || !poId) { console.error("Action button missing action or PO ID.", { action, poId }); return; }
 
-    console.log(`DEBUG: Action detected: '${action}', PO ID: ${poId}`); // General action log
+    console.log(`Action detected: '${action}', PO ID: ${poId}`);
 
-    // --- Mark Received ---
-    if (action === 'mark-received') {
-        console.log(`DEBUG: Initiating 'Mark Received' for PO: ${poId}`);
-        markPOAsReceived(poId);
-    }
-    // --- Edit PO ---
-    else if (action === 'edit-po') {
-        // This now calls the edit modal function instead of navigating
-        console.log(`DEBUG: Initiating 'Edit PO' modal for PO: ${poId}`); // Log from previous turn
-        console.log("DEBUG: Attempting to call openEditPoModal function..."); // <<< नया लॉग
-        if (typeof openEditPoModal === 'function') {
-             openEditPoModal(poId); // Call the function if it exists
-        } else {
-             console.error("DEBUG: Function 'openEditPoModal' is not defined or not found!"); // <<< एरर लॉग
-             alert("PO Edit function is not available.");
-        }
-    }
-    // --- Change Status Modal ---
-    else if (action === 'change-status-modal') {
-        console.log(`DEBUG: Opening status update modal for PO: ${poId}`);
-        const currentStatus = actionElement.dataset.status;
-        openStatusModal(poId, currentStatus, poNumber);
-    }
-    // --- Share PO ---
-    else if (action === 'share-po') {
-        console.log(`DEBUG: Opening share modal for PO: ${poId}`);
-        openPoShareModal(poId);
-    }
-    // --- Generate PDF ---
-    else if (action === 'generate-pdf') {
-        console.log(`DEBUG: Initiating PDF generation for PO: ${poId}`);
-        actionElement.disabled = true;
-        actionElement.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
-        try {
-            // Existing PDF logic... ensure generatePoPdf is available
-            let poData = cachedPOs[poId];
-            if (!poData) {
-                 console.log(`DEBUG: PO ${poId} not in cache, fetching...`);
-                 const poSnap = await getDoc(doc(db, "purchaseOrders", poId));
-                 if (poSnap.exists()) poData = poSnap.data();
+    // Handle different actions based on 'data-action'
+    switch (action) {
+        case 'mark-received':
+            console.log(`Initiating 'Mark Received' for PO: ${poId}`);
+            markPOAsReceived(poId); // Function defined below
+            break;
+
+        case 'edit-po':
+            console.log(`Initiating 'Edit PO' for PO: ${poId}`);
+            // Open the "New PO" page in edit mode
+            window.location.href = `new_po.html?editPOId=${poId}`;
+            break;
+
+        case 'change-status-modal':
+            console.log(`Opening status update modal for PO: ${poId}`);
+            const currentStatus = actionElement.dataset.status;
+            openStatusModal(poId, currentStatus, poNumber); // Function defined below
+            break;
+
+        case 'see-more-items': // Action for the new "See More" button
+            console.log(`Opening 'See More Items' modal for PO: ${poId}`);
+            openSeeMoreItemsModal(poId); // Function defined below
+            break;
+
+        case 'delete-po':
+            console.log(`Initiating delete for PO: ${poId}`);
+            console.log("About to show confirmation dialog...");
+            const confirmMessage = `क्या आप वाकई PO (${poNumber || poId.substring(0,6)}) को डिलीट करना चाहते हैं?`;
+            if (confirm(confirmMessage)) {
+                console.log("Confirmation received. Attempting deletion...");
+                try {
+                    console.log(`Creating reference to delete PO: ${poId}`);
+                    const poRef = doc(db, "purchaseOrders", poId);
+                    console.log(`Calling deleteDoc for PO: ${poId}`);
+                    await deleteDoc(poRef);
+                    console.log(`PO ${poId} deleted successfully from Firestore.`);
+                    // Remove row visually or reload list
+                    const rowToRemove = poTableBody.querySelector(`tr[data-id="${poId}"]`);
+                    if (rowToRemove) { rowToRemove.remove(); }
+                    else { await displayPoList(); } // Fallback to reload if row not found
+                    // Update cache and totals if necessary (optional)
+                    delete cachedPOs[poId];
+                    // Recalculate totals or just show a message
+                    alert(`PO (${poNumber || poId.substring(0,6)}) सफलतापूर्वक डिलीट हो गया है।`);
+                    // Optionally re-calculate totals here if needed
+
+                } catch (error) {
+                    console.error(`Error deleting PO ${poId}:`, error);
+                    displayError(`PO डिलीट करने में विफल: ${error.message}`);
+                }
+            } else {
+                console.log("Delete cancelled by user.");
             }
-            if (!poData) throw new Error(`PO data not found for ${poId}`);
+            break;
 
-            let supplierData = suppliersDataCache.find(s => s.id === poData.supplierId);
-             if (!supplierData && poData.supplierId) {
-                 console.log(`DEBUG: Supplier ${poData.supplierId} not in cache, fetching...`);
-                 const supSnap = await getDoc(doc(db, "suppliers", poData.supplierId));
-                 if (supSnap.exists()) supplierData = supSnap.data();
-            }
-             if (!supplierData) {
-                 console.warn(`DEBUG: Supplier data not found for PO ${poId}, using placeholder.`);
-                 supplierData = { name: poData.supplierName || 'Unknown Supplier' };
-             }
-
-            if (typeof generatePoPdf === 'function') {
-                 console.log(`DEBUG: Calling generatePoPdf for PO ${poId}...`);
-                 await generatePoPdf(poData, supplierData);
-                 console.log(`DEBUG: generatePoPdf call completed for PO ${poId}.`);
-             } else {
-                 console.error("DEBUG: Function 'generatePoPdf' is not defined or not available!");
-                 alert("PDF function unavailable.");
-             }
-        } catch (error) {
-            console.error("DEBUG: PDF Generation Error:", error);
-            alert("PDF Error: " + error.message);
-        }
-        finally {
-            actionElement.disabled = false;
-            actionElement.innerHTML = '<i class="fas fa-file-pdf"></i>';
-            console.log(`DEBUG: PDF button re-enabled for PO ${poId}.`);
-        }
-    }
-    // --- Delete PO ---
-    else if (action === 'delete-po') {
-        console.log(`DEBUG: Initiating delete for PO: ${poId}`); // Log from previous turn
-        console.log("DEBUG: About to show confirmation dialog..."); // <<< नया लॉग
-        // Use poNumber in confirmation if available
-        const confirmMessage = `क्या आप वाकई PO (${poNumber || poId}) को डिलीट करना चाहते हैं?`;
-        if (confirm(confirmMessage)) {
-            console.log("DEBUG: Confirmation received. Attempting deletion..."); // <<< नया लॉग
-            try {
-                console.log(`DEBUG: Creating reference to delete PO: ${poId}`); // <<< नया लॉग
-                const poRef = doc(db, "purchaseOrders", poId);
-                console.log(`DEBUG: Calling deleteDoc for PO: ${poId}`); // <<< नया लॉग
-                await deleteDoc(poRef);
-                console.log(`DEBUG: PO ${poId} deleted successfully from Firestore.`); // <<< नया लॉग
-                // Remove row from table or reload list
-                console.log("DEBUG: Reloading PO list after deletion."); // <<< नया लॉग
-                displayPoList(); // Reload the list after deletion
-                alert(`PO (${poNumber || poId}) सफलतापूर्वक डिलीट हो गया है।`);
-            } catch (error) {
-                console.error(`DEBUG: Error deleting PO ${poId}:`, error); // <<< एरर लॉग
-                displayError(`PO डिलीट करने में विफल: ${error.message}`);
-            }
-        } else {
-            console.log("DEBUG: Delete cancelled by user."); // <<< नया लॉग
-        }
-    } else {
-        console.warn(`DEBUG: Unknown action encountered: '${action}' for PO ID: ${poId}`);
-    }
-}
-
-// --- Placeholder for openEditPoModal ---
-// ****** डिबगिंग लॉग्स के साथ संशोधित ******
-function openEditPoModal(poId) {
-    console.log(`DEBUG: Inside openEditPoModal function for PO: ${poId}`); // <<< नया लॉग
-    const modal = document.getElementById('editPoModal'); // <<< सुनिश्चित करें कि HTML में यह ID है
-    if (modal) {
-        console.log("DEBUG: Edit PO Modal HTML element found. Displaying..."); // <<< नया लॉग
-        // यहां मोडाल में डेटा भरने का कोड आएगा (अभी के लिए खाली)
-        // Example: Load PO data and populate form fields
-        // const poData = cachedPOs[poId];
-        // if(poData) {
-        //     document.getElementById('editPoNumberInput').value = poData.poNumber || '';
-        //     // ... populate other fields ...
-        // } else {
-        //     console.error(`DEBUG: PO data for ${poId} not found in cache for editing.`);
-        // }
-        modal.style.display = 'block'; // या 'flex' जैसा आपकी CSS में हो
-    } else {
-        console.error("DEBUG: HTML Element with ID 'editPoModal' not found!"); // <<< एरर लॉग
-        alert("PO एडिट करने के लिए मोडाल विंडो नहीं मिली!");
+        default:
+            console.warn(`Unknown action encountered: '${action}' for PO ID: ${poId}`);
     }
 }
 
 
-// --- PO Receiving Logic Placeholder (markPOAsReceived) ---
-// (Keep this function as it was in v23)
+// --- PO Receiving Logic ---
 async function markPOAsReceived(poId) {
-     console.log(`DEBUG: Preparing to mark PO ${poId} as received.`);
-     if (!poId || !db || !doc || !updateDoc || !serverTimestamp) {
-         console.error("DEBUG: Cannot mark PO as received - missing required functions or PO ID.");
-         alert("Error: Cannot mark PO as received.");
-         return;
-     }
-     console.log(`DEBUG: About to show confirmation for marking PO ${poId} received...`);
-     if (confirm(`क्या आप PO #${poId.substring(0, 6)}... को 'Product Received' के रूप में चिह्नित करना चाहते हैं?`)) {
-         console.log(`DEBUG: Confirmation received. Attempting to update status for PO ${poId}...`);
-         try {
-             await updateDoc(doc(db, "purchaseOrders", poId), {
-                 status: "Product Received",
-                 receivedDate: serverTimestamp(),
-                 updatedAt: serverTimestamp()
-             });
-             console.log(`DEBUG: Status updated successfully for PO ${poId}. Reloading list...`);
-             alert("PO status updated to 'Product Received'.");
-             displayPoList();
-         } catch (error) {
-             console.error(`DEBUG: Error marking PO ${poId} received:`, error);
-             alert("Error updating PO status: " + error.message);
-         }
-     } else {
-        console.log(`DEBUG: Mark as received cancelled by user for PO ${poId}.`);
-     }
- }
+    if (!poId || !db || !doc || !updateDoc || !serverTimestamp) {
+        alert("Error: Cannot mark PO as received."); return;
+    }
+    if (confirm(`Mark PO #${poId.substring(0, 6)}... as 'Product Received'?`)) {
+        console.log(`Attempting to update status for PO ${poId}...`);
+        try {
+            await updateDoc(doc(db, "purchaseOrders", poId), {
+                status: "Product Received",
+                receivedDate: serverTimestamp(), // Add received date
+                updatedAt: serverTimestamp()
+            });
+            console.log(`Status updated successfully for PO ${poId}. Reloading list...`);
+            alert("PO status updated to 'Product Received'.");
+            // Update visually or reload
+            const row = poTableBody.querySelector(`tr[data-id="${poId}"]`);
+            if(row) {
+                const statusBadge = row.querySelector('.status-badge');
+                if(statusBadge) {
+                    statusBadge.textContent = 'Product Received';
+                    statusBadge.className = 'status-badge status-product-received'; // Update class
+                }
+                // Remove the mark received button if it exists
+                const markBtn = row.querySelector('.mark-received-btn');
+                if(markBtn) markBtn.remove();
+            } else {
+                 await displayPoList(); // Fallback reload
+            }
+        } catch (error) {
+            console.error(`Error marking PO ${poId} received:`, error);
+            alert("Error updating PO status: " + error.message);
+        }
+    } else {
+       console.log(`Mark as received cancelled by user for PO ${poId}.`);
+    }
+}
 
 
-// --- Status Update Modal Functions (openStatusModal, closeStatusModal, handleStatusUpdate) ---
-// (Keep these functions exactly as they were)
+// --- Status Update Modal Functions ---
 function openStatusModal(poId, currentStatus, poNumber) {
-     console.log(`DEBUG: Opening status modal for PO ${poId} (Current: ${currentStatus})`);
-     if (!statusUpdateModal || !statusUpdatePOId || !currentPOStatusSpan || !statusSelect || !statusModalTitle) {
-         console.error("DEBUG: Status update modal elements missing!");
-         return;
-     }
-     statusUpdatePOId.value = poId;
-     currentPOStatusSpan.textContent = currentStatus || 'N/A';
-     statusModalTitle.textContent = `Update Status for PO #${poNumber || poId.substring(0,6)}`;
-     // Reset status dropdown to current or default
-     statusSelect.value = currentStatus || ''; // Try setting to current
-     if(statusSelect.value !== currentStatus) { // If current status isn't an option, reset
-          statusSelect.value = '';
-     }
-     showStatusError('');
-     statusUpdateModal.style.display = 'block';
+    console.log(`Opening status modal for PO ${poId} (Current: ${currentStatus})`);
+    if (!statusUpdateModal || !statusUpdatePOId || !currentPOStatusSpan || !statusSelect || !statusModalTitle) {
+        console.error("Status update modal elements missing!"); return;
+    }
+    statusUpdatePOId.value = poId;
+    currentPOStatusSpan.textContent = currentStatus || 'N/A';
+    statusModalTitle.textContent = `Update Status for PO #${poNumber || poId.substring(0,6)}`;
+    statusSelect.value = currentStatus || ''; // Set dropdown to current status
+    showStatusError('');
+    statusUpdateModal.style.display = 'block'; // Use block or flex based on CSS
 }
-
-function closeStatusModal() {
-     console.log("DEBUG: Closing status modal.");
-     if (statusUpdateModal) { statusUpdateModal.style.display = 'none'; }
-}
-
+function closeStatusModal() { if (statusUpdateModal) { statusUpdateModal.style.display = 'none'; } }
 async function handleStatusUpdate(event) {
-     event.preventDefault();
-     console.log("DEBUG: handleStatusUpdate called.");
-     if (!statusUpdatePOId || !statusSelect || !db || !doc || !updateDoc || !serverTimestamp) {
-         console.error("DEBUG: Missing elements or DB functions for status update.");
-         showStatusError("An internal error occurred.");
-         return;
-     }
-     const poId = statusUpdatePOId.value;
-     const newStatus = statusSelect.value;
-     if (!poId || !newStatus) {
-         showStatusError("Please select a new status.");
-         return;
-     }
-     console.log(`DEBUG: Attempting status update to '${newStatus}' for PO: ${poId}`);
-     showStatusError(''); // Clear previous errors
-     saveStatusBtn.disabled = true; saveStatusBtn.textContent = 'Saving...';
+    event.preventDefault();
+    if (!statusUpdatePOId || !statusSelect || !db || !doc || !updateDoc || !serverTimestamp) {
+        showStatusError("Internal error occurred."); return;
+    }
+    const poId = statusUpdatePOId.value;
+    const newStatus = statusSelect.value;
+    if (!poId || !newStatus) { showStatusError("Please select a new status."); return; }
 
-     try {
-         await updateDoc(doc(db, "purchaseOrders", poId), {
-             status: newStatus,
-             updatedAt: serverTimestamp()
-         });
-         console.log(`DEBUG: Status updated successfully for PO ${poId}. Closing modal and reloading.`);
-         closeStatusModal();
-         displayPoList(); // Refresh the list
-         alert("PO Status updated successfully.");
-     } catch (error) {
-         console.error(`DEBUG: Error updating status for PO ${poId}:`, error);
-         showStatusError(`Failed to update status: ${error.message}`);
-     } finally {
-         saveStatusBtn.disabled = false; saveStatusBtn.textContent = 'Save Status';
-     }
+    console.log(`Attempting status update to '${newStatus}' for PO: ${poId}`);
+    showStatusError('');
+    saveStatusBtn.disabled = true; saveStatusBtn.textContent = 'Saving...';
+
+    try {
+        await updateDoc(doc(db, "purchaseOrders", poId), {
+            status: newStatus,
+            updatedAt: serverTimestamp()
+        });
+        console.log(`Status updated successfully for PO ${poId}. Closing modal and updating row.`);
+        closeStatusModal();
+
+        // Update the row visually instead of full reload
+        const row = poTableBody.querySelector(`tr[data-id="${poId}"]`);
+        if (row) {
+            const statusBadge = row.querySelector('.status-badge');
+            const statusBtn = row.querySelector('.status-button');
+             const markReceivedBtn = row.querySelector('.mark-received-btn');
+            if (statusBadge) {
+                statusBadge.textContent = newStatus;
+                statusBadge.className = `status-badge status-${newStatus.toLowerCase().replace(/\s+/g, '-')}`;
+            }
+             if (statusBtn) { statusBtn.dataset.status = newStatus; } // Update button data
+             // Show/hide Mark Received button based on new status
+             if (newStatus === 'Sent' || newStatus === 'Printing') {
+                 if (!markReceivedBtn && row.querySelector('.action-buttons')) {
+                     // Add the button if it doesn't exist
+                     const button = document.createElement('button');
+                     button.className = 'button mark-received-btn small-button success-button';
+                     button.dataset.action = 'mark-received';
+                     button.dataset.id = poId;
+                     button.title = 'Mark as Received';
+                     button.innerHTML = '<i class="fas fa-check"></i>';
+                     row.querySelector('.action-buttons').prepend(button); // Add at the beginning
+                 }
+             } else {
+                 if (markReceivedBtn) markReceivedBtn.remove(); // Remove if status no longer applicable
+             }
+        } else {
+            await displayPoList(); // Fallback reload if row not found
+        }
+
+        alert("PO Status updated successfully.");
+    } catch (error) {
+        console.error(`Error updating status for PO ${poId}:`, error);
+        showStatusError(`Failed to update status: ${error.message}`);
+    } finally {
+        saveStatusBtn.disabled = false; saveStatusBtn.textContent = 'Update Status';
+    }
 }
 
 
-// --- Delete PO Function (handleDeletePO - Now part of handlePOTableActions) ---
-// This function is now integrated into handlePOTableActions
-
-
-// --- PO Details & Share Modal Functions ---
-// (Keep existing placeholders or actual functions)
-// *** TODO: Implement these properly ***
+// --- PO Details Modal Functions ---
 async function openPoDetailsModal(poId) {
-     console.log("DEBUG: openPoDetailsModal called for PO:", poId);
-     // Basic Example: Fetch data and display in modal
-     if(!poDetailsModal || !poDetailsContent || !poDetailsModalTitle) {
-         console.error("DEBUG: PO Details modal elements missing.");
-         return;
-     }
-     poDetailsModalTitle.textContent = `Details for PO #${poId.substring(0,6)}...`;
-     poDetailsContent.innerHTML = '<p>Loading details...</p>';
-     poDetailsModal.style.display = 'block';
-     try {
-         let poData = cachedPOs[poId];
-         if (!poData) {
-             const poSnap = await getDoc(doc(db, "purchaseOrders", poId));
-             if (poSnap.exists()) poData = poSnap.data();
-         }
-         if (!poData) throw new Error("PO data not found.");
+    // Uses existing modal from HTML
+    if (!poDetailsModal || !poDetailsContent || !poDetailsModalTitle) {
+        console.error("PO Details modal elements missing."); return;
+    }
+    poDetailsModalTitle.textContent = `Details for PO #${poId.substring(0, 6)}...`;
+    poDetailsContent.innerHTML = '<p>Loading details...</p>';
+    poDetailsModal.style.display = 'block'; // Use block or flex
 
-         // Fetch supplier if needed (similar to PDF generation)
-         let supplierName = suppliersDataCache.find(s => s.id === poData.supplierId)?.name || poData.supplierName || 'Unknown';
+    try {
+        let poData = cachedPOs[poId];
+        if (!poData) { // Fetch if not in cache
+            const poSnap = await getDoc(doc(db, "purchaseOrders", poId));
+            if (poSnap.exists()) poData = poSnap.data();
+        }
+        if (!poData) throw new Error("PO data not found.");
 
-         // Format and display data (simple example)
-         let detailsHtml = `
+        let supplierName = suppliersDataCache.find(s => s.id === poData.supplierId)?.name || poData.supplierName || 'Unknown';
+
+        let detailsHtml = `
              <p><strong>PO Number:</strong> ${escapeHtml(poData.poNumber || 'N/A')}</p>
              <p><strong>Order Date:</strong> ${formatDate(poData.orderDate || poData.createdAt)}</p>
              <p><strong>Supplier:</strong> ${escapeHtml(supplierName)}</p>
              <p><strong>Total Amount:</strong> ${formatCurrency(poData.totalAmount)}</p>
              <p><strong>Status:</strong> ${escapeHtml(poData.status)}</p>
              <p><strong>Payment Status:</strong> ${escapeHtml(poData.paymentStatus || 'Pending')}</p>
-             <h4>Items:</h4>
-             <ul>`;
-         if (poData.items && poData.items.length > 0) {
-             poData.items.forEach(item => {
-                 detailsHtml += `<li>${escapeHtml(item.quantity || 0)} x ${escapeHtml(item.itemName || 'N/A')} @ ${formatCurrency(item.rate || 0)}</li>`;
+             <h4>Items:</h4>`;
+
+        if (poData.items && poData.items.length > 0) {
+             detailsHtml += `<table class="details-table">
+                               <thead>
+                                   <tr>
+                                       <th>#</th><th>Product Name</th><th>Qty</th><th>Rate</th><th>Amount</th>
+                                   </tr>
+                               </thead>
+                               <tbody>`;
+            poData.items.forEach((item, index) => {
+                 const itemTotal = (item.quantity || 0) * (item.rate || 0);
+                 detailsHtml += `<tr>
+                                   <td>${index + 1}</td>
+                                   <td>${escapeHtml(item.productName || 'N/A')}</td>
+                                   <td style="text-align: right;">${escapeHtml(item.quantity || 0)}</td>
+                                   <td style="text-align: right;">${formatCurrency(item.rate || 0)}</td>
+                                   <td style="text-align: right;">${formatCurrency(itemTotal)}</td>
+                               </tr>`;
              });
-         } else {
-             detailsHtml += '<li>No items listed.</li>';
-         }
-         detailsHtml += '</ul>';
-         poDetailsContent.innerHTML = detailsHtml;
-         console.log(`DEBUG: PO Details displayed for ${poId}.`);
+            detailsHtml += `</tbody></table>`;
+        } else { detailsHtml += '<p>No items listed.</p>'; }
+        detailsHtml += `<div class="po-notes-details"><strong>Notes:</strong><p>${escapeHtml(poData.notes || '-')}</p></div>`;
+        poDetailsContent.innerHTML = detailsHtml;
+        console.log(`PO Details displayed for ${poId}.`);
 
-     } catch(error) {
-         console.error(`DEBUG: Error loading PO details for ${poId}:`, error);
-         poDetailsContent.innerHTML = `<p style="color: red;">Error loading details: ${error.message}</p>`;
-     }
+    } catch (error) {
+        console.error(`Error loading PO details for ${poId}:`, error);
+        poDetailsContent.innerHTML = `<p style="color: red;">Error loading details: ${error.message}</p>`;
+    }
 }
-
-function closePoDetailsModal() {
-     console.log("DEBUG: Closing PO Details modal.");
-     if (poDetailsModal) { poDetailsModal.style.display = 'none'; }
-}
-
-async function openPoShareModal(poId) {
-    console.log("DEBUG: openPoShareModal called for PO:", poId);
-    // *** Placeholder - Needs full implementation similar to openPoDetailsModal but for sharing view ***
-    alert("PO Share Modal needs proper implementation.");
-    // Example structure:
-    // 1. Check if modal elements exist.
-    // 2. Set modal title.
-    // 3. Show loading state.
-    // 4. Fetch PO data (from cache or Firestore).
-    // 5. Fetch Supplier data (from cache or Firestore).
-    // 6. Populate #poShareInfo, #poShareGreeting, #poShareItemsContainer, #poShareTermList with fetched data.
-    // 7. Display the modal.
-    // 8. Handle errors.
-    if(poShareModal) poShareModal.style.display = 'block'; // Just show the modal shell for now
-}
-
-function closePoShareModalFunction() {
-     console.log("DEBUG: Closing PO Share modal.");
-     if (poShareModal) { poShareModal.style.display = 'none'; }
-}
-
-function handleEmailPoShare(event) {
-    console.log("DEBUG: Email PO button clicked.");
-    alert("Email PO needs implementation.");
+function closePoDetailsModal() { if (poDetailsModal) { poDetailsModal.style.display = 'none'; } }
+function handlePrintPoDetails() { // Placeholder - needs implementation if print button is kept
+    alert("Print PO Details function needs implementation.");
+    // Use window.print() or a library like jsPDF based on `#poDetailsContent`
 }
 
 
-// --- Batch Action Bar Update (Placeholder) ---
+// --- See More Items Modal Functions (Request #4) ---
+async function openSeeMoreItemsModal(poId) {
+    if (!poItemsModal || !poItemsModalContent || !poItemsModalTitle) {
+        console.error("PO Items Modal elements missing!"); alert("Could not display items."); return;
+    }
+
+    poItemsModalTitle.textContent = `Items for PO #${poId.substring(0, 6)}...`;
+    poItemsModalContent.innerHTML = '<p>Loading items...</p>';
+    poItemsModal.style.display = 'block'; // or 'flex'
+
+    try {
+        let poData = cachedPOs[poId];
+        if (!poData) {
+            const poSnap = await getDoc(doc(db, "purchaseOrders", poId));
+            if (poSnap.exists()) poData = poSnap.data();
+        }
+        if (!poData || !poData.items || poData.items.length === 0) {
+             throw new Error("No items found for this PO.");
+        }
+
+        // Using a more detailed table like in the details modal
+        let itemsTableHtml = `<table class="details-table">
+                               <thead>
+                                   <tr><th>#</th><th>Item Name</th><th>Quantity</th><th>Rate</th><th>Amount</th></tr>
+                               </thead>
+                               <tbody>`;
+        poData.items.forEach((item, index) => {
+            const itemTotal = (item.quantity || 0) * (item.rate || 0);
+            itemsTableHtml += `<tr>
+                                 <td>${index + 1}</td>
+                                 <td>${escapeHtml(item.productName || 'N/A')}</td>
+                                 <td style="text-align: right;">${escapeHtml(item.quantity || 0)}</td>
+                                 <td style="text-align: right;">${formatCurrency(item.rate || 0)}</td>
+                                 <td style="text-align: right;">${formatCurrency(itemTotal)}</td>
+                             </tr>`;
+        });
+        itemsTableHtml += `</tbody></table>`;
+        poItemsModalContent.innerHTML = itemsTableHtml;
+
+    } catch (error) {
+        console.error(`Error loading items for PO ${poId}:`, error);
+        poItemsModalContent.innerHTML = `<p style="color: red;">Error loading items: ${error.message}</p>`;
+    }
+}
+function closePoItemsModal() { if (poItemsModal) { poItemsModal.style.display = 'none'; } }
+
+
+// --- Batch Action Bar Update (Request #5 - Limits & Button State) ---
 function updateBatchActionBar() {
-     // console.log("DEBUG: Updating batch action bar."); // Can be noisy
-     if (!poBatchActionsBar || !poSelectedCount || !selectAllPoCheckbox) return;
-     const count = selectedPoIds.size;
-     if (count > 0) {
-         poSelectedCount.textContent = count;
-         poBatchActionsBar.style.display = 'flex';
-         // Check if all currently displayed POs are selected
-         const displayedCheckboxes = poTableBody.querySelectorAll('.po-select-checkbox');
-         selectAllPoCheckbox.checked = displayedCheckboxes.length > 0 && count === displayedCheckboxes.length;
-     } else {
-         poBatchActionsBar.style.display = 'none';
-         selectAllPoCheckbox.checked = false;
-     }
+    if (!poBatchActionsBar || !poSelectedCount || !selectAllPoCheckbox || !batchApplyStatusBtn || !batchDeletePoBtn || !batchUpdateStatusSelect) return;
+
+    const count = selectedPoIds.size;
+    const MAX_STATUS_UPDATE = 10;
+    const MAX_DELETE = 5;
+
+    if (count > 0) {
+        poSelectedCount.textContent = `${count} PO${count > 1 ? 's' : ''} selected`;
+        poBatchActionsBar.style.display = 'flex';
+
+        // Enable/Disable Apply Status button
+        const statusSelected = batchUpdateStatusSelect.value !== "";
+        batchApplyStatusBtn.disabled = !(statusSelected && count > 0 && count <= MAX_STATUS_UPDATE);
+        if (count > MAX_STATUS_UPDATE) {
+            batchApplyStatusBtn.title = `Select up to ${MAX_STATUS_UPDATE} POs to update status.`;
+        } else if (!statusSelected) {
+            batchApplyStatusBtn.title = `Select a status to apply.`;
+        } else {
+            batchApplyStatusBtn.title = `Apply status to ${count} PO(s).`;
+        }
+
+        // Enable/Disable Delete button
+        batchDeletePoBtn.disabled = !(count > 0 && count <= MAX_DELETE);
+         if (count > MAX_DELETE) {
+            batchDeletePoBtn.title = `Select up to ${MAX_DELETE} POs to delete.`;
+        } else {
+            batchDeletePoBtn.title = `Delete ${count} selected PO(s).`;
+        }
+
+        // Mark Received button (if kept) - enable if selection > 0
+        if(batchMarkReceivedBtn) batchMarkReceivedBtn.disabled = (count === 0);
+
+        // Check if all currently displayed POs are selected
+        const displayedCheckboxes = poTableBody.querySelectorAll('.po-select-checkbox');
+        selectAllPoCheckbox.checked = displayedCheckboxes.length > 0 && count === displayedCheckboxes.length;
+
+    } else {
+        poBatchActionsBar.style.display = 'none';
+        selectAllPoCheckbox.checked = false;
+        batchUpdateStatusSelect.value = ""; // Reset status dropdown
+        batchApplyStatusBtn.disabled = true;
+        batchDeletePoBtn.disabled = true;
+         if(batchMarkReceivedBtn) batchMarkReceivedBtn.disabled = true;
+    }
 }
 
 // --- Event Listener: Select All Checkbox ---
 if (selectAllPoCheckbox && poTableBody) {
     selectAllPoCheckbox.addEventListener('change', (event) => {
         const isChecked = event.target.checked;
-        console.log(`DEBUG: Select All checkbox changed: ${isChecked}`);
+        console.log(`Select All checkbox changed: ${isChecked}`);
         poTableBody.querySelectorAll('.po-select-checkbox').forEach(checkbox => {
             checkbox.checked = isChecked;
             const poId = checkbox.value;
-            if (isChecked) { selectedPoIds.add(poId); }
-            else { selectedPoIds.delete(poId); }
+            const row = checkbox.closest('tr');
+            if (isChecked) {
+                selectedPoIds.add(poId);
+                if(row) row.classList.add('selected-row');
+            } else {
+                selectedPoIds.delete(poId);
+                 if(row) row.classList.remove('selected-row');
+            }
         });
         updateBatchActionBar();
     });
@@ -718,12 +867,15 @@ if (poTableBody) {
         if (event.target.classList.contains('po-select-checkbox')) {
             const checkbox = event.target;
             const poId = checkbox.value;
+            const row = checkbox.closest('tr');
             if (checkbox.checked) {
                 selectedPoIds.add(poId);
-                 console.log(`DEBUG: PO ${poId} selected.`);
+                if(row) row.classList.add('selected-row');
+                console.log(`PO ${poId} selected.`);
             } else {
                 selectedPoIds.delete(poId);
-                 console.log(`DEBUG: PO ${poId} deselected.`);
+                 if(row) row.classList.remove('selected-row');
+                console.log(`PO ${poId} deselected.`);
             }
             updateBatchActionBar();
         }
@@ -733,122 +885,149 @@ if (poTableBody) {
 // --- Event Listener: Deselect All Button ---
 if (deselectAllPoBtn) {
     deselectAllPoBtn.addEventListener('click', () => {
-        console.log("DEBUG: Deselect All clicked.");
+        console.log("Deselect All clicked.");
         selectedPoIds.clear();
         poTableBody.querySelectorAll('.po-select-checkbox').forEach(checkbox => checkbox.checked = false);
+         poTableBody.querySelectorAll('tr.selected-row').forEach(row => row.classList.remove('selected-row'));
         if (selectAllPoCheckbox) selectAllPoCheckbox.checked = false;
         updateBatchActionBar();
     });
 }
 
-// --- Batch Action Button Listeners (Placeholders/Examples) ---
+// --- Batch Action Button Listeners (With Limits - Request #5) ---
 if(batchApplyStatusBtn && batchUpdateStatusSelect) {
     batchApplyStatusBtn.addEventListener('click', async () => {
         const newStatus = batchUpdateStatusSelect.value;
         const idsToUpdate = Array.from(selectedPoIds);
-        if (!newStatus || idsToUpdate.length === 0) {
-            alert("Please select a status and at least one PO."); return;
-        }
-        console.log(`DEBUG: Applying batch status '${newStatus}' to ${idsToUpdate.length} POs.`);
-        if (confirm(`Apply status '${newStatus}' to ${idsToUpdate.length} selected POs?`)) {
+        const MAX_LIMIT = 10;
+
+        if (!newStatus) { alert("Please select a status to apply."); return; }
+        if (idsToUpdate.length === 0) { alert("Please select at least one PO."); return; }
+        if (idsToUpdate.length > MAX_LIMIT) { alert(`You can update status for a maximum of ${MAX_LIMIT} POs at a time.`); return; }
+
+        console.log(`Applying batch status '${newStatus}' to ${idsToUpdate.length} POs.`);
+        if (confirm(`Apply status '${newStatus}' to ${idsToUpdate.length} selected PO(s)?`)) {
              batchApplyStatusBtn.disabled = true; batchApplyStatusBtn.textContent = 'Applying...';
              let successCount = 0; let errorCount = 0;
-            for (const poId of idsToUpdate) {
-                try {
-                    await updateDoc(doc(db, "purchaseOrders", poId), { status: newStatus, updatedAt: serverTimestamp() });
-                    successCount++;
-                } catch (error) {
-                     console.error(`DEBUG: Error batch updating PO ${poId}:`, error); errorCount++;
-                 }
+             const batch = writeBatch(db);
+             idsToUpdate.forEach(poId => {
+                 const poRef = doc(db, "purchaseOrders", poId);
+                 batch.update(poRef, { status: newStatus, updatedAt: serverTimestamp() });
+             });
+
+            try {
+                await batch.commit();
+                successCount = idsToUpdate.length; // Assume all succeeded if commit doesn't throw
+                 console.log(`Batch status update committed successfully for ${successCount} POs.`);
+            } catch (error) {
+                 console.error(`Error committing batch status update:`, error);
+                 // Hard to know which ones failed without individual checks
+                 errorCount = idsToUpdate.length; // Assume all failed on commit error
+                 successCount = 0;
+                 alert(`Error applying batch status update: ${error.message}`);
              }
+
              batchApplyStatusBtn.disabled = false; batchApplyStatusBtn.textContent = 'Apply Status';
-             alert(`Batch update complete. Success: ${successCount}, Failed: ${errorCount}.`);
-             selectedPoIds.clear(); updateBatchActionBar(); displayPoList(); // Refresh
+             if(successCount > 0) alert(`Batch update complete. Status updated for ${successCount} PO(s).`);
+             selectedPoIds.clear(); // Clear selection after attempt
+              poTableBody.querySelectorAll('.po-select-checkbox').forEach(cb => cb.checked = false);
+              poTableBody.querySelectorAll('tr.selected-row').forEach(row => row.classList.remove('selected-row'));
+             updateBatchActionBar();
+             displayPoList(); // Refresh list to show changes
          }
     });
 }
 
+// Batch Mark Received (Keep or remove based on user need)
 if(batchMarkReceivedBtn) {
      batchMarkReceivedBtn.addEventListener('click', async () => {
+         // Add limits if needed, similar to status update
          const idsToUpdate = Array.from(selectedPoIds);
          if (idsToUpdate.length === 0) { alert("Please select at least one PO."); return; }
-         console.log(`DEBUG: Applying batch 'Mark Received' to ${idsToUpdate.length} POs.`);
-         if (confirm(`Mark ${idsToUpdate.length} selected POs as 'Product Received'?`)) {
+         console.log(`Applying batch 'Mark Received' to ${idsToUpdate.length} POs.`);
+         if (confirm(`Mark ${idsToUpdate.length} selected PO(s) as 'Product Received'?`)) {
              batchMarkReceivedBtn.disabled = true; batchMarkReceivedBtn.textContent = 'Marking...';
              let successCount = 0; let errorCount = 0;
-             for (const poId of idsToUpdate) {
-                 try {
-                     await updateDoc(doc(db, "purchaseOrders", poId), { status: 'Product Received', receivedDate: serverTimestamp(), updatedAt: serverTimestamp() });
-                     successCount++;
-                 } catch (error) {
-                     console.error(`DEBUG: Error batch marking PO ${poId} received:`, error); errorCount++;
-                 }
-             }
+             const batch = writeBatch(db);
+             idsToUpdate.forEach(poId => {
+                 const poRef = doc(db, "purchaseOrders", poId);
+                 batch.update(poRef, { status: 'Product Received', receivedDate: serverTimestamp(), updatedAt: serverTimestamp() });
+             });
+             try { await batch.commit(); successCount = idsToUpdate.length; }
+             catch (error) { console.error("Error batch marking received:", error); errorCount = idsToUpdate.length; alert(`Error: ${error.message}`); }
              batchMarkReceivedBtn.disabled = false; batchMarkReceivedBtn.textContent = 'Mark as Received';
-             alert(`Batch update complete. Success: ${successCount}, Failed: ${errorCount}.`);
-             selectedPoIds.clear(); updateBatchActionBar(); displayPoList(); // Refresh
+             if(successCount > 0) alert(`Mark Received complete. Updated ${successCount} PO(s).`);
+             selectedPoIds.clear(); updateBatchActionBar(); displayPoList();
          }
      });
- }
+}
 
+ // Batch Delete PO (With Limit - Request #5)
  if(batchDeletePoBtn) {
      batchDeletePoBtn.addEventListener('click', async () => {
          const idsToDelete = Array.from(selectedPoIds);
-         if (idsToDelete.length === 0) { alert("Please select at least one PO."); return; }
-         console.log(`DEBUG: Applying batch delete to ${idsToDelete.length} POs.`);
-         if (confirm(`Permanently delete ${idsToDelete.length} selected POs? This cannot be undone.`)) {
+         const MAX_LIMIT = 5;
+
+         if (idsToDelete.length === 0) { alert("Please select at least one PO to delete."); return; }
+         if (idsToDelete.length > MAX_LIMIT) { alert(`You can delete a maximum of ${MAX_LIMIT} POs at a time.`); return; }
+
+         console.log(`Applying batch delete to ${idsToDelete.length} POs.`);
+         if (confirm(`Permanently delete ${idsToDelete.length} selected PO(s)? This cannot be undone.`)) {
              batchDeletePoBtn.disabled = true; batchDeletePoBtn.textContent = 'Deleting...';
              let successCount = 0; let errorCount = 0;
-             for (const poId of idsToDelete) {
-                 try {
-                     await deleteDoc(doc(db, "purchaseOrders", poId));
-                     successCount++;
-                 } catch (error) {
-                     console.error(`DEBUG: Error batch deleting PO ${poId}:`, error); errorCount++;
-                 }
-             }
+             const batch = writeBatch(db);
+             idsToDelete.forEach(poId => {
+                 batch.delete(doc(db, "purchaseOrders", poId));
+             });
+
+             try { await batch.commit(); successCount = idsToDelete.length; }
+             catch (error) { console.error(`Error committing batch delete:`, error); errorCount = idsToDelete.length; alert(`Error deleting POs: ${error.message}`); }
+
              batchDeletePoBtn.disabled = false; batchDeletePoBtn.textContent = 'Delete Selected';
-             alert(`Batch delete complete. Success: ${successCount}, Failed: ${errorCount}.`);
-             selectedPoIds.clear(); updateBatchActionBar(); displayPoList(); // Refresh
+              if(successCount > 0) alert(`Batch delete complete. Deleted ${successCount} PO(s).`);
+              selectedPoIds.clear();
+              poTableBody.querySelectorAll('.po-select-checkbox').forEach(cb => cb.checked = false);
+              poTableBody.querySelectorAll('tr.selected-row').forEach(row => row.classList.remove('selected-row'));
+             updateBatchActionBar();
+             displayPoList(); // Refresh the list
          }
      });
  }
 
 
 // --- Page Initialization & Event Listeners Setup ---
-// (Keep initializeSupplierManagementPage and setupEventListeners as they were in v23)
 async function initializeSupplierManagementPage(user) {
-    console.log("Initializing Supplier Management Page v23...");
-    setupEventListeners(); // Setup all event listeners first
+    console.log("Initializing Supplier Management Page v24...");
+    setupEventListeners(); // Setup all event listeners
     try {
-        await displaySupplierTable(); // Load suppliers (populates filter)
+        await displaySupplierTable(); // Load suppliers FIRST (populates filter and cache)
         await displayPoList();      // Then load initial POs
     } catch (error) {
         console.error("Error during initial data load:", error);
         // Errors should be shown by individual display functions
     }
-     console.log("Supplier Management Page Initialized v23.");
+     console.log("Supplier Management Page Initialized v24.");
 }
 
 function setupEventListeners() {
-    console.log("Setting up event listeners v23...");
+    console.log("Setting up event listeners v24...");
 
     // --- Supplier List Actions ---
     if (supplierTableBody) {
-        supplierTableBody.addEventListener('click', handleSupplierTableActions); // Use corrected handler
-    } else { console.error("Supplier table body not found for event listener."); }
+        supplierTableBody.addEventListener('click', handleSupplierTableActions);
+    } // else { console.warn("Supplier table body not found for event listener."); } // Optional warning
 
     // --- Supplier Modal ---
     if (addNewSupplierBtn) addNewSupplierBtn.addEventListener('click', () => openSupplierModal('add'));
     if (closeSupplierModalBtn) closeSupplierModalBtn.addEventListener('click', closeSupplierModal);
     if (cancelSupplierBtn) cancelSupplierBtn.addEventListener('click', closeSupplierModal);
-    if (supplierForm) supplierForm.addEventListener('submit', saveSupplier);
+    if (supplierForm) supplierForm.addEventListener('submit', handleAddSupplierSubmit); // Use specific handler
     if (supplierModal) supplierModal.addEventListener('click', (event) => { if (event.target === supplierModal) closeSupplierModal(); });
 
     // --- PO Filters ---
     if (poFilterBtn) {
         poFilterBtn.addEventListener('click', () => {
-            poPagination.currentPage = 1;
+            poPagination.currentPage = 1; // Reset pagination on filter
             poPagination.lastVisibleDoc = null;
             displayPoList();
         });
@@ -860,12 +1039,27 @@ function setupEventListeners() {
             if(poStatusFilter) poStatusFilter.value = '';
             if(poStartDateFilter) poStartDateFilter.value = '';
             if(poEndDateFilter) poEndDateFilter.value = '';
-            currentPoSortField = 'createdAt'; currentPoSortDirection = 'desc';
-            updateSortIndicators();
-            poPagination.currentPage = 1; poPagination.lastVisibleDoc = null;
+            currentPoSortField = 'createdAt'; currentPoSortDirection = 'desc'; // Reset sort
+            updateSortIndicators(); // Update visual indicator
+            poPagination.currentPage = 1; poPagination.lastVisibleDoc = null; // Reset pagination
             displayPoList();
         });
     }
+    // Search on Enter Key (Request #6)
+    if (poSearchInput) {
+         poSearchInput.addEventListener('keypress', (event) => {
+             if (event.key === 'Enter') {
+                 event.preventDefault(); // Prevent default if inside a form
+                 console.log("Enter key pressed in search input, triggering filter.");
+                 if (poFilterBtn) {
+                    poFilterBtn.click(); // Trigger filter button click
+                 } else { // Fallback if button not found
+                    poPagination.currentPage = 1; poPagination.lastVisibleDoc = null;
+                    displayPoList();
+                 }
+             }
+         });
+     }
 
     // --- PO Table Sorting ---
     if (poTableHeader) {
@@ -874,14 +1068,16 @@ function setupEventListeners() {
 
     // --- PO Table Actions (Delegated) ---
     if (poTableBody) {
-        // *** THIS IS THE MAIN LISTENER FOR PO ACTIONS ***
-        poTableBody.addEventListener('click', handlePOTableActions);
+        poTableBody.addEventListener('click', handlePOTableActions); // Single listener handles all actions
     } else { console.error("PO table body not found for PO actions listener."); }
 
-    // Batch Action listeners are added above, outside this function
+    // --- Batch Action Bar ---
+    // Event listeners for buttons are added above
+    if(batchUpdateStatusSelect) { // Add listener for status dropdown change to enable/disable Apply button
+        batchUpdateStatusSelect.addEventListener('change', updateBatchActionBar);
+    }
 
-
-    // --- Modals (Status, Details, Share) ---
+    // --- Modals (Status, Details, See More Items) ---
     if (closeStatusModalBtn) closeStatusModalBtn.addEventListener('click', closeStatusModal);
     if (cancelStatusBtn) cancelStatusBtn.addEventListener('click', closeStatusModal);
     if (statusUpdateForm) statusUpdateForm.addEventListener('submit', handleStatusUpdate);
@@ -890,25 +1086,25 @@ function setupEventListeners() {
     if (closePoDetailsModalBtn) closePoDetailsModalBtn.addEventListener('click', closePoDetailsModal);
     if (closePoDetailsBtn) closePoDetailsBtn.addEventListener('click', closePoDetailsModal);
     if (poDetailsModal) poDetailsModal.addEventListener('click', (event) => { if (event.target === poDetailsModal) closePoDetailsModal(); });
-    if (printPoDetailsBtn) printPoDetailsBtn.addEventListener('click', () => { alert("Print Details needs implementation."); });
+    if (printPoDetailsBtn) printPoDetailsBtn.addEventListener('click', handlePrintPoDetails); // Add handler if keeping print
 
-    if (closePoShareModal) closePoShareModal.addEventListener('click', closePoShareModalFunction);
-    if (closePoShareModalBtn) closePoShareModalBtn.addEventListener('click', closePoShareModalFunction);
-    if (poShareModal) poShareModal.addEventListener('click', (event) => { if (event.target === poShareModal) closePoShareModalFunction(); });
-    if (printPoShareModalBtn) printPoShareModalBtn.addEventListener('click', () => { alert("Print Share needs implementation."); });
-    if (emailPoShareModalBtn) emailPoShareModalBtn.addEventListener('click', handleEmailPoShare);
+    // Close listeners for the new PO Items modal
+    if (closePoItemsModalBtn) closePoItemsModalBtn.addEventListener('click', closePoItemsModal);
+    if (closePoItemsModalBottomBtn) closePoItemsModalBottomBtn.addEventListener('click', closePoItemsModal);
+    if (poItemsModal) poItemsModal.addEventListener('click', (event) => { if (event.target === poItemsModal) closePoItemsModal(); });
 
-    // --- CSV Export (Placeholder - Step 5) ---
-    if (exportPoCsvBtn) exportPoCsvBtn.addEventListener('click', () => { alert("CSV Export needs implementation."); });
 
-    // --- Pagination (Placeholder - Step 5) ---
+    // --- CSV Export ---
+    if (exportPoCsvBtn) exportPoCsvBtn.addEventListener('click', () => { alert("CSV Export needs implementation."); }); // Needs implementation
+
+    // --- Pagination ---
     // TODO: Add listeners for prevPageBtn, nextPageBtn, itemsPerPageSelect
 
-    console.log("Event listeners setup complete v23.");
+    console.log("Event listeners setup complete v24.");
 }
 
 
-// Make initialization function global
+// Make initialization function global if called from HTML
 window.initializeSupplierManagementPage = initializeSupplierManagementPage;
 
-console.log("supplier_management.js v23 (DEBUG Logs Added) loaded.");
+console.log("supplier_management.js v24 (User Requests) loaded.");
