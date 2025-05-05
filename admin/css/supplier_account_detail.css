@@ -1,26 +1,26 @@
 /* css/supplier_account_detail.css */
-/* MODIFIED: Incorporates customer page modal styles for consistency */
+/* VERSION: Includes fixes for action bar button visibility and customer modal styles */
 /* Based on customer page theme and supplier page structure */
 /* Includes styles for Ledger, Adjustment, Toggle, Delete features */
 
 /* --- Root Variables (Combined & Refined) --- */
 :root {
     --primary-color: #0056b3;
-    --secondary-color: #2c3e50; /* Used for back button etc */
+    --secondary-color: #2c3e50; /* Used for back button, cancel button */
     --success-color: #28a745;
     --danger-color: #dc3545;
     --warning-color: #ffc107;
     --info-color: #17a2b8;    /* Used for Edit button */
-    --purple-color: #6f42c1; /* Original supplier color */
-    --light-bg: #f8f9fa;   /* Use light-gray */
+    --purple-color: #6f42c1; /* Original supplier color for Add Adjustment */
+    --light-bg: #f8f9fa;
     --medium-gray: #e9ecef;  /* Original border reference */
     --light-border: #eee;    /* Lighter border like customer page */
     --input-border: #ccc;    /* Input border like customer page */
-    --dark-gray: #6c757d;    /* Use as text-muted */
+    --dark-gray: #6c757d;
     --text-color: #212529;     /* Darker text like customer page */
     --text-muted: #6c757d;
     --white-color: #ffffff;
-    --black-color: #000000;
+    --black-color: #000000; /* For text on yellow buttons */
     --font-family: 'Poppins', sans-serif;
     --border-radius: 6px;     /* Customer page radius */
     --input-border-radius: 4px; /* Customer page input radius */
@@ -97,23 +97,25 @@ body.auth-error {
     gap: 12px;
     padding: 15px 20px;
     background-color: var(--light-bg);
-    border: 1px solid var(--medium-gray); /* Keep original border for action bar */
+    border: 1px solid var(--medium-gray);
     border-radius: var(--border-radius);
     margin-bottom: 25px;
     min-height: 50px;
 }
+
+/* Base style for buttons in action bar - Includes Opacity Fix */
 .actions-bar .button,
 .actions-bar a.button {
-    min-width: 140px; /* Adjusted min-width */
+    min-width: 140px;
     height: 40px;
     box-sizing: border-box;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    padding: 8px 15px; /* Original padding */
+    padding: 8px 15px;
     font-weight: 500;
     border: none;
-    color: white;
+    color: white; /* Default text color - overridden by specific rules */
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     transition: all 0.2s ease;
     text-decoration: none;
@@ -121,37 +123,37 @@ body.auth-error {
     font-family: var(--font-family);
     border-radius: var(--border-radius);
     gap: 8px;
+    opacity: 1; /* <<< IMPORTANT FIX: Ensure enabled buttons are fully opaque */
+    /* No default background-color here */
 }
+
+/* Specific Button Colors */
+.actions-bar #editSupplierBtn { background-color: var(--info-color); color: white; }
+.actions-bar #recordPaymentBtn { background-color: var(--success-color); color: white; }
+.actions-bar #addAdjustmentBtn { background-color: var(--purple-color); color: white; } /* Purple for supplier adjustment */
+.actions-bar #toggleStatusBtn.disable-button { background-color: var(--warning-color); color: var(--black-color); } /* Yellow background, dark text */
+.actions-bar #toggleStatusBtn.enable-button { background-color: var(--success-color); color: white; } /* Green background, white text */
+.actions-bar #deleteSupplierBtn { background-color: var(--danger-color); color: white; }
+
+/* Hover states */
 .actions-bar .button:hover:not(:disabled),
 .actions-bar a.button:hover:not(:disabled) {
     transform: translateY(-2px);
     box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+    filter: brightness(95%); /* Slightly darken on hover */
 }
 
-/* Specific Button Colors */
-.actions-bar #editSupplierBtn { background-color: var(--info-color); }
-.actions-bar #editSupplierBtn:hover { background-color: #117a8b; }
-.actions-bar #recordPaymentBtn { background-color: var(--success-color); }
-.actions-bar #recordPaymentBtn:hover { background-color: #1e7e34; }
-.actions-bar #addAdjustmentBtn { background-color: var(--purple-color); } /* Kept purple for supplier adjustment */
-.actions-bar #addAdjustmentBtn:hover { background-color: #5a32a3; }
-.actions-bar #toggleStatusBtn.disable-button { background-color: var(--warning-color); color: var(--black-color); } /* Dark text on yellow */
-.actions-bar #toggleStatusBtn.disable-button:hover { background-color: #e0a800; }
-.actions-bar #toggleStatusBtn.enable-button { background-color: var(--success-color); color: white; } /* Success color for enable */
-.actions-bar #toggleStatusBtn.enable-button:hover { background-color: #1e7e34; }
-.actions-bar #deleteSupplierBtn { background-color: var(--danger-color); }
-.actions-bar #deleteSupplierBtn:hover { background-color: #bd2130; }
-
-/* Disabled Button Styles */
+/* Disabled Button Styles (WITHOUT !important) */
 .actions-bar .button:disabled,
 .actions-bar a.button.disabled {
-    background-color: #adb5bd !important; /* Ensure override */
-    color: #fff !important;
-    cursor: not-allowed;
-    opacity: 0.65;
-    transform: none;
-    box-shadow: none;
-    border-color: transparent !important;
+    background-color: #adb5bd; /* Grey background */
+    color: #ffffff;           /* White text */
+    cursor: not-allowed;       /* Not-allowed cursor */
+    opacity: 0.65;             /* <<< Opacity applies ONLY when disabled */
+    transform: none;           /* No transform */
+    box-shadow: none;          /* No shadow */
+    border-color: transparent; /* No border */
+    filter: none;              /* Remove hover filter if applied */
 }
 
 /* --- Info Grid Layout --- */
@@ -243,7 +245,7 @@ body.auth-error {
 .table-container {
     max-height: 350px;
     overflow-y: auto;
-    border: 1px solid var(--medium-gray); /* Use original border for tables */
+    border: 1px solid var(--medium-gray);
     border-radius: var(--border-radius);
     margin-bottom: 30px;
     background-color: var(--white-color);
@@ -265,7 +267,7 @@ body.auth-error {
     text-align: left;
     font-weight: 600;
     color: var(--text-color);
-    border-bottom: 2px solid var(--medium-gray); /* Original border */
+    border-bottom: 2px solid var(--medium-gray);
     position: sticky;
     top: 0;
     z-index: 1;
@@ -331,10 +333,10 @@ body.auth-error {
     width: 100%;
     height: 100%;
     overflow: auto;
-    background-color: rgba(0,0,0,0.55); /* <<< Customer background */
+    background-color: rgba(0,0,0,0.55); /* Customer background */
     align-items: center;
     justify-content: center;
-    padding: 15px; /* <<< Customer padding */
+    padding: 15px; /* Customer padding */
     box-sizing: border-box;
 }
 .modal.active {
@@ -342,27 +344,23 @@ body.auth-error {
 }
 .modal-content {
     background-color: var(--white-color);
-    margin: auto; /* Auto margin for centering */
-    padding: 25px 30px; /* <<< Customer padding */
-    /* border: 1px solid var(--medium-gray); */ /* <<< Removed border */
-    width: 90%; /* Default width */
-    max-width: 600px; /* <<< Customer default max-width */
+    margin: auto;
+    padding: 25px 30px; /* Customer padding */
+    /* border: 1px solid var(--medium-gray); <<< Removed border */
+    width: 90%;
+    max-width: 600px; /* Customer default max-width */
     border-radius: var(--border-radius);
     position: relative;
-    box-shadow: var(--modal-shadow); /* <<< Customer shadow */
+    box-shadow: var(--modal-shadow); /* Customer shadow */
     z-index: 1051;
-    animation: slideIn 0.3s ease-out; /* Keep animation */
+    animation: slideIn 0.3s ease-out;
 }
 /* Specific Modal Sizes */
 .modal-content.small-modal {
-    max-width: 480px; /* <<< Customer small modal size */
+    max-width: 480px; /* Customer small modal size */
 }
-.modal-content.modal-lg { /* If you use larger modals */
-     max-width: 800px;
-}
-.modal-content.modal-xl { /* If you use extra large modals */
-    max-width: 1140px;
-}
+.modal-content.modal-lg { max-width: 800px; }
+.modal-content.modal-xl { max-width: 1140px; }
 
 /* Close Button */
 .close-btn {
@@ -378,57 +376,44 @@ body.auth-error {
     border: none;
     padding: 0;
 }
-.close-btn:hover, .close-btn:focus {
-    color: var(--black-color);
-}
+.close-btn:hover, .close-btn:focus { color: var(--black-color); }
 
 /* Modal Header */
-.modal-header { /* If using a specific header div */
-    border-bottom: 1px solid var(--light-border); /* <<< Lighter border */
+.modal-header { /* Optional header div */
+    border-bottom: 1px solid var(--light-border); /* Lighter border */
     padding-bottom: 15px;
     margin-bottom: 25px;
 }
 .modal-header h2,
-.modal h2 { /* Apply to h2 directly in modal-content too */
+.modal h2 { /* Apply to h2 directly too */
     margin-top: 0;
-    margin-bottom: 25px; /* Default margin if not in header */
+    margin-bottom: 25px; /* Default margin */
     font-size: 1.3em;
     font-weight: 600;
     color: #333;
-    text-align: center; /* <<< Customer alignment */
-    justify-content: center; /* <<< Customer alignment */
+    text-align: center; /* Customer alignment */
+    justify-content: center; /* Customer alignment */
     display: flex;
     align-items: center;
     gap: 10px;
-    border-bottom: 1px solid var(--light-border); /* <<< Lighter border */
+    border-bottom: 1px solid var(--light-border); /* Lighter border */
     padding-bottom: 15px;
 }
-/* Reset margin/padding if h2 is inside .modal-header */
-.modal-header h2 {
-    margin-bottom: 0;
-    padding-bottom: 0;
-    border-bottom: none;
-}
+.modal-header h2 { margin-bottom: 0; padding-bottom: 0; border-bottom: none; } /* Reset if in .modal-header */
 
-.modal h2 i, .modal-header h2 i { /* Icon styling */
-    font-size: 1.1em;
-    opacity: 0.9;
-}
-/* Modal Header Icon Colors */
+.modal h2 i, .modal-header h2 i { font-size: 1.1em; opacity: 0.9; }
 .modal h2 .info-icon, .modal-header .info-icon { color: var(--info-color); }
 .modal h2 .success-icon, .modal-header .success-icon { color: var(--success-color); }
 .modal h2 .warning-icon, .modal-header .warning-icon { color: var(--warning-color); }
 .modal h2 .danger-icon, .modal-header .danger-icon { color: var(--danger-color); }
-.modal h2 .purple-icon, .modal-header .purple-icon { color: var(--purple-color); } /* Added purple */
+.modal h2 .purple-icon, .modal-header .purple-icon { color: var(--purple-color); }
 
 
 /* Modal Form Styles */
-.modal .form-group {
-    margin-bottom: 18px; /* Customer spacing */
-}
+.modal .form-group { margin-bottom: 18px; } /* Customer spacing */
 .modal .form-group label {
     display: block;
-    margin-bottom: 8px; /* <<< Customer spacing */
+    margin-bottom: 8px; /* Customer spacing */
     font-weight: 500;
     color: #444; /* Customer color */
     font-size: 0.9em;
@@ -441,9 +426,9 @@ body.auth-error {
 .modal .form-group select,
 .modal .form-group textarea {
     font-size: 0.95em;
-    padding: 10px 14px; /* <<< Customer padding */
-    border: 1px solid var(--input-border); /* <<< Lighter border */
-    border-radius: var(--input-border-radius); /* <<< Customer radius */
+    padding: 10px 14px; /* Customer padding */
+    border: 1px solid var(--input-border); /* Lighter border */
+    border-radius: var(--input-border-radius); /* Customer radius */
     width: 100%;
     box-sizing: border-box;
     transition: border-color 0.2s ease, box-shadow 0.2s ease;
@@ -456,18 +441,10 @@ body.auth-error {
     box-shadow: 0 0 0 0.2rem rgba(0, 86, 179, 0.25); /* Customer focus */
     outline: none;
 }
-.modal .form-group .required {
-    color: var(--danger-color);
-    margin-left: 3px;
-    font-weight: bold;
-}
-.modal .form-group textarea {
-    resize: vertical;
-    min-height: 70px;
-}
-/* Radio button styling (from customer css) */
+.modal .form-group .required { color: var(--danger-color); margin-left: 3px; font-weight: bold; }
+.modal .form-group textarea { resize: vertical; min-height: 70px; }
 .modal .form-group input[type="radio"] { margin-right: 5px; vertical-align: middle; cursor: pointer;}
-.modal .form-group label[for*="adjustmentType"] { /* Adjust labels for radios */
+.modal .form-group label[for*="adjustmentType"] {
     margin-right: 15px;
     font-weight: normal;
     font-size: 0.95em;
@@ -475,38 +452,18 @@ body.auth-error {
     margin-bottom: 0;
     cursor: pointer;
 }
-#addAdjustmentForm .form-group div { /* Space for radio buttons */
-    margin-top: 5px;
-    line-height: 1.5;
-}
-#addAdjustmentForm .form-group p { /* Helper text for adjustment type */
-    font-size: 0.8em;
-    color: var(--text-muted);
-    margin-top: 5px;
-    margin-bottom: 0;
-}
+#addAdjustmentForm .form-group div { margin-top: 5px; line-height: 1.5; }
+#addAdjustmentForm .form-group p { font-size: 0.8em; color: var(--text-muted); margin-top: 5px; margin-bottom: 0; }
 
-/* Edit Supplier Modal - Optional Grid Layout (like customer page) */
-/* Uncomment and adjust if you want 2-column layout */
+/* Edit Supplier Modal - Grid Layout Option (like customer page) - CURRENTLY DISABLED */
+/* Uncomment and adjust HTML structure if needed for 2-column layout */
 /*
-#editSupplierForm {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 0px 25px;
-    align-items: start;
-}
+#editSupplierForm { display: grid; grid-template-columns: 1fr 1fr; gap: 0px 25px; align-items: start; }
 #editSupplierForm .form-group { margin-bottom: 20px; }
 #editSupplierForm .form-row { display: contents; }
-#editSupplierForm .form-group-address,
-#editSupplierForm .form-group-remarks {
-    grid-column: 1 / -1; /* Span full width */
-}
-#editSupplierForm .modal-actions {
-    grid-column: 1 / -1; /* Span full width */
-}
-#editSupplierModal .modal-content {
-    max-width: 750px; /* Wider for grid layout */
-}
+#editSupplierForm .form-group-address, #editSupplierForm .form-group-remarks { grid-column: 1 / -1; }
+#editSupplierForm .modal-actions { grid-column: 1 / -1; }
+#editSupplierModal .modal-content { max-width: 750px; }
 */
 
 /* Confirmation Modals (Toggle/Delete) Styling */
@@ -519,24 +476,12 @@ body.auth-error {
     background-color: var(--light-bg);
     padding: 15px;
     border-radius: var(--border-radius);
-    border: 1px solid var(--medium-gray); /* Keep original border here */
+    border: 1px solid var(--medium-gray);
 }
-.confirmation-check input[type="checkbox"] {
-    transform: scale(1.1);
-    cursor: pointer;
-    margin: 0;
-    margin-top: 3px; /* Align checkbox */
-    flex-shrink: 0;
-}
-.confirmation-check label {
-    font-size: 0.9em;
-    color: #333;
-    cursor: pointer;
-    margin: 0;
-    font-weight: 500;
-    line-height: 1.4;
-}
-.warning-message { /* General warning style */
+.confirmation-check input[type="checkbox"] { transform: scale(1.1); cursor: pointer; margin: 0; margin-top: 3px; flex-shrink: 0; }
+.confirmation-check label { font-size: 0.9em; color: #333; cursor: pointer; margin: 0; font-weight: 500; line-height: 1.4; }
+
+.warning-message {
     font-weight: 500;
     background-color: #fff3cd;
     border: 1px solid #ffeeba;
@@ -548,12 +493,8 @@ body.auth-error {
     font-size: 0.9em;
     text-align: center;
 }
-#confirmDeleteSupplierModal .warning-message { /* Specific delete warning */
-    color: var(--danger-color);
-    background-color: #f8d7da;
-    border-color: #f5c6cb;
-}
-#confirmToggleSupplierBtn:disabled,
+#confirmDeleteSupplierModal .warning-message { color: var(--danger-color); background-color: #f8d7da; border-color: #f5c6cb; }
+#confirmToggleSupplierBtn:disabled, /* Keep using :disabled selector */
 #confirmDeleteSupplierBtn:disabled {
     background-color: #adb5bd;
     cursor: not-allowed;
@@ -572,47 +513,51 @@ body.auth-error {
     font-size: 0.9em;
     text-align: center;
 }
-.error-message.hidden {
-    display: none;
-}
-#generalErrorDisplay { /* Specific styling for the main error display */
-    margin-bottom: 20px; /* Add space below general errors */
-}
+.error-message.hidden { display: none; }
+#generalErrorDisplay { margin-bottom: 20px; }
 
 /* Modal Actions (Footer Buttons) */
 .modal .modal-actions {
-    margin-top: 30px; /* <<< Customer spacing */
+    margin-top: 30px; /* Customer spacing */
     padding-top: 20px;
-    border-top: 1px solid var(--light-border); /* <<< Lighter border */
+    border-top: 1px solid var(--light-border); /* Lighter border */
     display: flex;
-    justify-content: flex-end; /* Align buttons to the right */
+    justify-content: flex-end;
     gap: 10px;
 }
 .modal .modal-actions .button {
     font-weight: 500;
     padding: 10px 20px; /* Customer padding */
-    height: auto; /* Allow natural height */
+    height: auto;
     min-width: 100px; /* Customer min-width */
+    opacity: 1; /* Ensure modal buttons are opaque */
 }
 
-/* Specific action button colors (define consistently) */
-.modal .button.primary-button { background-color: var(--primary-color); color: white; } /* Define primary if used */
+/* Define modal action button colors consistently */
+.modal .button.primary-button { background-color: var(--primary-color); color: white; }
 .modal .button.primary-button:hover { background-color: #00418a; }
 .modal .button.success-button { background-color: var(--success-color); color: white; }
 .modal .button.success-button:hover { background-color: #1e7e34; }
 .modal .button.info-button { background-color: var(--info-color); color: white; }
 .modal .button.info-button:hover { background-color: #117a8b; }
-.modal .button.warning-button { background-color: var(--warning-color); color: var(--black-color); } /* <<< Dark text */
-.modal .button.warning-button:hover { background-color: #e0a800; color: var(--black-color); } /* <<< Dark text */
+.modal .button.warning-button { background-color: var(--warning-color); color: var(--black-color); } /* Dark text */
+.modal .button.warning-button:hover { background-color: #e0a800; color: var(--black-color); } /* Dark text */
 .modal .button.danger-button { background-color: var(--danger-color); color: white; }
 .modal .button.danger-button:hover { background-color: #bd2130; }
-.modal .button.purple-button { background-color: var(--purple-color); color: white; }
+.modal .button.purple-button { background-color: var(--purple-color); color: white; } /* Added purple */
 .modal .button.purple-button:hover { background-color: #5a32a3; }
-.modal .button.cancel-button { background-color: var(--secondary-color); color: white; } /* Use secondary as cancel */
+.modal .button.cancel-button { background-color: var(--secondary-color); color: white; } /* Secondary as cancel */
 .modal .button.cancel-button:hover { background-color: #5a6268; }
 .modal .button.light-button { background-color: var(--light-bg); color: var(--text-color); border: 1px solid #ccc; } /* Define light */
 .modal .button.light-button:hover { background-color: #e2e6ea; }
-
+/* Disabled styles for modal buttons (if needed, though HTML disabled attribute is preferred) */
+.modal .modal-actions .button:disabled {
+    background-color: #adb5bd;
+    color: #ffffff;
+    cursor: not-allowed;
+    opacity: 0.65;
+    border-color: transparent;
+}
 
 /* --- Responsive Adjustments --- */
 @media (max-width: 992px) {
@@ -627,70 +572,30 @@ body.auth-error {
     .actions-bar .button, .actions-bar a.button { width: 100%; text-align: center; justify-content: center; }
     .modal-content, .modal-content.modal-lg, .modal-content.modal-xl {
         width: 95%; /* Wider modals */
-        max-height: calc(95vh);
-        padding: 20px; /* Adjust padding for smaller screens */
+        max-height: calc(95vh); /* Limit height on small screens */
+        padding: 20px; /* Adjust padding */
     }
-    .modal-content h2, .modal-header h2 {
-        font-size: 1.1em;
-    }
-    .section-container table, .history-section table {
-        font-size: 0.85em;
-    }
-    .section-container td, .section-container th, .history-section td, .history-section th {
-        padding: 8px 10px;
-    }
-    .info-grid {
-        grid-template-columns: 1fr; /* Stack info boxes */
-    }
+    .modal-content h2, .modal-header h2 { font-size: 1.1em; }
+    .section-container table, .history-section table { font-size: 0.85em; }
+    .section-container td, .section-container th, .history-section td, .history-section th { padding: 8px 10px; }
+    .info-grid { grid-template-columns: 1fr; } /* Stack info boxes */
     .info-box h2 { font-size: 1.05em; }
     .info-box p { font-size: 0.88em; }
 }
+
 @media (max-width: 480px) {
     .header h1, .page-header h1 { font-size: 1.4em; }
-    .actions-bar .button, .actions-bar a.button {
-        padding: 8px 12px; /* Smaller padding */
-        font-size: 0.9em;
-        gap: 5px;
-    }
-    .section-container td, .section-container th, .history-section td, .history-section th {
-        padding: 6px 8px; /* Smaller padding */
-    }
-    .status-badge, .payment-badge { /* Assume payment-badge exists or might be needed */
-        padding: 3px 8px;
-        font-size: 0.75em;
-    }
-    .modal .modal-actions {
-        flex-direction: column; /* Stack buttons */
-    }
-    .modal .modal-actions .button {
-        width: 100%; /* Full width modal buttons */
-        justify-content: center;
-    }
-    .modal-content {
-         padding: 15px; /* Further reduced padding */
-    }
-     .modal h2, .modal-header h2 {
-        font-size: 1em; /* Smaller title */
-        margin-bottom: 15px;
-        padding-bottom: 10px;
-     }
-     .modal .form-group {
-        margin-bottom: 15px; /* Less space between fields */
-     }
-     .modal .form-group label {
-        margin-bottom: 5px; /* Less space below label */
-        font-size: 0.85em;
-     }
-     .modal .form-group input, /* etc. */
-     .modal .form-group select,
-     .modal .form-group textarea {
-        padding: 8px 12px; /* Smaller padding inside inputs */
-        font-size: 0.9em;
-     }
-     .modal .modal-actions {
-        margin-top: 20px; /* Less space above buttons */
-        padding-top: 15px;
-     }
+    .actions-bar .button, .actions-bar a.button { padding: 8px 12px; font-size: 0.9em; gap: 5px; }
+    .section-container td, .section-container th, .history-section td, .history-section th { padding: 6px 8px; }
+    .status-badge, .payment-badge { padding: 3px 8px; font-size: 0.75em; }
+    .modal .modal-actions { flex-direction: column; gap: 8px; } /* Stack buttons */
+    .modal .modal-actions .button { width: 100%; justify-content: center; }
+    .modal-content { padding: 15px; }
+    .modal h2, .modal-header h2 { font-size: 1em; margin-bottom: 15px; padding-bottom: 10px; }
+    .modal .form-group { margin-bottom: 15px; }
+    .modal .form-group label { margin-bottom: 5px; font-size: 0.85em; }
+    .modal .form-group input, .modal .form-group select, .modal .form-group textarea { padding: 8px 12px; font-size: 0.9em; }
+    .modal .modal-actions { margin-top: 20px; padding-top: 15px; }
 }
 
 /* Animation */
