@@ -2,7 +2,6 @@
 /* Styles specifically for supplier_account_detail.html page */
 /* Based on customer page theme and supplier page structure */
 /* Includes styles for Ledger, Adjustment, Toggle, Delete features */
-/* Modal styles updated to match customer_account_detail.css */
 
 /* --- Root Variables (Combined & Refined) --- */
 :root {
@@ -18,717 +17,196 @@
     --dark-gray: #6c757d;    /* Use as text-muted */
     --text-color: #212529;     /* Darker text like customer page */
     --text-muted: #6c757d;
-    --white-color: #ffffff; /* Added for consistency */
+    --white-color: #ffffff;
     --black-color: #000000;
     --font-family: 'Poppins', sans-serif;
     --border-radius: 6px;     /* Customer page radius */
-    --box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); /* General shadow */
-    --modal-box-shadow: 0 5px 20px rgba(0, 0, 0, 0.25); /* Specific for modals */
+    --box-shadow: 0 2px 5px rgba(0, 0, 0, 0.08); /* Softer shadow */
+    --border-color: #dee2e6; /* Customer page border color */
+    --selected-row-bg: #e0ecf8;
+    --primary-color-light: #e6f0ff;
+    --scrollbar-track-color: #f1f1f1;
+    --scrollbar-thumb-color: #c1c1c1;
+    --scrollbar-thumb-hover-color: #a8a8a8;
 }
 
-/* --- Base & Typography --- */
-body, html {
-    margin: 0;
-    padding: 0;
-    font-family: var(--font-family);
-    background-color: #f4f7fc; /* Lighter overall background */
-    color: var(--text-color);
-    font-size: 16px; /* Base font size */
-    line-height: 1.6;
-}
+/* --- Base Styles --- */
+body, input, button, select, textarea { font-family: var(--font-family); }
+body { background-color: #f0f2f5; margin: 0; color: var(--text-color); line-height: 1.5; font-size: 15px; }
+html { scrollbar-width: thin; scrollbar-color: var(--scrollbar-thumb-color) var(--scrollbar-track-color); }
+html::-webkit-scrollbar { width: 8px; height: 8px; }
+html::-webkit-scrollbar-track { background: var(--scrollbar-track-color); }
+html::-webkit-scrollbar-thumb { background-color: var(--scrollbar-thumb-color); border-radius: 4px; border: 2px solid var(--scrollbar-track-color); }
+html::-webkit-scrollbar-thumb:hover { background-color: var(--scrollbar-thumb-hover-color); }
 
-.container {
-    max-width: 1300px; /* Slightly wider container */
-    margin: 25px auto;
-    padding: 20px 30px;
+/* --- Layout --- */
+.container { /* Styles for the main page wrapper */
+    max-width: 1400px;
+    margin: 15px auto;
+    padding: 25px; /* Padding inside container */
     background-color: var(--white-color);
-    border-radius: 8px; /* Slightly larger radius for container */
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
-}
-
-/* --- Header & Breadcrumbs (No changes from original logic) --- */
-.header, .page-header { /* Consolidate */
-    display: flex;
-    align-items: center;
-    gap: 15px;
-    margin-bottom: 20px;
-    padding-bottom: 15px;
-    border-bottom: 1px solid var(--medium-gray);
-}
-.header i, .page-header i {
-    font-size: 1.8em;
-    color: var(--primary-color);
-}
-.header h1, .page-header h1 {
-    margin: 0;
-    font-size: 1.6em; /* Slightly smaller */
-    font-weight: 600;
-    color: #333;
-}
-#supp-detail-name-header { /* Specific ID */
-    color: var(--primary-color); /* Highlight name */
-}
-
-.breadcrumb-container {
-    margin-bottom: 30px;
-    font-size: 0.9em;
-    color: var(--text-muted);
-}
-.breadcrumb-container a {
-    color: var(--primary-color);
-    text-decoration: none;
-    transition: color 0.2s ease;
-}
-.breadcrumb-container a:hover {
-    color: #003d80; /* Darker primary */
-    text-decoration: underline;
-}
-.breadcrumb-container span { /* Current page */
-    color: var(--text-color);
-    font-weight: 500;
-}
-
-
-/* --- Actions Bar (No changes from original logic) --- */
-.actions-bar {
-    display: flex;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 12px;
-    padding: 15px 20px;
-    background-color: var(--light-bg);
+    border-radius: 8px;
+    box-shadow: 0 3px 12px rgba(0, 0, 0, 0.07);
     border: 1px solid var(--medium-gray);
-    border-radius: var(--border-radius);
-    margin-bottom: 30px;
-    min-height: 50px;
-}
-.actions-bar .button,
-.actions-bar a.button {
-    min-width: 150px; /* Ensure reasonable width */
-    height: 40px;
     box-sizing: border-box;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    padding: 8px 18px;
-    font-weight: 500;
-    border: none;
-    color: white;
-    border-radius: var(--border-radius);
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    transition: all 0.2s ease;
-    text-decoration: none;
-    cursor: pointer;
-    font-size: 0.9em; /* Match customer page button size */
-    gap: 8px; /* Space between icon and text */
 }
-.actions-bar .button i,
-.actions-bar a.button i {
-    font-size: 1em; /* Icon size relative to button text */
-}
-.actions-bar .button:hover,
-.actions-bar a.button:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
-}
+.header { display: flex; align-items: center; gap: 15px; margin-bottom: 15px; padding-bottom: 15px; border-bottom: 1px solid var(--border-color); }
+.header .header-icon { font-size: 1.8em; color: var(--primary-color); }
+.header h1 { margin: 0; font-size: 1.7em; color: var(--primary-color); font-weight: 600; }
+.header h1 span { font-weight: 600; }
+.breadcrumb-container { font-size: 0.9em; color: var(--text-muted); margin-bottom: 20px; }
+.breadcrumb-container a { color: var(--primary-color); text-decoration: none; }
+.breadcrumb-container a:hover { text-decoration: underline; }
+.breadcrumb-container span { margin-left: 5px; color: var(--text-color); }
+.breadcrumb-container span::before { content: "/"; margin-right: 5px; color: var(--text-muted); }
 
-/* Specific Action Button Colors */
-#editSupplierBtn { background-color: var(--info-color); }
-#editSupplierBtn:hover { background-color: #117a8b; }
+/* --- Action Bar --- */
+.actions-bar { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; padding: 15px 20px; background-color: var(--light-bg); border: 1px solid var(--border-color); border-radius: var(--border-radius); margin-bottom: 25px; min-height: 50px; }
+.actions-bar .button, .actions-bar a.button { min-width: 140px; height: 40px; box-sizing: border-box; display: inline-flex; align-items: center; justify-content: center; padding: 8px 15px; font-weight: 500; border: none; color: white; box-shadow: 0 2px 4px rgba(0,0,0,0.1); transition: all 0.2s ease; text-decoration: none; cursor: pointer; font-family: var(--font-family); border-radius: var(--border-radius); gap: 8px; }
+.actions-bar .button:hover:not(:disabled), .actions-bar a.button:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.15); }
+.actions-bar .button:disabled, .actions-bar a.button.disabled { background-color: #adb5bd !important; color: #fff !important; cursor: not-allowed; opacity: 0.65; transform: none; box-shadow: none; border-color: transparent !important; }
+/* Button Colors */
+.actions-bar .payment-button { background-color: var(--success-color); }
+.actions-bar .payment-button:hover:not(:disabled) { background-color: #1e7e34; }
+.actions-bar .edit-button { background-color: var(--info-color); }
+.actions-bar .edit-button:hover:not(:disabled) { background-color: #117a8b; }
+.actions-bar .back-button { background-color: var(--secondary-color); }
+.actions-bar .back-button:hover:not(:disabled) { background-color: #5a6268; }
+.actions-bar .adjustment-button { background-color: var(--warning-color); color: var(--text-color); }
+.actions-bar .adjustment-button:hover:not(:disabled) { background-color: #e0a800; }
+.actions-bar .status-toggle-button.enable { background-color: var(--success-color); } /* Class set by JS */
+.actions-bar .status-toggle-button.disable { background-color: var(--warning-color); color: var(--text-color); } /* Class set by JS */
+.actions-bar .delete-button { background-color: var(--danger-color); }
+.actions-bar .delete-button:hover:not(:disabled) { background-color: #bd2130; }
+.actions-bar .primary-button { background-color: var(--primary-color); } /* For Add New PO Link */
+.actions-bar .primary-button:hover:not(:disabled) { background-color: #00418a; }
 
-#addPaymentBtn { background-color: var(--success-color); }
-#addPaymentBtn:hover { background-color: #1e7e34; }
-
-#addAdjustmentBtn { background-color: var(--warning-color); color: var(--text-color); }
-#addAdjustmentBtn:hover { background-color: #e0a800; }
-
-#addNewPOBtn { background-color: var(--primary-color); }
-#addNewPOBtn:hover { background-color: #00418a; }
-
-/* Toggle Button Needs Dynamic Classes from JS */
-#toggleStatusBtn.secondary-button { background-color: var(--warning-color); color: #212529; } /* For 'Disable' state */
-#toggleStatusBtn.secondary-button:hover { background-color: #e0a800; }
-#toggleStatusBtn.success-button { background-color: var(--success-color); color: white; } /* For 'Enable' state */
-#toggleStatusBtn.success-button:hover { background-color: #1e7e34; }
-
-#deleteSupplierBtn { background-color: var(--danger-color); }
-#deleteSupplierBtn:hover { background-color: #bd2130; }
-
-.actions-bar .button:disabled,
-.actions-bar a.button.disabled {
-    background-color: #adb5bd;
-    cursor: not-allowed;
-    opacity: 0.65;
-    transform: none;
-    box-shadow: none;
-}
-
-/* --- Info Grid (No changes from original logic) --- */
-.info-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: 25px;
-    margin-bottom: 30px;
-}
-
-.info-box {
-    background-color: var(--white-color);
-    border: 1px solid var(--medium-gray);
-    border-radius: var(--border-radius);
-    padding: 20px 25px;
-    box-shadow: var(--box-shadow);
-}
-
-.info-box h2 {
-    font-size: 1.15em;
-    color: var(--primary-color);
-    margin-top: 0;
-    margin-bottom: 20px;
-    padding-bottom: 12px;
-    border-bottom: 1px solid #eee;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    font-weight: 600;
-}
-.info-box h2 i {
-    color: var(--primary-color);
-    opacity: 0.8;
-}
-
-.info-box p {
-    margin-bottom: 12px;
-    font-size: 0.95em;
-    line-height: 1.6;
-    color: #555;
-}
-.info-box p strong {
-    font-weight: 600;
-    color: var(--text-color);
-    min-width: 110px;
-    display: inline-block;
-    margin-right: 5px;
-}
-
-/* Account Summary Balance Styles (JS determines class) */
-#summary-balance.balance-payable { color: var(--danger-color); font-weight: bold; } /* Payable */
-#summary-balance.balance-advance { color: var(--success-color); font-weight: bold; } /* Advance */
-#summary-balance.balance-info { color: var(--text-muted); font-weight: normal; }    /* Zero */
-
-/* Status Badge */
-.status-badge {
-    font-weight: 500;
-    padding: 3px 10px;
-    border-radius: 12px; /* Pill shape */
-    font-size: 0.8em;
-    color: white;
-    background-color: var(--dark-gray); /* Default */
-    white-space: nowrap;
-    display: inline-block;
-    line-height: 1.2;
-    text-align: center;
-    vertical-align: middle;
-    text-transform: capitalize;
-}
-.status-badge.status-active { background-color: var(--success-color); }
-.status-badge.status-inactive { background-color: var(--dark-gray); }
+/* --- Info Grid --- */
+.info-grid { display: grid !important; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 25px; margin-bottom: 30px; }
+.info-box { background-color: var(--white-color); border: 1px solid var(--border-color); border-radius: var(--border-radius); padding: 20px 25px; box-shadow: var(--box-shadow); }
+.info-box h2 { font-size: 1.15em; color: var(--primary-color); margin-top: 0; margin-bottom: 20px; padding-bottom: 12px; border-bottom: 1px solid #eee; display: flex; align-items: center; gap: 10px; font-weight: 600; }
+.info-box h2 i { color: var(--primary-color); opacity: 0.8; }
+.info-box p { margin-bottom: 12px; font-size: 0.95em; line-height: 1.6; color: #555; display: flex; justify-content: space-between; align-items: center; }
+.info-box p:last-child { margin-bottom: 0; }
+.info-box p strong { font-weight: 600; color: var(--text-color); min-width: 110px; display: inline-block; margin-right: 5px; }
+.info-box p span { word-break: break-word; text-align: right; }
+/* Account Summary Specific Styles */
+#summaryTotalPoValue, #summaryTotalPaid { font-weight: 500; }
+#summaryBalance { font-weight: bold; }
+#summaryBalance.balance-due { color: var(--danger-color); } /* Used by JS */
+#summaryBalance.balance-credit { color: var(--success-color); } /* Used by JS */
+#summaryBalance.balance-zero { color: var(--text-muted); font-weight: normal; } /* Used by JS */
+/* Supplier Status Badge */
+#supplierStatusBadge { font-weight: 500; padding: 3px 10px; border-radius: 12px; font-size: 0.8em; color: white; background-color: var(--secondary-color); white-space: nowrap; display: inline-block; line-height: 1.2; text-align: center; vertical-align: middle; text-transform: capitalize; }
+#supplierStatusBadge.status-active { background-color: var(--success-color); }
+#supplierStatusBadge.status-inactive { background-color: var(--secondary-color); }
+/* Remarks/Notes Box */
+#supplierRemarksNotes { display: block; white-space: pre-wrap; font-size: 0.95em; color: #555; line-height: 1.6; min-height: 50px; }
 
 
-/* --- History/Table Sections (No changes from original logic) --- */
-.history-section, .section-container { /* Consolidate */
-    margin-top: 30px;
-}
-
-.history-section h2, .section-container h2 {
-    font-size: 1.2em;
-    margin-bottom: 15px;
-    padding-bottom: 10px;
-    border-bottom: 2px solid var(--primary-color);
-    color: var(--primary-color);
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    font-weight: 600;
-}
-.history-section h2 i, .section-container h2 i {
-    opacity: 0.9;
-}
-
-/* Table Container */
-.table-container {
-    max-height: 350px;
-    overflow-y: auto;
-    border: 1px solid var(--medium-gray);
-    border-radius: var(--border-radius);
-    margin-bottom: 30px;
-    background-color: #fff;
-    padding: 0;
-}
-.ledger-table-container { /* Specific if needed */
-   /* Inherits .table-container */
-}
-
-/* Base Table Styles */
-.history-section table, .section-container table {
+/* --- History/Table Section --- */
+.history-section { /* Use this wrapper class now */ margin-top: 30px; }
+.history-section h2, .section-container h3 { /* Style both H2 & H3 */ font-size: 1.2em; margin-top: 0; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 2px solid var(--primary-color); color: var(--primary-color); display: flex; align-items: center; gap: 10px; font-weight: 600; }
+.history-section h2 i, .section-container h3 i { opacity: 0.9; }
+.table-container { max-height: 400px; overflow-y: auto; border: 1px solid var(--border-color); border-radius: var(--border-radius); margin-bottom: 30px; background-color: #fff; padding: 0; overflow-x: auto; }
+table.details-table, /* Target specific tables */
+#accountLedgerTable {
     width: 100%;
     border-collapse: collapse;
     border: none;
     font-size: 0.9em;
 }
+thead th { background-color: var(--light-bg); padding: 12px 15px; text-align: left; font-weight: 600; color: var(--text-color); border-bottom: 2px solid var(--border-color); position: sticky; top: 0; z-index: 1; }
+tbody tr { border-bottom: 1px solid #eff2f5; transition: background-color 0.15s ease; }
+tbody tr:last-child { border-bottom: none; }
+tbody tr:hover { background-color: #f5f8fa; }
+td { padding: 10px 15px; text-align: left; vertical-align: middle; color: var(--text-muted); line-height: 1.4; }
+/* Align amounts */
+.amount-po, .amount-paid, .number-cell,
+#accountLedgerTable td:nth-child(3), /* Ledger Debit */
+#accountLedgerTable td:nth-child(4), /* Ledger Credit */
+#accountLedgerTable td:nth-child(5) /* Ledger Balance */ { text-align: right !important; white-space: nowrap; color: var(--text-color); font-weight: 500; }
+.amount-paid { color: var(--success-color); }
+#accountLedgerTable td:nth-child(5).ledger-balance-negative { color: var(--danger-color); } /* Ledger specific balance colors */
+#accountLedgerTable td:nth-child(5).ledger-balance-positive { color: var(--success-color); }
+#accountLedgerTable td:nth-child(5).ledger-balance-zero { color: var(--text-muted); font-weight: normal; }
 
-/* Table Header */
-.history-section thead th, .section-container thead th {
-    background-color: var(--light-bg);
-    padding: 12px 15px;
-    text-align: left;
-    font-weight: 600;
-    color: var(--text-color);
-    border-bottom: 2px solid var(--medium-gray);
-    position: sticky;
-    top: 0;
-    z-index: 1;
-}
-
-/* Table Body */
-.history-section tbody tr, .section-container tbody tr {
-    border-bottom: 1px solid #eff2f5;
-    transition: background-color 0.15s ease;
-}
-.history-section tbody tr:last-child, .section-container tbody tr:last-child {
-    border-bottom: none;
-}
-.history-section tbody tr:hover, .section-container tbody tr:hover {
-    background-color: #f5f8fa;
-}
-.history-section tbody tr.po-row-clickable:hover, /* PO Specific */
-.section-container tbody tr.clickable-row:hover { /* Generic clickable */
-    background-color: #eaf5ff;
-    cursor: pointer;
-}
+/* Status Badges (Copied from supplier_management.css) */
+.status-badge, .payment-badge { padding: 4px 10px; font-size: 0.8em; border-radius: 12px; font-weight: 500; white-space: nowrap; display: inline-block; text-transform: capitalize; text-align: center; border: 1px solid transparent;}
+.status-new { background-color: #cfe2ff; color: #0a58ca; border-color: #b6d4fe;}
+.status-sent { background-color: #e2e3e5; color: #41464b; border-color: #d3d6d8;}
+.status-printing { background-color: #ffedd5; color: #9a3412; border-color: #fed7aa;}
+.status-product-received { background-color: var(--purple-color); color: var(--white-color); border-color: var(--purple-color);}
+.status-paid, .payment-status-paid, .status-po-paid { background-color: #d1e7dd; color: #0f5132; border-color: #badbcc;}
+.status-cancel { background-color: #f8d7da; color: #842029; border-color: #f5c2c7;}
+.status-unknown { background-color: #eee; color: #555; border: 1px solid #ddd;}
+.payment-pending { background-color: #f8d7da; color: #842029; border-color: #f5c2c7;}
+.payment-partially-paid, .status-partially-paid { background-color: #fff3cd; color: #664d03; border-color: #ffecb5;}
 
 
-/* Table Cells */
-.history-section td, .section-container td {
-    padding: 10px 15px;
-    text-align: left;
-    vertical-align: middle;
-    color: var(--text-muted);
-    line-height: 1.4;
-}
-
-/* Key Info Cells */
-#supplierPurchaseOrderTable td:nth-child(1), /* PO ID */
-#supplierAccountLedgerTable td:nth-child(1) /* Ledger Date */ {
-    font-weight: 500;
-    color: var(--text-color);
-}
-
-/* Description Cells */
-#supplierPurchaseOrderTable td:nth-child(3), /* PO Items */
-#supplierAccountLedgerTable td:nth-child(2) /* Ledger Desc */ {
-    white-space: normal;
-    min-width: 150px;
-    word-break: break-word;
-}
-
-/* Ledger Table Specific Styles */
-#supplierAccountLedgerTable th,
-#supplierAccountLedgerTable td {
-    padding: 10px 12px; /* Consistent padding */
-}
-#supplierAccountLedgerTable th {
-    font-size: 0.85em; /* Slightly smaller header font */
-}
-/* Align Debit, Credit, Balance Right */
-#supplierAccountLedgerTable th:nth-child(3), /* Debit Header */
-#supplierAccountLedgerTable td:nth-child(3), /* Debit Cell */
-#supplierAccountLedgerTable th:nth-child(4), /* Credit Header */
-#supplierAccountLedgerTable td:nth-child(4), /* Credit Cell */
-#supplierAccountLedgerTable th:nth-child(5), /* Balance Header */
-#supplierAccountLedgerTable td:nth-child(5) /* Balance Cell */ {
-    text-align: right;
-    white-space: nowrap;
-}
-/* Ledger Running Balance Cell Styling */
-#supplierAccountLedgerTable td.ledger-balance-negative { /* Payable Balance (Red) */
-    color: var(--danger-color);
-    font-weight: 500;
-}
-#supplierAccountLedgerTable td.ledger-balance-positive { /* Advance Balance (Green) */
-    color: var(--success-color);
-    font-weight: 500;
-}
-#supplierAccountLedgerTable td.ledger-balance-zero { /* Zero Balance */
-     color: var(--text-muted);
-    font-weight: normal;
-}
-
-/* Scrollbar Styles (Optional) */
-.table-container::-webkit-scrollbar { width: 8px; }
-.table-container::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 10px; }
-.table-container::-webkit-scrollbar-thumb { background: #ccc; border-radius: 10px; }
-.table-container::-webkit-scrollbar-thumb:hover { background: #aaa; }
-
-/* --- Error Display (No changes from original logic) --- */
-.error-message {
-    color: var(--danger-color);
-    background-color: #f8d7da; /* Light red background */
-    border: 1px solid #f5c6cb; /* Red border */
-    padding: 12px 15px;
-    margin: 15px 0;
-    border-radius: var(--border-radius);
-    font-size: 0.9em;
-    font-weight: 500;
-}
-.error-message ul {
-    margin: 0;
-    padding-left: 20px;
-}
-
-/* === MODAL STYLES (Updated based on Customer Page Design) === */
-/* This section replaces the old modal styles */
-
-/* Base Modal Styles */
-.modal {
-    display: none; /* Hidden by default - JS will add .active class */
-    position: fixed;
-    z-index: 1050;
-    left: 0;
-    top: 0;
-    width: 100%;
-    height: 100%;
-    overflow: auto; /* Enable scroll if needed */
-    background-color: rgba(0, 0, 0, 0.55); /* Semi-transparent background overlay */
-    align-items: center; /* Vertically center */
-    justify-content: center; /* Horizontally center */
-    padding: 15px; /* Padding around modal content */
-    box-sizing: border-box;
-}
-
-/* Style for when modal is active (JS adds/removes this class) */
-.modal.active {
-    display: flex; /* Show the modal using flex alignment */
-}
-
-/* Modal Content Box */
-.modal-content {
-    background-color: var(--white-color);
-    margin: auto; /* Centered */
-    padding: 25px 30px; /* Inner padding */
-    border: none; /* Remove default border if any */
-    width: 90%; /* Responsive width */
-    max-width: 650px; /* Default Max width - adjust as needed */
-    border-radius: var(--border-radius); /* Use defined radius */
-    position: relative; /* For positioning close button */
-    box-shadow: var(--modal-box-shadow); /* Use specific modal shadow */
-    z-index: 1051; /* Above overlay */
-    display: flex; /* Use flexbox for internal layout */
-    flex-direction: column; /* Stack header, body, actions vertically */
-    max-height: 90vh; /* Limit height to prevent overflow on short screens */
-    /* overflow-y: auto; REMOVED - applying to modal-body instead */
-}
-
-/* Specific sizes (adjust max-width as needed for your supplier modals) */
-.modal-content.small-modal {
-    max-width: 480px; /* For confirmation modals */
-}
-.modal-content.large-modal {
-    max-width: 750px; /* Example for larger forms like Edit */
-}
-/* Apply specific max-widths based on supplier modal IDs if necessary */
-#editSupplierModal .modal-content { max-width: 750px; } /* Example if Edit Supplier is large */
-#addPaymentModal .modal-content { max-width: 550px; } /* Example */
-#addAdjustmentModal .modal-content { max-width: 480px; }
+/* === Modal Styles === */
+.modal { display: none; position: fixed; z-index: 1050; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.55); align-items: center; justify-content: center; padding: 15px; box-sizing: border-box; }
+.modal.active { display: flex; }
+.modal-content { background-color: #fff; margin: auto; padding: 0; border: none; width: 90%; max-width: 600px; border-radius: var(--border-radius); position: relative; box-shadow: 0 5px 20px rgba(0,0,0,0.25); z-index: 1051; display: flex; flex-direction: column; max-height: 85vh; overflow: hidden; }
+.modal-content.small-modal { max-width: 500px; }
+.modal-header { padding: 12px 20px; border-bottom: 1px solid var(--border-color); background-color: var(--light-bg); border-radius: var(--border-radius) var(--border-radius) 0 0; flex-shrink: 0; display: flex; justify-content: space-between; align-items: center; }
+.modal-header h2 { margin: 0; font-size: 1.2em; font-weight: 600; color: var(--secondary-color); text-align: left; display: flex; align-items: center; gap: 10px; padding-right: 30px; }
+/* Icon Colors */
+.modal-header h2 .info-icon { color: var(--info-color); }
+.modal-header h2 .success-icon { color: var(--success-color); }
+.modal-header h2 .warning-icon { color: var(--warning-color); }
+.modal-header h2 .danger-icon { color: var(--danger-color); }
+.modal-header h2 #paymentSupplierName,
+.modal-header h2 #adjustmentSupplierName,
+.modal-header h2 #toggleSupplierName,
+.modal-header h2 #deleteSupplierName { color: var(--primary-color); font-weight: 700; margin-left: 5px; }
+.close-btn { color: var(--text-muted); position: absolute; top: 8px; right: 8px; font-size: 24px; font-weight: bold; cursor: pointer; line-height: 1; background: none; border: none; padding: 5px; z-index: 10; }
+.close-btn:hover, .close-btn:focus { color: var(--danger-color); }
+.modal-body { padding: 20px 25px; overflow-y: auto; flex-grow: 1; }
+.modal-actions { margin-top: 0; padding: 12px 25px; border-top: 1px solid var(--border-color); display: flex; justify-content: flex-end; gap: 10px; background-color: var(--light-bg); border-radius: 0 0 var(--border-radius) var(--border-radius); flex-shrink: 0; }
+.modal-actions .button { font-weight: 500; padding: 8px 18px; height: auto; min-width: 100px; }
+.modal .form-group { margin-bottom: 15px; }
+.modal .form-group label { display: block; margin-bottom: 6px; font-weight: 500; color: #444; font-size: 0.9em; }
+.modal .form-group label .required { color: var(--danger-color); margin-left: 3px; font-weight: bold; }
+.modal .form-group input[type="text"], .modal .form-group input[type="tel"], .modal .form-group input[type="email"], .modal .form-group input[type="number"], .modal .form-group input[type="date"], .modal .form-group select, .modal .form-group textarea { font-size: 0.95em; padding: 10px 14px; border: 1px solid #ccc; border-radius: var(--border-radius); width: 100%; box-sizing: border-box; transition: border-color 0.2s ease, box-shadow 0.2s ease; font-family: var(--font-family); height: 40px; background-color: #fff; }
+.modal .form-group textarea { resize: vertical; min-height: 65px; height: auto; }
+.modal .form-group select { -webkit-appearance: none; -moz-appearance: none; appearance: none; background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%236C757D%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E'); background-repeat: no-repeat; background-position: right 10px center; background-size: 9px 9px; padding-right: 30px; cursor: pointer; }
+.modal .form-group input:focus, .modal .form-group select:focus, .modal .form-group textarea:focus { border-color: var(--primary-color); box-shadow: 0 0 0 0.2rem rgba(0, 86, 179, 0.25); outline: none; }
+.modal .error-message { color: var(--danger-color); background-color: #f8d7da; border: 1px solid var(--danger-color); border-radius: var(--border-radius); padding: 8px 12px; font-size: 0.88em; margin-top: 10px; text-align: center; width: 100%; box-sizing: border-box; display: none; }
+.modal .error-message[style*="block"] { display: block !important; }
+.modal small { font-size: 0.85em; color: var(--text-muted); margin-top: 5px; display: block; }
+/* Radio button styling */
+.modal .form-group input[type="radio"] { margin-right: 5px; vertical-align: middle; cursor: pointer; accent-color: var(--primary-color); }
+.modal .form-group label[for*="adjustmentType"], .modal .form-group label[for*="supplierAdjustmentType"] { margin-right: 15px; font-weight: normal; font-size: 0.95em; display: inline-block; margin-bottom: 0; cursor: pointer; }
+#addSupplierAdjustmentForm .form-group div:has(input[type="radio"]) { margin-top: 5px; line-height: 1.5; }
+#addSupplierAdjustmentForm .form-group p.help-text { font-size: 0.8em; color: #6c757d; margin-top: 5px; margin-bottom: 0; }
+/* Payment Modal Checkbox List */
+#paymentLinkPOList { max-height: 150px; overflow-y: auto; border: 1px solid var(--border-color); padding: 10px; border-radius: var(--border-radius); background-color: var(--light-bg); margin-top: 5px; }
+#paymentLinkPOList p { font-size: 0.9em; color: var(--text-muted); margin: 5px 0; font-style: italic; }
+#paymentLinkPOList .po-checkbox-item { margin-bottom: 5px; padding: 6px 10px; border-radius: 3px; cursor: pointer; transition: background-color 0.2s ease; display: flex; align-items: center; background-color: #fff; border: 1px solid transparent; }
+#paymentLinkPOList .po-checkbox-item:hover { background-color: var(--primary-color-light); border-color: #b3d7ff; }
+#paymentLinkPOList input[type="checkbox"] { margin-right: 10px; vertical-align: middle; accent-color: var(--primary-color); cursor: pointer; transform: scale(1); flex-shrink: 0; }
+#paymentLinkPOList label { font-weight: normal; font-size: 0.9em; display: inline-block; margin-bottom: 0; cursor: pointer; vertical-align: middle; flex-grow: 1; line-height: 1.4; }
+#paymentLinkPOList label .po-number { font-weight: 600; color: var(--text-color); }
+#paymentLinkPOList label .po-date { color: var(--text-muted); margin-left: 6px; font-size: 0.9em; }
+#paymentLinkPOList label .po-balance { color: var(--text-muted); margin-left: 10px; font-style: normal; font-size: 0.9em; white-space: nowrap; }
+/* Confirmation Modals */
+.confirmation-check { margin-top: 25px; margin-bottom: 25px; display: flex; align-items: flex-start; gap: 10px; background-color: #f8f9fa; padding: 15px; border-radius: var(--border-radius); border: 1px solid var(--border-color); }
+.confirmation-check input[type="checkbox"] { transform: scale(1.1); cursor: pointer; margin: 0; margin-top: 3px; flex-shrink: 0; accent-color: var(--primary-color); }
+.confirmation-check label { font-size: 0.9em; color: #333; cursor: pointer; margin: 0; font-weight: 500; line-height: 1.4; }
+.warning-message { font-weight: 500; color: #856404; background-color: #fff3cd; border: 1px solid #ffeeba; border-radius: var(--border-radius); padding: 12px 18px; margin-top: 15px; margin-bottom: 20px; font-size: 0.9em; text-align: center; }
+#confirmDeleteModal .warning-message, #confirmDeleteSupplierModal .warning-message { color: var(--danger-color); background-color: #f8d7da; border: 1px solid #f5c6cb; }
+#confirmToggleBtn:disabled, #confirmDeleteBtn:disabled, #confirmSupplierToggleBtn:disabled, #confirmSupplierDeleteBtn:disabled { background-color: #adb5bd !important; cursor: not-allowed; opacity: 0.65; border-color: transparent !important; }
 
 
-/* Close Button ('x') */
-.close-btn {
-    color: #aaa;
-    position: absolute;
-    top: 10px;
-    right: 15px;
-    font-size: 28px;
-    font-weight: bold;
-    cursor: pointer;
-    line-height: 1;
-    background: none;
-    border: none;
-    padding: 0;
-    text-decoration: none;
-}
-.close-btn:hover,
-.close-btn:focus {
-    color: black;
-}
+/* --- Utility Styles --- */
+.required { color: var(--danger-color); margin-left: 2px; }
+.loading-state { color: var(--text-muted) !important; font-style: italic !important; }
+.error-message-area { color: var(--danger-color); background-color: #f8d7da; border: 1px solid #f5c6cb; border-radius: var(--border-radius); padding: 10px 15px; margin-bottom: 15px; font-size: 0.95em; display: none; }
+#loadingIndicator { display: none; text-align: center; padding: 20px; font-size: 1.2em; color: var(--dark-gray); }
+#loadingIndicator i { margin-right: 8px; }
 
-/* Modal Header (Assuming H2 is used) */
-.modal h2 {
-    margin-top: 0;
-    margin-bottom: 25px;
-    font-size: 1.3em;
-    font-weight: 600;
-    color: #333;
-    text-align: center;
-    border-bottom: 1px solid #eee;
-    padding-bottom: 15px;
-    width: 100%; /* Ensure it spans width */
-    display: flex; /* For icon alignment */
-    align-items: center;
-    justify-content: center;
-    gap: 10px; /* Space between icon and text */
-    flex-shrink: 0; /* Prevent header from shrinking */
-}
-/* Style icons in header if you use them */
-.modal h2 i {
-    font-size: 1.1em;
-    opacity: 0.9;
-}
-.modal h2 .info-icon { color: var(--info-color); }
-.modal h2 .success-icon { color: var(--success-color); }
-.modal h2 .warning-icon { color: var(--warning-color); }
-.modal h2 .danger-icon { color: var(--danger-color); }
-
-/* Modal Body (Container for main content/form) */
-.modal .modal-body {
-    padding: 5px 0; /* Add some vertical padding if needed */
-    overflow-y: auto; /* Allow body to scroll if content is too long */
-    flex-grow: 1; /* Allow body to take available space */
-}
-
-/* Modal Form Styles */
-.modal .form-group {
-    margin-bottom: 18px;
-}
-.modal .form-group label {
-    display: block;
-    margin-bottom: 8px;
-    font-weight: 500;
-    color: #444;
-    font-size: 0.9em;
-}
-.modal .form-group input[type="text"],
-.modal .form-group input[type="tel"],
-.modal .form-group input[type="email"],
-.modal .form-group input[type="number"],
-.modal .form-group input[type="date"],
-.modal .form-group select,
-.modal .form-group textarea {
-    font-size: 0.95em;
-    padding: 10px 14px;
-    border: 1px solid #ccc;
-    border-radius: 4px; /* Slightly smaller radius for inputs */
-    width: 100%;
-    box-sizing: border-box;
-    transition: border-color 0.2s ease, box-shadow 0.2s ease;
-    font-family: var(--font-family); /* Ensure inputs use Poppins */
-}
-.modal .form-group input:focus,
-.modal .form-group select:focus,
-.modal .form-group textarea:focus {
-    border-color: var(--primary-color);
-    box-shadow: 0 0 0 0.2rem rgba(0, 86, 179, 0.25); /* Focus ring */
-    outline: none;
-}
-.modal .form-group .required {
-    color: var(--danger-color);
-    margin-left: 3px;
-    font-weight: bold;
-}
-.modal .form-group textarea {
-    resize: vertical;
-    min-height: 70px;
-}
-/* Radio button styling (copy from customer CSS if needed) */
-.modal .form-group input[type="radio"] { margin-right: 5px; vertical-align: middle; cursor: pointer;}
-.modal .form-group label[for*="adjustmentType"] { /* Example for adjustment radios */
-    margin-right: 15px;
-    font-weight: normal;
-    font-size: 0.95em;
-    display: inline-block;
-    margin-bottom: 0;
-    cursor: pointer;
-}
-#addAdjustmentForm .form-group div { /* Container for radios */
-    margin-top: 5px;
-    line-height: 1.5;
-}
-#addAdjustmentForm .form-group p { /* Helper text */
-    font-size: 0.8em;
-    color: #6c757d;
-    margin-top: 5px;
-    margin-bottom: 0;
-}
-
-/* Grid layout for Edit Supplier modal (adjust column count/spanning as needed) */
-#editSupplierForm { /* Assuming this is the form ID */
-    display: grid;
-    /* Default to 1 column, override for larger screens below if needed */
-    grid-template-columns: 1fr;
-    gap: 0px 25px; /* Column gap only */
-    align-items: start;
-}
-/* Adjust grid for wider screens */
-@media (min-width: 600px) {
-    #editSupplierForm {
-        grid-template-columns: 1fr 1fr; /* Two columns on wider screens */
-    }
-     /* Example: Span address, notes, GSTIN across two columns */
-    #editSupplierForm .form-group-address,
-    #editSupplierForm .form-group-notes,
-    #editSupplierForm .form-group-gstin {
-        grid-column: 1 / -1; /* Span full width */
-    }
-}
-
-
-/* Modal Actions (Footer Buttons) */
-.modal .modal-actions {
-    margin-top: 30px;
-    padding-top: 20px;
-    border-top: 1px solid #eee;
-    display: flex;
-    justify-content: flex-end; /* Align buttons to the right */
-    gap: 10px; /* Space between buttons */
-    width: 100%; /* Ensure it spans width */
-    flex-shrink: 0; /* Prevent footer from shrinking */
-    background-color: var(--white-color); /* Ensure background */
-}
-
-/* General Button Styling inside Modals */
-/* NOTE: Ensure your modal buttons have the class 'button' */
-.modal .button {
-    font-weight: 500;
-    padding: 10px 20px; /* Standard padding */
-    height: auto; /* Allow natural height */
-    min-width: 100px; /* Minimum width */
-    border: none;
-    border-radius: var(--border-radius); /* Use defined radius */
-    cursor: pointer;
-    transition: background-color 0.2s ease, transform 0.1s ease;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px; /* Space between icon and text */
-    text-decoration: none; /* For link buttons */
-    font-size: 0.9em; /* Match customer page */
-}
-
-.modal .button:hover {
-    transform: translateY(-1px); /* Subtle hover effect */
-}
-
-/* Specific action button colors (Add/adjust based on your button IDs/classes) */
-.modal .save-button,      /* Generic save/update */
-.modal #updateSupplierBtn,
-.modal #savePaymentBtn {   /* Specific IDs */
-    background-color: var(--success-color); color: white;
-}
-.modal .save-button:hover,
-.modal #updateSupplierBtn:hover,
-.modal #savePaymentBtn:hover {
-    background-color: #1e7e34; /* Darker success */
-}
-
-.modal .cancel-button {     /* Generic Cancel */
-    background-color: var(--secondary-color); color: white;
-}
-.modal .cancel-button:hover {
-    background-color: #5a6268; /* Darker secondary */
-}
-
-.modal .delete-button,     /* Generic Delete */
-.modal #confirmSupplierDeleteBtn { /* Specific ID */
-    background-color: var(--danger-color); color: white;
-}
-.modal .delete-button:hover,
-.modal #confirmSupplierDeleteBtn:hover {
-    background-color: #bd2130; /* Darker danger */
-}
-
-/* Adjustment Save Button (Specific Style from Customer Page) */
-.modal #saveAdjustmentBtn { /* Assuming this ID */
-    background-color: var(--warning-color); color: var(--text-color);
-}
-.modal #saveAdjustmentBtn:hover {
-    background-color: #e0a800; /* Darker warning */
-}
-
-/* Toggle Status Confirmation Button (Dynamic Color via JS class) */
-#confirmToggleBtn.success-button { background-color: var(--success-color); color: white; }
-#confirmToggleBtn.success-button:hover { background-color: #1e7e34; }
-#confirmToggleBtn.warning-button { background-color: var(--warning-color); color: var(--text-color); } /* Assuming warning for disable */
-#confirmToggleBtn.warning-button:hover { background-color: #e0a800; }
-
-
-/* Disabled Button Style */
-.modal .button:disabled {
-    background-color: #adb5bd;
-    cursor: not-allowed;
-    opacity: 0.65;
-    transform: none;
-    box-shadow: none; /* Remove shadow on disabled */
-}
-
-/* Confirmation Modal Specifics (like delete) */
-.modal .confirmation-check {
-    margin-top: 25px; margin-bottom: 25px; display: flex; align-items: flex-start; gap: 10px; background-color: var(--light-bg); padding: 15px; border-radius: var(--border-radius); border: 1px solid var(--medium-gray);
-}
-.modal .confirmation-check input[type="checkbox"] {
-    transform: scale(1.1); cursor: pointer; margin: 0; margin-top: 3px; flex-shrink: 0;
-}
-.modal .confirmation-check label {
-    font-size: 0.9em; color: #333; cursor: pointer; margin: 0; font-weight: 500; line-height: 1.4;
-}
-.modal .warning-message {
-    font-weight: 500; color: #856404; background-color: #fff3cd; border: 1px solid #ffeeba; border-radius: var(--border-radius); padding: 12px 18px; margin-top: 15px; margin-bottom: 20px; font-size: 0.9em; text-align: center;
-}
-/* Specific delete warning */
-.modal #confirmDeleteSupplierModal .warning-message {
-    color: var(--danger-color); background-color: #f8d7da; border: 1px solid #f5c6cb;
-}
-
-/* === END OF MODAL STYLES === */
-
-
-/* --- General Responsive Adjustments (Combined Original + Modal Responsive) --- */
-@media (max-width: 992px) {
-    .info-grid { grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); }
-    .container { padding: 15px 20px; }
-}
-
-@media (max-width: 768px) {
-    .header h1, .page-header h1 { font-size: 1.5em; }
-    .actions-bar { padding: 15px; }
-    .actions-bar .button, .actions-bar a.button { min-width: 130px; font-size: 0.9em; padding: 8px 15px; }
-    .info-box { padding: 15px 20px; }
-    .info-box h2 { font-size: 1.1em; }
-    .info-box p { font-size: 0.9em; }
-    .history-section table, .section-container table { font-size: 0.85em; }
-    .history-section td, .history-section th, .section-container td, .section-container th { padding: 8px 10px; }
-
-    /* Modal Responsive */
-    .modal-content { padding: 20px; }
-    /* #editSupplierForm { grid-template-columns: 1fr; gap: 0px; } */ /* Already default */
-    #editSupplierForm .form-group-address, /* Reset span if needed */
-    #editSupplierForm .form-group-notes,
-    #editSupplierForm .form-group-gstin {
-         /* grid-column: auto; */ /* Only reset if needed */
-    }
-    .modal-content.small-modal,
-    .modal-content.large-modal,
-    .modal-content { max-width: 90%; } /* Allow wider modals */
-}
-
-@media (max-width: 480px) {
-    .header h1, .page-header h1 { font-size: 1.4em; }
-    .actions-bar { flex-direction: column; align-items: stretch; }
-    .actions-bar .button, .actions-bar a.button { width: 100%; text-align: center; justify-content: center; }
-    .history-section td, .history-section th, .section-container td, .section-container th { padding: 6px 8px; }
-    .status-badge { padding: 3px 8px; font-size: 0.75em;}
-
-    /* Modal Responsive */
-    .modal .modal-actions { flex-direction: column; }
-    .modal .modal-actions .button { width: 100%; justify-content: center; }
-    .modal h2 { font-size: 1.15em; }
-    .modal-content { padding: 15px; }
-}
+/* --- Responsive --- */
+@media (max-width: 992px) { .container { margin: 10px; max-width: none; padding: 0 10px; } .modal-content.modal-lg, .modal-content.modal-xl { max-width: 95%; } .info-grid { grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); } }
+@media (max-width: 768px) { body { font-size: 14px; } .container { padding: 15px; } .actions-bar { flex-direction: column; align-items: stretch; padding: 15px; } .actions-bar .button, .actions-bar a.button { width: 100%; text-align: center; justify-content: center; } .modal-content, .modal-content.modal-lg, .modal-content.modal-xl { width: 95%; max-height: calc(95vh); } .modal-content h2, .modal-header h2 { font-size: 1.1em; } .section-container table, .history-section table { font-size: 0.85em; } .section-container td, .section-container th, .history-section td, .history-section th { padding: 8px 10px; } .info-grid { grid-template-columns: 1fr; } .info-box h2 { font-size: 1.05em; } .info-box p { font-size: 0.88em; } }
+@media (max-width: 480px) { .header h1, .page-header h1 { font-size: 1.4em; } .actions-bar .button, .actions-bar a.button { padding: 8px 12px; font-size: 0.9em; gap: 5px; } .section-container td, .section-container th, .history-section td, .history-section th { padding: 6px 8px; } .status-badge, .payment-badge { padding: 3px 8px; font-size: 0.75em;} .modal-actions { flex-direction: column; gap: 8px; } .modal-actions .button { width: 100%; justify-content: center; } .info-box p { flex-direction: column; align-items: flex-start; gap: 2px; border-bottom: none; } .info-box p span { text-align: left; } .modal-body { padding: 15px; } .modal-header { padding: 10px 15px; } .modal-actions { padding: 10px 15px; } .modal form .form-group select { background-position: right 10px center; padding-right: 30px;} #paymentLinkPOList label .po-balance { display: block; margin-left: 0; margin-top: 3px; } }
