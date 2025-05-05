@@ -3,213 +3,186 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Customer Account Details</title>
+    <title>Supplier Account Details</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <link rel="stylesheet" href="css/customer_management.css"> <link rel="stylesheet" href="css/order_history.css"> <link rel="stylesheet" href="css/customer_account_detail.css"> <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-        // Include all necessary Firestore functions, including addDoc for adjustments
-        import { getFirestore, doc, getDoc, collection, query, where, getDocs, orderBy, updateDoc, deleteDoc, Timestamp, arrayUnion, addDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-        // **** आपकी Firebase कॉन्फ़िगरेशन ****
-        const firebaseConfig = {
-          apiKey: "AIzaSyBQj5rQmE77kKKGYixP8y3Hcimz8tiAqzQ", // Your apiKey
-          authDomain: "madhav-multyprint.firebaseapp.com", // Your authDomain
-          projectId: "madhav-multyprint", // Your projectId
-          storageBucket: "madhav-multyprint.appspot.com", // Your storageBucket
-          messagingSenderId: "104988349637", // Your messagingSenderId
-          appId: "1:104988349637:web:faf045b77c6786a4e70cac" // Your appId
-        };
+    <link rel="stylesheet" href="css/supplier_account_detail.css">
+    <script type="module">
+        import { db, auth } from './js/firebase-init.js'; // Assuming firebase-init exports db and auth
+        import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+        // Make Firestore functions globally available for supplier_account_detail.js
+         window.db = db;
+         // Ensure ALL necessary functions are available IF NOT exported/imported via firebase-init.js
+         // Make sure these are available or imported in supplier_account_detail.js
+         /*
+         window.doc = window.doc;
+         window.getDoc = window.getDoc;
+         window.collection = window.collection;
+         window.query = query;
+         window.where = where;
+         window.getDocs = getDocs;
+         window.orderBy = firestoreOrderBy; // Use alias if needed
+         window.updateDoc = updateDoc;
+         window.deleteDoc = deleteDoc;
+         window.Timestamp = Timestamp;
+         window.addDoc = addDoc;
+         window.serverTimestamp = serverTimestamp;
+         window.runTransaction = runTransaction;
+         window.writeBatch = writeBatch;
+         */
 
-        let app; let auth; let db;
         try {
-            // Initialize Firebase App (only once per page load)
-            if (!window.firebaseAppInitialized) {
-                app = initializeApp(firebaseConfig);
-                window.firebaseAppInitialized = true;
-                window.firebaseApp = app; // Store globally
-                console.log("Firebase initialized (V2.4.0 Compatible + Adjustment Ready)");
-            } else {
-                app = window.firebaseApp; // Use existing instance
-                console.log("Firebase already initialized (V2.4.0 Compatible + Adjustment Ready)");
-            }
-            auth = getAuth(app);
-            db = getFirestore(app);
-
-            // Make Firebase functions globally available for customer_account_detail.js
-            window.db = db;
-            window.doc = doc;
-            window.getDoc = getDoc;
-            window.collection = collection;
-            window.query = query;
-            window.where = where;
-            window.getDocs = getDocs;
-            window.orderBy = orderBy; // Rename to avoid conflict with DOM orderBy
-            window.updateDoc = updateDoc;
-            window.deleteDoc = deleteDoc;
-            window.Timestamp = Timestamp;
-            window.arrayUnion = arrayUnion;
-            window.addDoc = addDoc; // Ensure addDoc is available
-
-            // Authentication Check
+            if (!auth || !db) { throw new Error("Firebase Auth or DB failed to initialize."); }
             onAuthStateChanged(auth, (user) => {
-                const currentPage = window.location.pathname.split('/').pop() || 'index.html';
-                if (!user && currentPage.toLowerCase() !== 'login.html') {
-                    console.log("User not logged in. Redirecting to login...");
-                    window.location.replace('login.html'); // Ensure correct path to login.html
+                const contentArea = document.getElementById('supplierAccountDetailContent'); // Use the main content ID below
+                if (!contentArea) { console.error("Critical Error: Main content area ('supplierAccountDetailContent') not found."); return; }
+                if (!user && !window.location.pathname.endsWith('login.html')) {
+                    window.location.replace('login.html');
                 } else if (user) {
-                    console.log(`User logged in. Initializing detail page for ${user.uid}. V2.4.0 OK.`);
-                    // Defer initialization call slightly to ensure JS file is loaded
-                    setTimeout(() => {
-                        if (typeof window.initializeCustomerDetailPage === 'function') {
-                            window.initializeCustomerDetailPage(user);
-                        } else {
-                            console.error("Initialization function 'initializeCustomerDetailPage' not found!");
-                            alert("Application Error: Page script failed to load.");
-                        }
-                    }, 150); // Small delay
+                    console.log("Supplier Detail Auth OK:", user.uid);
+                     requestAnimationFrame(() => { // Use rAF instead of setTimeout
+                          if (typeof window.initializeSupplierDetailPage === 'function') {
+                              window.initializeSupplierDetailPage(user); // Pass user if needed by JS
+                          } else { console.error("initializeSupplierDetailPage function not found!"); }
+                      });
                 }
             });
-        } catch(e) {
-            console.error("Firebase setup error:", e);
-            alert("Critical Application Error. Please try again later.");
-        }
+        } catch (e) { console.error("Auth Setup Error:", e); alert(`Auth Setup Error: ${e.message}`); }
     </script>
 </head>
 <body>
-    <div class="container">
+    <div class="container" id="supplierAccountDetailContent">
         <div class="header">
-             <i class="fas fa-user-tie header-icon"></i>
-             <h1>Customer Account: <span id="cust-detail-name-header">Loading...</span></h1>
+             <i class="fas fa-user-tie header-icon"></i> <h1>Supplier Account: <span id="supplierNameHeader">Loading...</span></h1>
         </div>
 
-        <div class="breadcrumb-container">
-            <a href="index.html">Home</a> /
-            <a href="customer_management.html">Customers</a> /
-            <span id="cust-detail-name-breadcrumb">Details</span>
+        <div class="breadcrumb-container"> <a href="index.html">Dashboard</a> /
+            <a href="supplier_management.html">Suppliers</a> /
+            <span id="supplierNameBreadcrumb">Loading...</span>
         </div>
 
-        <div class="actions-bar cust-detail-actions">
-            <button id="editCustomerBtn" class="button info-button" disabled><i class="fas fa-user-edit"></i> Edit Details</button>
-            <button id="addPaymentBtn" class="button success-button" disabled><i class="fas fa-money-bill-wave"></i> Add Payment</button>
-             <button id="addAdjustmentBtn" class="button adjustment-button" disabled style="background-color: #ffc107; color: #212529;"><i class="fas fa-balance-scale"></i> Add Adjustment</button> <a href="#" id="addNewOrderLink" class="button primary-button disabled"><i class="fas fa-plus-circle"></i> Add New Order</a>
-            <button id="toggleStatusBtn" class="button" disabled><i class="fas fa-toggle-on"></i> <span>Loading...</span></button>
-            <button id="deleteCustomerBtn" class="button danger-button" disabled><i class="fas fa-user-times"></i> Delete Customer</button>
+        <div class="actions-bar">
+            <button id="editSupplierDetailsBtn" type="button" class="button edit-button" disabled>
+                <i class="fas fa-edit"></i> Edit Details
+            </button>
+            <button id="addPaymentMadeBtn" type="button" class="button payment-button" disabled>
+                <i class="fas fa-money-bill-wave"></i> Record Payment
+            </button>
+            <button id="addSupplierAdjustmentBtn" type="button" class="button adjustment-button" disabled>
+                <i class="fas fa-balance-scale"></i> Add Adjustment
+            </button>
+            <button id="toggleSupplierStatusBtn" type="button" class="button status-toggle-button" disabled> <i class="fas fa-toggle-on"></i> <span id="toggleSupplierStatusBtnText">Loading...</span>
+            </button>
+            <button id="deleteSupplierBtn" type="button" class="button delete-button" disabled>
+                 <i class="fas fa-user-times"></i> Delete Supplier
+            </button>
+             <a href="new_po.html" id="addNewPoLink" class="button primary-button disabled"><i class="fas fa-plus-circle"></i> Add New PO</a>
+             <a href="supplier_management.html" class="button back-button"><i class="fas fa-arrow-left"></i> Back to List</a>
         </div>
 
-        <div class="customer-info-grid">
-             <div class="info-box customer-details-box">
-                 <h2><i class="fas fa-info-circle"></i> Customer Details</h2>
-                 <p><strong>Customer ID:</strong> <span id="cust-detail-id">...</span></p>
-                 <p><strong>WhatsApp:</strong> <span id="cust-detail-whatsapp">...</span></p>
-                 <p><strong>Contact No:</strong> <span id="cust-detail-contact">...</span></p>
-                 <p><strong>Email:</strong> <span id="cust-detail-email">...</span></p>
-                 <p><strong>Address:</strong> <span id="cust-detail-address">...</span></p>
-                 <p><strong>City:</strong> <span id="cust-detail-city">...</span></p>
-                 <p><strong>State:</strong> <span id="cust-detail-state">...</span></p>
-                 <p><strong>Account Status:</strong> <span id="cust-detail-status" class="status-badge">...</span></p>
+        <div id="generalErrorDisplay" class="error-message-area" style="display: none;"></div>
+        <div id="loadingIndicator" style="text-align: center; padding: 20px; display: none;"><i class="fas fa-spinner fa-spin fa-2x"></i> Loading...</div>
+
+        <div class="info-grid">
+            <div class="info-box">
+                <h2><i class="fas fa-info-circle"></i> Supplier Details</h2>
+                <p><strong>Supplier ID:</strong> <span id="detailSupplierId">-</span></p>
+                <p><strong>Name:</strong> <span id="detailSupplierName">-</span></p>
+                <p><strong>Company:</strong> <span id="detailSupplierCompany">-</span></p>
+                <p><strong>WhatsApp:</strong> <span id="detailSupplierWhatsapp">-</span></p>
+                <p><strong>Contact No:</strong> <span id="detailSupplierContact">-</span></p>
+                <p><strong>Email:</strong> <span id="detailSupplierEmail">-</span></p>
+                <p><strong>GST No:</strong> <span id="detailSupplierGst">-</span></p>
+                <p><strong>Address:</strong> <span id="detailSupplierAddress">-</span></p>
+                <p><strong>Added On:</strong> <span id="detailAddedOn">-</span></p>
+                <p><strong>Account Status:</strong> <span id="supplierStatusBadge" class="status-badge">...</span></p>
              </div>
-             <div class="info-box account-summary-box">
-                 <h2><i class="fas fa-calculator"></i> Account Summary</h2>
-                 <p><strong>Total Order Value:</strong> <span id="summary-total-orders">Loading...</span></p>
-                 <p><strong>Total Paid Amount:</strong> <span id="summary-total-paid">Loading...</span></p>
-                 <p><strong>Outstanding Balance:</strong> <strong id="summary-balance" class="balance-info">Loading...</strong></p>
-                 <hr>
-                 <p><strong>Credit Allowed:</strong> <span id="cust-detail-credit-allowed">...</span></p>
-                 <p><strong>Credit Limit:</strong> <span id="cust-detail-credit-limit">...</span></p>
-             </div>
-             <div class="info-box customer-notes-box">
+
+            <div class="info-box">
+                <h2><i class="fas fa-calculator"></i> Account Summary</h2>
+                <p><strong>Total PO Value:</strong> <span id="summaryTotalPoValue" class="amount-po loading-state">Calculating...</span></p>
+                <p><strong>Total Payments Made:</strong> <span id="summaryTotalPaid" class="amount-paid loading-state">Calculating...</span></p>
+                <hr style="border: none; border-top: 1px solid var(--border-color); margin: 15px 0;">
+                <p><strong>Outstanding Balance:</strong>
+                    <span id="summaryBalance" class="balance-info loading-state">Calculating...</span>
+                </p>
+                <div id="accountSummaryError" class="error-message" style="display: none; margin-top: 10px;"></div>
+            </div>
+             <div class="info-box">
                  <h2><i class="fas fa-sticky-note"></i> Remarks / Notes</h2>
-                 <p id="cust-detail-notes">...</p>
+                 <p id="supplierRemarksNotes" style="display: block; white-space: pre-wrap; min-height: 50px;">...</p>
              </div>
+        </div>
+
+        <div class="history-section"> <h2><i class="fas fa-file-invoice-dollar"></i> Purchase Orders (POs)</h2>
+            <div id="supplierPoListError" class="error-message" style="display: none;"></div>
+            <div class="table-container">
+                <table id="supplierPoTable" class="details-table"> <thead>
+                        <tr>
+                            <th>PO #</th>
+                            <th>Order Date</th>
+                            <th class="amount-po">Total Amount</th>
+                            <th>Status</th>
+                            <th>Payment Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="supplierPoTableBody">
+                        <tr id="supplierPoLoading"> <td colspan="6" class="loading-state" style="text-align: center;"> <i class="fas fa-spinner fa-spin"></i> Loading POs...</td> </tr>
+                        <tr id="noSupplierPoMessage" style="display: none;"> <td colspan="6" style="text-align: center;"> No purchase orders found.</td> </tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
 
         <div class="history-section">
-            <h2><i class="fas fa-history"></i> Order History</h2>
-            <div class="table-container">
-                <table id="customerOrderTable">
-                    <thead>
-                        <tr>
-                            <th>Order ID</th>
-                            <th>Order Date</th>
-                            <th>Products</th>
-                            <th>Status</th>
-                        </tr>
-                    </thead>
-                    <tbody id="customerOrderTableBody">
-                        <tr><td colspan="4" style="text-align: center;">Loading orders...</td></tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-
-         <div class="history-section">
-            <h2 style="margin-top: 30px;"><i class="fas fa-book-open"></i> Account Ledger</h2>
+            <h2><i class="fas fa-book-open"></i> Account Ledger</h2>
+            <div id="supplierLedgerError" class="error-message" style="display: none;"></div>
             <div class="table-container ledger-table-container">
-                <table id="accountLedgerTable">
-                    <thead>
+                <table id="accountLedgerTable"> <thead>
                         <tr>
                             <th>Date</th>
                             <th>Description</th>
-                            <th style="text-align: right;">Debit (₹)</th>
-                            <th style="text-align: right;">Credit (₹)</th>
-                            <th style="text-align: right;">Balance (₹)</th>
+                            <th style="text-align: right;">Debit (₹)</th> <th style="text-align: right;">Credit (₹)</th> <th style="text-align: right;">Balance (₹)</th>
                         </tr>
                     </thead>
-                    <tbody id="accountLedgerTableBody">
-                        <tr><td colspan="5" style="text-align: center;">Loading ledger...</td></tr>
+                    <tbody id="accountLedgerTableBody"> <tr><td colspan="5" style="text-align: center;" class="loading-state">Loading ledger...</td></tr>
                     </tbody>
                 </table>
             </div>
         </div>
 
-    </div> <div id="detailsModal" class="modal">
-        <div class="modal-content">
-            <span class="close-btn" id="closeDetailsModal" title="Close">&times;</span>
-            <h2><i class="fas fa-receipt info-icon"></i> Order Details & Actions</h2>
-            <input type="hidden" id="modalOrderId">
-            <div class="modal-info">
-                <p><strong>Order ID:</strong> <span id="modalDisplayOrderId"></span></p>
-                <p><strong>Customer:</strong> <span id="modalCustomerName"></span></p>
-                <p><strong>WhatsApp:</strong> <span id="modalCustomerWhatsApp"></span></p>
-            </div>
-            <div class="modal-section" id="modalProductSection">
-                <label>Products:</label>
-                <div id="modalProductList"><p>Loading...</p></div>
-            </div>
-            <div class="modal-section" id="modalStatusHistorySection">
-                <label>Status History:</label>
-                <div id="modalStatusHistoryList"><p>Loading history...</p></div>
-            </div>
-            <div class="modal-section">
-                <label for="modalOrderStatus">Update Status:</label>
-                <select id="modalOrderStatus">
-                    <option value="Order Received">Order Received</option>
-                    <option value="Designing">Designing</option>
-                    <option value="Verification">Verification</option>
-                    <option value="Design Approved">Design Approved</option>
-                    <option value="Printing">Printing</option>
-                    <option value="Ready for Working">Ready for Working</option>
-                    <option value="Delivered">Delivered</option>
-                    <option value="Completed">Completed</option>
-                </select>
-                <button id="modalUpdateStatusBtn" class="button update-status-button"><i class="fas fa-sync-alt"></i> Update Status</button>
-            </div>
-            <div class="modal-section modal-actions">
-                <button id="modalEditFullBtn" class="button edit-full-button"><i class="fas fa-edit"></i> Edit Full Order</button>
-                <button id="modalDeleteBtn" class="button delete-button"><i class="fas fa-trash-alt"></i> Delete Order</button>
+        <div class="history-section">
+            <h2><i class="fas fa-hand-holding-usd"></i> Payment History</h2>
+             <div id="supplierPaymentListError" class="error-message" style="display: none;"></div>
+            <div class="table-container">
+                <table id="supplierPaymentsTable" class="details-table">
+                     <thead>
+                        <tr>
+                            <th>Payment Date</th>
+                            <th>Description / Notes</th>
+                            <th>Method</th>
+                            <th>Linked PO</th>
+                            <th class="amount-paid">Amount Paid</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="transactionsTableBody"> <tr id="transactionsLoading"> <td colspan="6" class="loading-state" style="text-align: center;"> <i class="fas fa-spinner fa-spin"></i> Loading payments...</td> </tr>
+                        <tr id="noTransactionsMessage" style="display: none;"> <td colspan="6" style="text-align: center;"> No payment history found.</td> </tr>
+                    </tbody>
+                </table>
             </div>
         </div>
-    </div>
 
-    <div id="addPaymentModal" class="modal">
-        <div class="modal-content small-modal">
-            <span class="close-btn" id="closePaymentModal" title="Close">&times;</span>
-            <h2><i class="fas fa-money-bill-wave success-icon"></i> Add New Payment for <span id="payment-modal-cust-name">Customer</span></h2>
-            <form id="addPaymentForm">
+    </div> <div id="paymentMadeModal" class="modal">
+         <div class="modal-content small-modal">
+            <span class="close-btn" id="closePaymentMadeModalBtn" title="Close">&times;</span>
+            <h2><i class="fas fa-money-bill-wave success-icon"></i> Record Payment Made to <span id="paymentSupplierName">Supplier</span></h2>
+            <form id="paymentMadeForm">
+                <div id="paymentMadeError" class="error-message" style="display: none;"></div>
                 <div class="form-group">
                     <label for="paymentAmount">Amount Paid <span class="required">*</span>:</label>
                     <input type="number" id="paymentAmount" step="0.01" required placeholder="e.g., 500.00">
@@ -219,17 +192,26 @@
                     <input type="date" id="paymentDate" required>
                 </div>
                 <div class="form-group">
+                     <label for="paymentLinkPOList">Link to Purchase Order(s) (Optional):</label>
+                     <div id="paymentLinkPOList">
+                         <p class="loading-state">Loading available POs...</p>
+                     </div>
+                     <small>Select POs if this payment applies to specific orders.</small>
+                 </div>
+                <div class="form-group">
                     <label for="paymentMethod">Payment Method:</label>
                     <select id="paymentMethod">
-                        <option value="Cash">Cash</option>
-                        <option value="Online">Online</option>
-                        <option value="Cheque">Cheque</option>
-                        <option value="Other">Other</option>
-                    </select>
+                         <option value="">Select Method</option>
+                         <option value="Bank Transfer">Bank Transfer</option>
+                         <option value="Cash">Cash</option>
+                         <option value="Cheque">Cheque</option>
+                         <option value="UPI">UPI</option>
+                         <option value="Other">Other</option>
+                     </select>
                 </div>
                 <div class="form-group">
                     <label for="paymentNotes">Notes:</label>
-                    <textarea id="paymentNotes" rows="2" placeholder="Optional payment notes"></textarea>
+                    <textarea id="paymentNotes" rows="2" placeholder="Optional reference or notes"></textarea>
                 </div>
                 <div class="modal-actions">
                     <button type="submit" id="savePaymentBtn" class="button save-button"><i class="fas fa-save"></i> Save Payment</button>
@@ -239,139 +221,124 @@
         </div>
     </div>
 
-     <div id="addAdjustmentModal" class="modal">
-        <div class="modal-content small-modal">
-            <span class="close-btn" id="closeAdjustmentModal" title="Close">&times;</span>
-            <h2><i class="fas fa-balance-scale warning-icon"></i> Add Account Adjustment for <span id="adjustment-modal-cust-name">Customer</span></h2>
-            <form id="addAdjustmentForm">
+    <div id="editSupplierModal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" id="closeEditSupplierBtn" title="Close">&times;</span>
+            <h2><i class="fas fa-edit info-icon"></i> Edit Supplier Details</h2>
+            <form id="editSupplierForm">
+                 <div id="editSupplierError" class="error-message" style="display: none;"></div>
                  <div class="form-group">
-                    <label>Type <span class="required">*</span>:</label>
-                    <div style="padding-top: 5px;">
-                        <input type="radio" id="adjustmentTypeDebit" name="adjustmentType" value="debit" checked>
-                        <label for="adjustmentTypeDebit" style="margin-right: 15px; font-weight: normal;">Debit (-)</label>
-                        <input type="radio" id="adjustmentTypeCredit" name="adjustmentType" value="credit">
-                        <label for="adjustmentTypeCredit" style="font-weight: normal;">Credit (+)</label>
-                    </div>
-                    <p style="font-size: 0.8em; color: #6c757d; margin-top: 5px;">Debit increases amount due, Credit decreases amount due.</p>
-                </div>
-                <div class="form-group">
-                    <label for="adjustmentAmount">Amount <span class="required">*</span>:</label>
-                    <input type="number" id="adjustmentAmount" step="0.01" required placeholder="e.g., 100.00">
-                </div>
-                <div class="form-group">
-                    <label for="adjustmentDate">Adjustment Date <span class="required">*</span>:</label>
-                    <input type="date" id="adjustmentDate" required>
-                </div>
-                <div class="form-group">
-                    <label for="adjustmentRemarks">Remarks:</label>
-                    <textarea id="adjustmentRemarks" rows="2" placeholder="Reason for adjustment (Optional)"></textarea>
-                </div>
+                    <label for="editSupplierNameInput">Name <span class="required">*</span>:</label>
+                    <input type="text" id="editSupplierNameInput" required>
+                 </div>
+                 <div class="form-group">
+                    <label for="editSupplierCompanyInput">Company:</label>
+                    <input type="text" id="editSupplierCompanyInput">
+                 </div>
+                  <div class="form-group">
+                    <label for="editSupplierWhatsappInput">WhatsApp No:</label>
+                    <input type="tel" id="editSupplierWhatsappInput">
+                 </div>
+                 <div class="form-group">
+                    <label for="editSupplierContactInput">Contact No:</label>
+                    <input type="tel" id="editSupplierContactInput">
+                 </div>
+                 <div class="form-group">
+                    <label for="editSupplierEmailInput">Email:</label>
+                    <input type="email" id="editSupplierEmailInput">
+                 </div>
+                 <div class="form-group">
+                    <label for="editSupplierGstInput">GST No:</label>
+                    <input type="text" id="editSupplierGstInput">
+                 </div>
+                 <div class="form-group">
+                    <label for="editSupplierAddressInput">Address:</label>
+                    <textarea id="editSupplierAddressInput" rows="2"></textarea>
+                 </div>
+                 <div class="form-group"> <label for="editSupplierNotes">Remarks / Notes:</label>
+                     <textarea id="editSupplierNotes" rows="2"></textarea>
+                 </div>
+                 <input type="hidden" id="editingSupplierId">
                 <div class="modal-actions">
-                    <button type="submit" id="saveAdjustmentBtn" class="button save-button" style="background-color: var(--warning-color); color: #212529;"><i class="fas fa-save"></i> Save Adjustment</button>
-                    <button type="button" id="cancelAdjustmentBtn" class="button cancel-button">Cancel</button>
+                    <button type="submit" id="updateSupplierBtn" class="button save-button"><i class="fas fa-save"></i> Update Supplier</button>
+                    <button type="button" id="cancelEditSupplierBtn" class="button cancel-button">Cancel</button>
                 </div>
             </form>
         </div>
     </div>
 
-    <div id="customerEditModal" class="modal">
-         <div class="modal-content">
-             <span class="close-btn" id="closeCustomerEditModal" title="Close">&times;</span>
-             <h2 id="customerEditModalTitle"><i class="fas fa-user-edit info-icon"></i> Edit Customer</h2>
-             <form id="customerEditForm">
-                 <input type="hidden" id="editCustPageCustomerId">
-                 <div class="form-row">
-                     <div class="form-group">
-                         <label for="customerEditFullName">Full Name <span class="required">*</span>:</label>
-                         <input type="text" id="customerEditFullName" required>
-                     </div>
-                     <div class="form-group">
-                         <label for="customerEditWhatsApp">WhatsApp No <span class="required">*</span>:</label>
-                         <input type="tel" id="customerEditWhatsApp" required placeholder="e.g., 91XXXXXXXXXX">
-                     </div>
-                 </div>
-                 <div class="form-row">
-                     <div class="form-group">
-                         <label for="customerEditContact">Contact No:</label>
-                         <input type="tel" id="customerEditContact" placeholder="Optional alternate number">
-                     </div>
-                     <div class="form-group">
-                         <label for="customerEditEmail">Email:</label>
-                         <input type="email" id="customerEditEmail" placeholder="Optional email address">
-                     </div>
-                 </div>
-                 <div class="form-row">
-                    <div class="form-group">
-                        <label for="customerEditCity">City:</label>
-                        <input type="text" id="customerEditCity">
+    <div id="addSupplierAdjustmentModal" class="modal">
+        <div class="modal-content small-modal">
+            <span class="close-btn" id="closeSupplierAdjustmentModal" title="Close">&times;</span>
+            <h2><i class="fas fa-balance-scale warning-icon"></i> Add Account Adjustment for <span id="adjustmentSupplierName">Supplier</span></h2>
+            <form id="addSupplierAdjustmentForm">
+                 <div id="supplierAdjustmentError" class="error-message" style="display: none;"></div>
+                 <div class="form-group">
+                    <label>Type <span class="required">*</span>:</label>
+                    <div>
+                        <input type="radio" id="supplierAdjustmentTypeDebit" name="supplierAdjustmentType" value="debit" checked>
+                        <label for="supplierAdjustmentTypeDebit">Debit (-)</label>
+                        <input type="radio" id="supplierAdjustmentTypeCredit" name="supplierAdjustmentType" value="credit">
+                        <label for="supplierAdjustmentTypeCredit">Credit (+)</label>
                     </div>
-                    <div class="form-group">
-                        <label for="customerEditState">State:</label>
-                        <input type="text" id="customerEditState">
-                    </div>
+                    <p class="help-text">Debit increases amount payable by you, Credit decreases amount payable.</p>
                 </div>
-                 <div class="form-group form-group-address">
-                     <label for="customerEditAddress">Address:</label>
-                     <textarea id="customerEditAddress" rows="2" placeholder="Optional address details"></textarea>
-                 </div>
-                 <div class="form-group form-group-credit-radio">
-                     <label>Credit Allowed:</label>
-                     <div>
-                         <input type="radio" id="creditEditYes" name="creditAllowedEdit" value="yes"> <label for="creditEditYes">Yes</label>
-                         <input type="radio" id="creditEditNo" name="creditAllowedEdit" value="no" checked> <label for="creditEditNo">No</label>
-                     </div>
-                 </div>
-                 <div class="form-group" id="creditLimitEditGroup" style="display: none;">
-                     <label for="customerEditCreditLimit">Credit Limit:</label>
-                     <input type="number" id="customerEditCreditLimit" step="0.01" placeholder="e.g., 5000.00">
-                 </div>
-                 <div class="form-group form-group-notes">
-                     <label for="customerEditNotes">Remarks / Notes:</label>
-                     <textarea id="customerEditNotes" rows="2"></textarea>
-                 </div>
-                 <div class="modal-actions">
-                     <button type="submit" id="saveCustomerEditBtn" class="button save-button"> <i class="fas fa-save"></i> <span>Update Customer</span> </button>
-                     <button type="button" id="cancelCustomerEditBtn" class="button cancel-button"> Cancel </button>
-                 </div>
-             </form>
-         </div>
-     </div>
+                <div class="form-group">
+                    <label for="supplierAdjustmentAmount">Amount <span class="required">*</span>:</label>
+                    <input type="number" id="supplierAdjustmentAmount" step="0.01" required placeholder="e.g., 100.00">
+                </div>
+                <div class="form-group">
+                    <label for="supplierAdjustmentDate">Adjustment Date <span class="required">*</span>:</label>
+                    <input type="date" id="supplierAdjustmentDate" required>
+                </div>
+                <div class="form-group">
+                    <label for="supplierAdjustmentRemarks">Remarks:</label>
+                    <textarea id="supplierAdjustmentRemarks" rows="2" placeholder="Reason for adjustment (Optional)"></textarea>
+                </div>
+                <div class="modal-actions">
+                    <button type="submit" id="saveSupplierAdjustmentBtn" class="button save-button" style="background-color: var(--warning-color); color: #212529;"><i class="fas fa-save"></i> Save Adjustment</button>
+                    <button type="button" id="cancelSupplierAdjustmentBtn" class="button cancel-button">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
 
-    <div id="confirmToggleStatusModal" class="modal">
+     <div id="confirmToggleSupplierStatusModal" class="modal">
         <div class="modal-content small-modal">
-            <span class="close-btn" id="closeConfirmToggleModal" title="Close">&times;</span>
+            <span class="close-btn" id="closeConfirmToggleSupplierModal" title="Close">&times;</span>
              <h2><i class="fas fa-user-cog warning-icon"></i> Confirm Account Status Change</h2>
-            <p>Are you sure you want to <strong id="toggleActionText"></strong> the account for customer: <strong id="toggleCustName"></strong>?</p>
-            <p class="warning-message" id="toggleWarningMessage" style="display:none;">Disabling might restrict certain actions.</p>
+            <p>Are you sure you want to <strong id="toggleSupplierActionText"></strong> the account for supplier: <strong id="toggleSupplierName"></strong>?</p>
+            <p class="warning-message" id="toggleSupplierWarningMessage" style="display:none;">Disabling might restrict certain actions like creating new POs.</p>
             <div class="confirmation-check">
-                <input type="checkbox" id="confirmToggleCheckbox">
-                <label for="confirmToggleCheckbox" id="toggleCheckboxLabel">I understand and want to change the status.</label>
+                <input type="checkbox" id="confirmToggleSupplierCheckbox">
+                <label for="confirmToggleSupplierCheckbox" id="toggleSupplierCheckboxLabel">I understand and want to change the status.</label>
             </div>
             <div class="modal-actions">
-                <button id="cancelToggleBtn" class="button cancel-button">Cancel</button>
-                <button id="confirmToggleBtn" class="button" disabled><i class=""></i> <span id="confirmToggleBtnText">Confirm</span></button>
+                <button type="button" id="cancelSupplierToggleBtn" class="button cancel-button">Cancel</button>
+                <button type="button" id="confirmSupplierToggleBtn" class="button" disabled><i class=""></i> <span id="confirmSupplierToggleBtnText">Confirm</span></button>
             </div>
         </div>
     </div>
 
-    <div id="confirmDeleteModal" class="modal">
+    <div id="confirmDeleteSupplierModal" class="modal">
         <div class="modal-content small-modal">
-            <span class="close-btn" id="closeConfirmDeleteModal" title="Close">&times;</span>
-            <h2><i class="fas fa-trash-alt danger-icon"></i> Confirm Delete Account</h2>
-            <p>Are you absolutely sure you want to permanently delete the account for customer: <strong id="deleteCustName"></strong>?</p>
-            <p class="warning-message">This action cannot be undone. Associated orders and payments will NOT be deleted automatically.</p>
+            <span class="close-btn" id="closeConfirmDeleteSupplierModal" title="Close">&times;</span>
+            <h2><i class="fas fa-trash-alt danger-icon"></i> Confirm Delete Supplier</h2>
+            <p>Are you absolutely sure you want to permanently delete the supplier: <strong id="deleteSupplierName"></strong>?</p>
+            <p class="warning-message">This action cannot be undone. Associated POs and payments will NOT be deleted automatically.</p>
             <div class="confirmation-check">
-                <input type="checkbox" id="confirmDeleteCheckboxModal">
-                <label for="confirmDeleteCheckboxModal">I understand the consequences and want to permanently delete this customer.</label>
+                <input type="checkbox" id="confirmDeleteSupplierCheckbox">
+                <label for="confirmDeleteSupplierCheckbox">I understand the consequences and want to permanently delete this supplier.</label>
             </div>
             <div class="modal-actions">
-                <button id="cancelDeleteBtn" class="button cancel-button">Cancel</button>
-                <button id="confirmDeleteBtn" class="button danger-button" disabled><i class="fas fa-trash-alt"></i> Delete Permanently</button>
+                <button type="button" id="cancelSupplierDeleteBtn" class="button cancel-button">Cancel</button>
+                <button type="button" id="confirmSupplierDeleteBtn" class="button danger-button" disabled><i class="fas fa-trash-alt"></i> Delete Permanently</button>
             </div>
         </div>
     </div>
 
-    <script src="js/customer_account_detail.js" type="module" defer></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script> <script src="js/firebase-init.js" type="module"></script>
+    <script src="js/supplier_account_detail.js" type="module" defer></script>
 
 </body>
 </html>
