@@ -40,9 +40,11 @@
                     });
             }
             // No 'else' needed here if we only act when user is logged in on non-login pages
+            // Or handle the case where user is logged in but on login page if needed
         });
+        // IMPORTANT: Ensure this script tag is properly closed and no code follows it directly in head
     </script>
-    </head>
+</head>
 <body>
     <div class="main-content">
 
@@ -80,7 +82,8 @@
                     <label for="filterEndDate">To Date:</label>
                     <input type="date" id="filterEndDate">
                 </div>
-                <div class="filter-group filter-buttons"> <button id="applyExpenseFiltersBtn" class="button filter-action-button primary-button">
+                <div class="filter-group filter-buttons">
+                    <button id="applyExpenseFiltersBtn" class="button filter-action-button primary-button">
                         <i class="fas fa-check"></i> Apply Filters
                     </button>
                     <button id="clearExpenseFiltersBtn" class="button filter-action-button cancel-button">
@@ -91,8 +94,7 @@
         </div>
         <div class="section-container">
             <h2><i class="fas fa-list-ul"></i> Expenses List</h2>
-            <div class="table-container expenses-table-container">
-                <table id="expensesTable">
+            <div class="table-container expenses-table-container"> <table id="expensesTable">
                     <thead>
                         <tr>
                             <th>Date</th>
