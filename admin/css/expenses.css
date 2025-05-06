@@ -1,105 +1,191 @@
 /* css/expenses.css */
-/* ... (अन्य सभी स्टाइल्स वैसे ही रहेंगे) ... */
+/* Version targeting initial alignment fixes */
+
+/* --- Theme Variables --- */
+:root {
+    --primary-color: #0056b3;
+    --secondary-color: #2c3e50;
+    --success-color: #28a745;
+    --danger-color: #dc3545;
+    --warning-color: #ffc107;
+    --info-color: #17a2b8;
+    --light-gray: #f8f9fa;
+    --medium-gray: #e9ecef;
+    --dark-gray: #6c757d;
+    --text-color: #343a40;
+    --white-color: #ffffff;
+    --black-color: #000000;
+    --font-family: 'Poppins', sans-serif;
+    --border-radius: 5px;
+    --box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    --scrollbar-track-color: #f1f1f1;
+    --scrollbar-thumb-color: #c1c1c1;
+    --scrollbar-thumb-hover-color: #a8a8a8;
+}
+
+/* --- Base Styles --- */
+html { scrollbar-width: thin; scrollbar-color: var(--scrollbar-thumb-color) var(--scrollbar-track-color); }
+html::-webkit-scrollbar { width: 8px; height: 8px; }
+html::-webkit-scrollbar-track { background: var(--scrollbar-track-color); }
+html::-webkit-scrollbar-thumb { background-color: var(--scrollbar-thumb-color); border-radius: 4px; border: 2px solid var(--scrollbar-track-color); }
+html::-webkit-scrollbar-thumb:hover { background-color: var(--scrollbar-thumb-hover-color); }
+
+body {
+    font-family: var(--font-family), sans-serif;
+    background-color: #f0f2f5;
+    margin: 0;
+    color: var(--text-color);
+    line-height: 1.5;
+    font-size: 15px;
+}
+
+input, button, select, textarea, label, h1, h2, h3, th, td, span, div, p, li, a {
+    font-family: var(--font-family), sans-serif;
+}
+
+/* --- Layout Containers --- */
+.main-content { padding: 25px; box-sizing: border-box; max-width: 1300px; margin: 20px auto; background-color: var(--white-color); border-radius: 8px; box-shadow: 0 3px 12px rgba(0, 0, 0, 0.07); }
+.page-header { margin-bottom: 20px; padding-bottom: 15px; }
+.page-header h1 { margin: 0; font-size: 1.8em; color: var(--primary-color); font-weight: 600; display: flex; align-items: center; }
+.page-header h1 i { margin-right: 12px; color: var(--primary-color); opacity: 0.9; }
+
+/* --- Breadcrumb Styles --- */
+.breadcrumb { font-size: 0.9em; color: var(--dark-gray, #6c757d); margin-bottom: 20px; padding-bottom: 10px; border-bottom: 1px solid var(--medium-gray, #e9ecef); }
+.breadcrumb a { color: var(--primary-color, #0056b3); text-decoration: none; }
+.breadcrumb a:hover { text-decoration: underline; }
+.breadcrumb span { margin-left: 5px; color: var(--text-color, #343a40); }
+.breadcrumb span::before { content: "/"; margin-right: 5px; color: var(--dark-gray, #6c757d); }
+
+/* --- Action Bar Styles --- */
+.actions-bar { display: flex; gap: 12px; margin-bottom: 25px; flex-wrap: wrap; align-items: center; }
+
+/* --- General Button Styles --- */
+.button { padding: 9px 18px; font-size: 0.95em; border: none; border-radius: var(--border-radius); cursor: pointer; font-weight: 600; display: inline-flex; align-items: center; gap: 7px; text-decoration: none; transition: background-color 0.2s ease, opacity 0.2s ease, box-shadow 0.2s ease; white-space: nowrap; vertical-align: middle; line-height: 1; box-shadow: var(--box-shadow); }
+.button i { line-height: 1; margin-right: 3px; font-size: 0.9em; }
+.button:hover:not(:disabled) { box-shadow: 0 2px 5px rgba(0,0,0,0.2); transform: translateY(-1px); }
+.button:disabled { background-color: #adb5bd !important; color: #fff !important; cursor: not-allowed; opacity: 0.7; box-shadow: none; }
+.add-new-button { background-color: var(--success-color); color: var(--white-color); }
+.add-new-button:hover:not(:disabled) { background-color: #218838; }
+.cancel-button { background-color: var(--dark-gray); color: var(--white-color);}
+.cancel-button:hover:not(:disabled) { background-color: #5a6268;}
+.save-button { background-color: var(--primary-color); color: var(--white-color);}
+.save-button:hover:not(:disabled) { background-color: #004085; }
+.primary-button { background-color: var(--primary-color); color: var(--white-color); }
+.primary-button:hover:not(:disabled) { background-color: #004085; }
+
+/* --- Section Container Styles --- */
+.section-container { background-color: var(--white-color); padding: 20px 25px; border-radius: 8px; margin-bottom: 25px; border: 1px solid var(--medium-gray); }
+.section-container h2 { margin-top: 0; margin-bottom: 20px; font-size: 1.4em; color: var(--secondary-color); border-bottom: 1px solid var(--medium-gray); padding-bottom: 12px; font-weight: 600; display: flex; align-items: center; }
+.section-container h2 i { margin-right: 10px; color: var(--secondary-color); opacity: 0.9; }
+
+/* --- Filter Section Styles --- */
+.expense-filters { background-color: #f9fafb; border-bottom: 1px solid var(--medium-gray); margin-bottom: 25px; padding-top: 15px; }
+.filter-controls { display: flex; gap: 15px; flex-wrap: wrap; align-items: flex-end; }
+.filter-group { display: flex; flex-direction: column; gap: 5px; flex-grow: 1; min-width: 180px; }
+.filter-group label { font-size: 0.85em; font-weight: 500; color: #495057; margin-bottom: 2px; }
+.expense-filters input[type="text"],
+.expense-filters input[type="date"],
+.expense-filters select { padding: 8px 12px; border: 1px solid #ced4da; border-radius: var(--border-radius); font-size: 0.9em; height: 38px; box-sizing: border-box; background-color: var(--white-color); width: 100%; }
+.expense-filters input[type="date"] { color-scheme: light; min-width: 140px; }
+.filter-group.filter-buttons {
+    flex-grow: 0;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: row;
+    gap: 10px;
+    align-self: flex-end;
+    padding-bottom: 1px;
+    margin-left: auto;
+}
+.filter-action-button { height: 38px; padding: 8px 15px; }
 
 /* --- Table Styles --- */
-/* ... (expenses-table-container, #expensesTable, thead styles वैसे ही रहेंगे) ... */
+.expenses-table-container {
+    width: 100%;
+    max-height: 60vh;
+    overflow-y: auto;
+    border: 1px solid var(--medium-gray);
+    border-radius: var(--border-radius);
+    margin-bottom: 15px;
+    background-color: var(--white-color);
+}
+.expenses-table-container::-webkit-scrollbar { width: 8px; height: 8px; }
+.expenses-table-container::-webkit-scrollbar-track { background: var(--scrollbar-track-color); border-radius: 4px; }
+.expenses-table-container::-webkit-scrollbar-thumb { background-color: var(--scrollbar-thumb-color); border-radius: 4px; border: 2px solid var(--scrollbar-track-color); }
+.expenses-table-container::-webkit-scrollbar-thumb:hover { background-color: var(--scrollbar-thumb-hover-color); }
+.expenses-table-container { scrollbar-width: thin; scrollbar-color: var(--scrollbar-thumb-color) var(--scrollbar-track-color); }
 
-/* Default alignment and padding for all cells */
+#expensesTable { width: 100%; border-collapse: collapse; font-size: 0.9em; }
+#expensesTable thead { background-color: var(--light-gray); border-bottom: 2px solid var(--medium-gray); position: sticky; top: 0; z-index: 1; }
+
+/* Alignment Changes Start Here */
 #expensesTable th,
 #expensesTable td {
     border: 1px solid #e0e0e0;
-    /* बेसलाइन पैडिंग - इसे थोड़ा कम कर सकते हैं यदि आवश्यक हो */
-    padding: 9px 10px;
-    text-align: left;
-    vertical-align: middle; /* वर्टिकल अलाइनमेंट मिडल रखें */
+    padding: 10px 12px; /* Default padding */
+    text-align: left;   /* Default alignment */
+    vertical-align: middle; /* Default vertical alignment */
     border-left: none;
     border-right: none;
 }
 
-/* Add border back to first and last columns */
 #expensesTable th:first-child, #expensesTable td:first-child { border-left: 1px solid #e0e0e0; }
 #expensesTable th:last-child, #expensesTable td:last-child { border-right: 1px solid #e0e0e0; }
 
-/* Table Header specific styles */
 #expensesTable th {
     font-weight: 600;
     color: #495057;
     white-space: nowrap;
-    text-align: left;
+    text-align: left; /* Ensure headers are left aligned by default */
 }
-/* Specific header alignments and padding */
-#expensesTable th:nth-child(1) { width: 10%; }
-#expensesTable th:nth-child(2) { width: 15%; }
-#expensesTable th:nth-child(3) { text-align: right; padding-right: 25px; width: 15%; } /* Amount हैडर - राइट पैडिंग बढ़ाई */
-#expensesTable th:nth-child(4) { padding-left: 25px; width: auto; } /* Description हैडर - लेफ्ट पैडिंग बढ़ाई */
-#expensesTable th:nth-child(5) { width: 15%; padding-left: 10px; } /* Payment Method हैडर - थोड़ी लेफ्ट पैडिंग */
-#expensesTable th:nth-child(6) { text-align: center; width: 100px; } /* Actions हैडर */
-
+/* Specific Header Alignments */
+#expensesTable th:nth-child(3) { text-align: right; } /* Amount Header Right */
+#expensesTable th:nth-child(6) { text-align: center; } /* Actions Header Center */
 
 #expensesTable tbody tr:nth-child(even) { background-color: #fdfdfd; }
 #expensesTable tbody tr:hover { background-color: #f1f5f9; }
 
-/* Specific column alignment and padding (tbody cells) */
-#expensesTable td:nth-child(1), /* Date */
-#expensesTable td:nth-child(2) { /* Category */
-    white-space: nowrap;
-}
-
-#expensesTable td:nth-child(3) { /* Amount */
+/* Specific Cell Alignments */
+#expensesTable td:nth-child(3) { /* Amount Cell */
     text-align: right;
     font-weight: 500;
     white-space: nowrap;
-    padding-right: 25px; /* Amount और Description के बीच गैप बढ़ाया */
 }
 
-#expensesTable td:nth-child(4) { /* Description */
+#expensesTable td:nth-child(4) { /* Description Cell */
     white-space: normal;
     word-break: break-word;
-    text-align: left;
-    padding-left: 25px; /* Amount और Description के बीच गैप बढ़ाया */
-    /* Description और Payment Method के बीच गैप कम करने के लिए राइट पैडिंग हटा दी */
-    padding-right: 10px; /* Payment Method से थोड़ी दूरी */
+    min-width: 200px; /* Give description some minimum space */
 }
 
-#expensesTable td:nth-child(5) { /* Payment Method */
-    text-align: left;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    /* Description और Payment Method के बीच गैप कम करने के लिए लेफ्ट पैडिंग थोड़ी कम की */
-    padding-left: 10px;
+#expensesTable td:nth-child(5) { /* Payment Method Cell */
+     white-space: nowrap;
+     /* Add width/max-width later if needed */
+ }
+
+#expensesTable td:last-child { /* Actions Cell */
+    text-align: center; /* Center align the container */
+    width: 100px; /* Fixed width for actions */
 }
 
-#expensesTable td:last-child { /* Actions */
-    text-align: center;
-    /* वर्टिकल अलाइनमेंट के लिए पैडिंग को सामान्य रखें या थोड़ा समायोजित करें */
-    /* padding: 9px 10px; */ /* डिफ़ॉल्ट पैडिंग */
-     /* यदि बटन अभी भी ऊपर दिख रहे हैं, तो थोड़ा टॉप पैडिंग बढ़ा सकते हैं */
-     padding-top: 10px;
-     padding-bottom: 10px;
-
-}
-
-/* Action Buttons in Table */
+/* Action Buttons Alignment */
 .action-buttons {
-    display: inline-flex;
+    display: inline-flex; /* Needed for text-align:center to work */
     gap: 5px;
-    align-items: center;
-    vertical-align: middle; /* सुनिश्चित करें कि बटन वर्टिकली अलाइन हों */
+    align-items: center; /* Vertical align buttons */
+    vertical-align: middle; /* Align the flex container itself */
 }
-.action-buttons .button {
-    padding: 5px 9px; /* पैडिंग समायोजित करें यदि बटन बहुत बड़े लग रहे हैं */
-    font-size: 0.85em;
-    gap: 4px;
-    border-radius: 4px;
-    line-height: 1; /* लाइन हाइट को 1 रखें */
-    box-shadow: none;
-}
-/* ... (अन्य बटन स्टाइल्स) ... */
-
+.action-buttons .button { padding: 5px 9px; font-size: 0.85em; gap: 4px; border-radius: 4px; line-height: 1; box-shadow: none; }
+.action-buttons .button:hover { transform: translateY(-1px); box-shadow: 0 1px 3px rgba(0,0,0,0.15); }
+.action-buttons .button i { margin-right: 0; font-size: 0.9em; }
+.action-buttons .edit-button { background-color: var(--warning-color); color: #333; }
+.action-buttons .edit-button:hover:not(:disabled) { background-color: #e0a800; }
+.action-buttons .delete-button { background-color: var(--danger-color); color: var(--white-color); }
+.action-buttons .delete-button:hover:not(:disabled) { background-color: #c82333; }
+/* Alignment Changes End Here */
 
 /* Loading / No Results Row */
-#expensesTableLoadingMessage td,
+#expensesLoadingMessage td,
 #noExpensesMessage td {
     text-align: center !important;
     color: var(--dark-gray);
@@ -112,26 +198,35 @@
 .list-totals { margin-top: 10px; padding: 10px 15px; background-color: var(--light-gray); border: 1px solid var(--medium-gray); border-radius: var(--border-radius); text-align: right; font-size: 1em; font-weight: 600; }
 
 /* --- Modal Styles --- */
-/* (Modal styles remain unchanged) */
-/* ... */
+.modal { display: none; position: fixed; z-index: 1050; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.6); align-items: center; justify-content: center; padding: 15px; box-sizing: border-box; }
+.modal.active { display: flex; }
+.modal-content { background-color: var(--white-color); margin: auto; border: none; width: 95%; max-width: 600px; border-radius: var(--border-radius); position: relative; box-shadow: 0 5px 15px rgba(0,0,0,0.2); z-index: 1051; display: flex; flex-direction: column; max-height: calc(90vh); overflow: hidden; padding: 0; }
+.modal-header { padding: 12px 20px; border-bottom: 1px solid var(--medium-gray); background-color: var(--light-gray); border-radius: var(--border-radius) var(--border-radius) 0 0; flex-shrink: 0; display: flex; justify-content: space-between; align-items: center;}
+.modal-header h2 { margin: 0; font-size: 1.25em; font-weight: 600; color: var(--secondary-color); }
+.close-btn { color: #aaa; font-size: 26px; font-weight: bold; cursor: pointer; line-height: 1; background: none; border: none; padding: 0 5px; }
+.close-btn:hover, .close-btn:focus { color: var(--danger-color); }
+.modal-body { padding: 15px 20px; overflow-y: auto; flex-grow: 1; }
+.modal-actions { display: flex; justify-content: flex-end; gap: 10px; padding: 10px 20px; border-top: 1px solid var(--medium-gray); background-color: var(--light-gray); flex-shrink: 0; border-radius: 0 0 var(--border-radius) var(--border-radius); }
 
 /* --- Form Styles within Modal --- */
-/* (Form styles remain unchanged) */
-/* ... */
+.modal form .form-group { margin-bottom: 15px; }
+.modal form .form-group label { display: block; margin-bottom: 6px; font-weight: 500; font-size: 0.9em; }
+.modal form .form-group label .required { color: var(--danger-color); margin-left: 3px; }
+.modal form .form-group input[type="text"], .modal form .form-group input[type="number"], .modal form .form-group input[type="date"], .modal form .form-group select, .modal form .form-group textarea { width: 100%; padding: 9px 12px; border: 1px solid #ced4da; border-radius: var(--border-radius); font-size: 0.95em; box-sizing: border-box; font-family: var(--font-family); }
+.modal form .form-group input[type="text"], .modal form .form-group input[type="number"], .modal form .form-group input[type="date"], .modal form .form-group select { height: 40px; }
+.modal form .form-group input[type="date"] { color-scheme: light; }
+.modal form .form-group textarea { resize: vertical; min-height: 60px; }
+.modal form .form-group input:focus, .modal form .form-group select:focus, .modal form .form-group textarea:focus { border-color: var(--primary-color); outline: 0; box-shadow: 0 0 0 0.2rem rgba(0, 86, 179, 0.2); }
+.modal .error-message { color: var(--danger-color); background-color: #fdecea; border: 1px solid var(--danger-color); border-radius: var(--border-radius); padding: 8px 12px; font-size: 0.88em; margin-top: 0; margin-bottom: 15px; text-align: center; width: 100%; box-sizing: border-box; display: none; }
+.modal .error-message[style*="block"] { display: block !important; }
 
 /* --- General Error Message Area --- */
-/* (Error message styles remain unchanged) */
-/* ... */
+.error-message { color: var(--danger-color); background-color: #f8d7da; border: 1px solid #f5c6cb; border-radius: var(--border-radius); padding: 10px 15px; margin-bottom: 15px; font-size: 0.95em; display: none; }
 
 /* --- Responsive --- */
-/* Responsive स्टाइल्स में भी पैडिंग को समायोजित करें */
 @media (max-width: 992px) {
-    #expensesTable th:nth-child(3),
-    #expensesTable td:nth-child(3) { padding-right: 20px; } /* थोड़ी कम पैडिंग */
-    #expensesTable th:nth-child(4),
-    #expensesTable td:nth-child(4) { padding-left: 20px; padding-right: 8px;} /* थोड़ी कम पैडिंग */
-     #expensesTable th:nth-child(5),
-    #expensesTable td:nth-child(5) { padding-left: 8px; }
+    .filter-controls { gap: 10px; }
+    .filter-group.filter-buttons { margin-left: 0; }
 }
 @media (max-width: 768px) {
     .main-content { padding: 15px; }
@@ -143,11 +238,9 @@
     .filter-group.filter-buttons .button { flex-grow: 1; justify-content: center; }
 
     #expensesTable { font-size: 0.85em; }
-    #expensesTable th, #expensesTable td { padding: 8px 6px; } /* बेस पैडिंग */
-    #expensesTable td:nth-child(3) { padding-right: 15px; } /* Amount padding */
-    #expensesTable td:nth-child(4) { padding-left: 15px; padding-right: 5px; width: auto;} /* Description padding */
-    #expensesTable td:nth-child(5) { padding-left: 5px; width: auto; white-space: normal; } /* Payment Method padding */
-    #expensesTable td:last-child { width: auto; padding: 8px 6px;} /* Actions padding */
+    #expensesTable th, #expensesTable td { padding: 8px 6px; }
+    #expensesTable td:nth-child(4) { min-width: 150px; }
+    #expensesTable td:last-child { width: auto; }
 
     .modal-content { width: 96%; }
      .modal-actions { flex-direction: column; gap: 8px; }
@@ -157,10 +250,6 @@
     .filter-group.filter-buttons { flex-direction: column; }
     #expensesTable { font-size: 0.8em; }
      #expensesTable th, #expensesTable td { padding: 6px 4px; }
-     #expensesTable td:nth-child(3) { padding-right: 10px; }
-     #expensesTable td:nth-child(4) { padding-left: 10px; padding-right: 3px; }
-     #expensesTable td:nth-child(5) { padding-left: 3px; }
-     #expensesTable td:last-child { padding: 6px 4px; }
      .action-buttons .button { padding: 3px 5px; }
      .action-buttons .button i { font-size: 0.8em; }
 }
