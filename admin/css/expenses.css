@@ -1,5 +1,5 @@
 /* css/expenses.css */
-/* Version targeting initial alignment fixes */
+/* Final Version with Spacing and Alignment Adjustments */
 
 /* --- Theme Variables --- */
 :root {
@@ -118,62 +118,86 @@ input, button, select, textarea, label, h1, h2, h3, th, td, span, div, p, li, a 
 #expensesTable { width: 100%; border-collapse: collapse; font-size: 0.9em; }
 #expensesTable thead { background-color: var(--light-gray); border-bottom: 2px solid var(--medium-gray); position: sticky; top: 0; z-index: 1; }
 
-/* Alignment Changes Start Here */
+/* Default alignment and padding for all cells */
 #expensesTable th,
 #expensesTable td {
     border: 1px solid #e0e0e0;
-    padding: 10px 12px; /* Default padding */
+    padding: 9px 10px; /* Default padding */
     text-align: left;   /* Default alignment */
     vertical-align: middle; /* Default vertical alignment */
     border-left: none;
     border-right: none;
 }
 
+/* Add border back to first and last columns */
 #expensesTable th:first-child, #expensesTable td:first-child { border-left: 1px solid #e0e0e0; }
 #expensesTable th:last-child, #expensesTable td:last-child { border-right: 1px solid #e0e0e0; }
 
+/* Table Header specific styles */
 #expensesTable th {
     font-weight: 600;
     color: #495057;
     white-space: nowrap;
-    text-align: left; /* Ensure headers are left aligned by default */
+    text-align: left;
 }
-/* Specific Header Alignments */
-#expensesTable th:nth-child(3) { text-align: right; } /* Amount Header Right */
-#expensesTable th:nth-child(6) { text-align: center; } /* Actions Header Center */
+/* Specific header alignments and padding */
+#expensesTable th:nth-child(1) { width: 10%; } /* Date */
+#expensesTable th:nth-child(2) { width: 15%; } /* Category */
+#expensesTable th:nth-child(3) { text-align: right; padding-right: 30px; width: 15%; } /* Amount Header - Increased right padding */
+#expensesTable th:nth-child(4) { padding-left: 30px; padding-right: 8px; width: auto; } /* Description Header - Increased left, reduced right padding */
+#expensesTable th:nth-child(5) { padding-left: 8px; width: 15%; } /* Payment Method Header - Reduced left padding */
+#expensesTable th:nth-child(6) { text-align: center; width: 100px; } /* Actions Header */
+
 
 #expensesTable tbody tr:nth-child(even) { background-color: #fdfdfd; }
 #expensesTable tbody tr:hover { background-color: #f1f5f9; }
 
-/* Specific Cell Alignments */
+/* Specific column alignment and padding (tbody cells) */
+#expensesTable td:nth-child(1), /* Date */
+#expensesTable td:nth-child(2) { /* Category */
+    white-space: nowrap;
+}
+
 #expensesTable td:nth-child(3) { /* Amount Cell */
     text-align: right;
     font-weight: 500;
     white-space: nowrap;
+    padding-right: 30px; /* Increased right padding */
 }
 
 #expensesTable td:nth-child(4) { /* Description Cell */
     white-space: normal;
     word-break: break-word;
-    min-width: 200px; /* Give description some minimum space */
+    text-align: left;
+    padding-left: 30px; /* Increased left padding */
+    padding-right: 8px; /* Reduced right padding */
 }
 
 #expensesTable td:nth-child(5) { /* Payment Method Cell */
-     white-space: nowrap;
-     /* Add width/max-width later if needed */
- }
-
-#expensesTable td:last-child { /* Actions Cell */
-    text-align: center; /* Center align the container */
-    width: 100px; /* Fixed width for actions */
+    text-align: left;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    padding-left: 8px; /* Reduced left padding */
+    /* Optional width setting */
+    /* width: 120px; */
+    /* max-width: 120px; */
 }
 
-/* Action Buttons Alignment */
+#expensesTable td:last-child { /* Actions Cell */
+    text-align: center;
+    vertical-align: middle; /* Ensure vertical alignment */
+    width: 100px;
+    padding-top: 9px; /* Match default vertical padding */
+    padding-bottom: 9px; /* Match default vertical padding */
+}
+
+/* Action Buttons in Table */
 .action-buttons {
-    display: inline-flex; /* Needed for text-align:center to work */
+    display: inline-flex; /* Allows text-align:center on parent TD to work */
     gap: 5px;
-    align-items: center; /* Vertical align buttons */
-    vertical-align: middle; /* Align the flex container itself */
+    align-items: center; /* Vertical center buttons within the flex container */
+    vertical-align: middle; /* Aligns the flex container itself vertically */
 }
 .action-buttons .button { padding: 5px 9px; font-size: 0.85em; gap: 4px; border-radius: 4px; line-height: 1; box-shadow: none; }
 .action-buttons .button:hover { transform: translateY(-1px); box-shadow: 0 1px 3px rgba(0,0,0,0.15); }
@@ -182,7 +206,6 @@ input, button, select, textarea, label, h1, h2, h3, th, td, span, div, p, li, a 
 .action-buttons .edit-button:hover:not(:disabled) { background-color: #e0a800; }
 .action-buttons .delete-button { background-color: var(--danger-color); color: var(--white-color); }
 .action-buttons .delete-button:hover:not(:disabled) { background-color: #c82333; }
-/* Alignment Changes End Here */
 
 /* Loading / No Results Row */
 #expensesLoadingMessage td,
@@ -198,6 +221,7 @@ input, button, select, textarea, label, h1, h2, h3, th, td, span, div, p, li, a 
 .list-totals { margin-top: 10px; padding: 10px 15px; background-color: var(--light-gray); border: 1px solid var(--medium-gray); border-radius: var(--border-radius); text-align: right; font-size: 1em; font-weight: 600; }
 
 /* --- Modal Styles --- */
+/* (Modal styles remain unchanged) */
 .modal { display: none; position: fixed; z-index: 1050; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.6); align-items: center; justify-content: center; padding: 15px; box-sizing: border-box; }
 .modal.active { display: flex; }
 .modal-content { background-color: var(--white-color); margin: auto; border: none; width: 95%; max-width: 600px; border-radius: var(--border-radius); position: relative; box-shadow: 0 5px 15px rgba(0,0,0,0.2); z-index: 1051; display: flex; flex-direction: column; max-height: calc(90vh); overflow: hidden; padding: 0; }
@@ -209,6 +233,7 @@ input, button, select, textarea, label, h1, h2, h3, th, td, span, div, p, li, a 
 .modal-actions { display: flex; justify-content: flex-end; gap: 10px; padding: 10px 20px; border-top: 1px solid var(--medium-gray); background-color: var(--light-gray); flex-shrink: 0; border-radius: 0 0 var(--border-radius) var(--border-radius); }
 
 /* --- Form Styles within Modal --- */
+/* (Form styles remain unchanged) */
 .modal form .form-group { margin-bottom: 15px; }
 .modal form .form-group label { display: block; margin-bottom: 6px; font-weight: 500; font-size: 0.9em; }
 .modal form .form-group label .required { color: var(--danger-color); margin-left: 3px; }
@@ -221,12 +246,21 @@ input, button, select, textarea, label, h1, h2, h3, th, td, span, div, p, li, a 
 .modal .error-message[style*="block"] { display: block !important; }
 
 /* --- General Error Message Area --- */
+/* (Error message styles remain unchanged) */
 .error-message { color: var(--danger-color); background-color: #f8d7da; border: 1px solid #f5c6cb; border-radius: var(--border-radius); padding: 10px 15px; margin-bottom: 15px; font-size: 0.95em; display: none; }
 
 /* --- Responsive --- */
+/* Adjust padding for responsiveness according to new base values */
 @media (max-width: 992px) {
     .filter-controls { gap: 10px; }
     .filter-group.filter-buttons { margin-left: 0; }
+
+    #expensesTable th:nth-child(3),
+    #expensesTable td:nth-child(3) { padding-right: 20px; } /* Adjusted responsive padding */
+    #expensesTable th:nth-child(4),
+    #expensesTable td:nth-child(4) { padding-left: 20px; padding-right: 6px;} /* Adjusted responsive padding */
+     #expensesTable th:nth-child(5),
+    #expensesTable td:nth-child(5) { padding-left: 6px; } /* Adjusted responsive padding */
 }
 @media (max-width: 768px) {
     .main-content { padding: 15px; }
@@ -238,9 +272,11 @@ input, button, select, textarea, label, h1, h2, h3, th, td, span, div, p, li, a 
     .filter-group.filter-buttons .button { flex-grow: 1; justify-content: center; }
 
     #expensesTable { font-size: 0.85em; }
-    #expensesTable th, #expensesTable td { padding: 8px 6px; }
-    #expensesTable td:nth-child(4) { min-width: 150px; }
-    #expensesTable td:last-child { width: auto; }
+    #expensesTable th, #expensesTable td { padding: 8px 6px; } /* Base padding for this size */
+    #expensesTable td:nth-child(3) { padding-right: 15px; } /* Adjusted responsive padding */
+    #expensesTable td:nth-child(4) { padding-left: 15px; padding-right: 5px; width: auto;} /* Adjusted responsive padding */
+    #expensesTable td:nth-child(5) { padding-left: 5px; white-space: normal; } /* Allow wrap */
+    #expensesTable td:last-child { padding-top: 8px; padding-bottom: 8px; } /* Adjusted responsive padding */
 
     .modal-content { width: 96%; }
      .modal-actions { flex-direction: column; gap: 8px; }
@@ -249,7 +285,11 @@ input, button, select, textarea, label, h1, h2, h3, th, td, span, div, p, li, a 
 @media (max-width: 480px) {
     .filter-group.filter-buttons { flex-direction: column; }
     #expensesTable { font-size: 0.8em; }
-     #expensesTable th, #expensesTable td { padding: 6px 4px; }
+     #expensesTable th, #expensesTable td { padding: 6px 4px; } /* Base padding for this size */
+     #expensesTable td:nth-child(3) { padding-right: 10px; } /* Adjusted responsive padding */
+     #expensesTable td:nth-child(4) { padding-left: 10px; padding-right: 3px; } /* Adjusted responsive padding */
+     #expensesTable td:nth-child(5) { padding-left: 3px; } /* Adjusted responsive padding */
+     #expensesTable td:last-child { padding-top: 6px; padding-bottom: 6px; } /* Adjusted responsive padding */
      .action-buttons .button { padding: 3px 5px; }
      .action-buttons .button i { font-size: 0.8em; }
 }
