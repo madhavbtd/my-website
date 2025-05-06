@@ -1,11 +1,11 @@
-// js/expenses.js - Expenses Management Logic with Filters (v3 - Listener Check)
+// js/expenses.js - Expenses Management Logic with Filters (v4 - Debug Listeners)
 
 // --- Firebase Imports ---
 import { db, auth } from './js/firebase-init.js'; // Ensure path is correct
 import {
     collection, addDoc, doc, getDoc, getDocs, updateDoc, deleteDoc,
     query, orderBy, where, Timestamp, serverTimestamp,
-    startAt, endAt // Needed for text search if implemented differently
+    startAt, endAt
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 // --- Global Variables ---
@@ -13,7 +13,6 @@ let expensesCache = [];
 let currentEditingExpenseId = null;
 
 // --- DOM Elements Cache ---
-// Variables declared to hold references to DOM elements
 let addExpenseBtn, expenseModal, expenseModalTitle, closeExpenseModalBtn, cancelExpenseBtn,
     saveExpenseBtn, expenseForm, editingExpenseIdInput, expenseDateInput,
     expenseCategoryInput, expenseAmountInput, expenseDescriptionInput,
@@ -24,8 +23,9 @@ let addExpenseBtn, expenseModal, expenseModalTitle, closeExpenseModalBtn, cancel
     filterSearchInput, filterCategoryInput, filterStartDateInput, filterEndDateInput,
     applyExpenseFiltersBtn, clearExpenseFiltersBtn;
 
-// Function to get references to DOM elements and store them in variables
+// Function to cache DOM elements
 function cacheDOMElements() {
+    console.log("Attempting to cache DOM elements..."); // Debug log
     addExpenseBtn = document.getElementById('addExpenseBtn');
     expenseModal = document.getElementById('expenseModal');
     expenseModalTitle = document.getElementById('expenseModalTitle');
@@ -53,107 +53,53 @@ function cacheDOMElements() {
     filterEndDateInput = document.getElementById('filterEndDate');
     applyExpenseFiltersBtn = document.getElementById('applyExpenseFiltersBtn');
     clearExpenseFiltersBtn = document.getElementById('clearExpenseFiltersBtn');
-    console.log("DOM Elements Cached"); // Confirmation log
+
+    // Check if filter buttons were found
+    if (!applyExpenseFiltersBtn) console.error("Apply Filters button not found!");
+    if (!clearExpenseFiltersBtn) console.error("Clear Filters button not found!");
+
+    console.log("DOM Elements Caching attempt complete.");
 }
 
 
 // --- Utility Functions ---
-function formatDate(timestamp) {
-    // Formats a Firestore Timestamp into DD/MM/YYYY string
-    if (!timestamp || typeof timestamp.toDate !== 'function') return '-';
-    try { return timestamp.toDate().toLocaleDateString('en-GB'); } // Use locale for DD/MM/YYYY
-    catch (e) { console.error("Error formatting date:", timestamp, e); return 'Invalid Date'; }
-}
-
-function formatCurrency(amount) {
-    // Formats a number into Indian Rupee currency string
-    const num = Number(amount);
-    if (isNaN(num)) return 'N/A';
-    return num.toLocaleString('en-IN', { style: 'currency', currency: 'INR', minimumFractionDigits: 2, maximumFractionDigits: 2 });
-}
-function escapeHtml(unsafe) {
-    // Basic HTML escaping
-     if (typeof unsafe !== 'string') { try { unsafe = String(unsafe ?? ''); } catch (e) { unsafe = ''; } }
-     return unsafe.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
-}
-
-function displayExpenseError(message, elementId = 'expenseListError') {
-    // Displays an error message
-    const errorElement = document.getElementById(elementId);
-    if (errorElement) {
-        errorElement.textContent = message;
-        errorElement.style.display = message ? 'block' : 'none';
-        console.log(`Error displayed in ${elementId}: ${message}`);
-    } else { console.error(`Error element ID '${elementId}' not found. Msg:`, message); if(elementId !== 'expenseFormError') alert(message); }
-}
-
-function clearExpenseError(elementId = 'expenseListError') {
-    // Clears an error message
-    const errorElement = document.getElementById(elementId);
-    if (errorElement) { errorElement.textContent = ''; errorElement.style.display = 'none'; }
-    if (elementId === 'expenseListError' && expenseFormError) { expenseFormError.textContent = ''; expenseFormError.style.display = 'none'; }
-}
+function formatDate(timestamp) { /* ... (same as before) ... */ if (!timestamp || typeof timestamp.toDate !== 'function') return '-'; try { return timestamp.toDate().toLocaleDateString('en-GB'); } catch (e) { console.error("Error formatting date:", timestamp, e); return 'Invalid Date'; } }
+function formatCurrency(amount) { /* ... (same as before) ... */ const num = Number(amount); if (isNaN(num)) return 'N/A'; return num.toLocaleString('en-IN', { style: 'currency', currency: 'INR', minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+function escapeHtml(unsafe) { /* ... (same as before) ... */ if (typeof unsafe !== 'string') { try { unsafe = String(unsafe ?? ''); } catch (e) { unsafe = ''; } } return unsafe.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;"); }
+function displayExpenseError(message, elementId = 'expenseListError') { /* ... (same as before) ... */ const errorElement = document.getElementById(elementId); if (errorElement) { errorElement.textContent = message; errorElement.style.display = message ? 'block' : 'none'; console.log(`Error displayed in ${elementId}: ${message}`); } else { console.error(`Error element ID '${elementId}' not found. Msg:`, message); if(elementId !== 'expenseFormError') alert(message); } }
+function clearExpenseError(elementId = 'expenseListError') { /* ... (same as before) ... */ const errorElement = document.getElementById(elementId); if (errorElement) { errorElement.textContent = ''; errorElement.style.display = 'none'; } if (elementId === 'expenseListError' && expenseFormError) { expenseFormError.textContent = ''; expenseFormError.style.display = 'none'; } }
 
 // --- Core Functions ---
 
-/**
- * Loads expenses from Firestore based on current filters and displays them.
- */
+/** Loads expenses from Firestore based on current filters and displays them. */
 async function loadExpenses() {
-    // Ensure required elements are available
-    if (!expensesTableBody || !expensesLoadingMessage || !noExpensesMessage || !expensesTotalDisplay) {
-        console.error("Expense table elements not found. Cannot load expenses.");
-        return;
-    }
+    if (!expensesTableBody || !expensesLoadingMessage || !noExpensesMessage || !expensesTotalDisplay) { console.error("Expense table elements not found. Cannot load expenses."); return; }
     if (!auth.currentUser) { displayExpenseError("Please login to view expenses."); return; }
     console.log("Loading expenses with current filters...");
 
-    // Show loading state
     expensesLoadingMessage.style.display = 'table-row';
     noExpensesMessage.style.display = 'none';
-    expensesTableBody.innerHTML = ''; // Clear previous entries
-    clearExpenseError(); // Clear previous errors
+    expensesTableBody.innerHTML = '';
+    clearExpenseError();
     let totalAmount = 0;
     expensesTotalDisplay.textContent = 'Calculating total...';
 
     try {
         const expensesRef = collection(db, "expenses");
-        let conditions = [where("userId", "==", auth.currentUser.uid)]; // Base query: only user's expenses
+        let conditions = [where("userId", "==", auth.currentUser.uid)];
 
         // --- Apply Firestore Filters ---
-        // Get filter values ONLY if the elements exist
         const categoryFilter = filterCategoryInput?.value.trim();
         const startDateVal = filterStartDateInput?.value;
         const endDateVal = filterEndDateInput?.value;
 
-        if (categoryFilter) {
-            console.log("Applying Firestore category filter:", categoryFilter);
-            conditions.push(where("category", "==", categoryFilter));
-        }
-        if (startDateVal) {
-            try {
-                const startDate = new Date(startDateVal + 'T00:00:00');
-                if(isNaN(startDate.getTime())) throw new Error("Invalid start date");
-                conditions.push(where("expenseDate", ">=", Timestamp.fromDate(startDate)));
-                console.log("Applying start date filter:", startDateVal);
-            } catch (e) { console.error("Invalid start date format:", e); displayExpenseError("Invalid 'From Date'. Please use YYYY-MM-DD.");}
-        }
-        if (endDateVal) {
-            try {
-                const endDate = new Date(endDateVal + 'T23:59:59');
-                 if(isNaN(endDate.getTime())) throw new Error("Invalid end date");
-                conditions.push(where("expenseDate", "<=", Timestamp.fromDate(endDate)));
-                 console.log("Applying end date filter:", endDateVal);
-            } catch (e) { console.error("Invalid end date format:", e); displayExpenseError("Invalid 'To Date'. Please use YYYY-MM-DD.");}
-        }
+        if (categoryFilter) { console.log("Applying Firestore category filter:", categoryFilter); conditions.push(where("category", "==", categoryFilter)); }
+        if (startDateVal) { try { const startDate = new Date(startDateVal + 'T00:00:00'); if(isNaN(startDate.getTime())) throw new Error("Invalid start date"); conditions.push(where("expenseDate", ">=", Timestamp.fromDate(startDate))); console.log("Applying start date filter:", startDateVal); } catch (e) { console.error("Invalid start date format:", e); displayExpenseError("Invalid 'From Date'. Please use YYYY-MM-DD.");} }
+        if (endDateVal) { try { const endDate = new Date(endDateVal + 'T23:59:59'); if(isNaN(endDate.getTime())) throw new Error("Invalid end date"); conditions.push(where("expenseDate", "<=", Timestamp.fromDate(endDate))); console.log("Applying end date filter:", endDateVal); } catch (e) { console.error("Invalid end date format:", e); displayExpenseError("Invalid 'To Date'. Please use YYYY-MM-DD.");} }
 
-        // --- Build Query ---
         const q = query(expensesRef, ...conditions, orderBy("expenseDate", "desc"));
-
-        // --- Fetch Data ---
         const querySnapshot = await getDocs(q);
         expensesLoadingMessage.style.display = 'none';
-
         let results = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
         // --- Apply Client-Side Search Filter ---
@@ -166,29 +112,15 @@ async function loadExpenses() {
                 return descMatch || catMatch;
              });
         }
-
-        expensesCache = results; // Store filtered results
+        expensesCache = results;
 
         // --- Render Table ---
-        if (expensesCache.length === 0) {
-            noExpensesMessage.style.display = 'table-row';
-        } else {
+        if (expensesCache.length === 0) { noExpensesMessage.style.display = 'table-row'; }
+        else {
             expensesCache.forEach(exp => {
-                const tr = document.createElement('tr');
-                tr.setAttribute('data-id', exp.id);
-                const amount = Number(exp.amount || 0);
-                totalAmount += amount;
-
-                tr.innerHTML = `
-                    <td>${formatDate(exp.expenseDate)}</td>
-                    <td>${escapeHtml(exp.category || '-')}</td>
-                    <td style="text-align: right;">${formatCurrency(amount)}</td>
-                    <td>${escapeHtml(exp.description || '-')}</td>
-                    <td class="action-buttons">
-                        <button class="button edit-button small-button" data-action="edit" data-id="${exp.id}" title="Edit Expense"><i class="fas fa-edit"></i></button>
-                        <button class="button delete-button small-button" data-action="delete" data-id="${exp.id}" title="Delete Expense"><i class="fas fa-trash-alt"></i></button>
-                    </td>
-                `;
+                const tr = document.createElement('tr'); tr.setAttribute('data-id', exp.id);
+                const amount = Number(exp.amount || 0); totalAmount += amount;
+                tr.innerHTML = `<td>${formatDate(exp.expenseDate)}</td><td>${escapeHtml(exp.category || '-')}</td><td style="text-align: right;">${formatCurrency(amount)}</td><td>${escapeHtml(exp.description || '-')}</td><td class="action-buttons"><button class="button edit-button small-button" data-action="edit" data-id="${exp.id}" title="Edit Expense"><i class="fas fa-edit"></i></button><button class="button delete-button small-button" data-action="delete" data-id="${exp.id}" title="Delete Expense"><i class="fas fa-trash-alt"></i></button></td>`;
                 expensesTableBody.appendChild(tr);
             });
         }
@@ -196,11 +128,8 @@ async function loadExpenses() {
 
     } catch (error) {
         console.error("Error loading expenses: ", error);
-        if (error.code === 'failed-precondition') {
-             displayExpenseError(`Error: Database index missing for the current filter combination. Please check Firestore console.`);
-        } else {
-            displayExpenseError(`Error loading expenses: ${error.message}`);
-        }
+        if (error.code === 'failed-precondition') { displayExpenseError(`Error: Database index missing. Check Firestore console.`); }
+        else { displayExpenseError(`Error loading expenses: ${error.message}`); }
         expensesLoadingMessage.style.display = 'none';
         expensesTableBody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: red;">Could not load expenses.</td></tr>`;
         expensesTotalDisplay.textContent = `Total Expenses: Error`;
@@ -208,145 +137,30 @@ async function loadExpenses() {
 }
 
 /** Opens the Add/Edit Expense Modal */
-function openExpenseModal(mode = 'add', expenseData = null) {
-    if (!expenseModal || !expenseForm || !expenseDateInput || !expenseCategoryInput || !expenseAmountInput || !expenseDescriptionInput) {
-         console.error("Expense modal or form elements missing!"); return;
-    };
-
-    expenseForm.reset();
-    clearExpenseError('expenseFormError');
-    editingExpenseIdInput.value = '';
-    currentEditingExpenseId = null;
-
-    if (mode === 'edit' && expenseData && expenseData.id) {
-        expenseModalTitle.textContent = 'Edit Expense';
-        currentEditingExpenseId = expenseData.id;
-        editingExpenseIdInput.value = expenseData.id;
-        if (expenseData.expenseDate && expenseData.expenseDate.toDate) {
-             const date = expenseData.expenseDate.toDate();
-             expenseDateInput.value = date.toISOString().split('T')[0];
-        }
-        expenseCategoryInput.value = expenseData.category || '';
-        expenseAmountInput.value = expenseData.amount || '';
-        expenseDescriptionInput.value = expenseData.description || '';
-        if(expensePaymentMethodInput) expensePaymentMethodInput.value = expenseData.paymentMethod || '';
-        if(expenseNotesInput) expenseNotesInput.value = expenseData.notes || '';
-    } else {
-        expenseModalTitle.textContent = 'Add New Expense';
-        try { expenseDateInput.valueAsDate = new Date(); } catch(e){ console.warn("Cannot set default date"); }
-    }
-    expenseModal.classList.add('active');
-}
+function openExpenseModal(mode = 'add', expenseData = null) { /* ... (same as before) ... */ if (!expenseModal || !expenseForm || !expenseDateInput || !expenseCategoryInput || !expenseAmountInput || !expenseDescriptionInput) { console.error("Expense modal or form elements missing!"); return; }; expenseForm.reset(); clearExpenseError('expenseFormError'); editingExpenseIdInput.value = ''; currentEditingExpenseId = null; if (mode === 'edit' && expenseData && expenseData.id) { expenseModalTitle.textContent = 'Edit Expense'; currentEditingExpenseId = expenseData.id; editingExpenseIdInput.value = expenseData.id; if (expenseData.expenseDate && expenseData.expenseDate.toDate) { const date = expenseData.expenseDate.toDate(); expenseDateInput.value = date.toISOString().split('T')[0]; } expenseCategoryInput.value = expenseData.category || ''; expenseAmountInput.value = expenseData.amount || ''; expenseDescriptionInput.value = expenseData.description || ''; if(expensePaymentMethodInput) expensePaymentMethodInput.value = expenseData.paymentMethod || ''; if(expenseNotesInput) expenseNotesInput.value = expenseData.notes || ''; } else { expenseModalTitle.textContent = 'Add New Expense'; try { expenseDateInput.valueAsDate = new Date(); } catch(e){ console.warn("Cannot set default date"); } } expenseModal.classList.add('active'); }
 
 /** Closes the Add/Edit Expense Modal */
-function closeExpenseModal() {
-    if (expenseModal) { expenseModal.classList.remove('active'); }
-}
+function closeExpenseModal() { /* ... (same as before) ... */ if (expenseModal) { expenseModal.classList.remove('active'); } }
 
 /** Handles the submission of the expense form */
-async function handleExpenseFormSubmit(event) {
-    event.preventDefault();
-    if (!auth.currentUser) { displayExpenseError("You must be logged in.", "expenseFormError"); return; }
-    if (!expenseDateInput || !expenseCategoryInput || !expenseAmountInput || !expenseDescriptionInput || !saveExpenseBtn) {
-        displayExpenseError("Form elements missing.", "expenseFormError"); return;
-    }
-
-    const expenseDateStr = expenseDateInput.value;
-    const category = expenseCategoryInput.value.trim();
-    const amountStr = expenseAmountInput.value.trim();
-    const description = expenseDescriptionInput.value.trim();
-    const paymentMethod = expensePaymentMethodInput?.value || '';
-    const notes = expenseNotesInput?.value.trim() || '';
-    const editingId = editingExpenseIdInput.value;
-
-    // Validation
-    if (!expenseDateStr || !category || !amountStr || !description) { displayExpenseError("Please fill in all required fields (*).", "expenseFormError"); return; }
-    const amount = parseFloat(amountStr);
-    if (isNaN(amount) || amount <= 0) { displayExpenseError("Please enter a valid positive amount.", "expenseFormError"); expenseAmountInput.focus(); return; }
-     let expenseDateTimestamp;
-     try {
-        const localDate = new Date(expenseDateStr + 'T00:00:00');
-        if (isNaN(localDate.getTime())) throw new Error("Invalid date value");
-        expenseDateTimestamp = Timestamp.fromDate(localDate);
-     } catch (e) { displayExpenseError("Invalid date format or value.", "expenseFormError"); expenseDateInput.focus(); return; }
-
-    clearExpenseError('expenseFormError');
-    saveExpenseBtn.disabled = true;
-    saveExpenseBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
-
-    const expenseData = {
-        userId: auth.currentUser.uid,
-        expenseDate: expenseDateTimestamp,
-        category: category,
-        amount: amount,
-        description: description,
-        paymentMethod: paymentMethod,
-        notes: notes,
-        updatedAt: serverTimestamp()
-    };
-
-    try {
-        if (editingId) {
-            const expenseRef = doc(db, "expenses", editingId);
-            await updateDoc(expenseRef, expenseData);
-            console.log("Expense updated:", editingId);
-        } else {
-            expenseData.createdAt = serverTimestamp();
-            const docRef = await addDoc(collection(db, "expenses"), expenseData);
-            console.log("Expense added:", docRef.id);
-        }
-        closeExpenseModal();
-        await loadExpenses(); // Refresh list
-
-    } catch (error) {
-        console.error("Error saving expense: ", error);
-        displayExpenseError(`Error saving expense: ${error.message}`, "expenseFormError");
-    } finally {
-        saveExpenseBtn.disabled = false;
-        saveExpenseBtn.innerHTML = '<i class="fas fa-save"></i> Save Expense';
-    }
-}
+async function handleExpenseFormSubmit(event) { /* ... (same as before) ... */ event.preventDefault(); if (!auth.currentUser) { displayExpenseError("You must be logged in.", "expenseFormError"); return; } if (!expenseDateInput || !expenseCategoryInput || !expenseAmountInput || !expenseDescriptionInput || !saveExpenseBtn) { displayExpenseError("Form elements missing.", "expenseFormError"); return; } const expenseDateStr = expenseDateInput.value; const category = expenseCategoryInput.value.trim(); const amountStr = expenseAmountInput.value.trim(); const description = expenseDescriptionInput.value.trim(); const paymentMethod = expensePaymentMethodInput?.value || ''; const notes = expenseNotesInput?.value.trim() || ''; const editingId = editingExpenseIdInput.value; if (!expenseDateStr || !category || !amountStr || !description) { displayExpenseError("Please fill in all required fields (*).", "expenseFormError"); return; } const amount = parseFloat(amountStr); if (isNaN(amount) || amount <= 0) { displayExpenseError("Please enter a valid positive amount.", "expenseFormError"); expenseAmountInput.focus(); return; } let expenseDateTimestamp; try { const localDate = new Date(expenseDateStr + 'T00:00:00'); if (isNaN(localDate.getTime())) throw new Error("Invalid date value"); expenseDateTimestamp = Timestamp.fromDate(localDate); } catch (e) { displayExpenseError("Invalid date format or value.", "expenseFormError"); expenseDateInput.focus(); return; } clearExpenseError('expenseFormError'); saveExpenseBtn.disabled = true; saveExpenseBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...'; const expenseData = { userId: auth.currentUser.uid, expenseDate: expenseDateTimestamp, category: category, amount: amount, description: description, paymentMethod: paymentMethod, notes: notes, updatedAt: serverTimestamp() }; try { if (editingId) { const expenseRef = doc(db, "expenses", editingId); await updateDoc(expenseRef, expenseData); console.log("Expense updated:", editingId); } else { expenseData.createdAt = serverTimestamp(); const docRef = await addDoc(collection(db, "expenses"), expenseData); console.log("Expense added:", docRef.id); } closeExpenseModal(); await loadExpenses(); } catch (error) { console.error("Error saving expense: ", error); displayExpenseError(`Error saving expense: ${error.message}`, "expenseFormError"); } finally { saveExpenseBtn.disabled = false; saveExpenseBtn.innerHTML = '<i class="fas fa-save"></i> Save Expense'; } }
 
 /** Handles delete expense confirmation and action */
-async function handleDeleteExpenseClick(expenseId) {
-     if (!expenseId) return;
-
-     const expense = expensesCache.find(exp => exp.id === expenseId);
-     const confirmMessage = `Are you sure you want to delete this expense?
------------------------------
-Date: ${expense ? formatDate(expense.expenseDate) : 'N/A'}
-Amount: ${expense ? formatCurrency(expense.amount) : 'N/A'}
-Category: ${expense ? escapeHtml(expense.category) : 'N/A'}
-Description: ${expense ? escapeHtml(expense.description) : 'N/A'}
------------------------------
-This action cannot be undone.`;
-
-     if (window.confirm(confirmMessage)) {
-         console.log("Attempting to delete expense:", expenseId);
-         try {
-             displayExpenseError("Deleting...", "expenseListError")
-             const expenseRef = doc(db, "expenses", expenseId);
-             await deleteDoc(expenseRef);
-             console.log("Expense deleted successfully from Firestore:", expenseId);
-             clearExpenseError();
-             await loadExpenses(); // Reload list to reflect deletion
-
-         } catch (error) {
-             console.error("Error deleting expense:", error);
-             displayExpenseError(`Error deleting expense: ${error.message}`);
-         }
-     } else {
-        console.log("Expense deletion cancelled by user.");
-     }
-}
+async function handleDeleteExpenseClick(expenseId) { /* ... (same as before) ... */ if (!expenseId) return; const expense = expensesCache.find(exp => exp.id === expenseId); const confirmMessage = `Are you sure you want to delete this expense?\n-----------------------------\nDate: ${expense ? formatDate(expense.expenseDate) : 'N/A'}\nAmount: ${expense ? formatCurrency(expense.amount) : 'N/A'}\nCategory: ${expense ? escapeHtml(expense.category) : 'N/A'}\nDescription: ${expense ? escapeHtml(expense.description) : 'N/A'}\n-----------------------------\nThis action cannot be undone.`; if (window.confirm(confirmMessage)) { console.log("Attempting to delete expense:", expenseId); try { displayExpenseError("Deleting...", "expenseListError"); const expenseRef = doc(db, "expenses", expenseId); await deleteDoc(expenseRef); console.log("Expense deleted successfully from Firestore:", expenseId); clearExpenseError(); await loadExpenses(); } catch (error) { console.error("Error deleting expense:", error); displayExpenseError(`Error deleting expense: ${error.message}`); } } else { console.log("Expense deletion cancelled by user."); } }
 
 // --- Event Listeners Setup ---
 function setupEventListeners() {
-    // Cache elements only once
+    // Cache elements only once when setting up listeners
     cacheDOMElements();
 
+    console.log("Setting up event listeners..."); // Debug log
+
     // Check if elements exist before adding listeners
-    addExpenseBtn?.addEventListener('click', () => openExpenseModal('add'));
+    addExpenseBtn?.addEventListener('click', () => {
+        console.log("Add New Expense button clicked"); // Debug log
+        openExpenseModal('add');
+    });
+
     closeExpenseModalBtn?.addEventListener('click', closeExpenseModal);
     cancelExpenseBtn?.addEventListener('click', closeExpenseModal);
     expenseModal?.addEventListener('click', (event) => { if (event.target === expenseModal) closeExpenseModal(); });
@@ -358,6 +172,7 @@ function setupEventListeners() {
         if (!targetButton) return;
         const action = targetButton.dataset.action;
         const expenseId = targetButton.dataset.id;
+        console.log(`Action button clicked: ${action}, ID: ${expenseId}`); // Debug log
 
         if (action === 'edit') {
             const expenseData = expensesCache.find(exp => exp.id === expenseId);
@@ -368,19 +183,20 @@ function setupEventListeners() {
         }
     });
 
-    // --- Filter Buttons Event Listeners ---
+    // --- Filter Buttons Event Listeners (Re-checked) ---
     if (applyExpenseFiltersBtn) {
         applyExpenseFiltersBtn.addEventListener('click', () => {
-            console.log("Apply Filters button clicked"); // Debug log
+            console.log("Apply Filters button clicked - Calling loadExpenses()"); // Debug log
             loadExpenses(); // Reload data when Apply is clicked
         });
+         console.log("Listener ADDED for Apply Filters button."); // Debug log
     } else {
-        console.warn("Apply Filters button not found");
+        console.error("Apply Filters button (applyExpenseFiltersBtn) NOT FOUND in DOM."); // Error if button missing
     }
 
     if (clearExpenseFiltersBtn) {
         clearExpenseFiltersBtn.addEventListener('click', () => {
-            console.log("Clear Filters button clicked"); // Debug log
+            console.log("Clear Filters button clicked - Clearing inputs and calling loadExpenses()"); // Debug log
             // Clear filter input fields
             if(filterSearchInput) filterSearchInput.value = '';
             if(filterCategoryInput) filterCategoryInput.value = '';
@@ -389,34 +205,35 @@ function setupEventListeners() {
             // Reload data with cleared filters
             loadExpenses();
         });
+         console.log("Listener ADDED for Clear Filters button."); // Debug log
     } else {
-        console.warn("Clear Filters button not found");
+        console.error("Clear Filters button (clearExpenseFiltersBtn) NOT FOUND in DOM."); // Error if button missing
     }
 
      // Optional: Trigger filter on Enter key in search/category inputs
-     filterSearchInput?.addEventListener('keypress', (e) => { if(e.key === 'Enter') { e.preventDefault(); loadExpenses();} });
-     filterCategoryInput?.addEventListener('keypress', (e) => { if(e.key === 'Enter') { e.preventDefault(); loadExpenses();} });
+     filterSearchInput?.addEventListener('keypress', (e) => { if(e.key === 'Enter') { e.preventDefault(); console.log("Enter pressed in Search input"); loadExpenses();} });
+     filterCategoryInput?.addEventListener('keypress', (e) => { if(e.key === 'Enter') { e.preventDefault(); console.log("Enter pressed in Category input"); loadExpenses();} });
 
 
-    console.log("Expense page event listeners set up.");
+    console.log("Expense page event listeners setup complete.");
 }
 
 // --- Initialization Function (Exported) ---
-// Called by the auth check script in expenses.html head
 export function initializeExpensesPage(user) {
     console.log("Initializing Expenses Page for user:", user?.uid);
     if (!db) { console.error("Firestore DB is not initialized!"); displayExpenseError("Database connection error."); return; }
-     // Ensure DOM is ready before setting up listeners and loading data
+
+    // Ensure DOM is fully ready before caching elements and setting up listeners
      if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', () => {
-             console.log("DOM Loaded, setting up page.");
-             setupEventListeners(); // Setup listeners *after* caching elements
+             console.log("DOMContentLoaded event fired. Setting up page.");
+             setupEventListeners(); // Setup listeners *after* DOM is ready
              loadExpenses(); // Initial data load
          });
     } else {
         // DOM is already ready
         console.log("DOM Ready, setting up page.");
-        setupEventListeners(); // Setup listeners *after* caching elements
+        setupEventListeners(); // Setup listeners *after* DOM is ready
         loadExpenses(); // Initial data load
     }
 }
