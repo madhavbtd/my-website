@@ -177,7 +177,9 @@
             </div>
         </div>
 
-    </div> <div id="paymentMadeModal" class="modal">
+    </div>
+
+    <div id="paymentMadeModal" class="modal">
          <div class="modal-content small-modal">
             <span class="close-btn" id="closePaymentMadeModalBtn" title="Close">&times;</span>
             <h2><i class="fas fa-money-bill-wave success-icon"></i> Record Payment Made to <span id="paymentSupplierName">Supplier</span></h2>
@@ -227,39 +229,43 @@
             <h2><i class="fas fa-edit info-icon"></i> Edit Supplier Details</h2>
             <form id="editSupplierForm">
                  <div id="editSupplierError" class="error-message" style="display: none;"></div>
-                 <div class="form-group">
-                    <label for="editSupplierNameInput">Name <span class="required">*</span>:</label>
-                    <input type="text" id="editSupplierNameInput" required>
-                 </div>
-                 <div class="form-group">
-                    <label for="editSupplierCompanyInput">Company:</label>
-                    <input type="text" id="editSupplierCompanyInput">
-                 </div>
-                  <div class="form-group">
-                    <label for="editSupplierWhatsappInput">WhatsApp No:</label>
-                    <input type="tel" id="editSupplierWhatsappInput">
-                 </div>
-                 <div class="form-group">
-                    <label for="editSupplierContactInput">Contact No:</label>
-                    <input type="tel" id="editSupplierContactInput">
-                 </div>
-                 <div class="form-group">
-                    <label for="editSupplierEmailInput">Email:</label>
-                    <input type="email" id="editSupplierEmailInput">
-                 </div>
-                 <div class="form-group">
-                    <label for="editSupplierGstInput">GST No:</label>
-                    <input type="text" id="editSupplierGstInput">
-                 </div>
-                 <div class="form-group">
-                    <label for="editSupplierAddressInput">Address:</label>
-                    <textarea id="editSupplierAddressInput" rows="2"></textarea>
-                 </div>
-                 <div class="form-group"> <label for="editSupplierNotes">Remarks / Notes:</label>
-                     <textarea id="editSupplierNotes" rows="2"></textarea>
+                 <div class="form-grid"> {/* Add a wrapper for the grid */}
+                     <div class="form-group">
+                        <label for="editSupplierNameInput">Name <span class="required">*</span>:</label>
+                        <input type="text" id="editSupplierNameInput" required>
+                     </div>
+                     <div class="form-group">
+                        <label for="editSupplierCompanyInput">Company:</label>
+                        <input type="text" id="editSupplierCompanyInput">
+                     </div>
+                     <div class="form-group">
+                        <label for="editSupplierWhatsappInput">WhatsApp No:</label>
+                        <input type="tel" id="editSupplierWhatsappInput">
+                     </div>
+                     <div class="form-group">
+                        <label for="editSupplierContactInput">Contact No:</label>
+                        <input type="tel" id="editSupplierContactInput">
+                     </div>
+                     <div class="form-group">
+                        <label for="editSupplierEmailInput">Email:</label>
+                        <input type="email" id="editSupplierEmailInput">
+                     </div>
+                     <div class="form-group">
+                        <label for="editSupplierGstInput">GST No:</label>
+                        <input type="text" id="editSupplierGstInput">
+                     </div>
+                     {/* Address and Remarks take full width */}
+                     <div class="form-group form-group-full-width">
+                        <label for="editSupplierAddressInput">Address:</label>
+                        <textarea id="editSupplierAddressInput" rows="2"></textarea>
+                     </div>
+                     <div class="form-group form-group-full-width">
+                         <label for="editSupplierNotes">Remarks / Notes:</label>
+                         <textarea id="editSupplierNotes" rows="2"></textarea>
+                     </div>
                  </div>
                  <input type="hidden" id="editingSupplierId">
-                <div class="modal-actions">
+                 <div class="modal-actions">
                     <button type="submit" id="updateSupplierBtn" class="button save-button"><i class="fas fa-save"></i> Update Supplier</button>
                     <button type="button" id="cancelEditSupplierBtn" class="button cancel-button">Cancel</button>
                 </div>
@@ -337,7 +343,8 @@
         </div>
     </div>
 
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script> <script src="js/firebase-init.js" type="module"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="js/firebase-init.js" type="module"></script>
     <script src="js/supplier_account_detail.js" type="module" defer></script>
 
 </body>

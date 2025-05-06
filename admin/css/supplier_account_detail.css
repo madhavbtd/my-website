@@ -269,3 +269,79 @@ td { padding: 10px 15px; text-align: left; vertical-align: middle; color: var(--
     .modal form .form-group select { background-position: right 10px center; padding-right: 30px;}
     #paymentLinkPOList label .po-balance { display: block; margin-left: 0; margin-top: 3px; }
 }
+
+/* ----- ADDED CODE START ----- */
+
+/* --- Edit Supplier Modal Enhancements --- */
+
+/* Grid Layout for Edit Form */
+#editSupplierForm .form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr); /* Creates two equal columns */
+    gap: 0 20px; /* 0px vertical gap, 20px horizontal gap */
+    align-items: start; /* Align items to the top of their grid cell */
+}
+
+/* Make specific fields span both columns */
+#editSupplierForm .form-group-full-width {
+    grid-column: 1 / -1; /* Span from the first to the last column line */
+}
+
+/* Ensure labels and inputs inside the grid behave correctly */
+#editSupplierForm .form-grid .form-group {
+    margin-bottom: 20px; /* Maintain vertical spacing */
+}
+
+/* --- Button Styling Updates --- */
+
+/* Edit Details Button (Action Bar) - Ensure it uses theme color */
+/* This rule might already exist or be similar, ensure info-color is used */
+.actions-bar .edit-button {
+    background-color: var(--info-color); /* Theme color for edit actions */
+}
+.actions-bar .edit-button:hover:not(:disabled) {
+    background-color: #117a8b; /* Darker shade of info-color */
+}
+
+/* Update Supplier Button (Inside Modal) */
+#editSupplierModal #updateSupplierBtn {
+    background-color: var(--secondary-color); /* Dark background */
+    color: var(--white-color); /* White text */
+    border: none;
+    /* font-family: 'Poppins', sans-serif; /* Already inherited */
+    /* border-radius: var(--border-radius); /* Already inherited */
+}
+
+#editSupplierModal #updateSupplierBtn:hover:not(:disabled) {
+    background-color: #1d2a36; /* Slightly darker secondary */
+}
+
+/* Cancel Button (Inside Modal) */
+#editSupplierModal #cancelEditSupplierBtn {
+    background-color: var(--dark-gray); /* Dark background (using dark-gray for distinction) */
+    color: var(--white-color); /* White text */
+    border: none;
+     /* font-family: 'Poppins', sans-serif; /* Already inherited */
+     /* border-radius: var(--border-radius); /* Already inherited */
+}
+
+#editSupplierModal #cancelEditSupplierBtn:hover:not(:disabled) {
+    background-color: #5a6268; /* Slightly darker gray */
+}
+
+/* Ensure icons in modal buttons are white */
+#editSupplierModal .modal-actions .button i {
+    color: var(--white-color);
+}
+
+/* Adjustments for smaller screens if the grid looks cramped */
+@media (max-width: 600px) {
+    #editSupplierForm .form-grid {
+        grid-template-columns: 1fr; /* Stack to single column */
+        gap: 0; /* Remove horizontal gap */
+    }
+    #editSupplierForm .form-group {
+         margin-bottom: 15px; /* Adjust spacing for single column */
+    }
+}
+/* ----- ADDED CODE END ----- */
