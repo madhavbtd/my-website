@@ -8,7 +8,8 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="css/index.css"> <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js" defer></script>
+    <link rel="stylesheet" href="css/index.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js" defer></script>
 </head>
 
 <body>
@@ -28,6 +29,12 @@
                 <li><a href="product_management.html"><i class="fas fa-box-open"></i> <span>Product</span></a></li>
                 <li><a href="manage-online-products.html"><i class="fas fa-store"></i> <span>Online Products</span></a></li>
                 <li><a href="view-online-orders.html"><i class="fas fa-receipt"></i> <span>Online Orders</span></a></li>
+
+                <li class="menu-section-header"><span>Agent Portal</span></li>
+                <li><a href="agent_management.html"><i class="fas fa-users-cog"></i> <span>Agent Management</span></a></li>
+                <li><a href="pending_agent_orders.html"><i class="fas fa-hourglass-half"></i> <span>Pending Agent Orders</span></a></li>
+                <li><a href="agent_commission_report.html"><i class="fas fa-file-invoice-dollar"></i> <span>Agent Commission</span></a></li>
+                
                 <li><a href="#"><i class="fas fa-tools"></i> <span>Tools</span></a></li>
                 <li><a href="#" id="logout-link"><i class="fas fa-sign-out-alt"></i> <span>LOGOUT</span></a></li>
              </ul>
@@ -170,8 +177,10 @@
                     </form>
                 </div>
             </div>
-             </div> </div> <script src="js/utils.js" type="module" defer></script> <script type="module" src="js/firebase-init.js"></script>
-    <script type="module" src="js/dashboard.js"></script> <script>
+        </div> </div> <script src="js/utils.js" type="module" defer></script>
+    <script type="module" src="js/firebase-init.js"></script>
+    <script type="module" src="js/dashboard.js"></script>
+    <script>
         function setActiveLink() {
              try {
                 const path = window.location.pathname;

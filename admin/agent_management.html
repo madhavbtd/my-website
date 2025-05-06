@@ -11,7 +11,7 @@
     
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     
-    <link rel="stylesheet" href="css/index.css"> 
+    <link rel="stylesheet" href="css/agent_index.css"> 
     
     <link rel="stylesheet" href="css/agent_management.css"> 
 
@@ -74,16 +74,14 @@
         <div class="modal-content large-modal"> 
             <span class="close-btn" id="closeAgentModal" title="Close">&times;</span>
             <h2 id="agentModalTitle">Add New Agent</h2> 
-            <div id="agentModalError" class="error-message" style="display: none;"></div>
-            <form id="agentForm" novalidate>
+            <div id="agentModalError" class="error-message" style="display: none;"></div> <form id="agentForm" novalidate>
                 <input type="hidden" id="editAgentId"> 
                 <div class="form-grid two-columns"> 
                     <div class="form-group">
-                        <label for="agentName">Agent Name <span class="required">*</span></label>
-                        <input type="text" id="agentName" required>
+                        <label for="agentName">Agent Name <span class="required-asterisk">*</span></label> <input type="text" id="agentName" required>
                     </div>
                     <div class="form-group">
-                        <label for="agentEmail">Login Email <span class="required">*</span></label>
+                        <label for="agentEmail">Login Email <span class="required-asterisk">*</span></label>
                         <input type="email" id="agentEmail" required>
                     </div>
                     <div class="form-group">
@@ -91,12 +89,12 @@
                         <input type="tel" id="agentContact">
                     </div>
                     <div class="form-group" id="agentPasswordGroup"> 
-                        <label for="agentPassword">Password <span id="passwordRequiredSpan" class="required">*</span></label>
+                        <label for="agentPassword">Password <span id="passwordRequiredSpan" class="required-asterisk">*</span></label>
                         <input type="password" id="agentPassword" required minlength="6">
                         <small id="passwordHelp">Required for new agents (min 6 characters). Leave blank to keep existing password when editing.</small>
                     </div>
                     <div class="form-group">
-                         <label for="agentStatus">Status <span class="required">*</span></label>
+                         <label for="agentStatus">Status <span class="required-asterisk">*</span></label>
                          <select id="agentStatus" required>
                              <option value="active" selected>Active</option>
                              <option value="inactive">Inactive</option>
@@ -111,19 +109,16 @@
                     </div>
                 </div> 
                 <div class="form-section-permissions">
-                     <label>Allowed Product Categories <span class="required">*</span></label>
+                     <label>Allowed Product Categories <span class="required-asterisk">*</span></label>
                      <div id="categoryPermissionsCheckboxes" class="checkbox-grid">
-                         <p>Loading categories...</p>
-                     </div>
+                         <p>Loading categories...</p> </div>
                      <div class="permission-actions">
                           <button type="button" id="selectAllCategoriesBtn" class="button-link">Select All</button>
                           <button type="button" id="deselectAllCategoriesBtn" class="button-link">Deselect All</button>
                      </div>
                 </div>
                 <div class="modal-actions">
-                    <button type="button" id="cancelAgentBtn" class="button cancel-button">Cancel</button>
-                    <button type="submit" id="saveAgentBtn" class="button save-button">
-                        <i class="fas fa-save"></i> <span id="saveAgentBtnText">Save Agent</span>
+                    <button type="button" id="cancelAgentBtn" class="button cancel-button">Cancel</button> <button type="submit" id="saveAgentBtn" class="button save-button"> <i class="fas fa-save"></i> <span id="saveAgentBtnText">Save Agent</span>
                     </button>
                 </div>
             </form>

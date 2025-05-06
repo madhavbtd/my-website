@@ -8,11 +8,15 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <link rel="stylesheet" href="css/index.css"> 
-    <link rel="stylesheet" href="css/order_history.css"> <link rel="stylesheet" href="css/pending_agent_orders.css"> 
+
+    <link rel="stylesheet" href="css/agent_index.css"> 
+
+    <link rel="stylesheet" href="css/order_history.css"> 
+    <link rel="stylesheet" href="css/pending_agent_orders.css"> 
 </head>
 <body>
-    <div class="container"> <div class="header"> 
+    <div class="container"> 
+        <div class="header"> 
             <i class="fas fa-hourglass-half header-icon"></i>
             <h1>Pending Agent Orders</h1>
         </div>
@@ -32,25 +36,27 @@
             <table id="pendingAgentOrdersTable">
                 <thead>
                     <tr>
-                         <th>Submitted At</th> <th>Agent Name</th>
+                         <th>Submitted At</th> 
+                         <th>Agent Name</th>
                          <th>Customer Name</th>
                          <th>Items Summary</th>
                          <th style="text-align: right;">Total Amount</th>
-                         <th>Actions</th>
-                    </tr>
+                         <th style="text-align: center;">Actions</th> </tr>
                 </thead>
                 <tbody id="pendingAgentOrdersTableBody">
-                    <tr>
-                         <td colspan="6" id="loadingPendingOrdersMessage" style="text-align: center; padding: 20px; color: #6c757d;">
-                           Loading pending orders... (Functionality will be added later)
+                    <tr id="loadingPendingOrdersMessageRow"> <td colspan="6" id="loadingPendingOrdersMessage" style="text-align: center; padding: 20px;">
+                           <i class="fas fa-spinner fa-spin"></i> Loading pending orders...
                          </td> 
                     </tr>
                 </tbody>
             </table>
         </div>
+        <p id="noPendingOrdersMessage" class="info-message" style="display: none; text-align:center;">
+            No pending agent orders found.
+        </p>
     </div>
 
-    <script src="js/pending_agent_orders.js" type="module"></script> 
     <script src="js/firebase-init.js" type="module"></script> 
+    <script src="js/pending_agent_orders.js" type="module"></script> 
 </body>
 </html>
