@@ -1,6 +1,6 @@
 /* css/expenses.css */
 
-/* --- Theme Variables (Copy from supplier_management.css) --- */
+/* --- Theme Variables (Ensure these match your main theme) --- */
 :root {
     --primary-color: #0056b3;
     --secondary-color: #2c3e50;
@@ -14,8 +14,8 @@
     --text-color: #343a40;
     --white-color: #ffffff;
     --black-color: #000000;
-    --font-family: 'Poppins', sans-serif;
-    --border-radius: 5px; /* Use your theme's radius */
+    --font-family: 'Poppins', sans-serif; /* Poppins Font */
+    --border-radius: 5px;
     --box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
@@ -27,32 +27,38 @@ html::-webkit-scrollbar-thumb { background-color: #c1c1c1; border-radius: 4px; b
 html::-webkit-scrollbar-thumb:hover { background-color: #a8a8a8; }
 
 body {
-    font-family: var(--font-family);
+    font-family: var(--font-family), sans-serif; /* Apply Poppins to body */
     background-color: #f0f2f5;
     margin: 0;
     color: var(--text-color);
     line-height: 1.5;
+    font-size: 15px; /* Base font size */
 }
+
+/* Apply Poppins to common elements */
+input, button, select, textarea, label, h1, h2, h3, th, td, span, div, p, li, a {
+    font-family: var(--font-family), sans-serif;
+}
+
 
 .main-content {
     padding: 25px;
     box-sizing: border-box;
-    max-width: 1200px; /* Adjust width as needed */
+    max-width: 1300px; /* Slightly wider */
     margin: 20px auto;
     background-color: var(--white-color);
     border-radius: 8px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.07);
+    box-shadow: 0 3px 12px rgba(0, 0, 0, 0.07); /* Enhanced shadow */
 }
 
 .page-header {
     margin-bottom: 20px;
     padding-bottom: 15px;
-    border-bottom: 1px solid var(--medium-gray);
 }
 
 .page-header h1 {
     margin: 0;
-    font-size: 1.7em;
+    font-size: 1.8em; /* Slightly larger */
     color: var(--primary-color);
     font-weight: 600;
     display: flex;
@@ -65,6 +71,20 @@ body {
     opacity: 0.9;
 }
 
+/* --- Breadcrumb Styles --- */
+.breadcrumb {
+    font-size: 0.9em;
+    color: var(--dark-gray, #6c757d);
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--medium-gray, #e9ecef);
+}
+.breadcrumb a { color: var(--primary-color, #0056b3); text-decoration: none; }
+.breadcrumb a:hover { text-decoration: underline; }
+.breadcrumb span { margin-left: 5px; color: var(--text-color, #343a40); }
+.breadcrumb span::before { content: "/"; margin-right: 5px; color: var(--dark-gray, #6c757d); }
+
+/* --- Action Bar Styles --- */
 .actions-bar {
     display: flex;
     gap: 12px;
@@ -73,35 +93,10 @@ body {
     align-items: center;
 }
 
-.section-container {
-    background-color: var(--white-color);
-    padding: 20px 25px;
-    border-radius: 8px;
-    margin-bottom: 25px;
-    border: 1px solid var(--medium-gray);
-}
-
-.section-container h2 {
-    margin-top: 0;
-    margin-bottom: 20px;
-    font-size: 1.4em;
-    color: var(--secondary-color);
-    border-bottom: 1px solid var(--medium-gray);
-    padding-bottom: 12px;
-    font-weight: 600;
-    display: flex;
-    align-items: center;
-}
-.section-container h2 i {
-     margin-right: 10px;
-     color: var(--secondary-color);
-     opacity: 0.9;
-}
-
 /* --- General Button Styles --- */
 .button { padding: 9px 18px; font-size: 0.95em; border: none; border-radius: var(--border-radius); cursor: pointer; font-weight: 600; display: inline-flex; align-items: center; gap: 7px; text-decoration: none; transition: background-color 0.2s ease, opacity 0.2s ease, box-shadow 0.2s ease; white-space: nowrap; vertical-align: middle; line-height: 1; box-shadow: var(--box-shadow); }
-.button i { line-height: 1; margin-right: 2px; }
-.button:hover:not(:disabled) { box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+.button i { line-height: 1; margin-right: 3px; font-size: 0.9em; } /* Slightly smaller icon */
+.button:hover:not(:disabled) { box-shadow: 0 2px 5px rgba(0,0,0,0.2); transform: translateY(-1px); /* Subtle lift */ }
 .button:disabled { background-color: #adb5bd !important; color: #fff !important; cursor: not-allowed; opacity: 0.7; box-shadow: none; }
 .add-new-button { background-color: var(--success-color); color: var(--white-color); }
 .add-new-button:hover:not(:disabled) { background-color: #218838; }
@@ -109,17 +104,80 @@ body {
 .cancel-button:hover:not(:disabled) { background-color: #5a6268;}
 .save-button { background-color: var(--primary-color); color: var(--white-color);}
 .save-button:hover:not(:disabled) { background-color: #004085; }
+.primary-button { background-color: var(--primary-color); color: var(--white-color); } /* For Apply Filters */
+.primary-button:hover:not(:disabled) { background-color: #004085; }
 
-/* --- Action Buttons in Table --- */
-.action-buttons { display: flex; gap: 5px; justify-content: center; flex-wrap: nowrap; align-items: center; }
-.action-buttons .button { padding: 5px 9px; font-size: 0.85em; gap: 4px; border-radius: 4px; line-height: 1; box-shadow: none; }
-.action-buttons .button:hover { transform: translateY(-1px); box-shadow: 0 1px 3px rgba(0,0,0,0.15); }
-.action-buttons .button i { margin-right: 0; font-size: 0.9em; }
-.action-buttons .edit-button { background-color: var(--warning-color); color: #333; }
-.action-buttons .edit-button:hover:not(:disabled) { background-color: #e0a800; }
-.action-buttons .delete-button { background-color: var(--danger-color); color: var(--white-color); }
-.action-buttons .delete-button:hover:not(:disabled) { background-color: #c82333; }
+/* --- Section Container Styles --- */
+.section-container {
+    background-color: var(--white-color);
+    padding: 20px 25px;
+    border-radius: 8px;
+    margin-bottom: 25px;
+    border: 1px solid var(--medium-gray);
+}
+.section-container h2 { margin-top: 0; margin-bottom: 20px; font-size: 1.4em; color: var(--secondary-color); border-bottom: 1px solid var(--medium-gray); padding-bottom: 12px; font-weight: 600; display: flex; align-items: center; }
+.section-container h2 i { margin-right: 10px; color: var(--secondary-color); opacity: 0.9; }
 
+/* --- START: Filter Section Styles --- */
+.expense-filters {
+    background-color: #f9fafb; /* Slightly different background */
+    border-bottom: 1px solid var(--medium-gray);
+    margin-bottom: 25px; /* Space below filters */
+}
+.expense-filters h2 {
+    border-bottom: none; /* Remove double border */
+    padding-bottom: 0;
+    margin-bottom: 15px;
+    font-size: 1.2em; /* Slightly smaller heading */
+}
+.filter-controls {
+    display: flex;
+    gap: 15px; /* Space between filter groups */
+    flex-wrap: wrap; /* Allow wrapping on smaller screens */
+    align-items: flex-end; /* Align items to the bottom */
+}
+.filter-group {
+    display: flex;
+    flex-direction: column;
+    gap: 5px; /* Space between label and input */
+    flex-grow: 1; /* Allow groups to grow */
+    min-width: 180px; /* Minimum width for each filter group */
+}
+.filter-group label {
+    font-size: 0.85em;
+    font-weight: 500;
+    color: #495057;
+    margin-bottom: 2px;
+}
+.expense-filters input[type="text"],
+.expense-filters input[type="date"],
+.expense-filters select {
+    padding: 8px 12px;
+    border: 1px solid #ced4da;
+    border-radius: var(--border-radius);
+    font-size: 0.9em;
+    height: 38px; /* Consistent height */
+    box-sizing: border-box;
+    background-color: var(--white-color);
+    width: 100%; /* Make inputs fill their group */
+}
+.expense-filters input[type="date"] {
+    color-scheme: light;
+    min-width: 140px; /* Ensure date input is wide enough */
+}
+.filter-group.filter-buttons {
+    flex-grow: 0; /* Don't allow button group to grow */
+    flex-shrink: 0; /* Prevent shrinking */
+    display: flex;
+    gap: 10px;
+    align-self: flex-end; /* Align with bottom of inputs */
+    padding-bottom: 1px; /* Align baseline with inputs */
+}
+.filter-action-button {
+    height: 38px; /* Match input height */
+    padding: 8px 15px; /* Adjust padding */
+}
+/* --- END: Filter Section Styles --- */
 
 /* --- Table Styles --- */
 .table-container { width: 100%; overflow-x: auto; border: 1px solid var(--medium-gray); border-radius: var(--border-radius); margin-bottom: 15px; background-color: var(--white-color); }
@@ -130,7 +188,7 @@ body {
 #expensesTable tbody tr:nth-child(even) { background-color: #fdfdfd; }
 #expensesTable tbody tr:hover { background-color: #f1f5f9; }
 #expensesTable td:nth-child(3) { text-align: right; font-weight: 500; white-space: nowrap; } /* Amount */
-#expensesTable td:nth-child(4) { /* Description column */ white-space: normal; word-break: break-word; min-width: 200px; }
+#expensesTable td:nth-child(4) { white-space: normal; word-break: break-word; min-width: 200px; } /* Description */
 #expensesTable td:last-child { text-align: center; white-space: nowrap; width: 100px; } /* Actions */
 
 /* Loading / No Results Row */
@@ -156,34 +214,36 @@ body {
 .modal form .form-group label { display: block; margin-bottom: 6px; font-weight: 500; font-size: 0.9em; }
 .modal form .form-group label .required { color: var(--danger-color); margin-left: 3px; }
 .modal form .form-group input[type="text"], .modal form .form-group input[type="number"], .modal form .form-group input[type="date"], .modal form .form-group select, .modal form .form-group textarea { width: 100%; padding: 9px 12px; border: 1px solid #ced4da; border-radius: var(--border-radius); font-size: 0.95em; box-sizing: border-box; font-family: var(--font-family); }
-/* Adjust height for specific elements if needed */
 .modal form .form-group input[type="text"], .modal form .form-group input[type="number"], .modal form .form-group input[type="date"], .modal form .form-group select { height: 40px; }
-.modal form .form-group input[type="date"] { color-scheme: light; } /* Improve date input appearance */
+.modal form .form-group input[type="date"] { color-scheme: light; }
 .modal form .form-group textarea { resize: vertical; min-height: 60px; }
 .modal form .form-group input:focus, .modal form .form-group select:focus, .modal form .form-group textarea:focus { border-color: var(--primary-color); outline: 0; box-shadow: 0 0 0 0.2rem rgba(0, 86, 179, 0.2); }
-.modal .error-message { color: var(--danger-color); background-color: #fdecea; border: 1px solid var(--danger-color); border-radius: var(--border-radius); padding: 8px 12px; font-size: 0.88em; margin-top: 0; margin-bottom: 15px; /* Show below label, above input */ text-align: center; width: 100%; box-sizing: border-box; display: none; }
+.modal .error-message { color: var(--danger-color); background-color: #fdecea; border: 1px solid var(--danger-color); border-radius: var(--border-radius); padding: 8px 12px; font-size: 0.88em; margin-top: 0; margin-bottom: 15px; text-align: center; width: 100%; box-sizing: border-box; display: none; }
 .modal .error-message[style*="block"] { display: block !important; }
 
-/* --- Error Message Area --- */
-.error-message {
-    color: var(--danger-color);
-    background-color: #f8d7da;
-    border: 1px solid #f5c6cb;
-    border-radius: var(--border-radius);
-    padding: 10px 15px;
-    margin-bottom: 15px;
-    font-size: 0.95em;
-    display: none; /* Initially hidden */
-}
+/* --- General Error Message Area --- */
+.error-message { color: var(--danger-color); background-color: #f8d7da; border: 1px solid #f5c6cb; border-radius: var(--border-radius); padding: 10px 15px; margin-bottom: 15px; font-size: 0.95em; display: none; }
 
 /* --- Responsive --- */
+@media (max-width: 992px) {
+    .filter-controls { gap: 10px; } /* Reduce gap on medium screens */
+}
+
 @media (max-width: 768px) {
     .main-content { padding: 15px; }
     .page-header h1 { font-size: 1.5em; }
     .section-container h2 { font-size: 1.2em;}
+    .filter-controls { flex-direction: column; align-items: stretch; } /* Stack filters vertically */
+    .filter-group { min-width: 100%; } /* Make groups full width */
+    .filter-group.filter-buttons { flex-direction: row; justify-content: space-between; } /* Keep buttons side-by-side */
+    .filter-group.filter-buttons .button { flex-grow: 1; justify-content: center; } /* Make buttons equal width */
     #expensesTable { font-size: 0.85em; }
     #expensesTable th, #expensesTable td { padding: 8px 6px; }
     .modal-content { width: 96%; }
      .modal-actions { flex-direction: column; gap: 8px; }
      .modal-actions .button { width: 100%; justify-content: center;}
+}
+
+@media (max-width: 480px) {
+    .filter-group.filter-buttons { flex-direction: column; } /* Stack buttons on smallest screens */
 }
