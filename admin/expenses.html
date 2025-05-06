@@ -9,11 +9,9 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 
-    <link rel="stylesheet" href="css/expenses.css">
-
-    <script type="module">
+    <link rel="stylesheet" href="expenses.css"> <script type="module">
         // Import auth from your firebase-init.js file (ensure path is correct)
-        import { auth } from './js/firebase-init.js';
+        import { auth } from './firebase-init.js'; // पाथ सही किया गया
         import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
         onAuthStateChanged(auth, (user) => {
@@ -24,7 +22,7 @@
             } else if (user) {
                 console.log("Expenses Auth OK:", user.uid);
                 // Dynamically import the script AFTER ensuring user is logged in
-                import('./js/expenses.js') // Ensure path is correct
+                import('./expenses.js') // पाथ सही किया गया
                     .then(module => {
                         if (typeof module.initializeExpensesPage === 'function') {
                             // Initialize page logic now that script is loaded
@@ -39,10 +37,7 @@
                          alert("Error loading page functionality.");
                     });
             }
-            // No 'else' needed here if we only act when user is logged in on non-login pages
-            // Or handle the case where user is logged in but on login page if needed
         });
-        // IMPORTANT: Ensure this script tag is properly closed and no code follows it directly in head
     </script>
 </head>
 <body>
@@ -172,6 +167,5 @@
         </div>
     </div>
 
-    <script src="js/firebase-init.js" type="module"></script>
     </body>
 </html>
