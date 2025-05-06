@@ -30,7 +30,7 @@ html::-webkit-scrollbar-thumb { background-color: var(--scrollbar-thumb-color); 
 html::-webkit-scrollbar-thumb:hover { background-color: var(--scrollbar-thumb-hover-color); }
 
 body { font-family: var(--font-family); background-color: #f0f2f5; margin: 0; color: var(--text-color); line-height: 1.5; }
-.container { }
+.container { } /* Consider adding max-width and margin: auto here if needed */
 .main-content { padding: 25px; box-sizing: border-box; max-width: 1500px; margin: 20px auto; background-color: var(--white-color); border-radius: 8px; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.07); }
 
 .page-header { margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid var(--medium-gray); }
@@ -94,8 +94,8 @@ body { font-family: var(--font-family); background-color: #f0f2f5; margin: 0; co
 .section-container h2 i { margin-right: 10px; color: var(--primary-color); }
 
 .table-container { width: 100%; overflow-x: auto; border: 1px solid var(--medium-gray); border-radius: var(--border-radius); margin-bottom: 15px; background-color: var(--white-color); overflow-y: hidden; }
-#suppliersListSection .table-container { max-height: 18em; overflow-y: auto; }
-#poListSection .table-container { max-height: 60vh; overflow-y: auto; }
+#suppliersListSection .table-container { max-height: 18em; overflow-y: auto; } /* Limit supplier list height */
+#poListSection .table-container { max-height: 60vh; overflow-y: auto; } /* Limit PO list height */
 
 table { width: 100%; border-collapse: collapse; font-size: 0.9em; }
 table thead { background-color: var(--light-gray); border-bottom: 2px solid var(--medium-gray); }
@@ -109,12 +109,12 @@ table tbody tr:nth-child(even) { background-color: #fdfdfd; }
 table tbody tr:hover { background-color: #f1f5f9; }
 table tbody tr.selected-row { background-color: var(--selected-row-bg) !important; font-weight: 500; }
 #supplierTableBody tr.clickable-row:not(:has(button:hover)):hover { cursor: pointer; background-color: var(--primary-color-light) !important; }
-#supplierTable th:nth-child(3), #supplierTable td:nth-child(3) { text-align: right; }
-.supplier-balance { text-align: right; font-weight: 500; }
-.no-results td { text-align: center !important; color: var(--dark-gray); font-style: italic; padding: 15px !important;}
+#supplierTable th:nth-child(3), #supplierTable td:nth-child(3) { text-align: right; } /* Align balance column header right */
+.supplier-balance { text-align: right; font-weight: 500; } /* Default style for balance cell content */
+.no-results td, .error-message td { text-align: center !important; color: var(--dark-gray); font-style: italic; padding: 15px !important;} /* Style for no results/error rows */
 
 .product-name-display { font-weight: 600; color: var(--text-color); margin-right: 5px; }
-#poTableBody td:nth-child(6) { font-weight: 400; }
+#poTableBody td:nth-child(6) { font-weight: 400; } /* Style for Products column */
 #poTableBody td:nth-child(6) .product-name-display { font-weight: 600; }
 #poTableBody td:nth-child(6) .see-more-items-btn { font-weight: 500; }
 
@@ -128,9 +128,10 @@ a.supplier-link:hover { text-decoration: underline; color: #003d80; }
 .status-sent { background-color: #e2e3e5; color: #41464b; border: 1px solid #d3d6d8;}
 .status-printing { background-color: #ffedd5; color: #9a3412; border: 1px solid #fed7aa;}
 .status-product-received { background-color: var(--success-color); color: var(--white-color); border: 1px solid #1c7430;}
-.status-po-paid { background-color: #a3cfbb; color: #0a3622; border: 1px solid #88c3a5;}
+.status-po-paid { background-color: #a3cfbb; color: #0a3622; border: 1px solid #88c3a5;} /* Style if using PO Paid status */
 .status-cancel { background-color: #f8d7da; color: #842029; border: 1px solid #f5c2c7;}
 .status-unknown { background-color: #eee; color: #555; border: 1px solid #ddd;}
+/* Payment Status Badges */
 .payment-pending { background-color: #f8d7da; color: #842029; border: 1px solid #f5c2c7;}
 .payment-partially-paid { background-color: #fff3cd; color: #664d03; border: 1px solid #ffecb5;}
 .payment-paid { background-color: #d1e7dd; color: #0f5132; border: 1px solid #badbcc;}
