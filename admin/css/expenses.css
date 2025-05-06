@@ -121,15 +121,62 @@ input, button, select, textarea, label, h1, h2, h3, th, td, span, div, p, li, a 
 
 #expensesTable { width: 100%; border-collapse: collapse; font-size: 0.9em; }
 #expensesTable thead { background-color: var(--light-gray); border-bottom: 2px solid var(--medium-gray); position: sticky; /* Make header sticky */ top: 0; /* Stick to top of scrollable container */ z-index: 1; /* Keep header above scrolling content */ }
-#expensesTable th, #expensesTable td { border: 1px solid #e0e0e0; padding: 10px 12px; text-align: left; vertical-align: middle; border-left: none; border-right: none; /* Optional: remove vertical borders */ }
-#expensesTable th:first-child, #expensesTable td:first-child { border-left: 1px solid #e0e0e0; } /* Add border back to first column */
-#expensesTable th:last-child, #expensesTable td:last-child { border-right: 1px solid #e0e0e0; } /* Add border back to last column */
-#expensesTable th { font-weight: 600; color: #495057; white-space: nowrap; }
+
+/* Default alignment for all cells (td and th) */
+#expensesTable th,
+#expensesTable td {
+    border: 1px solid #e0e0e0;
+    padding: 10px 12px;
+    text-align: left; /* डिफ़ॉल्ट लेफ्ट अलाइनमेंट */
+    vertical-align: middle;
+    border-left: none;
+    border-right: none; /* Optional: remove vertical borders */
+}
+
+/* Add border back to first and last columns */
+#expensesTable th:first-child, #expensesTable td:first-child { border-left: 1px solid #e0e0e0; }
+#expensesTable th:last-child, #expensesTable td:last-child { border-right: 1px solid #e0e0e0; }
+
+/* Table Header specific styles */
+#expensesTable th {
+    font-weight: 600;
+    color: #495057;
+    white-space: nowrap;
+    text-align: left; /* सुनिश्चित करें कि हैडर भी लेफ्ट अलाइन हैं */
+}
+ /* हैडर में Amount और Actions को स्पेसिफिकली अलाइन करें */
+ #expensesTable th:nth-child(3) { text-align: right; } /* Amount हैडर */
+ #expensesTable th:nth-child(6) { text-align: center; } /* Actions हैडर (अब 6वां है) */
+
+
 #expensesTable tbody tr:nth-child(even) { background-color: #fdfdfd; }
 #expensesTable tbody tr:hover { background-color: #f1f5f9; }
-#expensesTable td:nth-child(3) { text-align: right; font-weight: 500; white-space: nowrap; } /* Amount */
-#expensesTable td:nth-child(4) { white-space: normal; word-break: break-word; min-width: 200px; } /* Description */
-#expensesTable td:last-child { text-align: center; white-space: nowrap; width: 100px; } /* Actions */
+
+/* स्पेसिफिक कॉलम अलाइनमेंट (tbody cells) */
+#expensesTable td:nth-child(3) { /* Amount कॉलम */
+    text-align: right;
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+#expensesTable td:nth-child(4) { /* Description कॉलम */
+    white-space: normal;
+    word-break: break-word;
+    min-width: 200px;
+    text-align: left; /* यह पहले से ही डिफ़ॉल्ट है, लेकिन स्पष्टता के लिए */
+}
+
+/* Payment Method कॉलम (नया कॉलम, 5वां) */
+ #expensesTable td:nth-child(5) {
+     text-align: left; /* इसे लेफ्ट अलाइन करें */
+     white-space: nowrap; /* यदि छोटा रखना है */
+ }
+
+#expensesTable td:last-child { /* Actions कॉलम (अब 6वां) */
+    text-align: center;
+    white-space: nowrap;
+    width: 100px; /* चौड़ाई समायोजित करें यदि आवश्यक हो */
+}
 
 /* Action Buttons in Table */
 .action-buttons { display: flex; gap: 5px; justify-content: center; flex-wrap: nowrap; align-items: center; }
@@ -142,7 +189,13 @@ input, button, select, textarea, label, h1, h2, h3, th, td, span, div, p, li, a 
 .action-buttons .delete-button:hover:not(:disabled) { background-color: #c82333; }
 
 /* Loading / No Results Row */
-#expensesLoadingMessage td, #noExpensesMessage td { text-align: center !important; color: var(--dark-gray); padding: 20px !important; font-style: italic; }
+#expensesLoadingMessage td,
+#noExpensesMessage td {
+    text-align: center !important; /* इसे सेंटर ही रहने दें */
+    color: var(--dark-gray);
+    padding: 20px !important;
+    font-style: italic;
+}
 #expensesLoadingMessage i { margin-right: 8px; }
 
 /* Total Display */
@@ -188,12 +241,20 @@ input, button, select, textarea, label, h1, h2, h3, th, td, span, div, p, li, a 
     .filter-group.filter-buttons { flex-direction: row; justify-content: space-between; } /* Keep buttons side-by-side */
     .filter-group.filter-buttons .button { flex-grow: 1; justify-content: center; }
     #expensesTable { font-size: 0.85em; }
-    #expensesTable th, #expensesTable td { padding: 8px 6px; }
+    #expensesTable th, #expensesTable td { padding: 8px 6px; } /* Padding कम किया */
+    #expensesTable td:nth-child(4) { min-width: 150px; } /* Description कॉलम की चौड़ाई कम की */
+    #expensesTable td:last-child { width: auto; } /* Actions कॉलम की चौड़ाई ऑटो */
+    .action-buttons { gap: 3px; } /* एक्शन बटन के बीच गैप कम किया */
+    .action-buttons .button { padding: 4px 7px; } /* एक्शन बटन पैडिंग कम की */
+
     .modal-content { width: 96%; }
      .modal-actions { flex-direction: column; gap: 8px; }
      .modal-actions .button { width: 100%; justify-content: center;}
 }
 @media (max-width: 480px) {
     .filter-group.filter-buttons { flex-direction: column; } /* Stack buttons on smallest screens */
+    #expensesTable { font-size: 0.8em; } /* फॉन्ट और छोटा किया */
+     #expensesTable th, #expensesTable td { padding: 6px 4px; } /* Padding और कम किया */
+     .action-buttons .button { padding: 3px 5px; } /* एक्शन बटन पैडिंग और कम */
+     .action-buttons .button i { font-size: 0.8em; } /* एक्शन बटन आइकन छोटा */
 }
-

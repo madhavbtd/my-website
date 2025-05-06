@@ -9,20 +9,25 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 
-    <link rel="stylesheet" href="css/expenses.css"> <script type="module">
-        // Import auth from your firebase-init.js file (ensure path is correct)
-        import { auth } from './js/firebase-init.js'; // पाथ सही है यदि expenses.html 'admin' में है और js 'admin/js' में
+    <link rel="stylesheet" href="css/expenses.css">
+
+    <script type="module">
+        // पाथ सही है: admin/expenses.html से admin/js/firebase-init.js
+        import { auth } from './js/firebase-init.js';
         import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
         onAuthStateChanged(auth, (user) => {
             const isLoginPage = window.location.pathname.endsWith('login.html');
+            // सुनिश्चित करें कि login.html का पाथ आपकी संरचना के अनुसार सही है
             if (!user && !isLoginPage) {
                 console.log("User not logged in, redirecting to login.");
-                window.location.replace('login.html'); // 'login.html' का पाथ भी जांचें
+                window.location.replace('login.html'); // यदि login.html admin फोल्डर में है
+                // window.location.replace('../login.html'); // यदि login.html admin फोल्डर के बाहर है
             } else if (user) {
                 console.log("Expenses Auth OK:", user.uid);
                 // Dynamically import the script AFTER ensuring user is logged in
-                import('./js/expenses.js') // पाथ सही है यदि expenses.html 'admin' में है और js 'admin/js' में
+                // पाथ सही है: admin/expenses.html से admin/js/expenses.js
+                import('./js/expenses.js')
                     .then(module => {
                         if (typeof module.initializeExpensesPage === 'function') {
                             // Initialize page logic now that script is loaded
@@ -48,7 +53,7 @@
         </div>
 
         <div class="breadcrumb">
-            <a href="index.html">Home</a> / <span>Expenses</span> </div>
+             <a href="index.html">Home</a> / <span>Expenses</span> </div>
 
         <div class="actions-bar">
             <button id="addExpenseBtn" class="button add-new-button">
@@ -88,22 +93,25 @@
         </div>
         <div class="section-container">
             <h2><i class="fas fa-list-ul"></i> Expenses List</h2>
-            <div class="table-container expenses-table-container"> <table id="expensesTable">
+             <div class="table-container expenses-table-container">
+                <table id="expensesTable">
                     <thead>
                         <tr>
                             <th>Date</th>
                             <th>Category</th>
                             <th>Amount</th>
                             <th>Description</th>
-                            <th>Actions</th>
+                            <th>Payment Method</th> <th>Actions</th>
                         </tr>
                     </thead>
                     <tbody id="expensesTableBody">
                         <tr id="expensesLoadingMessage">
-                            <td colspan="5" style="text-align: center;"><i class="fas fa-spinner fa-spin"></i> Loading expenses...</td>
+                            <td colspan="6" style="text-align: center;"><i class="fas fa-spinner fa-spin"></i> Loading expenses...
+                            </td>
                         </tr>
                         <tr id="noExpensesMessage" style="display: none;">
-                             <td colspan="5" style="text-align: center;">No expenses found. Adjust filters or add a new expense.</td>
+                             <td colspan="6" style="text-align: center;">No expenses found. Adjust filters or add a new expense.
+                             </td>
                         </tr>
                         </tbody>
                 </table>
@@ -113,7 +121,9 @@
              </div>
         </div>
 
-    </div><div id="expenseModal" class="modal">
+    </div>
+
+    <div id="expenseModal" class="modal">
         <div class="modal-content">
              <div class="modal-header">
                  <h2 id="expenseModalTitle">Add Expense</h2>
