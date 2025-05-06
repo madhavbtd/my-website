@@ -1,7 +1,7 @@
 // js/expenses.js - Expenses Management Logic with Filters (v6 - Final Listener Check)
 
 // --- Firebase Imports ---
-import { db, auth } from './js/firebase-init.js'; // Ensure path is correct
+import { db, auth } from './firebase-init.js'; // './js/' // Ensure path is correct
 import {
     collection, addDoc, doc, getDoc, getDocs, updateDoc, deleteDoc,
     query, orderBy, where, Timestamp, serverTimestamp,
