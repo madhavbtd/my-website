@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Expenses Management</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
+    <link rel="stylesheet" href="css/expenses.css">
+
+    <script type="module">
+        import { auth } from './js/firebase-init.js'; // Make sure path is correct
+        import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+
+        onAuthStateChanged(auth, (user) => {
+            if (!user && !window.location.pathname.endsWith('login.html')) {
+                window.location.replace('login.html');
+            } else if (user) {
+                console.log("Expenses Auth OK:", user.uid);
+                // Load and initialize the expenses script
+                import('./js/expenses.js') // Make sure path is correct
+                    .then(module => {
+                        if (typeof module.initializeExpensesPage === 'function') {
+                            module.initializeExpensesPage(user);
+                        } else {
+                            console.error("initializeExpensesPage function not found in expenses.js");
+                        }
+                    })
+                    .catch(err => console.error("Error loading expenses.js:", err));
+            } else if (!user && window.location.pathname.endsWith('login.html')) {
+                 // User is on login page and not logged in, do nothing.
+            } else {
+                 // Fallback or edge case, redirect to login
+                 if(!window.location.pathname.endsWith('login.html')) {
+                    window.location.replace('login.html');
+                 }
+            }
+        });
+    </script>
+</head>
+<body>
+    <div class="main-content">
+
+        <div class="page-header">
+            <h1><i class="fas fa-wallet"></i> Expenses Management</h1>
+        </div>
+
+        <div class="actions-bar">
+            <button id="addExpenseBtn" class="button add-new-button">
+                <i class="fas fa-plus"></i> Add New Expense
+            </button>
+            </div>
+
+         <div id="expenseListError" class="error-message" style="display: none;"></div>
+
+        <div class="section-container">
+            <h2><i class="fas fa-list-ul"></i> Expenses List</h2>
+            <div class="table-container">
+                <table id="expensesTable">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Category</th>
+                            <th>Amount</th>
+                            <th>Description</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="expensesTableBody">
+                        <tr id="expensesLoadingMessage">
+                            <td colspan="5" style="text-align: center;"><i class="fas fa-spinner fa-spin"></i> Loading expenses...</td>
+                        </tr>
+                        <tr id="noExpensesMessage" style="display: none;">
+                             <td colspan="5" style="text-align: center;">No expenses found. Add one using the button above.</td>
+                        </tr>
+                        </tbody>
+                </table>
+            </div>
+             <div id="expensesTotalDisplay" class="list-totals">
+                 Total Expenses (Displayed): ₹ 0.00
+             </div>
+        </div>
+
+    </div><div id="expenseModal" class="modal">
+        <div class="modal-content">
+             <div class="modal-header">
+                 <h2 id="expenseModalTitle">Add Expense</h2>
+                 <button id="closeExpenseModalBtn" class="close-btn" title="Close">&times;</button>
+             </div>
+             <form id="expenseForm" novalidate>
+                 <div class="modal-body">
+                    <div id="expenseFormError" class="error-message" style="display: none;"></div>
+                    <input type="hidden" id="editingExpenseId">
+
+                    <div class="form-group">
+                        <label for="expenseDate">Date <span class="required">*</span>:</label>
+                        <input type="date" id="expenseDate" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="expenseCategory">Category <span class="required">*</span>:</label>
+                        <input type="text" id="expenseCategory" placeholder="e.g., Office Supplies, Travel, Food" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="expenseAmount">Amount <span class="required">*</span>:</label>
+                        <input type="number" id="expenseAmount" step="0.01" placeholder="e.g., 150.50" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="expenseDescription">Description / Particulars <span class="required">*</span>:</label>
+                        <textarea id="expenseDescription" rows="3" placeholder="Describe the expense" required></textarea>
+                    </div>
+
+                     <div class="form-group">
+                        <label for="expensePaymentMethod">Payment Method:</label>
+                        <select id="expensePaymentMethod">
+                            <option value="">Select Method (Optional)</option>
+                            <option value="Cash">Cash</option>
+                            <option value="Card">Card</option>
+                            <option value="UPI">UPI</option>
+                            <option value="Bank Transfer">Bank Transfer</option>
+                            <option value="Other">Other</option>
+                        </select>
+                     </div>
+                     <div class="form-group">
+                        <label for="expenseNotes">Notes:</label>
+                        <textarea id="expenseNotes" rows="2" placeholder="Optional notes or reference"></textarea>
+                     </div>
+
+                 </div>
+                 <div class="modal-actions">
+                     <button type="button" id="cancelExpenseBtn" class="button cancel-button">Cancel</button>
+                     <button type="submit" id="saveExpenseBtn" class="button save-button">
+                         <i class="fas fa-save"></i> Save Expense
+                     </button>
+                 </div>
+            </form>
+        </div>
+    </div>
+
+
+    <script src="js/firebase-init.js" type="module"></script>
+    </body>
+</html>

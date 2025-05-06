@@ -8,8 +8,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="css/index.css">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js" defer></script>
+    <link rel="stylesheet" href="css/index.css"> <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js" defer></script>
 </head>
 
 <body>
@@ -21,6 +20,7 @@
                 <li><a href="order_history.html"><i class="fas fa-history"></i> <span>Order History</span></a></li>
                 <li><a href="customer_management.html"><i class="fas fa-users"></i> <span>Customers</span></a></li>
                 <li><a href="supplier_management.html"><i class="fas fa-truck"></i> <span>Suppliers</span></a></li>
+                <li><a href="expenses.html"><i class="fas fa-wallet"></i> <span>Expenses</span></a></li>
                 <li><a href="lic_management.html"><i class="fas fa-shield-alt"></i> <span>LIC Management</span></a></li>
                 <li><a href="#"><i class="fas fa-chart-bar"></i> <span>Report</span></a></li>
                 <li><a href="#"><i class="fas fa-code-branch"></i> <span>Branch Manage</span></a></li>
@@ -121,16 +121,13 @@
                 <div class="modal-content small-modal">
                     <span class="close-btn" id="closeQuickSearchModal" title="Close">&times;</span>
                     <h2><i class="fas fa-search info-icon"></i> Quick Payment - Find Customer</h2>
-
                     <div class="form-group">
                         <label for="quick-payment-search-input">Enter Customer Name or Mobile No.:</label>
                         <input type="text" id="quick-payment-search-input" placeholder="Name or Mobile No. ...">
                     </div>
-
                     <div id="quick-payment-search-results" class="suggestions-list" style="position: static; display: block; max-height: 200px; border: 1px solid #ccc; margin-top: 10px;">
                         <div class="suggestion-item no-suggestions">Type to search...</div>
                     </div>
-
                     <div class="modal-actions" style="margin-top: 20px; border-top: none; justify-content: center;">
                          <button type="button" id="cancelQuickSearchBtn" class="button cancel-button">Cancel</button>
                      </div>
@@ -140,7 +137,6 @@
                 <div class="modal-content small-modal">
                     <span class="close-btn" id="closePaymentModal" title="Close">&times;</span>
                     <h2><i class="fas fa-money-bill-wave success-icon"></i> Add New Payment for <span id="payment-modal-cust-name">Customer</span></h2>
-
                     <p class="customer-balance-display" style="text-align: center; margin-bottom: 15px; font-size: 1.1em;">
                         Current Balance: <strong id="payment-modal-cust-balance">Loading...</strong>
                     </p>
@@ -174,21 +170,28 @@
                     </form>
                 </div>
             </div>
-             </div> </div> <script src="js/utils.js" type="module" defer></script> <script type="module" src="js/firebase-init.js"></script> <script type="module" src="js/dashboard.js"></script>
-
-    <script>
+             </div> </div> <script src="js/utils.js" type="module" defer></script> <script type="module" src="js/firebase-init.js"></script>
+    <script type="module" src="js/dashboard.js"></script> <script>
         function setActiveLink() {
              try {
                 const path = window.location.pathname;
+                // Handle root path and index.html as the same for dashboard active state
                 const page = path.substring(path.lastIndexOf('/') + 1) || 'index.html';
                 const links = document.querySelectorAll('.sidebar ul li a');
+
                 links.forEach(l => {
                     const hrefAttr = l.getAttribute('href');
-                    l.classList.remove('active');
+                    l.classList.remove('active'); // Remove active from all links first
                     if (hrefAttr) {
+                        // Extract filename from href, handle potential parameters/hashes
                         const linkPage = hrefAttr.substring(hrefAttr.lastIndexOf('/') + 1).split('?')[0].split('#')[0] || 'index.html';
-                        if (page === linkPage || ((page === '/' || page === 'index.html') && linkPage === 'index.html')) {
+                        // Check if the current page matches the link's page
+                        if (page === linkPage) {
                             l.classList.add('active');
+                        }
+                        // Special case for dashboard (index.html or root path)
+                        else if ((page === 'index.html' || path === '/' || page === '') && linkPage === 'index.html') {
+                             l.classList.add('active');
                         }
                     }
                 });
@@ -196,8 +199,9 @@
                 console.error("Error setting active link:", e);
              }
         }
+        // Run on initial load and after navigation events
         window.addEventListener('DOMContentLoaded', setActiveLink);
-        window.addEventListener('popstate', setActiveLink); // Handle browser back/forward
+        window.addEventListener('popstate', setActiveLink); // Handle browser back/forward navigation
     </script>
 </body>
 </html>

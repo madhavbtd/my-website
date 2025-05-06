@@ -1,0 +1,189 @@
+/* css/expenses.css */
+
+/* --- Theme Variables (Copy from supplier_management.css) --- */
+:root {
+    --primary-color: #0056b3;
+    --secondary-color: #2c3e50;
+    --success-color: #28a745;
+    --danger-color: #dc3545;
+    --warning-color: #ffc107;
+    --info-color: #17a2b8;
+    --light-gray: #f8f9fa;
+    --medium-gray: #e9ecef;
+    --dark-gray: #6c757d;
+    --text-color: #343a40;
+    --white-color: #ffffff;
+    --black-color: #000000;
+    --font-family: 'Poppins', sans-serif;
+    --border-radius: 5px; /* Use your theme's radius */
+    --box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+/* --- Base Styles --- */
+html { scrollbar-width: thin; scrollbar-color: #c1c1c1 #f1f1f1; }
+html::-webkit-scrollbar { width: 8px; height: 8px; }
+html::-webkit-scrollbar-track { background: #f1f1f1; }
+html::-webkit-scrollbar-thumb { background-color: #c1c1c1; border-radius: 4px; border: 2px solid #f1f1f1; }
+html::-webkit-scrollbar-thumb:hover { background-color: #a8a8a8; }
+
+body {
+    font-family: var(--font-family);
+    background-color: #f0f2f5;
+    margin: 0;
+    color: var(--text-color);
+    line-height: 1.5;
+}
+
+.main-content {
+    padding: 25px;
+    box-sizing: border-box;
+    max-width: 1200px; /* Adjust width as needed */
+    margin: 20px auto;
+    background-color: var(--white-color);
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.07);
+}
+
+.page-header {
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid var(--medium-gray);
+}
+
+.page-header h1 {
+    margin: 0;
+    font-size: 1.7em;
+    color: var(--primary-color);
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+}
+
+.page-header h1 i {
+    margin-right: 12px;
+    color: var(--primary-color);
+    opacity: 0.9;
+}
+
+.actions-bar {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 25px;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.section-container {
+    background-color: var(--white-color);
+    padding: 20px 25px;
+    border-radius: 8px;
+    margin-bottom: 25px;
+    border: 1px solid var(--medium-gray);
+}
+
+.section-container h2 {
+    margin-top: 0;
+    margin-bottom: 20px;
+    font-size: 1.4em;
+    color: var(--secondary-color);
+    border-bottom: 1px solid var(--medium-gray);
+    padding-bottom: 12px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+}
+.section-container h2 i {
+     margin-right: 10px;
+     color: var(--secondary-color);
+     opacity: 0.9;
+}
+
+/* --- General Button Styles --- */
+.button { padding: 9px 18px; font-size: 0.95em; border: none; border-radius: var(--border-radius); cursor: pointer; font-weight: 600; display: inline-flex; align-items: center; gap: 7px; text-decoration: none; transition: background-color 0.2s ease, opacity 0.2s ease, box-shadow 0.2s ease; white-space: nowrap; vertical-align: middle; line-height: 1; box-shadow: var(--box-shadow); }
+.button i { line-height: 1; margin-right: 2px; }
+.button:hover:not(:disabled) { box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+.button:disabled { background-color: #adb5bd !important; color: #fff !important; cursor: not-allowed; opacity: 0.7; box-shadow: none; }
+.add-new-button { background-color: var(--success-color); color: var(--white-color); }
+.add-new-button:hover:not(:disabled) { background-color: #218838; }
+.cancel-button { background-color: var(--dark-gray); color: var(--white-color);}
+.cancel-button:hover:not(:disabled) { background-color: #5a6268;}
+.save-button { background-color: var(--primary-color); color: var(--white-color);}
+.save-button:hover:not(:disabled) { background-color: #004085; }
+
+/* --- Action Buttons in Table --- */
+.action-buttons { display: flex; gap: 5px; justify-content: center; flex-wrap: nowrap; align-items: center; }
+.action-buttons .button { padding: 5px 9px; font-size: 0.85em; gap: 4px; border-radius: 4px; line-height: 1; box-shadow: none; }
+.action-buttons .button:hover { transform: translateY(-1px); box-shadow: 0 1px 3px rgba(0,0,0,0.15); }
+.action-buttons .button i { margin-right: 0; font-size: 0.9em; }
+.action-buttons .edit-button { background-color: var(--warning-color); color: #333; }
+.action-buttons .edit-button:hover:not(:disabled) { background-color: #e0a800; }
+.action-buttons .delete-button { background-color: var(--danger-color); color: var(--white-color); }
+.action-buttons .delete-button:hover:not(:disabled) { background-color: #c82333; }
+
+
+/* --- Table Styles --- */
+.table-container { width: 100%; overflow-x: auto; border: 1px solid var(--medium-gray); border-radius: var(--border-radius); margin-bottom: 15px; background-color: var(--white-color); }
+#expensesTable { width: 100%; border-collapse: collapse; font-size: 0.9em; }
+#expensesTable thead { background-color: var(--light-gray); border-bottom: 2px solid var(--medium-gray); }
+#expensesTable th, #expensesTable td { border: 1px solid #e0e0e0; padding: 10px 12px; text-align: left; vertical-align: middle; }
+#expensesTable th { font-weight: 600; color: #495057; white-space: nowrap; }
+#expensesTable tbody tr:nth-child(even) { background-color: #fdfdfd; }
+#expensesTable tbody tr:hover { background-color: #f1f5f9; }
+#expensesTable td:nth-child(3) { text-align: right; font-weight: 500; white-space: nowrap; } /* Amount */
+#expensesTable td:nth-child(4) { /* Description column */ white-space: normal; word-break: break-word; min-width: 200px; }
+#expensesTable td:last-child { text-align: center; white-space: nowrap; width: 100px; } /* Actions */
+
+/* Loading / No Results Row */
+#expensesLoadingMessage td, #noExpensesMessage td { text-align: center !important; color: var(--dark-gray); padding: 20px !important; font-style: italic; }
+#expensesLoadingMessage i { margin-right: 8px; }
+
+/* Total Display */
+.list-totals { margin-top: 10px; padding: 10px 15px; background-color: var(--light-gray); border: 1px solid var(--medium-gray); border-radius: var(--border-radius); text-align: right; font-size: 1em; font-weight: 600; }
+
+/* --- Modal Styles --- */
+.modal { display: none; position: fixed; z-index: 1050; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.6); align-items: center; justify-content: center; padding: 15px; box-sizing: border-box; }
+.modal.active { display: flex; }
+.modal-content { background-color: var(--white-color); margin: auto; border: none; width: 95%; max-width: 600px; border-radius: var(--border-radius); position: relative; box-shadow: 0 5px 15px rgba(0,0,0,0.2); z-index: 1051; display: flex; flex-direction: column; max-height: calc(90vh); overflow: hidden; padding: 0; }
+.modal-header { padding: 12px 20px; border-bottom: 1px solid var(--medium-gray); background-color: var(--light-gray); border-radius: var(--border-radius) var(--border-radius) 0 0; flex-shrink: 0; display: flex; justify-content: space-between; align-items: center;}
+.modal-header h2 { margin: 0; font-size: 1.25em; font-weight: 600; color: var(--secondary-color); }
+.close-btn { color: #aaa; font-size: 26px; font-weight: bold; cursor: pointer; line-height: 1; background: none; border: none; padding: 0 5px; }
+.close-btn:hover, .close-btn:focus { color: var(--danger-color); }
+.modal-body { padding: 15px 20px; overflow-y: auto; flex-grow: 1; }
+.modal-actions { display: flex; justify-content: flex-end; gap: 10px; padding: 10px 20px; border-top: 1px solid var(--medium-gray); background-color: var(--light-gray); flex-shrink: 0; border-radius: 0 0 var(--border-radius) var(--border-radius); }
+
+/* --- Form Styles within Modal --- */
+.modal form .form-group { margin-bottom: 15px; }
+.modal form .form-group label { display: block; margin-bottom: 6px; font-weight: 500; font-size: 0.9em; }
+.modal form .form-group label .required { color: var(--danger-color); margin-left: 3px; }
+.modal form .form-group input[type="text"], .modal form .form-group input[type="number"], .modal form .form-group input[type="date"], .modal form .form-group select, .modal form .form-group textarea { width: 100%; padding: 9px 12px; border: 1px solid #ced4da; border-radius: var(--border-radius); font-size: 0.95em; box-sizing: border-box; font-family: var(--font-family); }
+/* Adjust height for specific elements if needed */
+.modal form .form-group input[type="text"], .modal form .form-group input[type="number"], .modal form .form-group input[type="date"], .modal form .form-group select { height: 40px; }
+.modal form .form-group input[type="date"] { color-scheme: light; } /* Improve date input appearance */
+.modal form .form-group textarea { resize: vertical; min-height: 60px; }
+.modal form .form-group input:focus, .modal form .form-group select:focus, .modal form .form-group textarea:focus { border-color: var(--primary-color); outline: 0; box-shadow: 0 0 0 0.2rem rgba(0, 86, 179, 0.2); }
+.modal .error-message { color: var(--danger-color); background-color: #fdecea; border: 1px solid var(--danger-color); border-radius: var(--border-radius); padding: 8px 12px; font-size: 0.88em; margin-top: 0; margin-bottom: 15px; /* Show below label, above input */ text-align: center; width: 100%; box-sizing: border-box; display: none; }
+.modal .error-message[style*="block"] { display: block !important; }
+
+/* --- Error Message Area --- */
+.error-message {
+    color: var(--danger-color);
+    background-color: #f8d7da;
+    border: 1px solid #f5c6cb;
+    border-radius: var(--border-radius);
+    padding: 10px 15px;
+    margin-bottom: 15px;
+    font-size: 0.95em;
+    display: none; /* Initially hidden */
+}
+
+/* --- Responsive --- */
+@media (max-width: 768px) {
+    .main-content { padding: 15px; }
+    .page-header h1 { font-size: 1.5em; }
+    .section-container h2 { font-size: 1.2em;}
+    #expensesTable { font-size: 0.85em; }
+    #expensesTable th, #expensesTable td { padding: 8px 6px; }
+    .modal-content { width: 96%; }
+     .modal-actions { flex-direction: column; gap: 8px; }
+     .modal-actions .button { width: 100%; justify-content: center;}
+}
