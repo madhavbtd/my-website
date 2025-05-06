@@ -1,0 +1,216 @@
+/* /admin/css/agent_reports.css */
+
+/* यह मानते हुए कि Poppins फॉन्ट और सामान्य CSS वेरिएबल्स (जैसे --primary-color)
+   आपकी मुख्य एडमिन CSS (जैसे css/index.css) में परिभाषित हैं। */
+
+/* यदि आपकी मुख्य CSS में .header, .filter-bar, .table-container, .button, .info-message
+   के लिए पर्याप्त स्टाइल नहीं हैं, तो आप उन्हें यहाँ भी परिभाषित कर सकते हैं या
+   css/index.css को अपडेट कर सकते हैं। */
+
+/* रिपोर्ट पेज के लिए विशिष्ट स्टाइल */
+.report-filters {
+    /* आपकी मौजूदा .filter-bar स्टाइल यहाँ लागू होनी चाहिए।
+       यदि आवश्यक हो तो अतिरिक्त स्टाइल जोड़ें। */
+    align-items: flex-end; /* फिल्टर ग्रुप आइटम्स को अलाइन करें */
+}
+
+.report-filters .filter-group {
+    /* आपकी मौजूदा .filter-group स्टाइल यहाँ लागू होनी चाहिए। */
+    min-width: 180px; /* ड्रॉपडाउन और डेट पिकर के लिए जगह */
+}
+.report-filters .filter-group label {
+    font-size: 0.85em;
+    font-weight: 500;
+    /* color: var(--text-muted); आपकी मुख्य CSS से आना चाहिए */
+    margin-bottom: 4px; /* इनपुट/सेलेक्ट से थोड़ा गैप */
+}
+.report-filters .filter-group label i {
+    margin-right: 5px;
+    /* color: var(--primary-color); आपकी मुख्य CSS से आना चाहिए */
+}
+
+.report-filters select,
+.report-filters input[type="date"] {
+    /* आपकी मौजूदा इनपुट/सेलेक्ट स्टाइल यहाँ लागू होनी चाहिए। */
+    /* जैसे: padding, border, border-radius, font-size, height, box-sizing */
+    padding: 8px 10px;
+    border: 1px solid var(--border-color, #dee2e6);
+    border-radius: var(--border-radius, 4px);
+    font-size: 0.9em;
+    height: 38px;
+    box-sizing: border-box;
+    width: 100%; /* फिल्टर ग्रुप में पूरी चौड़ाई लें */
+}
+
+.report-filters #reportCustomDateFilters {
+    display: none; /* JS इसे 'flex' करेगा */
+    gap: 10px;
+    align-items: center;
+}
+.report-filters #reportCustomDateFilters input[type="date"] {
+    width: auto; /* कस्टम डेट इनपुट के लिए चौड़ाई समायोजित करें */
+    flex-grow: 1;
+}
+
+
+.report-filters .filter-button {
+    /* आपकी मौजूदा .button स्टाइल यहाँ लागू होनी चाहिए। */
+    background-color: var(--success-color, #28a745); /* एक अलग रंग का बटन */
+    color: var(--white-color, #fff);
+    padding: 0 18px; /* पैडिंग को ऊंचाई के अनुरूप समायोजित करें */
+    height: 38px; /* इनपुट फील्ड के साथ ऊंचाई संरेखित करें */
+    align-self: flex-end; /* इसे फिल्टर ग्रुप के नीचे अलाइन करें यदि वे अलग-अलग ऊंचाई के हों */
+}
+.report-filters .filter-button:hover {
+    background-color: #218838; /* गहरा हरा */
+}
+.report-filters .filter-button i {
+    margin-right: 6px;
+}
+
+/* रिपोर्ट समरी कार्ड */
+.report-summary-card {
+    background-color: var(--light-bg, #f8f9fa);
+    border: 1px solid var(--border-color, #dee2e6);
+    border-radius: var(--border-radius, 6px);
+    padding: 15px 20px;
+    margin-bottom: 20px;
+    text-align: right; /* या केंद्र, जैसा आपको पसंद हो */
+    box-shadow: var(--box-shadow, 0 2px 5px rgba(0,0,0,0.08));
+}
+.report-summary-card h3 {
+    margin-top: 0;
+    margin-bottom: 8px;
+    font-size: 1em;
+    color: var(--text-muted, #6c757d);
+    font-weight: 500;
+}
+.report-summary-card p {
+    font-size: 1.4em;
+    font-weight: 700;
+    color: var(--primary-color, #0056b3);
+    margin: 0;
+}
+
+
+/* रिपोर्ट टेबल */
+.report-table-container {
+    /* आपकी मौजूदा .table-container स्टाइल यहाँ लागू होनी चाहिए। */
+    margin-top: 10px; /* समरी कार्ड से थोड़ा गैप */
+}
+
+#commissionReportTable {
+    /* आपकी मौजूदा टेबल स्टाइल यहाँ लागू होनी चाहिए। */
+    /* जैसे: width, border-collapse, font-size */
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9em;
+}
+
+#commissionReportTable thead th {
+    /* आपकी मौजूदा th स्टाइल यहाँ लागू होनी चाहिए। */
+    /* जैसे: background-color, color, padding, text-align, font-weight, border-bottom, white-space, position, top, z-index */
+    background-color: var(--medium-gray, #e9ecef);
+    color: var(--secondary-color, #2c3e50);
+    padding: 12px 15px;
+    text-align: left;
+    font-weight: 600;
+    border-bottom: 2px solid var(--border-color, #dee2e6);
+    white-space: nowrap;
+}
+
+#commissionReportTable tbody td {
+    /* आपकी मौजूदा td स्टाइल यहाँ लागू होनी चाहिए। */
+    /* जैसे: padding, border-bottom, vertical-align */
+    padding: 10px 15px;
+    border-bottom: 1px solid var(--border-color, #dee2e6);
+    vertical-align: middle;
+    color: var(--text-color, #212529);
+}
+
+#commissionReportTable tbody tr:nth-child(even) {
+    background-color: var(--light-bg, #f8f9fa); /* वैकल्पिक: रो स्ट्राइपिंग */
+}
+#commissionReportTable tbody tr:hover {
+    background-color: #e0e0e0; /* आपकी थीम का होवर रंग */
+}
+
+#commissionReportTable .action-button {
+    /* आपकी मौजूदा .button और .action-button स्टाइल यहाँ लागू होनी चाहिए। */
+    background-color: var(--info-color, #17a2b8);
+    color: var(--white-color, #fff);
+    padding: 6px 12px;
+    font-size: 0.85em;
+    border-radius: var(--border-radius, 4px);
+    text-decoration: none;
+}
+#commissionReportTable .action-button:hover {
+    background-color: #117a8b; /* गहरा जानकारी रंग */
+}
+#commissionReportTable .action-button i {
+    margin-right: 5px;
+}
+
+
+/* लोडिंग और नो-डेटा मैसेज */
+#loadingReportMessage td { /* colspan के कारण td पर स्टाइल करें */
+    /* आपकी मौजूदा लोडिंग मैसेज स्टाइल यहाँ लागू होनी चाहिए। */
+    text-align: center;
+    padding: 40px 20px !important; /* अधिक पैडिंग */
+    font-size: 1.1em;
+    color: var(--text-muted, #6c757d);
+}
+#loadingReportMessage i {
+    margin-right: 10px;
+    font-size: 1.2em; /* बड़ा स्पिनर */
+    /* animation: fa-spin 1s infinite linear; आपकी मुख्य CSS में हो सकता है */
+}
+
+/* .info-message आपकी मुख्य CSS से आना चाहिए */
+#noReportDataMessage {
+    /* padding, background-color, border, border-radius, color, font-size, text-align */
+}
+
+/* Responsive adjustments (optional, if needed beyond your main admin CSS) */
+@media (max-width: 768px) {
+    .report-filters {
+        flex-direction: column;
+        align-items: stretch; /* फिल्टर को पूरी चौड़ाई में फैलाएं */
+    }
+    .report-filters .filter-group,
+    .report-filters #reportCustomDateFilters,
+    .report-filters .filter-button {
+        width: 100%; /* मोबाइल पर पूरी चौड़ाई */
+    }
+    .report-filters #reportCustomDateFilters {
+        flex-direction: column;
+        gap: 10px; /* कस्टम डेट फिल्टर के बीच गैप */
+    }
+    .report-filters #reportCustomDateFilters input[type="date"] {
+        width: 100%; /* कस्टम डेट इनपुट पूरी चौड़ाई लें */
+    }
+}
+
+/* Sr-only class for accessibility - visually hide but available to screen readers */
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border-width: 0;
+}
+.visually-hidden { /* Alias for sr-only */
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border-width: 0;
+}

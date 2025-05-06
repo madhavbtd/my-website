@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agent Management - Admin</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <link rel="stylesheet" href="css/index.css"> 
+    
+    <link rel="stylesheet" href="css/agent_management.css"> 
+
+</head>
+<body>
+    <div class="container"> 
+        <div class="header"> 
+            <i class="fas fa-users-cog header-icon"></i>
+            <h1>Agent Management</h1>
+        </div>
+        <div class="breadcrumb-container">
+          <a href="index.html">Home</a> / <span>Agent Management</span>
+        </div>
+        <div class="filter-bar">
+            <div class="filter-group">
+                 <button id="addNewAgentBtn" class="button add-new-button">
+                    <i class="fas fa-user-plus"></i> Add New Agent
+                </button>
+            </div>
+             <div class="filter-group">
+                 <label for="agentSearch"><i class="fas fa-search"></i> Search:</label>
+                 <input type="text" id="agentSearch" placeholder="Name, Email..."> 
+             </div>
+             <div class="filter-group filter-sort">
+                <label for="sort-agents"><i class="fas fa-sort"></i> Sort by:</label>
+                 <select id="sort-agents">
+                    <option value="createdAt_desc">Newest First</option>
+                    <option value="name_asc">Name (A-Z)</option>
+                    <option value="name_desc">Name (Z-A)</option>
+                 </select>
+            </div>
+             <button id="clearAgentFiltersBtn" class="button cancel-button">Clear Filters</button>
+        </div>
+        <div class="table-container">
+            <table id="agentTable">
+                <thead>
+                    <tr>
+                         <th>Agent Name</th>
+                         <th>Email / Username</th>
+                         <th>Contact</th>
+                         <th style="text-align:center;">Status</th> 
+                         <th>Allowed Categories</th> 
+                         <th style="text-align:center;">Can Add Cust.?</th>
+                         <th style="text-align:center;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="agentTableBody">
+                    <tr id="loadingAgentMessage">
+                         <td colspan="7" style="text-align: center; padding: 20px; color: #6c757d;">
+                           <i class="fas fa-spinner fa-spin"></i> Loading agents...
+                         </td> 
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+         <p id="noAgentsMessage" class="info-message" style="display: none; text-align:center;">No agents found.</p>
+    </div>
+
+    <div id="agentModal" class="modal">
+        <div class="modal-content large-modal"> 
+            <span class="close-btn" id="closeAgentModal" title="Close">&times;</span>
+            <h2 id="agentModalTitle">Add New Agent</h2> 
+            <div id="agentModalError" class="error-message" style="display: none;"></div>
+            <form id="agentForm" novalidate>
+                <input type="hidden" id="editAgentId"> 
+                <div class="form-grid two-columns"> 
+                    <div class="form-group">
+                        <label for="agentName">Agent Name <span class="required">*</span></label>
+                        <input type="text" id="agentName" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="agentEmail">Login Email <span class="required">*</span></label>
+                        <input type="email" id="agentEmail" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="agentContact">Contact No</label>
+                        <input type="tel" id="agentContact">
+                    </div>
+                    <div class="form-group" id="agentPasswordGroup"> 
+                        <label for="agentPassword">Password <span id="passwordRequiredSpan" class="required">*</span></label>
+                        <input type="password" id="agentPassword" required minlength="6">
+                        <small id="passwordHelp">Required for new agents (min 6 characters). Leave blank to keep existing password when editing.</small>
+                    </div>
+                    <div class="form-group">
+                         <label for="agentStatus">Status <span class="required">*</span></label>
+                         <select id="agentStatus" required>
+                             <option value="active" selected>Active</option>
+                             <option value="inactive">Inactive</option>
+                         </select>
+                    </div>
+                     <div class="form-group form-group-toggle"> 
+                         <label for="agentCanAddCustomers">Allow Adding Customers?</label>
+                         <label class="switch">
+                             <input type="checkbox" id="agentCanAddCustomers">
+                             <span class="slider round"></span>
+                         </label>
+                    </div>
+                </div> 
+                <div class="form-section-permissions">
+                     <label>Allowed Product Categories <span class="required">*</span></label>
+                     <div id="categoryPermissionsCheckboxes" class="checkbox-grid">
+                         <p>Loading categories...</p>
+                     </div>
+                     <div class="permission-actions">
+                          <button type="button" id="selectAllCategoriesBtn" class="button-link">Select All</button>
+                          <button type="button" id="deselectAllCategoriesBtn" class="button-link">Deselect All</button>
+                     </div>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" id="cancelAgentBtn" class="button cancel-button">Cancel</button>
+                    <button type="submit" id="saveAgentBtn" class="button save-button">
+                        <i class="fas fa-save"></i> <span id="saveAgentBtnText">Save Agent</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="js/firebase-init.js" type="module"></script> 
+    <script src="js/agent_management.js" type="module"></script> 
+</body>
+</html>

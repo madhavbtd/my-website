@@ -1,0 +1,172 @@
+/* /agent/css/agent_order_history.css */
+
+/* Reuse variables and base styles from agent_main.css */
+
+.agent-main-content h1 {
+    margin-bottom: 10px; /* Reduce space after main title */
+}
+.agent-main-content > p {
+    margin-bottom: 20px;
+    font-size: 0.95em;
+    color: var(--agent-text-muted);
+}
+
+/* Filter Styles (Placeholder - you can enhance later) */
+.order-history-filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 20px;
+    padding: 10px 15px;
+    background-color: var(--agent-light-bg);
+    border: 1px solid var(--agent-border);
+    border-radius: var(--agent-radius);
+}
+.order-history-filters input, 
+.order-history-filters select, 
+.order-history-filters button {
+    padding: 7px 10px;
+    font-size: 0.9em;
+    border-radius: 4px;
+    border: 1px solid var(--agent-border);
+    font-family: 'Poppins', sans-serif;
+    height: 36px;
+    box-sizing: border-box;
+}
+.order-history-filters input[type="text"] { flex-grow: 1; min-width: 200px; }
+.order-history-filters input[type="date"] { min-width: 140px; }
+.order-history-filters select { min-width: 150px; }
+.order-history-filters button { 
+    background-color: var(--agent-text-muted); 
+    color: var(--agent-white); 
+    cursor: pointer; 
+    border: none;
+}
+.order-history-filters button:hover:not(:disabled) { background-color: #5a6268; }
+
+/* Table Styles */
+.agent-history-table {
+    width: 100%;
+    max-height: 65vh; /* Adjust height */
+    overflow-y: auto;
+    border: 1px solid var(--agent-border);
+    border-radius: var(--agent-radius);
+    margin-bottom: 20px;
+    background-color: var(--agent-white);
+    box-shadow: var(--agent-shadow);
+    position: relative;
+    overflow-x: auto;
+}
+#agentOrderHistoryTable {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.88em;
+    border: none;
+    min-width: 800px; /* Min width to prevent squishing */
+}
+#agentOrderHistoryTable thead th {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    background-color: var(--agent-light-bg);
+    padding: 10px 12px;
+    text-align: left;
+    font-weight: 600;
+    color: var(--agent-text);
+    white-space: nowrap;
+    border-bottom: 2px solid var(--agent-border);
+}
+#agentOrderHistoryTable td {
+    padding: 9px 12px;
+    text-align: left;
+    vertical-align: middle;
+    border-bottom: 1px solid #f0f0f0; /* Lighter row border */
+    color: var(--agent-text);
+    white-space: normal; /* Allow wrapping in cells */
+}
+#agentOrderHistoryTable tbody tr:last-child td { border-bottom: none; }
+#agentOrderHistoryTable tbody tr:hover { background-color: #f1f8ff; } /* Subtle hover */
+
+/* Specific Column Styles */
+#agentOrderHistoryTable td:nth-child(1) { /* Order ID */
+    font-weight: 600;
+    color: var(--agent-primary);
+}
+#agentOrderHistoryTable td:nth-child(3) { /* Customer Name */
+    font-weight: 500;
+}
+#agentOrderHistoryTable td:nth-child(5) { /* Total Amount */
+    text-align: right;
+    font-weight: 600;
+}
+#agentOrderHistoryTable td:nth-child(6) { /* Status */
+    text-align: center;
+}
+#agentOrderHistoryTable td:nth-child(7) { /* Action */
+    text-align: center;
+    white-space: nowrap;
+}
+
+/* Status Badge (reuse from agent_main.css if defined there, or define here) */
+.status-badge { 
+    font-weight: 500; 
+    padding: 4px 10px; 
+    border-radius: 4px; /* Slightly less round */
+    font-size: 0.9em; /* Match table font size */
+    color: white; 
+    background-color: var(--agent-secondary, #6c757d); /* Default */
+    white-space: nowrap; 
+    display: inline-block; 
+    line-height: 1.3; 
+    text-align: center;
+    border: 1px solid rgba(0,0,0,0.05);
+}
+/* Add specific status colors as needed (copy from order_history.css if desired) */
+.status-badge.status-order-received { background-color: #6c757d; }
+.status-badge.status-designing { background-color: #ffc107; color: #333; }
+.status-badge.status-verification { background-color: #fd7e14; }
+.status-badge.status-design-approved { background-color: #20c997; color: #fff; }
+.status-badge.status-ready-for-working { background-color: #0dcaf0; color: #333; }
+.status-badge.status-printing { background-color: #17a2b8; }
+.status-badge.status-delivered { background-color: #28a745; }
+.status-badge.status-completed { background-color: #198754; } /* Slightly different green */
+.status-badge.status-cancelled { background-color: #dc3545; }
+.status-badge.status-unknown { background-color: #adb5bd; }
+
+/* Action Button */
+.view-details-button {
+    padding: 5px 10px;
+    font-size: 0.85em;
+    border-radius: 4px;
+    white-space: nowrap;
+    background-color: var(--agent-primary);
+    color: white;
+    border: none;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+.view-details-button:hover {
+    background-color: #00418a;
+}
+
+/* Loading/No Orders Message */
+#loadingAgentHistoryMessage td, #noAgentOrdersMessage {
+    text-align: center;
+    padding: 30px !important;
+    color: var(--agent-text-muted);
+    font-style: italic;
+    font-size: 1em;
+}
+#loadingAgentHistoryMessage i { margin-right: 8px; }
+
+/* Responsive */
+@media (max-width: 768px) {
+    .order-history-filters { flex-direction: column; align-items: stretch; }
+    #agentOrderHistoryTable { font-size: 0.85em; min-width: 650px; }
+    #agentOrderHistoryTable th, #agentOrderHistoryTable td { padding: 8px; white-space: normal; }
+     #agentOrderHistoryTable td:nth-child(5) { white-space: nowrap;} /* Keep amount nowrap */
+     #agentOrderHistoryTable td:nth-child(6) { white-space: nowrap;} /* Keep status nowrap */
+     #agentOrderHistoryTable td:nth-child(7) { white-space: nowrap;} /* Keep actions nowrap */
+}

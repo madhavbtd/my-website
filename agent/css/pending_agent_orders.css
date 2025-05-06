@@ -1,0 +1,103 @@
+/* /admin/css/pending_agent_orders.css */
+
+/* Reuse existing admin styles if possible */
+/* Ensure body or specific elements use Poppins */
+body, .container, table, button, input, select {
+    font-family: 'Poppins', sans-serif; /* Ensure Poppins font */
+}
+
+/* Table Styles (Similar to order_history) */
+.table-container {
+    width: 100%;
+    overflow-x: auto;
+    border: 1px solid #dee2e6; 
+    border-radius: 5px; 
+    margin-bottom: 20px;
+    background-color: #fff; 
+}
+
+#pendingAgentOrdersTable {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9em;
+}
+
+#pendingAgentOrdersTable th, 
+#pendingAgentOrdersTable td {
+    border-bottom: 1px solid #dee2e6; 
+    padding: 10px 12px;
+    text-align: left;
+    vertical-align: middle;
+    white-space: nowrap;
+}
+
+#pendingAgentOrdersTable thead th {
+    background-color: #e9ecef; 
+    font-weight: 600;
+    color: #495057; 
+    position: sticky;
+    top: 0;
+    z-index: 1;
+}
+
+#pendingAgentOrdersTable tbody tr:hover {
+    background-color: #f1f3f5;
+}
+
+#pendingAgentOrdersTable td:nth-child(5) { /* Total Amount */
+    text-align: right;
+    font-weight: 500;
+}
+
+#pendingAgentOrdersTable td:last-child { /* Actions */
+    text-align: center;
+    width: 1%; /* Prevent stretching */
+}
+
+/* Action Buttons */
+.action-buttons-container {
+    display: flex;
+    gap: 6px;
+    justify-content: center;
+}
+.action-button {
+    padding: 5px 9px;
+    font-size: 0.85em;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    color: white;
+    transition: background-color 0.2s ease;
+    font-family: 'Poppins', sans-serif; /* Ensure font */
+}
+.action-button i { font-size: 0.9em; }
+
+.process-order-button {
+    background-color: #28a745; /* Green */
+}
+.process-order-button:hover {
+    background-color: #218838;
+}
+.view-order-button {
+    background-color: #17a2b8; /* Info Blue */
+}
+.view-order-button:hover {
+    background-color: #117a8b;
+}
+.cancel-order-button {
+    background-color: #dc3545; /* Danger Red */
+}
+.cancel-order-button:hover {
+    background-color: #c82333;
+}
+
+/* Loading message */
+#loadingPendingOrdersMessage {
+    text-align: center;
+    padding: 20px;
+    color: #6c757d; 
+    font-style: italic;
+}

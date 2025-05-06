@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Profile - Agent Portal</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="css/agent_main.css">
+    </head>
+<body>
+    <div class="agent-portal-container">
+        <header class="agent-header">
+            <div class="header-logo">
+                <img src="https://i.ibb.co/Z6gKD9Rd/1.png" alt="Madhav Multiprint Logo">
+                <span>Agent Portal</span>
+            </div>
+            <div class="header-user-info">
+                <span id="agentWelcomeMessage">Welcome, Agent!</span>
+                <button id="agentLogoutBtn" class="button-logout" title="Logout">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </button>
+            </div>
+        </header>
+
+        <nav class="agent-nav">
+            <a href="dashboard.html"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+            <a href="create_order.html"><i class="fas fa-plus-circle"></i> Create Order</a>
+            <a href="products.html"><i class="fas fa-box-open"></i> Products</a>
+            <a href="order_history.html"><i class="fas fa-history"></i> Order History</a>
+            <a href="customers.html"><i class="fas fa-users"></i> Customers</a>
+            <a href="ledger.html"><i class="fas fa-book-open"></i> Ledger/Commission</a>
+            <a href="profile.html" class="active"><i class="fas fa-user-cog"></i> Profile</a>
+        </nav>
+
+        <main class="agent-main-content">
+            <h1>My Profile</h1>
+            <p>Manage your personal information and account password.</p>
+
+            <div class="profile-sections-container">
+                <section class="profile-section card-style">
+                    <h2><i class="fas fa-user-edit"></i> Personal Information</h2>
+                    <form id="agentProfileForm">
+                        <div class="form-group">
+                            <label for="profileAgentName">Full Name <span class="required-asterisk">*</span></label>
+                            <input type="text" id="profileAgentName" name="profileAgentName" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="profileAgentEmail">Email (Login ID)</label>
+                            <input type="email" id="profileAgentEmail" name="profileAgentEmail" readonly disabled>
+                            <small>Email cannot be changed here. Contact admin if needed.</small>
+                        </div>
+                        <div class="form-group">
+                            <label for="profileAgentContact">Contact Number</label>
+                            <input type="tel" id="profileAgentContact" name="profileAgentContact" placeholder="e.g., 9876543210">
+                        </div>
+                        <button type="submit" id="updateProfileBtn" class="button primary-button">
+                            <i class="fas fa-save"></i> Update Profile
+                        </button>
+                        <p id="profileMessage" class="form-message" style="display:none;"></p>
+                    </form>
+                </section>
+
+                <section class="profile-section card-style">
+                    <h2><i class="fas fa-key"></i> Change Password</h2>
+                    <form id="agentPasswordChangeForm">
+                        <div class="form-group">
+                            <label for="currentPassword">Current Password <span class="required-asterisk">*</span></label>
+                            <input type="password" id="currentPassword" name="currentPassword" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="newPassword">New Password <span class="required-asterisk">*</span></label>
+                            <input type="password" id="newPassword" name="newPassword" required minlength="6">
+                            <small>Minimum 6 characters.</small>
+                        </div>
+                        <div class="form-group">
+                            <label for="confirmNewPassword">Confirm New Password <span class="required-asterisk">*</span></label>
+                            <input type="password" id="confirmNewPassword" name="confirmNewPassword" required>
+                        </div>
+                        <button type="submit" id="changePasswordBtn" class="button primary-button">
+                            <i class="fas fa-exchange-alt"></i> Change Password
+                        </button>
+                        <p id="passwordChangeMessage" class="form-message" style="display:none;"></p>
+                    </form>
+                </section>
+            </div>
+        </main>
+
+        <footer class="agent-footer">
+            <p>&copy; 2025 Madhav Multiprint - Agent Portal</p>
+        </footer>
+    </div>
+
+    <script src="js/agent_firebase_config.js" type="module"></script>
+    <script src="js/agent_profile.js" type="module"></script>
+</body>
+</html>

@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agent Portal Login - Madhav Multiprint</title>
+    <link rel="stylesheet" href="css/agent_login.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <div class="login-container">
+        <img src="https://i.ibb.co/Z6gKD9Rd/1.png" alt="Madhav Multiprint Logo" class="logo-image">
+        <h2>Agent Portal Login</h2>
+        <form id="agentLoginForm">
+            <div class="form-group">
+                <label for="agent-email">Email / Username:</label>
+                <input type="email" id="agent-email" name="email" required autocomplete="email">
+            </div>
+            <div class="form-group">
+                <label for="agent-password">Password:</label>
+                <input type="password" id="agent-password" name="password" required autocomplete="current-password">
+            </div>
+            <button type="submit" id="agentLoginBtn" class="login-button">
+                <span class="button-text">Login</span>
+                <span class="button-loader" style="display: none;">
+                    <i class="fas fa-spinner fa-spin"></i> Logging in...
+                </span>
+            </button>
+            <p id="loginErrorMessage" class="error-message" style="display: none;"></p>
+        </form>
+    </div>
+
+    <script src="js/agent_firebase_config.js" type="module"></script>
+    <script src="js/agent_login.js" type="module"></script>
+</body>
+</html>

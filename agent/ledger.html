@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Ledger/Commission - Agent Portal</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="css/agent_main.css">
+    <link rel="stylesheet" href="css/agent_ledger.css">
+</head>
+<body>
+    <div class="agent-portal-container">
+        <header class="agent-header">
+            <div class="header-logo">
+                <img src="https://i.ibb.co/Z6gKD9Rd/1.png" alt="Madhav Multiprint Logo">
+                <span>Agent Portal</span>
+            </div>
+            <div class="header-user-info">
+                <span id="agentWelcomeMessage">Welcome, Agent!</span>
+                <button id="agentLogoutBtn" class="button-logout" title="Logout">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </button>
+            </div>
+        </header>
+
+        <nav class="agent-nav">
+            <a href="dashboard.html"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+            <a href="create_order.html"><i class="fas fa-plus-circle"></i> Create Order</a>
+            <a href="products.html"><i class="fas fa-box-open"></i> Products</a>
+            <a href="order_history.html"><i class="fas fa-history"></i> Order History</a>
+            <a href="customers.html"><i class="fas fa-users"></i> Customers</a>
+            <a href="ledger.html" class="active"><i class="fas fa-book-open"></i> Ledger/Commission</a>
+            <a href="profile.html"><i class="fas fa-user-cog"></i> Profile</a>
+        </nav>
+
+        <main class="agent-main-content">
+            <h1>My Ledger & Commission</h1>
+            <p>View your earnings, payments, and current balance.</p>
+
+            <div class="ledger-summary-cards">
+                <div class="summary-card">
+                    <h3>Total Commission Earned</h3>
+                    <p id="totalCommissionEarned">₹0.00</p>
+                </div>
+                <div class="summary-card">
+                    <h3>Total Paid</h3>
+                    <p id="totalPaidToAgent">₹0.00</p>
+                </div>
+                <div class="summary-card">
+                    <h3>Outstanding Balance</h3>
+                    <p id="outstandingBalance">₹0.00</p>
+                </div>
+            </div>
+
+            <div class="filter-bar ledger-filters">
+                <div class="filter-group">
+                    <label for="ledgerDateRange"><i class="fas fa-calendar-alt"></i> Date Range:</label>
+                    <select id="ledgerDateRange">
+                        <option value="all_time" selected>All Time</option>
+                        <option value="current_month">Current Month</option>
+                        <option value="last_month">Last Month</option>
+                        <option value="custom">Custom Range</option>
+                    </select>
+                </div>
+                <div class="filter-group" id="customDateFilters" style="display:none;">
+                    <label for="ledgerStartDate">From:</label>
+                    <input type="date" id="ledgerStartDate">
+                    <label for="ledgerEndDate">To:</label>
+                    <input type="date" id="ledgerEndDate">
+                </div>
+                <button id="applyLedgerFilterBtn" class="button filter-button">
+                    <i class="fas fa-filter"></i> Apply Filter
+                </button>
+            </div>
+
+            <div class="table-container ledger-table-container">
+                <table id="agentLedgerTable">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Description</th>
+                            <th>Order ID / Ref.</th>
+                            <th style="text-align: right;">Commission (+) / Payment (-)</th>
+                            <th style="text-align: right;">Balance</th>
+                        </tr>
+                    </thead>
+                    <tbody id="agentLedgerTableBody">
+                        <tr id="loadingLedgerMessage">
+                            <td colspan="5" style="text-align: center; padding: 20px;">
+                                <i class="fas fa-spinner fa-spin"></i> Loading ledger details...
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <p id="noLedgerEntriesMessage" class="info-message" style="display: none; text-align:center;">
+                No ledger entries found for the selected period.
+            </p>
+
+        </main>
+
+        <footer class="agent-footer">
+            <p>&copy; 2025 Madhav Multiprint - Agent Portal</p>
+        </footer>
+    </div>
+
+    <script src="js/agent_firebase_config.js" type="module"></script>
+    <script src="js/agent_ledger.js" type="module"></script>
+</body>
+</html>

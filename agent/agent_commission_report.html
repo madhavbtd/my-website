@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agent Commission Report - Admin</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
+    <link rel="stylesheet" href="css/index.css">
+
+    <link rel="stylesheet" href="css/agent_reports.css">
+</head>
+<body>
+    <div class="container"> <div class="header"> <i class="fas fa-chart-line header-icon"></i>
+            <h1>Agent Commission Report</h1>
+        </div>
+
+        <div class="breadcrumb-container"> <a href="index.html">Home</a> / <span>Agent Commission Report</span>
+        </div>
+
+        <div class="filter-bar report-filters">
+            <div class="filter-group">
+                <label for="reportAgentSelect"><i class="fas fa-user-tie"></i> Select Agent:</label>
+                <select id="reportAgentSelect">
+                    <option value="all_agents" selected>All Agents</option>
+                    </select>
+            </div>
+            <div class="filter-group">
+                <label for="reportDateRange"><i class="fas fa-calendar-alt"></i> Date Range:</label>
+                <select id="reportDateRange">
+                    <option value="all_time" selected>All Time</option>
+                    <option value="current_month">Current Month</option>
+                    <option value="last_month">Last Month</option>
+                    <option value="custom">Custom Range</option>
+                </select>
+            </div>
+            <div class="filter-group" id="reportCustomDateFilters" style="display:none;">
+                <label for="reportStartDate" class="sr-only">From Date:</label> <input type="date" id="reportStartDate" aria-label="Start Date">
+                <span class_ visually-hidden>to</span> <label for="reportEndDate" class="sr-only">To Date:</label>
+                <input type="date" id="reportEndDate" aria-label="End Date">
+            </div>
+            <button id="applyReportFilterBtn" class="button filter-button"> <i class="fas fa-search"></i> Generate Report
+            </button>
+        </div>
+
+        <div class="report-summary-card"> <h3>Overall Outstanding Balance</h3>
+            <p id="overallOutstandingTotal">₹0.00</p>
+        </div>
+
+        <div class="table-container report-table-container"> <table id="commissionReportTable">
+                <thead>
+                    <tr>
+                        <th>Agent Name</th>
+                        <th>Email</th>
+                        <th style="text-align: right;">Orders</th>
+                        <th style="text-align: right;">Total Commission</th>
+                        <th style="text-align: right;">Total Paid</th>
+                        <th style="text-align: right;">Outstanding</th>
+                        <th style="text-align: center;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="commissionReportTableBody">
+                    <tr id="loadingReportMessage">
+                        <td colspan="7" style="text-align: center; padding: 20px;">
+                            <i class="fas fa-spinner fa-spin"></i> Loading report data...
+                        </td>
+                    </tr>
+                    </tbody>
+            </table>
+        </div>
+        <p id="noReportDataMessage" class="info-message" style="display: none; text-align:center;">
+            No data found for the selected criteria.
+        </p>
+    </div>
+
+    <script src="js/firebase-init.js" type="module"></script>
+    <script src="js/agent_commission_report.js" type="module"></script>
+</body>
+</html>
