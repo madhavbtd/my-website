@@ -206,7 +206,7 @@ async function displaySupplierTable() {
                 tr.innerHTML = `
                     <td>${name}</td>
                     <td>${contact}</td>
-                    <td class="supplier-balance" style="text-align: right;">Calculating...</td> {/* Placeholder */}
+                    <td class="supplier-balance" style="text-align: right;">Calculating...</td> 
                     <td class="action-buttons">
                         <button class="button edit-supplier-btn small-button" data-id="${supplierId}" title="Edit Supplier"><i class="fas fa-edit"></i></button>
                     </td>`;
