@@ -1,249 +1,388 @@
-/* css/expenses.css */
+// js/expenses.js - Expenses Management Logic with Filters
 
-/* --- Theme Variables (Ensure these match your main theme) --- */
-:root {
-    --primary-color: #0056b3;
-    --secondary-color: #2c3e50;
-    --success-color: #28a745;
-    --danger-color: #dc3545;
-    --warning-color: #ffc107;
-    --info-color: #17a2b8;
-    --light-gray: #f8f9fa;
-    --medium-gray: #e9ecef;
-    --dark-gray: #6c757d;
-    --text-color: #343a40;
-    --white-color: #ffffff;
-    --black-color: #000000;
-    --font-family: 'Poppins', sans-serif; /* Poppins Font */
-    --border-radius: 5px;
-    --box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+// --- Firebase Imports ---
+import { db, auth } from './firebase-init.js';
+import {
+    collection, addDoc, doc, getDoc, getDocs, updateDoc, deleteDoc,
+    query, orderBy, where, Timestamp, serverTimestamp,
+    startAt, endAt // Needed for text search if implemented differently
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+// --- Global Variables ---
+let expensesCache = [];
+let currentEditingExpenseId = null;
+
+// --- DOM Elements Cache ---
+let addExpenseBtn, expenseModal, expenseModalTitle, closeExpenseModalBtn, cancelExpenseBtn,
+    saveExpenseBtn, expenseForm, editingExpenseIdInput, expenseDateInput,
+    expenseCategoryInput, expenseAmountInput, expenseDescriptionInput,
+    expensePaymentMethodInput, expenseNotesInput, expenseFormError,
+    expensesTableBody, expensesLoadingMessage, noExpensesMessage,
+    expenseListError, expensesTotalDisplay,
+    // Filter elements
+    filterSearchInput, filterCategoryInput, filterStartDateInput, filterEndDateInput,
+    applyExpenseFiltersBtn, clearExpenseFiltersBtn;
+
+
+function cacheDOMElements() {
+    addExpenseBtn = document.getElementById('addExpenseBtn');
+    expenseModal = document.getElementById('expenseModal');
+    expenseModalTitle = document.getElementById('expenseModalTitle');
+    closeExpenseModalBtn = document.getElementById('closeExpenseModalBtn');
+    cancelExpenseBtn = document.getElementById('cancelExpenseBtn');
+    saveExpenseBtn = document.getElementById('saveExpenseBtn');
+    expenseForm = document.getElementById('expenseForm');
+    editingExpenseIdInput = document.getElementById('editingExpenseId');
+    expenseDateInput = document.getElementById('expenseDate');
+    expenseCategoryInput = document.getElementById('expenseCategory');
+    expenseAmountInput = document.getElementById('expenseAmount');
+    expenseDescriptionInput = document.getElementById('expenseDescription');
+    expensePaymentMethodInput = document.getElementById('expensePaymentMethod');
+    expenseNotesInput = document.getElementById('expenseNotes');
+    expenseFormError = document.getElementById('expenseFormError');
+    expensesTableBody = document.getElementById('expensesTableBody');
+    expensesLoadingMessage = document.getElementById('expensesLoadingMessage');
+    noExpensesMessage = document.getElementById('noExpensesMessage');
+    expenseListError = document.getElementById('expenseListError');
+    expensesTotalDisplay = document.getElementById('expensesTotalDisplay');
+    // Filter elements
+    filterSearchInput = document.getElementById('filterSearch');
+    filterCategoryInput = document.getElementById('filterCategory');
+    filterStartDateInput = document.getElementById('filterStartDate');
+    filterEndDateInput = document.getElementById('filterEndDate');
+    applyExpenseFiltersBtn = document.getElementById('applyExpenseFiltersBtn');
+    clearExpenseFiltersBtn = document.getElementById('clearExpenseFiltersBtn');
 }
 
-/* --- Base Styles --- */
-html { scrollbar-width: thin; scrollbar-color: #c1c1c1 #f1f1f1; }
-html::-webkit-scrollbar { width: 8px; height: 8px; }
-html::-webkit-scrollbar-track { background: #f1f1f1; }
-html::-webkit-scrollbar-thumb { background-color: #c1c1c1; border-radius: 4px; border: 2px solid #f1f1f1; }
-html::-webkit-scrollbar-thumb:hover { background-color: #a8a8a8; }
 
-body {
-    font-family: var(--font-family), sans-serif; /* Apply Poppins to body */
-    background-color: #f0f2f5;
-    margin: 0;
-    color: var(--text-color);
-    line-height: 1.5;
-    font-size: 15px; /* Base font size */
+// --- Utility Functions ---
+function formatDate(timestamp) {
+    if (!timestamp || typeof timestamp.toDate !== 'function') return '-';
+    try { return timestamp.toDate().toLocaleDateString('en-GB'); } // DD/MM/YYYY
+    catch (e) { console.error("Error formatting date:", e); return '-'; }
 }
 
-/* Apply Poppins to common elements */
-input, button, select, textarea, label, h1, h2, h3, th, td, span, div, p, li, a {
-    font-family: var(--font-family), sans-serif;
+function formatCurrency(amount) {
+    const num = Number(amount);
+    if (isNaN(num)) return 'N/A';
+    return num.toLocaleString('en-IN', { style: 'currency', currency: 'INR', minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+function escapeHtml(unsafe) {
+     if (typeof unsafe !== 'string') { try { unsafe = String(unsafe ?? ''); } catch (e) { unsafe = ''; } }
+     return unsafe.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
 }
 
-
-.main-content {
-    padding: 25px;
-    box-sizing: border-box;
-    max-width: 1300px; /* Slightly wider */
-    margin: 20px auto;
-    background-color: var(--white-color);
-    border-radius: 8px;
-    box-shadow: 0 3px 12px rgba(0, 0, 0, 0.07); /* Enhanced shadow */
+function displayExpenseError(message, elementId = 'expenseListError') {
+    const errorElement = document.getElementById(elementId);
+    if (errorElement) {
+        errorElement.textContent = message;
+        errorElement.style.display = message ? 'block' : 'none';
+    } else { console.error(`Error element ID '${elementId}' not found. Msg:`, message); if(elementId !== 'expenseFormError') alert(message); }
 }
 
-.page-header {
-    margin-bottom: 20px;
-    padding-bottom: 15px;
+function clearExpenseError(elementId = 'expenseListError') {
+    const errorElement = document.getElementById(elementId);
+    if (errorElement) { errorElement.textContent = ''; errorElement.style.display = 'none'; }
+    if (elementId === 'expenseListError' && expenseFormError) { expenseFormError.textContent = ''; expenseFormError.style.display = 'none'; }
 }
 
-.page-header h1 {
-    margin: 0;
-    font-size: 1.8em; /* Slightly larger */
-    color: var(--primary-color);
-    font-weight: 600;
-    display: flex;
-    align-items: center;
+// --- Core Functions ---
+
+/**
+ * Loads expenses from Firestore based on current filters and displays them.
+ */
+async function loadExpenses() {
+    if (!expensesTableBody || !expensesLoadingMessage || !noExpensesMessage || !expensesTotalDisplay) {
+        console.error("Expense table elements not found."); return;
+    }
+    if (!auth.currentUser) { displayExpenseError("Please login to view expenses."); return; }
+
+    expensesLoadingMessage.style.display = 'table-row';
+    noExpensesMessage.style.display = 'none';
+    expensesTableBody.innerHTML = ''; // Clear previous entries
+    clearExpenseError();
+    let totalAmount = 0;
+    expensesTotalDisplay.textContent = 'Calculating total...';
+
+    try {
+        const expensesRef = collection(db, "expenses");
+        let conditions = [where("userId", "==", auth.currentUser.uid)]; // Base condition: user's expenses
+
+        // --- Apply Filters ---
+        const categoryFilter = filterCategoryInput?.value.trim();
+        const startDateVal = filterStartDateInput?.value;
+        const endDateVal = filterEndDateInput?.value;
+        const searchTerm = filterSearchInput?.value.trim().toLowerCase(); // For client-side search
+
+        if (categoryFilter) {
+            console.log("Applying category filter:", categoryFilter);
+            // Note: Firestore case-sensitive exact match. For case-insensitive, store lowercase version.
+            conditions.push(where("category", "==", categoryFilter));
+        }
+        if (startDateVal) {
+            try {
+                conditions.push(where("expenseDate", ">=", Timestamp.fromDate(new Date(startDateVal + 'T00:00:00'))));
+                console.log("Applying start date filter:", startDateVal);
+            } catch (e) { console.error("Invalid start date format:", e); }
+        }
+        if (endDateVal) {
+            try {
+                conditions.push(where("expenseDate", "<=", Timestamp.fromDate(new Date(endDateVal + 'T23:59:59'))));
+                 console.log("Applying end date filter:", endDateVal);
+            } catch (e) { console.error("Invalid end date format:", e); }
+        }
+
+        // --- Build Query ---
+        // Default sort: most recent first
+        const q = query(expensesRef, ...conditions, orderBy("expenseDate", "desc"));
+
+        const querySnapshot = await getDocs(q);
+        expensesLoadingMessage.style.display = 'none';
+
+        let results = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+        // --- Client-side Search (Description/Category) ---
+        // Firestore doesn't support efficient partial text search directly on multiple fields easily.
+        // We filter the results fetched based on other criteria.
+        if (searchTerm) {
+             console.log("Applying client-side search:", searchTerm);
+             results = results.filter(exp => {
+                const descMatch = exp.description?.toLowerCase().includes(searchTerm);
+                const catMatch = exp.category?.toLowerCase().includes(searchTerm);
+                return descMatch || catMatch;
+             });
+        }
+
+        expensesCache = results; // Store filtered results
+
+        if (expensesCache.length === 0) {
+            noExpensesMessage.style.display = 'table-row';
+        } else {
+            expensesCache.forEach(exp => {
+                const tr = document.createElement('tr');
+                tr.setAttribute('data-id', exp.id);
+                const amount = Number(exp.amount || 0);
+                totalAmount += amount;
+
+                tr.innerHTML = `
+                    <td>${formatDate(exp.expenseDate)}</td>
+                    <td>${escapeHtml(exp.category || '-')}</td>
+                    <td style="text-align: right;">${formatCurrency(amount)}</td>
+                    <td>${escapeHtml(exp.description || '-')}</td>
+                    <td class="action-buttons">
+                        <button class="button edit-button small-button" data-action="edit" data-id="${exp.id}" title="Edit Expense"><i class="fas fa-edit"></i></button>
+                        <button class="button delete-button small-button" data-action="delete" data-id="${exp.id}" title="Delete Expense"><i class="fas fa-trash-alt"></i></button>
+                    </td>
+                `;
+                expensesTableBody.appendChild(tr);
+            });
+        }
+        expensesTotalDisplay.textContent = `Total Expenses (Displayed): ${formatCurrency(totalAmount)}`;
+
+    } catch (error) {
+        console.error("Error loading expenses: ", error);
+        if (error.code === 'failed-precondition') {
+             displayExpenseError(`Error: Database index missing for the current filter combination. Please check Firestore console.`);
+        } else {
+            displayExpenseError(`Error loading expenses: ${error.message}`);
+        }
+        expensesLoadingMessage.style.display = 'none';
+        expensesTableBody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: red;">Could not load expenses.</td></tr>`;
+        expensesTotalDisplay.textContent = `Total Expenses: Error`;
+    }
 }
 
-.page-header h1 i {
-    margin-right: 12px;
-    color: var(--primary-color);
-    opacity: 0.9;
+/** Opens the Add/Edit Expense Modal */
+function openExpenseModal(mode = 'add', expenseData = null) {
+    if (!expenseModal || !expenseForm || !expenseDateInput || !expenseCategoryInput || !expenseAmountInput || !expenseDescriptionInput) {
+         console.error("Expense modal or form elements missing!"); return;
+    };
+
+    expenseForm.reset();
+    clearExpenseError('expenseFormError');
+    editingExpenseIdInput.value = '';
+    currentEditingExpenseId = null;
+
+    if (mode === 'edit' && expenseData && expenseData.id) {
+        expenseModalTitle.textContent = 'Edit Expense';
+        currentEditingExpenseId = expenseData.id;
+        editingExpenseIdInput.value = expenseData.id;
+
+        if (expenseData.expenseDate && expenseData.expenseDate.toDate) {
+             const date = expenseData.expenseDate.toDate();
+             expenseDateInput.value = date.toISOString().split('T')[0]; // Format YYYY-MM-DD
+        }
+        expenseCategoryInput.value = expenseData.category || '';
+        expenseAmountInput.value = expenseData.amount || '';
+        expenseDescriptionInput.value = expenseData.description || '';
+        if(expensePaymentMethodInput) expensePaymentMethodInput.value = expenseData.paymentMethod || '';
+        if(expenseNotesInput) expenseNotesInput.value = expenseData.notes || '';
+
+    } else {
+        expenseModalTitle.textContent = 'Add New Expense';
+        try { expenseDateInput.valueAsDate = new Date(); } catch(e){ console.warn("Cannot set default date"); }
+    }
+    expenseModal.classList.add('active');
 }
 
-/* --- Breadcrumb Styles --- */
-.breadcrumb {
-    font-size: 0.9em;
-    color: var(--dark-gray, #6c757d);
-    margin-bottom: 20px;
-    padding-bottom: 10px;
-    border-bottom: 1px solid var(--medium-gray, #e9ecef);
-}
-.breadcrumb a { color: var(--primary-color, #0056b3); text-decoration: none; }
-.breadcrumb a:hover { text-decoration: underline; }
-.breadcrumb span { margin-left: 5px; color: var(--text-color, #343a40); }
-.breadcrumb span::before { content: "/"; margin-right: 5px; color: var(--dark-gray, #6c757d); }
-
-/* --- Action Bar Styles --- */
-.actions-bar {
-    display: flex;
-    gap: 12px;
-    margin-bottom: 25px;
-    flex-wrap: wrap;
-    align-items: center;
+/** Closes the Add/Edit Expense Modal */
+function closeExpenseModal() {
+    if (expenseModal) { expenseModal.classList.remove('active'); }
 }
 
-/* --- General Button Styles --- */
-.button { padding: 9px 18px; font-size: 0.95em; border: none; border-radius: var(--border-radius); cursor: pointer; font-weight: 600; display: inline-flex; align-items: center; gap: 7px; text-decoration: none; transition: background-color 0.2s ease, opacity 0.2s ease, box-shadow 0.2s ease; white-space: nowrap; vertical-align: middle; line-height: 1; box-shadow: var(--box-shadow); }
-.button i { line-height: 1; margin-right: 3px; font-size: 0.9em; } /* Slightly smaller icon */
-.button:hover:not(:disabled) { box-shadow: 0 2px 5px rgba(0,0,0,0.2); transform: translateY(-1px); /* Subtle lift */ }
-.button:disabled { background-color: #adb5bd !important; color: #fff !important; cursor: not-allowed; opacity: 0.7; box-shadow: none; }
-.add-new-button { background-color: var(--success-color); color: var(--white-color); }
-.add-new-button:hover:not(:disabled) { background-color: #218838; }
-.cancel-button { background-color: var(--dark-gray); color: var(--white-color);}
-.cancel-button:hover:not(:disabled) { background-color: #5a6268;}
-.save-button { background-color: var(--primary-color); color: var(--white-color);}
-.save-button:hover:not(:disabled) { background-color: #004085; }
-.primary-button { background-color: var(--primary-color); color: var(--white-color); } /* For Apply Filters */
-.primary-button:hover:not(:disabled) { background-color: #004085; }
+/** Handles the submission of the expense form */
+async function handleExpenseFormSubmit(event) {
+    event.preventDefault();
+    if (!auth.currentUser) { displayExpenseError("You must be logged in.", "expenseFormError"); return; }
+    if (!expenseDateInput || !expenseCategoryInput || !expenseAmountInput || !expenseDescriptionInput || !saveExpenseBtn) {
+        displayExpenseError("Form elements missing.", "expenseFormError"); return;
+    }
 
-/* --- Section Container Styles --- */
-.section-container {
-    background-color: var(--white-color);
-    padding: 20px 25px;
-    border-radius: 8px;
-    margin-bottom: 25px;
-    border: 1px solid var(--medium-gray);
-}
-.section-container h2 { margin-top: 0; margin-bottom: 20px; font-size: 1.4em; color: var(--secondary-color); border-bottom: 1px solid var(--medium-gray); padding-bottom: 12px; font-weight: 600; display: flex; align-items: center; }
-.section-container h2 i { margin-right: 10px; color: var(--secondary-color); opacity: 0.9; }
+    const expenseDateStr = expenseDateInput.value;
+    const category = expenseCategoryInput.value.trim();
+    const amountStr = expenseAmountInput.value.trim();
+    const description = expenseDescriptionInput.value.trim();
+    const paymentMethod = expensePaymentMethodInput?.value || '';
+    const notes = expenseNotesInput?.value.trim() || '';
+    const editingId = editingExpenseIdInput.value;
 
-/* --- START: Filter Section Styles --- */
-.expense-filters {
-    background-color: #f9fafb; /* Slightly different background */
-    border-bottom: 1px solid var(--medium-gray);
-    margin-bottom: 25px; /* Space below filters */
-}
-.expense-filters h2 {
-    border-bottom: none; /* Remove double border */
-    padding-bottom: 0;
-    margin-bottom: 15px;
-    font-size: 1.2em; /* Slightly smaller heading */
-}
-.filter-controls {
-    display: flex;
-    gap: 15px; /* Space between filter groups */
-    flex-wrap: wrap; /* Allow wrapping on smaller screens */
-    align-items: flex-end; /* Align items to the bottom */
-}
-.filter-group {
-    display: flex;
-    flex-direction: column;
-    gap: 5px; /* Space between label and input */
-    flex-grow: 1; /* Allow groups to grow */
-    min-width: 180px; /* Minimum width for each filter group */
-}
-.filter-group label {
-    font-size: 0.85em;
-    font-weight: 500;
-    color: #495057;
-    margin-bottom: 2px;
-}
-.expense-filters input[type="text"],
-.expense-filters input[type="date"],
-.expense-filters select {
-    padding: 8px 12px;
-    border: 1px solid #ced4da;
-    border-radius: var(--border-radius);
-    font-size: 0.9em;
-    height: 38px; /* Consistent height */
-    box-sizing: border-box;
-    background-color: var(--white-color);
-    width: 100%; /* Make inputs fill their group */
-}
-.expense-filters input[type="date"] {
-    color-scheme: light;
-    min-width: 140px; /* Ensure date input is wide enough */
-}
-.filter-group.filter-buttons {
-    flex-grow: 0; /* Don't allow button group to grow */
-    flex-shrink: 0; /* Prevent shrinking */
-    display: flex;
-    gap: 10px;
-    align-self: flex-end; /* Align with bottom of inputs */
-    padding-bottom: 1px; /* Align baseline with inputs */
-}
-.filter-action-button {
-    height: 38px; /* Match input height */
-    padding: 8px 15px; /* Adjust padding */
-}
-/* --- END: Filter Section Styles --- */
+    // Validation
+    if (!expenseDateStr || !category || !amountStr || !description) { displayExpenseError("Please fill in all required fields (*).", "expenseFormError"); return; }
+    const amount = parseFloat(amountStr);
+    if (isNaN(amount) || amount <= 0) { displayExpenseError("Please enter a valid positive amount.", "expenseFormError"); return; }
+     let expenseDateTimestamp;
+     try {
+        const localDate = new Date(expenseDateStr + 'T00:00:00');
+        if (isNaN(localDate.getTime())) throw new Error("Invalid date value");
+        expenseDateTimestamp = Timestamp.fromDate(localDate);
+     } catch (e) { displayExpenseError("Invalid date format or value.", "expenseFormError"); return; }
 
-/* --- Table Styles --- */
-.table-container { width: 100%; overflow-x: auto; border: 1px solid var(--medium-gray); border-radius: var(--border-radius); margin-bottom: 15px; background-color: var(--white-color); }
-#expensesTable { width: 100%; border-collapse: collapse; font-size: 0.9em; }
-#expensesTable thead { background-color: var(--light-gray); border-bottom: 2px solid var(--medium-gray); }
-#expensesTable th, #expensesTable td { border: 1px solid #e0e0e0; padding: 10px 12px; text-align: left; vertical-align: middle; }
-#expensesTable th { font-weight: 600; color: #495057; white-space: nowrap; }
-#expensesTable tbody tr:nth-child(even) { background-color: #fdfdfd; }
-#expensesTable tbody tr:hover { background-color: #f1f5f9; }
-#expensesTable td:nth-child(3) { text-align: right; font-weight: 500; white-space: nowrap; } /* Amount */
-#expensesTable td:nth-child(4) { white-space: normal; word-break: break-word; min-width: 200px; } /* Description */
-#expensesTable td:last-child { text-align: center; white-space: nowrap; width: 100px; } /* Actions */
+    clearExpenseError('expenseFormError');
+    saveExpenseBtn.disabled = true;
+    saveExpenseBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
 
-/* Loading / No Results Row */
-#expensesLoadingMessage td, #noExpensesMessage td { text-align: center !important; color: var(--dark-gray); padding: 20px !important; font-style: italic; }
-#expensesLoadingMessage i { margin-right: 8px; }
+    const expenseData = {
+        userId: auth.currentUser.uid,
+        expenseDate: expenseDateTimestamp,
+        category: category,
+        amount: amount,
+        description: description,
+        paymentMethod: paymentMethod,
+        notes: notes,
+        updatedAt: serverTimestamp()
+        // Consider adding lowercase fields for category/description for case-insensitive search/filter later
+        // category_lowercase: category.toLowerCase(),
+        // description_lowercase: description.toLowerCase()
+    };
 
-/* Total Display */
-.list-totals { margin-top: 10px; padding: 10px 15px; background-color: var(--light-gray); border: 1px solid var(--medium-gray); border-radius: var(--border-radius); text-align: right; font-size: 1em; font-weight: 600; }
+    try {
+        if (editingId) {
+            const expenseRef = doc(db, "expenses", editingId);
+            await updateDoc(expenseRef, expenseData);
+            console.log("Expense updated:", editingId);
+        } else {
+            expenseData.createdAt = serverTimestamp();
+            const docRef = await addDoc(collection(db, "expenses"), expenseData);
+            console.log("Expense added:", docRef.id);
+        }
+        closeExpenseModal();
+        await loadExpenses(); // Refresh list
 
-/* --- Modal Styles --- */
-.modal { display: none; position: fixed; z-index: 1050; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.6); align-items: center; justify-content: center; padding: 15px; box-sizing: border-box; }
-.modal.active { display: flex; }
-.modal-content { background-color: var(--white-color); margin: auto; border: none; width: 95%; max-width: 600px; border-radius: var(--border-radius); position: relative; box-shadow: 0 5px 15px rgba(0,0,0,0.2); z-index: 1051; display: flex; flex-direction: column; max-height: calc(90vh); overflow: hidden; padding: 0; }
-.modal-header { padding: 12px 20px; border-bottom: 1px solid var(--medium-gray); background-color: var(--light-gray); border-radius: var(--border-radius) var(--border-radius) 0 0; flex-shrink: 0; display: flex; justify-content: space-between; align-items: center;}
-.modal-header h2 { margin: 0; font-size: 1.25em; font-weight: 600; color: var(--secondary-color); }
-.close-btn { color: #aaa; font-size: 26px; font-weight: bold; cursor: pointer; line-height: 1; background: none; border: none; padding: 0 5px; }
-.close-btn:hover, .close-btn:focus { color: var(--danger-color); }
-.modal-body { padding: 15px 20px; overflow-y: auto; flex-grow: 1; }
-.modal-actions { display: flex; justify-content: flex-end; gap: 10px; padding: 10px 20px; border-top: 1px solid var(--medium-gray); background-color: var(--light-gray); flex-shrink: 0; border-radius: 0 0 var(--border-radius) var(--border-radius); }
-
-/* --- Form Styles within Modal --- */
-.modal form .form-group { margin-bottom: 15px; }
-.modal form .form-group label { display: block; margin-bottom: 6px; font-weight: 500; font-size: 0.9em; }
-.modal form .form-group label .required { color: var(--danger-color); margin-left: 3px; }
-.modal form .form-group input[type="text"], .modal form .form-group input[type="number"], .modal form .form-group input[type="date"], .modal form .form-group select, .modal form .form-group textarea { width: 100%; padding: 9px 12px; border: 1px solid #ced4da; border-radius: var(--border-radius); font-size: 0.95em; box-sizing: border-box; font-family: var(--font-family); }
-.modal form .form-group input[type="text"], .modal form .form-group input[type="number"], .modal form .form-group input[type="date"], .modal form .form-group select { height: 40px; }
-.modal form .form-group input[type="date"] { color-scheme: light; }
-.modal form .form-group textarea { resize: vertical; min-height: 60px; }
-.modal form .form-group input:focus, .modal form .form-group select:focus, .modal form .form-group textarea:focus { border-color: var(--primary-color); outline: 0; box-shadow: 0 0 0 0.2rem rgba(0, 86, 179, 0.2); }
-.modal .error-message { color: var(--danger-color); background-color: #fdecea; border: 1px solid var(--danger-color); border-radius: var(--border-radius); padding: 8px 12px; font-size: 0.88em; margin-top: 0; margin-bottom: 15px; text-align: center; width: 100%; box-sizing: border-box; display: none; }
-.modal .error-message[style*="block"] { display: block !important; }
-
-/* --- General Error Message Area --- */
-.error-message { color: var(--danger-color); background-color: #f8d7da; border: 1px solid #f5c6cb; border-radius: var(--border-radius); padding: 10px 15px; margin-bottom: 15px; font-size: 0.95em; display: none; }
-
-/* --- Responsive --- */
-@media (max-width: 992px) {
-    .filter-controls { gap: 10px; } /* Reduce gap on medium screens */
+    } catch (error) {
+        console.error("Error saving expense: ", error);
+        displayExpenseError(`Error saving expense: ${error.message}`, "expenseFormError");
+    } finally {
+        saveExpenseBtn.disabled = false;
+        saveExpenseBtn.innerHTML = '<i class="fas fa-save"></i> Save Expense';
+    }
 }
 
-@media (max-width: 768px) {
-    .main-content { padding: 15px; }
-    .page-header h1 { font-size: 1.5em; }
-    .section-container h2 { font-size: 1.2em;}
-    .filter-controls { flex-direction: column; align-items: stretch; } /* Stack filters vertically */
-    .filter-group { min-width: 100%; } /* Make groups full width */
-    .filter-group.filter-buttons { flex-direction: row; justify-content: space-between; } /* Keep buttons side-by-side */
-    .filter-group.filter-buttons .button { flex-grow: 1; justify-content: center; } /* Make buttons equal width */
-    #expensesTable { font-size: 0.85em; }
-    #expensesTable th, #expensesTable td { padding: 8px 6px; }
-    .modal-content { width: 96%; }
-     .modal-actions { flex-direction: column; gap: 8px; }
-     .modal-actions .button { width: 100%; justify-content: center;}
+/** Handles delete expense confirmation and action */
+async function handleDeleteExpenseClick(expenseId) {
+     if (!expenseId) return;
+
+     const expense = expensesCache.find(exp => exp.id === expenseId);
+     const confirmMessage = `Are you sure you want to delete this expense?
+-----------------------------
+Date: ${expense ? formatDate(expense.expenseDate) : 'N/A'}
+Amount: ${expense ? formatCurrency(expense.amount) : 'N/A'}
+Category: ${expense ? escapeHtml(expense.category) : 'N/A'}
+Description: ${expense ? escapeHtml(expense.description) : 'N/A'}
+-----------------------------
+This action cannot be undone.`;
+
+     if (confirm(confirmMessage)) {
+         try {
+             displayExpenseError("Deleting...", "expenseListError")
+             const expenseRef = doc(db, "expenses", expenseId);
+             await deleteDoc(expenseRef);
+             console.log("Expense deleted:", expenseId);
+             clearExpenseError();
+             await loadExpenses(); // Reload list to reflect deletion and update total
+
+         } catch (error) {
+             console.error("Error deleting expense:", error);
+             displayExpenseError(`Error deleting expense: ${error.message}`);
+         }
+     }
 }
 
-@media (max-width: 480px) {
-    .filter-group.filter-buttons { flex-direction: column; } /* Stack buttons on smallest screens */
+// --- Event Listeners Setup ---
+function setupEventListeners() {
+    cacheDOMElements(); // Cache elements after DOM is ready
+
+    addExpenseBtn?.addEventListener('click', () => openExpenseModal('add'));
+    closeExpenseModalBtn?.addEventListener('click', closeExpenseModal);
+    cancelExpenseBtn?.addEventListener('click', closeExpenseModal);
+    expenseModal?.addEventListener('click', (event) => { if (event.target === expenseModal) closeExpenseModal(); });
+    expenseForm?.addEventListener('submit', handleExpenseFormSubmit);
+
+    // Table Action Buttons (Event Delegation)
+    expensesTableBody?.addEventListener('click', (event) => {
+        const targetButton = event.target.closest('button[data-action]');
+        if (!targetButton) return;
+        const action = targetButton.dataset.action;
+        const expenseId = targetButton.dataset.id;
+
+        if (action === 'edit') {
+            const expenseData = expensesCache.find(exp => exp.id === expenseId);
+            if (expenseData) { openExpenseModal('edit', expenseData); }
+            else { console.error("Expense data not found in cache for edit:", expenseId); displayExpenseError("Could not load expense details for editing.");}
+        } else if (action === 'delete') {
+            handleDeleteExpenseClick(expenseId);
+        }
+    });
+
+    // Filter Buttons
+    applyExpenseFiltersBtn?.addEventListener('click', loadExpenses); // Reload data when Apply is clicked
+    clearExpenseFiltersBtn?.addEventListener('click', () => {
+        // Clear filter inputs
+        if(filterSearchInput) filterSearchInput.value = '';
+        if(filterCategoryInput) filterCategoryInput.value = '';
+        if(filterStartDateInput) filterStartDateInput.value = '';
+        if(filterEndDateInput) filterEndDateInput.value = '';
+        // Reload data with cleared filters
+        loadExpenses();
+    });
+     // Optional: Trigger filter on Enter key in search/category inputs
+     filterSearchInput?.addEventListener('keypress', (e) => { if(e.key === 'Enter') loadExpenses(); });
+     filterCategoryInput?.addEventListener('keypress', (e) => { if(e.key === 'Enter') loadExpenses(); });
+
+
+    console.log("Expense page event listeners set up.");
+}
+
+// --- Initialization Function (Exported) ---
+export function initializeExpensesPage(user) {
+    console.log("Initializing Expenses Page for user:", user?.uid);
+    if (!db) { console.error("Firestore DB is not initialized!"); displayExpenseError("Database connection error."); return; }
+     if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', () => {
+             setupEventListeners();
+             loadExpenses();
+         });
+    } else {
+        setupEventListeners();
+        loadExpenses();
+    }
 }

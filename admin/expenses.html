@@ -1,9 +1,8 @@
 <!DOCTYPE html>
-<html lang="hi">
-<head>
+<html lang="en"> <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>खर्च प्रबंधन (Expenses Management)</title>
+    <title>Expenses Management</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -49,82 +48,83 @@
     <div class="main-content">
 
         <div class="page-header">
-            <h1><i class="fas fa-wallet"></i> खर्च प्रबंधन (Expenses Management)</h1>
+            <h1><i class="fas fa-wallet"></i> Expenses Management</h1>
         </div>
 
         <div class="breadcrumb">
-            <a href="index.html">होम (Home)</a> / <span>खर्चे (Expenses)</span>
+            <a href="index.html">Home</a> / <span>Expenses</span>
         </div>
 
         <div class="actions-bar">
             <button id="addExpenseBtn" class="button add-new-button">
-                <i class="fas fa-plus"></i> नया खर्चा जोड़ें (Add New Expense)
+                <i class="fas fa-plus"></i> Add New Expense
             </button>
         </div>
 
          <div id="expenseListError" class="error-message" style="display: none;"></div>
 
-        <div class="expense-filters section-container"> <h2><i class="fas fa-filter"></i> फ़िल्टर खर्चे (Filter Expenses)</h2>
+        <div class="expense-filters section-container">
+             <h2><i class="fas fa-filter"></i> Filter Expenses</h2>
              <div class="filter-controls">
                 <div class="filter-group">
-                    <label for="filterSearch">विवरण/श्रेणी खोजें (Search Desc/Category):</label>
-                    <input type="text" id="filterSearch" placeholder="विवरण या श्रेणी लिखें...">
+                    <label for="filterSearch">Search Description/Category:</label>
+                    <input type="text" id="filterSearch" placeholder="Enter description or category...">
                 </div>
                 <div class="filter-group">
-                    <label for="filterCategory">श्रेणी फ़िल्टर (Filter by Category):</label>
-                    <input type="text" id="filterCategory" placeholder="श्रेणी लिखें...">
+                    <label for="filterCategory">Filter by Category:</label>
+                     <input type="text" id="filterCategory" placeholder="Enter category...">
                     </div>
                 <div class="filter-group">
-                    <label for="filterStartDate">शुरुआत दिनांक (From Date):</label>
+                    <label for="filterStartDate">From Date:</label>
                     <input type="date" id="filterStartDate">
                 </div>
                 <div class="filter-group">
-                    <label for="filterEndDate">अंतिम दिनांक (To Date):</label>
+                    <label for="filterEndDate">To Date:</label>
                     <input type="date" id="filterEndDate">
                 </div>
                 <div class="filter-group filter-buttons">
                     <button id="applyExpenseFiltersBtn" class="button filter-action-button primary-button">
-                        <i class="fas fa-check"></i> फ़िल्टर लागू करें (Apply)
+                        <i class="fas fa-check"></i> Apply Filters
                     </button>
                     <button id="clearExpenseFiltersBtn" class="button filter-action-button cancel-button">
-                        <i class="fas fa-times"></i> साफ़ करें (Clear)
+                        <i class="fas fa-times"></i> Clear Filters
                     </button>
                 </div>
             </div>
         </div>
         <div class="section-container">
-            <h2><i class="fas fa-list-ul"></i> खर्चों की सूची (Expenses List)</h2>
+            <h2><i class="fas fa-list-ul"></i> Expenses List</h2>
             <div class="table-container">
                 <table id="expensesTable">
                     <thead>
                         <tr>
-                            <th>दिनांक (Date)</th>
-                            <th>श्रेणी (Category)</th>
-                            <th>राशि (Amount)</th>
-                            <th>विवरण (Description)</th>
-                            <th>कार्य (Actions)</th>
+                            <th>Date</th>
+                            <th>Category</th>
+                            <th>Amount</th>
+                            <th>Description</th>
+                            <th>Actions</th>
                         </tr>
                     </thead>
                     <tbody id="expensesTableBody">
                         <tr id="expensesLoadingMessage">
-                            <td colspan="5" style="text-align: center;"><i class="fas fa-spinner fa-spin"></i> खर्चे लोड हो रहे हैं...</td>
+                            <td colspan="5" style="text-align: center;"><i class="fas fa-spinner fa-spin"></i> Loading expenses...</td>
                         </tr>
                         <tr id="noExpensesMessage" style="display: none;">
-                             <td colspan="5" style="text-align: center;">कोई खर्चा नहीं मिला। फ़िल्टर बदलें या नया खर्चा जोड़ें।</td>
+                             <td colspan="5" style="text-align: center;">No expenses found. Adjust filters or add a new expense.</td>
                         </tr>
                         </tbody>
                 </table>
             </div>
              <div id="expensesTotalDisplay" class="list-totals">
-                 कुल खर्चे (प्रदर्शित): ₹ 0.00
+                 Total Expenses (Displayed): ₹ 0.00
              </div>
         </div>
 
     </div><div id="expenseModal" class="modal">
         <div class="modal-content">
              <div class="modal-header">
-                 <h2 id="expenseModalTitle">नया खर्चा जोड़ें</h2>
-                 <button id="closeExpenseModalBtn" class="close-btn" title="बंद करें (Close)">&times;</button>
+                 <h2 id="expenseModalTitle">Add Expense</h2>
+                 <button id="closeExpenseModalBtn" class="close-btn" title="Close">&times;</button>
              </div>
              <form id="expenseForm" novalidate>
                  <div class="modal-body">
@@ -132,51 +132,52 @@
                     <input type="hidden" id="editingExpenseId">
 
                     <div class="form-group">
-                        <label for="expenseDate">दिनांक (Date) <span class="required">*</span>:</label>
+                        <label for="expenseDate">Date <span class="required">*</span>:</label>
                         <input type="date" id="expenseDate" required>
                     </div>
 
                     <div class="form-group">
-                        <label for="expenseCategory">श्रेणी (Category) <span class="required">*</span>:</label>
-                        <input type="text" id="expenseCategory" placeholder="उदा. ऑफिस सप्लाई, यात्रा, खाना" required>
+                        <label for="expenseCategory">Category <span class="required">*</span>:</label>
+                        <input type="text" id="expenseCategory" placeholder="e.g., Office Supplies, Travel, Food" required>
                     </div>
 
                     <div class="form-group">
-                        <label for="expenseAmount">राशि (Amount) <span class="required">*</span>:</label>
-                        <input type="number" id="expenseAmount" step="0.01" placeholder="उदा. 150.50" required>
+                        <label for="expenseAmount">Amount <span class="required">*</span>:</label>
+                        <input type="number" id="expenseAmount" step="0.01" placeholder="e.g., 150.50" required>
                     </div>
 
                     <div class="form-group">
-                        <label for="expenseDescription">विवरण (Description) <span class="required">*</span>:</label>
-                        <textarea id="expenseDescription" rows="3" placeholder="खर्चे का विवरण दें" required></textarea>
+                        <label for="expenseDescription">Description / Particulars <span class="required">*</span>:</label>
+                        <textarea id="expenseDescription" rows="3" placeholder="Describe the expense" required></textarea>
                     </div>
 
                      <div class="form-group">
-                        <label for="expensePaymentMethod">भुगतान विधि (Payment Method):</label>
+                        <label for="expensePaymentMethod">Payment Method:</label>
                         <select id="expensePaymentMethod">
-                            <option value="">विधि चुनें (वैकल्पिक)</option>
-                            <option value="Cash">नकद (Cash)</option>
-                            <option value="Card">कार्ड (Card)</option>
-                            <option value="UPI">यूपीआई (UPI)</option>
-                            <option value="Bank Transfer">बैंक ट्रांसफर</option>
-                            <option value="Other">अन्य (Other)</option>
+                            <option value="">Select Method (Optional)</option>
+                            <option value="Cash">Cash</option>
+                            <option value="Card">Card</option>
+                            <option value="UPI">UPI</option>
+                            <option value="Bank Transfer">Bank Transfer</option>
+                            <option value="Other">Other</option>
                         </select>
                      </div>
                      <div class="form-group">
-                        <label for="expenseNotes">नोट्स (Notes):</label>
-                        <textarea id="expenseNotes" rows="2" placeholder="वैकल्पिक नोट्स या संदर्भ"></textarea>
+                        <label for="expenseNotes">Notes:</label>
+                        <textarea id="expenseNotes" rows="2" placeholder="Optional notes or reference"></textarea>
                      </div>
 
                  </div>
                  <div class="modal-actions">
-                     <button type="button" id="cancelExpenseBtn" class="button cancel-button">रद्द करें (Cancel)</button>
+                     <button type="button" id="cancelExpenseBtn" class="button cancel-button">Cancel</button>
                      <button type="submit" id="saveExpenseBtn" class="button save-button">
-                         <i class="fas fa-save"></i> खर्चा सेव करें (Save Expense)
+                         <i class="fas fa-save"></i> Save Expense
                      </button>
                  </div>
             </form>
         </div>
     </div>
+
 
     <script src="js/firebase-init.js" type="module"></script>
     </body>
