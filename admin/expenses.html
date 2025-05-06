@@ -1,482 +1,175 @@
-// js/expenses.js - Expenses Management Logic with Filters
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Expenses Management</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 
-// --- Firebase Imports ---
-import { db, auth } from './js/firebase-init.js'; // Ensure path is correct
-import {
-    collection, addDoc, doc, getDoc, getDocs, updateDoc, deleteDoc,
-    query, orderBy, where, Timestamp, serverTimestamp,
-    startAt, endAt // Needed for text search if implemented differently
-} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+    <link rel="stylesheet" href="css/expenses.css">
 
-// --- Global Variables ---
-let expensesCache = []; // Stores fetched expenses for client-side filtering/editing
-let currentEditingExpenseId = null; // Tracks the ID of the expense being edited
+    <script type="module">
+        // Import auth from your firebase-init.js file (ensure path is correct)
+        import { auth } from './js/firebase-init.js';
+        import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
-// --- DOM Elements Cache ---
-// Caching elements improves performance slightly by avoiding repeated lookups
-let addExpenseBtn, expenseModal, expenseModalTitle, closeExpenseModalBtn, cancelExpenseBtn,
-    saveExpenseBtn, expenseForm, editingExpenseIdInput, expenseDateInput,
-    expenseCategoryInput, expenseAmountInput, expenseDescriptionInput,
-    expensePaymentMethodInput, expenseNotesInput, expenseFormError,
-    expensesTableBody, expensesLoadingMessage, noExpensesMessage,
-    expenseListError, expensesTotalDisplay,
-    // Filter elements
-    filterSearchInput, filterCategoryInput, filterStartDateInput, filterEndDateInput,
-    applyExpenseFiltersBtn, clearExpenseFiltersBtn;
-
-// Function to cache DOM elements once the DOM is ready
-function cacheDOMElements() {
-    addExpenseBtn = document.getElementById('addExpenseBtn');
-    expenseModal = document.getElementById('expenseModal');
-    expenseModalTitle = document.getElementById('expenseModalTitle');
-    closeExpenseModalBtn = document.getElementById('closeExpenseModalBtn');
-    cancelExpenseBtn = document.getElementById('cancelExpenseBtn');
-    saveExpenseBtn = document.getElementById('saveExpenseBtn');
-    expenseForm = document.getElementById('expenseForm');
-    editingExpenseIdInput = document.getElementById('editingExpenseId');
-    expenseDateInput = document.getElementById('expenseDate');
-    expenseCategoryInput = document.getElementById('expenseCategory');
-    expenseAmountInput = document.getElementById('expenseAmount');
-    expenseDescriptionInput = document.getElementById('expenseDescription');
-    expensePaymentMethodInput = document.getElementById('expensePaymentMethod');
-    expenseNotesInput = document.getElementById('expenseNotes');
-    expenseFormError = document.getElementById('expenseFormError');
-    expensesTableBody = document.getElementById('expensesTableBody');
-    expensesLoadingMessage = document.getElementById('expensesLoadingMessage');
-    noExpensesMessage = document.getElementById('noExpensesMessage');
-    expenseListError = document.getElementById('expenseListError');
-    expensesTotalDisplay = document.getElementById('expensesTotalDisplay');
-    // Filter elements
-    filterSearchInput = document.getElementById('filterSearch');
-    filterCategoryInput = document.getElementById('filterCategory');
-    filterStartDateInput = document.getElementById('filterStartDate');
-    filterEndDateInput = document.getElementById('filterEndDate');
-    applyExpenseFiltersBtn = document.getElementById('applyExpenseFiltersBtn');
-    clearExpenseFiltersBtn = document.getElementById('clearExpenseFiltersBtn');
-    console.log("DOM Elements Cached"); // Confirm caching
-}
-
-
-// --- Utility Functions ---
-function formatDate(timestamp) {
-    // Formats a Firestore Timestamp into DD/MM/YYYY string
-    if (!timestamp || typeof timestamp.toDate !== 'function') return '-';
-    try {
-        return timestamp.toDate().toLocaleDateString('en-GB'); // Use locale for DD/MM/YYYY
-    } catch (e) {
-        console.error("Error formatting date:", timestamp, e);
-        return 'Invalid Date';
-    }
-}
-
-function formatCurrency(amount) {
-    // Formats a number into Indian Rupee currency string
-    const num = Number(amount);
-    if (isNaN(num)) return 'N/A';
-    return num.toLocaleString('en-IN', { style: 'currency', currency: 'INR', minimumFractionDigits: 2, maximumFractionDigits: 2 });
-}
-function escapeHtml(unsafe) {
-    // Basic HTML escaping to prevent XSS
-     if (typeof unsafe !== 'string') { try { unsafe = String(unsafe ?? ''); } catch (e) { unsafe = ''; } }
-     return unsafe.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
-}
-
-function displayExpenseError(message, elementId = 'expenseListError') {
-    // Displays an error message in the specified element
-    const errorElement = document.getElementById(elementId);
-    if (errorElement) {
-        errorElement.textContent = message;
-        errorElement.style.display = message ? 'block' : 'none';
-        console.log(`Error displayed in ${elementId}: ${message}`);
-    } else {
-        console.error(`Error element ID '${elementId}' not found. Msg:`, message);
-        if(elementId !== 'expenseFormError') alert(message); // Alert only for non-form errors
-    }
-}
-
-function clearExpenseError(elementId = 'expenseListError') {
-    // Clears an error message
-    const errorElement = document.getElementById(elementId);
-    if (errorElement) { errorElement.textContent = ''; errorElement.style.display = 'none'; }
-    // Also clear form error when clearing general list error
-    if (elementId === 'expenseListError' && expenseFormError) {
-        expenseFormError.textContent = '';
-        expenseFormError.style.display = 'none';
-    }
-}
-
-// --- Core Functions ---
-
-/**
- * Loads expenses from Firestore based on current filters and displays them in the table.
- */
-async function loadExpenses() {
-    // Ensure required elements are available
-    if (!expensesTableBody || !expensesLoadingMessage || !noExpensesMessage || !expensesTotalDisplay) {
-        console.error("Expense table elements not found. Cannot load expenses.");
-        return;
-    }
-    // Ensure user is logged in
-    if (!auth.currentUser) {
-        displayExpenseError("Please login to view expenses.");
-        return;
-    }
-    console.log("Loading expenses...");
-
-    // Show loading state
-    expensesLoadingMessage.style.display = 'table-row';
-    noExpensesMessage.style.display = 'none';
-    expensesTableBody.innerHTML = ''; // Clear previous entries
-    clearExpenseError(); // Clear previous errors
-    let totalAmount = 0;
-    expensesTotalDisplay.textContent = 'Calculating total...';
-
-    try {
-        const expensesRef = collection(db, "expenses");
-        let conditions = [where("userId", "==", auth.currentUser.uid)]; // Base query: only user's expenses
-
-        // --- Apply Firestore Filters ---
-        const categoryFilter = filterCategoryInput?.value.trim();
-        const startDateVal = filterStartDateInput?.value;
-        const endDateVal = filterEndDateInput?.value;
-
-        if (categoryFilter) {
-            console.log("Applying Firestore category filter:", categoryFilter);
-            // Firestore '==' is case-sensitive. For case-insensitive, store a lowercase version.
-            conditions.push(where("category", "==", categoryFilter));
-        }
-        if (startDateVal) {
-            try {
-                // Convert date string to Timestamp at the beginning of the day (local time)
-                const startDate = new Date(startDateVal + 'T00:00:00');
-                if(isNaN(startDate.getTime())) throw new Error("Invalid start date");
-                conditions.push(where("expenseDate", ">=", Timestamp.fromDate(startDate)));
-                console.log("Applying start date filter:", startDateVal);
-            } catch (e) { console.error("Invalid start date format:", e); displayExpenseError("Invalid 'From Date'. Please use YYYY-MM-DD.");}
-        }
-        if (endDateVal) {
-            try {
-                 // Convert date string to Timestamp at the end of the day (local time)
-                const endDate = new Date(endDateVal + 'T23:59:59');
-                 if(isNaN(endDate.getTime())) throw new Error("Invalid end date");
-                conditions.push(where("expenseDate", "<=", Timestamp.fromDate(endDate)));
-                 console.log("Applying end date filter:", endDateVal);
-            } catch (e) { console.error("Invalid end date format:", e); displayExpenseError("Invalid 'To Date'. Please use YYYY-MM-DD.");}
-        }
-
-        // --- Build Query ---
-        const q = query(expensesRef, ...conditions, orderBy("expenseDate", "desc")); // Default sort: most recent first
-
-        // --- Fetch Data ---
-        const querySnapshot = await getDocs(q);
-        expensesLoadingMessage.style.display = 'none'; // Hide loading message
-
-        let results = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-
-        // --- Apply Client-Side Search Filter ---
-        const searchTerm = filterSearchInput?.value.trim().toLowerCase();
-        if (searchTerm) {
-             console.log("Applying client-side search filter:", searchTerm);
-             results = results.filter(exp => {
-                const descMatch = exp.description?.toLowerCase().includes(searchTerm);
-                const catMatch = exp.category?.toLowerCase().includes(searchTerm);
-                return descMatch || catMatch;
-             });
-        }
-
-        expensesCache = results; // Store filtered results in cache
-
-        // --- Render Table ---
-        if (expensesCache.length === 0) {
-            noExpensesMessage.style.display = 'table-row'; // Show 'no results' message
-        } else {
-            expensesCache.forEach(exp => {
-                const tr = document.createElement('tr');
-                tr.setAttribute('data-id', exp.id); // Store ID on the row for actions
-                const amount = Number(exp.amount || 0);
-                totalAmount += amount; // Add to total
-
-                // Populate table cells
-                tr.innerHTML = `
-                    <td>${formatDate(exp.expenseDate)}</td>
-                    <td>${escapeHtml(exp.category || '-')}</td>
-                    <td style="text-align: right;">${formatCurrency(amount)}</td>
-                    <td>${escapeHtml(exp.description || '-')}</td>
-                    <td class="action-buttons">
-                        <button class="button edit-button small-button" data-action="edit" data-id="${exp.id}" title="Edit Expense"><i class="fas fa-edit"></i></button>
-                        <button class="button delete-button small-button" data-action="delete" data-id="${exp.id}" title="Delete Expense"><i class="fas fa-trash-alt"></i></button>
-                    </td>
-                `;
-                expensesTableBody.appendChild(tr);
-            });
-        }
-        // Update the total expenses display
-        expensesTotalDisplay.textContent = `Total Expenses (Displayed): ${formatCurrency(totalAmount)}`;
-
-    } catch (error) {
-        console.error("Error loading expenses: ", error);
-        // Display specific error messages if possible
-        if (error.code === 'failed-precondition') {
-             displayExpenseError(`Error: Database index missing for the current filter combination. Please check Firestore console for index recommendations.`);
-        } else {
-            displayExpenseError(`Error loading expenses: ${error.message}`);
-        }
-        expensesLoadingMessage.style.display = 'none'; // Hide loading
-        expensesTableBody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: red;">Could not load expenses.</td></tr>`; // Show error in table
-        expensesTotalDisplay.textContent = `Total Expenses: Error`; // Show error in total
-    }
-}
-
-/** Opens the Add/Edit Expense Modal */
-function openExpenseModal(mode = 'add', expenseData = null) {
-    // Ensure modal and form elements are available
-    if (!expenseModal || !expenseForm || !expenseDateInput || !expenseCategoryInput || !expenseAmountInput || !expenseDescriptionInput) {
-         console.error("Expense modal or form elements missing!");
-         alert("Error opening the expense form.");
-         return;
-    };
-
-    expenseForm.reset(); // Reset form fields
-    clearExpenseError('expenseFormError'); // Clear any previous errors in the form
-    editingExpenseIdInput.value = ''; // Clear hidden ID field
-    currentEditingExpenseId = null; // Reset editing state
-
-    if (mode === 'edit' && expenseData && expenseData.id) {
-        // --- Edit Mode ---
-        expenseModalTitle.textContent = 'Edit Expense';
-        currentEditingExpenseId = expenseData.id;
-        editingExpenseIdInput.value = expenseData.id; // Store ID in hidden field
-
-        // Pre-fill form fields with existing data
-        if (expenseData.expenseDate && expenseData.expenseDate.toDate) {
-             const date = expenseData.expenseDate.toDate();
-             // Format date as YYYY-MM-DD for the input field
-             expenseDateInput.value = date.toISOString().split('T')[0];
-        }
-        expenseCategoryInput.value = expenseData.category || '';
-        expenseAmountInput.value = expenseData.amount || '';
-        expenseDescriptionInput.value = expenseData.description || '';
-        if(expensePaymentMethodInput) expensePaymentMethodInput.value = expenseData.paymentMethod || '';
-        if(expenseNotesInput) expenseNotesInput.value = expenseData.notes || '';
-
-    } else {
-        // --- Add Mode ---
-        expenseModalTitle.textContent = 'Add New Expense';
-        // Set default date to today for new expenses
-        try { expenseDateInput.valueAsDate = new Date(); } catch(e){ console.warn("Cannot set default date"); }
-    }
-
-    expenseModal.classList.add('active'); // Display the modal
-}
-
-/** Closes the Add/Edit Expense Modal */
-function closeExpenseModal() {
-    if (expenseModal) { expenseModal.classList.remove('active'); }
-}
-
-/** Handles the submission of the expense form (Add or Edit) */
-async function handleExpenseFormSubmit(event) {
-    event.preventDefault(); // Prevent default form submission
-    if (!auth.currentUser) { displayExpenseError("You must be logged in to save expenses.", "expenseFormError"); return; }
-    // Ensure required form elements are present
-    if (!expenseDateInput || !expenseCategoryInput || !expenseAmountInput || !expenseDescriptionInput || !saveExpenseBtn) {
-        displayExpenseError("Form elements missing. Cannot save.", "expenseFormError"); return;
-    }
-
-    // Get form values
-    const expenseDateStr = expenseDateInput.value;
-    const category = expenseCategoryInput.value.trim();
-    const amountStr = expenseAmountInput.value.trim();
-    const description = expenseDescriptionInput.value.trim();
-    const paymentMethod = expensePaymentMethodInput?.value || ''; // Optional field
-    const notes = expenseNotesInput?.value.trim() || ''; // Optional field
-    const editingId = editingExpenseIdInput.value; // Get ID if editing
-
-    // --- Input Validation ---
-    if (!expenseDateStr || !category || !amountStr || !description) {
-        displayExpenseError("Please fill in all required fields (*).", "expenseFormError");
-        return;
-    }
-    const amount = parseFloat(amountStr);
-    if (isNaN(amount) || amount <= 0) {
-        displayExpenseError("Please enter a valid positive amount.", "expenseFormError");
-        expenseAmountInput.focus(); // Focus on the amount field
-        return;
-    }
-     let expenseDateTimestamp;
-     try {
-        // Convert YYYY-MM-DD string to Firestore Timestamp, interpreting as local date
-        const localDate = new Date(expenseDateStr + 'T00:00:00');
-        if (isNaN(localDate.getTime())) throw new Error("Invalid date value"); // Check if date is valid
-        expenseDateTimestamp = Timestamp.fromDate(localDate);
-     } catch (e) {
-         displayExpenseError("Invalid date format or value. Please use YYYY-MM-DD.", "expenseFormError");
-         expenseDateInput.focus(); // Focus on the date field
-         return;
-     }
-
-    // --- Prepare Data for Firestore ---
-    clearExpenseError('expenseFormError'); // Clear previous errors
-    saveExpenseBtn.disabled = true; // Disable button during save
-    saveExpenseBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
-
-    const expenseData = {
-        userId: auth.currentUser.uid, // Associate with logged-in user **IMPORTANT for Security Rules**
-        expenseDate: expenseDateTimestamp,
-        category: category,
-        amount: amount,
-        description: description,
-        paymentMethod: paymentMethod,
-        notes: notes,
-        updatedAt: serverTimestamp() // Track last modification time
-        // Consider adding lowercase fields for case-insensitive filtering/searching later
-        // category_lowercase: category.toLowerCase(),
-        // description_lowercase: description.toLowerCase()
-    };
-
-    // --- Save to Firestore ---
-    try {
-        if (editingId) {
-            // Update existing document
-            const expenseRef = doc(db, "expenses", editingId);
-            await updateDoc(expenseRef, expenseData);
-            console.log("Expense updated successfully:", editingId);
-        } else {
-            // Add new document
-            expenseData.createdAt = serverTimestamp(); // Set creation time only for new entries
-            const docRef = await addDoc(collection(db, "expenses"), expenseData);
-            console.log("Expense added successfully:", docRef.id);
-        }
-        closeExpenseModal(); // Close modal on success
-        await loadExpenses(); // Refresh the expense list
-
-    } catch (error) {
-        console.error("Error saving expense: ", error);
-        displayExpenseError(`Error saving expense: ${error.message}`, "expenseFormError"); // Show error in modal
-    } finally {
-        // Re-enable button regardless of success/failure
-        saveExpenseBtn.disabled = false;
-        saveExpenseBtn.innerHTML = '<i class="fas fa-save"></i> Save Expense';
-    }
-}
-
-/** Handles delete expense confirmation and action */
-async function handleDeleteExpenseClick(expenseId) {
-     if (!expenseId) {
-        console.error("Delete action triggered without expense ID.");
-        return;
-     }
-
-     // Find expense details from cache for the confirmation message
-     const expense = expensesCache.find(exp => exp.id === expenseId);
-     const confirmMessage = `Are you sure you want to delete this expense?
------------------------------
-Date: ${expense ? formatDate(expense.expenseDate) : 'N/A'}
-Amount: ${expense ? formatCurrency(expense.amount) : 'N/A'}
-Category: ${expense ? escapeHtml(expense.category) : 'N/A'}
-Description: ${expense ? escapeHtml(expense.description) : 'N/A'}
------------------------------
-This action cannot be undone.`;
-
-     // Ask for confirmation
-     if (window.confirm(confirmMessage)) {
-         console.log("Attempting to delete expense:", expenseId);
-         try {
-             // Show temporary deleting message
-             displayExpenseError("Deleting...", "expenseListError")
-             const expenseRef = doc(db, "expenses", expenseId);
-             // Delete the document from Firestore
-             await deleteDoc(expenseRef);
-             console.log("Expense deleted successfully from Firestore:", expenseId);
-             clearExpenseError(); // Clear the "Deleting..." message
-
-             // Option 1: Remove from UI immediately (faster UX)
-             // expensesCache = expensesCache.filter(exp => exp.id !== expenseId);
-             // const rowToRemove = expensesTableBody?.querySelector(`tr[data-id="${expenseId}"]`);
-             // if (rowToRemove) rowToRemove.remove();
-             // else console.warn("Could not find row in table to remove:", expenseId);
-             // Manually update total display or reload all
-
-             // Option 2: Reload the entire list (simpler, ensures consistency)
-             await loadExpenses();
-
-         } catch (error) {
-             console.error("Error deleting expense:", error);
-             displayExpenseError(`Error deleting expense: ${error.message}`);
-         }
-     } else {
-        console.log("Expense deletion cancelled by user.");
-     }
-}
-
-// --- Event Listeners Setup ---
-function setupEventListeners() {
-    // Cache DOM elements first
-    cacheDOMElements();
-
-    // Check if elements exist before adding listeners
-    addExpenseBtn?.addEventListener('click', () => openExpenseModal('add'));
-    closeExpenseModalBtn?.addEventListener('click', closeExpenseModal);
-    cancelExpenseBtn?.addEventListener('click', closeExpenseModal);
-    expenseModal?.addEventListener('click', (event) => { if (event.target === expenseModal) closeExpenseModal(); });
-    expenseForm?.addEventListener('submit', handleExpenseFormSubmit);
-
-    // Table Action Buttons (Event Delegation)
-    expensesTableBody?.addEventListener('click', (event) => {
-        const targetButton = event.target.closest('button[data-action]');
-        if (!targetButton) return; // Exit if click wasn't on an action button
-
-        const action = targetButton.dataset.action;
-        const expenseId = targetButton.dataset.id;
-
-        if (action === 'edit') {
-            const expenseData = expensesCache.find(exp => exp.id === expenseId);
-            if (expenseData) {
-                openExpenseModal('edit', expenseData);
-            } else {
-                console.error("Expense data not found in cache for edit:", expenseId);
-                displayExpenseError("Could not load expense details for editing.");
+        onAuthStateChanged(auth, (user) => {
+            const isLoginPage = window.location.pathname.endsWith('login.html');
+            if (!user && !isLoginPage) {
+                console.log("User not logged in, redirecting to login.");
+                window.location.replace('login.html');
+            } else if (user) {
+                console.log("Expenses Auth OK:", user.uid);
+                // Dynamically import the script AFTER ensuring user is logged in
+                import('./js/expenses.js') // Ensure path is correct
+                    .then(module => {
+                        if (typeof module.initializeExpensesPage === 'function') {
+                            // Initialize page logic now that script is loaded
+                            module.initializeExpensesPage(user);
+                        } else {
+                            console.error("initializeExpensesPage function not found in expenses.js");
+                            alert("Error initializing page script.");
+                        }
+                    })
+                    .catch(err => {
+                         console.error("Error loading expenses.js:", err);
+                         alert("Error loading page functionality.");
+                    });
             }
-        } else if (action === 'delete') {
-            handleDeleteExpenseClick(expenseId); // Call delete handler
-        }
-    });
+            // No 'else' needed here if we only act when user is logged in on non-login pages
+        });
+    </script>
+    </head>
+<body>
+    <div class="main-content">
 
-    // Filter Buttons
-    applyExpenseFiltersBtn?.addEventListener('click', loadExpenses); // Reload data when Apply is clicked
-    clearExpenseFiltersBtn?.addEventListener('click', () => {
-        // Clear filter input fields
-        if(filterSearchInput) filterSearchInput.value = '';
-        if(filterCategoryInput) filterCategoryInput.value = '';
-        if(filterStartDateInput) filterStartDateInput.value = '';
-        if(filterEndDateInput) filterEndDateInput.value = '';
-        // Reload data with cleared filters
-        loadExpenses();
-    });
-     // Optional: Trigger filter on Enter key in search/category inputs
-     filterSearchInput?.addEventListener('keypress', (e) => { if(e.key === 'Enter') { e.preventDefault(); loadExpenses();} });
-     filterCategoryInput?.addEventListener('keypress', (e) => { if(e.key === 'Enter') { e.preventDefault(); loadExpenses();} });
+        <div class="page-header">
+            <h1><i class="fas fa-wallet"></i> Expenses Management</h1>
+        </div>
 
-    console.log("Expense page event listeners set up.");
-}
+        <div class="breadcrumb">
+            <a href="index.html">Home</a> / <span>Expenses</span>
+        </div>
 
-// --- Initialization Function (Exported) ---
-// Called by the auth check script in expenses.html head
-export function initializeExpensesPage(user) {
-    console.log("Initializing Expenses Page for user:", user?.uid);
-    if (!db) { console.error("Firestore DB is not initialized!"); displayExpenseError("Database connection error."); return; }
-    // Ensure DOM is ready before setting up listeners and loading data
-     if (document.readyState === 'loading') {
-        // Wait for DOMContentLoaded if script loads before DOM is ready
-        document.addEventListener('DOMContentLoaded', () => {
-             console.log("DOM Loaded, setting up page.");
-             setupEventListeners();
-             loadExpenses(); // Initial data load
-         });
-    } else {
-        // DOM is already ready
-        console.log("DOM Ready, setting up page.");
-        setupEventListeners();
-        loadExpenses(); // Initial data load
-    }
-}
+        <div class="actions-bar">
+            <button id="addExpenseBtn" class="button add-new-button">
+                <i class="fas fa-plus"></i> Add New Expense
+            </button>
+        </div>
+
+         <div id="expenseListError" class="error-message" style="display: none;"></div>
+
+        <div class="expense-filters section-container">
+             <div class="filter-controls">
+                <div class="filter-group">
+                    <label for="filterSearch">Search Description/Category:</label>
+                    <input type="text" id="filterSearch" placeholder="Enter description or category...">
+                </div>
+                <div class="filter-group">
+                    <label for="filterCategory">Filter by Category:</label>
+                     <input type="text" id="filterCategory" placeholder="Enter category...">
+                </div>
+                <div class="filter-group">
+                    <label for="filterStartDate">From Date:</label>
+                    <input type="date" id="filterStartDate">
+                </div>
+                <div class="filter-group">
+                    <label for="filterEndDate">To Date:</label>
+                    <input type="date" id="filterEndDate">
+                </div>
+                <div class="filter-group filter-buttons"> <button id="applyExpenseFiltersBtn" class="button filter-action-button primary-button">
+                        <i class="fas fa-check"></i> Apply Filters
+                    </button>
+                    <button id="clearExpenseFiltersBtn" class="button filter-action-button cancel-button">
+                        <i class="fas fa-times"></i> Clear Filters
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div class="section-container">
+            <h2><i class="fas fa-list-ul"></i> Expenses List</h2>
+            <div class="table-container expenses-table-container">
+                <table id="expensesTable">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Category</th>
+                            <th>Amount</th>
+                            <th>Description</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="expensesTableBody">
+                        <tr id="expensesLoadingMessage">
+                            <td colspan="5" style="text-align: center;"><i class="fas fa-spinner fa-spin"></i> Loading expenses...</td>
+                        </tr>
+                        <tr id="noExpensesMessage" style="display: none;">
+                             <td colspan="5" style="text-align: center;">No expenses found. Adjust filters or add a new expense.</td>
+                        </tr>
+                        </tbody>
+                </table>
+            </div>
+             <div id="expensesTotalDisplay" class="list-totals">
+                 Total Expenses (Displayed): ₹ 0.00
+             </div>
+        </div>
+
+    </div><div id="expenseModal" class="modal">
+        <div class="modal-content">
+             <div class="modal-header">
+                 <h2 id="expenseModalTitle">Add Expense</h2>
+                 <button id="closeExpenseModalBtn" class="close-btn" title="Close">&times;</button>
+             </div>
+             <form id="expenseForm" novalidate>
+                 <div class="modal-body">
+                    <div id="expenseFormError" class="error-message" style="display: none;"></div>
+                    <input type="hidden" id="editingExpenseId">
+
+                    <div class="form-group">
+                        <label for="expenseDate">Date <span class="required">*</span>:</label>
+                        <input type="date" id="expenseDate" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="expenseCategory">Category <span class="required">*</span>:</label>
+                        <input type="text" id="expenseCategory" placeholder="e.g., Office Supplies, Travel, Food" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="expenseAmount">Amount <span class="required">*</span>:</label>
+                        <input type="number" id="expenseAmount" step="0.01" placeholder="e.g., 150.50" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="expenseDescription">Description / Particulars <span class="required">*</span>:</label>
+                        <textarea id="expenseDescription" rows="3" placeholder="Describe the expense" required></textarea>
+                    </div>
+                     <div class="form-group">
+                        <label for="expensePaymentMethod">Payment Method:</label>
+                        <select id="expensePaymentMethod">
+                            <option value="">Select Method (Optional)</option>
+                            <option value="Cash">Cash</option>
+                            <option value="Card">Card</option>
+                            <option value="UPI">UPI</option>
+                            <option value="Bank Transfer">Bank Transfer</option>
+                            <option value="Other">Other</option>
+                        </select>
+                     </div>
+                     <div class="form-group">
+                        <label for="expenseNotes">Notes:</label>
+                        <textarea id="expenseNotes" rows="2" placeholder="Optional notes or reference"></textarea>
+                     </div>
+                 </div>
+                 <div class="modal-actions">
+                     <button type="button" id="cancelExpenseBtn" class="button cancel-button">Cancel</button>
+                     <button type="submit" id="saveExpenseBtn" class="button save-button">
+                         <i class="fas fa-save"></i> Save Expense
+                     </button>
+                 </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="js/firebase-init.js" type="module"></script>
+    </body>
+</html>

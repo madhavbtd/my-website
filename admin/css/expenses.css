@@ -1,7 +1,7 @@
 /* css/expenses.css */
 /* Complete styles for the Expenses page, mimicking the main theme */
 
-/* --- Theme Variables (Copied from supplier_management.css) --- */
+/* --- Theme Variables (Ensure these match your main theme) --- */
 :root {
     --primary-color: #0056b3;
     --secondary-color: #2c3e50;
@@ -18,17 +18,21 @@
     --font-family: 'Poppins', sans-serif; /* Poppins Font */
     --border-radius: 5px;
     --box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    /* Scrollbar Colors */
+    --scrollbar-track-color: #f1f1f1;
+    --scrollbar-thumb-color: #c1c1c1;
+    --scrollbar-thumb-hover-color: #a8a8a8;
 }
 
 /* --- Base Styles & Font Application --- */
-html { scrollbar-width: thin; scrollbar-color: #c1c1c1 #f1f1f1; }
+html { scrollbar-width: thin; scrollbar-color: var(--scrollbar-thumb-color) var(--scrollbar-track-color); }
 html::-webkit-scrollbar { width: 8px; height: 8px; }
-html::-webkit-scrollbar-track { background: #f1f1f1; }
-html::-webkit-scrollbar-thumb { background-color: #c1c1c1; border-radius: 4px; border: 2px solid #f1f1f1; }
-html::-webkit-scrollbar-thumb:hover { background-color: #a8a8a8; }
+html::-webkit-scrollbar-track { background: var(--scrollbar-track-color); }
+html::-webkit-scrollbar-thumb { background-color: var(--scrollbar-thumb-color); border-radius: 4px; border: 2px solid var(--scrollbar-track-color); }
+html::-webkit-scrollbar-thumb:hover { background-color: var(--scrollbar-thumb-hover-color); }
 
 body {
-    font-family: var(--font-family), sans-serif; /* Apply Poppins */
+    font-family: var(--font-family), sans-serif;
     background-color: #f0f2f5;
     margin: 0;
     color: var(--text-color);
@@ -36,63 +40,25 @@ body {
     font-size: 15px;
 }
 
-/* Apply Poppins to common elements */
 input, button, select, textarea, label, h1, h2, h3, th, td, span, div, p, li, a {
     font-family: var(--font-family), sans-serif;
 }
 
 /* --- Layout Containers --- */
-.main-content {
-    padding: 25px;
-    box-sizing: border-box;
-    max-width: 1300px;
-    margin: 20px auto;
-    background-color: var(--white-color);
-    border-radius: 8px;
-    box-shadow: 0 3px 12px rgba(0, 0, 0, 0.07);
-}
-
-.page-header {
-    margin-bottom: 20px;
-    padding-bottom: 15px;
-}
-
-.page-header h1 {
-    margin: 0;
-    font-size: 1.8em;
-    color: var(--primary-color);
-    font-weight: 600;
-    display: flex;
-    align-items: center;
-}
-
-.page-header h1 i {
-    margin-right: 12px;
-    color: var(--primary-color);
-    opacity: 0.9;
-}
+.main-content { padding: 25px; box-sizing: border-box; max-width: 1300px; margin: 20px auto; background-color: var(--white-color); border-radius: 8px; box-shadow: 0 3px 12px rgba(0, 0, 0, 0.07); }
+.page-header { margin-bottom: 20px; padding-bottom: 15px; }
+.page-header h1 { margin: 0; font-size: 1.8em; color: var(--primary-color); font-weight: 600; display: flex; align-items: center; }
+.page-header h1 i { margin-right: 12px; color: var(--primary-color); opacity: 0.9; }
 
 /* --- Breadcrumb Styles --- */
-.breadcrumb {
-    font-size: 0.9em;
-    color: var(--dark-gray, #6c757d);
-    margin-bottom: 20px;
-    padding-bottom: 10px;
-    border-bottom: 1px solid var(--medium-gray, #e9ecef);
-}
+.breadcrumb { font-size: 0.9em; color: var(--dark-gray, #6c757d); margin-bottom: 20px; padding-bottom: 10px; border-bottom: 1px solid var(--medium-gray, #e9ecef); }
 .breadcrumb a { color: var(--primary-color, #0056b3); text-decoration: none; }
 .breadcrumb a:hover { text-decoration: underline; }
 .breadcrumb span { margin-left: 5px; color: var(--text-color, #343a40); }
 .breadcrumb span::before { content: "/"; margin-right: 5px; color: var(--dark-gray, #6c757d); }
 
 /* --- Action Bar Styles --- */
-.actions-bar {
-    display: flex;
-    gap: 12px;
-    margin-bottom: 25px;
-    flex-wrap: wrap;
-    align-items: center;
-}
+.actions-bar { display: flex; gap: 12px; margin-bottom: 25px; flex-wrap: wrap; align-items: center; }
 
 /* --- General Button Styles --- */
 .button { padding: 9px 18px; font-size: 0.95em; border: none; border-radius: var(--border-radius); cursor: pointer; font-weight: 600; display: inline-flex; align-items: center; gap: 7px; text-decoration: none; transition: background-color 0.2s ease, opacity 0.2s ease, box-shadow 0.2s ease; white-space: nowrap; vertical-align: middle; line-height: 1; box-shadow: var(--box-shadow); }
@@ -109,19 +75,13 @@ input, button, select, textarea, label, h1, h2, h3, th, td, span, div, p, li, a 
 .primary-button:hover:not(:disabled) { background-color: #004085; }
 
 /* --- Section Container Styles --- */
-.section-container {
-    background-color: var(--white-color);
-    padding: 20px 25px;
-    border-radius: 8px;
-    margin-bottom: 25px;
-    border: 1px solid var(--medium-gray);
-}
+.section-container { background-color: var(--white-color); padding: 20px 25px; border-radius: 8px; margin-bottom: 25px; border: 1px solid var(--medium-gray); }
 .section-container h2 { margin-top: 0; margin-bottom: 20px; font-size: 1.4em; color: var(--secondary-color); border-bottom: 1px solid var(--medium-gray); padding-bottom: 12px; font-weight: 600; display: flex; align-items: center; }
 .section-container h2 i { margin-right: 10px; color: var(--secondary-color); opacity: 0.9; }
 
 /* --- Filter Section Styles --- */
-.expense-filters { background-color: #f9fafb; border-bottom: 1px solid var(--medium-gray); margin-bottom: 25px; }
-.expense-filters h2 { border-bottom: none; padding-bottom: 0; margin-bottom: 15px; font-size: 1.2em; }
+.expense-filters { background-color: #f9fafb; border-bottom: 1px solid var(--medium-gray); margin-bottom: 25px; padding-top: 15px; /* Add padding since h2 is removed */ }
+/* Removed h2 style for filters */
 .filter-controls { display: flex; gap: 15px; flex-wrap: wrap; align-items: flex-end; }
 .filter-group { display: flex; flex-direction: column; gap: 5px; flex-grow: 1; min-width: 180px; }
 .filter-group label { font-size: 0.85em; font-weight: 500; color: #495057; margin-bottom: 2px; }
@@ -129,14 +89,41 @@ input, button, select, textarea, label, h1, h2, h3, th, td, span, div, p, li, a 
 .expense-filters input[type="date"],
 .expense-filters select { padding: 8px 12px; border: 1px solid #ced4da; border-radius: var(--border-radius); font-size: 0.9em; height: 38px; box-sizing: border-box; background-color: var(--white-color); width: 100%; }
 .expense-filters input[type="date"] { color-scheme: light; min-width: 140px; }
-.filter-group.filter-buttons { flex-grow: 0; flex-shrink: 0; display: flex; gap: 10px; align-self: flex-end; padding-bottom: 1px; }
+.filter-group.filter-buttons {
+    flex-grow: 0;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: row; /* Keep buttons in a row */
+    gap: 10px;
+    align-self: flex-end;
+    padding-bottom: 1px;
+    margin-left: auto; /* Push buttons to the right */
+}
 .filter-action-button { height: 38px; padding: 8px 15px; }
 
 /* --- Table Styles --- */
-.table-container { width: 100%; overflow-x: auto; border: 1px solid var(--medium-gray); border-radius: var(--border-radius); margin-bottom: 15px; background-color: var(--white-color); }
+/* Specific container for expenses table scrollbar */
+.expenses-table-container {
+    width: 100%;
+    max-height: 60vh; /* Limit height to approx 10-15 rows depending on row height */
+    overflow-y: auto; /* Add vertical scrollbar when needed */
+    border: 1px solid var(--medium-gray);
+    border-radius: var(--border-radius);
+    margin-bottom: 15px;
+    background-color: var(--white-color);
+}
+/* Apply scrollbar styles to this container */
+.expenses-table-container::-webkit-scrollbar { width: 8px; height: 8px; }
+.expenses-table-container::-webkit-scrollbar-track { background: var(--scrollbar-track-color); border-radius: 4px; }
+.expenses-table-container::-webkit-scrollbar-thumb { background-color: var(--scrollbar-thumb-color); border-radius: 4px; border: 2px solid var(--scrollbar-track-color); }
+.expenses-table-container::-webkit-scrollbar-thumb:hover { background-color: var(--scrollbar-thumb-hover-color); }
+.expenses-table-container { scrollbar-width: thin; scrollbar-color: var(--scrollbar-thumb-color) var(--scrollbar-track-color); }
+
 #expensesTable { width: 100%; border-collapse: collapse; font-size: 0.9em; }
-#expensesTable thead { background-color: var(--light-gray); border-bottom: 2px solid var(--medium-gray); }
-#expensesTable th, #expensesTable td { border: 1px solid #e0e0e0; padding: 10px 12px; text-align: left; vertical-align: middle; }
+#expensesTable thead { background-color: var(--light-gray); border-bottom: 2px solid var(--medium-gray); position: sticky; /* Make header sticky */ top: 0; /* Stick to top of scrollable container */ z-index: 1; /* Keep header above scrolling content */ }
+#expensesTable th, #expensesTable td { border: 1px solid #e0e0e0; padding: 10px 12px; text-align: left; vertical-align: middle; border-left: none; border-right: none; /* Optional: remove vertical borders */ }
+#expensesTable th:first-child, #expensesTable td:first-child { border-left: 1px solid #e0e0e0; } /* Add border back to first column */
+#expensesTable th:last-child, #expensesTable td:last-child { border-right: 1px solid #e0e0e0; } /* Add border back to last column */
 #expensesTable th { font-weight: 600; color: #495057; white-space: nowrap; }
 #expensesTable tbody tr:nth-child(even) { background-color: #fdfdfd; }
 #expensesTable tbody tr:hover { background-color: #f1f5f9; }
@@ -190,6 +177,7 @@ input, button, select, textarea, label, h1, h2, h3, th, td, span, div, p, li, a 
 /* --- Responsive --- */
 @media (max-width: 992px) {
     .filter-controls { gap: 10px; }
+    .filter-group.filter-buttons { margin-left: 0; /* Allow wrapping */ }
 }
 @media (max-width: 768px) {
     .main-content { padding: 15px; }
@@ -197,7 +185,7 @@ input, button, select, textarea, label, h1, h2, h3, th, td, span, div, p, li, a 
     .section-container h2 { font-size: 1.2em;}
     .filter-controls { flex-direction: column; align-items: stretch; }
     .filter-group { min-width: 100%; }
-    .filter-group.filter-buttons { flex-direction: row; justify-content: space-between; }
+    .filter-group.filter-buttons { flex-direction: row; justify-content: space-between; } /* Keep buttons side-by-side */
     .filter-group.filter-buttons .button { flex-grow: 1; justify-content: center; }
     #expensesTable { font-size: 0.85em; }
     #expensesTable th, #expensesTable td { padding: 8px 6px; }
@@ -206,6 +194,6 @@ input, button, select, textarea, label, h1, h2, h3, th, td, span, div, p, li, a 
      .modal-actions .button { width: 100%; justify-content: center;}
 }
 @media (max-width: 480px) {
-    .filter-group.filter-buttons { flex-direction: column; }
+    .filter-group.filter-buttons { flex-direction: column; } /* Stack buttons on smallest screens */
 }
 
