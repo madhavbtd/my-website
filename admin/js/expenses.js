@@ -1,4 +1,4 @@
-// js/expenses.js - Expenses Management Logic with Filters (v4 - Debug Listeners)
+// js/expenses.js - Expenses Management Logic with Filters (v5 - Final Listener Check)
 
 // --- Firebase Imports ---
 import { db, auth } from './js/firebase-init.js'; // Ensure path is correct
@@ -13,6 +13,7 @@ let expensesCache = [];
 let currentEditingExpenseId = null;
 
 // --- DOM Elements Cache ---
+// Variables declared globally, will be assigned in cacheDOMElements
 let addExpenseBtn, expenseModal, expenseModalTitle, closeExpenseModalBtn, cancelExpenseBtn,
     saveExpenseBtn, expenseForm, editingExpenseIdInput, expenseDateInput,
     expenseCategoryInput, expenseAmountInput, expenseDescriptionInput,
@@ -25,7 +26,7 @@ let addExpenseBtn, expenseModal, expenseModalTitle, closeExpenseModalBtn, cancel
 
 // Function to cache DOM elements
 function cacheDOMElements() {
-    console.log("Attempting to cache DOM elements..."); // Debug log
+    console.log("[CacheDOM] Caching elements...");
     addExpenseBtn = document.getElementById('addExpenseBtn');
     expenseModal = document.getElementById('expenseModal');
     expenseModalTitle = document.getElementById('expenseModalTitle');
@@ -54,11 +55,11 @@ function cacheDOMElements() {
     applyExpenseFiltersBtn = document.getElementById('applyExpenseFiltersBtn');
     clearExpenseFiltersBtn = document.getElementById('clearExpenseFiltersBtn');
 
-    // Check if filter buttons were found
-    if (!applyExpenseFiltersBtn) console.error("Apply Filters button not found!");
-    if (!clearExpenseFiltersBtn) console.error("Clear Filters button not found!");
+    // Check if filter buttons were found after caching
+    if (!applyExpenseFiltersBtn) console.error("[CacheDOM] Apply Filters button (applyExpenseFiltersBtn) NOT FOUND!");
+    if (!clearExpenseFiltersBtn) console.error("[CacheDOM] Clear Filters button (clearExpenseFiltersBtn) NOT FOUND!");
 
-    console.log("DOM Elements Caching attempt complete.");
+    console.log("[CacheDOM] Caching attempt complete.");
 }
 
 
@@ -75,7 +76,7 @@ function clearExpenseError(elementId = 'expenseListError') { /* ... (same as bef
 async function loadExpenses() {
     if (!expensesTableBody || !expensesLoadingMessage || !noExpensesMessage || !expensesTotalDisplay) { console.error("Expense table elements not found. Cannot load expenses."); return; }
     if (!auth.currentUser) { displayExpenseError("Please login to view expenses."); return; }
-    console.log("Loading expenses with current filters...");
+    console.log("[LoadExpenses] Starting to load expenses...");
 
     expensesLoadingMessage.style.display = 'table-row';
     noExpensesMessage.style.display = 'none';
@@ -93,9 +94,9 @@ async function loadExpenses() {
         const startDateVal = filterStartDateInput?.value;
         const endDateVal = filterEndDateInput?.value;
 
-        if (categoryFilter) { console.log("Applying Firestore category filter:", categoryFilter); conditions.push(where("category", "==", categoryFilter)); }
-        if (startDateVal) { try { const startDate = new Date(startDateVal + 'T00:00:00'); if(isNaN(startDate.getTime())) throw new Error("Invalid start date"); conditions.push(where("expenseDate", ">=", Timestamp.fromDate(startDate))); console.log("Applying start date filter:", startDateVal); } catch (e) { console.error("Invalid start date format:", e); displayExpenseError("Invalid 'From Date'. Please use YYYY-MM-DD.");} }
-        if (endDateVal) { try { const endDate = new Date(endDateVal + 'T23:59:59'); if(isNaN(endDate.getTime())) throw new Error("Invalid end date"); conditions.push(where("expenseDate", "<=", Timestamp.fromDate(endDate))); console.log("Applying end date filter:", endDateVal); } catch (e) { console.error("Invalid end date format:", e); displayExpenseError("Invalid 'To Date'. Please use YYYY-MM-DD.");} }
+        if (categoryFilter) { console.log("[LoadExpenses] Applying Firestore category filter:", categoryFilter); conditions.push(where("category", "==", categoryFilter)); }
+        if (startDateVal) { try { const startDate = new Date(startDateVal + 'T00:00:00'); if(isNaN(startDate.getTime())) throw new Error("Invalid start date"); conditions.push(where("expenseDate", ">=", Timestamp.fromDate(startDate))); console.log("[LoadExpenses] Applying start date filter:", startDateVal); } catch (e) { console.error("Invalid start date format:", e); displayExpenseError("Invalid 'From Date'. Please use YYYY-MM-DD.");} }
+        if (endDateVal) { try { const endDate = new Date(endDateVal + 'T23:59:59'); if(isNaN(endDate.getTime())) throw new Error("Invalid end date"); conditions.push(where("expenseDate", "<=", Timestamp.fromDate(endDate))); console.log("[LoadExpenses] Applying end date filter:", endDateVal); } catch (e) { console.error("Invalid end date format:", e); displayExpenseError("Invalid 'To Date'. Please use YYYY-MM-DD.");} }
 
         const q = query(expensesRef, ...conditions, orderBy("expenseDate", "desc"));
         const querySnapshot = await getDocs(q);
@@ -105,7 +106,7 @@ async function loadExpenses() {
         // --- Apply Client-Side Search Filter ---
         const searchTerm = filterSearchInput?.value.trim().toLowerCase();
         if (searchTerm) {
-             console.log("Applying client-side search filter:", searchTerm);
+             console.log("[LoadExpenses] Applying client-side search filter:", searchTerm);
              results = results.filter(exp => {
                 const descMatch = exp.description?.toLowerCase().includes(searchTerm);
                 const catMatch = exp.category?.toLowerCase().includes(searchTerm);
@@ -125,9 +126,10 @@ async function loadExpenses() {
             });
         }
         expensesTotalDisplay.textContent = `Total Expenses (Displayed): ${formatCurrency(totalAmount)}`;
+        console.log("[LoadExpenses] Finished loading and rendering expenses.");
 
     } catch (error) {
-        console.error("Error loading expenses: ", error);
+        console.error("[LoadExpenses] Error loading expenses: ", error);
         if (error.code === 'failed-precondition') { displayExpenseError(`Error: Database index missing. Check Firestore console.`); }
         else { displayExpenseError(`Error loading expenses: ${error.message}`); }
         expensesLoadingMessage.style.display = 'none';
@@ -151,52 +153,63 @@ async function handleDeleteExpenseClick(expenseId) { /* ... (same as before) ...
 // --- Event Listeners Setup ---
 function setupEventListeners() {
     // Cache elements only once when setting up listeners
-    cacheDOMElements();
+    cacheDOMElements(); // Call this first!
 
-    console.log("Setting up event listeners..."); // Debug log
+    console.log("[SetupListeners] Setting up event listeners...");
 
     // Check if elements exist before adding listeners
-    addExpenseBtn?.addEventListener('click', () => {
-        console.log("Add New Expense button clicked"); // Debug log
-        openExpenseModal('add');
-    });
+    if (addExpenseBtn) {
+        addExpenseBtn.addEventListener('click', () => {
+            console.log("[Listener] Add New Expense button clicked");
+            openExpenseModal('add');
+        });
+        console.log("[SetupListeners] Listener ADDED for Add Expense button.");
+    } else {
+        console.error("[SetupListeners] Add Expense button (addExpenseBtn) NOT FOUND.");
+    }
 
-    closeExpenseModalBtn?.addEventListener('click', closeExpenseModal);
-    cancelExpenseBtn?.addEventListener('click', closeExpenseModal);
-    expenseModal?.addEventListener('click', (event) => { if (event.target === expenseModal) closeExpenseModal(); });
-    expenseForm?.addEventListener('submit', handleExpenseFormSubmit);
+    if(closeExpenseModalBtn) closeExpenseModalBtn.addEventListener('click', closeExpenseModal);
+    if(cancelExpenseBtn) cancelExpenseBtn.addEventListener('click', closeExpenseModal);
+    if(expenseModal) expenseModal.addEventListener('click', (event) => { if (event.target === expenseModal) closeExpenseModal(); });
+    if(expenseForm) expenseForm.addEventListener('submit', handleExpenseFormSubmit);
 
     // Table Action Buttons (Event Delegation)
-    expensesTableBody?.addEventListener('click', (event) => {
-        const targetButton = event.target.closest('button[data-action]');
-        if (!targetButton) return;
-        const action = targetButton.dataset.action;
-        const expenseId = targetButton.dataset.id;
-        console.log(`Action button clicked: ${action}, ID: ${expenseId}`); // Debug log
+    if(expensesTableBody){
+        expensesTableBody.addEventListener('click', (event) => {
+            const targetButton = event.target.closest('button[data-action]');
+            if (!targetButton) return;
+            const action = targetButton.dataset.action;
+            const expenseId = targetButton.dataset.id;
+            console.log(`[Listener] Table Action button clicked: ${action}, ID: ${expenseId}`);
 
-        if (action === 'edit') {
-            const expenseData = expensesCache.find(exp => exp.id === expenseId);
-            if (expenseData) { openExpenseModal('edit', expenseData); }
-            else { console.error("Expense data not found in cache for edit:", expenseId); displayExpenseError("Could not load expense details for editing.");}
-        } else if (action === 'delete') {
-            handleDeleteExpenseClick(expenseId);
-        }
-    });
+            if (action === 'edit') {
+                const expenseData = expensesCache.find(exp => exp.id === expenseId);
+                if (expenseData) { openExpenseModal('edit', expenseData); }
+                else { console.error("Expense data not found in cache for edit:", expenseId); displayExpenseError("Could not load expense details for editing.");}
+            } else if (action === 'delete') {
+                handleDeleteExpenseClick(expenseId);
+            }
+        });
+        console.log("[SetupListeners] Listener ADDED for table actions.");
+    } else {
+         console.error("[SetupListeners] expensesTableBody NOT FOUND.");
+    }
 
-    // --- Filter Buttons Event Listeners (Re-checked) ---
+
+    // --- Filter Buttons Event Listeners ---
     if (applyExpenseFiltersBtn) {
         applyExpenseFiltersBtn.addEventListener('click', () => {
-            console.log("Apply Filters button clicked - Calling loadExpenses()"); // Debug log
+            console.log("[Listener] Apply Filters button clicked - Calling loadExpenses()");
             loadExpenses(); // Reload data when Apply is clicked
         });
-         console.log("Listener ADDED for Apply Filters button."); // Debug log
+         console.log("[SetupListeners] Listener ADDED for Apply Filters button.");
     } else {
-        console.error("Apply Filters button (applyExpenseFiltersBtn) NOT FOUND in DOM."); // Error if button missing
+        console.error("[SetupListeners] Apply Filters button (applyExpenseFiltersBtn) NOT FOUND.");
     }
 
     if (clearExpenseFiltersBtn) {
         clearExpenseFiltersBtn.addEventListener('click', () => {
-            console.log("Clear Filters button clicked - Clearing inputs and calling loadExpenses()"); // Debug log
+            console.log("[Listener] Clear Filters button clicked - Clearing inputs and calling loadExpenses()");
             // Clear filter input fields
             if(filterSearchInput) filterSearchInput.value = '';
             if(filterCategoryInput) filterCategoryInput.value = '';
@@ -205,17 +218,16 @@ function setupEventListeners() {
             // Reload data with cleared filters
             loadExpenses();
         });
-         console.log("Listener ADDED for Clear Filters button."); // Debug log
+         console.log("[SetupListeners] Listener ADDED for Clear Filters button.");
     } else {
-        console.error("Clear Filters button (clearExpenseFiltersBtn) NOT FOUND in DOM."); // Error if button missing
+        console.error("[SetupListeners] Clear Filters button (clearExpenseFiltersBtn) NOT FOUND.");
     }
 
      // Optional: Trigger filter on Enter key in search/category inputs
-     filterSearchInput?.addEventListener('keypress', (e) => { if(e.key === 'Enter') { e.preventDefault(); console.log("Enter pressed in Search input"); loadExpenses();} });
-     filterCategoryInput?.addEventListener('keypress', (e) => { if(e.key === 'Enter') { e.preventDefault(); console.log("Enter pressed in Category input"); loadExpenses();} });
+     filterSearchInput?.addEventListener('keypress', (e) => { if(e.key === 'Enter') { e.preventDefault(); console.log("[Listener] Enter pressed in Search input"); loadExpenses();} });
+     filterCategoryInput?.addEventListener('keypress', (e) => { if(e.key === 'Enter') { e.preventDefault(); console.log("[Listener] Enter pressed in Category input"); loadExpenses();} });
 
-
-    console.log("Expense page event listeners setup complete.");
+    console.log("[SetupListeners] Expense page event listeners setup complete.");
 }
 
 // --- Initialization Function (Exported) ---
