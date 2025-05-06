@@ -297,4 +297,39 @@ a.supplier-link:hover { text-decoration: underline; color: #003d80; }
     .printing-po-share #poShareTermList { display: block !important; font-size: 9pt; color: #000 !important; list-style-position: outside; padding-left: 20px; }
     .printing-po-share #poShareTermList li { margin-bottom: 4px; }
     a[href]:after { content: "" !important; }
+} /* Batch Action Bar Font & Button Color Fix */
+
+/* सुनिश्चित करें कि Poppins फ़ॉन्ट लागू हो (वैकल्पिक, इनहेरिट होना चाहिए) */
+.batch-actions-bar,
+.batch-actions-bar span, /* गिनती वाले टेक्स्ट के लिए */
+.batch-actions-bar select,
+.batch-actions-bar .button {
+    font-family: var(--font-family), sans-serif; /* Poppins फॉन्ट फिर से लागू करें */
+}
+
+/* बैच एक्शन बार में विशिष्ट बटनों के टेक्स्ट का रंग सफ़ेद करें */
+.batch-actions-bar .success-button, /* Mark Received बटन शामिल है */
+.batch-actions-bar #batchMarkReceivedBtn, /* केवल ID के लिए (अगर क्लास न हो) */
+.batch-actions-bar .info-button,    /* Apply Status बटन (अगर यह क्लास उपयोग करता है) */
+.batch-actions-bar .delete-button,  /* Delete Selected बटन */
+.batch-actions-bar .cancel-button   /* Deselect All बटन (अगर यह क्लास उपयोग करता है) */
+/* यदि अन्य बटनों का टेक्स्ट भी सफ़ेद करना है तो उनकी क्लास यहाँ जोड़ें */
+{
+    color: var(--white-color); /* टेक्स्ट का रंग सफ़ेद करें */
+}
+
+/* सुनिश्चित करें कि हॉवर करने पर भी टेक्स्ट सफ़ेद रहे */
+.batch-actions-bar .success-button:hover:not(:disabled),
+.batch-actions-bar #batchMarkReceivedBtn:hover:not(:disabled) {
+    /* background-color: #218838; */ /* गहरा हरा रंग पहले से सेट होना चाहिए */
+    color: var(--white-color); /* हॉवर पर भी टेक्स्ट सफ़ेद */
+}
+.batch-actions-bar .info-button:hover:not(:disabled) {
+    color: var(--white-color);
+}
+.batch-actions-bar .delete-button:hover:not(:disabled) {
+    color: var(--white-color);
+}
+.batch-actions-bar .cancel-button:hover:not(:disabled) {
+    color: var(--white-color);
 }
