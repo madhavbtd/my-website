@@ -1,55 +1,60 @@
 // js/firebase-init.js
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getAuth } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import { getFirestore } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js"; // doc और getDoc यहाँ इम्पोर्ट करें
 
-// **** Your Firebase Configuration ****
-// !!! सुनिश्चित करें कि यह कॉन्फ़िगरेशन सही है !!!
+// **** आपकी Firebase कॉन्फ़िगरेशन ****
 const firebaseConfig = {
-  apiKey: "AIzaSyBQj5rQmE77kKKGYixP8y3Hcimz8tiAqzQ", // आपके कोड से
-  authDomain: "madhav-multyprint.firebaseapp.com",   // आपके कोड से
-  projectId: "madhav-multyprint",                // आपके कोड से
-  storageBucket: "madhav-multyprint.appspot.com",   // आपके कोड से
-  messagingSenderId: "104988349637",             // आपके कोड से
-  appId: "1:104988349637:web:faf045b77c6786a4e70cac" // आपके कोड से
+  apiKey: "AIzaSyBQj5rQmE77kKKGYixP8y3Hcimz8tiAqzQ",
+  authDomain: "madhav-multyprint.firebaseapp.com",
+  projectId: "madhav-multyprint",
+  storageBucket: "madhav-multyprint.appspot.com", // यदि आप स्टोरेज का उपयोग करते हैं तो सुनिश्चित करें कि यह सही है, या .firebasestorage.app वाला हो सकता है
+  messagingSenderId: "104988349637",
+  appId: "1:104988349637:web:faf045b77c6786a4e70cac"
 };
 
 let app;
-// Prevent re-initialization
+// पुन: इनिशियलाइज़ेशन रोकें
 if (!window.firebaseAppInitialized) {
     try {
         app = initializeApp(firebaseConfig);
         window.firebaseAppInitialized = true;
-        window.firebaseApp = app; // Optional global ref
-        console.log("Firebase initialized by firebase-init.js");
+        window.firebaseApp = app; // वैकल्पिक ग्लोबल संदर्भ
+        console.log("Firebase एडमिन पैनल के लिए firebase-init.js द्वारा इनिशियलाइज़ किया गया");
     } catch (e) {
-        console.error("Firebase initialization failed in firebase-init.js:", e);
-        // ऐप को लोड होने से रोकने के लिए त्रुटि फेंकें
+        console.error("Firebase एडमिन इनिशियलाइज़ेशन विफल (firebase-init.js):", e);
         throw new Error("Firebase initialization failed: " + e.message);
     }
 } else {
     app = window.firebaseApp;
-    console.log("Firebase already initialized (firebase-init.js)");
+    console.log("Firebase पहले से इनिशियलाइज़्ड है (firebase-init.js)");
 }
 
 let auth, db;
 try {
     auth = getAuth(app);
     db = getFirestore(app);
-    console.log("firebase-init.js: Auth and DB instances obtained.");
+    console.log("firebase-init.js: एडमिन के लिए Auth और DB इंस्टेंस प्राप्त किए गए।");
 } catch (e) {
-     console.error("Failed to get Auth/Firestore instance in firebase-init.js:", e);
-     // ऐप को लोड होने से रोकने के लिए त्रुटि फेंकें
+     console.error("Auth/Firestore इंस्टेंस प्राप्त करने में विफल (firebase-init.js):", e);
      throw new Error("Failed to get Auth/Firestore instances: " + e.message);
 }
 
-// Export the initialized instances
-export { app, auth, db };
-
-// Firestore functions को सीधे SDK मॉड्यूल से री-एक्सपोर्ट करें
+// इनिशियलाइज़ किए गए इंस्टेंस और आवश्यक फ़ंक्शंस एक्सपोर्ट करें
 export {
-    collection, doc, addDoc, getDoc, getDocs, updateDoc, deleteDoc, onSnapshot,
-    query, orderBy, where, Timestamp, serverTimestamp
-} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+    app,
+    auth,
+    db,
+    // Firestore फ़ंक्शंस जिन्हें login.js उपयोग करेगा
+    doc,
+    getDoc,
+    // Auth फ़ंक्शन जिसे login.js उपयोग करेगा
+    signInWithEmailAndPassword
+};
 
-console.log("firebase-init.js module loaded and exports ready.");
+// अन्य Firestore या Auth फ़ंक्शंस जिन्हें आपकी अन्य एडमिन JS फाइलें
+// सीधे SDK से इम्पोर्ट करने के बजाय यहाँ से इम्पोर्ट कर सकती हैं (यदि आप चाहें)
+// उदाहरण के लिए: collection, query, getDocs, onSnapshot, updateDoc, deleteDoc, Timestamp, serverTimestamp आदि।
+// यदि वे पहले से ही सीधे SDK से इम्पोर्ट कर रहे हैं, तो उन्हें यहाँ एक्सपोर्ट करने की आवश्यकता नहीं है।
+
+console.log("firebase-init.js मॉड्यूल लोड हुआ और एडमिन के लिए एक्सपोर्ट तैयार हैं।");
