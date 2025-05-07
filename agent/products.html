@@ -8,14 +8,16 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-
-    <link rel="stylesheet" href="css/agent_main.css"> <link rel="stylesheet" href="css/agent_products.css"> </head>
+    <link rel="stylesheet" href="css/agent_main.css">
+    <link rel="stylesheet" href="css/agent_products.css">
+</head>
 <body>
     <div class="agent-portal-container">
         <header class="agent-header">
-            <div class="header-logo">
-                <img src="https://i.ibb.co/Z6gKD9Rd/1.png" alt="Madhav Multiprint Logo">
-                <span>Agent Portal</span>
+            <div class="header-left"> <button class="header-menu-toggle"><i class="fas fa-bars"></i></button> <div class="header-logo">
+                    <img src="https://i.ibb.co/Z6gKD9Rd/1.png" alt="Madhav Multiprint Logo">
+                    <span>Agent Portal</span>
+                </div>
             </div>
             <div class="header-user-info">
                 <span id="agentWelcomeMessage">Welcome, Agent!</span>
@@ -25,43 +27,84 @@
             </div>
         </header>
 
-        <nav class="agent-nav">
-            <a href="dashboard.html"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
-            <a href="create_order.html"><i class="fas fa-plus-circle"></i> Create Order</a>
-            <a href="products.html" class="active"><i class="fas fa-box-open"></i> Products</a>
-            <a href="order_history.html"><i class="fas fa-history"></i> Order History</a>
-            <a href="customers.html"><i class="fas fa-users"></i> Customers</a> 
-            <a href="ledger.html"><i class="fas fa-book-open"></i> Ledger/Commission</a>
-            <a href="profile.html"><i class="fas fa-user-cog"></i> Profile</a>
-        </nav>
+        <div class="agent-sidebar">
+            <ul>
+                <li><a href="dashboard.html" id="nav-dashboard"><i class="fas fa-tachometer-alt"></i> <span>Dashboard</span></a></li>
+                <li><a href="create_order.html" id="nav-create-order"><i class="fas fa-plus-circle"></i> <span>Create Order</span></a></li>
+                <li><a href="products.html" id="nav-products"><i class="fas fa-box-open"></i> <span>Products</span></a></li>
+                <li><a href="order_history.html" id="nav-order-history"><i class="fas fa-history"></i> <span>Order History</span></a></li>
+                <li><a href="customers.html" id="nav-customers"><i class="fas fa-users"></i> <span>Customers</span></a></li>
+                <li><a href="ledger.html" id="nav-ledger"><i class="fas fa-book-open"></i> <span>Ledger/Commission</span></a></li>
+                <li><a href="profile.html" id="nav-profile"><i class="fas fa-user-cog"></i> <span>Profile</span></a></li>
+            </ul>
+        </div>
+        <div class="agent-main-content-area">
+            <main class="agent-main-content">
+                <h1>Product Catalog</h1>
 
-        <main class="agent-main-content">
-            <h1>Product Catalog</h1>
-
-            <div class="product-filters">
-                <input type="text" id="productSearchInput" placeholder="Search products...">
-                <select id="productCategoryFilter">
-                    <option value="">All Categories</option>
-                    </select>
-                <button id="clearProductFiltersBtn" class="button-clear-filters">
-                    <i class="fas fa-times"></i> Clear
-                </button>
-            </div>
-
-            <div id="agentProductList" class="product-grid">
-                <div class="loading-state active" id="loadingProducts"> 
-                    <i class="fas fa-spinner fa-spin"></i> Loading Products...
+                <div class="product-filters">
+                    <input type="text" id="productSearchInput" placeholder="Search products...">
+                    <select id="productCategoryFilter">
+                        <option value="">All Categories</option>
+                        </select>
+                    <button id="clearProductFiltersBtn" class="button-clear-filters">
+                        <i class="fas fa-times"></i> Clear
+                    </button>
                 </div>
-                </div>
-            <p id="noProductsMessage" class="info-message" style="display: none; text-align:center; margin-top: 20px;">No products found matching your criteria or permissions.</p>
-        </main>
 
-        <footer class="agent-footer">
-            <p>&copy; 2025 Madhav Multiprint - Agent Portal</p>
-        </footer>
-    </div>
+                <div id="agentProductList" class="product-grid">
+                    <div class="loading-state active" id="loadingProducts">
+                        <i class="fas fa-spinner fa-spin"></i> Loading Products...
+                    </div>
+                    </div>
+                <p id="noProductsMessage" class="info-message" style="display: none; text-align:center; margin-top: 20px;">No products found matching your criteria or permissions.</p>
+            </main>
 
-    <script src="js/agent_firebase_config.js" type="module"></script>
-    <script src="js/agent_products.js" type="module"></script> 
+            <footer class="agent-footer">
+                <p>&copy; 2025 Madhav Multiprint - Agent Portal</p>
+            </footer>
+        </div>
+        </div><script src="js/agent_firebase_config.js" type="module"></script>
+    <script src="js/agent_products.js" type="module"></script>
+
+    <script>
+        function setActiveAgentLink() {
+             try {
+                const path = window.location.pathname;
+                const page = path.substring(path.lastIndexOf('/') + 1) || 'dashboard.html'; // Default page
+                const links = document.querySelectorAll('.agent-sidebar ul li a');
+
+                links.forEach(l => {
+                    l.classList.remove('active');
+                    const hrefAttr = l.getAttribute('href');
+                    if (hrefAttr) {
+                        const linkPage = hrefAttr.substring(hrefAttr.lastIndexOf('/') + 1).split('?')[0].split('#')[0] || 'dashboard.html';
+                        if (page === linkPage) {
+                            l.classList.add('active');
+                        }
+                    }
+                });
+             } catch(e) {
+                console.error("Error setting active agent link:", e);
+             }
+        }
+        window.addEventListener('DOMContentLoaded', setActiveAgentLink);
+        window.addEventListener('popstate', setActiveAgentLink);
+
+        // Mobile Sidebar Toggle Logic
+        const menuToggle = document.querySelector('.header-menu-toggle');
+        const sidebar = document.querySelector('.agent-sidebar');
+
+        if (menuToggle && sidebar) {
+             menuToggle.addEventListener('click', () => {
+                sidebar.classList.toggle('open');
+             });
+         }
+         document.addEventListener('click', (e) => {
+              if (sidebar && sidebar.classList.contains('open') && menuToggle && !sidebar.contains(e.target) && !menuToggle.contains(e.target)) {
+                    sidebar.classList.remove('open');
+              }
+          });
+    </script>
 </body>
 </html>

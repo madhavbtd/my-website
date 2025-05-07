@@ -1,8 +1,8 @@
 /* /agent/css/agent_ledger.css */
 
-/* सुनिश्चित करें कि agent_main.css में परिभाषित CSS वेरिएबल्स का उपयोग हो */
+/* Use CSS variables defined in agent_main.css */
 
-/* लेजर पेज के मुख्य कंटेंट के लिए अतिरिक्त मार्जिन (वैकल्पिक) */
+/* Additional margin for main content on ledger page (optional) */
 .agent-main-content h1 {
     margin-bottom: 15px;
 }
@@ -12,7 +12,7 @@
     color: var(--agent-text-muted);
 }
 
-/* समरी कार्ड्स */
+/* Summary Cards */
 .ledger-summary-cards {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); /* Responsive columns */
@@ -21,7 +21,7 @@
 }
 
 .summary-card {
-    background-color: var(--agent-white); /* agent_main.css से */
+    background-color: var(--agent-white); /* From agent_main.css */
     border: 1px solid var(--agent-border);
     border-radius: var(--agent-radius);
     padding: 20px;
@@ -36,22 +36,22 @@
 .summary-card h3 {
     margin-top: 0;
     margin-bottom: 10px;
-    font-size: 1.05em; /* थोड़ा छोटा हेडिंग */
-    color: var(--agent-secondary); /* agent_main.css से */
+    font-size: 1.05em; /* Slightly smaller heading */
+    color: var(--agent-secondary); /* From agent_main.css */
     font-weight: 600;
 }
 
 .summary-card p {
-    font-size: 1.6em; /* बड़ी रकम */
-    font-weight: 700; /* बोल्ड रकम */
-    color: var(--agent-primary); /* agent_main.css से */
+    font-size: 1.6em; /* Larger amount */
+    font-weight: 700; /* Bold amount */
+    color: var(--agent-primary); /* From agent_main.css */
     margin: 0;
 }
-#totalPaidToAgent { color: #dc3545; } /* पेमेंट के लिए लाल रंग (उदाहरण) */
-#outstandingBalance { color: #28a745; } /* बकाया के लिए हरा रंग (उदाहरण) */
+/* Colors for specific summaries (optional) */
+#totalPaidToAgent { color: var(--agent-danger, #dc3545); } /* Red for payments made */
+#outstandingBalance { color: var(--agent-success, #28a745); } /* Green for positive balance */
 
-
-/* फिल्टर बार */
+/* Filter Bar */
 .filter-bar.ledger-filters {
     display: flex;
     flex-wrap: wrap;
@@ -81,6 +81,7 @@
 
 .ledger-filters select,
 .ledger-filters input[type="date"] {
+    /* Inherit from agent_main.css .form-group select/input */
     padding: 8px 12px;
     border-radius: 4px;
     border: 1px solid var(--agent-border);
@@ -92,37 +93,41 @@
 }
 
 .ledger-filters #customDateFilters {
+    display: flex; /* Display side-by-side when shown */
     gap: 10px; /* Gap between date inputs */
     align-items: center; /* Align items if shown in a row */
 }
 .ledger-filters #customDateFilters label {
     margin-bottom: 0; /* Remove bottom margin if label is beside input */
+    flex-shrink: 0; /* Prevent label from shrinking */
+}
+.ledger-filters #customDateFilters input[type="date"] {
+    flex-grow: 1; /* Allow inputs to grow */
 }
 
 
 .ledger-filters .filter-button {
-    background-color: var(--agent-primary);
-    color: var(--agent-white);
-    padding: 8px 18px; /* अच्छा आकार */
+    /* Inherit from agent_main.css .button */
+    /* Specific styles */
+    padding: 8px 18px;
     font-size: 0.9em;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    height: 38px; /* Align with inputs */
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
+    height: 38px;
+    /* Default primary button color from agent_main.css */
 }
 .ledger-filters .filter-button:hover {
-    background-color: #00418a; /* गहरा प्राइमरी रंग */
+    /* Hover effect from agent_main.css */
+}
+.ledger-filters .filter-button i {
+    /* Icon styles if needed */
 }
 
 
-/* लेजर टेबल (agent_order_history.css से स्टाइल ले सकते हैं) */
+/* Ledger Table */
 .ledger-table-container {
     width: 100%;
-    max-height: 60vh; /* टेबल के लिए अधिकतम ऊंचाई */
+    max-height: 60vh; /* Max height for the table */
     overflow-y: auto;
+    /* Inherit other .table-container styles from agent_main.css */
     border: 1px solid var(--agent-border);
     border-radius: var(--agent-radius);
     margin-bottom: 20px;
@@ -131,13 +136,15 @@
 }
 
 #agentLedgerTable {
+    /* Inherit table styles from agent_main.css */
     width: 100%;
     border-collapse: collapse;
-    font-size: 0.88em; /* थोड़ा छोटा फॉन्ट */
+    font-size: 0.88em; /* Slightly smaller font */
 }
 
 #agentLedgerTable thead th {
-    position: sticky; /* हेडर को स्थिर रखें */
+    /* Inherit th styles from agent_main.css */
+    position: sticky; /* Keep header fixed */
     top: 0;
     z-index: 1;
     background-color: var(--agent-light-bg);
@@ -150,8 +157,9 @@
 }
 
 #agentLedgerTable td {
+    /* Inherit td styles from agent_main.css */
     padding: 9px 12px;
-    border-bottom: 1px solid #f0f0f0; /* हल्की रो बॉर्डर */
+    border-bottom: 1px solid #f0f0f0; /* Lighter row border */
     color: var(--agent-text-muted);
     vertical-align: middle;
 }
@@ -159,26 +167,36 @@
     border-bottom: none;
 }
 #agentLedgerTable tbody tr:hover {
-    background-color: #f1f8ff; /* हल्का नीला होवर */
+    /* Hover style from agent_main.css */
+    background-color: #f1f8ff;
 }
 
-/* कमीशन और पेमेंट के लिए रंग */
+/* Colors for commission and payment entries */
 #agentLedgerTable .commission-entry td:nth-child(4) {
-    color: green;
+    color: var(--agent-success, green); /* Use CSS variable */
     font-weight: 500;
 }
 #agentLedgerTable .payment-entry td:nth-child(4) {
-    color: red;
+    color: var(--agent-danger, red); /* Use CSS variable */
     font-weight: 500;
 }
-#agentLedgerTable td:nth-child(5) { /* Balance column */
+/* Balance column */
+#agentLedgerTable td:nth-child(5) {
     font-weight: 600;
     color: var(--agent-text);
 }
+#agentLedgerTable td:nth-child(5).balance-negative { /* Optional: class for negative balance */
+    color: var(--agent-danger, red);
+}
+#agentLedgerTable td:nth-child(5).balance-positive { /* Optional: class for positive balance */
+     color: var(--agent-success, green);
+}
 
-/* लोडिंग और नो-एंट्री मैसेज */
+
+/* Loading and No-Entry Messages */
 #loadingLedgerMessage td,
 #noLedgerEntriesMessage {
+    /* Inherit from agent_main.css #loadingMessage td or .loading-state */
     text-align: center;
     padding: 30px !important;
     color: var(--agent-text-muted);
@@ -186,13 +204,15 @@
     font-size: 1em;
 }
 #loadingLedgerMessage i {
+    /* Inherit from agent_main.css .loading-state i */
     margin-right: 8px;
 }
 
-.info-message { /* agent_main.css में पहले से हो सकता है */
+.info-message { /* Use styles from agent_main.css */
+    /* Example fallback if not in agent_main.css */
     padding: 15px;
-    background-color: #e9ecef; /* हल्का ग्रे */
-    border: 1px solid #ced4da; /* मध्यम ग्रे बॉर्डर */
+    background-color: #e9ecef;
+    border: 1px solid #ced4da;
     border-radius: var(--agent-radius);
     color: var(--agent-text-muted);
     font-size: 0.95em;

@@ -1,8 +1,8 @@
 // /agent/js/agent_dashboard.js
 
-// Firebase functions और इंस्टेंस agent_firebase_config.js से इम्पोर्ट करें
+// Import Firebase functions and instances from agent_firebase_config.js
 import { auth, db, onAuthStateChanged } from './agent_firebase_config.js';
-// Firestore फ़ंक्शंस जो इस फ़ाइल में उपयोग होंगे
+// Firestore functions used in this file
 import { collection, query, where, orderBy, limit, getDocs, doc, getDoc } from './agent_firebase_config.js';
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -12,12 +12,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const agentLogoutBtnEl = document.getElementById('agentLogoutBtn');
     const recentOrdersWidgetEl = document.getElementById('recentOrdersWidget');
     const accountSummaryWidgetEl = document.getElementById('accountSummaryWidget');
-    // अपने डैशबोर्ड HTML के अनुसार और विजेट एलिमेंट्स यहाँ जोड़ें
+    // Add more widget elements here according to your dashboard HTML
 
     let currentUser = null;
-    let agentData = null; // एजेंट का Firestore दस्तावेज़ डेटा स्टोर करने के लिए
+    let agentData = null; // To store agent's Firestore document data
 
-    // Helper Functions (यदि आवश्यक हो, तो इन्हें एक सामान्य utils.js फ़ाइल में ले जा सकते हैं)
+    // Helper Functions (Can be moved to a common utils.js file if needed)
     function formatCurrency(amount) {
         const num = Number(amount);
         return isNaN(num) ? 'N/A' : num.toLocaleString('en-IN', { style: 'currency', currency: 'INR', minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -32,13 +32,13 @@ document.addEventListener('DOMContentLoaded', () => {
     // Logout Button Event Listener
     if (agentLogoutBtnEl) {
         agentLogoutBtnEl.addEventListener('click', () => {
-            if (confirm("क्या आप वाकई लॉग आउट करना चाहते हैं?")) {
+            if (confirm("Are you sure you want to logout?")) { // Translated
                 auth.signOut().then(() => {
                     console.log("Agent logged out successfully.");
                     window.location.href = 'agent_login.html';
                 }).catch((error) => {
                     console.error("Agent Logout Error:", error);
-                    alert("लॉगआउट विफल रहा। कृपया पुनः प्रयास करें।");
+                    alert("Logout failed. Please try again."); // Translated
                 });
             }
         });
@@ -50,29 +50,29 @@ document.addEventListener('DOMContentLoaded', () => {
             currentUser = user;
             console.log("Agent User authenticated:", user.uid);
 
-            // एजेंट का Firestore दस्तावेज़ फ़ेच करें
+            // Fetch agent's Firestore document
             try {
                 const agentDocRef = doc(db, "agents", currentUser.uid);
                 const agentDocSnap = await getDoc(agentDocRef);
 
                 if (agentDocSnap.exists() && agentDocSnap.data().role === 'agent' && agentDocSnap.data().status === 'active') {
-                    agentData = agentDocSnap.data(); // एजेंट का डेटा स्टोर करें
+                    agentData = agentDocSnap.data(); // Store agent data
                     if (agentWelcomeMessageEl) {
                         agentWelcomeMessageEl.textContent = `Welcome, ${agentData.name || user.email || 'Agent'}`;
                     }
-                    // अब एजेंट-विशिष्ट डेटा लोड करें
+                    // Now load agent-specific data
                     loadRecentOrders(currentUser.uid);
                     loadAccountSummary(currentUser.uid);
-                    // अन्य डैशबोर्ड विजेट लोड करें
+                    // Load other dashboard widgets
                 } else {
                     console.error("Agent document not found, or role/status is not valid. Logging out.");
-                    alert("आपका एजेंट खाता मान्य नहीं है या सक्रिय नहीं है। कृपया एडमिन से संपर्क करें।");
-                    auth.signOut(); // सुरक्षा के लिए लॉग आउट करें
+                    alert("Your agent account is not valid or not active. Please contact admin."); // Translated
+                    auth.signOut(); // Log out for security
                     window.location.href = 'agent_login.html';
                 }
             } catch (error) {
                 console.error("Error fetching agent document:", error);
-                alert("आपकी प्रोफ़ाइल लोड करने में त्रुटि हुई। कृपया पुनः प्रयास करें।");
+                alert("Error loading your profile. Please try again."); // Translated
                 auth.signOut();
                 window.location.href = 'agent_login.html';
             }
@@ -84,42 +84,46 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // हाल के ऑर्डर लोड करने का फ़ंक्शन
+    // Function to load recent orders
     async function loadRecentOrders(agentId) {
         console.log(`Loading recent orders for agent ${agentId}...`);
         if (!recentOrdersWidgetEl) return;
-        recentOrdersWidgetEl.innerHTML = "<p><em>हाल के ऑर्डर लोड हो रहे हैं...</em></p>";
+        recentOrdersWidgetEl.innerHTML = "<p><em>Loading recent orders...</em></p>"; // Translated
         try {
-            const ordersRef = collection(db, "orders"); // मुख्य 'orders' कलेक्शन
+            const ordersRef = collection(db, "orders"); // Main 'orders' collection
             const q = query(
                 ordersRef,
-                where("agentId", "==", agentId), // केवल इस एजेंट के ऑर्डर
-                orderBy("createdAt", "desc"), // सबसे नए पहले
-                limit(5) // उदाहरण: केवल 5 हाल के ऑर्डर
+                where("agentId", "==", agentId), // Only this agent's orders
+                orderBy("createdAt", "desc"), // Newest first
+                limit(5) // Example: only 5 recent orders
             );
             const snapshot = await getDocs(q);
             if (snapshot.empty) {
-                recentOrdersWidgetEl.innerHTML = "<p><em>कोई हालिया ऑर्डर नहीं मिला।</em></p>";
+                recentOrdersWidgetEl.innerHTML = "<p><em>No recent orders found.</em></p>"; // Translated
             } else {
-                let html = '<h5>आपके हाल के ऑर्डर:</h5><ul>';
+                let html = '<h5>Your Recent Orders:</h5><ul>'; // Translated
                 snapshot.forEach(doc => {
                     const order = doc.data();
-                    html += `<li>${formatDateForDisplay(order.createdAt || order.orderDate)} - ऑर्डर #${order.orderId || doc.id.substring(0, 6)} (${order.customerDetails?.fullName || 'N/A'}) - स्थिति: ${order.status || 'N/A'}</li>`;
+                    // Ensure orderId exists, otherwise fallback to a truncated doc.id
+                    const displayOrderId = order.orderId || `Sys:${doc.id.substring(0, 6)}`;
+                    // Prioritize createdAt if available, fallback to orderDate
+                    const dateToFormat = order.createdAt || order.orderDate;
+                    html += `<li>${formatDateForDisplay(dateToFormat)} - Order #${displayOrderId} (${order.customerDetails?.fullName || 'N/A'}) - Status: ${order.status || 'N/A'}</li>`; // Translated status
                 });
-                html += '</ul><p><a href="agent_order_history.html">सभी ऑर्डर देखें</a></p>';
+                html += '</ul><p><a href="agent_order_history.html">View All Orders</a></p>'; // Translated link text
                 recentOrdersWidgetEl.innerHTML = html;
             }
         } catch (error) {
-            console.error("हाल के ऑर्डर लोड करने में त्रुटि:", error);
-            recentOrdersWidgetEl.innerHTML = "<p style='color:red;'>हाल के ऑर्डर लोड करने में त्रुटि हुई।</p>";
+            console.error("Error loading recent orders:", error); // Translated error log
+            recentOrdersWidgetEl.innerHTML = "<p style='color:red;'>Error loading recent orders.</p>"; // Translated error message
         }
     }
 
-    // खाता सारांश लोड करने का फ़ंक्शन
+    // Function to load account summary
     async function loadAccountSummary(agentId) {
         console.log(`Loading account summary for agent ${agentId}...`);
         if (!accountSummaryWidgetEl) return;
-        accountSummaryWidgetEl.innerHTML = "<p><em>खाता सारांश लोड हो रहा है...</em></p>";
+        accountSummaryWidgetEl.innerHTML = "<p><em>Loading account summary...</em></p>"; // Translated
         try {
             const ledgerQuery = query(
                 collection(db, "agentLedger"),
@@ -138,15 +142,15 @@ document.addEventListener('DOMContentLoaded', () => {
             });
             const outstanding = totalCommission - totalPaid;
             accountSummaryWidgetEl.innerHTML = `
-                <h5>आपका खाता सारांश:</h5>
-                <p><strong>कुल अर्जित कमीशन:</strong> ${formatCurrency(totalCommission)}</p>
-                <p><strong>आपको कुल भुगतान:</strong> ${formatCurrency(totalPaid)}</p>
-                <p><strong>बकाया शेष:</strong> ${formatCurrency(outstanding)}</p>
-                <p><a href="agent_ledger.html">पूरा लेजर देखें</a></p>
-            `;
+                <h5>Your Account Summary:</h5>
+                <p><strong>Total Commission Earned:</strong> ${formatCurrency(totalCommission)}</p>
+                <p><strong>Total Paid to You:</strong> ${formatCurrency(totalPaid)}</p>
+                <p><strong>Outstanding Balance:</strong> ${formatCurrency(outstanding)}</p>
+                <p><a href="agent_ledger.html">View Full Ledger</a></p>
+            `; // Translated labels and link text
         } catch (error) {
-            console.error("खाता सारांश लोड करने में त्रुटि:", error);
-            accountSummaryWidgetEl.innerHTML = "<p style='color:red;'>खाता सारांश लोड करने में त्रुटि हुई।</p>";
+            console.error("Error loading account summary:", error); // Translated error log
+            accountSummaryWidgetEl.innerHTML = "<p style='color:red;'>Error loading account summary.</p>"; // Translated error message
         }
     }
 

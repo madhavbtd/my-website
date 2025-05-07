@@ -54,39 +54,19 @@
     color: var(--agent-text, #343a40);
     font-weight: 500;
 }
+/* Input styles inherit from agent_main.css */
 .form-group input[type="text"],
 .form-group input[type="date"],
 .form-group input[type="number"],
 .form-group select,
 .form-group textarea {
-    padding: 9px 12px; /* Standard padding */
-    border: 1px solid #ced4da;
-    border-radius: 4px;
-    box-sizing: border-box;
-    font-size: 0.95em; /* Standard input font size */
-    height: 38px; /* Standard height */
-    width: 100%;
-    background-color: #fff;
-    transition: border-color .2s ease, box-shadow .2s ease;
-    color: var(--agent-text, #343a40);
-    font-family: 'Poppins', sans-serif; /* Ensure Poppins */
-}
-.form-group input::placeholder,
-.form-group textarea::placeholder {
-    color: #aaa;
-    opacity: 1;
-}
-.form-group input:focus,
-.form-group textarea:focus,
-.form-group select:focus {
-    border-color: var(--agent-primary, #0056b3);
-    outline: 0;
-    box-shadow: 0 0 0 0.2rem rgba(0, 86, 179, 0.25);
+    /* Styles are inherited from agent_main.css .form-group selector */
+    /* Ensure height: 40px; is applied */
+    height: 40px;
 }
 .form-group textarea {
     height: auto;
-    min-height: 70px; /* Minimum height for textarea */
-    resize: vertical;
+    min-height: 70px;
 }
 .info-text {
     flex-basis: 100%;
@@ -133,10 +113,10 @@
     margin-bottom: 15px;
     border: 1px solid var(--agent-border, #dee2e6);
     border-radius: var(--agent-radius, 6px);
-    overflow: hidden;
+    overflow: hidden; /* Hide overflow */
     overflow-x: auto; /* Enable horizontal scroll */
     -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
-    max-height: 300px; /* Max height before scroll */
+    max-height: 45vh; /* Adjusted max height before scroll */
     overflow-y: auto;
 }
 #agentOrderItemsTable {
@@ -147,8 +127,8 @@
 }
 #agentOrderItemsTable thead th {
     background-color: var(--agent-light-bg, #f8f9fa);
-    padding: 10px 12px; /* Slightly reduced padding */
-    font-size: 0.85em; 
+    padding: 10px 12px;
+    font-size: 0.85em;
     font-weight: 600;
     text-align: left;
     border-bottom: 2px solid var(--agent-border, #dee2e6);
@@ -161,25 +141,28 @@
     z-index: 10;
 }
 #agentOrderItemsTable tbody td {
-    padding: 6px 10px; /* Reduced padding for tighter rows */
-    border-bottom: 1px solid #f0f0f0; /* Lighter row border */
+    padding: 6px 10px;
+    border-bottom: 1px solid #f0f0f0;
     vertical-align: middle;
     background-color: var(--agent-white, #ffffff);
-    font-size: 0.9em; 
+    font-size: 0.9em;
 }
 #agentOrderItemsTable tbody tr:last-child td { border-bottom: none; }
-#agentOrderItemsTable tbody tr:hover td { background-color: #f1f8ff; }
+#agentOrderItemsTable tbody tr:hover td { background-color: #f1f8ff; } /* Light hover */
+
+/* Input styles within table */
 #agentOrderItemsTable .form-input {
-    padding: 7px 9px; /* Smaller padding inside table */
-    font-size: 0.95em; /* Match text size */
+    padding: 7px 9px;
+    font-size: 0.95em;
     border-radius: 3px;
     width: 100%;
     box-sizing: border-box;
-    min-height: 36px; /* Slightly smaller height */
+    min-height: 36px;
     border: 1px solid #d8dde2;
+    /* Inherit other styles from agent_main.css .form-group input */
 }
 #agentOrderItemsTable input[readonly].rate-input { /* Style for readonly rate */
-    background-color: #e9ecef; /* Grey background */
+    background-color: #e9ecef;
     cursor: not-allowed;
     font-weight: 500;
 }
@@ -189,65 +172,61 @@
 #agentOrderItemsTable .rate-input { width: 90px !important; text-align: right; }
 #agentOrderItemsTable .dimension-unit-select { width: 70px !important; }
 #agentOrderItemsTable .item-amount { font-weight: 600; text-align: right; white-space: nowrap; color: var(--agent-secondary, #495057); }
-#agentOrderItemsTable td:nth-last-child(2) { text-align: right; vertical-align: middle;}
-#agentOrderItemsTable td:last-child { text-align: center; vertical-align: middle;}
+#agentOrderItemsTable td:nth-last-child(2) { text-align: right; vertical-align: middle;} /* Amount column */
+#agentOrderItemsTable td:last-child { text-align: center; vertical-align: middle;} /* Action column */
 .hidden-col { display: none; } /* Class to hide/show Sq Ft columns */
 
 /* Add Item Button */
 .add-item-button {
-    background-color: var(--info-color, #17a2b8);
-    color: var(--agent-white, #ffffff);
-    margin-top: 10px; /* Space above button */
-    padding: 8px 16px; 
-    font-size: 0.9em; 
-    border-radius: var(--agent-radius, 6px);
-    border: none;
-    cursor: pointer;
-    font-weight: 500;
-    transition: background-color .2s ease;
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    font-family: 'Poppins', sans-serif; /* Ensure Poppins */
+    /* Uses .button class from agent_main.css */
+    background-color: var(--agent-info, #17a2b8); /* Specific color */
+    margin-top: 10px;
+    padding: 8px 16px;
+    font-size: 0.9em;
 }
 .add-item-button:hover { background-color: #117a8b; }
-.add-item-button i { margin-right: 0; }
+.add-item-button i { margin-right: 0; } /* Override if main button has margin */
 
 /* Delete Item Button */
 .delete-item-btn {
+    /* Uses .button class from agent_main.css */
     background-color: transparent;
-    color: var(--danger-color, #dc3545);
+    color: var(--agent-danger, #dc3545);
     border: none;
     padding: 6px;
     font-size: 1.05em;
-    cursor: pointer;
     opacity: 0.65;
-    transition: opacity .2s ease, color .2s ease, background-color .2s ease;
+    transition: opacity .2s ease, color .2s ease, background-color .2s ease, transform 0.1s ease;
     border-radius: 4px;
     line-height: 1;
+    box-shadow: none; /* Override main button shadow */
+    min-width: auto; /* Override main button min-width */
+    height: auto; /* Override main button height */
 }
 .delete-item-btn:hover {
     opacity: 1;
-    color: #a71d2a;
-    background-color: #fdece
+    color: #a71d2a; /* Darker red */
+    background-color: #fdecea; /* Light red background on hover */
+    transform: scale(1.1);
+}
 
 
 /* Order Summary Section Styles */
 .order-summary-section {
-    background-color: var(--agent-light-bg, #f8f9fa); /* Light background */
+    background-color: var(--agent-light-bg, #f8f9fa);
 }
 .summary-grid {
     display: grid;
     grid-template-columns: auto 1fr; /* Label column, Value column */
     align-items: center;
     gap: 10px 15px; /* Row gap, Column gap */
-    padding-top: 15px; /* Space above summary items */
+    padding-top: 15px;
 }
 .summary-grid .summary-label,
 .summary-grid label.summary-label {
     font-weight: 500;
     text-align: right;
-    font-size: 0.9em; /* Slightly smaller labels */
+    font-size: 0.9em;
     color: var(--agent-text-muted, #6c757d);
     padding: 0;
     grid-column: 1 / 2;
@@ -256,28 +235,22 @@
 .summary-grid .summary-input {
     font-weight: 600;
     text-align: left;
-    font-size: 1em; /* Standard value size */
+    font-size: 1em;
     grid-column: 2 / 3;
     width: 100%;
     box-sizing: border-box;
 }
 .summary-grid input.summary-input {
-    padding: 7px 10px; /* Slightly smaller padding */
+    /* Inherits from agent_main.css .form-group input */
+    padding: 7px 10px;
     font-size: 0.95em;
     height: 36px;
-    border-radius: 4px;
-    border: 1px solid #ced4da;
     text-align: right;
-}
-.summary-grid input.summary-input:focus {
-    border-color: var(--agent-primary, #0056b3);
-    outline: 0;
-    box-shadow: 0 0 0 0.2rem rgba(0, 86, 179, 0.25);
 }
 .summary-highlight-label {
     font-weight: 600 !important;
     color: var(--agent-text, #343a40) !important;
-    font-size: 0.95em !important; /* Highlight label size */
+    font-size: 0.95em !important;
 }
 .summary-subtotal,
 .summary-final-amount {
@@ -288,10 +261,10 @@
     width: auto;
     min-width: 100px;
     text-align: right;
-    font-size: 1.05em; /* Highlight value size */
+    font-size: 1.05em;
 }
-.summary-subtotal { background-color: #e9ecef; color: var(--agent-text); } /* Medium grey bg */
-.summary-final-amount { background-color: #cfe2ff; color: var(--agent-primary); } /* Light blue bg */
+.summary-subtotal { background-color: #e9ecef; color: var(--agent-text); }
+.summary-final-amount { background-color: #cfe2ff; color: var(--agent-primary); }
 
 /* Action Buttons Container */
 .button-container {
@@ -299,51 +272,20 @@
     margin-top: 30px;
     border-top: 1px solid var(--agent-border, #dee2e6);
     display: flex;
-    justify-content: flex-end; /* Align buttons to the right */
+    justify-content: flex-end;
     gap: 15px;
-    flex-wrap: wrap; /* Allow wrapping */
+    flex-wrap: wrap;
 }
-.save-button, .cancel-button { /* Style Reuse */
-    padding: 10px 25px;
-    font-size: 1em;
-    border: none;
-    border-radius: var(--agent-radius, 6px);
-    cursor: pointer;
-    font-weight: 600;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    transition: background-color .2s ease, box-shadow .2s ease, transform .1s ease;
-    box-shadow: var(--agent-shadow, 0 2px 5px rgba(0,0,0,0.08));
-    min-width: 120px;
-    font-family: 'Poppins', sans-serif; /* Ensure Poppins */
+/* Uses .button, .primary-button, .secondary-button from agent_main.css */
+.save-button { /* Alias for primary */
+    /* Inherits .button and .primary-button styles */
 }
-.save-button:hover, .cancel-button:hover {
-    box-shadow: 0 4px 8px rgba(0,0,0,0.12);
-    transform: translateY(-1px);
+.cancel-button { /* Alias for secondary */
+    /* Inherits .button and .secondary-button styles */
 }
-.save-button:active, .cancel-button:active {
-    transform: translateY(0);
-    box-shadow: var(--agent-shadow, 0 2px 5px rgba(0,0,0,0.08));
-}
-.save-button { background-color: var(--agent-primary, #0056b3); color: #fff; }
-.save-button:hover { background-color: #00418a; }
-.save-button:disabled { background-color: #a0cfff; cursor: not-allowed; opacity: .7; box-shadow: none; transform: none; }
-.save-button .fa-spinner { animation: fa-spin 1s infinite linear; }
-@keyframes fa-spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-.cancel-button { background-color: var(--agent-text-muted, #6c757d); color: #fff; }
-.cancel-button:hover { background-color: #5a6268; }
 
 /* Error Message Styling */
-.error-message {
-    color: var(--danger-color, #dc3545);
-    background-color: #fdecea;
-    border: 1px solid var(--danger-color, #dc3545);
-    border-radius: var(--agent-radius, 6px);
-    padding: 10px 15px;
-    font-weight: 500;
-    text-align: center;
-    margin-top: 20px;
-    font-size: 0.9em;
+/* Uses .form-message.error from agent_main.css */
+#agentFormErrorMsg {
+    /* Inherits .form-message.error styles */
 }

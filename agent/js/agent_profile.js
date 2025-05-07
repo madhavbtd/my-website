@@ -1,16 +1,16 @@
 // /agent/js/agent_profile.js
 
-// Firebase कॉन्फिग और जरूरी फंक्शन्स इम्पोर्ट करें
+// Import Firebase config and necessary functions
 import { db, auth } from './agent_firebase_config.js';
 import { doc, getDoc, updateDoc, serverTimestamp } from './agent_firebase_config.js';
 import { onAuthStateChanged, EmailAuthProvider, reauthenticateWithCredential, updatePassword as firebaseUpdatePassword } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
-// DOM Elements (मान लें कि ये IDs आपके HTML में मौजूद हैं)
+// DOM Elements (Assume these IDs exist in your HTML)
 const agentWelcomeMessageEl = document.getElementById('agentWelcomeMessage');
 const agentLogoutBtnEl = document.getElementById('agentLogoutBtn');
 const profileFormEl = document.getElementById('agentProfileForm');
 const profileAgentNameInputEl = document.getElementById('profileAgentName');
-const profileAgentEmailInputEl = document.getElementById('profileAgentEmail'); // ईमेल केवल दिखाया जाता है, बदला नहीं जाता
+const profileAgentEmailInputEl = document.getElementById('profileAgentEmail'); // Email is shown, not changed
 const profileAgentContactInputEl = document.getElementById('profileAgentContact');
 const updateProfileBtnEl = document.getElementById('updateProfileBtn');
 const profileMessageEl = document.getElementById('profileMessage');
@@ -22,32 +22,32 @@ const changePasswordBtnEl = document.getElementById('changePasswordBtn');
 const passwordChangeMessageEl = document.getElementById('passwordChangeMessage');
 
 let currentUser = null;
-let agentDocRef = null; // Firestore में एजेंट डॉक्यूमेंट का रेफरेंस
+let agentDocRef = null; // Reference to the agent document in Firestore
 
-// संदेश दिखाने के लिए हेल्पर फ़ंक्शन
+// Helper function to display messages
 function showMessage(element, message, isError = false) {
-    if (!element) return; // यदि एलिमेंट मौजूद नहीं है तो बाहर निकलें
+    if (!element) return; // Exit if element doesn't exist
     element.textContent = message;
-    element.className = 'form-message'; // बेस क्लास रीसेट करें
+    element.className = 'form-message'; // Reset base class
     element.classList.add(isError ? 'error' : 'success');
     element.style.display = message ? 'block' : 'none';
 }
 
-// प्रोफाइल डेटा लोड करने का फ़ंक्शन
+// Function to load profile data
 async function loadProfileData() {
     if (!currentUser) {
-        console.error("प्रोफ़ाइल लोड करने के लिए वर्तमान उपयोगकर्ता उपलब्ध नहीं है।");
-        showMessage(profileMessageEl, "प्रोफ़ाइल लोड करने में असमर्थ। पुनः लॉग इन करें।", true);
+        console.error("Current user not available for loading profile.");
+        showMessage(profileMessageEl, "Unable to load profile. Please log in again.", true); // English message
         return;
     }
-    // ईमेल को Auth से दिखाएं (इसे संपादित करने योग्य नहीं बनाना चाहिए)
+    // Show email from Auth (should not be editable here)
     if (profileAgentEmailInputEl) {
         profileAgentEmailInputEl.value = currentUser.email;
-        profileAgentEmailInputEl.readOnly = true; // इसे केवल पढ़ने के लिए सेट करें
-        profileAgentEmailInputEl.style.backgroundColor = '#e9ecef'; // थोड़ा ग्रे बैकग्राउंड
+        profileAgentEmailInputEl.readOnly = true; // Set to read-only
+        profileAgentEmailInputEl.style.backgroundColor = '#e9ecef'; // Slightly grey background
     }
 
-    // Firestore से अन्य विवरण लोड करें
+    // Load other details from Firestore
     agentDocRef = doc(db, "agents", currentUser.uid);
     try {
         const agentSnap = await getDoc(agentDocRef);
@@ -55,25 +55,25 @@ async function loadProfileData() {
             const agentData = agentSnap.data();
             if (profileAgentNameInputEl) profileAgentNameInputEl.value = agentData.name || '';
             if (profileAgentContactInputEl) profileAgentContactInputEl.value = agentData.contact || '';
-            console.log("एजेंट प्रोफ़ाइल डेटा Firestore से लोड किया गया:", agentData);
+            console.log("Agent profile data loaded from Firestore:", agentData);
         } else {
-            console.warn("Firestore में एजेंट दस्तावेज़ नहीं मिला:", currentUser.uid);
-            showMessage(profileMessageEl, "प्रोफ़ाइल डेटा नहीं मिला। कृपया एडमिन से संपर्क करें।", true);
-            // प्रोफ़ाइल फ़ॉर्म को अक्षम करें यदि डेटा नहीं मिला
+            console.warn("Agent document not found in Firestore:", currentUser.uid);
+            showMessage(profileMessageEl, "Profile data not found. Please contact admin.", true); // English message
+            // Disable profile form if data not found
             if (profileFormEl) profileFormEl.style.opacity = '0.5';
             if (updateProfileBtnEl) updateProfileBtnEl.disabled = true;
         }
     } catch (error) {
-        console.error("Firestore से एजेंट प्रोफ़ाइल डेटा लोड करने में त्रुटि:", error);
-        showMessage(profileMessageEl, "प्रोफ़ाइल लोड करने में त्रुटि: " + error.message, true);
+        console.error("Error loading agent profile data from Firestore:", error);
+        showMessage(profileMessageEl, "Error loading profile: " + error.message, true); // English message
     }
 }
 
-// प्रोफाइल फॉर्म सबमिट हैंडलर
+// Profile form submit handler
 async function handleProfileUpdate(event) {
     event.preventDefault();
     if (!agentDocRef || !currentUser) {
-        showMessage(profileMessageEl, "प्रोफ़ाइल अपडेट करने में असमर्थ। उपयोगकर्ता या डेटा संदर्भ गायब है।", true);
+        showMessage(profileMessageEl, "Unable to update profile. User or data reference missing.", true); // English message
         return;
     }
 
@@ -81,39 +81,39 @@ async function handleProfileUpdate(event) {
     const newContact = profileAgentContactInputEl.value.trim();
 
     if (!newName) {
-        showMessage(profileMessageEl, "पूरा नाम आवश्यक है।", true);
+        showMessage(profileMessageEl, "Full name is required.", true); // English message
         profileAgentNameInputEl.focus();
         return;
     }
 
     const originalBtnHTML = updateProfileBtnEl.innerHTML;
     updateProfileBtnEl.disabled = true;
-    updateProfileBtnEl.innerHTML = '<i class="fas fa-spinner fa-spin"></i> अपडेट हो रहा है...';
-    showMessage(profileMessageEl, ""); // पिछला संदेश हटाएं
+    updateProfileBtnEl.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Updating...'; // English message
+    showMessage(profileMessageEl, ""); // Clear previous message
 
     try {
         const dataToUpdate = {
             name: newName,
-            name_lowercase: newName.toLowerCase(),
-            contact: newContact, // यदि खाली है तो खाली स्ट्रिंग सहेजी जाएगी
+            name_lowercase: newName.toLowerCase(), // For case-insensitive search/sort
+            contact: newContact, // Will save empty string if blank
             updatedAt: serverTimestamp()
         };
-        // सुरक्षा नियम यह सुनिश्चित करेंगे कि एजेंट केवल इन फ़ील्ड्स को ही अपडेट कर सके
+        // Security rules should ensure agent can only update these fields
         await updateDoc(agentDocRef, dataToUpdate);
-        showMessage(profileMessageEl, "प्रोफ़ाइल सफलतापूर्वक अपडेट किया गया!");
-        console.log("प्रोफ़ाइल अपडेट किया गया:", dataToUpdate);
-        // Welcome संदेश भी अपडेट करें (यदि मौजूद है)
+        showMessage(profileMessageEl, "Profile updated successfully!"); // English message
+        console.log("Profile updated:", dataToUpdate);
+        // Also update the Welcome message if present
         if(agentWelcomeMessageEl) agentWelcomeMessageEl.textContent = `Welcome, ${newName || currentUser.email}`;
     } catch (error) {
-        console.error("Firestore में प्रोफ़ाइल अपडेट करने में त्रुटि:", error);
-        showMessage(profileMessageEl, "प्रोफ़ाइल अपडेट करने में त्रुटि: " + error.message, true);
+        console.error("Error updating profile in Firestore:", error);
+        showMessage(profileMessageEl, "Error updating profile: " + error.message, true); // English message
     } finally {
         updateProfileBtnEl.disabled = false;
         updateProfileBtnEl.innerHTML = originalBtnHTML;
     }
 }
 
-// पासवर्ड बदलें फॉर्म सबमिट हैंडलर
+// Change password form submit handler
 async function handlePasswordChange(event) {
     event.preventDefault();
     const currentPassword = currentPasswordInputEl.value;
@@ -122,16 +122,16 @@ async function handlePasswordChange(event) {
 
     // Basic Validation
     if (!currentPassword || !newPassword || !confirmNewPassword) {
-         showMessage(passwordChangeMessageEl, "सभी पासवर्ड फ़ील्ड आवश्यक हैं।", true);
+         showMessage(passwordChangeMessageEl, "All password fields are required.", true); // English message
          return;
     }
     if (newPassword !== confirmNewPassword) {
-        showMessage(passwordChangeMessageEl, "नया पासवर्ड मेल नहीं खाता।", true);
+        showMessage(passwordChangeMessageEl, "New passwords do not match.", true); // English message
         confirmNewPasswordInputEl.focus();
         return;
     }
     if (newPassword.length < 6) {
-        showMessage(passwordChangeMessageEl, "नया पासवर्ड कम से कम 6 अक्षर का होना चाहिए।", true);
+        showMessage(passwordChangeMessageEl, "New password must be at least 6 characters long.", true); // English message
         newPasswordInputEl.focus();
         return;
     }
@@ -139,37 +139,37 @@ async function handlePasswordChange(event) {
     // Disable button and show loader
     const originalBtnHTML = changePasswordBtnEl.innerHTML;
     changePasswordBtnEl.disabled = true;
-    changePasswordBtnEl.innerHTML = '<i class="fas fa-spinner fa-spin"></i> बदल रहा है...';
+    changePasswordBtnEl.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Changing...'; // English message
     showMessage(passwordChangeMessageEl, ""); // Clear previous message
 
     try {
         const user = auth.currentUser;
-        if (!user) throw new Error("कोई उपयोगकर्ता वर्तमान में साइन इन नहीं है।");
+        if (!user) throw new Error("No user is currently signed in.");
 
         // Re-authenticate user
         const credential = EmailAuthProvider.credential(user.email, currentPassword);
         await reauthenticateWithCredential(user, credential);
-        console.log("उपयोगकर्ता सफलतापूर्वक पुनः प्रमाणित हुआ।");
+        console.log("User re-authenticated successfully.");
 
         // Change password
         await firebaseUpdatePassword(user, newPassword);
-        console.log("पासवर्ड सफलतापूर्वक बदल दिया गया।");
+        console.log("Password changed successfully.");
 
-        showMessage(passwordChangeMessageEl, "पासवर्ड सफलतापूर्वक बदल दिया गया!");
-        passwordChangeFormEl.reset(); // फॉर्म रीसेट करें
+        showMessage(passwordChangeMessageEl, "Password changed successfully!"); // English message
+        passwordChangeFormEl.reset(); // Reset form
     } catch (error) {
-        console.error("पासवर्ड बदलने में त्रुटि:", error);
-        let msg = "पासवर्ड बदलने में त्रुटि।";
-        if (error.code === 'auth/wrong-password') {
-            msg = "वर्तमान पासवर्ड गलत है। कृपया पुनः प्रयास करें।";
+        console.error("Error changing password:", error);
+        let msg = "Error changing password."; // English message
+        if (error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
+            msg = "Current password is incorrect. Please try again."; // English message
             currentPasswordInputEl.focus();
         } else if (error.code === 'auth/too-many-requests') {
-            msg = "बहुत अधिक प्रयास। कृपया बाद में पुनः प्रयास करें।";
+            msg = "Too many attempts. Please try again later."; // English message
         } else if (error.code === 'auth/weak-password') {
-             msg = "नया पासवर्ड कमजोर है। कृपया मजबूत पासवर्ड चुनें।";
+             msg = "The new password is too weak. Please choose a stronger password."; // English message
              newPasswordInputEl.focus();
         } else {
-            msg = `त्रुटि: ${error.message}`;
+            msg = `Error: ${error.message}`;
         }
         showMessage(passwordChangeMessageEl, msg, true);
     } finally {
@@ -195,12 +195,12 @@ document.addEventListener('DOMContentLoaded', () => {
     // Attach Logout Listener
     if (agentLogoutBtnEl) {
         agentLogoutBtnEl.addEventListener('click', () => {
-             if (confirm("क्या आप वाकई लॉग आउट करना चाहते हैं?")) {
+             if (confirm("Are you sure you want to logout?")) { // English message
                 auth.signOut().then(() => {
                     window.location.href = 'agent_login.html';
                 }).catch(error => {
                     console.error("Logout error:", error);
-                    alert("लॉगआउट विफल रहा।");
+                    alert("Logout failed."); // English message
                 });
             }
         });
@@ -212,13 +212,13 @@ document.addEventListener('DOMContentLoaded', () => {
             currentUser = user;
             console.log("Agent authenticated:", currentUser.uid);
             if (agentWelcomeMessageEl) agentWelcomeMessageEl.textContent = `Welcome, ${user.email || 'Agent'}`;
-            loadProfileData(); // प्रोफाइल डेटा लोड करें
+            loadProfileData(); // Load profile data
         } else {
-            // कोई उपयोगकर्ता लॉग इन नहीं है, लॉगिन पेज पर भेजें
+            // No user logged in, redirect to login
             console.log("Agent not logged in on profile page. Redirecting...");
             window.location.replace('agent_login.html');
         }
     });
 
-    console.log("Agent Profile JS Initialized.");
+    console.log("Agent Profile JS Initialized."); // English comment
 }); // End DOMContentLoaded

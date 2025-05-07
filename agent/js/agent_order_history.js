@@ -1,23 +1,24 @@
 // /agent/js/agent_order_history.js
 
-// Firebase functions और इंस्टेंस इम्पोर्ट करें
+// Import Firebase functions and instances
 import { db, auth } from './agent_firebase_config.js';
 import {
     collection, query, where, orderBy, onSnapshot, Timestamp
 } from './agent_firebase_config.js'; // Firestore functions from config
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js"; // getDoc को भी इम्पोर्ट करें
+import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js"; // Also import getDoc
 
 // --- DOM Elements ---
 const tableBody = document.getElementById('agentOrderHistoryTableBody');
-const loadingMessageEl = document.getElementById('loadingAgentHistoryMessage'); // वेरिएबल का नाम बदला
-const noOrdersMessageEl = document.getElementById('noAgentOrdersMessage'); // वेरिएबल का नाम बदला
-const agentWelcomeMessageEl = document.getElementById('agentWelcomeMessage'); // हेडर से
-const agentLogoutBtnEl = document.getElementById('agentLogoutBtn'); // हेडर से
+const loadingMessageRowEl = document.getElementById('loadingAgentHistoryMessage'); // The <tr> element
+const noOrdersMessageRowEl = document.getElementById('noAgentOrdersMessageRow'); // The <tr> element containing the message <p>
+const noOrdersMessageParagraphEl = document.getElementById('noAgentOrdersMessage'); // The <p> element itself
+const agentWelcomeMessageEl = document.getElementById('agentWelcomeMessage'); // From header
+const agentLogoutBtnEl = document.getElementById('agentLogoutBtn'); // From header
 
 let currentUser = null;
-let agentPermissions = { role: null, status: 'inactive' }; // एजेंट की अनुमतियाँ स्टोर करने के लिए
-let unsubscribeAgentOrders = null; // Listener को बंद करने के लिए
+let agentPermissions = { role: null, status: 'inactive' }; // To store agent permissions
+let unsubscribeAgentOrders = null; // To stop the listener
 
 // --- Helper Functions ---
 function escapeHtml(unsafe) { if (typeof unsafe !== 'string') unsafe = String(unsafe || ''); return unsafe.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");}
@@ -28,78 +29,84 @@ function getStatusClass(status) { if (!status) return 'status-unknown'; const no
 
 // --- Main Logic ---
 
-// एजेंट के ऑर्डर्स को लोड और डिस्प्ले करने का फ़ंक्शन
+// Function to load and display agent's orders
 async function loadAgentOrderHistory(agentId) {
-    if (!tableBody || !loadingMessageEl || !noOrdersMessageEl || !db) {
+    if (!tableBody || !loadingMessageRowEl || !noOrdersMessageRowEl || !db) {
         console.error("History Table elements or DB not found.");
-        if (tableBody && loadingMessageEl) {
-            loadingMessageEl.style.display = 'none';
-            tableBody.innerHTML = `<tr><td colspan="7" style="color:red;">पेज लोड करने में त्रुटि।</td></tr>`;
+        if (tableBody && loadingMessageRowEl) {
+            loadingMessageRowEl.style.display = 'none';
+            tableBody.innerHTML = `<tr><td colspan="7" style="color:red;">Error loading page.</td></tr>`; // English message
         }
         return;
     }
-    console.log(`एजेंट ${agentId} के लिए ऑर्डर इतिहास लोड किया जा रहा है...`);
+    console.log(`Loading order history for agent ${agentId}...`);
 
-    loadingMessageEl.style.display = 'table-row';
-    noOrdersMessageEl.style.display = 'none';
-    const rows = tableBody.querySelectorAll('tr:not(#loadingAgentHistoryMessage)');
+    loadingMessageRowEl.style.display = 'table-row';
+    noOrdersMessageRowEl.style.display = 'none';
+    // Clear previous rows except the loading/no-orders rows
+    const rows = tableBody.querySelectorAll('tr:not(#loadingAgentHistoryMessage):not(#noAgentOrdersMessageRow)');
     rows.forEach(row => row.remove());
 
     if (unsubscribeAgentOrders) {
         unsubscribeAgentOrders();
-        console.log("पिछला एजेंट ऑर्डर लिस्नर बंद किया गया।");
+        console.log("Previous agent order listener stopped.");
     }
 
     try {
-        const ordersRef = collection(db, "orders"); // मुख्य 'orders' कलेक्शन को सुनें
+        const ordersRef = collection(db, "orders"); // Listen to the main 'orders' collection
 
-        // क्वेरी: केवल इस एजेंट के ऑर्डर्स लाएं (agentId फील्ड पर फ़िल्टर करें), createdAt के अनुसार सॉर्ट करें
+        // Query: Fetch only orders for this agent (filter by agentId), sort by createdAt
         const q = query(ordersRef,
-                        where("agentId", "==", agentId), // agentId द्वारा फ़िल्टर करें
-                        orderBy("createdAt", "desc") // सबसे नया पहले
+                        where("agentId", "==", agentId), // Filter by agentId
+                        orderBy("createdAt", "desc") // Newest first
                        );
 
         unsubscribeAgentOrders = onSnapshot(q, (snapshot) => {
-            console.log(`एजेंट इतिहास स्नैपशॉट: ${snapshot.docs.length} ऑर्डर प्राप्त हुए।`);
-            loadingMessageEl.style.display = 'none';
+            console.log(`Agent history snapshot: ${snapshot.docs.length} orders received.`);
+            loadingMessageRowEl.style.display = 'none';
 
-            const currentRows = tableBody.querySelectorAll('tr:not(#loadingAgentHistoryMessage)');
-            currentRows.forEach(row => row.remove()); // सुनिश्चित करें कि पुरानी पंक्तियाँ हटाई गई हैं
+            const currentDataRows = tableBody.querySelectorAll('tr:not(#loadingAgentHistoryMessage):not(#noAgentOrdersMessageRow)');
+            currentDataRows.forEach(row => row.remove()); // Ensure old rows are removed
 
             if (snapshot.empty) {
-                noOrdersMessageEl.style.display = 'table-row';
-                if (!document.getElementById('noAgentOrdersMessage')) { // यदि पहले से नहीं जोड़ा गया है
-                     tableBody.appendChild(noOrdersMessageEl);
-                }
+                noOrdersMessageRowEl.style.display = 'table-row';
+                // Ensure the paragraph element has the right message (it's static in HTML now)
+                if(noOrdersMessageParagraphEl) noOrdersMessageParagraphEl.textContent = "You haven't submitted any orders yet."; // Ensure English message
             } else {
-                noOrdersMessageEl.style.display = 'none';
+                noOrdersMessageRowEl.style.display = 'none';
                 snapshot.docs.forEach((doc) => {
                     displayAgentOrderRow(doc.id, doc.data());
                 });
             }
 
         }, (error) => {
-            console.error("एजेंट ऑर्डर इतिहास फ़ेच करने में त्रुटि:", error);
-            loadingMessageEl.style.display = 'none';
-            tableBody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: red;">ऑर्डर इतिहास लोड करने में त्रुटि: ${error.message}</td></tr>`;
+            console.error("Error fetching agent order history:", error);
+            loadingMessageRowEl.style.display = 'none';
+            tableBody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: red;">Error loading order history: ${error.message}</td></tr>`; // English message
         });
 
     } catch (error) {
-        console.error("एजेंट ऑर्डर इतिहास लिस्नर सेटअप करने में त्रुटि:", error);
-        loadingMessageEl.style.display = 'none';
-        tableBody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: red;">लिस्नर सेटअप करने में त्रुटि।</td></tr>`;
+        console.error("Error setting up agent order history listener:", error);
+        loadingMessageRowEl.style.display = 'none';
+        tableBody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: red;">Error setting up listener.</td></tr>`; // English message
     }
 }
 
-// एक ऑर्डर पंक्ति (row) डिस्प्ले करने का फ़ंक्शन
+// Function to display a single order row
 function displayAgentOrderRow(orderFirestoreId, orderData) {
     if (!tableBody) return;
 
-    const row = tableBody.insertRow();
+    // Check if row already exists to prevent duplicates from snapshot updates
+    if (tableBody.querySelector(`tr[data-id="${orderFirestoreId}"]`)) {
+        console.log(`Row for ${orderFirestoreId} already exists. Skipping.`);
+        return; // Or update the existing row if needed
+    }
+
+    const row = tableBody.insertRow(); // Insert at the end
     row.setAttribute('data-id', orderFirestoreId);
 
     const displayOrderId = escapeHtml(orderData.orderId || `Sys:${orderFirestoreId.substring(0,6)}`);
-    // orderDate या createdAt को प्राथमिकता दें
+    // Prioritize orderDate or createdAt
     const orderDateToFormat = orderData.orderDate || orderData.createdAt;
     const orderDate = formatTimestamp(orderDateToFormat);
     const customerName = escapeHtml(orderData.customerDetails?.fullName || 'N/A');
@@ -107,12 +114,12 @@ function displayAgentOrderRow(orderFirestoreId, orderData) {
     let itemsSummary = "N/A";
     if (orderData.items && orderData.items.length > 0) {
         itemsSummary = orderData.items.map(item =>
-            `${escapeHtml(item.productName || '?')} (मात्रा: ${escapeHtml(item.quantity || '?')})`
+            `${escapeHtml(item.productName || '?')} (Qty: ${escapeHtml(item.quantity || '?')})` // English label
         ).join(', ');
         if (itemsSummary.length > 50) itemsSummary = itemsSummary.substring(0, 50) + "...";
     }
 
-    const totalAmount = formatCurrency(orderData.finalAmount || orderData.totalAmount); // finalAmount या totalAmount
+    const totalAmount = formatCurrency(orderData.finalAmount ?? orderData.totalAmount); // Use finalAmount or totalAmount
     const status = escapeHtml(orderData.status || 'Unknown');
     const statusClass = getStatusClass(status);
 
@@ -124,11 +131,11 @@ function displayAgentOrderRow(orderFirestoreId, orderData) {
         <td style="text-align: right;">${totalAmount}</td>
         <td style="text-align: center;"><span class="status-badge ${statusClass}">${status}</span></td>
         <td style="text-align: center;">
-            <button class="button action-button view-details-button small-button" data-action="view-details" data-id="${orderFirestoreId}" title="ऑर्डर विवरण देखें">
-                <i class="fas fa-eye"></i> देखें
+            <button class="button view-details-button small-button" data-action="view-details" data-id="${orderFirestoreId}" title="View Order Details">
+                <i class="fas fa-eye"></i> View
             </button>
         </td>
-    `;
+    `; // English button text/title
 }
 
 // --- Initialization ---
@@ -146,24 +153,25 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 if (agentDocSnap.exists() && agentDocSnap.data().role === 'agent' && agentDocSnap.data().status === 'active') {
                     agentPermissions = agentDocSnap.data();
-                    console.log("एजेंट प्रमाणित (Order History) और अनुमतियाँ लोड की गईं:", agentPermissions);
-                    loadAgentOrderHistory(currentUser.uid); // वर्तमान एजेंट की ID पास करें
+                    console.log("Agent authenticated (Order History) and permissions loaded:", agentPermissions);
+                    loadAgentOrderHistory(currentUser.uid); // Pass current agent's ID
                 } else {
-                    console.error("एजेंट दस्तावेज़ नहीं मिला या भूमिका/स्थिति अमान्य है। लॉग आउट किया जा रहा है।");
-                    if(agentWelcomeMessageEl) agentWelcomeMessageEl.textContent = "अमान्य एजेंट खाता।";
-                    if(tableBody && loadingMessageEl) {
-                        loadingMessageEl.style.display = 'none';
-                        tableBody.innerHTML = `<tr><td colspan="7" class="form-message error">आप ऑर्डर इतिहास देखने के लिए अधिकृत नहीं हैं।</td></tr>`;
+                    console.error("Agent document not found or role/status invalid. Logging out.");
+                    if(agentWelcomeMessageEl) agentWelcomeMessageEl.textContent = "Invalid Agent Account.";
+                    if(tableBody && loadingMessageRowEl) {
+                        loadingMessageRowEl.style.display = 'none';
+                        // Display error in table body
+                         tableBody.innerHTML = `<tr><td colspan="7"><p class="form-message error">You are not authorized to view order history.</p></td></tr>`; // English message
                     }
                     // auth.signOut();
                     // window.location.href = 'agent_login.html';
                 }
             } catch (error) {
-                console.error("एजेंट अनुमतियाँ लोड करने में त्रुटि:", error);
-                 if(agentWelcomeMessageEl) agentWelcomeMessageEl.textContent = "प्रोफ़ाइल लोड करने में त्रुटि।";
-                 if(tableBody && loadingMessageEl) {
-                     loadingMessageEl.style.display = 'none';
-                     tableBody.innerHTML = `<tr><td colspan="7" class="form-message error">अनुमतियाँ लोड करने में त्रुटि। (${error.message})</td></tr>`;
+                console.error("Error loading agent permissions:", error);
+                 if(agentWelcomeMessageEl) agentWelcomeMessageEl.textContent = "Error loading profile.";
+                 if(tableBody && loadingMessageRowEl) {
+                     loadingMessageRowEl.style.display = 'none';
+                     tableBody.innerHTML = `<tr><td colspan="7"><p class="form-message error">Error loading permissions. (${error.message})</p></td></tr>`; // English message
                  }
                 // auth.signOut();
                 // window.location.href = 'agent_login.html';
@@ -174,21 +182,21 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // लॉगआउट बटन
+    // Logout button
     if (agentLogoutBtnEl) {
         agentLogoutBtnEl.addEventListener('click', () => {
-            if (confirm("क्या आप वाकई लॉग आउट करना चाहते हैं?")) {
+            if (confirm("Are you sure you want to logout?")) { // Translated
                 auth.signOut().then(() => {
                     window.location.href = 'agent_login.html';
                 }).catch((error) => {
                     console.error("Agent Logout Error:", error);
-                    alert("लॉगआउट विफल रहा।");
+                    alert("Logout failed."); // Translated
                 });
             }
         });
     }
 
-    // टेबल में एक्शन बटन के लिए लिस्नर (View Details)
+    // Listener for action buttons in the table (View Details)
     if(tableBody) {
         tableBody.addEventListener('click', (event) => {
             const targetButton = event.target.closest('button.view-details-button');
@@ -196,11 +204,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const orderId = targetButton.dataset.id;
             if (orderId) {
-                // यहाँ आपको ऑर्डर विवरण दिखाने के लिए एक Modal या एक नया पेज खोलना होगा।
-                // अभी के लिए, हम एक अलर्ट दिखाएंगे।
-                alert(`ऑर्डर विवरण देखें: ${orderId}. (यह कार्यक्षमता अभी लागू की जानी है)`);
-                // उदाहरण: openAgentOrderDetailModal(orderId);
-                // या: window.location.href = `agent_order_detail.html?id=${orderId}`;
+                // Here you would open a Modal or a new page to show order details.
+                // For now, just an alert.
+                alert(`View Order Details: ${orderId}. (Functionality to be implemented)`); // Translated alert
+                // Example: openAgentOrderDetailModal(orderId);
+                // Or: window.location.href = `agent_order_detail.html?id=${orderId}`;
             }
         });
     }

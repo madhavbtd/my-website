@@ -1,47 +1,48 @@
 /* /agent/css/agent_customers.css */
 
-/* agent_main.css में परिभाषित CSS वेरिएबल्स का उपयोग करें */
+/* Use CSS variables defined in agent_main.css */
 
 .page-actions {
     display: flex;
     justify-content: space-between;
     align-items: center;
     margin-bottom: 20px;
-    flex-wrap: wrap; /* छोटे स्क्रीन पर रैप करें */
+    flex-wrap: wrap; /* Wrap on smaller screens */
     gap: 15px;
 }
 
 .page-actions .form-input { /* Search input */
     max-width: 300px;
-    height: 38px; /* बटन के साथ ऊंचाई संरेखित करें */
+    height: 38px; /* Align height with button */
     padding: 8px 12px;
+    /* Other styles inherit from agent_main.css */
 }
 
-/* Modal Styles (agent_management.css से प्रेरित, लेकिन एजेंट थीम के साथ) */
+/* Modal Styles (Inspired by agent_management.css, but with agent theme) */
 .modal-overlay {
     position: fixed;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(0,0,0,0.5); /* गहरा ओवरले */
+    background-color: rgba(0,0,0,0.5); /* Darker overlay */
     display: flex;
     align-items: center;
     justify-content: center;
-    z-index: 1050; /* नेविगेशन बार के ऊपर */
+    z-index: 1050; /* Above nav bar */
     opacity: 0;
     visibility: hidden;
     transition: opacity 0.3s ease, visibility 0.3s ease;
 }
-.modal-overlay.active { /* JS द्वारा जोड़ा जाएगा */
+.modal-overlay.active { /* Will be added by JS */
     opacity: 1;
     visibility: visible;
 }
 
-.modal-overlay .modal-content { /* .card-style पहले से HTML में है */
+.modal-overlay .modal-content { /* .card-style is already in HTML */
     width: 100%;
-    max-width: 550px; /* Modal की चौड़ाई */
-    padding: 0; /* कार्ड स्टाइल से पैडिंग आएगी, लेकिन हेडर/एक्शन के लिए ओवरराइड करें */
+    max-width: 550px; /* Modal width */
+    padding: 0; /* Padding comes from card-style, but override for header/actions */
     position: relative;
     transform: scale(0.95);
     transition: transform 0.3s ease;
@@ -50,10 +51,11 @@
     transform: scale(1);
 }
 
-.modal-overlay .modal-content h2 { /* Modal का टाइटल */
+.modal-overlay .modal-content h2 { /* Modal Title */
     padding: 15px 20px;
-    margin-bottom: 0; /* फॉर्म ग्रुप से गैप आएगा */
-    font-size: 1.2em; /* थोड़ा छोटा */
+    margin-bottom: 0; /* Gap will come from form-group */
+    font-size: 1.2em; /* Slightly smaller */
+    /* Inherits other styles from .card-style h2 */
 }
 
 .modal-close-btn {
@@ -62,7 +64,7 @@
     right: 15px;
     background: none;
     border: none;
-    font-size: 1.8em; /* बड़ा क्लोज बटन */
+    font-size: 1.8em; /* Larger close button */
     color: var(--agent-text-muted);
     cursor: pointer;
     line-height: 1;
@@ -71,8 +73,8 @@
     color: var(--agent-danger);
 }
 
-#customerForm { /* Modal के अंदर का फॉर्म */
-    padding: 20px 25px; /* h2 के बाद पैडिंग */
+#customerForm { /* Form inside modal */
+    padding: 20px 25px; /* Padding after h2 */
 }
 
 .modal-actions {
@@ -84,26 +86,23 @@
     border-top: 1px solid var(--agent-border);
 }
 .modal-actions .button {
+    /* Inherit from agent_main.css */
     padding: 9px 18px;
     font-size: 0.9em;
 }
-.button.secondary-button { /* Cancel बटन के लिए */
-    background-color: var(--agent-text-muted);
-}
-.button.secondary-button:hover {
-    background-color: #5a6268; /* गहरा ग्रे */
-}
+/* Styles for specific buttons like Cancel use .secondary-button from agent_main.css */
+/* .button.secondary-button defined in agent_main.css */
 
 
-/* ग्राहकों की टेबल */
+/* Customers Table */
 .customers-table-container {
-    /* .table-container की सामान्य स्टाइल agent_main.css से आएगी */
+    /* General .table-container styles from agent_main.css will apply */
 }
 #agentCustomersTable {
-    /* सामान्य टेबल स्टाइल agent_main.css से आएगी */
+    /* General table styles from agent_main.css will apply */
 }
 #agentCustomersTable th, #agentCustomersTable td {
-    /* सामान्य th/td स्टाइल agent_main.css से आएगी */
+    /* General th/td styles from agent_main.css will apply */
 }
 #agentCustomersTable td:nth-child(1) { /* Customer Name */
     font-weight: 500;
@@ -113,20 +112,23 @@
     text-align: center;
     white-space: nowrap;
 }
-#agentCustomersTable .actions-cell .button { /* टेबल के अंदर एक्शन बटन */
-    padding: 5px 8px;
+#agentCustomersTable .actions-cell .button { /* Action buttons within table */
+    /* Use general .button styles from agent_main.css */
+    padding: 5px 8px; /* Make them smaller */
     font-size: 0.8em;
     margin: 0 3px;
 }
 #agentCustomersTable .actions-cell .button.edit-btn {
+    /* Use .info-button styles from agent_main.css */
     background-color: var(--agent-info);
 }
 #agentCustomersTable .actions-cell .button.edit-btn:hover {
-    background-color: #117a8b;
+    background-color: #117a8b; /* Darker info */
 }
 #agentCustomersTable .actions-cell .button.delete-btn {
+    /* Use .danger-button styles from agent_main.css */
     background-color: var(--agent-danger);
 }
 #agentCustomersTable .actions-cell .button.delete-btn:hover {
-    background-color: #c82333;
+    background-color: #c82333; /* Darker danger */
 }

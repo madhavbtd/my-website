@@ -1,13 +1,13 @@
 // /agent/js/agent_products.js
 
-// Firebase कॉन्फिग और जरूरी फंक्शन्स इम्पोर्ट करें
+// Import Firebase config and necessary functions
 import { db, auth } from './agent_firebase_config.js';
-import { collection, query, where, orderBy, getDocs, doc, getDoc } from './agent_firebase_config.js'; // या सीधे Firebase SDK से
+import { collection, query, where, orderBy, getDocs, doc, getDoc } from './agent_firebase_config.js'; // Or directly from Firebase SDK
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
 let currentUser = null;
-let agentPermissions = null; // एजेंट की अनुमतियाँ (जैसे allowedCategories) यहाँ स्टोर होंगी
-let allProductsCache = []; // सभी लोड किए गए उत्पादों का कैश
+let agentPermissions = null; // Agent permissions (e.g., allowedCategories) will be stored here
+let allProductsCache = []; // Cache for all loaded products
 
 // --- DOM Elements ---
 const productListContainer = document.getElementById('agentProductList');
@@ -17,18 +17,31 @@ const categoryFilterSelect = document.getElementById('productCategoryFilter');
 const clearFiltersButton = document.getElementById('clearProductFiltersBtn');
 const noProductsMessage = document.getElementById('noProductsMessage');
 
-// (Product Detail Page Elements - यदि यह फ़ाइल दोनों पेजों को संभालती है)
-const detailContainer = document.getElementById('productDetailContainer'); // यदि यह product_detail.html के लिए भी है
-// ... (अन्य डिटेल पेज एलिमेंट्स पहले जैसे)
-const agentWelcomeMessageEl = document.getElementById('agentWelcomeMessage'); // हेडर से
-const agentLogoutBtnEl = document.getElementById('agentLogoutBtn'); // हेडर से
+// (Product Detail Page Elements - If this file handles both pages)
+const detailContainer = document.getElementById('productDetailContainer');
+const detailImageEl = document.getElementById('mainProductImage');
+const detailNameEl = document.getElementById('productName');
+const detailCategoryEl = document.getElementById('productCategory');
+const detailAgentRateEl = document.getElementById('productAgentRate');
+const detailStockEl = document.getElementById('productStock');
+const detailDescriptionEl = document.getElementById('productDescription');
+const detailDiagramSectionEl = document.getElementById('diagramSection');
+const detailDiagramButtonEl = document.getElementById('diagramDownloadBtn');
+const breadcrumbProductNameEl = document.getElementById('breadcrumbProductName');
+const detailLoadingEl = document.getElementById('loadingProductDetail');
+const detailContentEl = document.getElementById('productDetailContent');
+const detailErrorEl = document.getElementById('productError');
+
+// (Header Elements)
+const agentWelcomeMessageEl = document.getElementById('agentWelcomeMessage');
+const agentLogoutBtnEl = document.getElementById('agentLogoutBtn');
 
 
 // --- Helper Functions ---
-function escapeHtml(unsafe) { /* ... (पहले जैसा) ... */ }
-function formatCurrency(amount) { /* ... (पहले जैसा) ... */ }
+function escapeHtml(unsafe) { if (typeof unsafe !== 'string') unsafe = String(unsafe || ''); return unsafe.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");}
+function formatCurrency(amount) { const num = Number(amount); return isNaN(num) ? 'N/A' : num.toLocaleString('en-IN', { style: 'currency', currency: 'INR', minimumFractionDigits: 2, maximumFractionDigits: 2 });}
 
-// --- प्रमाणीकरण और अनुमति लोड करना ---
+// --- Authentication and Permission Loading ---
 async function initializeAgentSession() {
     return new Promise((resolve, reject) => {
         onAuthStateChanged(auth, async (user) => {
@@ -36,31 +49,31 @@ async function initializeAgentSession() {
                 currentUser = user;
                 if (agentWelcomeMessageEl) agentWelcomeMessageEl.textContent = `Welcome, ${user.email || 'Agent'}`;
 
-                // एजेंट का Firestore दस्तावेज़ और अनुमतियाँ फ़ेच करें
+                // Fetch agent's Firestore document and permissions
                 try {
                     const agentDocRef = doc(db, "agents", currentUser.uid);
                     const agentDocSnap = await getDoc(agentDocRef);
 
                     if (agentDocSnap.exists() && agentDocSnap.data().role === 'agent' && agentDocSnap.data().status === 'active') {
                         agentPermissions = agentDocSnap.data();
-                        console.log("एजेंट प्रमाणित और अनुमतियाँ लोड की गईं (उत्पाद पेज):", agentPermissions);
-                        resolve(true); // सत्र सफलतापूर्वक प्रारंभ हुआ
+                        console.log("Agent authenticated and permissions loaded (Products Page):", agentPermissions);
+                        resolve(true); // Session initialized successfully
                     } else {
-                        console.error("एजेंट दस्तावेज़ नहीं मिला या भूमिका/स्थिति अमान्य है। लॉग आउट किया जा रहा है।");
-                        if (agentWelcomeMessageEl) agentWelcomeMessageEl.textContent = "अमान्य एजेंट खाता।";
+                        console.error("Agent document not found or role/status invalid. Logging out.");
+                        if (agentWelcomeMessageEl) agentWelcomeMessageEl.textContent = "Invalid Agent Account.";
                         auth.signOut();
                         window.location.href = 'agent_login.html';
                         reject(new Error("Invalid agent account."));
                     }
                 } catch (error) {
-                    console.error("एजेंट अनुमतियाँ लोड करने में त्रुटि:", error);
-                    if (agentWelcomeMessageEl) agentWelcomeMessageEl.textContent = "प्रोफ़ाइल लोड करने में त्रुटि।";
+                    console.error("Error loading agent permissions:", error);
+                    if (agentWelcomeMessageEl) agentWelcomeMessageEl.textContent = "Error loading profile.";
                     auth.signOut();
                     window.location.href = 'agent_login.html';
                     reject(error);
                 }
             } else {
-                // कोई उपयोगकर्ता लॉग इन नहीं है
+                // No user logged in
                 console.log("Agent not logged in on products page. Redirecting...");
                 window.location.replace('agent_login.html');
                 reject(new Error("User not logged in."));
@@ -70,12 +83,12 @@ async function initializeAgentSession() {
 }
 
 
-// --- उत्पाद सूची पेज तर्क ---
+// --- Product List Page Logic ---
 async function loadAgentProducts() {
     if (!productListContainer || !loadingIndicator || !db) {
-        console.error("उत्पाद सूची तत्व या DB तैयार नहीं हैं।");
+        console.error("Product list elements or DB not ready.");
         if (noProductsMessage) {
-            noProductsMessage.textContent = "उत्पाद लोड करने में त्रुटि (पेज सेटअप समस्या)।";
+            noProductsMessage.textContent = "Error loading products (page setup issue)."; // English message
             noProductsMessage.style.display = 'block';
         }
         if (loadingIndicator) loadingIndicator.style.display = 'none';
@@ -83,41 +96,50 @@ async function loadAgentProducts() {
     }
 
     loadingIndicator.style.display = 'flex';
-    productListContainer.innerHTML = '';
+    productListContainer.innerHTML = ''; // Clear previous products
     if (noProductsMessage) noProductsMessage.style.display = 'none';
 
     try {
-        let productsQuery = query(collection(db, "onlineProducts"), where("isEnabled", "==", true), orderBy("category"), orderBy("productName"));
+        let productsQuery;
 
-        // (वैकल्पिक) एजेंट की अनुमतियों के आधार पर श्रेणी फ़िल्टरिंग
+        // Filter by agent's allowed categories if applicable
         if (agentPermissions && agentPermissions.allowedCategories && agentPermissions.allowedCategories.length > 0) {
-            // यदि एजेंट को केवल कुछ श्रेणियों को देखने की अनुमति है
-            // ध्यान दें: Firestore 'in' क्वेरी में एक बार में अधिकतम 30 मान हो सकते हैं।
-            // यदि श्रेणियां बहुत अधिक हैं, तो आपको सभी उत्पाद लाने और क्लाइंट-साइड पर फ़िल्टर करने की आवश्यकता हो सकती है।
-            console.log("एजेंट की अनुमत श्रेणियों के आधार पर फ़िल्टरिंग:", agentPermissions.allowedCategories);
+            // Note: Firestore 'in' query limit is 30 values per query.
+            // If more categories, fetch all and filter client-side.
+            console.log("Filtering products based on agent's allowed categories:", agentPermissions.allowedCategories);
             productsQuery = query(collection(db, "onlineProducts"),
                                 where("isEnabled", "==", true),
-                                where("category", "in", agentPermissions.allowedCategories), // अनुमत श्रेणियों में से एक
+                                where("category", "in", agentPermissions.allowedCategories),
                                 orderBy("category"),
                                 orderBy("productName")
                                );
         } else if (agentPermissions) {
-             console.log("एजेंट सभी सक्षम उत्पाद देख सकता है (कोई श्रेणी फ़िल्टर नहीं)।");
+             console.log("Agent can view all enabled products (no category filter).");
+             productsQuery = query(collection(db, "onlineProducts"),
+                                where("isEnabled", "==", true),
+                                orderBy("category"),
+                                orderBy("productName")
+                                );
         } else {
-            console.warn("एजेंट अनुमतियाँ लोड नहीं हुईं, सभी सक्षम उत्पाद दिखाए जा रहे हैं।");
+            console.warn("Agent permissions not loaded, showing all enabled products.");
+            productsQuery = query(collection(db, "onlineProducts"),
+                                where("isEnabled", "==", true),
+                                orderBy("category"),
+                                orderBy("productName")
+                               );
         }
 
         const snapshot = await getDocs(productsQuery);
         allProductsCache = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        console.log(`एजेंट के लिए ${allProductsCache.length} ऑनलाइन उत्पाद लोड किए गए।`);
+        console.log(`${allProductsCache.length} online products loaded for agent.`);
 
         populateCategories(allProductsCache);
-        applyProductFilters(); // फ़िल्टर लागू करें और सूची दिखाएं
+        applyProductFilters(); // Apply filters and display the list
 
     } catch (error) {
-        console.error("एजेंट उत्पाद लोड करने में त्रुटि:", error);
+        console.error("Error loading agent products:", error);
         if (noProductsMessage) {
-            noProductsMessage.textContent = `उत्पाद लोड करने में त्रुटि: ${error.message}. Firestore नियमों/इंडेक्स की जाँच करें।`;
+            noProductsMessage.textContent = `Error loading products: ${error.message}. Check Firestore rules/indexes.`; // English message
             noProductsMessage.style.display = 'block';
         }
     } finally {
@@ -125,24 +147,25 @@ async function loadAgentProducts() {
     }
 }
 
-// श्रेणी फ़िल्टर ड्रॉपडाउन पॉप्युलेट करें
+// Populate category filter dropdown
 function populateCategories(products) {
     if (!categoryFilterSelect) return;
     const categories = [...new Set(products.map(p => p.category).filter(Boolean))].sort();
-    const currentValue = categoryFilterSelect.value;
-    categoryFilterSelect.innerHTML = '<option value="">सभी श्रेणियाँ</option>';
+    const currentValue = categoryFilterSelect.value; // Preserve selection if possible
+    categoryFilterSelect.innerHTML = '<option value="">All Categories</option>'; // English default
     categories.forEach(category => {
         const option = document.createElement('option');
         option.value = category;
         option.textContent = escapeHtml(category);
         categoryFilterSelect.appendChild(option);
     });
+    // Restore previous selection if it still exists
     if (currentValue && categories.includes(currentValue)) {
         categoryFilterSelect.value = currentValue;
     }
 }
 
-// फ़िल्टर लागू करें और सूची रेंडर करें
+// Apply filters and render the list
 function applyProductFilters() {
     if (!productListContainer) return;
     const searchTerm = productSearchInput ? productSearchInput.value.trim().toLowerCase() : '';
@@ -153,38 +176,42 @@ function applyProductFilters() {
         const searchMatch = !searchTerm ||
                             (product.productName || '').toLowerCase().includes(searchTerm) ||
                             (product.category || '').toLowerCase().includes(searchTerm) ||
-                            (product.itemCode || '').toLowerCase().includes(searchTerm); // itemCode भी जोड़ा गया
+                            (product.itemCode || '').toLowerCase().includes(searchTerm); // Also check itemCode
         return categoryMatch && searchMatch;
     });
     renderProductList(filteredProducts);
 }
 
-// उत्पाद सूची रेंडर करें
+// Render the product list
 function renderProductList(products) {
     if (!productListContainer) return;
-    productListContainer.innerHTML = '';
+    productListContainer.innerHTML = ''; // Clear previous list
 
     if (products.length === 0) {
          if(noProductsMessage) {
-             noProductsMessage.textContent = "आपकी खोज या अनुमतियों से मेल खाने वाले कोई उत्पाद नहीं मिले।";
+             noProductsMessage.textContent = "No products found matching your criteria or permissions."; // English message
              noProductsMessage.style.display = 'block';
          }
     } else {
         if(noProductsMessage) noProductsMessage.style.display = 'none';
         products.forEach(product => {
             const card = document.createElement('a');
-            card.href = `agent_product_detail.html?id=${product.id}`; // सुनिश्चित करें कि HTML फ़ाइल का नाम सही है
+            // Ensure the link points to the correct agent detail page
+            card.href = `product_detail.html?id=${product.id}`;
             card.className = 'product-card';
 
-            const imageUrl = (product.imageUrls && product.imageUrls[0]) ? product.imageUrls[0] : 'images/placeholder.png';
-            const stockLevelText = typeof product.stock === 'number' ? `Stock: ${product.stock}` : (product.stock === null || product.stock === undefined ? 'Stock: N/A' : `Stock: ${escapeHtml(product.stock)}`);
+            const imageUrl = (product.imageUrls && product.imageUrls[0]) ? product.imageUrls[0] : 'images/placeholder.png'; // Default placeholder path
+            const stockLevel = product.stock ?? 'N/A';
+            const stockLevelText = `Stock: ${escapeHtml(stockLevel)}`;
             let stockClass = '';
             if (typeof product.stock === 'number') {
                 if (product.stock <= 0) stockClass = 'stock-out';
-                else if (product.stock <= 10) stockClass = 'stock-low';
+                else if (product.stock <= 10) stockClass = 'stock-low'; // Example threshold for low stock
+            } else if (stockLevel === 'N/A') {
+                stockClass = 'stock-unknown'; // Optional class for N/A
             }
 
-            // एजेंट रेट को प्राथमिकता दें, यदि नहीं तो सामान्य बिक्री दर
+            // Prioritize agentRate, fallback to regular rate
             const displayRate = product.pricing?.agentRate ?? product.pricing?.rate ?? null;
 
             card.innerHTML = `
@@ -205,26 +232,12 @@ function renderProductList(products) {
 }
 
 
-// --- उत्पाद विवरण पेज तर्क (Product Detail Page Logic) ---
-// (यदि यह फ़ाइल उत्पाद सूची और विवरण दोनों को संभालती है)
-const detailImageEl = document.getElementById('mainProductImage');
-const detailNameEl = document.getElementById('productName');
-const detailCategoryEl = document.getElementById('productCategory');
-const detailAgentRateEl = document.getElementById('productAgentRate');
-const detailStockEl = document.getElementById('productStock');
-const detailDescriptionEl = document.getElementById('productDescription');
-const detailDiagramSectionEl = document.getElementById('diagramSection');
-const detailDiagramButtonEl = document.getElementById('diagramDownloadBtn');
-const breadcrumbProductNameEl = document.getElementById('breadcrumbProductName');
-const detailLoadingEl = document.getElementById('loadingProductDetail'); // आईडी जांची गई
-const detailContentEl = document.getElementById('productDetailContent'); // आईडी जांची गई
-const detailErrorEl = document.getElementById('productError'); // आईडी जांची गई
-
+// --- Product Detail Page Logic ---
 async function loadProductDetails(productId) {
     if (!detailContainer || !detailLoadingEl || !detailContentEl || !detailErrorEl || !db) {
-        console.error("उत्पाद विवरण पेज के तत्व या DB तैयार नहीं हैं।");
+        console.error("Product detail page elements or DB not ready.");
         if (detailErrorEl) {
-            detailErrorEl.textContent = "पेज लोड करने में त्रुटि।";
+            detailErrorEl.textContent = "Error loading page."; // English message
             detailErrorEl.style.display = 'block';
         }
         if(detailLoadingEl) detailLoadingEl.style.display = 'none';
@@ -241,30 +254,34 @@ async function loadProductDetails(productId) {
 
         if (docSnap.exists()) {
             const product = docSnap.data();
-            if (!product.isEnabled && !(agentPermissions && agentPermissions.canViewDisabledProducts)) { // काल्पनिक अनुमति
-                if(detailErrorEl) { detailErrorEl.textContent = "यह उत्पाद वर्तमान में उपलब्ध नहीं है।"; detailErrorEl.style.display = 'block';}
-                if (breadcrumbProductNameEl) breadcrumbProductNameEl.textContent = "अनुपलब्ध";
-                document.title = "उत्पाद अनुपलब्ध - एजेंट पोर्टल";
+
+            // Check if product is enabled or if agent has permission to view disabled ones
+            if (!product.isEnabled && !(agentPermissions && agentPermissions.canViewDisabledProducts)) { // Hypothetical permission
+                if(detailErrorEl) { detailErrorEl.textContent = "This product is currently unavailable."; detailErrorEl.style.display = 'block';} // English message
+                if (breadcrumbProductNameEl) breadcrumbProductNameEl.textContent = "Unavailable"; // English
+                document.title = "Product Unavailable - Agent Portal"; // English
                 if(detailLoadingEl) detailLoadingEl.style.display = 'none';
                 return;
             }
 
+            // Populate details
             if (detailNameEl) detailNameEl.textContent = product.productName || 'N/A';
-            if (breadcrumbProductNameEl) breadcrumbProductNameEl.textContent = product.productName || 'विवरण';
-            document.title = `${product.productName || 'उत्पाद'} - एजेंट पोर्टल`;
+            if (breadcrumbProductNameEl) breadcrumbProductNameEl.textContent = product.productName || 'Details'; // English
+            document.title = `${product.productName || 'Product'} - Agent Portal`; // English
 
             const imageUrl = (product.imageUrls && product.imageUrls[0]) ? product.imageUrls[0] : 'images/placeholder.png';
-            if (detailImageEl) { detailImageEl.src = imageUrl; detailImageEl.alt = product.productName || 'उत्पाद छवि'; }
+            if (detailImageEl) { detailImageEl.src = imageUrl; detailImageEl.alt = product.productName || 'Product Image'; } // English
 
-            if (detailCategoryEl) detailCategoryEl.textContent = `श्रेणी: ${product.category || 'N/A'}`;
-            if (detailDescriptionEl) detailDescriptionEl.innerHTML = product.description || 'कोई विवरण उपलब्ध नहीं है।';
+            if (detailCategoryEl) detailCategoryEl.textContent = `Category: ${product.category || 'N/A'}`; // English
+            if (detailDescriptionEl) detailDescriptionEl.innerHTML = product.description || 'No description available.'; // English
 
             const stockLevel = product.stock ?? 'N/A';
             if (detailStockEl) detailStockEl.textContent = escapeHtml(stockLevel);
 
             const displayRate = product.pricing?.agentRate ?? product.pricing?.rate ?? null;
-            if (detailAgentRateEl) detailAgentRateEl.textContent = displayRate !== null ? formatCurrency(displayRate) : 'दर उपलब्ध नहीं';
+            if (detailAgentRateEl) detailAgentRateEl.textContent = displayRate !== null ? formatCurrency(displayRate) : 'Rate not available'; // English
 
+            // Handle diagram download link
             const isWeddingCard = product.category?.toLowerCase().includes('wedding card');
             const diagramUrl = product.diagramUrl || null;
             if (isWeddingCard && diagramUrl && detailDiagramSectionEl && detailDiagramButtonEl) {
@@ -273,35 +290,37 @@ async function loadProductDetails(productId) {
             } else {
                 if (detailDiagramSectionEl) detailDiagramSectionEl.style.display = 'none';
             }
-            detailContentEl.style.display = 'grid';
+
+            detailContentEl.style.display = 'grid'; // Show content using grid layout
+
         } else {
-            if(detailErrorEl) { detailErrorEl.textContent = "उत्पाद नहीं मिला।"; detailErrorEl.style.display = 'block';}
-            if (breadcrumbProductNameEl) breadcrumbProductNameEl.textContent = "नहीं मिला";
-            document.title = "उत्पाद नहीं मिला - एजेंट पोर्टल";
+            if(detailErrorEl) { detailErrorEl.textContent = "Product not found."; detailErrorEl.style.display = 'block';} // English message
+            if (breadcrumbProductNameEl) breadcrumbProductNameEl.textContent = "Not Found"; // English
+            document.title = "Product Not Found - Agent Portal"; // English
         }
     } catch (error) {
-        console.error("उत्पाद विवरण लोड करने में त्रुटि:", error);
-        if(detailErrorEl) { detailErrorEl.textContent = `विवरण लोड करने में त्रुटि: ${error.message}`; detailErrorEl.style.display = 'block';}
+        console.error("Error loading product details:", error);
+        if(detailErrorEl) { detailErrorEl.textContent = `Error loading details: ${error.message}`; detailErrorEl.style.display = 'block';} // English message
     } finally {
         if (detailLoadingEl) detailLoadingEl.style.display = 'none';
     }
 }
 
-// --- पेज इनिशियलाइज़ेशन ---
+// --- Page Initialization ---
 async function initializePage() {
-    // पहले प्रमाणीकरण और अनुमतियाँ लोड करें
+    // First, load authentication and permissions
     try {
-        await initializeAgentSession(); // यह currentUser और agentPermissions सेट करेगा
+        await initializeAgentSession(); // This sets currentUser and agentPermissions
     } catch (error) {
-        console.error("एजेंट सत्र प्रारंभ करने में विफल:", error);
-        // त्रुटि पहले ही initializeAgentSession में हैंडल हो जानी चाहिए (जैसे लॉगआउट/रीडायरेक्ट)
-        return; // आगे न बढ़ें यदि सत्र प्रारंभ नहीं होता है
+        console.error("Failed to initialize agent session:", error);
+        // Error should have been handled (e.g., logout/redirect) in initializeAgentSession
+        return; // Do not proceed if session fails
     }
 
-    // पेज के प्रकार के आधार पर तर्क चलाएं
-    if (productListContainer && productSearchInput && categoryFilterSelect) { // उत्पाद सूची पेज के तत्व
-        console.log("एजेंट उत्पाद सूची पेज प्रारंभ हो रहा है...");
-        loadAgentProducts();
+    // Determine page type and run appropriate logic
+    if (productListContainer && productSearchInput && categoryFilterSelect) { // Elements for product list page
+        console.log("Initializing Agent Product List page...");
+        loadAgentProducts(); // Load product cache and display initially
         productSearchInput.addEventListener('input', applyProductFilters);
         categoryFilterSelect.addEventListener('change', applyProductFilters);
         if(clearFiltersButton) clearFiltersButton.addEventListener('click', () => {
@@ -309,35 +328,37 @@ async function initializePage() {
             if(categoryFilterSelect) categoryFilterSelect.value = '';
             applyProductFilters();
         });
-    } else if (detailContainer && detailNameEl) { // उत्पाद विवरण पेज के तत्व
-        console.log("एजेंट उत्पाद विवरण पेज प्रारंभ हो रहा है...");
+    } else if (detailContainer && detailNameEl) { // Elements for product detail page
+        console.log("Initializing Agent Product Detail page...");
         const urlParams = new URLSearchParams(window.location.search);
         const productId = urlParams.get('id');
         if (productId) {
             loadProductDetails(productId);
         } else {
-            if(detailErrorEl) { detailErrorEl.textContent = "URL में कोई उत्पाद ID नहीं दी गई है।"; detailErrorEl.style.display = 'block'; }
+            if(detailErrorEl) { detailErrorEl.textContent = "No product ID provided in URL."; detailErrorEl.style.display = 'block'; } // English
             if(detailLoadingEl) detailLoadingEl.style.display = 'none';
-            if (breadcrumbProductNameEl) breadcrumbProductNameEl.textContent = "अमान्य उत्पाद";
-            document.title = "अमान्य उत्पाद - एजेंट पोर्टल";
+            if (breadcrumbProductNameEl) breadcrumbProductNameEl.textContent = "Invalid Product"; // English
+            document.title = "Invalid Product - Agent Portal"; // English
         }
+    } else {
+        console.warn("Could not determine page type (Product List or Detail). Ensure correct HTML elements exist.");
     }
 
-    // सामान्य लॉगआउट बटन सेटअप
+    // Common logout button setup
     if (agentLogoutBtnEl && auth) {
         agentLogoutBtnEl.addEventListener('click', () => {
-            if (confirm("क्या आप वाकई लॉग आउट करना चाहते हैं?")) {
+            if (confirm("Are you sure you want to logout?")) { // English
                 auth.signOut().then(() => {
                     window.location.href = 'agent_login.html';
                 }).catch((error) => {
-                    console.error("एजेंट लॉगआउट त्रुटि:", error);
-                    alert("लॉगआउट विफल रहा।");
+                    console.error("Agent Logout Error:", error);
+                    alert("Logout failed."); // English
                 });
             }
         });
     }
-    console.log("agent_products.js पेज तर्क प्रारंभ किया गया।");
+    console.log("agent_products.js page logic initialized.");
 }
 
-// DOM रेडी होने पर पेज इनिशियलाइज़ करें
+// Initialize the page when the DOM is ready
 document.addEventListener('DOMContentLoaded', initializePage);

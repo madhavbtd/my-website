@@ -1,11 +1,11 @@
 // /agent/js/agent_login.js
 
-// Firebase कॉन्फिग से auth, signInWithEmailAndPassword, और db, doc, getDoc इम्पोर्ट करें
+// Import auth, signInWithEmailAndPassword, and db, doc, getDoc from Firebase config
 import { auth, signInWithEmailAndPassword, db, doc, getDoc } from './agent_firebase_config.js';
-// यदि agent_firebase_config.js में Firestore फ़ंक्शंस (db, doc, getDoc) एक्सपोर्टेड नहीं हैं,
-// तो उन्हें यहाँ सीधे SDK से इम्पोर्ट करें:
+// If Firestore functions (db, doc, getDoc) are not exported in agent_firebase_config.js,
+// import them directly from the SDK here:
 // import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-// और db को इनिशियलाइज़ करें: const db = getFirestore(app); // app agent_firebase_config.js से
+// and initialize db: const db = getFirestore(app); // app from agent_firebase_config.js
 
 const loginForm = document.getElementById('agentLoginForm');
 const emailInput = document.getElementById('agent-email');
@@ -15,71 +15,69 @@ const loginButtonText = loginButton?.querySelector('.button-text');
 const loginButtonLoader = loginButton?.querySelector('.button-loader');
 const errorMessageElement = document.getElementById('loginErrorMessage');
 
-// सुनिश्चित करें कि सभी ज़रूरी एलिमेंट्स मौजूद हैं
+// Ensure all necessary elements and Firestore functions are found
 if (!loginForm || !emailInput || !passwordInput || !loginButton || !loginButtonText || !loginButtonLoader || !errorMessageElement || !db || !doc || !getDoc ) {
-    console.error("लॉगिन फॉर्म एलिमेंट्स या Firestore फ़ंक्शंस नहीं मिले! HTML IDs और agent_firebase_config.js की जाँच करें।");
-    alert("लॉगिन फॉर्म संरचना में त्रुटि।");
+    console.error("Login form elements or Firestore functions not found! Check HTML IDs and agent_firebase_config.js.");
+    alert("Error in login form structure.");
 } else {
     loginForm.addEventListener('submit', async (e) => {
-        e.preventDefault(); // डिफ़ॉल्ट सबमिशन रोकें
+        e.preventDefault(); // Prevent default submission
 
         const email = emailInput.value.trim();
         const password = passwordInput.value;
 
-        // बेसिक वैलिडेशन
+        // Basic validation
         if (!email || !password) {
-            displayLoginError("कृपया ईमेल और पासवर्ड दोनों दर्ज करें।");
+            displayLoginError("Please enter both email and password."); // Translated
             return;
         }
 
-        // बटन को डिसेबल करें और लोडर दिखाएं
+        // Disable button and show loader
         setLoading(true);
         clearLoginError();
 
         try {
-            console.log("इसके लिए लॉगिन का प्रयास किया जा रहा है:", email);
+            console.log("Attempting login for:", email);
             const userCredential = await signInWithEmailAndPassword(auth, email, password);
             const user = userCredential.user;
-            console.log("Firebase Auth लॉगिन सफल:", user.uid);
+            console.log("Firebase Auth login successful:", user.uid);
 
-            // Firestore से एजेंट रोल और स्थिति जांचें
-            const agentDocRef = doc(db, "agents", user.uid); // db agent_firebase_config.js से आना चाहिए
+            // Check agent role and status from Firestore
+            const agentDocRef = doc(db, "agents", user.uid); // db should come from agent_firebase_config.js
             const agentDocSnap = await getDoc(agentDocRef);
 
             if (agentDocSnap.exists()) {
                 const agentData = agentDocSnap.data();
                 if (agentData.role === 'agent' && agentData.status === 'active') {
-                    console.log('एजेंट उपयोगकर्ता सत्यापित:', agentData);
-                    // --- <<< यहाँ बदलाव किया गया है >>> ---
-                    setLoading(false); // <<< रीडायरेक्ट से पहले बटन को री-इनेबल करें
-                    // --- <<< बदलाव समाप्त >>> ---
-                    // एजेंट डैशबोर्ड पर रीडायरेक्ट करें
-                    window.location.href = 'dashboard.html'; // या आपका एजेंट डैशबोर्ड पेज
+                    console.log('Agent user verified:', agentData);
+                    setLoading(false); // Re-enable button before redirect
+                    // Redirect to agent dashboard
+                    window.location.href = 'dashboard.html'; // Or your agent dashboard page
                 } else {
-                    console.error('लॉगिन विफल: उपयोगकर्ता एक सक्रिय एजेंट नहीं है।', agentData);
-                    displayLoginError('पहुँच अस्वीकृत। आप एक सक्रिय एजेंट नहीं हैं या आपका खाता अक्षम है।');
+                    console.error('Login failed: User is not an active agent.', agentData);
+                    displayLoginError('Access denied. You are not an active agent or your account is disabled.'); // Translated
                     await auth.signOut();
                     setLoading(false);
                 }
             } else {
-                console.error('लॉगिन विफल: Firestore में एजेंट रोल दस्तावेज़ नहीं मिला।');
-                displayLoginError('एजेंट प्रोफ़ाइल नहीं मिली।');
+                console.error('Login failed: Agent role document not found in Firestore.');
+                displayLoginError('Agent profile not found.'); // Translated
                 await auth.signOut();
                 setLoading(false);
             }
         } catch (error) {
-            console.error("लॉगिन विफल:", error);
-            // यूजर को समझने योग्य एरर मैसेज दिखाएं
-            let message = "लॉगिन विफल। कृपया अपनी साख जांचें।";
+            console.error("Login failed:", error);
+            // Show user-friendly error messages
+            let message = "Login failed. Please check your credentials."; // Translated
             if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
-                message = "अमान्य ईमेल या पासवर्ड।";
+                message = "Invalid email or password."; // Translated
             } else if (error.code === 'auth/invalid-email') {
-                message = "कृपया एक मान्य ईमेल पता दर्ज करें।";
+                message = "Please enter a valid email address."; // Translated
             } else if (error.code === 'auth/too-many-requests') {
-                message = "बहुत अधिक लॉगिन प्रयास। कृपया बाद में पुनः प्रयास करें।";
+                message = "Too many login attempts. Please try again later."; // Translated
             }
             displayLoginError(message);
-            setLoading(false); // एरर होने पर लोडिंग रोकें
+            setLoading(false); // Stop loading on error
         }
     });
 }
@@ -111,4 +109,4 @@ function setLoading(isLoading) {
     }
 }
 
-console.log("agent_login.js (भूमिका जाँच और setLoading फिक्स के साथ) लोड हुआ और लिस्नर संलग्न हैं।");
+console.log("agent_login.js (with role check and setLoading fix) loaded and listeners attached."); // Translated comment
