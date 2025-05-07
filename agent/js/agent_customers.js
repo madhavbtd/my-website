@@ -3,7 +3,7 @@ import { db, auth } from './agent_firebase_config.js';
 import {
     collection, query, where, orderBy, getDocs, addDoc,
     doc, getDoc, updateDoc, deleteDoc, serverTimestamp
-} from './agent_firebase_config.js';
+} from './agent_firebase_config.js'; // या सीधे Firebase SDK से
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
 // DOM Elements
@@ -29,255 +29,317 @@ const saveCustomerBtnEl = document.getElementById('saveCustomerBtn');
 const cancelCustomerFormBtnEl = document.getElementById('cancelCustomerFormBtn');
 const customerFormMessageEl = document.getElementById('customerFormMessage');
 
-
 let currentUser = null;
-let agentPermissions = { canAddCustomers: false };
-let allAgentCustomers = []; // इस एजेंट के ग्राहकों को कैश करने के लिए
+// एजेंट की अनुमतियाँ यहाँ स्टोर होंगी
+let agentPermissions = {
+    canAddCustomers: false, // डिफ़ॉल्ट
+    role: null,
+    status: 'inactive',
+    email: null // एजेंट का ईमेल स्टोर करने के लिए
+};
+let allAgentCustomersCache = []; // इस एजेंट के ग्राहकों को कैश करने के लिए (सुरक्षा नियमों के आधार पर)
+
+// --- हेल्पर फ़ंक्शंस ---
+function escapeHtml(unsafe) { if (typeof unsafe !== 'string') unsafe = String(unsafe || ''); return unsafe.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");}
 
 function showFormMessage(message, isError = false) {
+    if (!customerFormMessageEl) return;
     customerFormMessageEl.textContent = message;
-    customerFormMessageEl.className = 'form-message'; // बेस क्लास रीसेट करें
+    customerFormMessageEl.className = 'form-message';
     customerFormMessageEl.classList.add(isError ? 'error' : 'success');
     customerFormMessageEl.style.display = 'block';
 }
 
-// एजेंट की अनुमतियाँ लोड करें
-async function loadAgentPermissions() {
-    if (!currentUser) return;
-    try {
-        const agentDocSnap = await getDoc(doc(db, "agents", currentUser.uid));
-        if (agentDocSnap.exists()) {
-            agentPermissions = agentDocSnap.data();
-            if (agentPermissions.canAddCustomers) {
-                addNewCustomerBtnEl.style.display = 'inline-flex';
-            } else {
-                addNewCustomerBtnEl.style.display = 'none';
-            }
-        }
-    } catch (error) {
-        console.error("Error loading agent permissions:", error);
-    }
-}
+// --- प्रमाणीकरण और अनुमति लोड करना ---
+onAuthStateChanged(auth, async (user) => {
+    if (user) {
+        currentUser = user;
+        if (agentWelcomeMessageEl) agentWelcomeMessageEl.textContent = `Welcome, ${user.email || 'Agent'}`;
 
-// Modal खोलें
+        try {
+            const agentDocRef = doc(db, "agents", currentUser.uid);
+            const agentDocSnap = await getDoc(agentDocRef);
+
+            if (agentDocSnap.exists() && agentDocSnap.data().role === 'agent' && agentDocSnap.data().status === 'active') {
+                agentPermissions = agentDocSnap.data();
+                agentPermissions.email = user.email; // Auth से ईमेल जोड़ें (यदि agents doc में नहीं है)
+                console.log("एजेंट प्रमाणित और अनुमतियाँ लोड की गईं:", agentPermissions);
+
+                if (addNewCustomerBtnEl) {
+                    addNewCustomerBtnEl.style.display = agentPermissions.canAddCustomers ? 'inline-flex' : 'none';
+                } else {
+                    console.warn("'Add New Customer' बटन (addNewCustomerBtnEl) HTML में नहीं मिला।");
+                }
+                loadCustomers(); // अनुमतियाँ लोड होने के बाद ग्राहक लोड करें
+            } else {
+                console.error("एजेंट दस्तावेज़ नहीं मिला या भूमिका/स्थिति अमान्य है। लॉग आउट किया जा रहा है।");
+                if (agentWelcomeMessageEl) agentWelcomeMessageEl.textContent = "अमान्य एजेंट खाता।";
+                if (addNewCustomerBtnEl) addNewCustomerBtnEl.style.display = 'none';
+                if (customersTableBodyEl) customersTableBodyEl.innerHTML = `<tr><td colspan="6" class="form-message error">आप ग्राहक डेटा देखने के लिए अधिकृत नहीं हैं।</td></tr>`;
+                if (loadingCustomersMessageEl) loadingCustomersMessageEl.style.display = 'none';
+                // auth.signOut(); // वैकल्पिक: तुरंत लॉगआउट करें
+                // window.location.href = 'agent_login.html';
+            }
+        } catch (error) {
+            console.error("एजेंट अनुमतियाँ लोड करने में त्रुटि:", error);
+            if (agentWelcomeMessageEl) agentWelcomeMessageEl.textContent = "प्रोफ़ाइल लोड करने में त्रुटि।";
+            if (customersTableBodyEl) customersTableBodyEl.innerHTML = `<tr><td colspan="6" class="form-message error">अनुमतियाँ लोड करने में त्रुटि। (${error.message})</td></tr>`;
+            if (loadingCustomersMessageEl) loadingCustomersMessageEl.style.display = 'none';
+            // auth.signOut();
+            // window.location.href = 'agent_login.html';
+        }
+    } else {
+        console.log("Agent not logged in on customers page. Redirecting...");
+        window.location.replace('agent_login.html');
+    }
+});
+
+// --- ग्राहक Modal ---
 function openCustomerModal(mode = 'add', customerData = null) {
+    if (!customerFormEl || !customerModalEl /*...अन्य आवश्यक तत्व जांचें...*/) {
+        console.error("ग्राहक Modal या उसके तत्व नहीं मिले!");
+        alert("फ़ॉर्म खोलने में त्रुटि।");
+        return;
+    }
     customerFormEl.reset();
     editCustomerIdInputEl.value = '';
-    showFormMessage("", false); // पिछला संदेश हटाएं
+    showFormMessage("", false);
 
     if (mode === 'add') {
-        customerModalTitleEl.innerHTML = '<i class="fas fa-user-plus"></i> Add New Customer';
-        saveCustomerBtnEl.innerHTML = '<i class="fas fa-save"></i> Save Customer';
+        if (!agentPermissions.canAddCustomers) {
+            alert("आपके पास नए ग्राहक जोड़ने की अनुमति नहीं है।");
+            return; // Modal न खोलें
+        }
+        customerModalTitleEl.innerHTML = '<i class="fas fa-user-plus"></i> नया ग्राहक जोड़ें';
+        saveCustomerBtnEl.innerHTML = '<i class="fas fa-save"></i> ग्राहक सहेजें';
     } else if (mode === 'edit' && customerData) {
-        customerModalTitleEl.innerHTML = '<i class="fas fa-user-edit"></i> Edit Customer';
-        saveCustomerBtnEl.innerHTML = '<i class="fas fa-save"></i> Update Customer';
-        editCustomerIdInputEl.value = customerData.id;
+        customerModalTitleEl.innerHTML = '<i class="fas fa-user-edit"></i> ग्राहक संपादित करें';
+        saveCustomerBtnEl.innerHTML = '<i class="fas fa-save"></i> अपडेट ग्राहक';
+        editCustomerIdInputEl.value = customerData.id || '';
         customerFullNameInputEl.value = customerData.fullName || '';
         customerWhatsAppNoInputEl.value = customerData.whatsappNo || '';
         customerContactNoInputEl.value = customerData.contactNo || '';
-        customerAddressInputEl.value = customerData.address || '';
+        customerAddressInputEl.value = customerData.address || customerData.billingAddress || '';
     }
     customerModalEl.classList.add('active');
     customerModalEl.style.display = 'flex';
+    customerFullNameInputEl.focus();
 }
 
-// Modal बंद करें
 function closeCustomerModal() {
-    customerModalEl.classList.remove('active');
-    customerModalEl.style.display = 'none';
-}
-
-// ग्राहकों को लोड करें और टेबल में दिखाएं
-async function loadCustomers(searchTerm = '') {
-    if (!currentUser) return;
-
-    loadingCustomersMessageEl.style.display = 'table-row';
-    noCustomersMessageEl.style.display = 'none';
-    customersTableBodyEl.innerHTML = '';
-    customersTableBodyEl.appendChild(loadingCustomersMessageEl);
-
-    try {
-        // ग्राहकों को फिल्टर करें: केवल इस एजेंट द्वारा जोड़े गए (addedByAgentId)
-        // या यदि सभी ग्राहक दिखाने हैं तो यह 'where' क्लॉज हटाएं।
-        // अभी के लिए, हम सभी ग्राहकों को लाएंगे जिन्हें 'create_order' पेज पर भी एक्सेस किया जा सकता है।
-        // यदि आप चाहते हैं कि एजेंट केवल अपने द्वारा जोड़े गए ग्राहक देखें,
-        // तो आपको 'customers' कलेक्शन में 'addedByAgentId' फील्ड जोड़ना होगा।
-        const customersQuery = query(
-            collection(db, "customers"),
-            orderBy("fullNameLower") // नाम से सॉर्ट करें
-            // where("addedByAgentId", "==", currentUser.uid) // यह लाइन जोड़ें यदि एजेंट सिर्फ अपने ग्राहक देख सके
-        );
-        const snapshot = await getDocs(customersQuery);
-        allAgentCustomers = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
-
-        displayCustomers(searchTerm);
-
-    } catch (error) {
-        console.error("Error loading customers:", error);
-        loadingCustomersMessageEl.style.display = 'none';
-        customersTableBodyEl.innerHTML = `<tr><td colspan="6" class="form-message error">Error loading customers.</td></tr>`;
+    if (customerModalEl) {
+        customerModalEl.classList.remove('active');
+        customerModalEl.style.display = 'none';
     }
 }
 
-function displayCustomers(searchTerm = '') {
-    loadingCustomersMessageEl.style.display = 'none';
-    customersTableBodyEl.innerHTML = '';
-    const term = searchTerm.toLowerCase();
+// --- ग्राहक डेटा लोड करना और दिखाना ---
+async function loadCustomers() {
+    if (!currentUser || !customersTableBodyEl || !loadingCustomersMessageEl || !noCustomersMessageEl) {
+        console.warn("loadCustomers: आवश्यक तत्व या उपयोगकर्ता नहीं मिला।");
+        if (customersTableBodyEl && loadingCustomersMessageEl) {
+             loadingCustomersMessageEl.style.display = 'none';
+             customersTableBodyEl.innerHTML = `<tr><td colspan="6" class="form-message error">ग्राहक लोड करने के लिए लॉग इन करें।</td></tr>`;
+        }
+        return;
+    }
 
-    const filteredCustomers = allAgentCustomers.filter(cust => {
+    loadingCustomersMessageEl.style.display = 'table-row';
+    noCustomersMessageEl.style.display = 'none';
+    const rowsToRemove = customersTableBodyEl.querySelectorAll('tr:not(#loadingCustomersMessage):not(#noCustomersMessage)');
+    rowsToRemove.forEach(row => row.remove());
+
+    try {
+        // सुरक्षा नियम यह सुनिश्चित करेंगे कि एजेंट केवल अपने ग्राहक ही देख सके,
+        // यदि नियमों में `where("addedByAgentId", "==", request.auth.uid)` का उपयोग किया गया है।
+        const customersQuery = query(
+            collection(db, "customers"),
+            where("addedByAgentId", "==", currentUser.uid), // केवल इस एजेंट द्वारा जोड़े गए ग्राहक
+            orderBy("fullNameLower")
+        );
+        // यदि आपके सुरक्षा नियम एजेंटों को सभी ग्राहक पढ़ने की अनुमति देते हैं,
+        // और आप चाहते हैं कि UI में भी सभी ग्राहक दिखें (लेकिन संपादन केवल अपने पर हो),
+        // तो आप ऊपर की `where` क्लॉज को हटा सकते हैं।
+
+        const snapshot = await getDocs(customersQuery);
+        allAgentCustomersCache = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+        console.log(`एजेंट ${currentUser.uid} के लिए ${allAgentCustomersCache.length} ग्राहक लोड किए गए।`);
+        displayCustomers();
+
+    } catch (error) {
+        console.error("ग्राहक लोड करने में त्रुटि:", error);
+        loadingCustomersMessageEl.style.display = 'none';
+        customersTableBodyEl.innerHTML = `<tr><td colspan="6" class="form-message error">ग्राहक लोड करने में त्रुटि हुई। (${error.message})</td></tr>`;
+    }
+}
+
+function displayCustomers(searchTerm = (customerSearchInputEl ? customerSearchInputEl.value.trim() : '')) {
+    if (!customersTableBodyEl || !loadingCustomersMessageEl || !noCustomersMessageEl) return;
+
+    loadingCustomersMessageEl.style.display = 'none';
+    const rowsToRemove = customersTableBodyEl.querySelectorAll('tr:not(#loadingCustomersMessage):not(#noCustomersMessage)');
+    rowsToRemove.forEach(row => row.remove());
+
+    const term = searchTerm.toLowerCase();
+    const filteredCustomers = allAgentCustomersCache.filter(cust => {
         return (cust.fullName?.toLowerCase().includes(term) ||
                 cust.whatsappNo?.includes(term) ||
-                cust.contactNo?.includes(term));
+                (cust.contactNo && cust.contactNo.includes(term)) );
     });
 
     if (filteredCustomers.length === 0) {
         noCustomersMessageEl.style.display = 'table-row';
-        customersTableBodyEl.appendChild(noCustomersMessageEl);
+         if (!document.getElementById('noCustomersMessage')) { // यदि पहले से नहीं जोड़ा गया है
+             customersTableBodyEl.appendChild(noCustomersMessageEl);
+         }
         return;
     }
     noCustomersMessageEl.style.display = 'none';
 
     filteredCustomers.forEach(cust => {
         const row = customersTableBodyEl.insertRow();
-        row.insertCell().textContent = cust.fullName || 'N/A';
-        row.insertCell().textContent = cust.whatsappNo || 'N/A';
-        row.insertCell().textContent = cust.contactNo || 'N/A';
-        row.insertCell().textContent = cust.address || 'N/A';
-        row.insertCell().textContent = cust.createdAt && cust.createdAt.toDate ? cust.createdAt.toDate().toLocaleDateString('en-GB') : 'N/A';
+        row.insertCell().textContent = escapeHtml(cust.fullName || 'N/A');
+        row.insertCell().textContent = escapeHtml(cust.whatsappNo || 'N/A');
+        row.insertCell().textContent = escapeHtml(cust.contactNo || 'N/A');
+        row.insertCell().textContent = escapeHtml(cust.address || cust.billingAddress || 'N/A');
+        row.insertCell().textContent = cust.createdAt?.toDate ? cust.createdAt.toDate().toLocaleDateString('en-GB') : 'N/A';
 
         const actionsCell = row.insertCell();
         actionsCell.classList.add('actions-cell');
-        if (agentPermissions.canAddCustomers) { // या canEditCustomers
-            const editBtn = document.createElement('button');
-            editBtn.classList.add('button', 'edit-btn');
-            editBtn.innerHTML = '<i class="fas fa-edit"></i> Edit';
-            editBtn.title = "Edit Customer";
-            editBtn.onclick = () => openCustomerModal('edit', cust);
-            actionsCell.appendChild(editBtn);
 
-            // डिलीट बटन (यदि आवश्यक हो)
-            // const deleteBtn = document.createElement('button');
-            // deleteBtn.classList.add('button', 'delete-btn');
-            // deleteBtn.innerHTML = '<i class="fas fa-trash"></i> Delete';
-            // deleteBtn.onclick = () => handleDeleteCustomer(cust.id, cust.fullName);
-            // actionsCell.appendChild(deleteBtn);
-        } else {
-            actionsCell.textContent = '-';
-        }
+        // संपादन बटन दिखाएं। सुरक्षा नियम सर्वर पर जाँच करेंगे कि क्या एजेंट इस ग्राहक को संपादित कर सकता है।
+        // UI में, आप `cust.addedByAgentId === currentUser.uid` की भी जाँच कर सकते हैं यदि आवश्यक हो।
+        const editBtn = document.createElement('button');
+        editBtn.classList.add('button', 'edit-btn', 'small-button');
+        editBtn.innerHTML = '<i class="fas fa-edit"></i> संपादित करें';
+        editBtn.title = "ग्राहक संपादित करें";
+        editBtn.onclick = () => openCustomerModal('edit', cust);
+        actionsCell.appendChild(editBtn);
+
+        // डिलीट बटन (यदि एजेंटों को डिलीट करने की अनुमति है - आमतौर पर नहीं)
+        // if (agentPermissions.canDeleteCustomers) {
+        // const deleteBtn = document.createElement('button'); ... }
     });
 }
 
 
-// ग्राहक फॉर्म सबमिट हैंडलर
-if (customerFormEl) {
-    customerFormEl.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        if (!agentPermissions.canAddCustomers && !editCustomerIdInputEl.value) { // यदि जोड़ने की अनुमति नहीं और नया जोड़ रहे हैं
-            showFormMessage("You do not have permission to add new customers.", true);
-            return;
+// --- ग्राहक फ़ॉर्म सबमिट हैंडलर ---
+async function handleSaveCustomer(e) {
+    e.preventDefault();
+    if (!currentUser) {
+        showFormMessage("आपको इस क्रिया के लिए लॉग इन होना चाहिए।", true);
+        return;
+    }
+
+    const customerIdToEdit = editCustomerIdInputEl.value;
+    const isEditing = !!customerIdToEdit;
+
+    if (!isEditing && (!agentPermissions || !agentPermissions.canAddCustomers)) {
+        showFormMessage("आपके पास नए ग्राहक जोड़ने की अनुमति नहीं है।", true);
+        return;
+    }
+
+    const fullName = customerFullNameInputEl.value.trim();
+    const whatsappNo = customerWhatsAppNoInputEl.value.trim();
+    const contactNo = customerContactNoInputEl.value.trim() || null;
+    const address = customerAddressInputEl.value.trim() || null;
+
+    if (!fullName || !whatsappNo) {
+        showFormMessage("पूरा नाम और व्हाट्सएप नंबर आवश्यक हैं।", true);
+        return;
+    }
+    if (!/^\+?[1-9]\d{7,14}$/.test(whatsappNo.replace(/\s+/g, ''))) {
+         showFormMessage("कृपया एक मान्य व्हाट्सएप नंबर दर्ज करें।", true);
+         return;
+    }
+
+    const originalBtnHTML = saveCustomerBtnEl.innerHTML;
+    saveCustomerBtnEl.disabled = true;
+    saveCustomerBtnEl.innerHTML = '<i class="fas fa-spinner fa-spin"></i> सहेजा जा रहा है...';
+    showFormMessage("");
+
+    const customerDataPayload = {
+        fullName: fullName,
+        fullNameLower: fullName.toLowerCase(),
+        whatsappNo: whatsappNo,
+        contactNo: contactNo,
+        address: address,
+        billingAddress: address, // यदि एक ही है
+        updatedAt: serverTimestamp(),
+        // status: 'active' // यदि नया है तो इसे सेट करें, या सुरक्षा नियमों में इसे डिफ़ॉल्ट करें
+    };
+
+    try {
+        if (isEditing) {
+            const custDocRef = doc(db, "customers", customerIdToEdit);
+            // सुनिश्चित करें कि addedByAgentId और createdAt अपडेट नहीं हो रहे हैं
+            delete customerDataPayload.addedByAgentId;
+            delete customerDataPayload.agentEmail;
+            delete customerDataPayload.createdAt;
+            await updateDoc(custDocRef, customerDataPayload);
+            showFormMessage("ग्राहक सफलतापूर्वक अपडेट किया गया!");
+        } else { // नया ग्राहक जोड़ रहे हैं
+            customerDataPayload.createdAt = serverTimestamp();
+            customerDataPayload.addedByAgentId = currentUser.uid; // एजेंट की ID सेट करें
+            customerDataPayload.agentEmail = agentPermissions.email || currentUser.email; // एजेंट का ईमेल
+            customerDataPayload.status = 'active'; // नए ग्राहक के लिए डिफ़ॉल्ट स्थिति
+
+            const docRef = await addDoc(collection(db, "customers"), customerDataPayload);
+            console.log("नया ग्राहक सहेजा गया ID:", docRef.id);
+            showFormMessage("ग्राहक सफलतापूर्वक जोड़ा गया!");
         }
-
-        const customerId = editCustomerIdInputEl.value;
-        const fullName = customerFullNameInputEl.value.trim();
-        const whatsappNo = customerWhatsAppNoInputEl.value.trim();
-        const contactNo = customerContactNoInputEl.value.trim() || null;
-        const address = customerAddressInputEl.value.trim() || null;
-
-        if (!fullName || !whatsappNo) {
-            showFormMessage("Full Name and WhatsApp Number are required.", true);
-            return;
-        }
-        // WhatsApp नंबर का बेसिक वैलिडेशन (उदाहरण)
-        if (!/^\+?[1-9]\d{1,14}$/.test(whatsappNo.replace(/\s+/g, ''))) {
-             showFormMessage("Please enter a valid WhatsApp number (e.g., +91XXXXXXXXXX or XXXXXXXXXX).", true);
-             return;
-        }
-
-
-        const originalBtnText = saveCustomerBtnEl.innerHTML;
-        saveCustomerBtnEl.disabled = true;
-        saveCustomerBtnEl.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
-        showFormMessage("");
-
-        const customerData = {
-            fullName: fullName,
-            fullNameLower: fullName.toLowerCase(), // सर्चिंग के लिए
-            whatsappNo: whatsappNo,
-            contactNo: contactNo,
-            address: address,
-            // billingAddress: address, // यदि billingAddress और shippingAddress अलग नहीं हैं
-            updatedAt: serverTimestamp()
-        };
-
-        try {
-            if (customerId) { // एडिट मोड
-                const custDocRef = doc(db, "customers", customerId);
-                await updateDoc(custDocRef, customerData);
-                showFormMessage("Customer updated successfully!");
-            } else { // ऐड मोड
-                customerData.createdAt = serverTimestamp();
-                customerData.addedByAgentId = currentUser.uid; // एजेंट की ID स्टोर करें जिसने ग्राहक जोड़ा
-                customerData.status = 'active'; // डिफ़ॉल्ट स्टेटस
-                // customerData.customCustomerId = await getNextNumericId("customerCounter", 101); // यदि कस्टम आईडी चाहिए
-                await addDoc(collection(db, "customers"), customerData);
-                showFormMessage("Customer added successfully!");
-            }
-            customerFormEl.reset();
-            setTimeout(() => { // थोड़ा रुककर Modal बंद करें ताकि संदेश दिख सके
-                closeCustomerModal();
-                loadCustomers(customerSearchInputEl.value); // लिस्ट रिफ्रेश करें
-            }, 1500);
-        } catch (error) {
-            console.error("Error saving customer:", error);
-            showFormMessage(`Error saving customer: ${error.message}`, true);
-        } finally {
-            saveCustomerBtnEl.disabled = false;
-            saveCustomerBtnEl.innerHTML = originalBtnText;
-        }
-    });
+        customerFormEl.reset();
+        setTimeout(() => {
+            closeCustomerModal();
+            loadCustomers(); // नवीनतम डेटा के साथ सूची को रीफ्रेश करें
+        }, 1500);
+    } catch (error) {
+        console.error("ग्राहक सहेजने में त्रुटि:", error);
+        showFormMessage(`ग्राहक सहेजने में त्रुटि: ${error.message}`, true);
+    } finally {
+        saveCustomerBtnEl.disabled = false;
+        saveCustomerBtnEl.innerHTML = originalBtnHTML;
+    }
 }
 
-// सर्च इनपुट के लिए डिबाउंस
-let searchDebounceTimer;
-if(customerSearchInputEl) {
-    customerSearchInputEl.addEventListener('input', (e) => {
-        clearTimeout(searchDebounceTimer);
-        searchDebounceTimer = setTimeout(() => {
-            displayCustomers(e.target.value);
-        }, 300);
-    });
-}
-
-// DOMContentLoaded और Auth State Change
+// --- प्रारंभिक इवेंट लिस्नर सेटअप ---
 document.addEventListener('DOMContentLoaded', () => {
-    onAuthStateChanged(auth, (user) => {
-        if (user) {
-            currentUser = user;
-            if(agentWelcomeMessageEl) agentWelcomeMessageEl.textContent = `Welcome, ${user.email || 'Agent'}`;
-            loadAgentPermissions().then(() => {
-                loadCustomers(); // अनुमतियाँ लोड होने के बाद ग्राहक लोड करें
-            });
-        } else {
-            window.location.href = 'agent_login.html';
-        }
-    });
+    // onAuthStateChanged पहले से ही ऊपर है और वह loadAgentPermissions और loadCustomers को कॉल करेगा।
 
-    if(agentLogoutBtnEl) {
-        agentLogoutBtnEl.addEventListener('click', () => {
-            auth.signOut().then(() => window.location.href = 'agent_login.html');
+    if (addNewCustomerBtnEl) addNewCustomerBtnEl.onclick = () => openCustomerModal('add');
+    if (closeCustomerModalBtnEl) closeCustomerModalBtnEl.onclick = closeCustomerModal;
+    if (cancelCustomerFormBtnEl) cancelCustomerFormBtnEl.onclick = closeCustomerModal;
+
+    if (customerModalEl) {
+        customerModalEl.addEventListener('click', (event) => {
+            if (event.target === customerModalEl) closeCustomerModal();
+        });
+    }
+    if (customerFormEl) {
+        customerFormEl.addEventListener('submit', handleSaveCustomer);
+    }
+
+    let searchDebounceTimer;
+    if (customerSearchInputEl) {
+        customerSearchInputEl.addEventListener('input', (e) => {
+            clearTimeout(searchDebounceTimer);
+            searchDebounceTimer = setTimeout(() => {
+                displayCustomers(e.target.value); // केवल कैश की गई सूची को फ़िल्टर करें, Firestore को दोबारा क्वेरी न करें
+            }, 300);
         });
     }
 
-    if(addNewCustomerBtnEl) addNewCustomerBtnEl.onclick = () => openCustomerModal('add');
-    if(closeCustomerModalBtnEl) closeCustomerModalBtnEl.onclick = closeCustomerModal;
-    if(cancelCustomerFormBtnEl) cancelCustomerFormBtnEl.onclick = closeCustomerModal;
-
-    // Modal के बाहर क्लिक करने पर बंद करें
-    if(customerModalEl) {
-        customerModalEl.addEventListener('click', (event) => {
-            if (event.target === customerModalEl) { // यदि क्लिक ओवरले पर हुआ है, कंटेंट पर नहीं
-                closeCustomerModal();
+    if (agentLogoutBtnEl && auth) {
+        agentLogoutBtnEl.addEventListener('click', () => {
+            if(confirm("क्या आप वाकई लॉग आउट करना चाहते हैं?")) {
+                auth.signOut().then(() => {
+                    window.location.href = 'agent_login.html';
+                }).catch(error => {
+                     console.error("Logout error:", error);
+                     alert("लॉगआउट विफल रहा।");
+                });
             }
         });
     }
+    console.log("Agent Customers JS DOMContentLoaded listeners attached.");
 });
