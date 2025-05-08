@@ -40,6 +40,7 @@ const userTypeAgentRadio = document.getElementById('userTypeAgent');
 const userTypeWholesaleRadio = document.getElementById('userTypeWholesale');
 const agentPermissionsDiv = document.getElementById('agentPermissions');
 const wholesalePermissionsDiv = document.getElementById('wholesalePermissions');
+const canAddCustomersCheckbox = document.getElementById('canAddCustomersCheckbox'); // New
 
 
 // --- Global State ---
@@ -226,12 +227,13 @@ function displayAgentRow(agentId, agentData) {
     // const allowedCategoriesText = Array.isArray(agentData.allowedCategories) && agentData.allowedCategories.length > 0
     //     ? agentData.allowedCategories.map(escapeHtml).join(', ')
     //     : 'None';
-    const canAddCustomersText = agentData.canAddCustomers ? '<i class="fas fa-check-circle"></i> Yes' : '<i class="fas fa-times-circle"></i> No';
+    // const canAddCustomersText = agentData.canAddCustomers ? '<i class="fas fa-check-circle"></i> Yes' : '<i class="fas fa-times-circle"></i> No';
+    const canAddCustomersText = agentData.permissions?.includes('canAddCustomers') ? '<i class="fas fa-check-circle"></i> Yes' : '<i class="fas fa-times-circle"></i> No';
 
     const userTypeText = escapeHtml(agentData.userType || 'N/A');
-    // const permissionsText = Array.isArray(agentData.permissions) && agentData.permissions.length > 0
-    //     ? agentData.permissions.map(escapeHtml).join(', ')
-    //     : 'None';
+    const permissionsText = Array.isArray(agentData.permissions) && agentData.permissions.length > 0
+        ? agentData.permissions.map(escapeHtml).join(', ')
+        : 'None';
 
     row.innerHTML = `
         <td>${name}</td>
@@ -239,6 +241,7 @@ function displayAgentRow(agentId, agentData) {
         <td>${contact}</td>
         <td>${userTypeText}</td>
         <td style="text-align:center;"><span class="status-badge ${statusClass}">${status}</span></td>
+        <td class="category-list-cell">${permissionsText}</td>
         <td style="text-align:center;">${canAddCustomersText}</td>
         <td style="text-align:center;">
             <div class="action-buttons-container">
@@ -357,7 +360,8 @@ async function handleSaveAgent(event) {
         const contact = agentContactInput.value.trim() || null;
         const password = agentPasswordInput.value;
         const status = agentStatusSelect.value;
-        const canAddCustomers = agentCanAddCustomersInput.checked;
+        // const canAddCustomers = agentCanAddCustomersInput.checked;
+        const canAddCustomers = canAddCustomersCheckbox.checked;
 
         const selectedCategories = [];
         const categoryCheckboxes = categoryPermissionsDiv.querySelectorAll('input[type="checkbox"]:checked');
