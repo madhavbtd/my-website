@@ -1,8 +1,8 @@
 // js/manage-online-products.js
-// Updated Version: Tabbed interface for rates + Apply rate to others checkbox logic
+// Updated Version: Tabbed interface for rates + Apply rate to others checkbox logic + Fix ReferenceError
 
 // --- Firebase Function Availability Check (Assume global via HTML script) ---
-// window.db, window.auth, window.storage, window.collection, window.onSnapshot, etc.
+// Expecting: window.db, window.auth, window.storage, window.collection, window.onSnapshot, etc.
 
 // --- DOM Elements ---
 const productTableBody = document.getElementById('productTableBody');
@@ -47,6 +47,7 @@ const applyRateCheckboxesContainer = document.getElementById('applyRateCheckboxe
 const productPurchasePriceInput = document.getElementById('productPurchasePrice');
 const productMrpInput = document.getElementById('productMrp');
 const productGstRateInput = document.getElementById('productGstRate');
+const productMinOrderValueInput = document.getElementById('productMinOrderValue'); // <<<--- DEFINITION ADDED HERE
 // Wedding Fields
 const weddingFieldsContainer = document.getElementById('wedding-card-fields');
 const designChargeInput = document.getElementById('designCharge');
@@ -87,7 +88,7 @@ let existingImageUrls = [];
 let productBeingEditedData = {}; // Store all pricing data when editing
 let currentActiveRateType = 'online'; // Default active tab/rate type ('online', 'retail', 'agent', 'reseller')
 const RATE_TYPES = { // Map types to Firestore field names and labels
-    online: { field: 'rate', label: 'Online Customer Rate' },
+    online: { field: 'rate', label: 'Online Customer Rate' }, // 'rate' is used for online
     retail: { field: 'retailRate', label: 'Retail Shop Rate' },
     agent: { field: 'agentRate', label: 'Agent/Branch Rate' },
     reseller: { field: 'resellerRate', label: 'Reseller/Wholesale Rate' }
@@ -98,19 +99,19 @@ const RATE_TYPES = { // Map types to Firestore field names and labels
 function formatCurrency(amount) { const num = Number(amount); return isNaN(num) || num === null || num === undefined ? '-' : `₹ ${num.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`; }
 function escapeHtml(unsafe) { if (typeof unsafe !== 'string') { unsafe = String(unsafe || ''); } return unsafe.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;"); }
 function parseNumericInput(value, allowZero = true) { if (value === undefined || value === null) return null; const trimmedValue = String(value).trim(); if (trimmedValue === '') return null; const num = parseFloat(trimmedValue); if (isNaN(num) || (!allowZero && num <= 0) || (allowZero && num < 0)) { return NaN; } return num; }
-function formatFirestoreTimestamp(timestamp) { /* ... (unchanged) ... */ if (!timestamp || typeof timestamp.toDate !== 'function') { return '-'; } try { const date = timestamp.toDate(); const options = { day: '2-digit', month: 'short', year: 'numeric' }; return date.toLocaleDateString('en-GB', options).replace(/ /g, '-'); } catch (e) { console.error("Error formatting timestamp:", e); return '-'; } }
+function formatFirestoreTimestamp(timestamp) { if (!timestamp || typeof timestamp.toDate !== 'function') { return '-'; } try { const date = timestamp.toDate(); const options = { day: '2-digit', month: 'short', year: 'numeric' }; return date.toLocaleDateString('en-GB', options).replace(/ /g, '-'); } catch (e) { console.error("Error formatting timestamp:", e); return '-'; } }
 
 // --- Toast Notification ---
-function showToast(message, duration = 3500) { /* ... (unchanged) ... */ const existingToast = document.querySelector('.toast-notification'); if (existingToast) { existingToast.remove(); } const toast = document.createElement('div'); toast.className = 'toast-notification'; toast.textContent = message; document.body.appendChild(toast); setTimeout(() => toast.classList.add('show'), 10); setTimeout(() => { toast.classList.remove('show'); setTimeout(() => { if (toast.parentNode) { toast.parentNode.removeChild(toast); } }, 400); }, duration); console.log("Toast:", message); }
+function showToast(message, duration = 3500) { const existingToast = document.querySelector('.toast-notification'); if (existingToast) { existingToast.remove(); } const toast = document.createElement('div'); toast.className = 'toast-notification'; toast.textContent = message; document.body.appendChild(toast); setTimeout(() => toast.classList.add('show'), 10); setTimeout(() => { toast.classList.remove('show'); setTimeout(() => { if (toast.parentNode) { toast.parentNode.removeChild(toast); } }, 400); }, duration); console.log("Toast:", message); }
 
 // --- Initialization ---
 window.initializeOnlineProductManagement = () => {
-    console.log("Online Product Management Initializing (v_TabbedPricing)...");
+    console.log("Online Product Management Initializing (v_TabbedPricing_Fix)...");
     if (!window.db || !window.auth || !window.storage) { console.error("Firebase services not available on window object."); alert("Error initializing page. Firebase services missing."); return; }
     console.log("Firebase services confirmed. Setting up listeners.");
     listenForOnlineProducts();
-    setupEventListeners();
-    console.log("Online Product Management Initialized (v_TabbedPricing).");
+    setupEventListeners(); // Setup standard listeners + new tab listener
+    console.log("Online Product Management Initialized (v_TabbedPricing_Fix).");
 };
 
 // --- Setup Event Listeners ---
@@ -139,109 +140,156 @@ function setupEventListeners() {
         priceTabsContainer.addEventListener('click', (event) => {
             const button = event.target.closest('.price-tab-btn');
             if (button && !button.classList.contains('active')) {
-                const rateType = button.dataset.rateType; // e.g., 'online', 'retail'
+                const rateType = button.dataset.rateType;
                 if (rateType) {
                     setActiveRateTab(rateType);
                 }
             }
         });
+        console.log("Price tab click listener attached.");
+    } else {
+        console.error("Price tabs container (#priceTabsContainer) not found!");
     }
+    // <<< END NEW >>>
 
-    console.log("Online Product Management event listeners set up (v_TabbedPricing).");
+    console.log("Online Product Management event listeners set up (v_TabbedPricing_Fix).");
 }
 
 // --- Show/Hide Conditional Fields ---
-function toggleWeddingFields() { /* ... (unchanged) ... */ if (!weddingFieldsContainer || !productCategoryInput) return; const category = productCategoryInput.value.toLowerCase(); weddingFieldsContainer.style.display = category.includes('wedding card') ? 'block' : 'none'; }
-function toggleSqFtFields() { /* ... (unchanged) ... */ if (!productUnitSelect) return; const unitType = productUnitSelect.value; if (productMinOrderValueInput) { const parentGroup = productMinOrderValueInput.closest('.sq-feet-only'); if (parentGroup) { parentGroup.style.display = unitType === 'Sq Feet' ? 'block' : 'none'; } } }
-function toggleExtraCharges() { /* ... (unchanged) ... */ if (!extraChargesSection || !hasExtraChargesCheckbox) return; extraChargesSection.style.display = hasExtraChargesCheckbox.checked ? 'block' : 'none'; }
+function toggleWeddingFields() { if (!weddingFieldsContainer || !productCategoryInput) return; const category = productCategoryInput.value.toLowerCase(); weddingFieldsContainer.style.display = category.includes('wedding card') ? 'block' : 'none'; }
+// --- UPDATED toggleSqFtFields to check for existence of input element ---
+function toggleSqFtFields() {
+    if (!productUnitSelect) return;
+    const unitType = productUnitSelect.value;
+    // Check if productMinOrderValueInput exists before accessing its properties
+    if (productMinOrderValueInput) {
+        const parentGroup = productMinOrderValueInput.closest('.sq-feet-only');
+        if (parentGroup) {
+            parentGroup.style.display = unitType === 'Sq Feet' ? 'block' : 'none';
+        }
+    } else {
+        console.warn("Element productMinOrderValueInput not found for toggleSqFtFields.");
+    }
+}
+function toggleExtraCharges() { if (!extraChargesSection || !hasExtraChargesCheckbox) return; extraChargesSection.style.display = hasExtraChargesCheckbox.checked ? 'block' : 'none'; }
 
 // --- Sorting & Filtering Handlers ---
-function handleSortChange() { /* ... (unchanged) ... */ if (!sortSelect) return; const [field, direction] = sortSelect.value.split('_'); if (field && direction) { if (field === currentSortField && direction === currentSortDirection) return; currentSortField = field; currentSortDirection = direction; applyFiltersAndRender(); } }
-function handleSearchInput() { /* ... (unchanged) ... */ clearTimeout(searchDebounceTimer); searchDebounceTimer = setTimeout(applyFiltersAndRender, 300); }
-function clearFilters() { /* ... (unchanged) ... */ if (filterSearchInput) filterSearchInput.value = ''; if (sortSelect) sortSelect.value = 'createdAt_desc'; currentSortField = 'createdAt'; currentSortDirection = 'desc'; applyFiltersAndRender(); }
+function handleSortChange() { if (!sortSelect) return; const [field, direction] = sortSelect.value.split('_'); if (field && direction) { if (field === currentSortField && direction === currentSortDirection) return; currentSortField = field; currentSortDirection = direction; applyFiltersAndRender(); } }
+function handleSearchInput() { clearTimeout(searchDebounceTimer); searchDebounceTimer = setTimeout(applyFiltersAndRender, 300); }
+function clearFilters() { if (filterSearchInput) filterSearchInput.value = ''; if (sortSelect) sortSelect.value = 'createdAt_desc'; currentSortField = 'createdAt'; currentSortDirection = 'desc'; applyFiltersAndRender(); }
 
 // --- Firestore Listener ---
-function listenForOnlineProducts() { /* ... (unchanged) ... */ if (unsubscribeProducts) { unsubscribeProducts(); unsubscribeProducts = null; } if (!window.db || !window.collection || !window.query || !window.onSnapshot || !window.orderBy) { console.error("Firestore functions unavailable!"); if (productTableBody) productTableBody.innerHTML = `<tr><td colspan="8" style="color: red; text-align: center;">Error: DB Connection Failed.</td></tr>`; return; } if (productTableBody) productTableBody.innerHTML = `<tr><td colspan="8" id="loadingMessage" style="text-align: center;">Loading online products...</td></tr>`; try { console.log(`Setting up Firestore listener for 'onlineProducts' with sort: ${currentSortField}_${currentSortDirection}`); const productsRef = window.collection(window.db, "onlineProducts"); const q = window.query(productsRef, window.orderBy(currentSortField || 'createdAt', currentSortDirection || 'desc')); unsubscribeProducts = window.onSnapshot(q, (snapshot) => { console.log(`Received ${snapshot.docs.length} online products.`); allProductsCache = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })); applyFiltersAndRender(); }, (error) => { console.error("Error fetching online products snapshot:", error); if (error.code === 'permission-denied') { if (productTableBody) productTableBody.innerHTML = `<tr><td colspan="8" style="color: red; text-align: center;">Error loading products: Insufficient permissions. Check Firestore rules.</td></tr>`; } else { if (productTableBody) productTableBody.innerHTML = `<tr><td colspan="8" style="color: red; text-align: center;">Error loading products. Check connection/console.</td></tr>`; } }); } catch (error) { console.error("Error setting up online product listener:", error); if (productTableBody) productTableBody.innerHTML = `<tr><td colspan="8" style="color: red; text-align: center;">Error setting up listener.</td></tr>`; } }
+function listenForOnlineProducts() { if (unsubscribeProducts) { unsubscribeProducts(); unsubscribeProducts = null; } if (!window.db || !window.collection || !window.query || !window.onSnapshot || !window.orderBy) { console.error("Firestore functions unavailable!"); if (productTableBody) productTableBody.innerHTML = `<tr><td colspan="8" style="color: red; text-align: center;">Error: DB Connection Failed.</td></tr>`; return; } if (productTableBody) productTableBody.innerHTML = `<tr><td colspan="8" id="loadingMessage" style="text-align: center;">Loading online products...</td></tr>`; try { console.log(`Setting up Firestore listener for 'onlineProducts' with sort: ${currentSortField}_${currentSortDirection}`); const productsRef = window.collection(window.db, "onlineProducts"); const q = window.query(productsRef, window.orderBy(currentSortField || 'createdAt', currentSortDirection || 'desc')); unsubscribeProducts = window.onSnapshot(q, (snapshot) => { console.log(`Received ${snapshot.docs.length} online products.`); allProductsCache = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })); applyFiltersAndRender(); }, (error) => { console.error("Error fetching online products snapshot:", error); if (error.code === 'permission-denied') { if (productTableBody) productTableBody.innerHTML = `<tr><td colspan="8" style="color: red; text-align: center;">Error loading products: Insufficient permissions. Check Firestore rules.</td></tr>`; } else { if (productTableBody) productTableBody.innerHTML = `<tr><td colspan="8" style="color: red; text-align: center;">Error loading products. Check connection/console.</td></tr>`; } }); } catch (error) { console.error("Error setting up online product listener:", error); if (productTableBody) productTableBody.innerHTML = `<tr><td colspan="8" style="color: red; text-align: center;">Error setting up listener.</td></tr>`; } }
 
 // --- Filter, Sort, Render ---
-function applyFiltersAndRender() { /* ... (unchanged) ... */ if (!allProductsCache) return; console.log("Applying filters (sorting done by Firestore listener)..."); const filterSearchValue = filterSearchInput ? filterSearchInput.value.trim().toLowerCase() : ''; let filteredProducts = allProductsCache.filter(product => { if (!product || !product.productName) return false; if (filterSearchValue) { const name = (product.productName || '').toLowerCase(); const category = (product.category || '').toLowerCase(); const brand = (product.brand || '').toLowerCase(); if (!(name.includes(filterSearchValue) || category.includes(filterSearchValue) || brand.includes(filterSearchValue))) { return false; } } return true; }); renderProductTable(filteredProducts); console.log("Online product rendering complete (filtered)."); }
+function applyFiltersAndRender() { if (!allProductsCache) return; console.log("Applying filters..."); const filterSearchValue = filterSearchInput ? filterSearchInput.value.trim().toLowerCase() : ''; let filteredProducts = allProductsCache.filter(product => { if (!product || !product.productName) return false; if (filterSearchValue) { const name = (product.productName || '').toLowerCase(); const category = (product.category || '').toLowerCase(); const brand = (product.brand || '').toLowerCase(); if (!(name.includes(filterSearchValue) || category.includes(filterSearchValue) || brand.includes(filterSearchValue))) { return false; } } return true; }); renderProductTable(filteredProducts); console.log("Online product rendering complete (filtered)."); }
 
-// --- Table Rendering Function (Unchanged) ---
-function renderProductTable(products) { /* ... (unchanged - still shows pricing.rate in the table) ... */ if (!productTableBody) return; productTableBody.innerHTML = ''; const expectedColumns = 8; if (products.length === 0) { productTableBody.innerHTML = `<tr><td colspan="${expectedColumns}" id="noProductsMessage" style="text-align: center;">No online products found matching criteria.</td></tr>`; } else { products.forEach(product => { const firestoreId = product.id; const data = product; const tableRow = productTableBody.insertRow(); tableRow.setAttribute('data-id', firestoreId); const name = data.productName || 'N/A'; const category = data.category || '-'; const brand = data.brand || '-'; const rate = data.pricing?.rate !== undefined ? formatCurrency(data.pricing.rate) : '-'; // Display 'rate' (online rate) in table
-            const unit = data.unit || '-'; const enabled = data.isEnabled ? 'Yes' : 'No'; const dateAdded = formatFirestoreTimestamp(data.createdAt); tableRow.innerHTML = `<td>${escapeHtml(name)}</td><td>${escapeHtml(category)}</td><td>${escapeHtml(brand)}</td><td style="text-align: right;">${rate}</td><td style="text-align: center;">${escapeHtml(unit)}</td><td style="text-align: center;">${enabled}</td><td style="text-align: center;">${dateAdded}</td><td style="text-align: center;"><button class="button edit-product-btn" style="background-color: var(--info-color); color: white; padding: 5px 8px; font-size: 0.8em; margin: 2px;" title="Edit Online Product"><i class="fas fa-edit"></i> Edit</button><button class="button delete-product-btn" style="background-color: var(--danger-color); color: white; padding: 5px 8px; font-size: 0.8em; margin: 2px;" title="Delete Online Product"><i class="fas fa-trash"></i> Delete</button></td>`; const editBtn = tableRow.querySelector('.edit-product-btn'); if (editBtn) { editBtn.addEventListener('click', (e) => { e.stopPropagation(); openEditModal(firestoreId, data); }); } const delBtn = tableRow.querySelector('.delete-product-btn'); if (delBtn) { delBtn.addEventListener('click', (e) => { e.stopPropagation(); productToDeleteId = firestoreId; productToDeleteName = data.productName || 'this online product'; if(deleteWarningMessage) deleteWarningMessage.innerHTML = `Are you sure you want to delete the online product "<strong>${escapeHtml(productToDeleteName)}</strong>"? <br>This will also delete its images from storage. This action cannot be undone.`; if(deleteConfirmCheckbox) deleteConfirmCheckbox.checked = false; if(confirmDeleteFinalBtn) confirmDeleteFinalBtn.disabled = true; if(deleteConfirmModal) deleteConfirmModal.classList.add('active'); }); } }); } }
+// --- Table Rendering Function (Shows only 'rate' i.e., Online Rate) ---
+function renderProductTable(products) {
+    if (!productTableBody) return;
+    productTableBody.innerHTML = '';
+    const expectedColumns = 8;
+    if (products.length === 0) { productTableBody.innerHTML = `<tr><td colspan="${expectedColumns}" id="noProductsMessage" style="text-align: center;">No online products found matching criteria.</td></tr>`; }
+    else {
+        products.forEach(product => {
+            const firestoreId = product.id;
+            const data = product;
+            const tableRow = productTableBody.insertRow();
+            tableRow.setAttribute('data-id', firestoreId);
 
+            const name = data.productName || 'N/A';
+            const category = data.category || '-';
+            const brand = data.brand || '-';
+            const rate = data.pricing?.rate !== undefined ? formatCurrency(data.pricing.rate) : '-';
+            const unit = data.unit || '-';
+            const enabled = data.isEnabled ? 'Yes' : 'No';
+            const dateAdded = formatFirestoreTimestamp(data.createdAt);
 
-// --- <<< NEW: Pricing Tab Functions >>> ---
+            tableRow.innerHTML = `
+                <td>${escapeHtml(name)}</td>
+                <td>${escapeHtml(category)}</td>
+                <td>${escapeHtml(brand)}</td>
+                <td style="text-align: right;">${rate}</td>
+                <td style="text-align: center;">${escapeHtml(unit)}</td>
+                <td style="text-align: center;">${enabled}</td>
+                <td style="text-align: center;">${dateAdded}</td>
+                <td style="text-align: center;">
+                     <button class="button edit-product-btn" style="background-color: var(--info-color); color: white; padding: 5px 8px; font-size: 0.8em; margin: 2px;" title="Edit Online Product">
+                         <i class="fas fa-edit"></i> Edit
+                     </button>
+                     <button class="button delete-product-btn" style="background-color: var(--danger-color); color: white; padding: 5px 8px; font-size: 0.8em; margin: 2px;" title="Delete Online Product">
+                          <i class="fas fa-trash"></i> Delete
+                     </button>
+                </td>
+            `;
 
-/** Sets the active pricing tab and updates the UI */
+            const editBtn = tableRow.querySelector('.edit-product-btn');
+            if (editBtn) { editBtn.addEventListener('click', (e) => { e.stopPropagation(); openEditModal(firestoreId, data); }); }
+            const delBtn = tableRow.querySelector('.delete-product-btn');
+            if (delBtn) { delBtn.addEventListener('click', (e) => { e.stopPropagation(); productToDeleteId = firestoreId; productToDeleteName = data.productName || 'this online product'; if(deleteWarningMessage) deleteWarningMessage.innerHTML = `Are you sure you want to delete the online product "<strong>${escapeHtml(productToDeleteName)}</strong>"? <br>This will also delete its images from storage. This action cannot be undone.`; if(deleteConfirmCheckbox) deleteConfirmCheckbox.checked = false; if(confirmDeleteFinalBtn) confirmDeleteFinalBtn.disabled = true; if(deleteConfirmModal) deleteConfirmModal.classList.add('active'); }); }
+        });
+    }
+}
+
+// --- Pricing Tab Functions ---
 function setActiveRateTab(rateType) {
-    if (!RATE_TYPES[rateType] || !priceTabsContainer || !currentRateInput || !currentRateLabel || !applyRateCheckboxesContainer) return;
-
-    currentActiveRateType = rateType; // Update global state
+    if (!RATE_TYPES[rateType] || !priceTabsContainer || !currentRateInput || !currentRateLabel || !applyRateCheckboxesContainer) {
+        console.error("Cannot set active rate tab - required elements missing.");
+        return;
+    }
+    currentActiveRateType = rateType;
     console.log("Active rate type set to:", currentActiveRateType);
 
-    // Update Tab Buttons visual state
     priceTabsContainer.querySelectorAll('.price-tab-btn').forEach(btn => {
         btn.classList.toggle('active', btn.dataset.rateType === rateType);
     });
 
-    // Update the single rate input label and value
     currentRateLabel.textContent = `${RATE_TYPES[rateType].label}*:`;
-    // Load the rate from the stored data for the product being edited
     const fieldName = RATE_TYPES[rateType].field;
-    currentRateInput.value = productBeingEditedData.pricing?.[fieldName] ?? '';
-    currentRateInput.dataset.currentRateType = rateType; // Store type on input for reference if needed
+    // Use optional chaining and nullish coalescing for safety
+    currentRateInput.value = productBeingEditedData?.pricing?.[fieldName] ?? '';
+    currentRateInput.dataset.currentRateType = rateType;
 
-    // Update "Apply to others" checkboxes
     updateApplyRateCheckboxes(rateType);
 }
 
-/** Updates the "Apply to others" checkboxes based on the active tab */
 function updateApplyRateCheckboxes(activeType) {
-    if (!applyRateCheckboxesContainer) return;
-    applyRateCheckboxesContainer.innerHTML = ''; // Clear existing checkboxes
+    if (!applyRateCheckboxesContainer) {
+        console.error("Apply Rate Checkboxes container not found!");
+        return;
+    }
+    applyRateCheckboxesContainer.innerHTML = '';
 
     const containerTitle = document.createElement('label');
     containerTitle.className = 'checkbox-container-title';
-    containerTitle.textContent = `Apply ${RATE_TYPES[activeType].label} to:`;
+    containerTitle.textContent = `Apply ${RATE_TYPES[activeType]?.label || 'Current'} Rate to:`; // Safer access to label
     applyRateCheckboxesContainer.appendChild(containerTitle);
 
     Object.keys(RATE_TYPES).forEach(typeKey => {
-        if (typeKey !== activeType) { // Don't show checkbox for the active type itself
+        if (typeKey !== activeType) {
             const otherTypeInfo = RATE_TYPES[typeKey];
             const checkboxId = `applyRateTo_${typeKey}`;
-
             const wrapper = document.createElement('div');
-            wrapper.className = 'checkbox-wrapper';
-
+            wrapper.className = 'checkbox-wrapper apply-rate-checkbox';
             const checkbox = document.createElement('input');
-            checkbox.type = 'checkbox';
-            checkbox.id = checkboxId;
-            checkbox.name = 'applyRateTo';
-            checkbox.value = typeKey; // Store the target rate type ('online', 'retail', etc.)
-
+            checkbox.type = 'checkbox'; checkbox.id = checkboxId; checkbox.name = 'applyRateTo'; checkbox.value = typeKey;
             const label = document.createElement('label');
-            label.htmlFor = checkboxId;
-            label.textContent = otherTypeInfo.label; // Display the full label
-
-            wrapper.appendChild(checkbox);
-            wrapper.appendChild(label);
+            label.htmlFor = checkboxId; label.textContent = otherTypeInfo.label;
+            wrapper.appendChild(checkbox); wrapper.appendChild(label);
             applyRateCheckboxesContainer.appendChild(wrapper);
         }
     });
 }
 
-// --- <<< END: Pricing Tab Functions >>> ---
-
-
-// --- Modal Handling (Add/Edit) ---
+// --- Modal Handling (Add/Edit - Updated for Tabs) ---
 function openAddModal() {
     if (!productModal || !productForm) return;
-    console.log("Opening modal to add new ONLINE product (v_TabbedPricing).");
+    console.log("Opening modal to add new ONLINE product (v_TabbedPricing_Fix).");
     if (modalTitle) modalTitle.innerHTML = '<i class="fas fa-plus-circle success-icon"></i> Add New Online Product';
     if (editProductIdInput) editProductIdInput.value = '';
-    productForm.reset(); // Reset all form fields
-    productBeingEditedData = { pricing: {} }; // Clear stored data for add mode
+    productForm.reset();
+    productBeingEditedData = { pricing: {} }; // Initialize for add mode
+
     if (isEnabledCheckbox) isEnabledCheckbox.checked = true;
     if (hasExtraChargesCheckbox) hasExtraChargesCheckbox.checked = false;
     existingImageUrls = []; selectedFiles = []; imagesToDelete = [];
@@ -254,8 +302,7 @@ function openAddModal() {
     if (saveText) saveText.textContent = 'Save Product';
     if (deleteProductBtn) deleteProductBtn.style.display = 'none';
 
-    // <<< NEW: Set default active tab and checkboxes for Add mode >>>
-    setActiveRateTab('online'); // Default to 'online' tab
+    setActiveRateTab('online'); // Default to 'online' tab for new products
 
     toggleWeddingFields(); toggleSqFtFields(); toggleExtraCharges();
     productModal.classList.add('active');
@@ -263,11 +310,11 @@ function openAddModal() {
 
 async function openEditModal(firestoreId, data) {
     if (!productModal || !productForm || !data) return;
-    console.log("Opening modal to edit ONLINE product (v_TabbedPricing):", firestoreId);
+    console.log("Opening modal to edit ONLINE product (v_TabbedPricing_Fix):", firestoreId);
     if (modalTitle) modalTitle.innerHTML = '<i class="fas fa-edit info-icon"></i> Edit Online Product';
-    productForm.reset(); // Reset form first
-    productBeingEditedData = JSON.parse(JSON.stringify(data)); // Store a deep copy of the data being edited
-    if (!productBeingEditedData.pricing) productBeingEditedData.pricing = {}; // Ensure pricing object exists
+    productForm.reset();
+    productBeingEditedData = JSON.parse(JSON.stringify(data)); // Store deep copy
+    if (!productBeingEditedData.pricing) productBeingEditedData.pricing = {};
 
     if (editProductIdInput) editProductIdInput.value = firestoreId;
     if (productNameInput) productNameInput.value = data.productName || '';
@@ -276,9 +323,9 @@ async function openEditModal(firestoreId, data) {
     if (productDescInput) productDescInput.value = data.description || '';
     if (isEnabledCheckbox) isEnabledCheckbox.checked = data.isEnabled !== undefined ? data.isEnabled : true;
 
-    // --- Populate NON-RATE pricing fields ---
     const pricing = data.pricing || {};
-    // Note: Rate fields (rate, retailRate, agentRate, resellerRate) are handled by setActiveRateTab
+    // Only populate NON-RATE fields directly here
+    // The active rate field will be populated by setActiveRateTab
     if (productMinOrderValueInput) productMinOrderValueInput.value = pricing.minimumOrderValue ?? '';
     if (productPurchasePriceInput) productPurchasePriceInput.value = pricing.purchasePrice ?? '';
     if (productMrpInput) productMrpInput.value = pricing.mrp ?? '';
@@ -290,7 +337,6 @@ async function openEditModal(firestoreId, data) {
     if (hasExtraChargesCheckbox) hasExtraChargesCheckbox.checked = pricing.hasExtraCharges || false;
     if (extraChargeNameInput) extraChargeNameInput.value = pricing.extraCharge?.name || '';
     if (extraChargeAmountInput) extraChargeAmountInput.value = pricing.extraCharge?.amount ?? '';
-    // --- End NON-RATE pricing fields ---
 
     if (productOptionsInput) { try { productOptionsInput.value = (data.options && Array.isArray(data.options)) ? JSON.stringify(data.options, null, 2) : ''; } catch { productOptionsInput.value = ''; } }
     if (productBrandInput) productBrandInput.value = data.brand || '';
@@ -307,7 +353,6 @@ async function openEditModal(firestoreId, data) {
 
     productToDeleteId = firestoreId; productToDeleteName = data.productName || 'this online product';
 
-    // <<< NEW: Set active tab and load its rate for Edit mode >>>
     setActiveRateTab('online'); // Default to 'online' tab when opening edit
 
     toggleWeddingFields(); toggleSqFtFields(); toggleExtraCharges();
@@ -318,25 +363,21 @@ async function openEditModal(firestoreId, data) {
 function closeProductModal() {
     if (productModal) {
         productModal.classList.remove('active');
-        productToDeleteId = null;
-        productToDeleteName = null;
-        if (productImagesInput) productImagesInput.value = null; // Clear file input
-        selectedFiles = [];
-        imagesToDelete = [];
+        productToDeleteId = null; productToDeleteName = null;
+        if (productImagesInput) productImagesInput.value = null;
+        selectedFiles = []; imagesToDelete = [];
         productBeingEditedData = {}; // Clear stored data
         currentActiveRateType = 'online'; // Reset active tab
     }
 }
 
 // --- Image Handling ---
-// (handleFileSelection, displayImagePreview, uploadImage, deleteStoredImage functions remain the same)
-function handleFileSelection(event) { /* ... (unchanged) ... */ if (!imagePreviewArea || !productImagesInput) return; const files = Array.from(event.target.files); let currentImageCount = existingImageUrls.filter(url => !imagesToDelete.includes(url)).length + selectedFiles.length; const availableSlots = 4 - currentImageCount; if (files.length > availableSlots) { alert(`Max 4 images allowed. You have ${currentImageCount}, tried to add ${files.length}.`); productImagesInput.value = null; return; } files.forEach(file => { if (file.type.startsWith('image/')) { if (selectedFiles.length + existingImageUrls.filter(url => !imagesToDelete.includes(url)).length < 4) { selectedFiles.push(file); displayImagePreview(file, null); } } }); productImagesInput.value = null; }
-function displayImagePreview(fileObject, existingUrl = null) { /* ... (unchanged) ... */ if (!imagePreviewArea) return; const previewId = existingUrl || `new-${fileObject.name}-${Date.now()}`; const previewWrapper = document.createElement('div'); previewWrapper.className = 'image-preview-item'; previewWrapper.setAttribute('data-preview-id', previewId); const img = document.createElement('img'); const removeBtn = document.createElement('button'); removeBtn.type = 'button'; removeBtn.className = 'remove-image-btn'; removeBtn.innerHTML = '&times;'; removeBtn.title = 'Remove image'; const progressBar = document.createElement('div'); progressBar.className = 'upload-progress-bar'; const progressFill = document.createElement('div'); progressBar.appendChild(progressFill); progressBar.style.display = 'none'; if (existingUrl) { img.src = existingUrl; img.onerror = () => { img.src = 'images/placeholder.png'; }; previewWrapper.imageUrl = existingUrl; removeBtn.onclick = () => { if (!imagesToDelete.includes(existingUrl)) imagesToDelete.push(existingUrl); previewWrapper.style.display = 'none'; console.log("Marked for deletion:", existingUrl); }; } else if (fileObject) { const reader = new FileReader(); reader.onload = (e) => { img.src = e.target.result; }; reader.readAsDataURL(fileObject); previewWrapper.fileData = fileObject; removeBtn.onclick = () => { selectedFiles = selectedFiles.filter(f => f !== fileObject); previewWrapper.remove(); console.log("Removed new file:", fileObject.name); }; } previewWrapper.appendChild(img); previewWrapper.appendChild(removeBtn); previewWrapper.appendChild(progressBar); imagePreviewArea.appendChild(previewWrapper); }
-async function uploadImage(file, productId, index) { /* ... (unchanged) ... */ if (!window.storage || !window.storageRef || !window.uploadBytesResumable || !window.getDownloadURL) throw new Error("Storage functions missing."); const previewWrapper = [...imagePreviewArea.querySelectorAll('.image-preview-item')].find(el => el.fileData === file); const progressBar = previewWrapper?.querySelector('.upload-progress-bar'); const progressFill = progressBar?.querySelector('div'); const timestamp = Date.now(); const uniqueFileName = `${timestamp}-image${index}-${file.name.replace(/[^a-zA-Z0-9.]/g, '_')}`; const filePath = `onlineProductImages/${productId}/${uniqueFileName}`; const fileRef = window.storageRef(window.storage, filePath); if (progressBar) progressBar.style.display = 'block'; if (progressFill) progressFill.style.width = '0%'; const uploadTask = window.uploadBytesResumable(fileRef, file); return new Promise((resolve, reject) => { uploadTask.on('state_changed', (snapshot) => { const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100; if (progressFill) progressFill.style.width = `${progress}%`; if (uploadProgressInfo) uploadProgressInfo.textContent = `Uploading ${file.name}: ${progress.toFixed(0)}%`; }, (error) => { console.error(`Upload failed:`, error); if (progressBar) progressBar.style.backgroundColor = 'red'; if (uploadProgressInfo) uploadProgressInfo.textContent = `Upload failed: ${file.name}.`; reject(error); }, async () => { if (progressBar) progressBar.style.backgroundColor = 'var(--success-color)'; if (uploadProgressInfo) uploadProgressInfo.textContent = `Getting URL...`; try { const downloadURL = await window.getDownloadURL(uploadTask.snapshot.ref); resolve(downloadURL); } catch (error) { if (progressBar) progressBar.style.backgroundColor = 'red'; if (uploadProgressInfo) uploadProgressInfo.textContent = `Failed to get URL.`; reject(error); } }); }); }
-async function deleteStoredImage(imageUrl) { /* ... (unchanged) ... */ if (!window.storage || !window.storageRef || !window.deleteObject) return; if (!imageUrl || !(imageUrl.startsWith('https://firebasestorage.googleapis.com/') || imageUrl.startsWith('gs://'))) return; try { const imageRef = window.storageRef(window.storage, imageUrl); await window.deleteObject(imageRef); console.log("Deleted image from Storage:", imageUrl); } catch (error) { if (error.code === 'storage/object-not-found') console.warn("Image not found:", imageUrl); else console.error("Error deleting image:", imageUrl, error); } }
+function handleFileSelection(event) { if (!imagePreviewArea || !productImagesInput) return; const files = Array.from(event.target.files); let currentImageCount = existingImageUrls.filter(url => !imagesToDelete.includes(url)).length + selectedFiles.length; const availableSlots = 4 - currentImageCount; if (files.length > availableSlots) { alert(`Max 4 images allowed. You have ${currentImageCount}, tried to add ${files.length}.`); productImagesInput.value = null; return; } files.forEach(file => { if (file.type.startsWith('image/')) { if (selectedFiles.length + existingImageUrls.filter(url => !imagesToDelete.includes(url)).length < 4) { selectedFiles.push(file); displayImagePreview(file, null); } } }); productImagesInput.value = null; }
+function displayImagePreview(fileObject, existingUrl = null) { if (!imagePreviewArea) return; const previewId = existingUrl || `new-${fileObject.name}-${Date.now()}`; const previewWrapper = document.createElement('div'); previewWrapper.className = 'image-preview-item'; previewWrapper.setAttribute('data-preview-id', previewId); const img = document.createElement('img'); const removeBtn = document.createElement('button'); removeBtn.type = 'button'; removeBtn.className = 'remove-image-btn'; removeBtn.innerHTML = '&times;'; removeBtn.title = 'Remove image'; const progressBar = document.createElement('div'); progressBar.className = 'upload-progress-bar'; const progressFill = document.createElement('div'); progressBar.appendChild(progressFill); progressBar.style.display = 'none'; if (existingUrl) { img.src = existingUrl; img.onerror = () => { img.src = 'images/placeholder.png'; }; previewWrapper.imageUrl = existingUrl; removeBtn.onclick = () => { if (!imagesToDelete.includes(existingUrl)) imagesToDelete.push(existingUrl); previewWrapper.style.display = 'none'; console.log("Marked for deletion:", existingUrl); }; } else if (fileObject) { const reader = new FileReader(); reader.onload = (e) => { img.src = e.target.result; }; reader.readAsDataURL(fileObject); previewWrapper.fileData = fileObject; removeBtn.onclick = () => { selectedFiles = selectedFiles.filter(f => f !== fileObject); previewWrapper.remove(); console.log("Removed new file:", fileObject.name); }; } previewWrapper.appendChild(img); previewWrapper.appendChild(removeBtn); previewWrapper.appendChild(progressBar); imagePreviewArea.appendChild(previewWrapper); }
+async function uploadImage(file, productId, index) { if (!window.storage || !window.storageRef || !window.uploadBytesResumable || !window.getDownloadURL) throw new Error("Storage functions missing."); const previewWrapper = [...imagePreviewArea.querySelectorAll('.image-preview-item')].find(el => el.fileData === file); const progressBar = previewWrapper?.querySelector('.upload-progress-bar'); const progressFill = progressBar?.querySelector('div'); const timestamp = Date.now(); const uniqueFileName = `${timestamp}-image${index}-${file.name.replace(/[^a-zA-Z0-9.]/g, '_')}`; const filePath = `onlineProductImages/${productId}/${uniqueFileName}`; const fileRef = window.storageRef(window.storage, filePath); if (progressBar) progressBar.style.display = 'block'; if (progressFill) progressFill.style.width = '0%'; const uploadTask = window.uploadBytesResumable(fileRef, file); return new Promise((resolve, reject) => { uploadTask.on('state_changed', (snapshot) => { const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100; if (progressFill) progressFill.style.width = `${progress}%`; if (uploadProgressInfo) uploadProgressInfo.textContent = `Uploading ${file.name}: ${progress.toFixed(0)}%`; }, (error) => { console.error(`Upload failed:`, error); if (progressBar) progressBar.style.backgroundColor = 'red'; if (uploadProgressInfo) uploadProgressInfo.textContent = `Upload failed: ${file.name}.`; reject(error); }, async () => { if (progressBar) progressBar.style.backgroundColor = 'var(--success-color)'; if (uploadProgressInfo) uploadProgressInfo.textContent = `Getting URL...`; try { const downloadURL = await window.getDownloadURL(uploadTask.snapshot.ref); resolve(downloadURL); } catch (error) { if (progressBar) progressBar.style.backgroundColor = 'red'; if (uploadProgressInfo) uploadProgressInfo.textContent = `Failed to get URL.`; reject(error); } }); }); }
+async function deleteStoredImage(imageUrl) { if (!window.storage || !window.storageRef || !window.deleteObject) return; if (!imageUrl || !(imageUrl.startsWith('https://firebasestorage.googleapis.com/') || imageUrl.startsWith('gs://'))) return; try { const imageRef = window.storageRef(window.storage, imageUrl); await window.deleteObject(imageRef); console.log("Deleted image from Storage:", imageUrl); } catch (error) { if (error.code === 'storage/object-not-found') console.warn("Image not found:", imageUrl); else console.error("Error deleting image:", imageUrl, error); } }
 
-
-// --- <<< UPDATED: handleSaveProduct Function (v_TabbedPricing) >>> ---
+// --- <<< UPDATED: handleSaveProduct Function (v_TabbedPricing_Fix) >>> ---
 async function handleSaveProduct(event) {
     event.preventDefault();
     if (!window.db || !window.collection || !window.addDoc || !window.doc || !window.updateDoc || !window.serverTimestamp || !window.storage) { showToast("Core Firebase functions unavailable.", 5000); return; }
@@ -362,7 +403,7 @@ async function handleSaveProduct(event) {
     const purchasePrice = parseNumericInput(productPurchasePriceInput?.value);
     const mrp = parseNumericInput(productMrpInput?.value);
     const gstRate = parseNumericInput(productGstRateInput?.value);
-    const minOrderValue = parseNumericInput(productMinOrderValueInput?.value);
+    const minOrderValue = parseNumericInput(productMinOrderValueInput?.value); // Check existence before parsing
     const designCharge = parseNumericInput(designChargeInput?.value);
     const printingCharge = parseNumericInput(printingChargeInput?.value);
     const transportCharge = parseNumericInput(transportChargeInput?.value);
@@ -371,14 +412,18 @@ async function handleSaveProduct(event) {
 
     // Validate the CURRENTLY EDITED rate field specifically
     if (currentRateValue === null || isNaN(currentRateValue)) {
-        showToast(`Please enter a valid ${RATE_TYPES[currentActiveRateType].label}.`, 5000);
+        // Get the label of the currently active tab for the error message
+        const activeLabel = RATE_TYPES[currentActiveRateType]?.label || 'Current Price';
+        showToast(`Please enter a valid ${activeLabel}. It cannot be empty or invalid.`, 5000);
+        // Restore button state
         if (saveProductBtn) saveProductBtn.disabled = false; if (saveSpinner) saveSpinner.style.display = 'none'; if (saveIcon) saveIcon.style.display = ''; if (saveText) saveText.textContent = isEditing ? 'Update Product' : 'Save Product'; if (uploadProgressInfo) uploadProgressInfo.textContent = '';
         return;
     }
 
     // Validate other optional numeric fields
     if ([purchasePrice, mrp, gstRate, minOrderValue, designCharge, printingCharge, transportCharge, extraMarginPercent, extraChargeAmount].some(isNaN)) {
-        showToast("Please enter valid numbers for optional prices/charges.", 5000);
+        showToast("Please enter valid numbers (or leave blank) for optional prices/charges.", 5000);
+        // Restore button state
         if (saveProductBtn) saveProductBtn.disabled = false; if (saveSpinner) saveSpinner.style.display = 'none'; if (saveIcon) saveIcon.style.display = ''; if (saveText) saveText.textContent = isEditing ? 'Update Product' : 'Save Product'; if (uploadProgressInfo) uploadProgressInfo.textContent = '';
         return;
     }
@@ -395,7 +440,7 @@ async function handleSaveProduct(event) {
         hsnSacCode: productHsnSacCodeInput?.value.trim() || null,
         updatedAt: window.serverTimestamp(),
         // Initialize pricing - start with existing data if editing, or empty if adding
-        pricing: isEditing ? (productBeingEditedData.pricing || {}) : {}
+        pricing: isEditing ? { ...(productBeingEditedData.pricing || {}) } : {} // Use spread for shallow copy
     };
     if (!isEditing) {
         productData.createdAt = window.serverTimestamp();
@@ -409,26 +454,35 @@ async function handleSaveProduct(event) {
     // Apply to other rates based on checkboxes
     const applyCheckboxes = applyRateCheckboxesContainer?.querySelectorAll('input[name="applyRateTo"]:checked') ?? [];
     applyCheckboxes.forEach(checkbox => {
-        const targetRateType = checkbox.value; // e.g., 'retail'
+        const targetRateType = checkbox.value;
         if (RATE_TYPES[targetRateType]) {
             const targetField = RATE_TYPES[targetRateType].field;
-            productData.pricing[targetField] = currentRateValue;
-            console.log(`Applied ${currentActiveRateType} rate to ${targetRateType}.`);
+            productData.pricing[targetField] = currentRateValue; // Apply current input value
+            console.log(`Applied ${currentActiveRateType} rate to ${targetRateType}. Value: ${currentRateValue}`);
         }
     });
 
-    // --- Add/Update OTHER pricing fields ---
-    if (purchasePrice !== null) productData.pricing.purchasePrice = purchasePrice;
-    if (mrp !== null) productData.pricing.mrp = mrp;
-    if (gstRate !== null) productData.pricing.gstRate = gstRate;
-    if (unit === 'Sq Feet' && minOrderValue !== null) productData.pricing.minimumOrderValue = minOrderValue;
+    // --- Add/Update OTHER pricing fields (Purchase Price, MRP, GST etc.) ---
+    // Only update if a valid number was parsed
+    if (purchasePrice !== null) productData.pricing.purchasePrice = purchasePrice; else delete productData.pricing.purchasePrice;
+    if (mrp !== null) productData.pricing.mrp = mrp; else delete productData.pricing.mrp;
+    if (gstRate !== null) productData.pricing.gstRate = gstRate; else delete productData.pricing.gstRate;
+    if (unit === 'Sq Feet' && minOrderValue !== null) productData.pricing.minimumOrderValue = minOrderValue; else delete productData.pricing.minimumOrderValue;
+
     // Wedding card specific
     if (category.toLowerCase().includes('wedding card')) {
-        if (designCharge !== null) productData.pricing.designCharge = designCharge;
-        if (printingCharge !== null) productData.pricing.printingChargeBase = printingCharge;
-        if (transportCharge !== null) productData.pricing.transportCharge = transportCharge;
-        if (extraMarginPercent !== null) productData.pricing.extraMarginPercent = extraMarginPercent;
+        if (designCharge !== null) productData.pricing.designCharge = designCharge; else delete productData.pricing.designCharge;
+        if (printingCharge !== null) productData.pricing.printingChargeBase = printingCharge; else delete productData.pricing.printingChargeBase;
+        if (transportCharge !== null) productData.pricing.transportCharge = transportCharge; else delete productData.pricing.transportCharge;
+        if (extraMarginPercent !== null) productData.pricing.extraMarginPercent = extraMarginPercent; else delete productData.pricing.extraMarginPercent;
+    } else {
+        // Remove wedding fields if category is not wedding card
+        delete productData.pricing.designCharge;
+        delete productData.pricing.printingChargeBase;
+        delete productData.pricing.transportCharge;
+        delete productData.pricing.extraMarginPercent;
     }
+
     // Extra charges
     productData.pricing.hasExtraCharges = hasExtraChargesCheckbox?.checked ?? false;
     if (productData.pricing.hasExtraCharges) {
@@ -437,8 +491,7 @@ async function handleSaveProduct(event) {
             amount: extraChargeAmount ?? 0
         };
     } else {
-         // Ensure extraCharge field is removed or nulled if checkbox is unchecked
-         delete productData.pricing.extraCharge;
+        delete productData.pricing.extraCharge; // Remove if checkbox is unchecked
     }
     // --- End OTHER pricing fields ---
 
@@ -446,17 +499,23 @@ async function handleSaveProduct(event) {
     const optionsString = productOptionsInput?.value.trim();
     if (optionsString) {
         try {
-            productData.options = JSON.parse(optionsString);
-            if (!Array.isArray(productData.options)) throw new Error("Options must be an array.");
+            const parsedOptions = JSON.parse(optionsString);
+            if (!Array.isArray(parsedOptions)) throw new Error("Options must be an array.");
+            // Optional: Add deeper validation for option structure if needed
+            // parsedOptions.forEach(opt => { if(!opt.name || !opt.values || !Array.isArray(opt.values)) throw new Error("Invalid option structure."); });
+            productData.options = parsedOptions;
         } catch (err) {
-            showToast('Error: Invalid JSON in Options field.', 5000);
+            showToast(`Error: Invalid JSON in Options field. ${err.message}`, 5000);
+            // Restore button state
             if (saveProductBtn) saveProductBtn.disabled = false; if (saveSpinner) saveSpinner.style.display = 'none'; if (saveIcon) saveIcon.style.display = ''; if (saveText) saveText.textContent = isEditing ? 'Update Product' : 'Save Product'; if (uploadProgressInfo) uploadProgressInfo.textContent = '';
             return;
         }
+    } else {
+        productData.options = []; // Ensure it's an empty array if input is blank
     }
 
-    console.log("Final product data to save:", JSON.parse(JSON.stringify(productData))); // Log data before save
 
+    console.log("Final product data being prepared for Firestore save:", JSON.parse(JSON.stringify(productData)));
 
     // Start Save/Upload Process
     try {
@@ -464,9 +523,8 @@ async function handleSaveProduct(event) {
         if (isEditing) {
             if (uploadProgressInfo) uploadProgressInfo.textContent = 'Updating product info...';
             const productRef = window.doc(window.db, "onlineProducts", finalProductId);
-            // Create final update payload excluding timestamps that shouldn't be overwritten
             const updatePayload = { ...productData };
-            delete updatePayload.createdAt; // Don't overwrite createdAt on update
+            delete updatePayload.createdAt; // Prevent overwriting createdAt
             await window.updateDoc(productRef, updatePayload);
             console.log("Product info updated:", finalProductId);
         } else {
@@ -478,7 +536,7 @@ async function handleSaveProduct(event) {
 
         // === Step 2: Handle Image Operations ===
         let uploadedImageUrls = [];
-        let currentExistingUrls = isEditing ? (productBeingEditedData.imageUrls || []) : [];
+        let currentExistingUrls = isEditing ? (productBeingEditedData?.imageUrls || []) : []; // Use optional chaining
 
         // Delete marked images
         if (isEditing && imagesToDelete.length > 0) {
@@ -496,7 +554,7 @@ async function handleSaveProduct(event) {
             const uploadResults = await Promise.allSettled(uploadPromises);
             uploadedImageUrls = [];
             let uploadErrorOccurred = false;
-            uploadResults.forEach((result, index) => {
+            uploadResults.forEach((result) => { // No need for index here
                 if (result.status === 'fulfilled') { uploadedImageUrls.push(result.value); }
                 else { console.error(`Upload failed:`, result.reason); uploadErrorOccurred = true; }
             });
@@ -513,13 +571,11 @@ async function handleSaveProduct(event) {
          // Check if image URLs actually changed compared to the initial state
          if (isEditing) {
               const originalUrls = JSON.parse(existingImageUrlsInput?.value || '[]');
-              // Sort both arrays before comparing to handle order differences
               if (JSON.stringify(originalUrls.slice().sort()) === JSON.stringify(finalImageUrls.slice().sort())) {
                    needsUrlUpdate = false;
               }
          } else {
-             // Always update if it's a new product and there are images
-             needsUrlUpdate = finalImageUrls.length > 0;
+             needsUrlUpdate = finalImageUrls.length > 0; // Always update if new product has images
          }
 
         if (needsUrlUpdate) {
@@ -550,10 +606,9 @@ async function handleSaveProduct(event) {
 
 
 // --- Delete Handling ---
-// (handleDeleteButtonClick, closeDeleteConfirmModal, handleConfirmCheckboxChange, handleFinalDelete functions remain the same)
-function handleDeleteButtonClick(event) { /* ... (unchanged) ... */ event.preventDefault(); if (!productToDeleteId || !productToDeleteName) return; if (deleteWarningMessage) deleteWarningMessage.innerHTML = `Are you sure you want to delete "<strong>${escapeHtml(productToDeleteName)}</strong>"? <br>This will also delete its images. This action cannot be undone.`; if(deleteConfirmCheckbox) deleteConfirmCheckbox.checked = false; if(confirmDeleteFinalBtn) confirmDeleteFinalBtn.disabled = true; if(deleteConfirmModal) deleteConfirmModal.classList.add('active'); }
-function closeDeleteConfirmModal() { /* ... (unchanged) ... */ if (deleteConfirmModal) { deleteConfirmModal.classList.remove('active'); } }
-function handleConfirmCheckboxChange() { /* ... (unchanged) ... */ if (deleteConfirmCheckbox && confirmDeleteFinalBtn) { confirmDeleteFinalBtn.disabled = !deleteConfirmCheckbox.checked; } }
-async function handleFinalDelete() { /* ... (unchanged) ... */ if (!deleteConfirmCheckbox?.checked || !productToDeleteId) return; if (!window.db || !window.doc || !window.getDoc || !window.deleteDoc || !window.storage || !window.storageRef || !window.deleteObject) { showToast("Core Firebase functions unavailable.", 5000); return; } if(confirmDeleteFinalBtn) { confirmDeleteFinalBtn.disabled = true; confirmDeleteFinalBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Deleting...'; } const productRef = window.doc(window.db, "onlineProducts", productToDeleteId); try { const productSnap = await window.getDoc(productRef); if (productSnap.exists()) { const productData = productSnap.data(); if (productData.imageUrls && Array.isArray(productData.imageUrls) && productData.imageUrls.length > 0) { const deletePromises = productData.imageUrls.map(url => deleteStoredImage(url)); await Promise.allSettled(deletePromises); } } await window.deleteDoc(productRef); showToast(`Product "${productToDeleteName || ''}" deleted!`); closeDeleteConfirmModal(); closeProductModal(); } catch (error) { console.error(`Error deleting ${productToDeleteId}:`, error); showToast(`Failed to delete: ${error.message}`, 5000); } finally { if(confirmDeleteFinalBtn) { confirmDeleteFinalBtn.disabled = !deleteConfirmCheckbox?.checked; confirmDeleteFinalBtn.innerHTML = '<i class="fas fa-trash-alt"></i> Confirm Delete'; } } }
+function handleDeleteButtonClick(event) { event.preventDefault(); if (!productToDeleteId || !productToDeleteName) return; if (deleteWarningMessage) deleteWarningMessage.innerHTML = `Are you sure you want to delete "<strong>${escapeHtml(productToDeleteName)}</strong>"? <br>This will also delete its images. This action cannot be undone.`; if(deleteConfirmCheckbox) deleteConfirmCheckbox.checked = false; if(confirmDeleteFinalBtn) confirmDeleteFinalBtn.disabled = true; if(deleteConfirmModal) deleteConfirmModal.classList.add('active'); }
+function closeDeleteConfirmModal() { if (deleteConfirmModal) { deleteConfirmModal.classList.remove('active'); } }
+function handleConfirmCheckboxChange() { if (deleteConfirmCheckbox && confirmDeleteFinalBtn) { confirmDeleteFinalBtn.disabled = !deleteConfirmCheckbox.checked; } }
+async function handleFinalDelete() { if (!deleteConfirmCheckbox?.checked || !productToDeleteId) return; if (!window.db || !window.doc || !window.getDoc || !window.deleteDoc || !window.storage || !window.storageRef || !window.deleteObject) { showToast("Core Firebase functions unavailable.", 5000); return; } if(confirmDeleteFinalBtn) { confirmDeleteFinalBtn.disabled = true; confirmDeleteFinalBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Deleting...'; } const productRef = window.doc(window.db, "onlineProducts", productToDeleteId); try { const productSnap = await window.getDoc(productRef); if (productSnap.exists()) { const productData = productSnap.data(); if (productData.imageUrls && Array.isArray(productData.imageUrls) && productData.imageUrls.length > 0) { const deletePromises = productData.imageUrls.map(url => deleteStoredImage(url)); await Promise.allSettled(deletePromises); } } await window.deleteDoc(productRef); showToast(`Product "${productToDeleteName || ''}" deleted!`); closeDeleteConfirmModal(); closeProductModal(); } catch (error) { console.error(`Error deleting ${productToDeleteId}:`, error); showToast(`Failed to delete: ${error.message}`, 5000); } finally { if(confirmDeleteFinalBtn) { confirmDeleteFinalBtn.disabled = !deleteConfirmCheckbox?.checked; confirmDeleteFinalBtn.innerHTML = '<i class="fas fa-trash-alt"></i> Confirm Delete'; } } }
 
 // --- END ---
