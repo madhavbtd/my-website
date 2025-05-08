@@ -1,3 +1,5 @@
+"use strict";
+
 // js/manage-online-products.js
 // Updated Version: Layout changes + Diagram Upload + Checkbox Lock/Unlock Logic + Fixes + STOCK MANAGEMENT
 
@@ -110,7 +112,6 @@ let diagramFileToUpload = null;
 let shouldRemoveDiagram = false;
 let isRateLocked = false;
 
-
 // --- Helper Functions ---
 function formatCurrency(amount) {
     const num = Number(amount);
@@ -119,12 +120,14 @@ function formatCurrency(amount) {
         maximumFractionDigits: 2
     })}`;
 }
+
 function escapeHtml(unsafe) {
     if (typeof unsafe !== 'string') {
         unsafe = String(unsafe || '');
     }
     return unsafe.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
 }
+
 function parseNumericInput(value, allowZero = true, isInteger = false) { // Added isInteger for stock
     if (value === undefined || value === null) return null;
     const trimmedValue = String(value).trim();
@@ -140,6 +143,7 @@ function parseNumericInput(value, allowZero = true, isInteger = false) { // Adde
     }
     return num;
 }
+
 function formatFirestoreTimestamp(timestamp) {
     if (!timestamp || typeof timestamp.toDate !== 'function') {
         return '-';
@@ -253,6 +257,7 @@ function toggleWeddingFields() {
     const category = productCategoryInput.value.toLowerCase();
     weddingFieldsContainer.style.display = category.includes('wedding card') ? 'block' : 'none';
 }
+
 function toggleSqFtFields() {
     if (!productUnitSelect) return;
     const unitType = productUnitSelect.value;
@@ -261,6 +266,7 @@ function toggleSqFtFields() {
         if (parentGroup) parentGroup.style.display = unitType === 'Sq Feet' ? 'block' : 'none';
     }
 }
+
 function toggleExtraCharges() {
     if (!extraChargesSection || !hasExtraChargesCheckbox) return;
     extraChargesSection.style.display = hasExtraChargesCheckbox.checked ? 'block' : 'none';
@@ -277,10 +283,12 @@ function handleSortChange() {
         listenForOnlineProducts(); /* Re-fetch with new sort */
     }
 }
+
 function handleSearchInput() {
     clearTimeout(searchDebounceTimer);
     searchDebounceTimer = setTimeout(applyFiltersAndRender, 300);
 }
+
 function clearFilters() {
     if (filterSearchInput) filterSearchInput.value = '';
     if (sortSelect) sortSelect.value = 'createdAt_desc';
@@ -454,11 +462,13 @@ function updateApplyRateCheckboxes(activeType) {
 function handleApplyRateCheckboxChange() {
     checkAndApplyLockState();
 }
+
 function handleRateInputChange() {
     if (!currentRateInput.disabled) {
         resetApplyCheckboxesAndUnlock();
     }
 }
+
 function checkAndApplyLockState() {
     const checkboxes = applyRateCheckboxesContainer?.querySelectorAll('input[name="applyRateTo"]') ?? [];
     const checkedCheckboxes = applyRateCheckboxesContainer?.querySelectorAll('input[name="applyRateTo"]:checked') ?? [];
@@ -469,6 +479,7 @@ function checkAndApplyLockState() {
         unlockPricingFields();
     }
 }
+
 function applyRateToAllOthers() {
     if (!currentRateInput || !productBeingEditedData.pricing) return;
     const currentRateValue = parseNumericInput(currentRateInput.value);
@@ -481,6 +492,7 @@ function applyRateToAllOthers() {
         });
     }
 }
+
 function lockPricingFields() {
     if (!currentRateInput || !applyRateCheckboxesContainer || !priceTabsContainer) return;
     isRateLocked = true;
@@ -492,13 +504,17 @@ function lockPricingFields() {
         }
     });
 }
+
 function unlockPricingFields() {
     if (!currentRateInput || !applyRateCheckboxesContainer || !priceTabsContainer) return;
     isRateLocked = false;
     currentRateInput.disabled = false;
     applyRateCheckboxesContainer.querySelectorAll('input[name="applyRateTo"]:checked').forEach(cb => cb.checked = false);
-    unlockPricingFields();
+    priceTabsContainer.querySelectorAll('.price-tab-btn').forEach(btn => {
+        btn.disabled = false;
+    });
 }
+
 function resetApplyCheckboxesAndUnlock() {
     if (!applyRateCheckboxesContainer) return;
     applyRateCheckboxesContainer.querySelectorAll('input[name="applyRateTo"]:checked').forEach(cb => cb.checked = false);
@@ -621,69 +637,4 @@ async function openEditModal(firestoreId, data) {
 
     if (saveProductBtn) saveProductBtn.disabled = false;
     if (saveSpinner) saveSpinner.style.display = 'none';
-    if (saveIcon) saveIcon.style.display = '';
-    if (saveText) saveText.textContent = 'Update Product';
-    if (deleteProductBtn) deleteProductBtn.style.display = 'inline-flex';
-
-    productToDeleteId = firestoreId;
-    productToDeleteName = data.productName || 'this online product';
-
-    setActiveRateTab('online');
-    unlockPricingFields();
-
-    toggleWeddingFields();
-    toggleSqFtFields();
-    toggleExtraCharges();
-    productModal.classList.add('active');
-}
-
-function closeProductModal() {
-    if (productModal) {
-        productModal.classList.remove('active');
-        productToDeleteId = null;
-        productToDeleteName = null;
-        if (productImagesInput) productImagesInput.value = null;
-        selectedFiles = [];
-        imagesToDelete = [];
-        productBeingEditedData = {};
-        currentActiveRateType = 'online';
-        diagramFileToUpload = null;
-        shouldRemoveDiagram = false;
-        if (productDiagramInput) productDiagramInput.value = null;
-        unlockPricingFields();
-    }
-}
-
-// --- Image Handling ---
-function handleFileSelection(event) {
-    if (!imagePreviewArea || !productImagesInput) return;
-    const files = Array.from(event.target.files);
-    let currentImageCount = existingImageUrls.filter(url => !imagesToDelete.includes(url)).length + selectedFiles.length;
-    const availableSlots = 4 - currentImageCount;
-    if (files.length > availableSlots) {
-        alert(`Max 4 images allowed. You have ${currentImageCount}, tried to add ${files.length}.`);
-        productImagesInput.value = null;
-        return;
-    }
-    files.forEach(file => {
-        if (file.type.startsWith('image/')) {
-            if (selectedFiles.length + existingImageUrls.filter(url => !imagesToDelete.includes(url)).length < 4) {
-                selectedFiles.push(file);
-                displayImagePreview(file, null);
-            }
-        }
-    });
-    productImagesInput.value = null;
-}
-function displayImagePreview(fileObject, existingUrl = null) {
-    if (!imagePreviewArea) return;
-    const previewId = existingUrl || `new-<span class="math-inline">\{fileObject\.name\}\-</span>{Date.now()}`;
-    const previewWrapper = document.createElement('div');
-    previewWrapper.className = 'image-preview-item';
-    previewWrapper.setAttribute('data-preview-id', previewId);
-    const img = document.createElement('img');
-    const removeBtn = document.createElement('button');
-    removeBtn.type = 'button';
-    removeBtn.className = 'remove-image-btn';
-    removeBtn.innerHTML = '&times;';
-    removeBtn.title = 'Remove image';
+    if (
