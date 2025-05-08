@@ -43,7 +43,10 @@ a {
     font-family: var(--font-family);
 }
 
-/* --- General Page Layout --- */
+/* --- General Page Layout (Should reuse styles from linked common CSS) --- */
+/* Base styles for container, header, breadcrumb, filter-bar, table-container, button etc. */
+/* These should ideally come from your main admin CSS (e.g., index.css) */
+/* Add base styles here ONLY if they are NOT in your common admin CSS file */
 .container {
     background-color: #fff;
     padding: 20px 25px;
@@ -57,6 +60,7 @@ a {
 
 .header {
     background-color: var(--primary-color);
+    /* Agent management color */
     color: white;
     padding: 10px 15px;
     border-radius: 4px 4px 0 0;
@@ -236,20 +240,20 @@ a {
 #agentTable th:nth-child(4),
 /* Status */
 #agentTable td:nth-child(4),
-#agentTable th:nth-child(5),
+#agentTable th:nth-child(6),
 /* Can Add Cust? */
-#agentTable td:nth-child(5),
-#agentTable th:nth-child(6) {
+#agentTable td:nth-child(6),
+#agentTable th:nth-child(7) {
     /* Actions */
     text-align: center;
 }
 
-/* #agentTable th:nth-child(5), */
+#agentTable th:nth-child(5),
 /* Allowed Categories */
-/* #agentTable td:nth-child(5) { */
-/* white-space: normal; */
-/* min-width: 150px; */
-/* } */
+#agentTable td:nth-child(5) {
+    white-space: normal;
+    min-width: 150px;
+}
 
 .category-list-cell {
     font-size: 0.85em;
@@ -280,7 +284,7 @@ a {
 }
 
 /* Can Add Customer Icons */
-#agentTable td:nth-child(5) i {
+#agentTable td:nth-child(6) i {
     font-size: 1.2em;
 }
 
@@ -340,6 +344,20 @@ a {
     justify-content: center;
     padding: 15px;
     box-sizing: border-box;
+    /* Corrected properties: */
+    /* display: flex; */
+    /* position: fixed; */
+    /* z-index: 1050; */
+    /* left: 0; */
+    /* top: 0; */
+    /* width: 100%; */
+    /* height: 100%; */
+    /* overflow: auto; */
+    /* background-color: rgba(0, 0, 0, 0.55); */
+    /* align-items: center; */
+    /* justify-content: center; */
+    /* padding: 15px; */
+    /* box-sizing: border-box; */
 }
 
 .modal.active {
@@ -374,16 +392,13 @@ a {
 }
 
 .modal-content.large-modal {
-    max-width: 600px;
-    /* Adjusted width */
+    max-width: 750px;
 }
 
 .modal-content h2 {
     margin: 0;
-    padding: 12px 20px;
-    /* Reduced padding */
-    font-size: 1.1em;
-    /* Smaller font size */
+    padding: 15px 25px;
+    font-size: 1.3em;
     background-color: var(--light-bg);
     border-bottom: 1px solid var(--border-color);
     border-radius: var(--border-radius) var(--border-radius) 0 0;
@@ -399,11 +414,9 @@ a {
 .close-btn {
     color: var(--text-muted);
     position: absolute;
-    top: 5px;
-    right: 10px;
-    /* Adjusted position */
-    font-size: 1.5em;
-    /* Smaller font size */
+    top: 8px;
+    right: 15px;
+    font-size: 1.8em;
     cursor: pointer;
     transition: color 0.2s ease;
     z-index: 1053;
@@ -414,74 +427,57 @@ a {
 }
 
 .modal-actions {
-    padding: 10px 20px;
-    /* Reduced padding */
+    padding: 15px 25px;
     background-color: var(--light-bg);
     border-top: 1px solid var(--border-color);
     border-radius: 0 0 var(--border-radius) var(--border-radius);
     display: flex;
     justify-content: flex-end;
-    gap: 8px;
-    /* Reduced gap */
+    gap: 10px;
     flex-shrink: 0;
 }
 
 .modal-actions .button {
-    min-width: 70px;
-    /* Reduced width */
-    padding: 6px 12px;
-    /* Smaller padding */
-    font-size: 0.85em;
-    /* Smaller font size */
+    min-width: 80px;
 }
 
 /* --- Form Styles --- */
 #agentForm {
-    padding: 15px 20px;
-    /* Reduced padding */
+    padding: 20px 25px;
     display: flex;
     flex-direction: column;
-    gap: 10px;
-    /* Reduced gap */
+    gap: 15px;
     overflow-y: auto;
-    max-height: calc(90vh - 100px);
-    /* Adjusted max height */
+    max-height: calc(90vh - 120px);
 }
 
 .form-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    /* Adjusted min width */
-    gap: 10px;
-    /* Reduced gap */
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 15px;
 }
 
 .form-group {
     display: flex;
     flex-direction: column;
-    gap: 3px;
-    /* Reduced gap */
+    gap: 5px;
 }
 
 .form-group label {
-    font-size: 0.85em;
-    /* Smaller font size */
+    font-size: 0.9em;
     font-weight: 500;
     color: var(--text-muted);
-    margin-bottom: 2px;
-    /* Reduced margin */
+    margin-bottom: 3px;
     display: block;
 }
 
 .form-group input,
 .form-group select,
 .form-group textarea {
-    padding: 6px 10px;
-    /* Smaller padding */
+    padding: 8px 12px;
     border: 1px solid var(--border-color);
     border-radius: var(--border-radius);
-    font-size: 0.9em;
-    /* Smaller font size */
+    font-size: 0.95em;
     background-color: var(--white-color);
     box-sizing: border-box;
     width: 100%;
@@ -497,31 +493,26 @@ a {
 
 .form-group .error-message {
     color: var(--danger-color);
-    font-size: 0.8em;
-    /* Smaller font size */
-    margin-top: 2px;
-    /* Reduced margin */
+    font-size: 0.85em;
+    margin-top: 3px;
 }
 
 .required-asterisk {
     color: var(--danger-color);
-    font-size: 1em;
-    /* Smaller font size */
+    font-size: 1.1em;
     vertical-align: top;
     margin-left: 2px;
 }
 
 #passwordHelp {
-    font-size: 0.75em;
-    /* Smaller font size */
+    font-size: 0.8em;
     color: var(--text-muted);
 }
 
 /* --- User Type Toggle --- */
 .user-type-toggle {
     display: flex;
-    gap: 10px;
-    /* Reduced gap */
+    gap: 15px;
     align-items: center;
     margin-top: 5px;
 }
@@ -531,14 +522,12 @@ a {
 }
 
 .user-type-toggle label {
-    padding: 6px 12px;
-    /* Smaller padding */
+    padding: 8px 15px;
     border: 1px solid var(--border-color);
     border-radius: var(--border-radius);
     cursor: pointer;
     transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
-    font-size: 0.85em;
-    /* Smaller font size */
+    font-size: 0.9em;
     font-weight: 500;
     color: var(--text-muted);
     white-space: nowrap;
@@ -558,46 +547,36 @@ a {
 
 /* --- Permissions Section --- */
 .form-section-permissions {
-    margin-top: 10px;
-    /* Reduced margin */
+    margin-top: 15px;
     border-top: 1px solid var(--border-color);
-    padding-top: 10px;
-    /* Reduced padding */
+    padding-top: 15px;
 }
 
 .form-section-permissions label {
     display: block;
-    font-size: 0.9em;
-    /* Smaller font size */
+    font-size: 1em;
     font-weight: 600;
     color: var(--secondary-color);
-    margin-bottom: 8px;
-    /* Reduced margin */
+    margin-bottom: 10px;
 }
 
 .checkbox-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-    /* Adjusted min width */
-    gap: 6px;
-    /* Reduced gap */
-    margin-bottom: 8px;
-    /* Reduced margin */
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 8px;
+    margin-bottom: 10px;
 }
 
 .checkbox-grid label {
     display: flex;
     align-items: center;
-    gap: 3px;
-    /* Reduced gap */
-    font-size: 0.85em;
-    /* Smaller font size */
+    gap: 5px;
+    font-size: 0.9em;
     font-weight: normal;
     color: var(--text-color);
     cursor: pointer;
     margin: 0;
-    padding: 4px 8px;
-    /* Smaller padding */
+    padding: 6px 10px;
     border: 1px solid transparent;
     border-radius: 4px;
     transition: background-color 0.15s ease;
@@ -611,9 +590,8 @@ a {
     margin: 0;
     vertical-align: middle;
     appearance: none;
-    width: 14px;
-    /* Smaller size */
-    height: 14px;
+    width: 16px;
+    height: 16px;
     border: 1px solid var(--border-color);
     border-radius: 3px;
     cursor: pointer;
@@ -630,8 +608,7 @@ a {
     /* Font Awesome checkmark */
     font-family: "Font Awesome 6 Free";
     font-weight: 900;
-    font-size: 0.7em;
-    /* Smaller font size */
+    font-size: 0.8em;
     color: var(--white-color);
     position: absolute;
     top: 50%;
@@ -641,10 +618,8 @@ a {
 
 .permission-actions {
     display: flex;
-    gap: 8px;
-    /* Reduced gap */
-    margin-top: 8px;
-    /* Reduced margin */
+    gap: 10px;
+    margin-top: 10px;
 }
 
 .button-link {
@@ -652,8 +627,7 @@ a {
     border: none;
     color: var(--primary-color);
     cursor: pointer;
-    font-size: 0.85em;
-    /* Smaller font size */
+    font-size: 0.9em;
     font-weight: 500;
     text-decoration: none;
     transition: color 0.2s ease;
