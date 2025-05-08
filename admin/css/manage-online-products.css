@@ -1,6 +1,6 @@
 /* ============================================================== */
 /* == manage-online-products.css                           == */
-/* == UPDATED Version with Font & Layout Improvements        == */
+/* == UPDATED Version: Added styles for Pricing Tabs         == */
 /* ============================================================== */
 
 /* --- CSS Variables (Unchanged) --- */
@@ -37,7 +37,6 @@
     --focus-shadow-color: rgba(111, 66, 193, 0.15);
 
     --base-font-family: 'Poppins', "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
-    /* --- UPDATED FONT SIZE --- */
     --base-font-size: 15px; /* Increased from 14px */
     --border-radius-sm: 4px;
     --border-radius-md: 6px;
@@ -79,7 +78,6 @@ body {
     justify-content: center;
     gap: 12px;
 }
-/* --- UPDATED HEADER FONT SIZE --- */
 .header h1 {
     margin: 0;
     font-size: 1.4em; /* Increased size */
@@ -119,7 +117,6 @@ body {
     box-shadow: var(--box-shadow-light);
 }
 
-/* --- UPDATED TABLE FONT SIZE & PADDING --- */
 #productTable {
     width: 100%;
     border-collapse: collapse;
@@ -156,12 +153,11 @@ body {
     line-height: 1.6; /* Improved line height */
 }
 
-/* Column specific alignments (Keep as is or adjust if new columns added) */
+/* Column specific alignments */
 #productTable th:nth-child(4), #productTable td:nth-child(4) { text-align: right; } /* Rate */
-#productTable th:nth-child(5), #productTable td:nth-child(5) { text-align: right; } /* MRP (If Added) */
-#productTable th:nth-child(6), #productTable td:nth-child(6) { text-align: center; } /* Unit */
-#productTable th:nth-child(7), #productTable td:nth-child(7) { text-align: center; } /* Enabled */
-#productTable th:nth-child(8), #productTable td:nth-child(8) { text-align: center; } /* Date Added */
+#productTable th:nth-child(5), #productTable td:nth-child(5) { text-align: center; } /* Unit */
+#productTable th:nth-child(6), #productTable td:nth-child(6) { text-align: center; } /* Enabled */
+#productTable th:nth-child(7), #productTable td:nth-child(7) { text-align: center; } /* Date Added */
 #productTable th:last-child, #productTable td:last-child { text-align: center; } /* Actions */
 
 
@@ -169,17 +165,8 @@ body {
     text-align: center; color: var(--text-color-light); font-style: italic; padding: 40px !important; font-size: 1.1em;
 }
 
-/* --- UPDATED Action button styling in table --- */
-#productTable td:last-child {
-    white-space: nowrap; /* Prevent buttons wrapping to next line */
-    text-align: center;
-}
-#productTable td:last-child .button {
-    margin: 0 4px; /* Adjust spacing between buttons */
-    padding: 6px 12px; /* Slightly larger buttons */
-    font-size: 0.9em; /* Maintain relative size */
-    vertical-align: middle; /* Align buttons nicely */
-}
+#productTable td:last-child { white-space: nowrap; text-align: center; }
+#productTable td:last-child .button { margin: 0 4px; padding: 6px 12px; font-size: 0.9em; vertical-align: middle; }
 
 
 /* --- Modal Styles (Includes Scroll Fix & Professional Styling) --- */
@@ -200,39 +187,27 @@ body {
     width: 95%;
     overflow: hidden;
 }
-.modal-content.large-modal { max-width: 1150px; /* Slightly wider */ }
+.modal-content.large-modal { max-width: 1150px; }
 .modal-content.small-modal { max-width: 480px; padding: 30px 35px; overflow: visible; display: block; }
 
 .modal-content h2 {
-    font-weight: 600;
-    font-size: 1.5em; /* Larger modal title */
-    padding: 20px 30px;
-    border-bottom: 1px solid #eee;
-    color: var(--text-color-dark);
-    text-align: left;
-    display: flex;
-    align-items: center;
-    flex-shrink: 0;
-    margin: 0;
-    background-color: var(--container-bg);
+    font-weight: 600; font-size: 1.5em; padding: 20px 30px; border-bottom: 1px solid #eee; color: var(--text-color-dark); text-align: left; display: flex; align-items: center; flex-shrink: 0; margin: 0; background-color: var(--container-bg);
 }
 .modal-content h2 i { margin-right: 12px; color: var(--primary-color); font-size: 1.1em; }
 .modal-content h2 .warning-icon { color: var(--danger-color); }
 
 .close-btn {
-    color: #aaa; position: absolute; top: 15px; right: 25px; font-size: 30px; /* Slightly larger */ font-weight: bold; cursor: pointer; line-height: 1; background: none; border: none; padding: 0; transition: color 0.2s ease; z-index: 10;
+    color: #aaa; position: absolute; top: 15px; right: 25px; font-size: 30px; font-weight: bold; cursor: pointer; line-height: 1; background: none; border: none; padding: 0; transition: color 0.2s ease; z-index: 10;
 }
 .close-btn:hover, .close-btn:focus { color: #333; }
 
 #productForm { padding: 25px 30px; overflow-y: auto; flex-grow: 1; }
 
-.product-form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); /* Responsive columns */ gap: 25px 35px; }
+.product-form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 25px 35px; }
 
-#productForm .form-group { margin-bottom: 22px; /* Slightly more space */ }
+#productForm .form-group { margin-bottom: 22px; }
 
-#productForm label {
-    display: block; font-weight: 500; margin-bottom: 8px; font-size: 0.95em; /* Slightly larger label */ color: var(--text-color-medium);
-}
+#productForm label { display: block; font-weight: 500; margin-bottom: 8px; font-size: 0.95em; color: var(--text-color-medium); }
 #productForm label input[type="checkbox"] { margin-right: 10px; width: 16px; height: 16px; accent-color: var(--primary-color); cursor: pointer; vertical-align: middle; }
 
 #productForm input[type="text"],
@@ -240,7 +215,7 @@ body {
 #productForm input[type="file"],
 #productForm select,
 #productForm textarea {
-    width: 100%; padding: 12px 16px; /* Larger padding */ border: 1px solid var(--border-color); border-radius: var(--border-radius-md); font-size: 1em; /* Base size for inputs */ font-family: var(--base-font-family); background-color: #fff; transition: border-color 0.2s ease, box-shadow 0.2s ease; box-sizing: border-box; color: var(--text-color-dark);
+    width: 100%; padding: 12px 16px; border: 1px solid var(--border-color); border-radius: var(--border-radius-md); font-size: 1em; font-family: var(--base-font-family); background-color: #fff; transition: border-color 0.2s ease, box-shadow 0.2s ease; box-sizing: border-box; color: var(--text-color-dark);
 }
 #productForm ::placeholder { color: #aaa; opacity: 1; }
 #productForm input:focus,
@@ -255,10 +230,15 @@ body {
 #productForm input[type="file"]::file-selector-button { padding: 9px 16px; border: none; background-color: var(--secondary-color); color: white; border-radius: var(--border-radius-sm); cursor: pointer; margin-right: 12px; font-family: var(--base-font-family); font-weight: 500; transition: background-color 0.2s ease; }
 #productForm input[type="file"]::file-selector-button:hover { background-color: var(--secondary-color-dark); }
 
+/* --- Pricing Input Group (with ₹ symbol) --- */
 .price-group { position: relative; }
+/* Style the input specifically within .price-group */
 .price-group input[type="number"] { padding-left: 32px !important; }
+/* Style the ::before pseudo-element specifically within .price-group */
 .price-group::before { content: '₹'; position: absolute; left: 13px; top: 50%; transform: translateY(-50%); color: var(--text-color-light); font-size: 1em; z-index: 2; pointer-events: none; }
-#productForm .form-group label + input[type="number"]::before { top: calc(50% + 12px); /* May need fine tuning */ }
+/* Adjust if label is above the input */
+#productForm .form-group label + .price-group::before { top: calc(50% + 12px); /* Fine-tune this value if needed */ }
+
 
 #productForm fieldset {
     border: 1px solid #e0e0e0; border-radius: var(--border-radius-md); padding: 25px 30px 30px 30px; margin-top: 20px; margin-bottom: 20px; background-color: #fdfdff;
@@ -277,7 +257,7 @@ body {
 #image-upload-section h3 i { font-size: 0.9em; }
 
 #image-preview-area {
-    display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); /* Slightly larger previews */ gap: 15px; margin-top: 15px; padding: 20px; background-color: #f0f2f5; border: 1px dashed #ced4da; border-radius: var(--border-radius-md); min-height: 140px;
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 15px; margin-top: 15px; padding: 20px; background-color: #f0f2f5; border: 1px dashed #ced4da; border-radius: var(--border-radius-md); min-height: 140px;
 }
 .image-preview-item {
     position: relative; width: 110px; height: 110px; border: 1px solid #ddd; border-radius: var(--border-radius-md); overflow: hidden; background-color: #fff; box-shadow: 0 2px 5px rgba(0,0,0,0.08); display: flex; align-items: center; justify-content: center;
@@ -294,29 +274,14 @@ body {
 }
 .modal-actions-right { display: flex; gap: 15px; }
 
-/* --- UPDATED BUTTON STYLING --- */
+/* --- Button Styling --- */
 .button {
-    padding: 12px 30px; /* Slightly larger buttons */
-    font-size: 1em; /* Base font size */
-    border: none;
-    border-radius: var(--border-radius-md);
-    cursor: pointer;
-    font-weight: 500;
-    font-family: var(--base-font-family);
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    transition: background-color 0.2s ease, transform 0.1s ease, box-shadow 0.2s ease;
-    line-height: 1.5;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-    text-decoration: none;
-    white-space: nowrap;
+    padding: 12px 30px; font-size: 1em; border: none; border-radius: var(--border-radius-md); cursor: pointer; font-weight: 500; font-family: var(--base-font-family); display: inline-flex; align-items: center; justify-content: center; gap: 8px; transition: background-color 0.2s ease, transform 0.1s ease, box-shadow 0.2s ease; line-height: 1.5; box-shadow: 0 1px 3px rgba(0,0,0,0.1); text-decoration: none; white-space: nowrap;
 }
 .button:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
 .button:active:not(:disabled) { transform: translateY(0px); box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
 .button:disabled { opacity: 0.6; cursor: not-allowed; background-color: #adb5bd !important; transform: none; box-shadow: none; }
-.button i { margin-right: 8px; /* More space for icon */ }
+.button i { margin-right: 8px; }
 
 .save-button { background-color: var(--success-color); color: white; }
 .save-button:hover:not(:disabled) { background-color: var(--success-color-dark); }
@@ -347,46 +312,142 @@ body {
 .toast-notification { position: fixed; bottom: -100px; left: 50%; transform: translateX(-50%); background-color: rgba(52, 58, 64, 0.9); color: white; padding: 14px 28px; border-radius: 25px; z-index: 1100; font-size: 1em; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2); opacity: 0; transition: opacity 0.4s ease, bottom 0.4s ease; white-space: nowrap; }
 .toast-notification.show { opacity: 1; bottom: 30px; }
 
+
+/* --- NEW: Pricing Tab & Checkbox Styles --- */
+
+/* Container for the tab buttons */
+.price-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px; /* Space between tab buttons */
+    margin-bottom: 18px; /* Space below the tabs */
+    padding-bottom: 10px;
+    border-bottom: 1px solid #eee; /* Optional separator */
+}
+
+/* Individual tab button styling */
+.price-tab-btn {
+    padding: 8px 16px;
+    font-size: 0.9em; /* Slightly smaller font for tabs */
+    font-weight: 500;
+    border: 1px solid var(--border-color);
+    background-color: #f8f9fa; /* Light background for inactive tabs */
+    color: var(--text-color-medium);
+    border-radius: var(--border-radius-sm);
+    cursor: pointer;
+    transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+    flex-grow: 1; /* Allow buttons to grow */
+    text-align: center;
+    box-shadow: none; /* Override default button shadow */
+}
+
+.price-tab-btn:hover:not(.active) {
+    background-color: #e9ecef; /* Slightly darker hover */
+    border-color: #adb5bd;
+    color: var(--text-color-dark);
+    transform: none; /* No hover transform */
+    box-shadow: none;
+}
+
+/* Active tab button styling */
+.price-tab-btn.active {
+    background-color: var(--primary-color);
+    color: white;
+    border-color: var(--primary-color);
+    font-weight: 600;
+    box-shadow: none;
+    transform: none;
+}
+
+/* Ensure single rate input looks good */
+#currentRateLabel {
+    font-weight: 600; /* Make the current rate label slightly bolder */
+}
+
+/* Container for the "Apply rate to..." checkboxes */
+.apply-rate-checkboxes {
+    margin-top: 15px;
+    padding: 15px;
+    border: 1px solid #f0f0f0;
+    border-radius: var(--border-radius-sm);
+    background-color: #fdfdfd;
+}
+
+/* Title above the checkboxes */
+.checkbox-container-title {
+    display: block;
+    font-weight: 500;
+    font-size: 0.9em;
+    color: var(--text-color-medium);
+    margin-bottom: 12px;
+}
+
+/* Layout for each checkbox + label */
+.apply-rate-checkboxes .checkbox-wrapper {
+    display: flex; /* Use flex for better alignment */
+    align-items: center;
+    margin-bottom: 8px; /* Space between checkbox lines */
+}
+.apply-rate-checkboxes .checkbox-wrapper:last-child {
+    margin-bottom: 0;
+}
+
+/* Style the checkbox input */
+.apply-rate-checkboxes input[type="checkbox"] {
+    margin-right: 8px; /* Space between checkbox and label */
+    width: 15px;
+    height: 15px;
+    accent-color: var(--primary-color); /* Use theme color */
+    cursor: pointer;
+    flex-shrink: 0; /* Prevent checkbox from shrinking */
+}
+
+/* Style the label next to the checkbox */
+.apply-rate-checkboxes label {
+    font-weight: normal; /* Override default form label weight */
+    font-size: 0.9em;
+    color: var(--text-color-medium);
+    margin-bottom: 0; /* Reset default margin */
+    cursor: pointer;
+}
+
+/* --- END: NEW Pricing Styles --- */
+
+
 /* --- Responsive Adjustments --- */
-/* Minor adjustments to breakpoints if needed */
-@media (max-width: 1200px) { /* Adjusted breakpoint */
+@media (max-width: 1200px) {
     .modal-content.large-modal { max-width: 95%; }
-     /* Keep form grid flexible */
 }
-
-@media (max-width: 992px) { /* Tablet */
-    .product-form-grid { grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); } /* Allow more flexibility */
+@media (max-width: 992px) {
+    .product-form-grid { grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); }
 }
-
-@media (max-width: 767px) { /* Mobile */
-    body { font-size: 14px; /* Keep mobile slightly smaller */ }
+@media (max-width: 767px) {
+    body { font-size: 14px; }
     .container { padding: 20px 15px; margin: 15px 0; }
-    .header { padding: 15px; margin: -20px -15px 25px -15px; font-size: 1.3em; } /* Slightly larger header */
-    .header h1 { font-size: 1.1em; /* Adjust relative h1 size */}
+    .header { padding: 15px; margin: -20px -15px 25px -15px; }
+    .header h1 { font-size: 1.1em; }
     .filter-bar { flex-direction: column; align-items: stretch; padding: 15px; gap: 15px; margin-bottom: 25px; }
     .filter-group { min-width: 100%; }
     .filter-group .button { align-self: stretch; }
-
-    #productTable { font-size: 0.9em; table-layout: auto; } /* Adjust table font */
-    #productTable th, #productTable td { padding: 12px 10px; } /* Adjust padding */
-    #productTable td:last-child { white-space: normal; } /* Allow buttons to wrap on mobile */
-    #productTable td:last-child .button { margin-bottom: 5px; display: flex; width: auto; /* Let button size itself */ } /* Stack buttons vertically */
-
+    #productTable { font-size: 0.9em; table-layout: auto; }
+    #productTable th, #productTable td { padding: 12px 10px; }
+    #productTable td:last-child { white-space: normal; }
+    #productTable td:last-child .button { margin-bottom: 5px; display: flex; width: auto; }
     .modal-content { width: 96%; max-height: 95vh; }
     .modal-content.large-modal { max-width: 96%; }
-
     #productForm { padding: 20px; }
-    .modal-content h2 { padding: 15px 20px; font-size: 1.4em; } /* Larger modal title */
+    .modal-content h2 { padding: 15px 20px; font-size: 1.4em; }
     .modal-actions { padding: 15px 20px; flex-direction: column-reverse; align-items: stretch; }
     .modal-actions-right { flex-direction: column-reverse; width: 100%;}
     .delete-button-modal { margin-right: 0; margin-bottom: 10px; width: 100%; }
-    .modal-actions .button { width: 100%; padding: 12px 20px; } /* Adjust button padding */
-
+    .modal-actions .button { width: 100%; padding: 12px 20px; }
     .product-form-grid { grid-template-columns: 1fr; gap: 15px 0; }
     #productForm fieldset { padding: 20px; }
     #productForm legend { font-size: 1.1em; }
+    /* Responsive tabs */
+    .price-tabs { gap: 5px; }
+    .price-tab-btn { padding: 6px 10px; font-size: 0.85em; }
 }
-
 /* ============================================================== */
-/* == END: UPDATED CSS                                       == */
+/* == END CSS                                                == */
 /* ============================================================== */

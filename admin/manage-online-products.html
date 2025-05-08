@@ -9,33 +9,28 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/customer_management.css">
     <link rel="stylesheet" href="css/order_history.css">
-    <link rel="stylesheet" href="css/manage-online-products.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="css/manage-online-products.css"> <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 
     <script type="module">
-        // Firebase Core and Services
+        // Firebase Core and Services (जैसा आपने प्रदान किया था, storageBucket अपडेटेड)
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
         import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-        // --- Firestore Imports ---
         import {
             getFirestore, collection, doc, addDoc, updateDoc, deleteDoc,
             onSnapshot, query, orderBy, serverTimestamp, Timestamp, getDoc
         } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-        // --- Storage Imports ---
         import {
             getStorage, ref, uploadBytesResumable, getDownloadURL, deleteObject
         } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
 
         const firebaseConfig = {
-            apiKey: "AIzaSyBQj5rQmE77kKKGYixP8y3Hcimz8tiAqzQ", // आपका apiKey
+            apiKey: "AIzaSyBQj5rQmE77kKKGYixP8y3Hcimz8tiAqzQ",
             authDomain: "madhav-multyprint.firebaseapp.com",
             projectId: "madhav-multyprint",
-            // --- *** यह लाइन अपडेट की गई है *** ---
-            storageBucket: "madhav-multyprint.firebasestorage.app", // <<<---- यहाँ सही नाम डाला गया है
+            storageBucket: "madhav-multyprint.firebasestorage.app", // <<<--- Corrected
             messagingSenderId: "104988349637",
             appId: "1:104988349637:web:faf045b77c6786a4e70cac"
         };
-
 
         let app; let auth; let db; let storage;
         try {
@@ -54,13 +49,10 @@
 
             // Make Firebase services globally available
             window.db = db; window.auth = auth; window.storage = storage;
-            // Firestore functions
             window.collection = collection; window.doc = doc; window.addDoc = addDoc;
             window.updateDoc = updateDoc; window.deleteDoc = deleteDoc; window.onSnapshot = onSnapshot;
             window.query = query; window.orderBy = orderBy; window.serverTimestamp = serverTimestamp;
-            window.Timestamp = Timestamp;
-            window.getDoc = getDoc;
-            // Storage functions
+            window.Timestamp = Timestamp; window.getDoc = getDoc;
             window.storageRef = ref; window.uploadBytesResumable = uploadBytesResumable;
             window.getDownloadURL = getDownloadURL; window.deleteObject = deleteObject;
 
@@ -72,6 +64,7 @@
                     window.location.replace('login.html');
                 } else if (user) {
                     console.log(`User logged in on ${page}. Initializing Online Product Management.`);
+                    // Delay initialization slightly to ensure JS file is parsed
                     setTimeout(() => {
                          if (typeof initializeOnlineProductManagement === 'function') {
                              initializeOnlineProductManagement();
@@ -79,7 +72,7 @@
                          } else {
                               console.error("initializeOnlineProductManagement function not found in manage-online-products.js!");
                          }
-                    }, 150);
+                    }, 200); // Slightly increased delay
                 }
             });
         } catch(e) {
@@ -115,8 +108,7 @@
                     <option value="createdAt_asc">Oldest First</option>
                     <option value="productName_asc">Name (A-Z)</option>
                     <option value="productName_desc">Name (Z-A)</option>
-                     <option value="pricing.rate_asc">Rate (Low-High)</option>
-                     <option value="pricing.rate_desc">Rate (High-Low)</option>
+                     <option value="pricing.rate_asc">Rate (Low-High)</option> <option value="pricing.rate_desc">Rate (High-Low)</option>
                 </select>
             </div>
             <div class="filter-group">
@@ -133,8 +125,7 @@
                         <th style="width: 20%;">Name</th>
                         <th style="width: 14%;">Category</th>
                         <th style="width: 13%;">Brand</th>
-                        <th style="text-align: right; width: 9%;">Rate</th>
-                        <th style="text-align: center; width: 8%;">Unit</th>
+                        <th style="text-align: right; width: 9%;">Rate</th> <th style="text-align: center; width: 8%;">Unit</th>
                         <th style="text-align: center; width: 8%;">Enabled</th>
                         <th style="text-align: center; width: 12%;">Date Added</th>
                         <th style="text-align: center; width: 16%;">Actions</th>
@@ -159,6 +150,7 @@
                 <input type="hidden" id="existingImageUrls" value="[]">
 
                 <div class="product-form-grid">
+
                     <div class="form-column">
                         <fieldset>
                             <legend><i class="fas fa-info-circle"></i> Basic Details</legend>
@@ -190,7 +182,7 @@
                           </div>
                         </fieldset>
 
-                         <div id="image-upload-section">
+                        <div id="image-upload-section">
                                <h3><i class="fas fa-images"></i> Product Images</h3>
                                <div class="form-group">
                                    <label for="productImages">Select Images (Max 4):</label>
@@ -207,53 +199,54 @@
                     <div class="form-column">
                         <fieldset>
                             <legend><i class="fas fa-dollar-sign"></i> Price Details</legend>
+
+                            <div id="priceTabsContainer" class="price-tabs">
+                                <button type="button" class="price-tab-btn active" data-rate-type="online">Online</button>
+                                <button type="button" class="price-tab-btn" data-rate-type="retail">Retail</button>
+                                <button type="button" class="price-tab-btn" data-rate-type="agent">Agent</button>
+                                <button type="button" class="price-tab-btn" data-rate-type="reseller">Wholesale</button>
+                            </div>
                             <div class="form-group price-group">
-                               <label for="productSalePrice">Base Sale Price <span class="required">*</span>:</label>
-                               <input type="number" id="productSalePrice" required placeholder="0.00" step="0.01" min="0">
-                                <small>Price per Unit or per Sq Ft</small>
-                           </div>
-                            <div class="form-group sq-feet-only price-group" style="display: none;">
+                                <label for="currentRateInput" id="currentRateLabel">Online Customer Rate*:</label>
+                                <input type="number" id="currentRateInput" required placeholder="0.00" step="0.01" min="0">
+                                <small>Rate for the selected type above.</small>
+                            </div>
+                            <div id="applyRateCheckboxesContainer" class="apply-rate-checkboxes">
+                                 </div>
+                            <hr style="margin: 20px 0;"> <div class="form-group sq-feet-only price-group" style="display: none;">
                                 <label for="productMinOrderValue">Min. Order Value (Sq Ft Only):</label>
                                 <input type="number" id="productMinOrderValue" placeholder="e.g., 300" step="0.01" min="0">
                             </div>
+
+                            <div class="form-group price-group">
+                                <label for="productPurchasePrice">Purchase Price:</label>
+                                <input type="number" id="productPurchasePrice" placeholder="0.00" step="0.01" min="0">
+                            </div>
+                             <div class="form-group price-group">
+                                <label for="productMrp">M.R.P.:</label>
+                                <input type="number" id="productMrp" placeholder="0.00" step="0.01" min="0">
+                            </div>
+                             <div class="form-group">
+                                <label for="productGstRate">GST Rate (%):</label>
+                                <input type="number" id="productGstRate" placeholder="e.g., 18" step="0.01" min="0" max="100">
+                            </div>
+
                         </fieldset>
 
                         <fieldset id="wedding-card-fields" style="display: none;">
                             <legend>Wedding Card Charges</legend>
-                            <div class="form-group price-group">
-                                <label for="designCharge">Design Charge:</label>
-                                <input type="number" id="designCharge" placeholder="0.00" step="0.01" min="0">
-                            </div>
-                             <div class="form-group price-group">
-                                <label for="printingCharge">Printing Charge (Base):</label>
-                                <input type="number" id="printingCharge" placeholder="e.g., 700 per 100" step="0.01" min="0">
-                            </div>
-                             <div class="form-group price-group">
-                                <label for="transportCharge">Transport Charge:</label>
-                                <input type="number" id="transportCharge" placeholder="0.00" step="0.01" min="0">
-                            </div>
-                            <div class="form-group">
-                                 <label for="extraMarginPercent">Extra Margin (%):</label>
-                                 <input type="number" id="extraMarginPercent" placeholder="e.g., 10" step="0.01" min="0">
-                             </div>
+                             <div class="form-group price-group"><label for="designCharge">Design Charge:</label><input type="number" id="designCharge" placeholder="0.00" step="0.01" min="0"></div>
+                             <div class="form-group price-group"><label for="printingCharge">Printing Charge (Base):</label><input type="number" id="printingCharge" placeholder="e.g., 700 per 100" step="0.01" min="0"></div>
+                             <div class="form-group price-group"><label for="transportCharge">Transport Charge:</label><input type="number" id="transportCharge" placeholder="0.00" step="0.01" min="0"></div>
+                             <div class="form-group"><label for="extraMarginPercent">Extra Margin (%):</label><input type="number" id="extraMarginPercent" placeholder="e.g., 10" step="0.01" min="0"></div>
                         </fieldset>
 
-                        <fieldset id="extra-charges-outer" style="margin-top: 20px;">
+                        <fieldset id="extra-charges-outer">
                             <legend>Optional Extra Charges</legend>
-                            <div class="form-group">
-                               <label for="hasExtraCharges">
-                                   <input type="checkbox" id="hasExtraCharges"> Enable Additional Charge Option
-                               </label>
-                           </div>
+                            <div class="form-group"><label for="hasExtraCharges"><input type="checkbox" id="hasExtraCharges"> Enable Additional Charge Option</label></div>
                            <div id="extra-charges-section" style="display: none;">
-                               <div class="form-group">
-                                   <label for="extraChargeName">Charge Name:</label>
-                                   <input type="text" id="extraChargeName" placeholder="e.g., Lamination">
-                               </div>
-                               <div class="form-group price-group">
-                                   <label for="extraChargeAmount">Charge Amount:</label>
-                                   <input type="number" id="extraChargeAmount" step="0.01" min="0">
-                               </div>
+                               <div class="form-group"><label for="extraChargeName">Charge Name:</label><input type="text" id="extraChargeName" placeholder="e.g., Lamination"></div>
+                               <div class="form-group price-group"><label for="extraChargeAmount">Charge Amount:</label><input type="number" id="extraChargeAmount" step="0.01" min="0"></div>
                            </div>
                         </fieldset>
 
@@ -267,50 +260,32 @@
                        </fieldset>
                     </div>
 
-                     <div class="form-column">
+                    <div class="form-column">
                          <fieldset>
                              <legend><i class="fas fa-clipboard-list"></i> Internal Details (Optional)</legend>
-                              <div class="form-group price-group">
-                                 <label for="productPurchasePrice">Purchase Price:</label>
-                                 <input type="number" id="productPurchasePrice" placeholder="0.00" step="0.01" min="0">
-                             </div>
-                              <div class="form-group price-group">
-                                 <label for="productMrp">M.R.P.:</label>
-                                 <input type="number" id="productMrp" placeholder="0.00" step="0.01" min="0">
-                             </div>
-                              <div class="form-group">
-                                 <label for="productGstRate">GST Rate (%):</label>
-                                 <input type="number" id="productGstRate" placeholder="e.g., 18" step="0.01" min="0" max="100">
-                             </div>
-                             <div class="form-group">
-                                 <label for="productBrand">Brand:</label>
-                                 <input type="text" id="productBrand">
-                             </div>
-                             <div class="form-group">
-                                 <label for="productItemCode">Item Code:</label>
-                                 <input type="text" id="productItemCode">
-                             </div>
-                             <div class="form-group">
-                                 <label for="productHsnSacCode">HSN / SAC Code:</label>
-                                 <input type="text" id="productHsnSacCode">
-                             </div>
+                             <div class="form-group"><label for="productBrand">Brand:</label><input type="text" id="productBrand"></div>
+                             <div class="form-group"><label for="productItemCode">Item Code:</label><input type="text" id="productItemCode"></div>
+                             <div class="form-group"><label for="productHsnSacCode">HSN / SAC Code:</label><input type="text" id="productHsnSacCode"></div>
                          </fieldset>
                     </div>
-                </div> </form> <div class="modal-actions">
-                <button type="button" id="deleteProductBtn" class="button delete-button-modal" style="display: none;">
+
+                </div> </form>
+
+             <div class="modal-actions">
+                 <button type="button" id="deleteProductBtn" class="button delete-button-modal" style="display: none;">
                     <i class="fas fa-trash-alt"></i> Delete Product
-                </button>
-                <div class="modal-actions-right">
-                    <button type="button" id="cancelProductBtn" class="button cancel-button">
-                       Cancel
-                    </button>
-                    <button type="submit" form="productForm" id="saveProductBtn" class="button save-button">
-                           <i class="fas fa-spinner fa-spin" style="display: none;"></i>
-                           <i class="fas fa-save"></i>
-                           <span>Save Product</span>
+                 </button>
+                 <div class="modal-actions-right">
+                     <button type="button" id="cancelProductBtn" class="button cancel-button">
+                        Cancel
                      </button>
-               </div>
-             </div>
+                     <button type="submit" form="productForm" id="saveProductBtn" class="button save-button">
+                            <i class="fas fa-spinner fa-spin" style="display: none;"></i>
+                            <i class="fas fa-save"></i>
+                            <span>Save Product</span>
+                      </button>
+                </div>
+              </div>
         </div> </div> <div id="deleteConfirmModal" class="modal confirmation-modal">
         <div class="modal-content small-modal">
             <span class="close-btn" id="closeDeleteConfirmModal" title="Close">&times;</span>
