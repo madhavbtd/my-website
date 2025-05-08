@@ -108,6 +108,41 @@
                             <option value="inactive">Inactive</option>
                         </select>
                     </div>
+
+                    </div>
+
+                <div class="form-group">
+                    <label>User Type</label>
+                    <div class="user-type-toggle">
+                        <input type="radio" id="userTypeAgent" name="userType" value="agent" checked>
+                        <label for="userTypeAgent" class="user-type-label agent-type">Agent</label>
+
+                        <input type="radio" id="userTypeWholesale" name="userType" value="wholesale">
+                        <label for="userTypeWholesale" class="user-type-label wholesale-type">Wholesale</label>
+                    </div>
+                </div>
+
+                <div id="agentPermissions" class="form-section-permissions" style="display: block;">
+                    <label>Agent Permissions</label>
+                    <div class="checkbox-grid">
+                        <label><input type="checkbox" name="agentPermission" value="canAddCustomers">Add Customers</label>
+                        <label><input type="checkbox" name="agentPermission" value="canViewAddedCustomers">View
+                            Customers</label>
+                        <label><input type="checkbox" name="agentPermission" value="canShowCommissionReport">Show
+                            Commission</label>
+                        <label><input type="checkbox" name="agentPermission" value="canShowAccountLedgerReport">Show
+                            Ledger</label>
+                        <label><input type="checkbox" name="agentPermission" value="canShowOrderHistory">Show
+                            History</label>
+                        <label><input type="checkbox" name="agentPermission" value="canAddPaymentRequest">Add
+                            Request</label>
+                        <label><input type="checkbox" name="agentPermission" value="canSendOrderToAdmin">Send to
+                            Admin</label>
+                        <label><input type="checkbox" name="agentPermission" value="canSendOrderStatusUpdate">Send
+                            Status</label>
+                        <label><input type="checkbox" name="agentPermission" value="canRequestOrderCorrection">Request
+                            Correction</label>
+                    </div>
                     <div class="form-group form-group-toggle">
                         <label for="agentCanAddCustomers">Allow Adding Customers?</label>
                         <label class="switch">
@@ -117,51 +152,13 @@
                     </div>
                 </div>
 
-                <div class="form-group">
-                    <label>User Type</label>
-                    <div class="form-group user-type-selection">
-                        <label>
-                            <input type="radio" id="userTypeAgent" name="userType" value="agent" checked>
-                            Agent
-                        </label>
-                        <label>
-                            <input type="radio" id="userTypeWholesale" name="userType" value="wholesale">
-                            Wholesale
-                        </label>
-                    </div>
-                </div>
-
-                <div id="agentPermissions" class="form-section-permissions" style="display: block;">
-                    <label>Agent Permissions</label>
-                    <div class="checkbox-grid">
-                        <label><input type="checkbox" name="agentPermission" value="canAddCustomers">Can add customers</label>
-                        <label><input type="checkbox" name="agentPermission" value="canViewAddedCustomers">Can view added
-                            customers</label>
-                        <label><input type="checkbox" name="agentPermission" value="canShowCommissionReport">Can show
-                            commission report</label>
-                        <label><input type="checkbox" name="agentPermission" value="canShowAccountLedgerReport">Can show
-                            account ledger report</label>
-                        <label><input type="checkbox" name="agentPermission" value="canShowOrderHistory">Can show order
-                            history</label>
-                        <label><input type="checkbox" name="agentPermission" value="canAddPaymentRequest">Can add payment
-                            request</label>
-                        <label><input type="checkbox" name="agentPermission" value="canSendOrderToAdmin">Can send product
-                            order to admin</label>
-                        <label><input type="checkbox" name="agentPermission" value="canSendOrderStatusUpdate">Can send order
-                            status update to customer</label>
-                        <label><input type="checkbox" name="agentPermission" value="canRequestOrderCorrection">Can request
-                            order correction from admin</label>
-                    </div>
-                </div>
-
                 <div id="wholesalePermissions" class="form-section-permissions" style="display: none;">
                     <label>Wholesale Permissions</label>
                     <div class="checkbox-grid">
-                        <label><input type="checkbox" name="wholesalePermission" value="canViewStock">Can view stock</label>
-                        <label><input type="checkbox" name="wholesalePermission" value="canPlaceBulkOrder">Can place bulk
-                            order</label>
-                        <label><input type="checkbox" name="wholesalePermission" value="canViewWholesalePricing">Can view
-                            wholesale pricing</label>
+                        <label><input type="checkbox" name="wholesalePermission" value="canViewStock">View Stock</label>
+                        <label><input type="checkbox" name="wholesalePermission" value="canPlaceBulkOrder">Place Order</label>
+                        <label><input type="checkbox" name="wholesalePermission" value="canViewWholesalePricing">View
+                            Pricing</label>
                     </div>
                 </div>
 
