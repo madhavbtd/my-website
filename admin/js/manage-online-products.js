@@ -1,5 +1,5 @@
 // js/manage-online-products.js
-// Updated Version: Price layout changes + Diagram Upload + Tabbed Rates + Fixes
+// Updated Version: Layout changes + Diagram Upload + Checkbox Lock/Unlock Logic + Fixes
 
 // --- Firebase Function Availability Check ---
 // Expecting: window.db, window.auth, window.storage, window.collection, window.onSnapshot, etc.
@@ -39,12 +39,12 @@ const uploadProgressInfo = document.getElementById('upload-progress-info');
 const existingImageUrlsInput = document.getElementById('existingImageUrls');
 
 // Column 2 (Pricing)
-const productPurchasePriceInput = document.getElementById('productPurchasePrice'); // Moved to top
-const productGstRateInput = document.getElementById('productGstRate');       // Moved to top
+const productPurchasePriceInput = document.getElementById('productPurchasePrice');
+const productGstRateInput = document.getElementById('productGstRate');
 const priceTabsContainer = document.getElementById('priceTabsContainer');
 const currentRateInput = document.getElementById('currentRateInput');
 const currentRateLabel = document.getElementById('currentRateLabel');
-const applyRateCheckboxesContainer = document.getElementById('applyRateCheckboxesContainer'); // Below currentRateInput
+const applyRateCheckboxesContainer = document.getElementById('applyRateCheckboxesContainer');
 const productMinOrderValueInput = document.getElementById('productMinOrderValue');
 const productMrpInput = document.getElementById('productMrp');
 // Wedding Fields
@@ -53,25 +53,24 @@ const designChargeInput = document.getElementById('designCharge');
 const printingChargeInput = document.getElementById('printingCharge');
 const transportChargeInput = document.getElementById('transportCharge');
 const extraMarginPercentInput = document.getElementById('extraMarginPercent');
-// Extra Charges
-const hasExtraChargesCheckbox = document.getElementById('hasExtraCharges');
-const extraChargesSection = document.getElementById('extra-charges-section');
-const extraChargeNameInput = document.getElementById('extraChargeName');
-const extraChargeAmountInput = document.getElementById('extraChargeAmount');
 
-// Column 3 (Internal, Options, Diagram)
+// Column 3 (Internal, Options, Diagram, Extra Charges)
 const productBrandInput = document.getElementById('productBrand');
 const productItemCodeInput = document.getElementById('productItemCode');
 const productHsnSacCodeInput = document.getElementById('productHsnSacCode');
-const productOptionsInput = document.getElementById('productOptions'); // Moved below Internal
-// NEW Diagram Elements
+const productOptionsInput = document.getElementById('productOptions');
+// Diagram Elements
 const productDiagramInput = document.getElementById('productDiagram');
 const diagramLinkArea = document.getElementById('diagram-link-area');
 const viewDiagramLink = document.getElementById('viewDiagramLink');
 const removeDiagramBtn = document.getElementById('removeDiagramBtn');
 const diagramUploadProgress = document.getElementById('diagram-upload-progress');
 const existingDiagramUrlInput = document.getElementById('existingDiagramUrl');
-
+// Extra Charges Elements
+const hasExtraChargesCheckbox = document.getElementById('hasExtraCharges');
+const extraChargesSection = document.getElementById('extra-charges-section');
+const extraChargeNameInput = document.getElementById('extraChargeName');
+const extraChargeAmountInput = document.getElementById('extraChargeAmount');
 
 // --- Delete Confirmation Modal Elements ---
 const deleteConfirmModal = document.getElementById('deleteConfirmModal');
@@ -103,29 +102,31 @@ const RATE_TYPES = { // Map types to Firestore field names and labels
 // Diagram state
 let diagramFileToUpload = null;
 let shouldRemoveDiagram = false;
+let isRateLocked = false; // <<< NEW State for checkbox lock
 
 
 // --- Helper Functions ---
-function formatCurrency(amount) { const num = Number(amount); return isNaN(num) || num === null || num === undefined ? '-' : `₹ ${num.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`; }
-function escapeHtml(unsafe) { if (typeof unsafe !== 'string') { unsafe = String(unsafe || ''); } return unsafe.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;"); }
-function parseNumericInput(value, allowZero = true) { if (value === undefined || value === null) return null; const trimmedValue = String(value).trim(); if (trimmedValue === '') return null; const num = parseFloat(trimmedValue); if (isNaN(num) || (!allowZero && num <= 0) || (allowZero && num < 0)) { return NaN; } return num; }
-function formatFirestoreTimestamp(timestamp) { if (!timestamp || typeof timestamp.toDate !== 'function') { return '-'; } try { const date = timestamp.toDate(); const options = { day: '2-digit', month: 'short', year: 'numeric' }; return date.toLocaleDateString('en-GB', options).replace(/ /g, '-'); } catch (e) { console.error("Error formatting timestamp:", e); return '-'; } }
+function formatCurrency(amount) { /* ... (unchanged) ... */ const num = Number(amount); return isNaN(num) || num === null || num === undefined ? '-' : `₹ ${num.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`; }
+function escapeHtml(unsafe) { /* ... (unchanged) ... */ if (typeof unsafe !== 'string') { unsafe = String(unsafe || ''); } return unsafe.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;"); }
+function parseNumericInput(value, allowZero = true) { /* ... (unchanged) ... */ if (value === undefined || value === null) return null; const trimmedValue = String(value).trim(); if (trimmedValue === '') return null; const num = parseFloat(trimmedValue); if (isNaN(num) || (!allowZero && num <= 0) || (allowZero && num < 0)) { return NaN; } return num; }
+function formatFirestoreTimestamp(timestamp) { /* ... (unchanged) ... */ if (!timestamp || typeof timestamp.toDate !== 'function') { return '-'; } try { const date = timestamp.toDate(); const options = { day: '2-digit', month: 'short', year: 'numeric' }; return date.toLocaleDateString('en-GB', options).replace(/ /g, '-'); } catch (e) { console.error("Error formatting timestamp:", e); return '-'; } }
 
 // --- Toast Notification ---
-function showToast(message, duration = 3500) { const existingToast = document.querySelector('.toast-notification'); if (existingToast) { existingToast.remove(); } const toast = document.createElement('div'); toast.className = 'toast-notification'; toast.textContent = message; document.body.appendChild(toast); setTimeout(() => toast.classList.add('show'), 10); setTimeout(() => { toast.classList.remove('show'); setTimeout(() => { if (toast.parentNode) { toast.parentNode.removeChild(toast); } }, 400); }, duration); console.log("Toast:", message); }
+function showToast(message, duration = 3500) { /* ... (unchanged) ... */ const existingToast = document.querySelector('.toast-notification'); if (existingToast) { existingToast.remove(); } const toast = document.createElement('div'); toast.className = 'toast-notification'; toast.textContent = message; document.body.appendChild(toast); setTimeout(() => toast.classList.add('show'), 10); setTimeout(() => { toast.classList.remove('show'); setTimeout(() => { if (toast.parentNode) { toast.parentNode.removeChild(toast); } }, 400); }, duration); console.log("Toast:", message); }
 
 // --- Initialization ---
 window.initializeOnlineProductManagement = () => {
-    console.log("Online Product Management Initializing (v_Layout_Diagram)...");
+    console.log("Online Product Management Initializing (v_Layout_Diagram_Lock)...");
     if (!window.db || !window.auth || !window.storage) { console.error("Firebase services not available."); alert("Error initializing page."); return; }
     console.log("Firebase services confirmed.");
     listenForOnlineProducts();
     setupEventListeners();
-    console.log("Online Product Management Initialized (v_Layout_Diagram).");
+    console.log("Online Product Management Initialized (v_Layout_Diagram_Lock).");
 };
 
 // --- Setup Event Listeners ---
 function setupEventListeners() {
+    // ... (other listeners: sort, filter, add, close, cancel, form submit, delete, images, conditional fields remain the same) ...
     if (sortSelect) sortSelect.addEventListener('change', handleSortChange);
     if (filterSearchInput) filterSearchInput.addEventListener('input', handleSearchInput);
     if (clearFiltersBtn) clearFiltersBtn.addEventListener('click', clearFilters);
@@ -140,8 +141,6 @@ function setupEventListeners() {
     if (deleteConfirmModal) deleteConfirmModal.addEventListener('click', (event) => { if (event.target === deleteConfirmModal) closeDeleteConfirmModal(); });
     if (deleteConfirmCheckbox) deleteConfirmCheckbox.addEventListener('change', handleConfirmCheckboxChange);
     if (confirmDeleteFinalBtn) confirmDeleteFinalBtn.addEventListener('click', handleFinalDelete);
-
-    // Image & Conditional Fields
     if (productImagesInput) productImagesInput.addEventListener('change', handleFileSelection);
     if (hasExtraChargesCheckbox) hasExtraChargesCheckbox.addEventListener('change', toggleExtraCharges);
     if (productCategoryInput) productCategoryInput.addEventListener('input', toggleWeddingFields);
@@ -151,36 +150,40 @@ function setupEventListeners() {
     if (priceTabsContainer) {
         priceTabsContainer.addEventListener('click', (event) => {
             const button = event.target.closest('.price-tab-btn');
-            if (button && !button.classList.contains('active')) {
-                const rateType = button.dataset.rateType;
-                if (rateType) setActiveRateTab(rateType);
+            // Allow switching tabs ONLY if not locked OR if clicking the currently active tab (does nothing)
+            if (button && (!isRateLocked || button.classList.contains('active'))) {
+                 const rateType = button.dataset.rateType;
+                 if (rateType && rateType !== currentActiveRateType) { // Only switch if different type
+                     setActiveRateTab(rateType);
+                 }
+            } else if (button && isRateLocked && !button.classList.contains('active')) {
+                showToast("Uncheck 'Apply to all' checkboxes below to change rate type.", 3000);
             }
         });
         console.log("Price tab click listener attached.");
     } else { console.error("Price tabs container (#priceTabsContainer) not found!"); }
 
-    // --- NEW: Diagram Upload/Remove Listeners ---
-    if (productDiagramInput) {
-        productDiagramInput.addEventListener('change', handleDiagramFileSelection);
-    } else { console.error("Diagram input (#productDiagram) not found!"); }
+    // --- NEW: Rate Input Listener for Unlock ---
+    if (currentRateInput) {
+        currentRateInput.addEventListener('input', handleRateInputChange);
+    } else { console.error("Current rate input (#currentRateInput) not found!"); }
 
-    if (removeDiagramBtn) {
-        removeDiagramBtn.addEventListener('click', handleRemoveDiagram);
-    } else { console.error("Remove diagram button (#removeDiagramBtn) not found!"); }
-    // --- END Diagram Listeners ---
+    // --- Diagram Upload/Remove Listeners ---
+    if (productDiagramInput) { productDiagramInput.addEventListener('change', handleDiagramFileSelection); } else { console.error("Diagram input (#productDiagram) not found!"); }
+    if (removeDiagramBtn) { removeDiagramBtn.addEventListener('click', handleRemoveDiagram); } else { console.error("Remove diagram button (#removeDiagramBtn) not found!"); }
 
-    console.log("Online Product Management event listeners set up (v_Layout_Diagram).");
+    console.log("Online Product Management event listeners set up (v_Layout_Diagram_Lock).");
 }
 
 // --- Show/Hide Conditional Fields ---
-function toggleWeddingFields() { if (!weddingFieldsContainer || !productCategoryInput) return; const category = productCategoryInput.value.toLowerCase(); weddingFieldsContainer.style.display = category.includes('wedding card') ? 'block' : 'none'; }
-function toggleSqFtFields() { if (!productUnitSelect) return; const unitType = productUnitSelect.value; if (productMinOrderValueInput) { const parentGroup = productMinOrderValueInput.closest('.sq-feet-only'); if (parentGroup) parentGroup.style.display = unitType === 'Sq Feet' ? 'block' : 'none'; } else { console.warn("Min Order Value input not found for toggleSqFtFields."); } }
-function toggleExtraCharges() { if (!extraChargesSection || !hasExtraChargesCheckbox) return; extraChargesSection.style.display = hasExtraChargesCheckbox.checked ? 'block' : 'none'; }
+function toggleWeddingFields() { /* ... (unchanged) ... */ if (!weddingFieldsContainer || !productCategoryInput) return; const category = productCategoryInput.value.toLowerCase(); weddingFieldsContainer.style.display = category.includes('wedding card') ? 'block' : 'none'; }
+function toggleSqFtFields() { /* ... (unchanged) ... */ if (!productUnitSelect) return; const unitType = productUnitSelect.value; if (productMinOrderValueInput) { const parentGroup = productMinOrderValueInput.closest('.sq-feet-only'); if (parentGroup) parentGroup.style.display = unitType === 'Sq Feet' ? 'block' : 'none'; } else { console.warn("Min Order Value input not found for toggleSqFtFields."); } }
+function toggleExtraCharges() { /* ... (unchanged) ... */ if (!extraChargesSection || !hasExtraChargesCheckbox) return; extraChargesSection.style.display = hasExtraChargesCheckbox.checked ? 'block' : 'none'; }
 
 // --- Sorting & Filtering Handlers ---
-function handleSortChange() { if (!sortSelect) return; const [field, direction] = sortSelect.value.split('_'); if (field && direction) { if (field === currentSortField && direction === currentSortDirection) return; currentSortField = field; currentSortDirection = direction; applyFiltersAndRender(); } }
-function handleSearchInput() { clearTimeout(searchDebounceTimer); searchDebounceTimer = setTimeout(applyFiltersAndRender, 300); }
-function clearFilters() { if (filterSearchInput) filterSearchInput.value = ''; if (sortSelect) sortSelect.value = 'createdAt_desc'; currentSortField = 'createdAt'; currentSortDirection = 'desc'; applyFiltersAndRender(); }
+function handleSortChange() { /* ... (unchanged) ... */ if (!sortSelect) return; const [field, direction] = sortSelect.value.split('_'); if (field && direction) { if (field === currentSortField && direction === currentSortDirection) return; currentSortField = field; currentSortDirection = direction; applyFiltersAndRender(); } }
+function handleSearchInput() { /* ... (unchanged) ... */ clearTimeout(searchDebounceTimer); searchDebounceTimer = setTimeout(applyFiltersAndRender, 300); }
+function clearFilters() { /* ... (unchanged) ... */ if (filterSearchInput) filterSearchInput.value = ''; if (sortSelect) sortSelect.value = 'createdAt_desc'; currentSortField = 'createdAt'; currentSortDirection = 'desc'; applyFiltersAndRender(); }
 
 // --- Firestore Listener ---
 function listenForOnlineProducts() { /* ... (unchanged) ... */ if (unsubscribeProducts) { unsubscribeProducts(); unsubscribeProducts = null; } if (!window.db || !window.collection || !window.query || !window.onSnapshot || !window.orderBy) { console.error("Firestore functions unavailable!"); if (productTableBody) productTableBody.innerHTML = `<tr><td colspan="8" style="color: red; text-align: center;">Error: DB Connection Failed.</td></tr>`; return; } if (productTableBody) productTableBody.innerHTML = `<tr><td colspan="8" id="loadingMessage" style="text-align: center;">Loading online products...</td></tr>`; try { console.log(`Setting up Firestore listener for 'onlineProducts' with sort: ${currentSortField}_${currentSortDirection}`); const productsRef = window.collection(window.db, "onlineProducts"); const q = window.query(productsRef, window.orderBy(currentSortField || 'createdAt', currentSortDirection || 'desc')); unsubscribeProducts = window.onSnapshot(q, (snapshot) => { console.log(`Received ${snapshot.docs.length} online products.`); allProductsCache = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })); applyFiltersAndRender(); }, (error) => { console.error("Error fetching online products snapshot:", error); if (error.code === 'permission-denied') { if (productTableBody) productTableBody.innerHTML = `<tr><td colspan="8" style="color: red; text-align: center;">Error loading products: Insufficient permissions. Check Firestore rules.</td></tr>`; } else { if (productTableBody) productTableBody.innerHTML = `<tr><td colspan="8" style="color: red; text-align: center;">Error loading products. Check connection/console.</td></tr>`; } }); } catch (error) { console.error("Error setting up online product listener:", error); if (productTableBody) productTableBody.innerHTML = `<tr><td colspan="8" style="color: red; text-align: center;">Error setting up listener.</td></tr>`; } }
@@ -189,20 +192,161 @@ function listenForOnlineProducts() { /* ... (unchanged) ... */ if (unsubscribePr
 function applyFiltersAndRender() { /* ... (unchanged) ... */ if (!allProductsCache) return; console.log("Applying filters..."); const filterSearchValue = filterSearchInput ? filterSearchInput.value.trim().toLowerCase() : ''; let filteredProducts = allProductsCache.filter(product => { if (!product || !product.productName) return false; if (filterSearchValue) { const name = (product.productName || '').toLowerCase(); const category = (product.category || '').toLowerCase(); const brand = (product.brand || '').toLowerCase(); if (!(name.includes(filterSearchValue) || category.includes(filterSearchValue) || brand.includes(filterSearchValue))) { return false; } } return true; }); renderProductTable(filteredProducts); console.log("Online product rendering complete (filtered)."); }
 
 // --- Table Rendering Function ---
-function renderProductTable(products) { /* ... (unchanged) ... */ if (!productTableBody) return; productTableBody.innerHTML = ''; const expectedColumns = 8; if (products.length === 0) { productTableBody.innerHTML = `<tr><td colspan="${expectedColumns}" id="noProductsMessage" style="text-align: center;">No online products found matching criteria.</td></tr>`; } else { products.forEach(product => { const firestoreId = product.id; const data = product; const tableRow = productTableBody.insertRow(); tableRow.setAttribute('data-id', firestoreId); const name = data.productName || 'N/A'; const category = data.category || '-'; const brand = data.brand || '-'; const rate = data.pricing?.rate !== undefined ? formatCurrency(data.pricing.rate) : '-'; const unit = data.unit || '-'; const enabled = data.isEnabled ? 'Yes' : 'No'; const dateAdded = formatFirestoreTimestamp(data.createdAt); tableRow.innerHTML = `<td>${escapeHtml(name)}</td><td>${escapeHtml(category)}</td><td>${escapeHtml(brand)}</td><td style="text-align: right;">${rate}</td><td style="text-align: center;">${escapeHtml(unit)}</td><td style="text-align: center;">${enabled}</td><td style="text-align: center;">${dateAdded}</td><td style="text-align: center;"><button class="button edit-product-btn" style="background-color: var(--info-color); color: white; padding: 5px 8px; font-size: 0.8em; margin: 2px;" title="Edit Online Product"><i class="fas fa-edit"></i> Edit</button><button class="button delete-product-btn" style="background-color: var(--danger-color); color: white; padding: 5px 8px; font-size: 0.8em; margin: 2px;" title="Delete Online Product"><i class="fas fa-trash"></i> Delete</button></td>`; const editBtn = tableRow.querySelector('.edit-product-btn'); if (editBtn) { editBtn.addEventListener('click', (e) => { e.stopPropagation(); openEditModal(firestoreId, data); }); } const delBtn = tableRow.querySelector('.delete-product-btn'); if (delBtn) { delBtn.addEventListener('click', (e) => { e.stopPropagation(); productToDeleteId = firestoreId; productToDeleteName = data.productName || 'this online product'; if(deleteWarningMessage) deleteWarningMessage.innerHTML = `Are you sure you want to delete the online product "<strong>${escapeHtml(productToDeleteName)}</strong>"? <br>This will also delete its images from storage. This action cannot be undone.`; if(deleteConfirmCheckbox) deleteConfirmCheckbox.checked = false; if(confirmDeleteFinalBtn) confirmDeleteFinalBtn.disabled = true; if(deleteConfirmModal) deleteConfirmModal.classList.add('active'); }); } }); } }
+function renderProductTable(products) { /* ... (unchanged) ... */ if (!productTableBody) return; productTableBody.innerHTML = ''; const expectedColumns = 8; if (products.length === 0) { productTableBody.innerHTML = `<tr><td colspan="${expectedColumns}" id="noProductsMessage" style="text-align: center;">No online products found matching criteria.</td></tr>`; } else { products.forEach(product => { const firestoreId = product.id; const data = product; const tableRow = productTableBody.insertRow(); tableRow.setAttribute('data-id', firestoreId); const name = data.productName || 'N/A'; const category = data.category || '-'; const brand = data.brand || '-'; const rate = data.pricing?.rate !== undefined ? formatCurrency(data.pricing.rate) : '-'; const unit = data.unit || '-'; const enabled = data.isEnabled ? 'Yes' : 'No'; const dateAdded = formatFirestoreTimestamp(data.createdAt); tableRow.innerHTML = `<td>${escapeHtml(name)}</td><td>${escapeHtml(category)}</td><td>${escapeHtml(brand)}</td><td style="text-align: right;">${rate}</td><td style="text-align: center;">${escapeHtml(unit)}</td><td style="text-align: center;">${enabled}</td><td style="text-align: center;">${dateAdded}</td><td style="text-align: center;"><button class="button edit-product-btn" style="background-color: var(--info-color); color: white; padding: 5px 8px; font-size: 0.8em; margin: 2px;" title="Edit Online Product"><i class="fas fa-edit"></i> Edit</button><button class="button delete-product-btn" style="background-color: var(--danger-color); color: white; padding: 5px 8px; font-size: 0.8em; margin: 2px;" title="Delete Online Product"><i class="fas fa-trash"></i> Delete</button></td>`; const editBtn = tableRow.querySelector('.edit-product-btn'); if (editBtn) { editBtn.addEventListener('click', (e) => { e.stopPropagation(); openEditModal(firestoreId, data); }); } const delBtn = tableRow.querySelector('.delete-product-btn'); if (delBtn) { delBtn.addEventListener('click', (e) => { e.stopPropagation(); productToDeleteId = firestoreId; productToDeleteName = data.productName || 'this online product'; if(deleteWarningMessage) deleteWarningMessage.innerHTML = `Are you sure you want to delete the online product "<strong>${escapeHtml(productToDeleteName)}</strong>"? <br>This will also delete its images and diagram. This action cannot be undone.`; if(deleteConfirmCheckbox) deleteConfirmCheckbox.checked = false; if(confirmDeleteFinalBtn) confirmDeleteFinalBtn.disabled = true; if(deleteConfirmModal) deleteConfirmModal.classList.add('active'); }); } }); } }
 
 // --- Pricing Tab Functions ---
-function setActiveRateTab(rateType) { /* ... (unchanged) ... */ if (!RATE_TYPES[rateType] || !priceTabsContainer || !currentRateInput || !currentRateLabel || !applyRateCheckboxesContainer) { console.error("Cannot set active rate tab - required elements missing."); return; } currentActiveRateType = rateType; console.log("Active rate type set to:", currentActiveRateType); priceTabsContainer.querySelectorAll('.price-tab-btn').forEach(btn => { btn.classList.toggle('active', btn.dataset.rateType === rateType); }); currentRateLabel.textContent = `${RATE_TYPES[rateType].label}*:`; const fieldName = RATE_TYPES[rateType].field; currentRateInput.value = productBeingEditedData?.pricing?.[fieldName] ?? ''; currentRateInput.dataset.currentRateType = rateType; updateApplyRateCheckboxes(rateType); }
-function updateApplyRateCheckboxes(activeType) { /* ... (unchanged) ... */ if (!applyRateCheckboxesContainer) { console.error("Apply Rate Checkboxes container not found!"); return; } applyRateCheckboxesContainer.innerHTML = ''; const containerTitle = document.createElement('label'); containerTitle.className = 'checkbox-container-title'; containerTitle.textContent = `Apply ${RATE_TYPES[activeType]?.label || 'Current'} Rate to:`; applyRateCheckboxesContainer.appendChild(containerTitle); Object.keys(RATE_TYPES).forEach(typeKey => { if (typeKey !== activeType) { const otherTypeInfo = RATE_TYPES[typeKey]; const checkboxId = `applyRateTo_${typeKey}`; const wrapper = document.createElement('div'); wrapper.className = 'checkbox-wrapper apply-rate-checkbox'; const checkbox = document.createElement('input'); checkbox.type = 'checkbox'; checkbox.id = checkboxId; checkbox.name = 'applyRateTo'; checkbox.value = typeKey; const label = document.createElement('label'); label.htmlFor = checkboxId; label.textContent = otherTypeInfo.label; wrapper.appendChild(checkbox); wrapper.appendChild(label); applyRateCheckboxesContainer.appendChild(wrapper); } }); }
+function setActiveRateTab(rateType) {
+    // <<< NEW: Unlock fields whenever a tab is explicitly clicked >>>
+    unlockPricingFields(); // Ensure fields are enabled before switching
 
-// --- Modal Handling (Add/Edit - Updated for Diagram) ---
+    if (!RATE_TYPES[rateType] || !priceTabsContainer || !currentRateInput || !currentRateLabel || !applyRateCheckboxesContainer) {
+        console.error("Cannot set active rate tab - required elements missing.");
+        return;
+    }
+    currentActiveRateType = rateType;
+    console.log("Active rate type set to:", currentActiveRateType);
+
+    priceTabsContainer.querySelectorAll('.price-tab-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.rateType === rateType);
+    });
+
+    currentRateLabel.textContent = `${RATE_TYPES[rateType].label}*:`;
+    const fieldName = RATE_TYPES[rateType].field;
+    // Load rate from the potentially updated productBeingEditedData
+    currentRateInput.value = productBeingEditedData?.pricing?.[fieldName] ?? '';
+    currentRateInput.dataset.currentRateType = rateType;
+
+    updateApplyRateCheckboxes(rateType);
+}
+
+function updateApplyRateCheckboxes(activeType) {
+    if (!applyRateCheckboxesContainer) {
+        console.error("Apply Rate Checkboxes container not found!");
+        return;
+    }
+    applyRateCheckboxesContainer.innerHTML = '';
+
+    const containerTitle = document.createElement('label');
+    containerTitle.className = 'checkbox-container-title';
+    containerTitle.textContent = `Apply ${RATE_TYPES[activeType]?.label || 'Current'} Rate to:`;
+    applyRateCheckboxesContainer.appendChild(containerTitle);
+
+    Object.keys(RATE_TYPES).forEach(typeKey => {
+        if (typeKey !== activeType) {
+            const otherTypeInfo = RATE_TYPES[typeKey];
+            const checkboxId = `applyRateTo_${typeKey}`;
+            const wrapper = document.createElement('div');
+            wrapper.className = 'checkbox-wrapper apply-rate-checkbox';
+            const checkbox = document.createElement('input');
+            checkbox.type = 'checkbox'; checkbox.id = checkboxId; checkbox.name = 'applyRateTo'; checkbox.value = typeKey;
+            // <<< NEW: Add change listener to each checkbox >>>
+            checkbox.addEventListener('change', handleApplyRateCheckboxChange);
+            const label = document.createElement('label');
+            label.htmlFor = checkboxId; label.textContent = otherTypeInfo.label;
+            wrapper.appendChild(checkbox); wrapper.appendChild(label);
+            applyRateCheckboxesContainer.appendChild(wrapper);
+        }
+    });
+    // Check if fields should be locked based on current state (e.g., if reloading after save)
+    checkAndApplyLockState();
+}
+
+// --- <<< NEW: Checkbox Change and Locking Logic >>> ---
+function handleApplyRateCheckboxChange() {
+    // Check current state after a checkbox has been changed
+    checkAndApplyLockState();
+}
+
+function handleRateInputChange() {
+    // If user types in the input and it's not disabled, unlock everything
+    if (!currentRateInput.disabled) {
+        console.log("Rate input changed manually, unlocking fields.");
+        resetApplyCheckboxesAndUnlock();
+    }
+}
+
+function checkAndApplyLockState() {
+    const checkboxes = applyRateCheckboxesContainer?.querySelectorAll('input[name="applyRateTo"]') ?? [];
+    const checkedCheckboxes = applyRateCheckboxesContainer?.querySelectorAll('input[name="applyRateTo"]:checked') ?? [];
+
+    if (checkboxes.length > 0 && checkedCheckboxes.length === checkboxes.length) {
+        // All available checkboxes are checked
+        console.log("All 'Apply Rate' checkboxes checked. Locking fields.");
+        applyRateToAllOthers(); // Update internal data immediately
+        lockPricingFields();
+    } else {
+        // Not all checkboxes are checked (or none exist)
+        unlockPricingFields();
+    }
+}
+
+function applyRateToAllOthers() {
+    if (!currentRateInput || !productBeingEditedData.pricing) return;
+    const currentRateValue = parseNumericInput(currentRateInput.value);
+    // Apply only if the current value is a valid number
+    if (currentRateValue !== null && !isNaN(currentRateValue)) {
+        Object.keys(RATE_TYPES).forEach(typeKey => {
+            if (typeKey !== currentActiveRateType) {
+                const field = RATE_TYPES[typeKey].field;
+                productBeingEditedData.pricing[field] = currentRateValue;
+                console.log(`Internally updated ${field} to ${currentRateValue}`);
+            }
+        });
+    } else {
+        console.warn("Cannot apply rate to others: Current rate input is invalid.");
+    }
+}
+
+
+function lockPricingFields() {
+    if (!currentRateInput || !applyRateCheckboxesContainer || !priceTabsContainer) return;
+    isRateLocked = true;
+    currentRateInput.disabled = true;
+    applyRateCheckboxesContainer.querySelectorAll('input[name="applyRateTo"]').forEach(cb => cb.disabled = true);
+    priceTabsContainer.querySelectorAll('.price-tab-btn').forEach(btn => {
+        if (btn.dataset.rateType !== currentActiveRateType) {
+            btn.disabled = true;
+            // Optional: Add a visual style for locked tabs
+            // btn.classList.add('locked');
+        }
+    });
+     // Optional: Add a class to the input/container for visual feedback
+     // currentRateInput.classList.add('locked');
+     // applyRateCheckboxesContainer.classList.add('locked');
+}
+
+function unlockPricingFields() {
+    if (!currentRateInput || !applyRateCheckboxesContainer || !priceTabsContainer) return;
+    isRateLocked = false;
+    currentRateInput.disabled = false;
+    applyRateCheckboxesContainer.querySelectorAll('input[name="applyRateTo"]').forEach(cb => cb.disabled = false);
+    priceTabsContainer.querySelectorAll('.price-tab-btn').forEach(btn => {
+        btn.disabled = false;
+        // Optional: Remove visual lock style
+        // btn.classList.remove('locked');
+    });
+     // Optional: Remove visual lock style
+     // currentRateInput.classList.remove('locked');
+     // applyRateCheckboxesContainer.classList.remove('locked');
+}
+
+function resetApplyCheckboxesAndUnlock() {
+    if (!applyRateCheckboxesContainer) return;
+    console.log("Resetting 'Apply Rate' checkboxes and unlocking fields.");
+    applyRateCheckboxesContainer.querySelectorAll('input[name="applyRateTo"]:checked').forEach(cb => cb.checked = false);
+    unlockPricingFields();
+}
+// --- <<< END: Checkbox Change and Locking Logic >>> ---
+
+
+// --- Modal Handling (Add/Edit - Minimal Changes Needed) ---
 function openAddModal() {
     if (!productModal || !productForm) return;
-    console.log("Opening modal to add new ONLINE product (v_Layout_Diagram).");
+    console.log("Opening modal to add new ONLINE product (v_Layout_Diagram_Lock).");
     if (modalTitle) modalTitle.innerHTML = '<i class="fas fa-plus-circle success-icon"></i> Add New Online Product';
     if (editProductIdInput) editProductIdInput.value = '';
     productForm.reset();
-    productBeingEditedData = { pricing: {} }; // Clear stored data
+    productBeingEditedData = { pricing: {} }; // Initialize empty data for add
 
     if (isEnabledCheckbox) isEnabledCheckbox.checked = true;
     if (hasExtraChargesCheckbox) hasExtraChargesCheckbox.checked = false;
@@ -211,22 +355,18 @@ function openAddModal() {
     if (uploadProgressInfo) uploadProgressInfo.textContent = '';
     if (existingImageUrlsInput) existingImageUrlsInput.value = '[]';
     if (saveProductBtn) saveProductBtn.disabled = false;
-    if (saveSpinner) saveSpinner.style.display = 'none';
-    if (saveIcon) saveIcon.style.display = '';
-    if (saveText) saveText.textContent = 'Save Product';
+    if (saveSpinner) saveSpinner.style.display = 'none'; if (saveIcon) saveIcon.style.display = ''; if (saveText) saveText.textContent = 'Save Product';
     if (deleteProductBtn) deleteProductBtn.style.display = 'none';
 
-    // --- Diagram Reset ---
-    diagramFileToUpload = null;
-    shouldRemoveDiagram = false;
-    if(productDiagramInput) productDiagramInput.value = null; // Clear file input
+    diagramFileToUpload = null; shouldRemoveDiagram = false;
+    if(productDiagramInput) productDiagramInput.value = null;
     if(diagramLinkArea) diagramLinkArea.style.display = 'none';
     if(viewDiagramLink) viewDiagramLink.href = '#';
     if(diagramUploadProgress) diagramUploadProgress.textContent = '';
     if(existingDiagramUrlInput) existingDiagramUrlInput.value = '';
-    // --- End Diagram Reset ---
 
-    setActiveRateTab('online'); // Default to 'online' tab
+    setActiveRateTab('online'); // Sets default tab, loads empty rate, updates checkboxes
+    unlockPricingFields(); // Ensure fields are unlocked for add mode
 
     toggleWeddingFields(); toggleSqFtFields(); toggleExtraCharges();
     productModal.classList.add('active');
@@ -234,7 +374,7 @@ function openAddModal() {
 
 async function openEditModal(firestoreId, data) {
     if (!productModal || !productForm || !data) return;
-    console.log("Opening modal to edit ONLINE product (v_Layout_Diagram):", firestoreId);
+    console.log("Opening modal to edit ONLINE product (v_Layout_Diagram_Lock):", firestoreId);
     if (modalTitle) modalTitle.innerHTML = '<i class="fas fa-edit info-icon"></i> Edit Online Product';
     productForm.reset();
     productBeingEditedData = JSON.parse(JSON.stringify(data)); // Store deep copy
@@ -242,7 +382,6 @@ async function openEditModal(firestoreId, data) {
 
     if (editProductIdInput) editProductIdInput.value = firestoreId;
     if (productNameInput) productNameInput.value = data.productName || '';
-    // ... (Populate other non-pricing, non-image, non-diagram fields) ...
     if (productCategoryInput) productCategoryInput.value = data.category || '';
     if (productUnitSelect) productUnitSelect.value = data.unit || 'Qty';
     if (productDescInput) productDescInput.value = data.description || '';
@@ -266,7 +405,6 @@ async function openEditModal(firestoreId, data) {
     if (productItemCodeInput) productItemCodeInput.value = data.itemCode || '';
     if (productHsnSacCodeInput) productHsnSacCodeInput.value = data.hsnSacCode || '';
 
-    // --- Image Handling ---
     selectedFiles = []; imagesToDelete = [];
     if (imagePreviewArea) imagePreviewArea.innerHTML = '';
     existingImageUrls = data.imageUrls || [];
@@ -274,33 +412,23 @@ async function openEditModal(firestoreId, data) {
     existingImageUrls.forEach(url => displayImagePreview(null, url));
     if (uploadProgressInfo) uploadProgressInfo.textContent = '';
 
-    // --- NEW: Diagram Handling ---
-    diagramFileToUpload = null;
-    shouldRemoveDiagram = false;
+    diagramFileToUpload = null; shouldRemoveDiagram = false;
     const currentDiagramUrl = data.diagramUrl || '';
-    if(productDiagramInput) productDiagramInput.value = null; // Clear file input on open
+    if(productDiagramInput) productDiagramInput.value = null;
     if(existingDiagramUrlInput) existingDiagramUrlInput.value = currentDiagramUrl;
-    if (diagramLinkArea && viewDiagramLink) {
-        if (currentDiagramUrl) {
-            viewDiagramLink.href = currentDiagramUrl;
-            diagramLinkArea.style.display = 'block';
-        } else {
-            diagramLinkArea.style.display = 'none';
-        }
-    }
+    if (diagramLinkArea && viewDiagramLink) { if (currentDiagramUrl) { viewDiagramLink.href = currentDiagramUrl; diagramLinkArea.style.display = 'block'; } else { diagramLinkArea.style.display = 'none'; } }
      if(diagramUploadProgress) diagramUploadProgress.textContent = '';
-    // --- END Diagram Handling ---
 
     if (saveProductBtn) saveProductBtn.disabled = false; if (saveSpinner) saveSpinner.style.display = 'none'; if (saveIcon) saveIcon.style.display = ''; if (saveText) saveText.textContent = 'Update Product'; if (deleteProductBtn) deleteProductBtn.style.display = 'inline-flex';
 
     productToDeleteId = firestoreId; productToDeleteName = data.productName || 'this online product';
 
-    setActiveRateTab('online'); // Default to 'online' tab
+    setActiveRateTab('online'); // Set default tab and load its rate
+    unlockPricingFields(); // Ensure fields are unlocked when opening
 
     toggleWeddingFields(); toggleSqFtFields(); toggleExtraCharges();
     productModal.classList.add('active');
 }
-
 
 function closeProductModal() {
     if (productModal) {
@@ -310,11 +438,9 @@ function closeProductModal() {
         selectedFiles = []; imagesToDelete = [];
         productBeingEditedData = {};
         currentActiveRateType = 'online';
-        // --- NEW: Reset Diagram State on Close ---
-        diagramFileToUpload = null;
-        shouldRemoveDiagram = false;
+        diagramFileToUpload = null; shouldRemoveDiagram = false;
         if (productDiagramInput) productDiagramInput.value = null;
-        // --- END Diagram Reset ---
+        unlockPricingFields(); // Ensure fields are unlocked when modal is closed
     }
 }
 
@@ -325,133 +451,37 @@ async function uploadImage(file, productId, index) { /* ... (unchanged) ... */ i
 async function deleteStoredImage(imageUrl) { /* ... (unchanged) ... */ if (!window.storage || !window.storageRef || !window.deleteObject) return; if (!imageUrl || !(imageUrl.startsWith('https://firebasestorage.googleapis.com/') || imageUrl.startsWith('gs://'))) return; try { const imageRef = window.storageRef(window.storage, imageUrl); await window.deleteObject(imageRef); console.log("Deleted image from Storage:", imageUrl); } catch (error) { if (error.code === 'storage/object-not-found') console.warn("Image not found:", imageUrl); else console.error("Error deleting image:", imageUrl, error); } }
 
 
-// --- <<< NEW: Diagram File Handling >>> ---
-function handleDiagramFileSelection(event) {
-    const file = event.target.files[0];
-    if (file) {
-        // Basic validation (optional: add size limit)
-        const allowedTypes = ['application/pdf', 'image/png', 'image/jpeg', 'image/webp'];
-        if (!allowedTypes.includes(file.type)) {
-            showToast("Invalid diagram file type. Please use PDF, PNG, JPG, or WEBP.", 4000);
-            event.target.value = null; // Clear selection
-            diagramFileToUpload = null;
-            return;
-        }
-        diagramFileToUpload = file;
-        shouldRemoveDiagram = false; // Selecting a new file overrides removal intention
-        if(diagramUploadProgress) diagramUploadProgress.textContent = `Selected: ${file.name}`;
-        if(diagramLinkArea) diagramLinkArea.style.display = 'none'; // Hide old link preview
-        console.log("Diagram file selected:", file.name);
-    } else {
-        diagramFileToUpload = null; // No file selected
-         if(diagramUploadProgress) diagramUploadProgress.textContent = '';
-    }
-}
-
-function handleRemoveDiagram() {
-    if (!existingDiagramUrlInput?.value) {
-        showToast("No diagram currently saved to remove.", 3000);
-        return;
-    }
-    if (confirm("Are you sure you want to remove the current diagram? This will delete the file permanently when you save.")) {
-        shouldRemoveDiagram = true;
-        diagramFileToUpload = null; // Clear any newly selected file
-        if(productDiagramInput) productDiagramInput.value = null; // Clear the file input
-        if(diagramLinkArea) diagramLinkArea.style.display = 'none'; // Hide the link area
-        if(diagramUploadProgress) diagramUploadProgress.textContent = 'Diagram marked for removal.';
-        showToast("Diagram marked for removal. Click Save Product to confirm.", 4000);
-    }
-}
-
-async function uploadFile(file, storagePath, progressElement) {
-    if (!window.storage || !window.storageRef || !window.uploadBytesResumable || !window.getDownloadURL) throw new Error("Storage functions missing.");
-    if (!file || !storagePath || !progressElement) throw new Error("Missing file, path, or progress element for upload.");
-
-    const fileRef = window.storageRef(window.storage, storagePath);
-    progressElement.textContent = 'Starting upload...';
-    progressElement.style.color = 'var(--text-color-medium)'; // Reset color
-
-    const uploadTask = window.uploadBytesResumable(fileRef, file);
-
-    return new Promise((resolve, reject) => {
-        uploadTask.on('state_changed',
-            (snapshot) => {
-                const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-                progressElement.textContent = `Uploading ${file.name}: ${progress.toFixed(0)}%`;
-            },
-            (error) => {
-                console.error(`File Upload Error (${storagePath}):`, error);
-                progressElement.textContent = `Upload failed: ${file.name}. ${error.code}`;
-                progressElement.style.color = 'var(--danger-color)';
-                reject(error);
-            },
-            async () => {
-                progressElement.textContent = `Upload Complete. Getting URL...`;
-                try {
-                    const downloadURL = await window.getDownloadURL(uploadTask.snapshot.ref);
-                    progressElement.textContent = `Diagram uploaded successfully.`;
-                     progressElement.style.color = 'var(--success-color)';
-                    console.log("File available at", downloadURL);
-                    resolve(downloadURL);
-                } catch (getUrlError) {
-                    console.error(`Error getting download URL (${storagePath}):`, getUrlError);
-                    progressElement.textContent = `Failed to get URL after upload.`;
-                    progressElement.style.color = 'var(--danger-color)';
-                    reject(getUrlError);
-                }
-            }
-        );
-    });
-}
-
-async function deleteStoredFile(fileUrl) {
-    if (!window.storage || !window.storageRef || !window.deleteObject) { console.warn("Storage delete functions unavailable."); return; }
-    if (!fileUrl || !(fileUrl.startsWith('https://firebasestorage.googleapis.com/') || fileUrl.startsWith('gs://'))) { console.warn("Invalid or missing file URL for deletion:", fileUrl); return; }
-    console.log("Attempting to delete file from Storage:", fileUrl);
-    try {
-        const fileRef = window.storageRef(window.storage, fileUrl);
-        await window.deleteObject(fileRef);
-        console.log("Deleted file from Storage:", fileUrl);
-    } catch (error) {
-        if (error.code === 'storage/object-not-found') { console.warn("File not found in Storage, skipping delete:", fileUrl); }
-        else { console.error("Error deleting file:", fileUrl, error); /* Optionally re-throw or showToast */ }
-    }
-}
-// --- <<< END: Diagram File Handling >>> ---
+// --- Diagram File Handling ---
+function handleDiagramFileSelection(event) { /* ... (unchanged) ... */ const file = event.target.files[0]; if (file) { const allowedTypes = ['application/pdf', 'image/png', 'image/jpeg', 'image/webp']; if (!allowedTypes.includes(file.type)) { showToast("Invalid diagram file type. Please use PDF, PNG, JPG, or WEBP.", 4000); event.target.value = null; diagramFileToUpload = null; return; } diagramFileToUpload = file; shouldRemoveDiagram = false; if(diagramUploadProgress) diagramUploadProgress.textContent = `Selected: ${file.name}`; if(diagramLinkArea) diagramLinkArea.style.display = 'none'; console.log("Diagram file selected:", file.name); } else { diagramFileToUpload = null; if(diagramUploadProgress) diagramUploadProgress.textContent = ''; } }
+function handleRemoveDiagram() { /* ... (unchanged) ... */ if (!existingDiagramUrlInput?.value) { showToast("No diagram currently saved to remove.", 3000); return; } if (confirm("Are you sure you want to remove the current diagram? This will delete the file permanently when you save.")) { shouldRemoveDiagram = true; diagramFileToUpload = null; if(productDiagramInput) productDiagramInput.value = null; if(diagramLinkArea) diagramLinkArea.style.display = 'none'; if(diagramUploadProgress) diagramUploadProgress.textContent = 'Diagram marked for removal.'; showToast("Diagram marked for removal. Click Save Product to confirm.", 4000); } }
+async function uploadFile(file, storagePath, progressElement) { /* ... (unchanged) ... */ if (!window.storage || !window.storageRef || !window.uploadBytesResumable || !window.getDownloadURL) throw new Error("Storage functions missing."); if (!file || !storagePath || !progressElement) throw new Error("Missing file, path, or progress element for upload."); const fileRef = window.storageRef(window.storage, storagePath); progressElement.textContent = 'Starting upload...'; progressElement.style.color = 'var(--text-color-medium)'; const uploadTask = window.uploadBytesResumable(fileRef, file); return new Promise((resolve, reject) => { uploadTask.on('state_changed', (snapshot) => { const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100; progressElement.textContent = `Uploading ${file.name}: ${progress.toFixed(0)}%`; }, (error) => { console.error(`File Upload Error (${storagePath}):`, error); progressElement.textContent = `Upload failed: ${file.name}. ${error.code}`; progressElement.style.color = 'var(--danger-color)'; reject(error); }, async () => { progressElement.textContent = `Upload Complete. Getting URL...`; try { const downloadURL = await window.getDownloadURL(uploadTask.snapshot.ref); progressElement.textContent = `Diagram uploaded successfully.`; progressElement.style.color = 'var(--success-color)'; console.log("File available at", downloadURL); resolve(downloadURL); } catch (getUrlError) { console.error(`Error getting download URL (${storagePath}):`, getUrlError); progressElement.textContent = `Failed to get URL after upload.`; progressElement.style.color = 'var(--danger-color)'; reject(getUrlError); } }); }); }
+async function deleteStoredFile(fileUrl) { /* ... (unchanged) ... */ if (!window.storage || !window.storageRef || !window.deleteObject) { console.warn("Storage delete functions unavailable."); return; } if (!fileUrl || !(fileUrl.startsWith('https://firebasestorage.googleapis.com/') || fileUrl.startsWith('gs://'))) { console.warn("Invalid or missing file URL for deletion:", fileUrl); return; } console.log("Attempting to delete file from Storage:", fileUrl); try { const fileRef = window.storageRef(window.storage, fileUrl); await window.deleteObject(fileRef); console.log("Deleted file from Storage:", fileUrl); } catch (error) { if (error.code === 'storage/object-not-found') { console.warn("File not found in Storage, skipping delete:", fileUrl); } else { console.error("Error deleting file:", fileUrl, error); } } }
 
 
-// --- <<< UPDATED: handleSaveProduct Function (v_Layout_Diagram) >>> ---
+// --- handleSaveProduct Function (Integrates Diagram Logic) ---
 async function handleSaveProduct(event) {
     event.preventDefault();
+    // --- Initial Checks and Setup ---
     if (!window.db || !window.collection || !window.addDoc || !window.doc || !window.updateDoc || !window.serverTimestamp || !window.storage) { showToast("Core Firebase functions unavailable.", 5000); return; }
-    if (saveProductBtn) saveProductBtn.disabled = true; if (saveSpinner) saveSpinner.style.display = 'inline-block'; if (saveIcon) saveIcon.style.display = 'none'; if (saveText) saveText.textContent = 'Saving...'; if (uploadProgressInfo) uploadProgressInfo.textContent = 'Preparing data...'; if (diagramUploadProgress) diagramUploadProgress.textContent = ''; // Clear diagram progress
+    if (saveProductBtn) saveProductBtn.disabled = true; if (saveSpinner) saveSpinner.style.display = 'inline-block'; if (saveIcon) saveIcon.style.display = 'none'; if (saveText) saveText.textContent = 'Saving...'; if (uploadProgressInfo) uploadProgressInfo.textContent = 'Preparing data...'; if (diagramUploadProgress) diagramUploadProgress.textContent = '';
 
     const editingProductId = editProductIdInput?.value;
     const isEditing = !!editingProductId;
     let finalProductId = editingProductId;
 
     // --- Validation (Basic Fields) ---
-    const productName = productNameInput?.value.trim();
-    const category = productCategoryInput?.value.trim();
-    const unit = productUnitSelect?.value || null;
+    const productName = productNameInput?.value.trim(); const category = productCategoryInput?.value.trim(); const unit = productUnitSelect?.value || null;
     if (!productName || !category || !unit) { showToast("Product Name, Category, and Unit are required.", 5000); /* Restore button */ if (saveProductBtn) saveProductBtn.disabled = false; if (saveSpinner) saveSpinner.style.display = 'none'; if (saveIcon) saveIcon.style.display = ''; if (saveText) saveText.textContent = isEditing ? 'Update Product' : 'Save Product'; return; }
 
     // --- Validation (Pricing Fields) ---
     const currentRateValue = parseNumericInput(currentRateInput?.value);
-    const purchasePrice = parseNumericInput(productPurchasePriceInput?.value);
-    const mrp = parseNumericInput(productMrpInput?.value);
-    const gstRate = parseNumericInput(productGstRateInput?.value);
-    const minOrderValue = parseNumericInput(productMinOrderValueInput?.value);
-    const designCharge = parseNumericInput(designChargeInput?.value);
-    const printingCharge = parseNumericInput(printingChargeInput?.value);
-    const transportCharge = parseNumericInput(transportChargeInput?.value);
-    const extraMarginPercent = parseNumericInput(extraMarginPercentInput?.value);
-    const extraChargeAmount = parseNumericInput(extraChargeAmountInput?.value);
+    const purchasePrice = parseNumericInput(productPurchasePriceInput?.value); const mrp = parseNumericInput(productMrpInput?.value); const gstRate = parseNumericInput(productGstRateInput?.value); const minOrderValue = parseNumericInput(productMinOrderValueInput?.value); const designCharge = parseNumericInput(designChargeInput?.value); const printingCharge = parseNumericInput(printingChargeInput?.value); const transportCharge = parseNumericInput(transportChargeInput?.value); const extraMarginPercent = parseNumericInput(extraMarginPercentInput?.value); const extraChargeAmount = parseNumericInput(extraChargeAmountInput?.value);
+    if (currentRateValue === null || isNaN(currentRateValue)) { const activeLabel = RATE_TYPES[currentActiveRateType]?.label || 'Current Price'; showToast(`Please enter a valid ${activeLabel}.`, 5000); /* Restore button */ if (saveProductBtn) saveProductBtn.disabled = false; if (saveSpinner) saveSpinner.style.display = 'none'; if (saveIcon) saveIcon.style.display = ''; if (saveText) saveText.textContent = isEditing ? 'Update Product' : 'Save Product'; return; }
+    if ([purchasePrice, mrp, gstRate, minOrderValue, designCharge, printingCharge, transportCharge, extraMarginPercent, extraChargeAmount].some(isNaN)) { showToast("Please enter valid numbers for optional prices/charges.", 5000); /* Restore button */ if (saveProductBtn) saveProductBtn.disabled = false; if (saveSpinner) saveSpinner.style.display = 'none'; if (saveIcon) saveIcon.style.display = ''; if (saveText) saveText.textContent = isEditing ? 'Update Product' : 'Save Product'; return; }
 
-    if (currentRateValue === null || isNaN(currentRateValue)) { const activeLabel = RATE_TYPES[currentActiveRateType]?.label || 'Current Price'; showToast(`Please enter a valid ${activeLabel}. It cannot be empty or invalid.`, 5000); /* Restore button */ if (saveProductBtn) saveProductBtn.disabled = false; if (saveSpinner) saveSpinner.style.display = 'none'; if (saveIcon) saveIcon.style.display = ''; if (saveText) saveText.textContent = isEditing ? 'Update Product' : 'Save Product'; return; }
-    if ([purchasePrice, mrp, gstRate, minOrderValue, designCharge, printingCharge, transportCharge, extraMarginPercent, extraChargeAmount].some(isNaN)) { showToast("Please enter valid numbers (or leave blank) for optional prices/charges.", 5000); /* Restore button */ if (saveProductBtn) saveProductBtn.disabled = false; if (saveSpinner) saveSpinner.style.display = 'none'; if (saveIcon) saveIcon.style.display = ''; if (saveText) saveText.textContent = isEditing ? 'Update Product' : 'Save Product'; return; }
-
-    // --- Prepare Base Product Data ---
+    // --- Prepare Base Product Data (using productBeingEditedData for rates) ---
+    // IMPORTANT: Use productBeingEditedData.pricing as the starting point for rates
+    // This ensures rates updated by the checkbox lock logic are preserved.
     const productData = {
         productName: productName, productName_lowercase: productName.toLowerCase(),
         category: category, category_lowercase: category.toLowerCase(),
@@ -461,17 +491,18 @@ async function handleSaveProduct(event) {
         itemCode: productItemCodeInput?.value.trim() || null,
         hsnSacCode: productHsnSacCodeInput?.value.trim() || null,
         updatedAt: window.serverTimestamp(),
-        pricing: isEditing ? { ...(productBeingEditedData?.pricing || {}) } : {}
+        // Start with pricing from the edited data or an empty object
+        pricing: { ...(productBeingEditedData?.pricing || {}) }
     };
-    if (!isEditing) { productData.createdAt = window.serverTimestamp(); productData.imageUrls = []; productData.diagramUrl = null; } // Initialize for new product
+    if (!isEditing) { productData.createdAt = window.serverTimestamp(); productData.imageUrls = []; productData.diagramUrl = null; }
 
-    // --- Update Pricing based on Active Tab and Checkboxes ---
+    // --- Explicitly set the rate for the ACTIVE tab from the input ---
+    // This overwrites the value in productData.pricing for the active tab
+    // with the potentially modified value from the input box.
     const activeField = RATE_TYPES[currentActiveRateType].field;
     productData.pricing[activeField] = currentRateValue;
-    const applyCheckboxes = applyRateCheckboxesContainer?.querySelectorAll('input[name="applyRateTo"]:checked') ?? [];
-    applyCheckboxes.forEach(checkbox => { const targetRateType = checkbox.value; if (RATE_TYPES[targetRateType]) { const targetField = RATE_TYPES[targetRateType].field; productData.pricing[targetField] = currentRateValue; } });
 
-    // --- Add/Update OTHER pricing fields ---
+    // --- Add/Update OTHER (non-tabbed) pricing fields ---
     if (purchasePrice !== null) productData.pricing.purchasePrice = purchasePrice; else delete productData.pricing.purchasePrice;
     if (mrp !== null) productData.pricing.mrp = mrp; else delete productData.pricing.mrp;
     if (gstRate !== null) productData.pricing.gstRate = gstRate; else delete productData.pricing.gstRate;
@@ -484,91 +515,75 @@ async function handleSaveProduct(event) {
     if (optionsString) { try { const parsedOptions = JSON.parse(optionsString); if (!Array.isArray(parsedOptions)) throw new Error("Options must be an array."); productData.options = parsedOptions; } catch (err) { showToast(`Error: Invalid JSON in Options field. ${err.message}`, 5000); /* Restore button */ if (saveProductBtn) saveProductBtn.disabled = false; if (saveSpinner) saveSpinner.style.display = 'none'; if (saveIcon) saveIcon.style.display = ''; if (saveText) saveText.textContent = isEditing ? 'Update Product' : 'Save Product'; return; } }
     else { productData.options = []; }
 
-    // --- Diagram URL (will be updated after potential upload) ---
-    // Start with the existing URL (if editing) or null (if adding)
+    // --- Diagram URL (Start with existing/null) ---
     productData.diagramUrl = isEditing ? (productBeingEditedData?.diagramUrl || null) : null;
-
 
     console.log("Prepared product data (before file ops):", JSON.parse(JSON.stringify(productData)));
 
     // --- START Save/Upload Process ---
     try {
-        // === Step 0: Get Product ID (Create entry if new to get ID for storage paths) ===
+        // === Step 0: Get Product ID ===
         if (!isEditing) {
              if (uploadProgressInfo) uploadProgressInfo.textContent = 'Creating product entry...';
-             // Save preliminary data without file URLs first to get an ID
-             const preliminaryData = { ...productData };
-             delete preliminaryData.imageUrls; // Will be added later
-             delete preliminaryData.diagramUrl; // Will be added later
+             const preliminaryData = { ...productData }; delete preliminaryData.imageUrls; delete preliminaryData.diagramUrl;
              const docRef = await window.addDoc(window.collection(window.db, "onlineProducts"), preliminaryData);
-             finalProductId = docRef.id; // Get the newly created ID
+             finalProductId = docRef.id;
              console.log("New product entry created, ID:", finalProductId);
-             productData.id = finalProductId; // Add ID to data object for reference
-        } else {
-            finalProductId = editingProductId; // Use existing ID
-        }
+             productData.id = finalProductId;
+        } else { finalProductId = editingProductId; }
         if (!finalProductId) throw new Error("Could not establish Product ID.");
 
-
-        // === Step 1: Handle Diagram File Operation ===
-        let newDiagramUrl = productData.diagramUrl; // Start with current/initial URL
+        // === Step 1: Handle Diagram File ===
+        let newDiagramUrl = productData.diagramUrl;
         const existingDiagramUrl = isEditing ? (productBeingEditedData?.diagramUrl || null) : null;
 
         if (shouldRemoveDiagram && existingDiagramUrl) {
             if (diagramUploadProgress) diagramUploadProgress.textContent = 'Removing existing diagram...';
-            await deleteStoredFile(existingDiagramUrl); // Delete from storage
-            newDiagramUrl = null; // Remove URL from data
+            await deleteStoredFile(existingDiagramUrl);
+            newDiagramUrl = null;
             console.log("Existing diagram removed.");
         } else if (diagramFileToUpload) {
-            if (uploadProgressInfo) uploadProgressInfo.textContent = 'Processing diagram...'; // General progress update
-             // Delete old diagram *before* uploading new one if editing and one exists
+            if (uploadProgressInfo) uploadProgressInfo.textContent = 'Processing diagram...';
              if (isEditing && existingDiagramUrl) {
                  if (diagramUploadProgress) diagramUploadProgress.textContent = 'Replacing existing diagram...';
                  await deleteStoredFile(existingDiagramUrl);
                  console.log("Replaced existing diagram.");
              }
-            // Upload new diagram
             const diagramFileName = `diagram-${Date.now()}-${diagramFileToUpload.name.replace(/[^a-zA-Z0-9.]/g, '_')}`;
             const diagramPath = `productDiagrams/${finalProductId}/${diagramFileName}`;
-            newDiagramUrl = await uploadFile(diagramFileToUpload, diagramPath, diagramUploadProgress); // Upload and get URL
+            newDiagramUrl = await uploadFile(diagramFileToUpload, diagramPath, diagramUploadProgress);
         }
-        productData.diagramUrl = newDiagramUrl; // Update data object with final diagram URL
+        productData.diagramUrl = newDiagramUrl; // Update data object
 
-        // === Step 2: Handle Product Image Operations ===
+        // === Step 2: Handle Product Images ===
         let uploadedImageUrls = [];
         let currentExistingUrls = isEditing ? (productBeingEditedData?.imageUrls || []) : [];
 
-        if (isEditing && imagesToDelete.length > 0) { /* ... (delete images as before) ... */ if (uploadProgressInfo) uploadProgressInfo.textContent = 'Deleting images...'; const deletePromises = imagesToDelete.map(url => deleteStoredImage(url)); await Promise.allSettled(deletePromises); currentExistingUrls = currentExistingUrls.filter(url => !imagesToDelete.includes(url)); }
-        if (selectedFiles.length > 0) { /* ... (upload images as before) ... */ if (uploadProgressInfo) uploadProgressInfo.textContent = `Uploading ${selectedFiles.length} images...`; const uploadPromises = selectedFiles.map((file, index) => uploadImage(file, finalProductId, index)); const uploadResults = await Promise.allSettled(uploadPromises); uploadedImageUrls = []; let uploadErrorOccurred = false; uploadResults.forEach((result) => { if (result.status === 'fulfilled') { uploadedImageUrls.push(result.value); } else { console.error(`Upload failed:`, result.reason); uploadErrorOccurred = true; } }); if (uploadErrorOccurred) { showToast("Some images failed upload.", 5000); } else { if (uploadProgressInfo) uploadProgressInfo.textContent = 'Images uploaded!'; } }
+        if (isEditing && imagesToDelete.length > 0) { /* ... delete images ... */ if (uploadProgressInfo) uploadProgressInfo.textContent = 'Deleting images...'; const deletePromises = imagesToDelete.map(url => deleteStoredImage(url)); await Promise.allSettled(deletePromises); currentExistingUrls = currentExistingUrls.filter(url => !imagesToDelete.includes(url)); }
+        if (selectedFiles.length > 0) { /* ... upload images ... */ if (uploadProgressInfo) uploadProgressInfo.textContent = `Uploading ${selectedFiles.length} images...`; const uploadPromises = selectedFiles.map((file, index) => uploadImage(file, finalProductId, index)); const uploadResults = await Promise.allSettled(uploadPromises); uploadedImageUrls = []; let uploadErrorOccurred = false; uploadResults.forEach((result) => { if (result.status === 'fulfilled') { uploadedImageUrls.push(result.value); } else { console.error(`Upload failed:`, result.reason); uploadErrorOccurred = true; } }); if (uploadErrorOccurred) { showToast("Some images failed upload.", 5000); } else { if (uploadProgressInfo) uploadProgressInfo.textContent = 'Images uploaded!'; } }
         else { console.log("No new images selected."); }
 
-        // === Step 3: Final Firestore Update (with all URLs) ===
+        // === Step 3: Final Firestore Update ===
         const finalImageUrls = [...currentExistingUrls, ...uploadedImageUrls];
-        // Create final payload with updated URLs and correct timestamps
         const finalUpdatePayload = {
-             ...productData, // Includes updated pricing, details, options, diagramUrl
+             ...productData, // Contains updated pricing, details, options, diagramUrl
              imageUrls: finalImageUrls,
-             updatedAt: window.serverTimestamp() // Ensure latest timestamp
+             updatedAt: window.serverTimestamp()
         };
-        if (isEditing) { delete finalUpdatePayload.createdAt; } // Don't overwrite createdAt
+        if (isEditing) { delete finalUpdatePayload.createdAt; }
 
         if (uploadProgressInfo) uploadProgressInfo.textContent = 'Finalizing product data...';
         const finalProductRef = window.doc(window.db, "onlineProducts", finalProductId);
-        await window.updateDoc(finalProductRef, finalUpdatePayload); // Use updateDoc for both add (post-creation) and edit
+        await window.updateDoc(finalProductRef, finalUpdatePayload);
 
-        console.log(`Product ${isEditing ? 'updated' : 'added'} successfully in Firestore: ${finalProductId}`);
+        console.log(`Product ${isEditing ? 'updated' : 'added'} successfully: ${finalProductId}`);
         showToast(isEditing ? 'Product updated successfully!' : 'Product added successfully!', 3000);
         closeProductModal();
 
     } catch (error) {
         console.error("Save/upload error:", error);
         showToast(`Error saving product: ${error.message || 'Unknown error'}. Check console.`, 5000);
-        // Attempt to clean up partially created product if add failed after entry creation
-         if (!isEditing && finalProductId && error.message !== "Could not establish Product ID.") {
-            console.warn("Attempting to cleanup partial product entry:", finalProductId);
-             try { await window.deleteDoc(window.doc(window.db, "onlineProducts", finalProductId)); console.log("Partial product entry cleaned up."); }
-             catch (cleanupError) { console.error("Failed to cleanup partial product entry:", cleanupError); }
-         }
+         if (!isEditing && finalProductId && error.message !== "Could not establish Product ID.") { console.warn("Attempting to cleanup partial product entry:", finalProductId); try { await window.deleteDoc(window.doc(window.db, "onlineProducts", finalProductId)); console.log("Partial product entry cleaned up."); } catch (cleanupError) { console.error("Failed to cleanup partial product entry:", cleanupError); } }
     } finally {
         // Restore button state
         if (saveProductBtn) saveProductBtn.disabled = false; if (saveSpinner) saveSpinner.style.display = 'none'; if (saveIcon) saveIcon.style.display = ''; if (saveText) saveText.textContent = isEditing ? 'Update Product' : 'Save Product'; if (uploadProgressInfo) setTimeout(() => { if (uploadProgressInfo) uploadProgressInfo.textContent = ''; }, 3000); if (diagramUploadProgress) setTimeout(() => { if (diagramUploadProgress) diagramUploadProgress.textContent = ''; }, 3000);
@@ -578,62 +593,9 @@ async function handleSaveProduct(event) {
 
 
 // --- Delete Handling (Updated for Diagram) ---
-function handleDeleteButtonClick(event) { /* ... (unchanged) ... */ event.preventDefault(); if (!productToDeleteId || !productToDeleteName) return; if (deleteWarningMessage) deleteWarningMessage.innerHTML = `Are you sure you want to delete "<strong>${escapeHtml(productToDeleteName)}</strong>"? <br>This will also delete its images and diagram. This action cannot be undone.`; if(deleteConfirmCheckbox) deleteConfirmCheckbox.checked = false; if(confirmDeleteFinalBtn) confirmDeleteFinalBtn.disabled = true; if(deleteConfirmModal) deleteConfirmModal.classList.add('active'); }
+function handleDeleteButtonClick(event) { /* ... (updated message) ... */ event.preventDefault(); if (!productToDeleteId || !productToDeleteName) return; if (deleteWarningMessage) deleteWarningMessage.innerHTML = `Are you sure you want to delete "<strong>${escapeHtml(productToDeleteName)}</strong>"? <br>This will also delete its images and diagram. This action cannot be undone.`; if(deleteConfirmCheckbox) deleteConfirmCheckbox.checked = false; if(confirmDeleteFinalBtn) confirmDeleteFinalBtn.disabled = true; if(deleteConfirmModal) deleteConfirmModal.classList.add('active'); }
 function closeDeleteConfirmModal() { /* ... (unchanged) ... */ if (deleteConfirmModal) { deleteConfirmModal.classList.remove('active'); } }
 function handleConfirmCheckboxChange() { /* ... (unchanged) ... */ if (deleteConfirmCheckbox && confirmDeleteFinalBtn) { confirmDeleteFinalBtn.disabled = !deleteConfirmCheckbox.checked; } }
-async function handleFinalDelete() {
-    if (!deleteConfirmCheckbox?.checked || !productToDeleteId) return;
-    if (!window.db || !window.doc || !window.getDoc || !window.deleteDoc || !window.storage || !window.storageRef || !window.deleteObject) { showToast("Core Firebase functions unavailable.", 5000); return; }
-
-    if(confirmDeleteFinalBtn) { confirmDeleteFinalBtn.disabled = true; confirmDeleteFinalBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Deleting...'; }
-    const productRef = window.doc(window.db, "onlineProducts", productToDeleteId);
-
-    try {
-        // 1. Get product data to find file URLs
-        const productSnap = await window.getDoc(productRef);
-        let deletePromises = [];
-
-        if (productSnap.exists()) {
-            const productData = productSnap.data();
-
-            // 2. Delete Images from Storage
-            if (productData.imageUrls && Array.isArray(productData.imageUrls) && productData.imageUrls.length > 0) {
-                console.log(`Marking ${productData.imageUrls.length} images for deletion...`);
-                productData.imageUrls.forEach(url => deletePromises.push(deleteStoredImage(url)));
-            }
-
-            // 3. <<< NEW: Delete Diagram from Storage >>>
-            if (productData.diagramUrl) {
-                console.log("Marking diagram for deletion...");
-                deletePromises.push(deleteStoredFile(productData.diagramUrl));
-            }
-            // <<< END NEW >>>
-
-            // Wait for all file deletions to attempt
-            if (deletePromises.length > 0) {
-                console.log(`Waiting for ${deletePromises.length} file deletion(s) to settle...`);
-                await Promise.allSettled(deletePromises);
-                console.log("File deletion attempts finished.");
-            } else {
-                 console.log("No images or diagram found to delete from storage.");
-            }
-        } else {
-            console.warn(`Product document ${productToDeleteId} not found, cannot delete associated files.`);
-        }
-
-        // 4. Delete Firestore Document
-        console.log(`Deleting Firestore document ${productToDeleteId}...`);
-        await window.deleteDoc(productRef);
-        showToast(`Product "${productToDeleteName || ''}" and associated files deleted!`);
-        closeDeleteConfirmModal();
-        closeProductModal(); // Also close the edit modal if it was open
-
-    } catch (error) {
-        console.error(`Error during deletion process for ${productToDeleteId}:`, error);
-        showToast(`Failed to fully delete product: ${error.message}`, 5000);
-    } finally {
-        if(confirmDeleteFinalBtn) { confirmDeleteFinalBtn.disabled = !deleteConfirmCheckbox?.checked; confirmDeleteFinalBtn.innerHTML = '<i class="fas fa-trash-alt"></i> Confirm Delete'; }
-    }
-}
+async function handleFinalDelete() { /* ... (updated diagram deletion) ... */ if (!deleteConfirmCheckbox?.checked || !productToDeleteId) return; if (!window.db || !window.doc || !window.getDoc || !window.deleteDoc || !window.storage || !window.storageRef || !window.deleteObject) { showToast("Core Firebase functions unavailable.", 5000); return; } if(confirmDeleteFinalBtn) { confirmDeleteFinalBtn.disabled = true; confirmDeleteFinalBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Deleting...'; } const productRef = window.doc(window.db, "onlineProducts", productToDeleteId); try { const productSnap = await window.getDoc(productRef); let deletePromises = []; if (productSnap.exists()) { const productData = productSnap.data(); if (productData.imageUrls && Array.isArray(productData.imageUrls) && productData.imageUrls.length > 0) { console.log(`Marking ${productData.imageUrls.length} images for deletion...`); productData.imageUrls.forEach(url => deletePromises.push(deleteStoredImage(url))); } if (productData.diagramUrl) { console.log("Marking diagram for deletion..."); deletePromises.push(deleteStoredFile(productData.diagramUrl)); } if (deletePromises.length > 0) { console.log(`Waiting for ${deletePromises.length} file deletion(s) to settle...`); await Promise.allSettled(deletePromises); console.log("File deletion attempts finished."); } else { console.log("No images or diagram found to delete."); } } else { console.warn(`Product document ${productToDeleteId} not found.`); } console.log(`Deleting Firestore document ${productToDeleteId}...`); await window.deleteDoc(productRef); showToast(`Product "${productToDeleteName || ''}" and associated files deleted!`); closeDeleteConfirmModal(); closeProductModal(); } catch (error) { console.error(`Error during deletion process for ${productToDeleteId}:`, error); showToast(`Failed to fully delete product: ${error.message}`, 5000); } finally { if(confirmDeleteFinalBtn) { confirmDeleteFinalBtn.disabled = !deleteConfirmCheckbox?.checked; confirmDeleteFinalBtn.innerHTML = '<i class="fas fa-trash-alt"></i> Confirm Delete'; } } }
 
 // --- END ---

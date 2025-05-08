@@ -148,7 +148,9 @@
             <form id="productForm">
                 <input type="hidden" id="editProductId">
                 <input type="hidden" id="existingImageUrls" value="[]">
-                <input type="hidden" id="existingDiagramUrl"> <div class="product-form-grid">
+                <input type="hidden" id="existingDiagramUrl">
+
+                <div class="product-form-grid">
 
                     <div class="form-column">
                         <fieldset>
@@ -206,7 +208,9 @@
                                 <label for="productGstRate">GST Rate (%):</label>
                                 <input type="number" id="productGstRate" placeholder="e.g., 18" step="0.01" min="0" max="100">
                             </div>
-                            <hr style="margin: 20px 0;"> <div id="priceTabsContainer" class="price-tabs">
+                            <hr style="margin: 20px 0;">
+
+                            <div id="priceTabsContainer" class="price-tabs">
                                 <button type="button" class="price-tab-btn active" data-rate-type="online">Online</button>
                                 <button type="button" class="price-tab-btn" data-rate-type="retail">Retail</button>
                                 <button type="button" class="price-tab-btn" data-rate-type="agent">Agent</button>
@@ -219,10 +223,12 @@
                                 <small>Rate for the selected type above.</small>
                             </div>
 
-                            <div id="applyRateCheckboxesContainer" class="apply-rate-checkboxes">
+                             <div id="applyRateCheckboxesContainer" class="apply-rate-checkboxes">
                                  </div>
 
-                            <hr style="margin: 20px 0;"> <div class="form-group sq-feet-only price-group" style="display: none;">
+                            <hr style="margin: 20px 0;">
+
+                            <div class="form-group sq-feet-only price-group" style="display: none;">
                                 <label for="productMinOrderValue">Min. Order Value (Sq Ft Only):</label>
                                 <input type="number" id="productMinOrderValue" placeholder="e.g., 300" step="0.01" min="0">
                             </div>
@@ -242,16 +248,7 @@
                              <div class="form-group"><label for="extraMarginPercent">Extra Margin (%):</label><input type="number" id="extraMarginPercent" placeholder="e.g., 10" step="0.01" min="0"></div>
                         </fieldset>
 
-                        <fieldset id="extra-charges-outer">
-                            <legend>Optional Extra Charges</legend>
-                            <div class="form-group"><label for="hasExtraCharges"><input type="checkbox" id="hasExtraCharges"> Enable Additional Charge Option</label></div>
-                           <div id="extra-charges-section" style="display: none;">
-                               <div class="form-group"><label for="extraChargeName">Charge Name:</label><input type="text" id="extraChargeName" placeholder="e.g., Lamination"></div>
-                               <div class="form-group price-group"><label for="extraChargeAmount">Charge Amount:</label><input type="number" id="extraChargeAmount" step="0.01" min="0"></div>
-                           </div>
-                        </fieldset>
-
-                    </div>
+                        </div>
 
                     <div class="form-column">
                          <fieldset>
@@ -285,6 +282,15 @@
                            </div>
                        </fieldset>
 
+                       <fieldset id="extra-charges-outer">
+                            <legend>Optional Extra Charges</legend>
+                            <div class="form-group"><label for="hasExtraCharges"><input type="checkbox" id="hasExtraCharges"> Enable Additional Charge Option</label></div>
+                           <div id="extra-charges-section" style="display: none;">
+                               <div class="form-group"><label for="extraChargeName">Charge Name:</label><input type="text" id="extraChargeName" placeholder="e.g., Lamination"></div>
+                               <div class="form-group price-group"><label for="extraChargeAmount">Charge Amount:</label><input type="number" id="extraChargeAmount" step="0.01" min="0"></div>
+                           </div>
+                        </fieldset>
+
                     </div>
 
                 </div> </form>
@@ -305,7 +311,7 @@
                 </div>
               </div>
         </div> </div> <div id="deleteConfirmModal" class="modal confirmation-modal">
-        <div class="modal-content small-modal">
+         <div class="modal-content small-modal">
             <span class="close-btn" id="closeDeleteConfirmModal" title="Close">&times;</span>
             <h2><i class="fas fa-exclamation-triangle warning-icon"></i> Confirm Deletion</h2>
             <p id="deleteWarningMessage">Are you sure you want to delete this product? This action cannot be undone.</p>
