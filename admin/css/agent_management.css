@@ -560,6 +560,12 @@ input:focus+.slider {
 input:checked+.slider:before {
     transform: translateX(20px);
 }
+.slider.round {
+    border-radius: 24px;
+}
+.slider.round:before {
+    border-radius: 50%;
+}
 
 .modal-actions {
     display: flex;

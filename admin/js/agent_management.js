@@ -42,7 +42,6 @@ const agentPermissionsDiv = document.getElementById('agentPermissions');
 const wholesalePermissionsDiv = document.getElementById('wholesalePermissions');
 const canAddCustomersCheckbox = document.getElementById('canAddCustomersCheckbox'); // New
 
-
 // --- Global State ---
 let availableCategories = [];
 let currentAgents = [];
@@ -134,6 +133,10 @@ function openAgentModal(mode = 'add', agentData = null) {
             });
         }
 
+        // Set 'Add Customers' checkbox
+        if (canAddCustomersCheckbox) { // Check if element exists
+            canAddCustomersCheckbox.checked = agentData.canAddCustomers || false;
+        }
 
         // Check allowed categories
         if (agentData.allowedCategories && Array.isArray(agentData.allowedCategories)) {
