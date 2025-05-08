@@ -46,6 +46,7 @@ const wholesalePermissionsDiv = document.getElementById('wholesalePermissions');
 let availableCategories = [];
 let currentAgents = [];
 let unsubscribeAgents = null;
+let searchDebounceTimer; // Declare searchDebounceTimer here
 
 // --- Helper Functions ---
 function escapeHtml(unsafe) {
@@ -143,7 +144,7 @@ function openAgentModal(mode = 'add', agentData = null) {
                     if (checkbox) {
                         checkbox.checked = true;
                     } else {
-                        console.warn(`Category checkbox not found for saved category: <span class="math-inline">\{categoryName\} \(Selector\: input\[value\="</span>{sanitizedCategoryName}"])`);
+                        console.warn(`Category checkbox not found for saved category: ${categoryName} (Selector: input[value="${sanitizedCategoryName}"])`);
                     }
                 } catch (e) {
                     console.error(`Invalid selector for category checkbox: input[value="${sanitizedCategoryName}"]`, e);
@@ -233,13 +234,13 @@ function displayAgentRow(agentId, agentData) {
         : 'None';
 
     row.innerHTML = `
-        <td><span class="math-inline">\{name\}</td\>
-<td\></span>{email}</td>
-        <td><span class="math-inline">\{contact\}</td\>
-<td\></span>{userTypeText}</td>
-        <td style="text-align:center;"><span class="status-badge <span class="math-inline">\{statusClass\}"\></span>{status}</span></td>
-        <td class="category-list-cell"><span class="math-inline">\{allowedCategoriesText\}</td\>
-<td class\="category\-list\-cell"\></span>{permissionsText}</td>
+        <td>${name}</td>
+        <td>${email}</td>
+        <td>${contact}</td>
+        <td>${userTypeText}</td>
+        <td style="text-align:center;"><span class="status-badge ${statusClass}">${status}</span></td>
+        <td class="category-list-cell">${allowedCategoriesText}</td>
+        <td class="category-list-cell">${permissionsText}</td>
         <td style="text-align:center;">${canAddCustomersText}</td>
         <td style="text-align:center;">
             <div class="action-buttons-container">
@@ -380,4 +381,92 @@ async function handleSaveAgent(event) {
         if (!name || !email || !status) throw new Error("Agent Name, Email, and Status are required.");
         if (!isEditing && (!password || password.length < 6)) throw new Error("Password is required for new agents (min 6 characters).");
         if (selectedCategories.length === 0) throw new Error("Please select at least one allowed product category.");
-        if (!/\S+@\S+\.\S+/.test
+        if (!/\S+@\S+\.\S+/.test(email)) throw new Error("Please enter a valid email address.");
+        // --------------------
+
+        const agentData = {
+            name: name,
+            name_lowercase: name.toLowerCase(),
+            email: email,
+            contact: contact,
+            status: status,
+            canAddCustomers: canAddCustomers,
+            allowedCategories: selectedCategories,
+            userType: userType,
+            permissions: permissions,
+            updatedAt: serverTimestamp(),
+        };
+
+        if (isEditing) {
+            console.log(`Updating agent: ${agentId}`);
+            const agentRef = doc(db, "agents", agentId);
+            await updateDoc(agentRef, agentData);
+            alert(`Agent "${name}" updated successfully!`);
+
+        } else {
+            console.log(`Adding new agent: ${email}`);
+            agentData.createdAt = serverTimestamp();
+
+            const qEmail = query(collection(db, "agents"), where("email", "==", email), limit(1));
+            const emailSnap = await getDocs(qEmail);
+            if (!emailSnap.empty) {
+                throw new Error(`An agent with email ${email} already exists in the database.`);
+            }
+
+            const docRef = await addDoc(collection(db, "agents"), agentData);
+            console.log("New agent added to Firestore with ID:", docRef.id);
+            alert(`Agent "${name}" added successfully! \n\nIMPORTANT: You must manually create a corresponding login user in Firebase Authentication for email: ${email} with the password you set.`);
+        }
+        closeAgentModal();
+    } catch (error) {
+        console.error("Error saving agent:", error);
+        showModalError(`Failed to save agent: ${error.message}`);
+    } finally {
+        if (saveAgentBtn) {
+            saveAgentBtn.disabled = false;
+            saveAgentBtnText.textContent = originalButtonText;
+        }
+    }
+}
+
+// --- Initialization ---
+document.addEventListener('DOMContentLoaded', () => {
+    console.log("Admin Agent Management JS Initializing...");
+
+    // Attach Static Listeners
+    addNewAgentBtn?.addEventListener('click', () => openAgentModal('add'));
+    closeAgentModalBtn?.addEventListener('click', closeAgentModal);
+    cancelAgentBtn?.addEventListener('click', closeAgentModal);
+    agentForm?.addEventListener('submit', handleSaveAgent);
+    agentModal?.addEventListener('click', (e) => { if (e.target === agentModal) closeAgentModal(); });
+
+    // Select/Deselect All Categories
+    selectAllCategoriesBtn?.addEventListener('click', () => {
+        categoryPermissionsDiv?.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = true);
+    });
+    deselectAllCategoriesBtn?.addEventListener('click', () => {
+        categoryPermissionsDiv?.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = false);
+    });
+
+    // Filter/Sort Listeners
+    filterSearchInput?.addEventListener('input', () => { clearTimeout(searchDebounceTimer); searchDebounceTimer = setTimeout(applyAgentFilters, 300); });
+    sortSelect?.addEventListener('change', loadAgents); // Firestore query handles sorting
+    clearFiltersBtn?.addEventListener('click', () => {
+        if (filterSearchInput) filterSearchInput.value = '';
+        if (sortSelect) sortSelect.value = 'createdAt_desc';
+        loadAgents(); // Reload with default sort and no search
+    });
+
+    // Initial Data Load
+    fetchCategories().then(() => {
+        loadAgents();
+    }).catch(err => {
+        console.error("Failed initial category load, attempting to load agents anyway...");
+        loadAgents();
+    });
+
+    console.log("Admin Agent Management JS Initialized.");
+
+    handleUserTypeChange(); // Initialize display on page load - **moved here**
+
+});
