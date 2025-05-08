@@ -714,8 +714,3 @@ function displayImagePreview(fileObject, existingUrl = null) {
     const previewWrapper = document.createElement('div');
     previewWrapper.className = 'image-preview-item';
     previewWrapper.setAttribute('data-preview-id', previewId);
-    const img = document.createElement('img');
-    const removeBtn = document.createElement('button');
-    removeBtn.type = 'button';
-    removeBtn.className = 'remove-image-btn';
-    removeBtn.innerHTML = '&times;';
