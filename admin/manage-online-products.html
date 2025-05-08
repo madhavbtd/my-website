@@ -47,7 +47,6 @@
             db = getFirestore(app);
             storage = getStorage(app);
 
-            // Make Firebase services globally available
             window.db = db; window.auth = auth; window.storage = storage;
             window.collection = collection; window.doc = doc; window.addDoc = addDoc;
             window.updateDoc = updateDoc; window.deleteDoc = deleteDoc; window.onSnapshot = onSnapshot;
@@ -69,9 +68,9 @@
                              initializeOnlineProductManagement();
                              console.log("Called initializeOnlineProductManagement.");
                          } else {
-                              console.error("initializeOnlineProductManagement function not found in manage-online-products.js!");
+                              console.error("initializeOnlineProductManagement function not found!");
                          }
-                    }, 200);
+                    }, 250); // Slightly longer delay just in case
                 }
             });
         } catch(e) {
@@ -91,13 +90,13 @@
         </div>
 
         <div class="filter-bar">
-              <div class="filter-group">
-                 <button id="addNewProductBtn" class="button add-new-button">
+            <div class="filter-group">
+                <button id="addNewProductBtn" class="button add-new-button">
                     <i class="fas fa-plus"></i> Add New Online Product
                 </button>
             </div>
              <div class="filter-group">
-                 <label for="filterSearch"><i class="fas fa-search"></i> Search:</label>
+                <label for="filterSearch"><i class="fas fa-search"></i> Search:</label>
                 <input type="text" id="filterSearch" placeholder="Name, Category...">
              </div>
              <div class="filter-group filter-sort">
@@ -169,11 +168,12 @@
                                    <option value="Qty">Qty</option>
                                    <option value="Sq Feet">Sq Feet</option>
                                    <option value="Nos">Nos</option>
-                                   </select>
+                               </select>
                            </div>
                             <div class="form-group">
                                <label for="productDescription">Description:</label>
-                               <textarea id="productDescription" rows="3" placeholder="Product details shown to customer"></textarea> </div>
+                               <textarea id="productDescription" rows="4" placeholder="Product details shown to customer"></textarea>
+                           </div>
                             <div class="form-group">
                                <label for="isEnabled">
                                   <input type="checkbox" id="isEnabled" checked> Show on Website (Enabled)
@@ -181,20 +181,6 @@
                           </div>
                         </fieldset>
 
-                        <fieldset>
-                            <legend><i class="fas fa-drafting-compass"></i> Product Diagram</legend>
-                            <div class="form-group">
-                                <label for="productDiagram">Upload Diagram (Optional):</label>
-                                <input type="file" id="productDiagram" accept=".pdf,.png,.jpg,.jpeg,.webp">
-                                <small>PDF or Image file. Agents can download this.</small>
-                                <div id="diagram-link-area" style="margin-top: 10px; display: none;">
-                                    <label style="font-weight:normal; font-size:0.9em;">Current Diagram:</label>
-                                    <a href="#" id="viewDiagramLink" target="_blank" rel="noopener noreferrer" style="font-size:0.9em; word-break: break-all;">View/Download</a>
-                                    <button type="button" id="removeDiagramBtn" class="button small-button danger-button" style="margin-left: 10px; padding: 3px 6px; font-size: 0.8em;" title="Remove Diagram"><i class="fas fa-times"></i> Remove</button>
-                                </div>
-                                <div id="diagram-upload-progress" style="font-size: 0.9em; margin-top: 5px; min-height: 1.2em;"></div>
-                            </div>
-                        </fieldset>
                         <div id="image-upload-section">
                                <h3><i class="fas fa-images"></i> Product Images</h3>
                                <div class="form-group">
@@ -203,8 +189,7 @@
                                    <small>Select new images to add or replace existing ones.</small>
                                </div>
                                <label>Image Previews (Click <span style="color:red; font-weight:bold;">&times;</span> to remove):</label>
-                               <div id="image-preview-area">
-                                   </div>
+                               <div id="image-preview-area"></div>
                                <div id="upload-progress-info" style="font-size: 0.9em; margin-top: 10px; min-height: 1.2em;"></div>
                            </div>
                     </div>
@@ -220,13 +205,12 @@
                                 <button type="button" class="price-tab-btn" data-rate-type="reseller">Wholesale</button>
                             </div>
 
-                            <div class="form-group price-group">
-                                <label for="currentRateInput" id="currentRateLabel">Online Customer Rate*:</label>
+                            <div class="form-group price-group"> <label for="currentRateInput" id="currentRateLabel">Online Customer Rate*:</label>
                                 <input type="number" id="currentRateInput" required placeholder="0.00" step="0.01" min="0">
                                 <small>Rate for the selected type above.</small>
                             </div>
 
-                            <div id="applyRateCheckboxesContainer" class="apply-rate-checkboxes">
+                             <div id="applyRateCheckboxesContainer" class="apply-rate-checkboxes">
                                  </div>
                             <hr style="margin: 20px 0;"> <div class="form-group sq-feet-only price-group" style="display: none;">
                                 <label for="productMinOrderValue">Min. Order Value (Sq Ft Only):</label>
@@ -283,6 +267,22 @@
                               <small>Format: [{"name":"Option Name", "values":["Val1", "Val2"]}]</small>
                          </div>
                        </fieldset>
+
+                       <fieldset>
+                           <legend><i class="fas fa-drafting-compass"></i> Product Diagram</legend>
+                           <div class="form-group">
+                               <label for="productDiagram">Upload Diagram (Optional):</label>
+                               <input type="file" id="productDiagram" accept=".pdf,.png,.jpg,.jpeg,.webp">
+                               <small>PDF or Image file. Agents can download this.</small>
+                               <div id="diagram-link-area" style="margin-top: 10px; display: none;">
+                                   <label style="font-weight:normal; font-size:0.9em;">Current Diagram:</label>
+                                   <a href="#" id="viewDiagramLink" target="_blank" rel="noopener noreferrer" style="font-size:0.9em; word-break: break-all;">View/Download</a>
+                                   <button type="button" id="removeDiagramBtn" class="button small-button danger-button" style="margin-left: 10px; padding: 3px 6px; font-size: 0.8em;" title="Remove Diagram"><i class="fas fa-times"></i> Remove</button>
+                               </div>
+                               <div id="diagram-upload-progress" style="font-size: 0.9em; margin-top: 5px; min-height: 1.2em;"></div>
+                           </div>
+                       </fieldset>
+
                     </div>
 
                 </div> </form>
