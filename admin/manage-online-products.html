@@ -70,7 +70,7 @@
                          } else {
                               console.error("initializeOnlineProductManagement function not found!");
                          }
-                    }, 250); // Slightly longer delay just in case
+                    }, 250);
                 }
             });
         } catch(e) {
@@ -198,36 +198,38 @@
                         <fieldset>
                             <legend><i class="fas fa-dollar-sign"></i> Price Details</legend>
 
-                            <div id="priceTabsContainer" class="price-tabs">
+                            <div class="form-group price-group">
+                                <label for="productPurchasePrice">Purchase Price:</label>
+                                <input type="number" id="productPurchasePrice" placeholder="0.00" step="0.01" min="0">
+                            </div>
+                             <div class="form-group">
+                                <label for="productGstRate">GST Rate (%):</label>
+                                <input type="number" id="productGstRate" placeholder="e.g., 18" step="0.01" min="0" max="100">
+                            </div>
+                            <hr style="margin: 20px 0;"> <div id="priceTabsContainer" class="price-tabs">
                                 <button type="button" class="price-tab-btn active" data-rate-type="online">Online</button>
                                 <button type="button" class="price-tab-btn" data-rate-type="retail">Retail</button>
                                 <button type="button" class="price-tab-btn" data-rate-type="agent">Agent</button>
                                 <button type="button" class="price-tab-btn" data-rate-type="reseller">Wholesale</button>
                             </div>
 
-                            <div class="form-group price-group"> <label for="currentRateInput" id="currentRateLabel">Online Customer Rate*:</label>
+                            <div class="form-group price-group">
+                                <label for="currentRateInput" id="currentRateLabel">Online Customer Rate*:</label>
                                 <input type="number" id="currentRateInput" required placeholder="0.00" step="0.01" min="0">
                                 <small>Rate for the selected type above.</small>
                             </div>
 
-                             <div id="applyRateCheckboxesContainer" class="apply-rate-checkboxes">
+                            <div id="applyRateCheckboxesContainer" class="apply-rate-checkboxes">
                                  </div>
+
                             <hr style="margin: 20px 0;"> <div class="form-group sq-feet-only price-group" style="display: none;">
                                 <label for="productMinOrderValue">Min. Order Value (Sq Ft Only):</label>
                                 <input type="number" id="productMinOrderValue" placeholder="e.g., 300" step="0.01" min="0">
                             </div>
 
                             <div class="form-group price-group">
-                                <label for="productPurchasePrice">Purchase Price:</label>
-                                <input type="number" id="productPurchasePrice" placeholder="0.00" step="0.01" min="0">
-                            </div>
-                             <div class="form-group price-group">
                                 <label for="productMrp">M.R.P.:</label>
                                 <input type="number" id="productMrp" placeholder="0.00" step="0.01" min="0">
-                            </div>
-                             <div class="form-group">
-                                <label for="productGstRate">GST Rate (%):</label>
-                                <input type="number" id="productGstRate" placeholder="e.g., 18" step="0.01" min="0" max="100">
                             </div>
 
                         </fieldset>
