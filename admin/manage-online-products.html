@@ -24,10 +24,10 @@
         } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
 
         const firebaseConfig = {
-            apiKey: "AIzaSyBQj5rQmE77kKKGYixP8y3Hcimz8tiAqzQ",
+            apiKey: "AIzaSyBQj5rQmE77kKKGYixP8y3Hcimz8tiAqzQ", // सुनिश्चित करें कि यह सही API Key है
             authDomain: "madhav-multyprint.firebaseapp.com",
             projectId: "madhav-multyprint",
-            storageBucket: "madhav-multyprint.firebasestorage.app", // Corrected
+            storageBucket: "madhav-multyprint.appspot.com", // .firebasestorage.app या .appspot.com, कंसोल से जांच लें
             messagingSenderId: "104988349637",
             appId: "1:104988349637:web:faf045b77c6786a4e70cac"
         };
@@ -121,20 +121,21 @@
             <table id="productTable">
                 <thead>
                      <tr>
-                        <th style="width: 20%;">Name</th>
-                        <th style="width: 14%;">Category</th>
-                        <th style="width: 13%;">Brand</th>
-                        <th style="text-align: right; width: 9%;">Rate</th>
-                        <th style="text-align: center; width: 8%;">Unit</th>
-                        <th style="text-align: center; width: 8%;">Enabled</th>
-                        <th style="text-align: center; width: 12%;">Date Added</th>
-                        <th style="text-align: center; width: 16%;">Actions</th>
+                        <th style="width: 18%;">Name</th>
+                        <th style="width: 12%;">Category</th>
+                        <th style="width: 11%;">Brand</th>
+                        <th style="text-align: right; width: 8%;">Rate</th>
+                        <th style="text-align: center; width: 7%;">Unit</th>
+                        <th style="text-align: center; width: 7%;">Enabled</th>
+                        <th style="text-align: center; width: 10%;">Date Added</th>
+                        <th style="text-align: right; width: 9%;">Current Stock</th>
+                        <th style="text-align: center; width: 18%;">Actions</th>
                     </tr>
                  </thead>
                 <tbody id="productTableBody">
                     <tr>
-                        <td colspan="8" id="loadingMessage">Loading online products...</td>
-                    </tr>
+                        <td colspan="9" id="loadingMessage">Loading online products...</td>
+                        </tr>
                  </tbody>
             </table>
         </div>
@@ -170,7 +171,7 @@
                                    <option value="Qty">Qty</option>
                                    <option value="Sq Feet">Sq Feet</option>
                                    <option value="Nos">Nos</option>
-                               </select>
+                                   </select>
                            </div>
                             <div class="form-group">
                                <label for="productDescription">Description:</label>
@@ -258,7 +259,20 @@
                              <div class="form-group"><label for="productHsnSacCode">HSN / SAC Code:</label><input type="text" id="productHsnSacCode"></div>
                          </fieldset>
 
-                         <fieldset>
+                        <fieldset>
+                            <legend><i class="fas fa-cubes"></i> Stock Management</legend>
+                            <div class="form-group">
+                                <label for="productCurrentStock">Current Stock:</label>
+                                <input type="number" id="productCurrentStock" placeholder="0" min="0">
+                                <small>Enter the current available quantity of this product.</small>
+                            </div>
+                            <div class="form-group">
+                                <label for="productMinStockLevel">Minimum Stock Level (Optional):</label>
+                                <input type="number" id="productMinStockLevel" placeholder="e.g., 10" min="0">
+                                <small>Optional. Set a threshold for low stock alerts (feature to be implemented).</small>
+                            </div>
+                        </fieldset>
+                        <fieldset>
                            <legend><i class="fas fa-cogs"></i> Other Options</legend>
                             <div class="form-group">
                               <label for="productOptions">Selectable Options (JSON):</label>
@@ -290,10 +304,9 @@
                                <div class="form-group price-group"><label for="extraChargeAmount">Charge Amount:</label><input type="number" id="extraChargeAmount" step="0.01" min="0"></div>
                            </div>
                         </fieldset>
-
                     </div>
-
-                </div> </form>
+                </div>
+            </form>
 
              <div class="modal-actions">
                  <button type="button" id="deleteProductBtn" class="button delete-button-modal" style="display: none;">
@@ -310,7 +323,10 @@
                       </button>
                 </div>
               </div>
-        </div> </div> <div id="deleteConfirmModal" class="modal confirmation-modal">
+        </div>
+    </div>
+
+    <div id="deleteConfirmModal" class="modal confirmation-modal">
          <div class="modal-content small-modal">
             <span class="close-btn" id="closeDeleteConfirmModal" title="Close">&times;</span>
             <h2><i class="fas fa-exclamation-triangle warning-icon"></i> Confirm Deletion</h2>
