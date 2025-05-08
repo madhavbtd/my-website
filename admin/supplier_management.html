@@ -7,62 +7,11 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/supplier_management.css">
-    <link rel="stylesheet" href="css/index.css"> <script type="module">
-        // Firebase Auth और Initialization स्क्रिप्ट (पहले जैसा ही)
+    <link rel="stylesheet" href="css/index.css">
+    <script type="module">
         import { auth } from './js/firebase-init.js';
         import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-
-        function displayGlobalError(message) {
-            try {
-                const mainContent = document.getElementById('main-content');
-                if (mainContent) {
-                    mainContent.innerHTML = `<div class="error-message" style="display: block; margin: 20px; padding: 15px; background-color: #f8d7da; border: 1px solid #f5c2c7; color: #721c24; border-radius: 5px;"><strong>Error:</strong> ${message}</div>`;
-                } else {
-                    alert(`Critical Error: ${message}`);
-                }
-            } catch (e) {
-                console.error("Error displaying global error:", e);
-                alert(`Critical Error: ${message}`);
-            }
-        }
-        window.displayGlobalError = displayGlobalError;
-
-        try {
-            if (!auth) {
-                throw new Error("Firebase Auth failed to initialize.");
-            }
-            onAuthStateChanged(auth, (user) => {
-                const mainContent = document.getElementById('main-content');
-                if (!mainContent) {
-                    console.error("Main content area not found.");
-                    return;
-                }
-                if (!user && !window.location.pathname.endsWith('login.html')) {
-                    window.location.replace('login.html');
-                } else if (user) {
-                    // Use requestAnimationFrame for smoother initialization after DOM might be ready
-                     requestAnimationFrame(() => {
-                        if (typeof initializeSupplierManagementPage === 'function') {
-                             initializeSupplierManagementPage(user);
-                        } else {
-                             // Fallback with a short delay if needed, though rAF should be better
-                            setTimeout(() => {
-                                if (typeof initializeSupplierManagementPage === 'function') {
-                                    initializeSupplierManagementPage(user);
-                                } else {
-                                    console.error("initializeSupplierManagementPage function not found.");
-                                    displayGlobalError("Page initialization failed.");
-                                }
-                            }, 100); // Short delay
-                        }
-                     });
-                }
-            });
-        } catch (e) {
-            console.error("Firebase Auth Setup Error:", e);
-            // Display error using the function after ensuring the DOM element might exist
-            setTimeout(() => displayGlobalError(`Authentication Setup Error: ${e.message}.`), 0);
-        }
+        function displayGlobalError(message) { try { const mainContent = document.getElementById('main-content'); if (mainContent) { mainContent.innerHTML = `<div class="error-message" style="display: block; margin: 20px; padding: 15px; background-color: #f8d7da; border: 1px solid #f5c2c7; color: #721c24; border-radius: 5px;"><strong>Error:</strong> ${message}</div>`; } else { alert(`Critical Error: ${message}`); } } catch (e) { console.error("Error displaying global error:", e); alert(`Critical Error: ${message}`); } } window.displayGlobalError = displayGlobalError; try { if (!auth) { throw new Error("Firebase Auth failed to initialize."); } onAuthStateChanged(auth, (user) => { const mainContent = document.getElementById('main-content'); if (!mainContent) { console.error("Main content area not found."); return; } if (!user && !window.location.pathname.endsWith('login.html')) { window.location.replace('login.html'); } else if (user) { if (typeof initializeSupplierManagementPage === 'function') { initializeSupplierManagementPage(user); } else { setTimeout(() => { if (typeof initializeSupplierManagementPage === 'function') { initializeSupplierManagementPage(user); } else { console.error("initializeSupplierManagementPage function not found."); displayGlobalError("Page initialization failed."); } }, 200); } } }); } catch (e) { console.error("Firebase Auth Setup Error:", e); displayGlobalError(`Authentication Setup Error: ${e.message}.`); }
     </script>
 </head>
 <body>
@@ -103,7 +52,7 @@
                                     <i class="fas fa-spinner fa-spin"></i> Loading suppliers...
                                 </td>
                             </tr>
-                            </tbody>
+                        </tbody>
                     </table>
                 </div>
                  <div id="supplierListError" class="error-message" style="display: none; margin-top: 10px;"></div>
@@ -121,15 +70,15 @@
                         <label for="poSupplierFilter">Filter by Supplier:</label>
                         <select id="poSupplierFilter">
                             <option value="">All Suppliers</option>
-                            </select>
+                        </select>
                     </div>
                     <div class="filter-group">
                         <label for="poStatusFilter">Filter by Status:</label>
                         <select id="poStatusFilter">
-                             <option value="">All Statuses</option>
-                             <option value="New">New</option>
-                             <option value="Sent">Sent</option>
-                             <option value="Printing">Printing</option>
+                            <option value="">All Statuses</option>
+                            <option value="New">New</option>
+                            <option value="Sent">Sent</option>
+                            <option value="Printing">Printing</option>
                              <option value="Product Received">Product Received</option>
                              <option value="PO Paid">PO Paid</option>
                              <option value="Cancel">Cancel</option>
@@ -149,16 +98,16 @@
                     </div>
                 </div>
 
-                <div id="poBatchActionsBar" class="batch-actions-bar" style="display: none;">
+                 <div id="poBatchActionsBar" class="batch-actions-bar" style="display: none;">
                     <span id="poSelectedCount">0 POs selected</span>
                      <div >
                         <select id="batchUpdateStatusSelect" title="Select status to apply">
-                             <option value="">-- Batch Update Status --</option>
-                             <option value="Sent">Sent</option>
-                             <option value="Printing">Printing</option>
-                             <option value="Product Received">Product Received</option>
-                             <option value="PO Paid">PO Paid</option>
-                             <option value="Cancel">Cancel</option>
+                            <option value="">-- Batch Update Status --</option>
+                            <option value="Sent">Sent</option>
+                            <option value="Printing">Printing</option>
+                            <option value="Product Received">Product Received</option>
+                            <option value="PO Paid">PO Paid</option>
+                            <option value="Cancel">Cancel</option>
                         </select>
                         <button id="batchApplyStatusBtn" type="button" class="button info-button small-button" disabled><i class="fas fa-sync-alt"></i> Apply Status</button>
                         <button id="batchMarkReceivedBtn" type="button" class="button success-button small-button" disabled><i class="fas fa-check-circle"></i> Mark Received</button>
@@ -188,7 +137,7 @@
                                     <i class="fas fa-spinner fa-spin"></i> Loading purchase orders...
                                 </td>
                             </tr>
-                            </tbody>
+                        </tbody>
                     </table>
                 </div>
                 <div id="poListError" class="error-message" style="display: none; margin-top: 10px;"></div>
@@ -205,14 +154,19 @@
                          <option value="50">50 per page</option>
                      </select>
                  </div>
-            </div> </div> </div> <div id="supplierModal" class="modal">
+            </div>
+        </div>
+    </div>
+
+    <div id="supplierModal" class="modal">
         <div class="modal-content">
              <div class="modal-header">
                 <h2 id="supplierModalTitle">Add New Supplier</h2>
                 <button type="button" class="close-button" id="closeSupplierModal">&times;</button>
             </div>
             <form id="supplierForm" class="modal-body">
-                <input type="hidden" id="editSupplierId"> <div id="supplierFormError" class="error-message" style="display: none;"></div>
+                <input type="hidden" id="editSupplierId">
+                <div id="supplierFormError" class="error-message" style="display: none;"></div>
                 <div class="form-group">
                     <label for="supplierNameInput">Supplier Name <span class="required">*</span>:</label>
                     <input type="text" id="supplierNameInput" required>
@@ -224,10 +178,6 @@
                 <div class="form-group">
                     <label for="supplierWhatsappInput">WhatsApp No:</label>
                     <input type="tel" id="supplierWhatsappInput">
-                </div>
-                 <div class="form-group">
-                    <label for="supplierContactInput">Contact No:</label>
-                    <input type="tel" id="supplierContactInput">
                 </div>
                 <div class="form-group">
                     <label for="supplierEmailInput">Email:</label>
@@ -288,7 +238,7 @@
             </div>
             <div class="modal-body" id="poItemsModalContent">
                 <p>Loading items...</p>
-                </div>
+            </div>
             <div class="modal-actions">
                 <button type="button" class="button cancel-button" id="closePoItemsModalBottomBtn">Close</button>
             </div>
@@ -310,13 +260,13 @@
                 <div id="poShareItemsContainer">
                     <h3>Items</h3>
                     <p>Loading items...</p>
-                    </div>
+                </div>
                 <hr class="po-share-divider">
                 <div id="poShareTerms">
                     <h3>Terms & Conditions</h3>
                     <ol id="poShareTermList">
                         <li>Loading T&C...</li>
-                        </ol>
+                    </ol>
                 </div>
             </div>
             <div class="modal-actions">
@@ -332,5 +282,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
     <script src="js/firebase-init.js" type="module"></script>
-    <script src="js/supplier_management.js" type="module"></script> </body>
+    <script src="js/supplier_management.js" type="module"></script>
+
+</body>
 </html>
