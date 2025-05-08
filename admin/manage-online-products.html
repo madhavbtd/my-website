@@ -135,7 +135,7 @@
                 <tbody id="productTableBody">
                     <tr>
                         <td colspan="9" id="loadingMessage">Loading online products...</td>
-                        </tr>
+                    </tr>
                  </tbody>
             </table>
         </div>
@@ -153,8 +153,7 @@
 
                 <div class="product-form-grid">
 
-                    <div class="form-column">
-                        <fieldset>
+                    <div class="form-column"> <fieldset>
                             <legend><i class="fas fa-info-circle"></i> Basic Details</legend>
                             <div class="form-group">
                                <label for="productName">Product Name <span class="required">*</span>:</label>
@@ -171,7 +170,7 @@
                                    <option value="Qty">Qty</option>
                                    <option value="Sq Feet">Sq Feet</option>
                                    <option value="Nos">Nos</option>
-                                   </select>
+                               </select>
                            </div>
                             <div class="form-group">
                                <label for="productDescription">Description:</label>
@@ -194,11 +193,23 @@
                                <label>Image Previews (Click <span style="color:red; font-weight:bold;">&times;</span> to remove):</label>
                                <div id="image-preview-area"></div>
                                <div id="upload-progress-info" style="font-size: 0.9em; margin-top: 10px; min-height: 1.2em;"></div>
-                           </div>
-                    </div>
+                        </div>
 
-                    <div class="form-column">
                         <fieldset>
+                           <legend><i class="fas fa-drafting-compass"></i> Product Diagram</legend>
+                           <div class="form-group">
+                               <label for="productDiagram">Upload Diagram (Optional):</label>
+                               <input type="file" id="productDiagram" accept=".pdf,.png,.jpg,.jpeg,.webp">
+                               <small>PDF or Image file. Agents can download this.</small>
+                               <div id="diagram-link-area" style="margin-top: 10px; display: none;">
+                                   <label style="font-weight:normal; font-size:0.9em;">Current Diagram:</label>
+                                   <a href="#" id="viewDiagramLink" target="_blank" rel="noopener noreferrer" style="font-size:0.9em; word-break: break-all;">View/Download</a>
+                                   <button type="button" id="removeDiagramBtn" class="button small-button danger-button" style="margin-left: 10px; padding: 3px 6px; font-size: 0.8em;" title="Remove Diagram"><i class="fas fa-times"></i> Remove</button>
+                               </div>
+                               <div id="diagram-upload-progress" style="font-size: 0.9em; margin-top: 5px; min-height: 1.2em;"></div>
+                           </div>
+                       </fieldset>
+                       </div> <div class="form-column"> <fieldset>
                             <legend><i class="fas fa-dollar-sign"></i> Price Details</legend>
 
                             <div class="form-group price-group">
@@ -249,10 +260,7 @@
                              <div class="form-group"><label for="extraMarginPercent">Extra Margin (%):</label><input type="number" id="extraMarginPercent" placeholder="e.g., 10" step="0.01" min="0"></div>
                         </fieldset>
 
-                        </div>
-
-                    <div class="form-column">
-                         <fieldset>
+                        </div> <div class="form-column"> <fieldset>
                              <legend><i class="fas fa-clipboard-list"></i> Internal Details (Optional)</legend>
                              <div class="form-group"><label for="productBrand">Brand:</label><input type="text" id="productBrand"></div>
                              <div class="form-group"><label for="productItemCode">Item Code:</label><input type="text" id="productItemCode"></div>
@@ -272,28 +280,14 @@
                                 <small>Optional. Set a threshold for low stock alerts (feature to be implemented).</small>
                             </div>
                         </fieldset>
-                        <fieldset>
+
+                         <fieldset>
                            <legend><i class="fas fa-cogs"></i> Other Options</legend>
                             <div class="form-group">
                               <label for="productOptions">Selectable Options (JSON):</label>
                               <textarea id="productOptions" rows="4" placeholder='[{"name":"Size","values":["A4","A5"]},{"name":"Paper","values":["Glossy","Matt"]}]'></textarea>
                               <small>Format: [{"name":"Option Name", "values":["Val1", "Val2"]}]</small>
                          </div>
-                       </fieldset>
-
-                       <fieldset>
-                           <legend><i class="fas fa-drafting-compass"></i> Product Diagram</legend>
-                           <div class="form-group">
-                               <label for="productDiagram">Upload Diagram (Optional):</label>
-                               <input type="file" id="productDiagram" accept=".pdf,.png,.jpg,.jpeg,.webp">
-                               <small>PDF or Image file. Agents can download this.</small>
-                               <div id="diagram-link-area" style="margin-top: 10px; display: none;">
-                                   <label style="font-weight:normal; font-size:0.9em;">Current Diagram:</label>
-                                   <a href="#" id="viewDiagramLink" target="_blank" rel="noopener noreferrer" style="font-size:0.9em; word-break: break-all;">View/Download</a>
-                                   <button type="button" id="removeDiagramBtn" class="button small-button danger-button" style="margin-left: 10px; padding: 3px 6px; font-size: 0.8em;" title="Remove Diagram"><i class="fas fa-times"></i> Remove</button>
-                               </div>
-                               <div id="diagram-upload-progress" style="font-size: 0.9em; margin-top: 5px; min-height: 1.2em;"></div>
-                           </div>
                        </fieldset>
 
                        <fieldset id="extra-charges-outer">
@@ -304,8 +298,7 @@
                                <div class="form-group price-group"><label for="extraChargeAmount">Charge Amount:</label><input type="number" id="extraChargeAmount" step="0.01" min="0"></div>
                            </div>
                         </fieldset>
-                    </div>
-                </div>
+                    </div> </div>
             </form>
 
              <div class="modal-actions">
