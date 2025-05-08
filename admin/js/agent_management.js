@@ -27,7 +27,6 @@ const agentPasswordInput = document.getElementById('agentPassword');
 const agentPasswordGroup = document.getElementById('agentPasswordGroup');
 const passwordRequiredSpan = document.getElementById('passwordRequiredSpan');
 const agentStatusSelect = document.getElementById('agentStatus');
-const agentCanAddCustomersInput = document.getElementById('agentCanAddCustomers');
 const categoryPermissionsDiv = document.getElementById('categoryPermissionsCheckboxes');
 const selectAllCategoriesBtn = document.getElementById('selectAllCategoriesBtn');
 const deselectAllCategoriesBtn = document.getElementById('deselectAllCategoriesBtn');
@@ -40,85 +39,93 @@ const userTypeAgentRadio = document.getElementById('userTypeAgent');
 const userTypeWholesaleRadio = document.getElementById('userTypeWholesale');
 const agentPermissionsDiv = document.getElementById('agentPermissions');
 const wholesalePermissionsDiv = document.getElementById('wholesalePermissions');
-const canAddCustomersCheckbox = document.getElementById('canAddCustomersCheckbox'); // New
+const canAddCustomersCheckbox = document.getElementById('canAddCustomersCheckbox');
 
 // --- Global State ---
 let availableCategories = [];
 let currentAgents = [];
 let unsubscribeAgents = null;
-let searchDebounceTimer; // Declare searchDebounceTimer here
+let searchDebounceTimer;
 
 // --- Helper Functions ---
 function escapeHtml(unsafe) {
     if (typeof unsafe !== 'string') unsafe = String(unsafe || '');
     return unsafe.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
 }
+
 function showModalError(message) {
     if (agentModalError) {
         agentModalError.textContent = message;
         agentModalError.style.display = message ? 'block' : 'none';
     }
 }
+
 function clearModalError() {
     showModalError('');
 }
+
 function getStatusClass(status) {
     return status === 'active' ? 'status-active' : 'status-inactive';
 }
 
 // Function to handle user type change
 function handleUserTypeChange() {
-    if (userTypeAgentRadio.checked) {
-        agentPermissionsDiv.style.display = 'block';
-        wholesalePermissionsDiv.style.display = 'none';
-    } else if (userTypeWholesaleRadio.checked) {
-        agentPermissionsDiv.style.display = 'none';
-        wholesalePermissionsDiv.style.display = 'block';
+    if (userTypeAgentRadio && userTypeAgentRadio.checked) {
+        if (agentPermissionsDiv) agentPermissionsDiv.style.display = 'block';
+        if (wholesalePermissionsDiv) wholesalePermissionsDiv.style.display = 'none';
+    } else if (userTypeWholesaleRadio && userTypeWholesaleRadio.checked) {
+        if (agentPermissionsDiv) agentPermissionsDiv.style.display = 'none';
+        if (wholesalePermissionsDiv) wholesalePermissionsDiv.style.display = 'block';
     }
 }
 
 // --- Modal Handling ---
 function openAgentModal(mode = 'add', agentData = null) {
     if (!agentModal || !agentForm) return;
+
     clearModalError();
     agentForm.reset();
-    editAgentIdInput.value = '';
+    if (editAgentIdInput) editAgentIdInput.value = '';
 
-    const checkboxes = categoryPermissionsDiv.querySelectorAll('input[type="checkbox"]');
-    checkboxes.forEach(cb => cb.checked = false);
+    if (categoryPermissionsDiv) {
+        const checkboxes = categoryPermissionsDiv.querySelectorAll('input[type="checkbox"]');
+        checkboxes.forEach(cb => { if (cb) cb.checked = false; });
+    }
 
     if (mode === 'add') {
-        agentModalTitle.textContent = 'Add New Agent';
-        saveAgentBtnText.textContent = 'Save Agent';
-        agentPasswordInput.required = true;
-        agentPasswordGroup.style.display = '';
+        if (agentModalTitle) agentModalTitle.textContent = 'Add New Agent';
+        if (saveAgentBtnText) saveAgentBtnText.textContent = 'Save Agent';
+        if (agentPasswordInput) agentPasswordInput.required = true;
+        if (agentPasswordGroup) agentPasswordGroup.style.display = '';
         if (passwordRequiredSpan) passwordRequiredSpan.style.display = 'inline';
-        agentStatusSelect.value = 'active';
-        agentCanAddCustomersInput.checked = false;
+        if (agentStatusSelect) agentStatusSelect.value = 'active';
+        if (canAddCustomersCheckbox) canAddCustomersCheckbox.checked = false;
 
-        userTypeAgentRadio.checked = true; // Default to Agent
+        if (userTypeAgentRadio) userTypeAgentRadio.checked = true; // Default to Agent
         handleUserTypeChange();
 
     } else if (mode === 'edit' && agentData) {
-        agentModalTitle.textContent = `Edit Agent: ${agentData.name || ''}`;
-        saveAgentBtnText.textContent = 'Update Agent';
-        editAgentIdInput.value = agentData.id;
-        agentNameInput.value = agentData.name || '';
-        agentEmailInput.value = agentData.email || '';
-        agentContactInput.value = agentData.contact || '';
-        agentStatusSelect.value = agentData.status || 'inactive';
-        agentCanAddCustomersInput.checked = agentData.canAddCustomers || false;
+        if (agentModalTitle) agentModalTitle.textContent = `Edit Agent: ${agentData.name || ''}`;
+        if (saveAgentBtnText) saveAgentBtnText.textContent = 'Update Agent';
+        if (editAgentIdInput) editAgentIdInput.value = agentData.id;
+        if (agentNameInput) agentNameInput.value = agentData.name || '';
+        if (agentEmailInput) agentEmailInput.value = agentData.email || '';
+        if (agentContactInput) agentContactInput.value = agentData.contact || '';
+        if (agentStatusSelect) agentStatusSelect.value = agentData.status || 'inactive';
+        if (canAddCustomersCheckbox) canAddCustomersCheckbox.checked = agentData.canAddCustomers || false;
 
-        agentPasswordInput.required = false;
-        agentPasswordGroup.style.display = '';
-        if (passwordRequiredSpan) passwordRequiredSpan.style.display = 'none';
-        agentPasswordInput.value = '';
-        agentPasswordInput.placeholder = 'Leave blank to keep current password';
+        if (agentPasswordInput) {
+            agentPasswordInput.required = false;
+            if (agentPasswordGroup) agentPasswordGroup.style.display = '';
+            if (passwordRequiredSpan) passwordRequiredSpan.style.display = 'none';
+            agentPasswordInput.value = '';
+            agentPasswordInput.placeholder = 'Leave blank to keep current password';
+        }
 
         // Populate user type
-        if (agentData.userType === 'agent') {
+        if (agentData.userType === 'agent' && userTypeAgentRadio) {
             userTypeAgentRadio.checked = true;
-        } else if (agentData.userType === 'wholesale') {
+        } else if (agentData.userType === 'wholesale' && userTypeWholesaleRadio) {
             userTypeWholesaleRadio.checked = true;
         }
         handleUserTypeChange(); // Show/hide permissions based on user type
@@ -160,7 +167,7 @@ function openAgentModal(mode = 'add', agentData = null) {
         return;
     }
 
-    agentModal.classList.add('active');
+    if (agentModal) agentModal.classList.add('active');
 }
 
 function closeAgentModal() {
@@ -212,7 +219,7 @@ function populateCategoryCheckboxes() {
         checkbox.name = 'allowedCategories';
         label.appendChild(checkbox);
         label.appendChild(document.createTextNode(` ${escapeHtml(category)}`));
-        categoryPermissionsDiv.appendChild(label);
+        if (categoryPermissionsDiv) categoryPermissionsDiv.appendChild(label);
     });
 }
 
@@ -227,10 +234,6 @@ function displayAgentRow(agentId, agentData) {
     const contact = escapeHtml(agentData.contact || '-');
     const status = escapeHtml(agentData.status || 'inactive');
     const statusClass = getStatusClass(agentData.status);
-    // const allowedCategoriesText = Array.isArray(agentData.allowedCategories) && agentData.allowedCategories.length > 0
-    //     ? agentData.allowedCategories.map(escapeHtml).join(', ')
-    //     : 'None';
-    // const canAddCustomersText = agentData.canAddCustomers ? '<i class="fas fa-check-circle"></i> Yes' : '<i class="fas fa-times-circle"></i> No';
     const canAddCustomersText = agentData.permissions?.includes('canAddCustomers') ? '<i class="fas fa-check-circle"></i> Yes' : '<i class="fas fa-times-circle"></i> No';
 
     const userTypeText = escapeHtml(agentData.userType || 'N/A');
@@ -275,8 +278,8 @@ function loadAgents() {
         return;
     }
     console.log("Setting up agent listener...");
-    loadingAgentMessage.style.display = 'table-row';
-    noAgentsMessage.style.display = 'none';
+    if (loadingAgentMessage) loadingAgentMessage.style.display = 'table-row';
+    if (noAgentsMessage) noAgentsMessage.style.display = 'none';
 
     const rows = agentTableBody.querySelectorAll('tr:not(#loadingAgentMessage)');
     rows.forEach(row => row.remove());
@@ -301,7 +304,7 @@ function loadAgents() {
 
     unsubscribeAgents = onSnapshot(q, (snapshot) => {
         console.log(`Agent Snapshot: Received ${snapshot.docs.length} agents.`);
-        loadingAgentMessage.style.display = 'none';
+        if (loadingAgentMessage) loadingAgentMessage.style.display = 'none';
 
         currentAgents = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
@@ -309,9 +312,9 @@ function loadAgents() {
 
     }, (error) => {
         console.error("Error fetching agents:", error);
-        loadingAgentMessage.style.display = 'none';
-        agentTableBody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: red;">Error loading agents: ${error.message}</td></tr>`;
-        noAgentsMessage.style.display = 'none';
+        if (loadingAgentMessage) loadingAgentMessage.style.display = 'none';
+        if (agentTableBody) agentTableBody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: red;">Error loading agents: ${error.message}</td></tr>`;
+        if (noAgentsMessage) noAgentsMessage.style.display = 'none';
     });
 }
 
@@ -332,9 +335,9 @@ function applyAgentFilters() {
     currentRows.forEach(row => row.remove());
 
     if (filteredAgents.length === 0) {
-        noAgentsMessage.style.display = 'table-row';
+        if (noAgentsMessage) noAgentsMessage.style.display = 'table-row';
     } else {
-        noAgentsMessage.style.display = 'none';
+        if (noAgentsMessage) noAgentsMessage.style.display = 'none';
         filteredAgents.forEach(agent => {
             displayAgentRow(agent.id, agent);
         });
@@ -352,25 +355,26 @@ async function handleSaveAgent(event) {
 
     saveAgentBtn.disabled = true;
     const originalButtonText = saveAgentBtnText.textContent;
-    saveAgentBtnText.textContent = (editAgentIdInput.value ? 'Updating...' : 'Saving...');
+    if (saveAgentBtnText) saveAgentBtnText.textContent = (editAgentIdInput?.value ? 'Updating...' : 'Saving...');
     clearModalError();
 
     try {
-        const agentId = editAgentIdInput.value;
+        const agentId = editAgentIdInput?.value;
         const isEditing = !!agentId;
-        const name = agentNameInput.value.trim();
-        const email = agentEmailInput.value.trim().toLowerCase();
-        const contact = agentContactInput.value.trim() || null;
-        const password = agentPasswordInput.value;
-        const status = agentStatusSelect.value;
-        // const canAddCustomers = agentCanAddCustomersInput.checked;
-        const canAddCustomers = canAddCustomersCheckbox.checked;
+        const name = agentNameInput?.value.trim();
+        const email = agentEmailInput?.value.trim().toLowerCase();
+        const contact = agentContactInput?.value.trim() || null;
+        const password = agentPasswordInput?.value;
+        const status = agentStatusSelect?.value;
+        const canAddCustomers = canAddCustomersCheckbox?.checked;
 
         const selectedCategories = [];
-        const categoryCheckboxes = categoryPermissionsDiv.querySelectorAll('input[type="checkbox"]:checked');
-        categoryCheckboxes.forEach(cb => selectedCategories.push(cb.value));
+        if (categoryPermissionsDiv) {
+            const categoryCheckboxes = categoryPermissionsDiv.querySelectorAll('input[type="checkbox"]:checked');
+            categoryCheckboxes.forEach(cb => selectedCategories.push(cb.value));
+        }
 
-        const userType = document.querySelector('input[name="userType"]:checked').value;
+        const userType = document.querySelector('input[name="userType"]:checked')?.value;
         let permissions = [];
 
         if (userType === 'agent') {
@@ -429,7 +433,7 @@ async function handleSaveAgent(event) {
     } finally {
         if (saveAgentBtn) {
             saveAgentBtn.disabled = false;
-            saveAgentBtnText.textContent = originalButtonText;
+            if (saveAgentBtnText) saveAgentBtnText.textContent = originalButtonText;
         }
     }
 }
@@ -439,24 +443,24 @@ document.addEventListener('DOMContentLoaded', () => {
     console.log("Admin Agent Management JS Initializing...");
 
     // Attach Static Listeners
-    addNewAgentBtn?.addEventListener('click', () => openAgentModal('add'));
-    closeAgentModalBtn?.addEventListener('click', closeAgentModal);
-    cancelAgentBtn?.addEventListener('click', closeAgentModal);
-    agentForm?.addEventListener('submit', handleSaveAgent);
-    agentModal?.addEventListener('click', (e) => { if (e.target === agentModal) closeAgentModal(); });
+    if (addNewAgentBtn) addNewAgentBtn.addEventListener('click', () => openAgentModal('add'));
+    if (closeAgentModalBtn) closeAgentModalBtn.addEventListener('click', closeAgentModal);
+    if (cancelAgentBtn) cancelAgentBtn.addEventListener('click', closeAgentModal);
+    if (agentForm) agentForm.addEventListener('submit', handleSaveAgent);
+    if (agentModal) agentModal.addEventListener('click', (e) => { if (e.target === agentModal) closeAgentModal(); });
 
     // Select/Deselect All Categories
-    selectAllCategoriesBtn?.addEventListener('click', () => {
-        categoryPermissionsDiv?.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = true);
+    if (selectAllCategoriesBtn) selectAllCategoriesBtn.addEventListener('click', () => {
+        if (categoryPermissionsDiv) categoryPermissionsDiv.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = true);
     });
-    deselectAllCategoriesBtn?.addEventListener('click', () => {
-        categoryPermissionsDiv?.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = false);
+    if (deselectAllCategoriesBtn) deselectAllCategoriesBtn.addEventListener('click', () => {
+        if (categoryPermissionsDiv) categoryPermissionsDiv.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = false);
     });
 
     // Filter/Sort Listeners
-    filterSearchInput?.addEventListener('input', () => { clearTimeout(searchDebounceTimer); searchDebounceTimer = setTimeout(applyAgentFilters, 300); });
-    sortSelect?.addEventListener('change', loadAgents); // Firestore query handles sorting
-    clearFiltersBtn?.addEventListener('click', () => {
+    if (filterSearchInput) filterSearchInput.addEventListener('input', () => { clearTimeout(searchDebounceTimer); searchDebounceTimer = setTimeout(applyAgentFilters, 300); });
+    if (sortSelect) sortSelect.addEventListener('change', loadAgents); // Firestore query handles sorting
+    if (clearFiltersBtn) clearFiltersBtn.addEventListener('click', () => {
         if (filterSearchInput) filterSearchInput.value = '';
         if (sortSelect) sortSelect.value = 'createdAt_desc';
         loadAgents(); // Reload with default sort and no search
