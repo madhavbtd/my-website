@@ -714,3 +714,4 @@ function displayImagePreview(fileObject, existingUrl = null) {
     const previewWrapper = document.createElement('div');
     previewWrapper.className = 'image-preview-item';
     previewWrapper.setAttribute('data-preview-id', previewId);
+    const img =
