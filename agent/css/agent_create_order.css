@@ -315,4 +315,24 @@
     /* Override main button shadow */
     min-width: auto;
     /* Override main button min-width */
-    height
+    height: auto;
+    /* Override main button height */
+}
+
+.delete-item-btn:hover {
+    opacity: 1;
+    color: #a71d2a;
+    /* Darker red */
+    background-color: #fdecea;
+    /* Light red background on hover */
+    transform: scale(1.1);
+}
+
+/* Order Summary Section Styles */
+.order-summary-section {
+    background-color: var(--agent-light-bg, #f8f9fa);
+}
+
+.summary-grid {
+    display: grid;
+    grid
