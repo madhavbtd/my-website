@@ -4,6 +4,7 @@
 import { auth, db, onAuthStateChanged } from './agent_firebase_config.js';
 // Firestore functions used in this file
 import { collection, query, where, orderBy, limit, getDocs, doc, getDoc } from './agent_firebase_config.js';
+import { updateNavigation } from './agent_main.js'; // इम्पोर्ट
 
 document.addEventListener('DOMContentLoaded', () => {
     console.log("Agent Dashboard JS Initializing...");
@@ -60,7 +61,12 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (agentWelcomeMessageEl) {
                         agentWelcomeMessageEl.textContent = `Welcome, ${agentData.name || user.email || 'Agent'}`;
                     }
-                    // Now load agent-specific data
+
+                    // परमिशन के आधार पर नेविगेशन अपडेट करें
+                    const agentPermissions = agentData.permissions || [];
+                    updateNavigation(agentPermissions);
+
+                    // अब एजेंट-विशिष्ट डेटा लोड करें
                     loadRecentOrders(currentUser.uid);
                     loadAccountSummary(currentUser.uid);
                     // Load other dashboard widgets
@@ -108,7 +114,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     const displayOrderId = order.orderId || `Sys:${doc.id.substring(0, 6)}`;
                     // Prioritize createdAt if available, fallback to orderDate
                     const dateToFormat = order.createdAt || order.orderDate;
-                    html += `<li>${formatDateForDisplay(dateToFormat)} - Order #${displayOrderId} (${order.customerDetails?.fullName || 'N/A'}) - Status: ${order.status || 'N/A'}</li>`; // Translated status
+                    html += `<li><span class="math-inline">\{formatDateForDisplay\(dateToFormat\)\} \- Order \#</span>{displayOrderId} (${order.customerDetails?.fullName || 'N/A'}) - Status: ${order.status || 'N/A'}</li>`; // Translated status
                 });
                 html += '</ul><p><a href="agent_order_history.html">View All Orders</a></p>'; // Translated link text
                 recentOrdersWidgetEl.innerHTML = html;
@@ -144,15 +150,4 @@ document.addEventListener('DOMContentLoaded', () => {
             accountSummaryWidgetEl.innerHTML = `
                 <h5>Your Account Summary:</h5>
                 <p><strong>Total Commission Earned:</strong> ${formatCurrency(totalCommission)}</p>
-                <p><strong>Total Paid to You:</strong> ${formatCurrency(totalPaid)}</p>
-                <p><strong>Outstanding Balance:</strong> ${formatCurrency(outstanding)}</p>
-                <p><a href="agent_ledger.html">View Full Ledger</a></p>
-            `; // Translated labels and link text
-        } catch (error) {
-            console.error("Error loading account summary:", error); // Translated error log
-            accountSummaryWidgetEl.innerHTML = "<p style='color:red;'>Error loading account summary.</p>"; // Translated error message
-        }
-    }
-
-    console.log("Agent Dashboard JS Initialized and listeners potentially active.");
-});
+                <p><strong>Total Paid to You:</strong> ${formatCurrency
