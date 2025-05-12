@@ -298,7 +298,6 @@ function updateOrderSummary() {
          finalAmount = 0;
     }
 
-
     summaryFinalAmountSpan.textContent = finalAmount.toFixed(2);
 }
 
@@ -597,7 +596,7 @@ function renderProductSuggestions(suggestions, term, suggestionsContainer) {
             const displayName = name.replace(new RegExp(term, 'gi'), match => `<strong>${match}</strong>`);
             const displayCode = code.replace(new RegExp(term, 'gi'), match => `<strong>${match}</strong>`);
 
-            li.innerHTML = `${displayName}${displayCode} - ${rate}`;
+            li.innerHTML = `<span class="math-inline">\{displayName\}</span>{displayCode} - ${rate}`;
             li.dataset.productId = p.id; // Store product data if needed, or just select using object
             li.onclick = () => { // Use onclick for simplicity here
                 selectProductSuggestion(p, activeProductInput); // Pass the product object and the input
@@ -662,8 +661,8 @@ async function handleFormSubmit(event) {
         showFormError("Error: Cannot submit order. User or permissions not loaded."); // English message
         return;
     }
-    if (!db || !collection || !addDoc || !serverTimestamp || !Timestamp) {
-         showFormError("Error: Database connection not ready."); // English message
+    if (!db || !collection || !addDoc || !serverTimestamp || !Timestamp || !runTransaction || !query || !where || !limit || !getDocs || !arrayUnion) {
+         showFormError("Error: Database functions missing."); // English message
          return;
     }
 
@@ -715,121 +714,4 @@ async function handleFormSubmit(event) {
             const itemAmount = parseFloat(itemAmountSpan?.textContent || 0);
 
             if (!productName) { validationPassed = false; showFormError(`Item ${idx + 1}: Product name is required.`); productNameInput?.focus(); return; } // English
-            if (isNaN(quantity) || quantity <= 0) { validationPassed = false; showFormError(`Item ${idx + 1}: Quantity must be a positive number.`); quantityInput?.focus(); return; } // English
-            if (isNaN(rate) || rate < 0) { validationPassed = false; showFormError(`Item ${idx + 1}: Valid agent rate is required.`); rateInput?.focus(); return; } // English
-
-            const itemData = { productName, unitType, quantity, rate, itemAmount };
-
-            if (unitType === 'Sq Feet') {
-                 const width = parseFloat(widthInput?.value || '');
-                 const height = parseFloat(heightInput?.value || '');
-                 const dimensionUnit = unitSelect?.value;
-                 if (isNaN(width) || width <= 0 || isNaN(height) || height <= 0) {
-                      validationPassed = false; showFormError(`Item ${idx + 1}: Valid Width and Height required for Sq Feet.`); widthInput?.focus(); return; // English
-                 }
-                 itemData.width = width;
-                 itemData.height = height;
-                 itemData.dimensionUnit = dimensionUnit;
-                 itemData.sqFeetArea = calculateFlexDimensions(dimensionUnit, width, height); // Store calculated area
-            }
-            items.push(itemData);
-        });
-        if (!validationPassed) throw new Error("Please correct the errors in the item list."); // English message
-
-        // 3. Collect other order details
-        const deliveryDateValue = deliveryDateInput.value;
-        const remarksValue = remarksInput.value.trim();
-        const urgentRadio = document.querySelector('input[name="agent_urgent"]:checked');
-        const urgentValue = urgentRadio ? urgentRadio.value === "Yes" : false; // Default to No if none selected
-
-        // 4. Collect summary details
-        const subTotal = parseFloat(summarySubtotalSpan.textContent) || 0;
-        const discountPercent = parseFloat(summaryDiscountPercentInput.value) || 0;
-        const discountAmount = parseFloat(summaryDiscountAmountInput.value) || 0;
-        const finalAmount = parseFloat(summaryFinalAmountSpan.textContent) || 0;
-
-        // 5. Prepare Firestore payload for 'pendingAgentOrders' collection
-        const pendingOrderData = {
-            agentId: currentUser.uid,
-            agentEmail: agentPermissions.email || currentUser.email, // Get email from permissions/auth
-            customerId: customerIdToUse,
-            customerDetails: { // Snapshot of customer details at time of order
-                fullName: customerName,
-                whatsappNo: customerWhatsapp,
-                address: customerAddressInput.value.trim() || '',
-                contactNo: customerContactInput.value.trim() || ''
-            },
-            // Store date as Timestamp, treating input as local date start
-            deliveryDate: deliveryDateValue ? Timestamp.fromDate(new Date(deliveryDateValue + 'T00:00:00')) : null,
-            remarks: remarksValue,
-            urgent: urgentValue,
-            items: items, // Array of item objects
-            subTotal: subTotal,
-            discountPercentage: discountPercent,
-            discountAmount: discountAmount,
-            finalAmount: finalAmount,
-            status: "Pending Admin Approval", // Initial status
-            submittedAt: serverTimestamp() // Firestore server timestamp
-        };
-
-        // 6. Save to 'pendingAgentOrders' collection
-        const pendingOrdersRef = collection(db, "pendingAgentOrders");
-        const docRef = await addDoc(pendingOrdersRef, pendingOrderData);
-
-        console.log("Pending agent order submitted successfully:", docRef.id);
-        alert(`Order submitted successfully for processing! Pending ID: ${docRef.id.substring(0,10)}...`); // English alert
-        resetAgentOrderForm(true); // Reset everything
-
-    } catch (error) {
-        console.error("Order submission failed:", error);
-        showFormError("Error submitting order: " + error.message); // English error
-    } finally {
-        // Re-enable button and restore text/icon
-        if(saveOrderBtn) {
-            saveOrderBtn.disabled = false;
-            if(saveBtnSpan) saveBtnSpan.textContent = originalBtnText;
-            if(saveBtnIcon) saveBtnIcon.className = 'fas fa-paper-plane';
-        }
-    }
-}
-
-// --- Reset Form ---
-function resetAgentOrderForm(clearAll = true) {
-    if(orderForm) orderForm.reset(); // Reset native form elements
-    if(orderItemsTableBody) {
-        // Remove all but the first row, then clear the first row
-        while (orderItemsTableBody.rows.length > 1) {
-            orderItemsTableBody.deleteRow(1);
-        }
-        if (orderItemsTableBody.rows.length === 1) {
-             const firstRow = orderItemsTableBody.rows[0];
-             firstRow.querySelector('.product-name').value = '';
-             firstRow.querySelector('.quantity-input').value = '1';
-             firstRow.querySelector('.rate-input').value = '';
-             firstRow.querySelector('.item-amount').textContent = '0.00';
-             const unitTypeSelect = firstRow.querySelector('.unit-type-select');
-             if (unitTypeSelect) unitTypeSelect.value = 'Qty';
-             handleUnitTypeChange({target: unitTypeSelect}); // Hide SqFt fields
-        } else if (orderItemsTableBody.rows.length === 0) {
-             addInitialItemRow(); // Add one row back if table was completely empty
-        }
-    }
-    if(clearAll) {
-       resetCustomerFields(true); // Clear customer fields as well
-    }
-    if(summarySubtotalSpan) summarySubtotalSpan.textContent = '0.00';
-    if(summaryDiscountPercentInput) summaryDiscountPercentInput.value = '';
-    if(summaryDiscountAmountInput) summaryDiscountAmountInput.value = '';
-    if(summaryFinalAmountSpan) summaryFinalAmountSpan.textContent = '0.00';
-    showFormError(''); // Clear error message
-    selectedCustomerId = null; // Clear selected customer ID
-    if(selectedCustomerIdInput) selectedCustomerIdInput.value = '';
-}
-
-// --- Pre-fetch Caches ---
-function preFetchCaches() {
-    getOrFetchProductCache().catch(err => console.error("Initial product cache fetch failed:", err));
-    getOrFetchCustomerCache().catch(err => console.error("Initial customer cache fetch failed:", err));
-}
-
-console.log("agent_create_order.js loaded and ready (v2 - English)."); // English comment
+            if (isNaN(quantity) || quantity <= 0) { validationPassed = false; showFormError(`Item ${idx + 1}: Quantity must be

@@ -71,14 +71,7 @@ onAuthStateChanged(auth, async (user) => {
                 agentPermissions.canAddCustomers = agentPermissions.canAddCustomers ?? false; // Ensure boolean
                 agentPermissions.canEditOwnCustomers = agentPermissions.canEditOwnCustomers ?? true; // Default to true
                 agentPermissions.canDeleteOwnCustomers = agentPermissions.canDeleteOwnCustomers ?? false; // Default to false
-
                 console.log("Agent authenticated and permissions loaded:", agentPermissions);
-
-                if (addNewCustomerBtnEl) {
-                    addNewCustomerBtnEl.style.display = agentPermissions.canAddCustomers ? 'inline-flex' : 'none';
-                } else {
-                    console.warn("'Add New Customer' button (addNewCustomerBtnEl) not found in HTML.");
-                }
                 loadCustomers(); // Load customers after permissions are set
             } else {
                 console.error("Agent document not found or role/status invalid. Logging out.");
@@ -362,7 +355,6 @@ document.addEventListener('DOMContentLoaded', () => {
     if (addNewCustomerBtnEl) addNewCustomerBtnEl.onclick = () => openCustomerModal('add');
     if (closeCustomerModalBtnEl) closeCustomerModalBtnEl.onclick = closeCustomerModal;
     if (cancelCustomerFormBtnEl) cancelCustomerFormBtnEl.onclick = closeCustomerModal;
-
     // Close modal on overlay click
     if (customerModalEl) {
         customerModalEl.addEventListener('click', (event) => {

@@ -2,6 +2,7 @@
 import { db, auth } from './agent_firebase_config.js';
 import { collection, query, where, orderBy, getDocs, Timestamp, doc, getDoc } from './agent_firebase_config.js'; // Added getDoc to imports
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { updateNavigation } from './agent_main.js'; // इम्पोर्ट
 
 // DOM Elements
 const agentWelcomeMessageEl = document.getElementById('agentWelcomeMessage');
@@ -63,24 +64,28 @@ onAuthStateChanged(auth, async (user) => {
             if (agentDocSnap.exists() && agentDocSnap.data().role === 'agent' && agentDocSnap.data().status === 'active') {
                 agentPermissions = agentDocSnap.data();
                 console.log("Agent authenticated (Ledger) and permissions loaded:", agentPermissions);
+
+                // नेविगेशन अपडेट करें
+                updateNavigation(agentPermissions.permissions || []);
+
                 fetchLedgerEntries(); // Load initial data
             } else {
                 console.error("Agent document not found or role/status invalid. Logging out.");
-                if(agentWelcomeMessageEl) agentWelcomeMessageEl.textContent = "Invalid Agent Account.";
-                if(ledgerTableBodyEl && loadingLedgerMessageEl && noLedgerEntriesMessageEl) {
+                if (agentWelcomeMessageEl) agentWelcomeMessageEl.textContent = "Invalid Agent Account.";
+                if (ledgerTableBodyEl && loadingLedgerMessageEl && noLedgerEntriesMessageEl) {
                     loadingLedgerMessageEl.style.display = 'none';
                     noLedgerEntriesMessageEl.textContent = "You are not authorized to view the ledger."; // English message
-                    noLedgerEntriesMessageEl.parentElement.style.display = 'table-row'; // Show the wrapper row
+                    noLedgerEntriesMessageEl.parentElement.style.display = 'table-row';
                     ledgerTableBodyEl.innerHTML = ''; // Clear old entries
-                    ledgerTableBodyEl.appendChild(noLedgerEntriesMessageEl.parentElement); // Append the wrapper row
+                    ledgerTableBodyEl.appendChild(noLedgerEntriesMessageEl.parentElement);
                 }
                 // auth.signOut();
                 // window.location.href = 'agent_login.html';
             }
         } catch (error) {
             console.error("Error loading agent permissions:", error);
-            if(agentWelcomeMessageEl) agentWelcomeMessageEl.textContent = "Error loading profile.";
-            if(ledgerTableBodyEl && loadingLedgerMessageEl && noLedgerEntriesMessageEl) {
+            if (agentWelcomeMessageEl) agentWelcomeMessageEl.textContent = "Error loading profile.";
+            if (ledgerTableBodyEl && loadingLedgerMessageEl && noLedgerEntriesMessageEl) {
                 loadingLedgerMessageEl.style.display = 'none';
                 noLedgerEntriesMessageEl.textContent = "Error loading permissions."; // English message
                 noLedgerEntriesMessageEl.parentElement.style.display = 'table-row';
@@ -101,21 +106,22 @@ onAuthStateChanged(auth, async (user) => {
 async function fetchLedgerEntries() {
     if (!currentAgentIdForLedger) {
         console.error("Agent ID not available for loading ledger.");
-        if(loadingLedgerMessageEl) loadingLedgerMessageEl.style.display = 'none';
-        if(noLedgerEntriesMessageEl) {
+        if (loadingLedgerMessageEl) loadingLedgerMessageEl.style.display = 'none';
+        if (noLedgerEntriesMessageEl) {
             noLedgerEntriesMessageEl.textContent = "Unable to load ledger: Agent not identified."; // English message
             noLedgerEntriesMessageEl.parentElement.style.display = 'table-row';
+            ledgerTableBodyEl.appendChild(noLedgerEntriesMessageEl.parentElement);
         }
-        if(ledgerTableBodyEl) {
-             ledgerTableBodyEl.innerHTML = ''; // Clear old entries
-             if(noLedgerEntriesMessageEl) ledgerTableBodyEl.appendChild(noLedgerEntriesMessageEl.parentElement);
+        if (ledgerTableBodyEl) {
+            ledgerTableBodyEl.innerHTML = ''; // Clear old entries
+            if (noLedgerEntriesMessageEl) ledgerTableBodyEl.appendChild(noLedgerEntriesMessageEl.parentElement);
         }
         return;
     }
 
-    if(loadingLedgerMessageEl) loadingLedgerMessageEl.parentElement.style.display = 'table-row'; // Show loading row
-    if(noLedgerEntriesMessageEl) noLedgerEntriesMessageEl.parentElement.style.display = 'none';
-    if(ledgerTableBodyEl) {
+    if (loadingLedgerMessageEl) loadingLedgerMessageEl.parentElement.style.display = 'table-row'; // Show loading row
+    if (noLedgerEntriesMessageEl) noLedgerEntriesMessageEl.parentElement.style.display = 'none';
+    if (ledgerTableBodyEl) {
         const rowsToRemove = ledgerTableBodyEl.querySelectorAll('tr:not(#loadingLedgerMessage)');
         rowsToRemove.forEach(row => row.remove());
     }
@@ -135,8 +141,8 @@ async function fetchLedgerEntries() {
 
     } catch (error) {
         console.error("Error fetching ledger entries: ", error);
-        if(loadingLedgerMessageEl) loadingLedgerMessageEl.parentElement.style.display = 'none';
-        if(ledgerTableBodyEl) ledgerTableBodyEl.innerHTML = `<tr><td colspan="5" style="text-align:center; color:red;">Error loading ledger data: ${error.message}</td></tr>`;
+        if (loadingLedgerMessageEl) loadingLedgerMessageEl.parentElement.style.display = 'none';
+        if (ledgerTableBodyEl) ledgerTableBodyEl.innerHTML = `<tr><td colspan="5" style="text-align:center; color:red;">Error loading ledger data: ${error.message}</td></tr>`;
         updateSummaryCards([]); // Reset summary on error
     }
 }
@@ -145,7 +151,7 @@ async function fetchLedgerEntries() {
 function applyFiltersAndDisplayLedger() {
     if (!ledgerTableBodyEl || !loadingLedgerMessageEl || !noLedgerEntriesMessageEl || !ledgerDateRangeSelectEl) return;
 
-    if(loadingLedgerMessageEl) loadingLedgerMessageEl.parentElement.style.display = 'none'; // Hide loading row
+    if (loadingLedgerMessageEl) loadingLedgerMessageEl.parentElement.style.display = 'none'; // Hide loading row
     ledgerTableBodyEl.innerHTML = ''; // Clear previous entries
 
     const selectedRange = ledgerDateRangeSelectEl.value;
@@ -180,7 +186,7 @@ function applyFiltersAndDisplayLedger() {
         // Validate date range
         if (startDate && endDate && startDate.toMillis() > endDate.toMillis()) {
             alert("Start date cannot be after end date."); // English alert
-             if(noLedgerEntriesMessageEl) {
+            if (noLedgerEntriesMessageEl) {
                 noLedgerEntriesMessageEl.textContent = "Invalid date range."; // English message
                 noLedgerEntriesMessageEl.parentElement.style.display = 'table-row';
                 ledgerTableBodyEl.appendChild(noLedgerEntriesMessageEl.parentElement);
@@ -208,19 +214,19 @@ function applyFiltersAndDisplayLedger() {
         if (endMillis) return entryMillis <= endMillis;
 
         // If custom range selected but dates are empty, show all (or handle as needed)
-        if(selectedRange === 'custom' && !startMillis && !endMillis) return true;
+        if (selectedRange === 'custom' && !startMillis && !endMillis) return true;
 
         return false;
     });
 
     if (filteredEntries.length === 0) {
-        if(noLedgerEntriesMessageEl) {
+        if (noLedgerEntriesMessageEl) {
             noLedgerEntriesMessageEl.textContent = "No ledger entries found for the selected period."; // English message
             noLedgerEntriesMessageEl.parentElement.style.display = 'table-row';
             ledgerTableBodyEl.appendChild(noLedgerEntriesMessageEl.parentElement);
         }
     } else {
-        if(noLedgerEntriesMessageEl) noLedgerEntriesMessageEl.parentElement.style.display = 'none';
+        if (noLedgerEntriesMessageEl) noLedgerEntriesMessageEl.parentElement.style.display = 'none';
         displayEntriesInTable(filteredEntries);
     }
     updateSummaryCards(filteredEntries);
@@ -267,11 +273,11 @@ function displayEntriesInTable(entries) {
         // Optional: Color based on balance
         balanceCell.classList.remove('balance-positive', 'balance-negative'); // Reset classes
         if (entry.currentBalance < 0) {
-             balanceCell.classList.add('balance-negative');
-             balanceCell.style.color = 'var(--agent-danger, red)';
+            balanceCell.classList.add('balance-negative');
+            balanceCell.style.color = 'var(--agent-danger, red)';
         } else if (entry.currentBalance > 0) {
-             balanceCell.classList.add('balance-positive');
-             balanceCell.style.color = 'var(--agent-success, green)';
+            balanceCell.classList.add('balance-positive');
+            balanceCell.style.color = 'var(--agent-success, green)';
         }
     });
 }
@@ -291,9 +297,9 @@ function updateSummaryCards(entries) {
     });
     const outstanding = totalCommission - totalPaid;
 
-    if(totalCommissionEarnedEl) totalCommissionEarnedEl.textContent = formatCurrency(totalCommission);
-    if(totalPaidToAgentEl) totalPaidToAgentEl.textContent = formatCurrency(totalPaid);
-    if(outstandingBalanceEl) {
+    if (totalCommissionEarnedEl) totalCommissionEarnedEl.textContent = formatCurrency(totalCommission);
+    if (totalPaidToAgentEl) totalPaidToAgentEl.textContent = formatCurrency(totalPaid);
+    if (outstandingBalanceEl) {
         outstandingBalanceEl.textContent = formatCurrency(outstanding);
         outstandingBalanceEl.style.color = outstanding < 0 ? 'var(--agent-danger, red)' : (outstanding > 0 ? 'var(--agent-success, green)' : 'inherit');
     }
@@ -305,7 +311,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (agentLogoutBtnEl) {
         agentLogoutBtnEl.addEventListener('click', () => {
-             if (confirm("Are you sure you want to logout?")) { // Translated
+            if (confirm("Are you sure you want to logout?")) { // Translated
                 auth.signOut().then(() => {
                     window.location.href = 'agent_login.html';
                 }).catch(error => console.error("Logout error:", error));
@@ -315,9 +321,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (ledgerDateRangeSelectEl) {
         ledgerDateRangeSelectEl.addEventListener('change', () => {
-            if(customDateFiltersDivEl) customDateFiltersDivEl.style.display = ledgerDateRangeSelectEl.value === 'custom' ? 'flex' : 'none';
+            if (customDateFiltersDivEl) customDateFiltersDivEl.style.display = ledgerDateRangeSelectEl.value === 'custom' ? 'flex' : 'none';
             if (ledgerDateRangeSelectEl.value !== 'custom') {
-                 applyFiltersAndDisplayLedger(); // Apply filter immediately if not custom
+                applyFiltersAndDisplayLedger(); // Apply filter immediately if not custom
             }
         });
     }
