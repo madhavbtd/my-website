@@ -4,7 +4,7 @@
 import { db, auth, createUserWithEmailAndPassword } from './firebase-init.js';
 import {
     collection, onSnapshot, query, orderBy, doc, addDoc,
-    updateDoc, getDoc, getDocs, serverTimestamp, where, limit
+    updateDoc, getDoc, getDocs, serverTimestamp, where, limit, setDoc
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 // --- DOM Elements ---
@@ -423,15 +423,21 @@ async function handleSaveAgent(event) {
                 console.log("New user created in Auth with UID:", user.uid);
 
                 // Firestore में एजेंट डेटा बनाएँ
-                const docRef = await addDoc(collection(db, "agents"), agentData);
-                console.log("New agent added to Firestore with ID:", docRef.id);
-                alert(`Agent "${name}" added successfully!`);
+                try {
+                    // Use setDoc instead of addDoc to use the user.uid as the document ID
+                    await setDoc(doc(db, "agents", user.uid), agentData);
+                    console.log("New agent added to Firestore with UID:", user.uid);
+                    alert(`Agent "${name}" added successfully!`);
+                } catch (firestoreError) {
+                    console.error("Error saving agent to Firestore:", firestoreError);
+                    showModalError(`Failed to save agent to Firestore: ${firestoreError.message}`);
+                    return; // महत्वपूर्ण: Authentication में बनाने के बाद Firestore में सहेजने में विफल होने पर आगे न बढ़ें
+                }
 
             } catch (authError) {
                 console.error("Error creating user in Auth:", authError);
                 showModalError(`Failed to create agent: ${authError.message}`);
-                // यदि Authentication में यूज़र बनाने में विफलता होती है, तो Firestore में डेटा नहीं बनाएँ
-                return;
+                return; // यदि Authentication में यूज़र बनाने में विफलता होती है, तो Firestore में डेटा नहीं बनाएँ
             }
         }
         closeAgentModal();

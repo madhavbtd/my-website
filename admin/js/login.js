@@ -107,7 +107,12 @@ function checkAdminSession() {
         window.location.href = 'login.html';
     } else {
         // यूज़र एडमिन है, एडमिन पेज पर यूज़र जानकारी प्रदर्शित करें (उदाहरण के लिए, वेलकम मैसेज)
-        document.getElementById('welcomeMessage').textContent = `Welcome ${userEmail} (${userRole})`;
+        const welcomeMessageElement = document.getElementById('welcomeMessage');
+        if (welcomeMessageElement) {
+            welcomeMessageElement.textContent = `Welcome ${userEmail} (${userRole})`;
+        } else {
+            console.warn("Welcome message element (#welcomeMessage) not found!");
+        }
     }
 }
 
