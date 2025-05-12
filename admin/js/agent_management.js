@@ -4,7 +4,7 @@
 import { db, auth } from './firebase-init.js';
 import {
     collection, onSnapshot, query, orderBy, doc, addDoc,
-    updateDoc, getDoc, getDocs, serverTimestamp, where, limit
+    updateDoc, getDoc, getDocs, serverTimestamp, where, limit, setDoc
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 // --- DOM Elements ---
@@ -346,7 +346,7 @@ function applyAgentFilters() {
 // --- Save Agent Function ---
 async function handleSaveAgent(event) {
     event.preventDefault();
-    if (!db || !doc || !addDoc || !updateDoc || !collection || !serverTimestamp || !auth) {
+    if (!db || !doc || !addDoc || !updateDoc || !collection || !serverTimestamp || !auth || !setDoc) {
         showModalError("Error: Database functions missing.");
         return;
     }
@@ -403,31 +403,67 @@ async function handleSaveAgent(event) {
             userType: userType,
             permissions: permissions,
             updatedAt: serverTimestamp(),
+            role: 'agent'  // Default role
         };
 
         if (isEditing) {
             console.log(`Updating agent: ${agentId}`);
-            const agentRef = doc(db, "agents", agentId);
-            await updateDoc(agentRef, agentData);
-            alert(`Agent "${name}" updated successfully!`);
-
-        } else {
-            console.log(`Adding new agent: ${email}`);
-            agentData.createdAt = serverTimestamp();
-
-            const qEmail = query(collection(db, "agents"), where("email", "==", email), limit(1));
-            const emailSnap = await getDocs(qEmail);
-            if (!emailSnap.empty) {
-                throw new Error(`An agent with email ${email} already exists in the database.`);
+            try {
+                const agentRef = doc(db, "agents", agentId);
+                await updateDoc(agentRef, agentData);
+                alert(`Agent "${name}" updated successfully!`);
+            } catch (error) {
+                console.error("Error updating agent in Firestore:", error);
+                showModalError(`Failed to update agent: ${error.message}`);
+                return;  // Stop further execution
             }
 
-            const docRef = await addDoc(collection(db, "agents"), agentData);
-            console.log("New agent added to Firestore with ID:", docRef.id);
-            alert(`Agent "${name}" added successfully! \n\nIMPORTANT: You must manually create a corresponding login user in Firebase Authentication for email: ${email} with the password you set.`);
+        } else {
+            // *** GET OR CREATE USER IN AUTHENTICATION ***
+            let userCredential;
+            try {
+                userCredential = await auth.createUserWithEmailAndPassword(auth, email, password);
+                console.log("Firebase Authentication user created successfully:", userCredential.user.uid);
+            } catch (authError) {
+                if (authError.code === 'auth/email-already-in-use') {
+                    showModalError(`User with email ${email} already exists. Please log in.`);
+                } else {
+                    console.error("Error creating user in Firebase Authentication:", authError);
+                    showModalError(`Failed to create user: ${authError.message}`);
+                }
+                saveAgentBtn.disabled = false;
+                saveAgentBtnText.textContent = originalButtonText;
+                return;  // Stop further execution
+            }
+            const user = userCredential.user;
+            const uid = user.uid;
+
+            console.log(`Adding new agent to Firestore with UID: ${uid}`);
+            agentData.createdAt = serverTimestamp();
+
+            try {
+                const agentRef = doc(db, "agents", uid);
+                await setDoc(agentRef, agentData);
+                console.log("Agent added to Firestore successfully!");
+                alert(`Agent "${name}" added successfully!`);
+
+            } catch (error) {
+                console.error("Error adding agent to Firestore:", error);
+                showModalError(`Failed to add agent: ${error.message}`);
+                // Optionally, consider deleting the user from Authentication if Firestore write fails
+                try {
+                    await auth.deleteUser(uid);
+                    console.log("Successfully deleted Firebase Authentication user due to Firestore failure.");
+                } catch (deleteError) {
+                    console.error("Error deleting Firebase Authentication user:", deleteError);
+                    // Handle deletion error (e.g., log it)
+                }
+                return; // Stop further execution
+            }
         }
         closeAgentModal();
     } catch (error) {
-        console.error("Error saving agent:", error);
+        console.error("General error saving agent:", error);
         showModalError(`Failed to save agent: ${error.message}`);
     } finally {
         if (saveAgentBtn) {
@@ -475,6 +511,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     console.log("Admin Agent Management JS Initialized.");
 
-    handleUserTypeChange(); // Initialize display on page load - **moved here**
+    handleUserTypeChange();
 
 });
