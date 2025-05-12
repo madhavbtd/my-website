@@ -1,7 +1,7 @@
 // /admin/js/agent_management.js
 
 // Firebase फ़ंक्शंस को firebase-init.js से इम्पोर्ट करें
-import { db, auth } from './firebase-init.js';
+import { db, auth, createUserWithEmailAndPassword } from './firebase-init.js';
 import {
     collection, onSnapshot, query, orderBy, doc, addDoc,
     updateDoc, getDoc, getDocs, serverTimestamp, where, limit
@@ -346,7 +346,7 @@ function applyAgentFilters() {
 // --- Save Agent Function ---
 async function handleSaveAgent(event) {
     event.preventDefault();
-    if (!db || !doc || !addDoc || !updateDoc || !collection || !serverTimestamp || !auth) {
+    if (!db || !doc || !addDoc || !updateDoc || !collection || !serverTimestamp || !auth || !createUserWithEmailAndPassword) { // createUserWithEmailAndPassword जोड़ा गया
         showModalError("Error: Database functions missing.");
         return;
     }
@@ -415,15 +415,23 @@ async function handleSaveAgent(event) {
             console.log(`Adding new agent: ${email}`);
             agentData.createdAt = serverTimestamp();
 
-            const qEmail = query(collection(db, "agents"), where("email", "==", email), limit(1));
-            const emailSnap = await getDocs(qEmail);
-            if (!emailSnap.empty) {
-                throw new Error(`An agent with email ${email} already exists in the database.`);
-            }
+            // Firebase Authentication में यूज़र बनाएँ
+            try {
+                const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+                const user = userCredential.user;
+                console.log("New user created in Auth with UID:", user.uid);
 
-            const docRef = await addDoc(collection(db, "agents"), agentData);
-            console.log("New agent added to Firestore with ID:", docRef.id);
-            alert(`Agent "${name}" added successfully! \n\nIMPORTANT: You must manually create a corresponding login user in Firebase Authentication for email: ${email} with the password you set.`);
+                // Firestore में एजेंट डेटा बनाएँ
+                const docRef = await addDoc(collection(db, "agents"), agentData);
+                console.log("New agent added to Firestore with ID:", docRef.id);
+                alert(`Agent "${name}" added successfully!`);
+
+            } catch (authError) {
+                console.error("Error creating user in Auth:", authError);
+                showModalError(`Failed to create agent: ${authError.message}`);
+                // यदि Authentication में यूज़र बनाने में विफलता होती है, तो Firestore में डेटा नहीं बनाएँ
+                return;
+            }
         }
         closeAgentModal();
     } catch (error) {

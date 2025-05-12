@@ -1,6 +1,6 @@
 // js/firebase-init.js
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js"; // doc और getDoc यहाँ इम्पोर्ट करें
 
 // **** आपकी Firebase कॉन्फ़िगरेशन ****
@@ -49,7 +49,8 @@ export {
     doc,
     getDoc,
     // Auth फ़ंक्शन जिसे login.js उपयोग करेगा
-    signInWithEmailAndPassword
+    signInWithEmailAndPassword,
+    createUserWithEmailAndPassword // यह लाइन जोड़ी गई है
 };
 
 // अन्य Firestore या Auth फ़ंक्शंस जिन्हें आपकी अन्य एडमिन JS फाइलें
