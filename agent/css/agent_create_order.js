@@ -1,0 +1,338 @@
+/* /agent/css/agent_create_order.css */
+
+/* Use styles defined in agent_main.css for consistency */
+
+.form-section-card {
+    border: 1px solid var(--agent-border, #dee2e6);
+    border-radius: var(--agent-radius, 6px);
+    padding: 20px 25px;
+    background-color: var(--agent-white, #ffffff);
+    box-shadow: var(--agent-shadow, 0 2px 5px rgba(0,0,0,0.08));
+    margin-bottom: 25px;
+}
+
+.section-title {
+    font-size: 1.2em;
+    /* Slightly larger title */
+    color: var(--agent-primary, #0056b3);
+    margin-top: 0;
+    margin-bottom: 20px;
+    font-weight: 600;
+    border-bottom: 1px solid #e5e5e5;
+    padding-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.section-title i {
+    font-size: 0.9em;
+    opacity: 0.9;
+}
+
+.form-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px 20px;
+    /* Row and column gap */
+    margin-bottom: 15px;
+}
+
+.form-row:last-child {
+    margin-bottom: 0;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    /* Grow equally */
+    min-width: 150px;
+    /* Prevent extreme squishing */
+    position: relative;
+    /* For suggestion box positioning */
+}
+
+.form-group-half {
+    flex-basis: calc(50% - 10px);
+    /* Two columns with gap */
+}
+
+.form-group label {
+    font-size: 0.9em;
+    /* Slightly smaller label */
+    text-align: left;
+    margin-bottom: 6px;
+    color: var(--agent-text, #343a40);
+    font-weight: 500;
+}
+
+/* Input styles inherit from agent_main.css */
+.form-group input[type="text"],
+.form-group input[type="date"],
+.form-group input[type="number"],
+.form-group select,
+.form-group textarea {
+    /* Styles are inherited from agent_main.css .form-group selector */
+    /* Ensure height: 40px; is applied */
+    height: 40px;
+}
+
+.form-group textarea {
+    height: auto;
+    min-height: 70px;
+}
+
+.info-text {
+    flex-basis: 100%;
+    font-size: 0.85em;
+    /* Smaller info text */
+    color: var(--agent-text-muted, #6c757d);
+    margin-top: 5px;
+}
+
+/* Customer Suggestion Box Styling */
+.suggestions-box {
+    position: relative;
+}
+
+/* Needed for absolute positioning of ul */
+.suggestions-box ul {
+    position: absolute;
+    list-style: none;
+    margin: 1px 0 0;
+    padding: 0;
+    border: 1px solid #ced4da;
+    background-color: #fff;
+    max-height: 180px;
+    overflow-y: auto;
+    z-index: 1000;
+    border-radius: 0 0 4px 4px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    width: 100%;
+    box-sizing: border-box;
+    display: none;
+    /* Hidden by default */
+}
+
+.suggestions-box.active ul {
+    display: block;
+}
+
+/* Show when active class is added */
+.suggestions-box li {
+    padding: 8px 12px;
+    font-size: 0.9em;
+    cursor: pointer;
+    border-bottom: 1px solid #f0f0f0;
+    transition: background-color .15s ease;
+}
+
+.suggestions-box li:last-child {
+    border-bottom: none;
+}
+
+.suggestions-box li:hover {
+    background-color: #e9ecef;
+}
+
+.suggestions-box li strong {
+    font-weight: 600;
+    color: var(--agent-primary, #0056b3);
+}
+
+.suggestions-box li.no-suggestions {
+    color: var(--agent-text-muted, #6c757d);
+    font-style: italic;
+    cursor: default;
+}
+
+.suggestions-box li.no-suggestions:hover {
+    background-color: transparent;
+}
+
+/* Order Items Table Styling */
+.order-items-table {
+    margin-bottom: 15px;
+    border: 1px solid var(--agent-border, #dee2e6);
+    border-radius: var(--agent-radius, 6px);
+    overflow: hidden;
+    /* Hide overflow */
+    overflow-x: auto;
+    /* Enable horizontal scroll */
+    -webkit-overflow-scrolling: touch;
+    /* Smooth scrolling on iOS */
+    max-height: 45vh;
+    /* Adjusted max height before scroll */
+    overflow-y: auto;
+}
+
+#agentOrderItemsTable {
+    width: 100%;
+    min-width: 950px;
+    /* Ensure minimum width for all columns */
+    border-collapse: collapse;
+    border-spacing: 0;
+}
+
+#agentOrderItemsTable thead th {
+    background-color: var(--agent-light-bg, #f8f9fa);
+    padding: 10px 12px;
+    font-size: 0.85em;
+    font-weight: 600;
+    text-align: left;
+    border-bottom: 2px solid var(--agent-border, #dee2e6);
+    white-space: nowrap;
+    color: var(--agent-secondary, #495057);
+    text-transform: uppercase;
+    letter-spacing: .5px;
+    position: sticky;
+    /* Sticky header */
+    top: 0;
+    z-index: 10;
+}
+
+#agentOrderItemsTable tbody td {
+    padding: 6px 10px;
+    border-bottom: 1px solid #f0f0f0;
+    vertical-align: middle;
+    background-color: var(--agent-white, #ffffff);
+    font-size: 0.9em;
+}
+
+#agentOrderItemsTable tbody tr:last-child td {
+    border-bottom: none;
+}
+
+#agentOrderItemsTable tbody tr:hover td {
+    background-color: #f1f8ff;
+}
+
+/* Light hover */
+
+/* Input styles within table */
+#agentOrderItemsTable .form-input {
+    padding: 7px 9px;
+    font-size: 0.95em;
+    border-radius: 3px;
+    width: 100%;
+    box-sizing: border-box;
+    min-height: 36px;
+    border: 1px solid #d8dde2;
+    /* Inherit other styles from agent_main.css .form-group input */
+}
+
+#agentOrderItemsTable input[readonly].rate-input {
+    /* Style for readonly rate */
+    background-color: #e9ecef;
+    cursor: not-allowed;
+    font-weight: 500;
+}
+
+#agentOrderItemsTable .dimension-input-container {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+#agentOrderItemsTable .dimension-input {
+    width: 65px !important;
+    text-align: right;
+}
+
+#agentOrderItemsTable .quantity-input {
+    width: 70px !important;
+    text-align: right;
+}
+
+#agentOrderItemsTable .rate-input {
+    width: 90px !important;
+    text-align: right;
+}
+
+#agentOrderItemsTable .dimension-unit-select {
+    width: 70px !important;
+}
+
+#agentOrderItemsTable .item-amount {
+    font-weight: 600;
+    text-align: right;
+    white-space: nowrap;
+    color: var(--agent-secondary, #495057);
+}
+
+#agentOrderItemsTable td:nth-last-child(2) {
+    text-align: right;
+    vertical-align: middle;
+}
+
+/* Amount column */
+#agentOrderItemsTable td:last-child {
+    text-align: center;
+    vertical-align: middle;
+}
+
+/* Action column */
+.hidden-col {
+    display: none;
+}
+
+/* Class to hide/show Sq Ft columns */
+
+/* Add Item Button */
+.add-item-button {
+    /* Uses .button class from agent_main.css */
+    background-color: var(--agent-info, #17a2b8);
+    /* Specific color */
+    margin-top: 10px;
+    padding: 8px 16px;
+    font-size: 0.9em;
+}
+
+.add-item-button:hover {
+    background-color: #117a8b;
+}
+
+.add-item-button i {
+    margin-right: 0;
+}
+
+/* Override if main button has margin */
+
+/* Delete Item Button */
+.delete-item-btn {
+    /* Uses .button class from agent_main.css */
+    background-color: transparent;
+    color: var(--agent-danger, #dc3545);
+    border: none;
+    padding: 6px;
+    font-size: 1.05em;
+    opacity: 0.65;
+    transition: opacity .2s ease, color .2s ease, background-color .2s ease, transform 0.1s ease;
+    border-radius: 4px;
+    line-height: 1;
+    box-shadow: none;
+    /* Override main button shadow */
+    min-width: auto;
+    /* Override main button min-width */
+    height: auto;
+    /* Override main button height */
+}
+
+.delete-item-btn:hover {
+    opacity: 1;
+    color: #a71d2a;
+    /* Darker red */
+    background-color: #fdecea;
+    /* Light red background on hover */
+    transform: scale(1.1);
+}
+
+/* Order Summary Section Styles */
+.order-summary-section {
+    background-color: var(--agent-light-bg, #f8f9fa);
+}
+
+.summary-grid {
+    display: grid;
+    grid

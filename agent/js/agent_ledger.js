@@ -110,7 +110,6 @@ async function fetchLedgerEntries() {
         if (noLedgerEntriesMessageEl) {
             noLedgerEntriesMessageEl.textContent = "Unable to load ledger: Agent not identified."; // English message
             noLedgerEntriesMessageEl.parentElement.style.display = 'table-row';
-            ledgerTableBodyEl.appendChild(noLedgerEntriesMessageEl.parentElement);
         }
         if (ledgerTableBodyEl) {
             ledgerTableBodyEl.innerHTML = ''; // Clear old entries
