@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -9,11 +10,14 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="stylesheet" href="css/agent_main.css">
-    </head>
+</head>
+
 <body>
     <div class="agent-portal-container">
         <header class="agent-header">
-            <div class="header-left"> <button class="header-menu-toggle"><i class="fas fa-bars"></i></button> <div class="header-logo">
+            <div class="header-left">
+                <button class="header-menu-toggle"><i class="fas fa-bars"></i></button>
+                <div class="header-logo">
                     <img src="https://i.ibb.co/Z6gKD9Rd/1.png" alt="Madhav Multiprint Logo">
                     <span>Agent Portal</span>
                 </div>
@@ -43,17 +47,22 @@
                 <p>Welcome to your Agent Portal. Here you can manage your orders and customers.</p>
 
                 <div class="dashboard-widgets">
-                    <div class="widget card-style"> <h3>Recent Orders</h3>
-                        <div id="recentOrdersWidget"><span class="loading-state active"><i class="fas fa-spinner fa-spin"></i> Loading...</span></div>
+                    <div class="widget card-style">
+                        <h3>Recent Orders</h3>
+                        <div id="recentOrdersWidget"><span class="loading-state active"><i
+                                    class="fas fa-spinner fa-spin"></i> Loading...</span></div>
                     </div>
-                    <div class="widget card-style"> <h3>Account Summary</h3>
-                        <div id="accountSummaryWidget"><span class="loading-state active"><i class="fas fa-spinner fa-spin"></i> Loading...</span></div>
+                    <div class="widget card-style">
+                        <h3>Account Summary</h3>
+                        <div id="accountSummaryWidget"><span class="loading-state active"><i
+                                    class="fas fa-spinner fa-spin"></i> Loading...</span></div>
                     </div>
-                    <div class="widget card-style"> <h3>Quick Links</h3>
+                    <div class="widget card-style">
+                        <h3>Quick Links</h3>
                         <ul>
                             <li><a href="create_order.html">Create New Order</a></li>
                             <li><a href="customers.html?action=add">Add New Customer</a></li>
-                            </ul>
+                        </ul>
                     </div>
                 </div>
             </main>
@@ -62,7 +71,8 @@
                 <p>&copy; 2025 Madhav Multiprint - Agent Portal</p>
             </footer>
         </div>
-        </div><script src="js/agent_firebase_config.js" type="module"></script>
+    </div>
+    <script src="js/agent_firebase_config.js" type="module"></script>
     <script src="js/agent_dashboard.js" type="module"></script>
 
     <script>
@@ -117,4 +127,5 @@
           });
     </script>
 </body>
+
 </html>

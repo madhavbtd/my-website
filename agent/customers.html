@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -11,10 +12,13 @@
     <link rel="stylesheet" href="css/agent_main.css">
     <link rel="stylesheet" href="css/agent_customers.css">
 </head>
+
 <body>
     <div class="agent-portal-container">
         <header class="agent-header">
-            <div class="header-left"> <button class="header-menu-toggle"><i class="fas fa-bars"></i></button> <div class="header-logo">
+            <div class="header-left">
+                <button class="header-menu-toggle"><i class="fas fa-bars"></i></button>
+                <div class="header-logo">
                     <img src="https://i.ibb.co/Z6gKD9Rd/1.png" alt="Madhav Multiprint Logo">
                     <span>Agent Portal</span>
                 </div>
@@ -44,9 +48,11 @@
                 <p>Manage your customer information. You can add new customers if permitted.</p>
 
                 <div class="page-actions">
-                     <button id="addNewCustomerBtn" class="button primary-button" style="display: none;"> <i class="fas fa-user-plus"></i> Add New Customer
+                    <button id="addNewCustomerBtn" class="button primary-button" style="display: none;">
+                        <i class="fas fa-user-plus"></i> Add New Customer
                     </button>
-                    <input type="text" id="customerSearchInput" class="form-input" placeholder="Search customers by name, phone...">
+                    <input type="text" id="customerSearchInput" class="form-input"
+                        placeholder="Search customers by name, phone...">
                 </div>
 
                 <div class="table-container customers-table-container">
@@ -63,15 +69,17 @@
                         </thead>
                         <tbody id="agentCustomersTableBody">
                             <tr id="loadingCustomersMessage">
-                                <td colspan="6" class="loading-state active"> <i class="fas fa-spinner fa-spin"></i> Loading customers...
+                                <td colspan="6" class="loading-state active">
+                                    <i class="fas fa-spinner fa-spin"></i> Loading customers...
                                 </td>
                             </tr>
-                            <tr id="noCustomersMessageRow" style="display: none;"> <td colspan="6">
-                                     <p id="noCustomersMessage" class="info-message" style="display:block; margin-top: 0;">
+                            <tr id="noCustomersMessageRow" style="display: none;">
+                                <td colspan="6">
+                                    <p id="noCustomersMessage" class="info-message" style="display:block; margin-top: 0;">
                                         No customers found or you do not have permission to view them.
-                                     </p>
-                               </td>
-                           </tr>
+                                    </p>
+                                </td>
+                            </tr>
                         </tbody>
                     </table>
                 </div>
@@ -79,15 +87,18 @@
             </main>
 
             <div id="customerModal" class="modal-overlay" style="display:none;">
-                <div class="modal-content card-style"> <button class="modal-close-btn" id="closeCustomerModalBtn" title="Close">&times;</button>
-                    <h2 id="customerModalTitle"><i class="fas fa-user-plus"></i> Add New Customer</h2> <form id="customerForm">
+                <div class="modal-content card-style">
+                    <button class="modal-close-btn" id="closeCustomerModalBtn" title="Close">&times;</button>
+                    <h2 id="customerModalTitle"><i class="fas fa-user-plus"></i> Add New Customer</h2>
+                    <form id="customerForm">
                         <input type="hidden" id="editCustomerId">
                         <div class="form-group">
                             <label for="customerFullName">Full Name <span class="required-asterisk">*</span></label>
                             <input type="text" id="customerFullName" required>
                         </div>
                         <div class="form-group">
-                            <label for="customerWhatsAppNo">WhatsApp Number <span class="required-asterisk">*</span></label>
+                            <label for="customerWhatsAppNo">WhatsApp Number <span
+                                    class="required-asterisk">*</span></label>
                             <input type="tel" id="customerWhatsAppNo" required placeholder="e.g., 919876543210">
                         </div>
                         <div class="form-group">
@@ -112,12 +123,13 @@
                 <p>&copy; 2025 Madhav Multiprint - Agent Portal</p>
             </footer>
         </div>
-        </div><script src="js/agent_firebase_config.js" type="module"></script>
+    </div>
+    <script src="js/agent_firebase_config.js" type="module"></script>
     <script src="js/agent_customers.js" type="module"></script>
 
     <script>
         function setActiveAgentLink() {
-             try {
+            try {
                 const path = window.location.pathname;
                 const page = path.substring(path.lastIndexOf('/') + 1) || 'dashboard.html'; // Default page
                 const links = document.querySelectorAll('.agent-sidebar ul li a');
@@ -132,9 +144,9 @@
                         }
                     }
                 });
-             } catch(e) {
+            } catch (e) {
                 console.error("Error setting active agent link:", e);
-             }
+            }
         }
         window.addEventListener('DOMContentLoaded', setActiveAgentLink);
         window.addEventListener('popstate', setActiveAgentLink);
@@ -144,15 +156,16 @@
         const sidebar = document.querySelector('.agent-sidebar');
 
         if (menuToggle && sidebar) {
-             menuToggle.addEventListener('click', () => {
+            menuToggle.addEventListener('click', () => {
                 sidebar.classList.toggle('open');
-             });
-         }
-         document.addEventListener('click', (e) => {
-              if (sidebar && sidebar.classList.contains('open') && menuToggle && !sidebar.contains(e.target) && !menuToggle.contains(e.target)) {
-                    sidebar.classList.remove('open');
-              }
-          });
+            });
+        }
+        document.addEventListener('click', (e) => {
+            if (sidebar && sidebar.classList.contains('open') && menuToggle && !sidebar.contains(e.target) && !menuToggle.contains(e.target)) {
+                sidebar.classList.remove('open');
+            }
+        });
     </script>
 </body>
+
 </html>
