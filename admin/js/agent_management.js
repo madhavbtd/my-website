@@ -403,6 +403,7 @@ async function handleSaveAgent(event) {
             userType: userType,
             permissions: permissions,
             updatedAt: serverTimestamp(),
+            role: userType === 'agent' ? 'agent' : 'admin' // Ensure role is set correctly
         };
 
         if (isEditing) {
