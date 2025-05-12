@@ -149,7 +149,7 @@ function openAgentModal(mode = 'add', agentData = null) {
         if (agentData.allowedCategories && Array.isArray(agentData.allowedCategories)) {
             agentData.allowedCategories.forEach(categoryName => {
                 // Sanitize category name for use in querySelector
-                const sanitizedCategoryName = categoryName.replace(/[^a-zA-Z0-9-_]/g, '\\$&`);
+                const sanitizedCategoryName = categoryName.replace(/[^a-zA-Z0-9-_]/g, '\\$&');
                 try {
                     const checkbox = categoryPermissionsDiv.querySelector(`input[value="${sanitizedCategoryName}"]`);
                     if (checkbox) {
