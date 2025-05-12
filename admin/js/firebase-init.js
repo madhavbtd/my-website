@@ -1,24 +1,16 @@
 // js/firebase-init.js
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import {
-    getAuth,
-    signInWithEmailAndPassword,
-    createUserWithEmailAndPassword // createUserWithEmailAndPassword को इम्पोर्ट करें
-} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import {
-    getFirestore,
-    doc,
-    getDoc
-} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js"; // doc और getDoc यहाँ इम्पोर्ट करें
 
 // **** आपकी Firebase कॉन्फ़िगरेशन ****
 const firebaseConfig = {
-    apiKey: "AIzaSyBQj5rQmE77kKKGYixP8y3Hcimz8tiAqzQ",
-    authDomain: "madhav-multyprint.firebaseapp.com",
-    projectId: "madhav-multyprint",
-    storageBucket: "madhav-multyprint.appspot.com",
-    messagingSenderId: "104988349637",
-    appId: "1:104988349637:web:faf045b77c6786a4e70cac"
+  apiKey: "AIzaSyBQj5rQmE77kKKGYixP8y3Hcimz8tiAqzQ",
+  authDomain: "madhav-multyprint.firebaseapp.com",
+  projectId: "madhav-multyprint",
+  storageBucket: "madhav-multyprint.appspot.com", // यदि आप स्टोरेज का उपयोग करते हैं तो सुनिश्चित करें कि यह सही है, या .firebasestorage.app वाला हो सकता है
+  messagingSenderId: "104988349637",
+  appId: "1:104988349637:web:faf045b77c6786a4e70cac"
 };
 
 let app;
@@ -44,8 +36,8 @@ try {
     db = getFirestore(app);
     console.log("firebase-init.js: एडमिन के लिए Auth और DB इंस्टेंस प्राप्त किए गए।");
 } catch (e) {
-    console.error("Auth/Firestore इंस्टेंस प्राप्त करने में विफल (firebase-init.js):", e);
-    throw new Error("Failed to get Auth/Firestore instances: " + e.message);
+     console.error("Auth/Firestore इंस्टेंस प्राप्त करने में विफल (firebase-init.js):", e);
+     throw new Error("Failed to get Auth/Firestore instances: " + e.message);
 }
 
 // इनिशियलाइज़ किए गए इंस्टेंस और आवश्यक फ़ंक्शंस एक्सपोर्ट करें
@@ -53,10 +45,11 @@ export {
     app,
     auth,
     db,
+    // Firestore फ़ंक्शंस जिन्हें login.js उपयोग करेगा
     doc,
     getDoc,
-    signInWithEmailAndPassword,
-    createUserWithEmailAndPassword // createUserWithEmailAndPassword को एक्सपोर्ट करें
+    // Auth फ़ंक्शन जिसे login.js उपयोग करेगा
+    signInWithEmailAndPassword
 };
 
 // अन्य Firestore या Auth फ़ंक्शंस जिन्हें आपकी अन्य एडमिन JS फाइलें

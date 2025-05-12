@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -12,13 +11,10 @@
     <link rel="stylesheet" href="css/agent_main.css">
     <link rel="stylesheet" href="css/agent_products.css">
 </head>
-
 <body>
     <div class="agent-portal-container">
         <header class="agent-header">
-            <div class="header-left">
-                <button class="header-menu-toggle"><i class="fas fa-bars"></i></button>
-                <div class="header-logo">
+            <div class="header-left"> <button class="header-menu-toggle"><i class="fas fa-bars"></i></button> <div class="header-logo">
                     <img src="https://i.ibb.co/Z6gKD9Rd/1.png" alt="Madhav Multiprint Logo">
                     <span>Agent Portal</span>
                 </div>
@@ -48,15 +44,12 @@
                     <a href="products.html">Products</a> / <span id="breadcrumbProductName">Loading...</span>
                 </div>
 
-                <div id="productDetailContainer" class="product-detail-layout card-style">
-                    <div class="loading-state active" id="loadingProductDetail">
+                <div id="productDetailContainer" class="product-detail-layout card-style"> <div class="loading-state active" id="loadingProductDetail">
                         <i class="fas fa-spinner fa-spin"></i> Loading Product Details...
                     </div>
 
-                    <div id="productDetailContent" style="display: none;">
-                        <div class="product-image-section">
-                            <img id="mainProductImage" src="" alt="Product Image" onerror="this.onerror=null;this.src='images/placeholder.png';">
-                        </div>
+                    <div id="productDetailContent" style="display: none;"> <div class="product-image-section">
+                            <img id="mainProductImage" src="" alt="Product Image" onerror="this.onerror=null;this.src='images/placeholder.png';"> </div>
                         <div class="product-info-section">
                             <h1 id="productName">Product Name</h1>
                             <p id="productCategory" class="product-meta">Category: ---</p>
@@ -77,18 +70,15 @@
                             </div>
                         </div>
                     </div>
-                     <div id="productError" class="form-message error" style="display: none; grid-column: 1 / -1;"></div>
-                </div>
+                     <div id="productError" class="form-message error" style="display: none; grid-column: 1 / -1;"></div> </div>
             </main>
 
             <footer class="agent-footer">
-                <p>&copy; 2025 Madhav Multiprint - Agent Portal</p>
+                 <p>&copy; 2025 Madhav Multiprint - Agent Portal</p>
             </footer>
         </div>
-    </div>
-    <script src="js/agent_firebase_config.js" type="module"></script>
-    <script src="js/agent_products.js" type="module"></script>
-    <script>
+        </div><script src="js/agent_firebase_config.js" type="module"></script>
+    <script src="js/agent_products.js" type="module"></script> <script>
         function setActiveAgentLink() {
              try {
                 const path = window.location.pathname;

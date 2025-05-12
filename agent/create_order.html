@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -12,13 +11,10 @@
     <link rel="stylesheet" href="css/agent_main.css">
     <link rel="stylesheet" href="css/agent_create_order.css">
 </head>
-
 <body>
     <div class="agent-portal-container">
         <header class="agent-header">
-            <div class="header-left">
-                <button class="header-menu-toggle"><i class="fas fa-bars"></i></button>
-                <div class="header-logo">
+            <div class="header-left"> <button class="header-menu-toggle"><i class="fas fa-bars"></i></button> <div class="header-logo">
                     <img src="https://i.ibb.co/Z6gKD9Rd/1.png" alt="Madhav Multiprint Logo">
                     <span>Agent Portal</span>
                 </div>
@@ -53,35 +49,25 @@
                         <div class="section-title"><i class="fas fa-user-tag"></i> Customer Details</div>
                         <div class="form-row">
                             <div class="form-group form-group-half">
-                                <label for="agent_customer_name">Customer Name <span
-                                        class="required-asterisk">*</span></label>
-                                <input type="text" id="agent_customer_name" name="full_name" required
-                                    autocomplete="off" placeholder="Search or enter customer name...">
-                                <div id="agent-customer-suggestions-name" class="suggestions-box">
-                                    <ul></ul>
-                                </div>
+                                <label for="agent_customer_name">Customer Name <span class="required-asterisk">*</span></label>
+                                <input type="text" id="agent_customer_name" name="full_name" required autocomplete="off" placeholder="Search or enter customer name...">
+                                <div id="agent-customer-suggestions-name" class="suggestions-box"><ul></ul></div>
                             </div>
                             <div class="form-group form-group-half">
-                                <label for="agent_customer_whatsapp">WhatsApp No <span
-                                        class="required-asterisk">*</span></label>
-                                <input type="text" id="agent_customer_whatsapp" name="whatsapp_no" required
-                                    autocomplete="off" placeholder="Search or enter WhatsApp no...">
-                                <div id="agent-customer-suggestions-whatsapp" class="suggestions-box">
-                                    <ul></ul>
-                                </div>
+                                <label for="agent_customer_whatsapp">WhatsApp No <span class="required-asterisk">*</span></label>
+                                <input type="text" id="agent_customer_whatsapp" name="whatsapp_no" required autocomplete="off" placeholder="Search or enter WhatsApp no...">
+                                <div id="agent-customer-suggestions-whatsapp" class="suggestions-box"><ul></ul></div>
                             </div>
                         </div>
                         <div class="form-row">
                             <div class="form-group form-group-half">
                                 <label for="agent_customer_address">Address</label>
-                                <input type="text" id="agent_customer_address" name="address"
-                                    placeholder="Autofills or enter address">
+                                <input type="text" id="agent_customer_address" name="address" placeholder="Autofills or enter address">
                             </div>
-                            <div class="form-group form-group-half">
-                                <label for="agent_customer_contact">Contact No</label>
-                                <input type="text" id="agent_customer_contact" name="contact_no"
-                                    placeholder="Autofills or enter contact">
-                            </div>
+                             <div class="form-group form-group-half">
+                                 <label for="agent_customer_contact">Contact No</label>
+                                 <input type="text" id="agent_customer_contact" name="contact_no" placeholder="Autofills or enter contact">
+                             </div>
                         </div>
                         <p class="info-text">*Search existing customer or enter details for a new one (if allowed).</p>
                     </div>
@@ -92,13 +78,10 @@
                             <table id="agentOrderItemsTable">
                                 <thead>
                                     <tr>
-                                        <th style="width: 30%;">Product Name <span
-                                                class="required-asterisk">*</span></th>
+                                        <th style="width: 30%;">Product Name <span class="required-asterisk">*</span></th>
                                         <th style="width: 10%;">Unit Type <span class="required-asterisk">*</span></th>
-                                        <th style="width: 18%;" class="sq-feet-header hidden-col">Dimensions (W x H) <span
-                                                class="required-asterisk">*</span></th>
-                                        <th style="width: 8%;" class="sq-feet-header hidden-col">Unit <span
-                                                class="required-asterisk">*</span></th>
+                                        <th style="width: 18%;" class="sq-feet-header hidden-col">Dimensions (W x H) <span class="required-asterisk">*</span></th>
+                                        <th style="width: 8%;" class="sq-feet-header hidden-col">Unit <span class="required-asterisk">*</span></th>
                                         <th style="width: 9%;">Quantity <span class="required-asterisk">*</span></th>
                                         <th style="width: 10%;">Agent Rate <span class="required-asterisk">*</span></th>
                                         <th style="width: 10%;">Amount</th>
@@ -106,49 +89,46 @@
                                     </tr>
                                 </thead>
                                 <tbody id="agentOrderItemsTableBody">
-                                </tbody>
+                                    </tbody>
                             </table>
                         </div>
-                        <button type="button" id="agentAddItemBtn" class="button add-item-button"><i
-                                class="fas fa-plus"></i> Add Item</button>
+                        <button type="button" id="agentAddItemBtn" class="button add-item-button"><i class="fas fa-plus"></i> Add Item</button>
                     </div>
 
                     <div class="form-section-card">
-                        <div class="section-title"><i class="fas fa-file-alt"></i> Order Details</div>
-                        <div class="form-row">
-                            <div class="form-group form-group-half">
+                         <div class="section-title"><i class="fas fa-file-alt"></i> Order Details</div>
+                         <div class="form-row">
+                              <div class="form-group form-group-half">
                                 <label for="agent_delivery_date">Delivery Date</label>
                                 <input type="date" id="agent_delivery_date" name="delivery_date">
-                            </div>
-                            <div class="form-group priority-group form-group-half">
-                                <label>Urgent?</label>
-                                <div class="radio-group">
+                              </div>
+                               <div class="form-group priority-group form-group-half">
+                                 <label>Urgent?</label>
+                                 <div class="radio-group">
                                     <label><input type="radio" name="agent_urgent" value="Yes"> Yes</label>
                                     <label><input type="radio" name="agent_urgent" value="No" checked> No</label>
-                                </div>
-                            </div>
-                        </div>
+                                  </div>
+                              </div>
+                         </div>
                         <div class="form-group">
-                            <label for="agent_remarks">Remarks</label>
-                            <textarea id="agent_remarks" name="remarks" placeholder="Any specific notes..."></textarea>
+                             <label for="agent_remarks">Remarks</label>
+                             <textarea id="agent_remarks" name="remarks" placeholder="Any specific notes..."></textarea>
                         </div>
                     </div>
 
                     <div class="form-section-card order-summary-section">
                         <div class="section-title"><i class="fas fa-calculator"></i> Order Summary</div>
-                        <div class="summary-grid">
+                         <div class="summary-grid">
                             <div class="summary-label">Subtotal:</div>
                             <div class="summary-value summary-subtotal">
                                 ₹ <span id="agentSummarySubtotal">0.00</span>
                             </div>
 
                             <label for="agentSummaryDiscountPercent" class="summary-label">Discount (%):</label>
-                            <input type="number" id="agentSummaryDiscountPercent" class="summary-input" step="0.01"
-                                min="0" max="100" placeholder="%">
+                            <input type="number" id="agentSummaryDiscountPercent" class="summary-input" step="0.01" min="0" max="100" placeholder="%">
 
                             <label for="agentSummaryDiscountAmount" class="summary-label">Discount Amount:</label>
-                            <input type="number" id="agentSummaryDiscountAmount" class="summary-input" step="0.01"
-                                min="0" placeholder="Amount">
+                            <input type="number" id="agentSummaryDiscountAmount" class="summary-input" step="0.01" min="0" placeholder="Amount">
 
                             <div class="summary-label summary-highlight-label">Final Amount:</div>
                             <div class="summary-value summary-final-amount">
@@ -158,48 +138,25 @@
                     </div>
 
                     <div class="button-container">
-                        <button type="reset" class="button secondary-button">Reset Form</button>
-                        <button type="submit" class="button save-button primary-button" id="agentSaveOrderBtn">
-                            <i class="fas fa-paper-plane"></i> <span>Submit Order</span>
+                        <button type="reset" class="button secondary-button">Reset Form</button> <button type="submit" class="button save-button primary-button" id="agentSaveOrderBtn"> <i class="fas fa-paper-plane"></i> <span>Submit Order</span>
                         </button>
                     </div>
-                    <div id="agentFormErrorMsg" class="form-message error" style="display: none;"></div>
-                </form>
+                     <div id="agentFormErrorMsg" class="form-message error" style="display: none;"></div> </form>
             </main>
 
             <footer class="agent-footer">
                 <p>&copy; 2025 Madhav Multiprint - Agent Portal</p>
             </footer>
         </div>
-    </div>
-    <template id="agent-item-row-template">
+        </div><template id="agent-item-row-template">
         <tr class="item-row">
-            <td><input type="text" class="form-input product-name" placeholder="Search product..." required
-                    autocomplete="off"></td>
-            <td><select class="form-input unit-type-select">
-                    <option value="Qty" selected>Qty</option>
-                    <option value="Sq Feet">Sq Feet</option>
-                </select></td>
-            <td class="sq-feet-input hidden-col">
-                <div class="dimension-input-container"><input type="number" step="any"
-                        class="form-input dimension-input width-input" placeholder="W" required><span
-                        style="padding: 0 2px;">x</span><input type="number" step="any"
-                        class="form-input dimension-input height-input" placeholder="H" required></div>
-            </td>
-            <td class="sq-feet-input hidden-col"><select class="form-input dimension-unit-select">
-                    <option value="feet" selected>Feet</option>
-                    <option value="inches">Inches</option>
-                </select></td>
-            <td><input type="number" step="1" class="form-input quantity-input" placeholder="Qty" min="1"
-                    value="1" required></td>
-            <td>
-                <div class="rate-input-wrapper"><input type="number" step="any" class="form-input rate-input"
-                        placeholder="Rate" required readonly></div>
-            </td>
-            <td style="text-align: right; font-weight: 600; vertical-align: middle;">₹<span
-                    class="item-amount">0.00</span></td>
-            <td style="text-align: center; vertical-align: middle;"><button type="button"
-                    class="button delete-item-btn" title="Remove Item"><i class="fas fa-trash-alt"></i></button></td>
+            <td><input type="text" class="form-input product-name" placeholder="Search product..." required autocomplete="off"></td>
+            <td><select class="form-input unit-type-select"><option value="Qty" selected>Qty</option><option value="Sq Feet">Sq Feet</option></select></td>
+            <td class="sq-feet-input hidden-col"><div class="dimension-input-container"><input type="number" step="any" class="form-input dimension-input width-input" placeholder="W" required><span style="padding: 0 2px;">x</span><input type="number" step="any" class="form-input dimension-input height-input" placeholder="H" required></div></td>
+            <td class="sq-feet-input hidden-col"><select class="form-input dimension-unit-select"><option value="feet" selected>Feet</option><option value="inches">Inches</option></select></td>
+            <td><input type="number" step="1" class="form-input quantity-input" placeholder="Qty" min="1" value="1" required></td>
+            <td><div class="rate-input-wrapper"><input type="number" step="any" class="form-input rate-input" placeholder="Rate" required readonly></div></td> <td style="text-align: right; font-weight: 600; vertical-align: middle;">₹<span class="item-amount">0.00</span></td>
+            <td style="text-align: center; vertical-align: middle;"><button type="button" class="button delete-item-btn" title="Remove Item"><i class="fas fa-trash-alt"></i></button></td>
         </tr>
     </template>
 
@@ -208,7 +165,7 @@
 
     <script>
         function setActiveAgentLink() {
-            try {
+             try {
                 const path = window.location.pathname;
                 const page = path.substring(path.lastIndexOf('/') + 1) || 'dashboard.html'; // Default page
                 const links = document.querySelectorAll('.agent-sidebar ul li a');
@@ -223,9 +180,9 @@
                         }
                     }
                 });
-            } catch (e) {
+             } catch(e) {
                 console.error("Error setting active agent link:", e);
-            }
+             }
         }
         window.addEventListener('DOMContentLoaded', setActiveAgentLink);
         window.addEventListener('popstate', setActiveAgentLink);
@@ -235,16 +192,15 @@
         const sidebar = document.querySelector('.agent-sidebar');
 
         if (menuToggle && sidebar) {
-            menuToggle.addEventListener('click', () => {
+             menuToggle.addEventListener('click', () => {
                 sidebar.classList.toggle('open');
-            });
-        }
-        document.addEventListener('click', (e) => {
-            if (sidebar && sidebar.classList.contains('open') && menuToggle && !sidebar.contains(e.target) && !menuToggle.contains(e.target)) {
-                sidebar.classList.remove('open');
-            }
-        });
+             });
+         }
+         document.addEventListener('click', (e) => {
+              if (sidebar && sidebar.classList.contains('open') && menuToggle && !sidebar.contains(e.target) && !menuToggle.contains(e.target)) {
+                    sidebar.classList.remove('open');
+              }
+          });
     </script>
 </body>
-
 </html>
