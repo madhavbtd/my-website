@@ -7,13 +7,16 @@
     justify-content: space-between;
     align-items: center;
     margin-bottom: 20px;
-    flex-wrap: wrap; /* Wrap on smaller screens */
+    flex-wrap: wrap;
+    /* Wrap on smaller screens */
     gap: 15px;
 }
 
-.page-actions .form-input { /* Search input */
+.page-actions .form-input {
+    /* Search input */
     max-width: 300px;
-    height: 38px; /* Align height with button */
+    height: 38px;
+    /* Align height with button */
     padding: 8px 12px;
     /* Other styles inherit from agent_main.css */
 }
@@ -25,36 +28,47 @@
     left: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(0,0,0,0.5); /* Darker overlay */
+    background-color: rgba(0, 0, 0, 0.5);
+    /* Darker overlay */
     display: flex;
     align-items: center;
     justify-content: center;
-    z-index: 1050; /* Above nav bar */
+    z-index: 1050;
+    /* Above nav bar */
     opacity: 0;
     visibility: hidden;
     transition: opacity 0.3s ease, visibility 0.3s ease;
 }
-.modal-overlay.active { /* Will be added by JS */
+
+.modal-overlay.active {
+    /* Will be added by JS */
     opacity: 1;
     visibility: visible;
 }
 
-.modal-overlay .modal-content { /* .card-style is already in HTML */
+.modal-overlay .modal-content {
+    /* .card-style is already in HTML */
     width: 100%;
-    max-width: 550px; /* Modal width */
-    padding: 0; /* Padding comes from card-style, but override for header/actions */
+    max-width: 550px;
+    /* Modal width */
+    padding: 0;
+    /* Padding comes from card-style, but override for header/actions */
     position: relative;
     transform: scale(0.95);
     transition: transform 0.3s ease;
 }
+
 .modal-overlay.active .modal-content {
     transform: scale(1);
 }
 
-.modal-overlay .modal-content h2 { /* Modal Title */
+.modal-overlay .modal-content h2 {
+    /* Modal Title */
     padding: 15px 20px;
-    margin-bottom: 0; /* Gap will come from form-group */
-    font-size: 1.2em; /* Slightly smaller */
+    margin-bottom: 0;
+    /* Gap will come from form-group */
+    font-size: 1.2em;
+    /* Slightly smaller */
     /* Inherits other styles from .card-style h2 */
 }
 
@@ -64,17 +78,21 @@
     right: 15px;
     background: none;
     border: none;
-    font-size: 1.8em; /* Larger close button */
+    font-size: 1.8em;
+    /* Larger close button */
     color: var(--agent-text-muted);
     cursor: pointer;
     line-height: 1;
 }
+
 .modal-close-btn:hover {
     color: var(--agent-danger);
 }
 
-#customerForm { /* Form inside modal */
-    padding: 20px 25px; /* Padding after h2 */
+#customerForm {
+    /* Form inside modal */
+    padding: 20px 25px;
+    /* Padding after h2 */
 }
 
 .modal-actions {
@@ -85,11 +103,13 @@
     padding-top: 15px;
     border-top: 1px solid var(--agent-border);
 }
+
 .modal-actions .button {
     /* Inherit from agent_main.css */
     padding: 9px 18px;
     font-size: 0.9em;
 }
+
 /* Styles for specific buttons like Cancel use .secondary-button from agent_main.css */
 /* .button.secondary-button defined in agent_main.css */
 
@@ -98,37 +118,53 @@
 .customers-table-container {
     /* General .table-container styles from agent_main.css will apply */
 }
+
 #agentCustomersTable {
     /* General table styles from agent_main.css will apply */
 }
-#agentCustomersTable th, #agentCustomersTable td {
+
+#agentCustomersTable th,
+#agentCustomersTable td {
     /* General th/td styles from agent_main.css will apply */
 }
-#agentCustomersTable td:nth-child(1) { /* Customer Name */
+
+#agentCustomersTable td:nth-child(1) {
+    /* Customer Name */
     font-weight: 500;
     color: var(--agent-text);
 }
-#agentCustomersTable .actions-cell { /* Actions column */
+
+#agentCustomersTable .actions-cell {
+    /* Actions column */
     text-align: center;
     white-space: nowrap;
 }
-#agentCustomersTable .actions-cell .button { /* Action buttons within table */
+
+#agentCustomersTable .actions-cell .button {
+    /* Action buttons within table */
     /* Use general .button styles from agent_main.css */
-    padding: 5px 8px; /* Make them smaller */
+    padding: 5px 8px;
+    /* Make them smaller */
     font-size: 0.8em;
     margin: 0 3px;
 }
+
 #agentCustomersTable .actions-cell .button.edit-btn {
     /* Use .info-button styles from agent_main.css */
     background-color: var(--agent-info);
 }
+
 #agentCustomersTable .actions-cell .button.edit-btn:hover {
-    background-color: #117a8b; /* Darker info */
+    background-color: #117a8b;
+    /* Darker info */
 }
+
 #agentCustomersTable .actions-cell .button.delete-btn {
     /* Use .danger-button styles from agent_main.css */
     background-color: var(--agent-danger);
 }
+
 #agentCustomersTable .actions-cell .button.delete-btn:hover {
-    background-color: #c82333; /* Darker danger */
+    background-color: #c82333;
+    /* Darker danger */
 }

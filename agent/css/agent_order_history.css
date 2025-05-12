@@ -3,8 +3,10 @@
 /* Use variables and base styles from agent_main.css */
 
 .agent-main-content h1 {
-    margin-bottom: 10px; /* Reduce space after main title */
+    margin-bottom: 10px;
+    /* Reduce space after main title */
 }
+
 .agent-main-content > p {
     margin-bottom: 20px;
     font-size: 0.95em;
@@ -22,6 +24,7 @@
     border: 1px solid var(--agent-border);
     border-radius: var(--agent-radius);
 }
+
 .order-history-filters input,
 .order-history-filters select,
 .order-history-filters button {
@@ -30,23 +33,38 @@
     font-size: 0.9em;
     border-radius: 4px;
     border: 1px solid var(--agent-border);
-    font-family: 'Poppins', sans-serif;
+    font-family: 'Roboto', sans-serif;
     height: 36px;
     box-sizing: border-box;
 }
-.order-history-filters input[type="text"] { flex-grow: 1; min-width: 200px; }
-.order-history-filters input[type="date"] { min-width: 140px; }
-.order-history-filters select { min-width: 150px; }
+
+.order-history-filters input[type="text"] {
+    flex-grow: 1;
+    min-width: 200px;
+}
+
+.order-history-filters input[type="date"] {
+    min-width: 140px;
+}
+
+.order-history-filters select {
+    min-width: 150px;
+}
+
 .order-history-filters button {
     /* Inherit base .button styles from agent_main.css */
     /* Specific style for clear button */
     background-color: var(--agent-text-muted);
     color: var(--agent-white);
-    border: none; /* Override if main button has border */
+    border: none;
+    /* Override if main button has border */
 }
+
 .order-history-filters button:hover:not(:disabled) {
-    background-color: #5a6268; /* Darker grey */
+    background-color: #5a6268;
+    /* Darker grey */
 }
+
 .order-history-filters button:disabled {
     /* Disabled styles inherit from agent_main.css .button:disabled */
 }
@@ -55,7 +73,8 @@
 .agent-history-table {
     /* Inherit .table-container styles from agent_main.css */
     width: 100%;
-    max-height: 65vh; /* Adjust height */
+    max-height: 65vh;
+    /* Adjust height */
     overflow-y: auto;
     border: 1px solid var(--agent-border);
     border-radius: var(--agent-radius);
@@ -65,14 +84,17 @@
     position: relative;
     overflow-x: auto;
 }
+
 #agentOrderHistoryTable {
     /* Inherit table base styles from agent_main.css */
     width: 100%;
     border-collapse: collapse;
     font-size: 0.88em;
     border: none;
-    min-width: 800px; /* Min width to prevent squishing */
+    min-width: 800px;
+    /* Min width to prevent squishing */
 }
+
 #agentOrderHistoryTable thead th {
     /* Inherit thead th styles from agent_main.css */
     position: sticky;
@@ -86,37 +108,54 @@
     white-space: nowrap;
     border-bottom: 2px solid var(--agent-border);
 }
+
 #agentOrderHistoryTable td {
     /* Inherit tbody td styles from agent_main.css */
     padding: 9px 12px;
     text-align: left;
     vertical-align: middle;
-    border-bottom: 1px solid #f0f0f0; /* Lighter row border */
-    color: var(--agent-text); /* Slightly darker than muted for main content */
-    white-space: normal; /* Allow wrapping in cells */
+    border-bottom: 1px solid #f0f0f0;
+    /* Lighter row border */
+    color: var(--agent-text);
+    /* Slightly darker than muted for main content */
+    white-space: normal;
+    /* Allow wrapping in cells */
 }
-#agentOrderHistoryTable tbody tr:last-child td { border-bottom: none; }
+
+#agentOrderHistoryTable tbody tr:last-child td {
+    border-bottom: none;
+}
+
 #agentOrderHistoryTable tbody tr:hover {
     /* Inherit hover style from agent_main.css */
     background-color: #f1f8ff;
 }
 
 /* Specific Column Styles */
-#agentOrderHistoryTable td:nth-child(1) { /* Order ID */
+#agentOrderHistoryTable td:nth-child(1) {
+    /* Order ID */
     font-weight: 600;
     color: var(--agent-primary);
 }
-#agentOrderHistoryTable td:nth-child(3) { /* Customer Name */
+
+#agentOrderHistoryTable td:nth-child(3) {
+    /* Customer Name */
     font-weight: 500;
 }
-#agentOrderHistoryTable td:nth-child(5) { /* Total Amount */
+
+#agentOrderHistoryTable td:nth-child(5) {
+    /* Total Amount */
     text-align: right;
     font-weight: 600;
 }
-#agentOrderHistoryTable td:nth-child(6) { /* Status */
+
+#agentOrderHistoryTable td:nth-child(6) {
+    /* Status */
     text-align: center;
 }
-#agentOrderHistoryTable td:nth-child(7) { /* Action */
+
+#agentOrderHistoryTable td:nth-child(7) {
+    /* Action */
     text-align: center;
     white-space: nowrap;
 }
@@ -125,28 +164,77 @@
 .status-badge {
     font-weight: 500;
     padding: 4px 10px;
-    border-radius: 4px; /* Slightly less round */
-    font-size: 0.9em; /* Match table font size */
+    border-radius: 4px;
+    /* Slightly less round */
+    font-size: 0.9em;
+    /* Match table font size */
     color: white;
-    background-color: var(--agent-secondary, #6c757d); /* Default */
+    background-color: var(--agent-secondary, #6c757d);
+    /* Default */
     white-space: nowrap;
     display: inline-block;
     line-height: 1.3;
     text-align: center;
-    border: 1px solid rgba(0,0,0,0.05);
+    border: 1px solid rgba(0, 0, 0, 0.05);
 }
+
 /* Specific status colors */
-.status-badge.status-order-received { background-color: var(--agent-text-muted, #6c757d); }
-.status-badge.status-designing { background-color: var(--agent-warning, #ffc107); color: #333; }
-.status-badge.status-verification { background-color: #fd7e14; } /* Orange */
-.status-badge.status-design-approved { background-color: #20c997; color: #fff; } /* Tealish green */
-.status-badge.status-ready-for-working { background-color: var(--agent-info, #17a2b8); } /* Info blue */
-.status-badge.status-printing { background-color: #6f42c1; } /* Purple */
-.status-badge.status-delivered { background-color: var(--agent-success, #28a745); } /* Green */
-.status-badge.status-completed { background-color: #198754; } /* Darker Green */
-.status-badge.status-cancelled { background-color: var(--agent-danger, #dc3545); } /* Red */
-.status-badge.status-pending-admin-approval { background-color: var(--agent-warning, #ffc107); color:#333; } /* Yellow for pending */
-.status-badge.status-unknown { background-color: #adb5bd; } /* Grey for unknown */
+.status-badge.status-order-received {
+    background-color: var(--agent-text-muted, #6c757d);
+}
+
+.status-badge.status-designing {
+    background-color: var(--agent-warning, #ffc107);
+    color: #333;
+}
+
+.status-badge.status-verification {
+    background-color: #fd7e14;
+}
+
+/* Orange */
+.status-badge.status-design-approved {
+    background-color: #20c997;
+    color: #fff;
+}
+
+/* Tealish green */
+.status-badge.status-ready-for-working {
+    background-color: var(--agent-info, #17a2b8);
+}
+
+/* Info blue */
+.status-badge.status-printing {
+    background-color: #6f42c1;
+}
+
+/* Purple */
+.status-badge.status-delivered {
+    background-color: var(--agent-success, #28a745);
+}
+
+/* Green */
+.status-badge.status-completed {
+    background-color: #198754;
+}
+
+/* Darker Green */
+.status-badge.status-cancelled {
+    background-color: var(--agent-danger, #dc3545);
+}
+
+/* Red */
+.status-badge.status-pending-admin-approval {
+    background-color: var(--agent-warning, #ffc107);
+    color: #333;
+}
+
+/* Yellow for pending */
+.status-badge.status-unknown {
+    background-color: #adb5bd;
+}
+
+/* Grey for unknown */
 
 /* Action Button */
 .view-details-button {
@@ -157,6 +245,7 @@
     white-space: nowrap;
     /* Default primary color applied via .button */
 }
+
 .view-details-button:hover {
     /* Hover effect from agent_main.css .button:hover */
 }
@@ -166,17 +255,42 @@
 #loadingAgentHistoryMessage td {
     /* Styles inherit from .loading-state */
 }
+
 #noAgentOrdersMessage {
     /* Styles inherit from .info-message */
 }
 
-
 /* Responsive */
 @media (max-width: 768px) {
-    .order-history-filters { flex-direction: column; align-items: stretch; }
-    #agentOrderHistoryTable { font-size: 0.85em; min-width: 650px; }
-    #agentOrderHistoryTable th, #agentOrderHistoryTable td { padding: 8px; white-space: normal; }
-     #agentOrderHistoryTable td:nth-child(5) { white-space: nowrap;} /* Keep amount nowrap */
-     #agentOrderHistoryTable td:nth-child(6) { white-space: nowrap;} /* Keep status nowrap */
-     #agentOrderHistoryTable td:nth-child(7) { white-space: nowrap;} /* Keep actions nowrap */
+    .order-history-filters {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    #agentOrderHistoryTable {
+        font-size: 0.85em;
+        min-width: 650px;
+    }
+
+    #agentOrderHistoryTable th,
+    #agentOrderHistoryTable td {
+        padding: 8px;
+        white-space: normal;
+    }
+
+    #agentOrderHistoryTable td:nth-child(5) {
+        white-space: nowrap;
+    }
+
+    /* Keep amount nowrap */
+    #agentOrderHistoryTable td:nth-child(6) {
+        white-space: nowrap;
+    }
+
+    /* Keep status nowrap */
+    #agentOrderHistoryTable td:nth-child(7) {
+        white-space: nowrap;
+    }
+
+    /* Keep actions nowrap */
 }

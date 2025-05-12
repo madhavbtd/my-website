@@ -1,19 +1,23 @@
 /* /admin/css/index.css (उदाहरण - आपकी मौजूदा थीम पर आधारित) */
 :root {
-    --primary-color: #0056b3; /* नीला रंग जैसा agent_management.css में है */
+    --primary-color: #0056b3;
+    /* नीला रंग जैसा agent_management.css में है */
     --secondary-color: #2c3e50;
     --success-color: #28a745;
     --danger-color: #dc3545;
     --info-color: #17a2b8;
     --light-bg: #f8f9fa;
-    --medium-gray: #e9ecef; /* टेबल हेडर के लिए */
+    --medium-gray: #e9ecef;
+    /* टेबल हेडर के लिए */
     --dark-gray: #6c757d;
     --text-color: #212529;
     --text-muted: #6c757d;
     --white-color: #ffffff;
     --border-color: #dee2e6;
-    --border-radius: 5px; /* आपके agent_management.css के अनुसार */
-    --box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1); /* आपके agent_management.css के अनुसार */
+    --border-radius: 5px;
+    /* आपके agent_management.css के अनुसार */
+    --box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    /* आपके agent_management.css के अनुसार */
     --font-family: 'Poppins', sans-serif;
 }
 
@@ -25,14 +29,16 @@
 
 body {
     font-family: var(--font-family);
-    background-color: #f0f2f5; /* हल्का ग्रे बैकग्राउंड */
+    background-color: #f0f2f5;
+    /* हल्का ग्रे बैकग्राउंड */
     color: var(--text-color);
     line-height: 1.6;
 }
 
 .container {
     width: 100%;
-    max-width: 1200px; /* या आपकी पसंदीदा चौड़ाई */
+    max-width: 1200px;
+    /* या आपकी पसंदीदा चौड़ाई */
     margin: 20px auto;
     padding: 25px;
     background-color: var(--white-color);
@@ -41,22 +47,30 @@ body {
 }
 
 .header {
-    background-color: var(--primary-color); /* agent_management.css जैसा */
+    background-color: var(--primary-color);
+    /* agent_management.css जैसा */
     color: var(--white-color);
-    padding: 12px 20px; /* थोड़ी ज़्यादा पैडिंग */
-    margin: -25px -25px 25px -25px; /* कंटेनर की पैडिंग को ओवरराइड करें */
+    padding: 12px 20px;
+    /* थोड़ी ज़्यादा पैडिंग */
+    margin: -25px -25px 25px -25px;
+    /* कंटेनर की पैडिंग को ओवरराइड करें */
     border-radius: var(--border-radius) var(--border-radius) 0 0;
     display: flex;
     align-items: center;
-    gap: 10px; /* आइकन और टेक्स्ट के बीच गैप */
+    gap: 10px;
+    /* आइकन और टेक्स्ट के बीच गैप */
 }
+
 .header h1 {
-    font-size: 1.4em; /* हेडिंग का आकार */
+    font-size: 1.4em;
+    /* हेडिंग का आकार */
     font-weight: 600;
     margin: 0;
 }
+
 .header .header-icon {
-    font-size: 1.2em; /* आइकन का आकार */
+    font-size: 1.2em;
+    /* आइकन का आकार */
 }
 
 .breadcrumb-container {
@@ -66,13 +80,16 @@ body {
     padding-bottom: 10px;
     border-bottom: 1px solid var(--border-color);
 }
+
 .breadcrumb-container a {
     color: var(--primary-color);
     text-decoration: none;
 }
+
 .breadcrumb-container a:hover {
     text-decoration: underline;
 }
+
 .breadcrumb-container span::before {
     content: "/";
     margin: 0 8px;
@@ -82,42 +99,52 @@ body {
 .filter-bar {
     display: flex;
     flex-wrap: wrap;
-    gap: 15px; /* ग्रुप्स के बीच गैप */
+    gap: 15px;
+    /* ग्रुप्स के बीच गैप */
     padding: 15px;
     background-color: var(--light-bg);
     border: 1px solid var(--border-color);
     border-radius: var(--border-radius);
     margin-bottom: 20px;
-    align-items: flex-end; /* लेबल और इनपुट को अलाइन करने के लिए */
+    align-items: flex-end;
+    /* लेबल और इनपुट को अलाइन करने के लिए */
 }
 
 .filter-group {
     display: flex;
-    flex-direction: column; /* लेबल ऊपर, इनपुट नीचे */
-    gap: 5px; /* लेबल और इनपुट के बीच गैप */
-    flex: 1 1 200px; /* फ्लेक्सिबल चौड़ाई, न्यूनतम 200px */
+    flex-direction: column;
+    /* लेबल ऊपर, इनपुट नीचे */
+    gap: 5px;
+    /* लेबल और इनपुट के बीच गैप */
+    flex: 1 1 200px;
+    /* फ्लेक्सिबल चौड़ाई, न्यूनतम 200px */
 }
+
 .filter-group label {
     font-size: 0.85em;
     font-weight: 500;
     color: var(--text-muted);
 }
+
 .filter-group label i {
     margin-right: 5px;
     color: var(--primary-color);
 }
+
 .filter-group select,
 .filter-group input[type="date"],
 .filter-group input[type="text"] {
     padding: 8px 12px;
     border: 1px solid var(--border-color);
-    border-radius: 4px; /* थोड़ा कम रेडियस */
+    border-radius: 4px;
+    /* थोड़ा कम रेडियस */
     font-size: 0.9em;
     font-family: var(--font-family);
     height: 38px;
     box-sizing: border-box;
     width: 100%;
 }
+
 .filter-group select:focus,
 .filter-group input:focus {
     border-color: var(--primary-color);
@@ -129,38 +156,51 @@ body {
     padding: 8px 15px;
     font-size: 0.9em;
     border: none;
-    border-radius: 4px; /* बटन का रेडियस */
+    border-radius: 4px;
+    /* बटन का रेडियस */
     cursor: pointer;
-    font-weight: 500; /* थोड़ा कम बोल्ड */
+    font-weight: 500;
+    /* थोड़ा कम बोल्ड */
     display: inline-flex;
     align-items: center;
     justify-content: center;
     gap: 6px;
     text-decoration: none;
     transition: background-color 0.2s ease, box-shadow 0.15s ease;
-    height: 38px; /* फिल्टर इनपुट के साथ अलाइन करें */
+    height: 38px;
+    /* फिल्टर इनपुट के साथ अलाइन करें */
     color: var(--white-color);
-    background-color: var(--primary-color); /* डिफ़ॉल्ट बटन रंग */
-}
-.button:hover {
-    background-color: #00418a; /* गहरा प्राइमरी */
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-}
-.button.filter-button { /* यदि फिल्टर बार में बटन के लिए खास स्टाइल चाहिए */
-    background-color: var(--success-color); /* हरा रंग */
-    align-self: flex-end; /* इसे फिल्टर ग्रुप्स के साथ अलाइन करें */
-}
-.button.filter-button:hover {
-    background-color: #218838; /* गहरा हरा */
+    background-color: var(--primary-color);
+    /* डिफ़ॉल्ट बटन रंग */
 }
 
+.button:hover {
+    background-color: #00418a;
+    /* गहरा प्राइमरी */
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.button.filter-button {
+    /* यदि फिल्टर बार में बटन के लिए खास स्टाइल चाहिए */
+    background-color: var(--success-color);
+    /* हरा रंग */
+    align-self: flex-end;
+    /* इसे फिल्टर ग्रुप्स के साथ अलाइन करें */
+}
+
+.button.filter-button:hover {
+    background-color: #218838;
+    /* गहरा हरा */
+}
 
 .table-container {
     width: 100%;
-    overflow-x: auto; /* हॉरिजॉन्टल स्क्रॉल के लिए */
+    overflow-x: auto;
+    /* हॉरिजॉन्टल स्क्रॉल के लिए */
     border: 1px solid var(--border-color);
     border-radius: var(--border-radius);
-    background-color: var(--white-color); /* टेबल का बैकग्राउंड */
+    background-color: var(--white-color);
+    /* टेबल का बैकग्राउंड */
     box-shadow: var(--box-shadow);
 }
 
@@ -169,6 +209,7 @@ table {
     border-collapse: collapse;
     font-size: 0.9em;
 }
+
 table thead th {
     background-color: var(--medium-gray);
     color: var(--secondary-color);
@@ -177,21 +218,27 @@ table thead th {
     font-weight: 600;
     border-bottom: 2px solid var(--border-color);
     white-space: nowrap;
-    position: sticky; /* टेबल हेडर को स्क्रॉल के साथ स्टिकी रखें */
+    position: sticky;
+    /* टेबल हेडर को स्क्रॉल के साथ स्टिकी रखें */
     top: 0;
     z-index: 10;
 }
+
 table tbody td {
     padding: 10px 15px;
     border-bottom: 1px solid var(--border-color);
     vertical-align: middle;
     color: var(--text-color);
 }
+
 table tbody tr:nth-child(even) {
-    background-color: var(--light-bg); /* वैकल्पिक: पंक्ति स्ट्राइपिंग */
+    background-color: var(--light-bg);
+    /* वैकल्पिक: पंक्ति स्ट्राइपिंग */
 }
+
 table tbody tr:hover {
-    background-color: #e6f0fA; /* हल्का नीला होवर */
+    background-color: #e6f0fA;
+    /* हल्का नीला होवर */
 }
 
 .info-message {
@@ -204,8 +251,10 @@ table tbody tr:hover {
     text-align: center;
     margin-top: 20px;
 }
+
 /* एक्सेसिबिलिटी के लिए */
-.sr-only, .visually-hidden {
+.sr-only,
+.visually-hidden {
     position: absolute;
     width: 1px;
     height: 1px;

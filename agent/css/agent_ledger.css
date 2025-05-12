@@ -6,7 +6,9 @@
 .agent-main-content h1 {
     margin-bottom: 15px;
 }
-.agent-main-content > p { /* Intro paragraph */
+
+.agent-main-content > p {
+    /* Intro paragraph */
     margin-bottom: 25px;
     font-size: 0.95em;
     color: var(--agent-text-muted);
@@ -15,13 +17,15 @@
 /* Summary Cards */
 .ledger-summary-cards {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); /* Responsive columns */
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    /* Responsive columns */
     gap: 20px;
     margin-bottom: 30px;
 }
 
 .summary-card {
-    background-color: var(--agent-white); /* From agent_main.css */
+    background-color: var(--agent-white);
+    /* From agent_main.css */
     border: 1px solid var(--agent-border);
     border-radius: var(--agent-radius);
     padding: 20px;
@@ -29,6 +33,7 @@
     box-shadow: var(--agent-shadow);
     transition: transform 0.2s ease;
 }
+
 .summary-card:hover {
     transform: translateY(-3px);
 }
@@ -36,27 +41,42 @@
 .summary-card h3 {
     margin-top: 0;
     margin-bottom: 10px;
-    font-size: 1.05em; /* Slightly smaller heading */
-    color: var(--agent-secondary); /* From agent_main.css */
+    font-size: 1.05em;
+    /* Slightly smaller heading */
+    color: var(--agent-secondary);
+    /* From agent_main.css */
     font-weight: 600;
 }
 
 .summary-card p {
-    font-size: 1.6em; /* Larger amount */
-    font-weight: 700; /* Bold amount */
-    color: var(--agent-primary); /* From agent_main.css */
+    font-size: 1.6em;
+    /* Larger amount */
+    font-weight: 700;
+    /* Bold amount */
+    color: var(--agent-primary);
+    /* From agent_main.css */
     margin: 0;
 }
+
 /* Colors for specific summaries (optional) */
-#totalPaidToAgent { color: var(--agent-danger, #dc3545); } /* Red for payments made */
-#outstandingBalance { color: var(--agent-success, #28a745); } /* Green for positive balance */
+#totalPaidToAgent {
+    color: var(--agent-danger, #dc3545);
+}
+
+/* Red for payments made */
+#outstandingBalance {
+    color: var(--agent-success, #28a745);
+}
+
+/* Green for positive balance */
 
 /* Filter Bar */
 .filter-bar.ledger-filters {
     display: flex;
     flex-wrap: wrap;
     gap: 15px;
-    align-items: flex-end; /* Align items to bottom for better look with labels */
+    align-items: flex-end;
+    /* Align items to bottom for better look with labels */
     margin-bottom: 20px;
     padding: 15px;
     background-color: var(--agent-light-bg);
@@ -66,14 +86,17 @@
 
 .ledger-filters .filter-group {
     display: flex;
-    flex-direction: column; /* Label above input */
+    flex-direction: column;
+    /* Label above input */
     gap: 5px;
 }
+
 .ledger-filters .filter-group label {
     font-size: 0.85em;
     font-weight: 500;
     color: var(--agent-text-muted);
 }
+
 .ledger-filters .filter-group label i {
     margin-right: 4px;
     color: var(--agent-primary);
@@ -85,26 +108,34 @@
     padding: 8px 12px;
     border-radius: 4px;
     border: 1px solid var(--agent-border);
-    font-family: 'Poppins', sans-serif;
+    font-family: 'Roboto', sans-serif;
     font-size: 0.9em;
-    height: 38px; /* Consistent height */
+    height: 38px;
+    /* Consistent height */
     box-sizing: border-box;
     background-color: var(--agent-white);
 }
 
 .ledger-filters #customDateFilters {
-    display: flex; /* Display side-by-side when shown */
-    gap: 10px; /* Gap between date inputs */
-    align-items: center; /* Align items if shown in a row */
-}
-.ledger-filters #customDateFilters label {
-    margin-bottom: 0; /* Remove bottom margin if label is beside input */
-    flex-shrink: 0; /* Prevent label from shrinking */
-}
-.ledger-filters #customDateFilters input[type="date"] {
-    flex-grow: 1; /* Allow inputs to grow */
+    display: flex;
+    /* Display side-by-side when shown */
+    gap: 10px;
+    /* Gap between date inputs */
+    align-items: center;
+    /* Align items if shown in a row */
 }
 
+.ledger-filters #customDateFilters label {
+    margin-bottom: 0;
+    /* Remove bottom margin if label is beside input */
+    flex-shrink: 0;
+    /* Prevent label from shrinking */
+}
+
+.ledger-filters #customDateFilters input[type="date"] {
+    flex-grow: 1;
+    /* Allow inputs to grow */
+}
 
 .ledger-filters .filter-button {
     /* Inherit from agent_main.css .button */
@@ -114,18 +145,20 @@
     height: 38px;
     /* Default primary button color from agent_main.css */
 }
+
 .ledger-filters .filter-button:hover {
     /* Hover effect from agent_main.css */
 }
+
 .ledger-filters .filter-button i {
     /* Icon styles if needed */
 }
 
-
 /* Ledger Table */
 .ledger-table-container {
     width: 100%;
-    max-height: 60vh; /* Max height for the table */
+    max-height: 60vh;
+    /* Max height for the table */
     overflow-y: auto;
     /* Inherit other .table-container styles from agent_main.css */
     border: 1px solid var(--agent-border);
@@ -139,12 +172,14 @@
     /* Inherit table styles from agent_main.css */
     width: 100%;
     border-collapse: collapse;
-    font-size: 0.88em; /* Slightly smaller font */
+    font-size: 0.88em;
+    /* Slightly smaller font */
 }
 
 #agentLedgerTable thead th {
     /* Inherit th styles from agent_main.css */
-    position: sticky; /* Keep header fixed */
+    position: sticky;
+    /* Keep header fixed */
     top: 0;
     z-index: 1;
     background-color: var(--agent-light-bg);
@@ -159,13 +194,16 @@
 #agentLedgerTable td {
     /* Inherit td styles from agent_main.css */
     padding: 9px 12px;
-    border-bottom: 1px solid #f0f0f0; /* Lighter row border */
+    border-bottom: 1px solid #f0f0f0;
+    /* Lighter row border */
     color: var(--agent-text-muted);
     vertical-align: middle;
 }
+
 #agentLedgerTable tbody tr:last-child td {
     border-bottom: none;
 }
+
 #agentLedgerTable tbody tr:hover {
     /* Hover style from agent_main.css */
     background-color: #f1f8ff;
@@ -173,25 +211,32 @@
 
 /* Colors for commission and payment entries */
 #agentLedgerTable .commission-entry td:nth-child(4) {
-    color: var(--agent-success, green); /* Use CSS variable */
+    color: var(--agent-success, green);
+    /* Use CSS variable */
     font-weight: 500;
 }
+
 #agentLedgerTable .payment-entry td:nth-child(4) {
-    color: var(--agent-danger, red); /* Use CSS variable */
+    color: var(--agent-danger, red);
+    /* Use CSS variable */
     font-weight: 500;
 }
+
 /* Balance column */
 #agentLedgerTable td:nth-child(5) {
     font-weight: 600;
     color: var(--agent-text);
 }
-#agentLedgerTable td:nth-child(5).balance-negative { /* Optional: class for negative balance */
+
+#agentLedgerTable td:nth-child(5).balance-negative {
+    /* Optional: class for negative balance */
     color: var(--agent-danger, red);
 }
-#agentLedgerTable td:nth-child(5).balance-positive { /* Optional: class for positive balance */
-     color: var(--agent-success, green);
-}
 
+#agentLedgerTable td:nth-child(5).balance-positive {
+    /* Optional: class for positive balance */
+    color: var(--agent-success, green);
+}
 
 /* Loading and No-Entry Messages */
 #loadingLedgerMessage td,
@@ -203,12 +248,14 @@
     font-style: italic;
     font-size: 1em;
 }
+
 #loadingLedgerMessage i {
     /* Inherit from agent_main.css .loading-state i */
     margin-right: 8px;
 }
 
-.info-message { /* Use styles from agent_main.css */
+.info-message {
+    /* Use styles from agent_main.css */
     /* Example fallback if not in agent_main.css */
     padding: 15px;
     background-color: #e9ecef;
