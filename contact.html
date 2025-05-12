@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contact Us - Madhav Multiprint</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
+    <link rel="stylesheet" href="css/header-footer.css">
+
+    <link rel="stylesheet" href="css/contact.css">
+</head>
+<body>
+    <header>
+        <nav class="container">
+            <div class="logo">
+                <a href="index.html"><img src="https://i.ibb.co/Z6gKD9Rd/1.png" alt="Madhav Multiprint Logo"></a>
+            </div>
+            <div class="nav-links">
+                <a href="index.html">Home</a>
+                <a href="products.html">Products</a>
+                <a href="about.html">About Us</a>
+                <a href="contact.html" class="active">Contact</a>
+                <a href="cart.html"><i class="fas fa-shopping-cart"></i> Cart (<span id="cart-count">0</span>)</a>
+                <a href="/admin/login.html" class="admin-login-link" target="_blank">Admin Login</a>
+            </div>
+            <button class="mobile-menu-toggle" aria-label="Toggle menu"><i class="fas fa-bars"></i></button>
+        </nav>
+    </header>
+
+    <main>
+        <section id="contact-cover" class="page-cover contact-cover-image">
+            <div class="container cover-content">
+                <h1>Get In Touch</h1>
+                <p>We're ready to assist with your printing requirements.</p>
+            </div>
+        </section>
+
+        <div class="container contact-page-container">
+            <p class="contact-intro">
+                Have questions, need a quote, or want to discuss a project?
+                Use the form below or reach out through our contact details. We aim to respond promptly.
+            </p>
+
+            <div class="contact-layout">
+                <form id="contact-form">
+                    <h3><i class="fas fa-paper-plane fa-fw"></i> Send Us a Message</h3>
+                    <div class="form-group">
+                        <label for="name">Your Name <span class="required">*</span>:</label>
+                        <input type="text" id="name" name="name" required placeholder="Enter your full name">
+                    </div>
+                    <div class="form-group">
+                        <label for="email">Your Email <span class="required">*</span>:</label>
+                        <input type="email" id="email" name="email" required placeholder="Enter your email address">
+                    </div>
+                    <div class="form-group">
+                        <label for="phone">Phone Number:</label>
+                        <input type="tel" id="phone" name="phone" placeholder="Enter your phone number (optional)">
+                    </div>
+                    <div class="form-group">
+                        <label for="subject">Subject:</label>
+                        <input type="text" id="subject" name="subject" placeholder="What is your message about?">
+                    </div>
+                    <div class="form-group">
+                        <label for="message">Message <span class="required">*</span>:</label>
+                        <textarea id="message" name="message" rows="6" required placeholder="Enter your message or query here..."></textarea>
+                    </div>
+                    <button type="submit" class="button-primary">Send Message</button>
+                    <div id="contact-form-status" style="margin-top: 15px;"></div>
+                 </form>
+
+                <div class="contact-details">
+                    <h3><i class="fas fa-info-circle fa-fw"></i> Our Information</h3>
+                    <p><i class="fas fa-phone fa-fw"></i> <a href="tel:+919549116541">+91 9549116541</a></p>
+                    <p><i class="fab fa-whatsapp fa-fw"></i> <a href="https://wa.me/919549116541" target="_blank" rel="noopener">+91 9549116541</a> (WhatsApp)</p>
+                    <p><i class="fas fa-envelope fa-fw"></i> <a href="mailto:madhavbtd@gmail.com">madhavbtd@gmail.com</a></p>
+                    <p><i class="fas fa-map-marker-alt fa-fw"></i> Head Office: Moodh Market, Batadu, Barmer (Raj.) 344035</p>
+
+                    <h4><i class="fas fa-clock fa-fw"></i> Working Hours:</h4>
+                    <p class="working-hours">Everyday: 10:00 AM - 10:00 PM</p>
+
+                    <h4 style="margin-top: 20px;"><i class="fas fa-hashtag fa-fw"></i> Connect with Us:</h4>
+                    <div class="social-links">
+                        <a href="https://www.instagram.com/devendra_jaani?igsh=aHhwcXVtb2I1Zmp6&utm_source=qr" target="_blank" rel="noopener" aria-label="Instagram" title="Instagram"><i class="fab fa-instagram"></i></a>
+                        <a href="https://www.facebook.com/share/18fEWTnpZ5/?mibextid=wwXIfr" target="_blank" rel="noopener" aria-label="Facebook" title="Facebook"><i class="fab fa-facebook-f"></i></a>
+                        <a href="https://wa.me/919549116541" target="_blank" rel="noopener" aria-label="WhatsApp" title="WhatsApp"><i class="fab fa-whatsapp"></i></a>
+                    </div>
+
+                    <h4 style="margin-top: 20px;"><i class="fas fa-map-marked-alt fa-fw"></i> Location Map:</h4>
+                    <div id="map-placeholder" class="contact-map">
+                         <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3579.176980531062!2d71.91903867411571!3d26.22337848931269!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x39447d655f6d7f7b%3A0x1b9c1976953f38f3!2sMadhav%20Multiprint!5e0!3m2!1sen!2sin!4v1719318890884!5m2!1sen!2sin" width="600" height="450" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2025 Madhav Multiprint. All Rights Reserved.</p>
+            <p><a href="#">Privacy Policy</a> | <a href="#">Terms & Conditions</a> | <a href="contact.html">Contact</a></p>
+        </div>
+    </footer>
+
+    <script src="js/firebase-config.js" type="module"></script>
+    <script src="js/main.js" type="module" defer></script>
+    </body>
+</html>

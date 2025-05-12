@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Your Shopping Cart - Madhav Multiprint</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/header-footer.css">
+    <link rel="stylesheet" href="css/cart.css">
+    <style>
+        /* WhatsApp और कन्फर्मेशन स्टाइल (पहले जैसे) */
+        .button-whatsapp {
+            display: inline-flex; align-items: center; justify-content: center; gap: 10px;
+            padding: 10px 20px; background-color: #25D366; color: white;
+            text-decoration: none; border-radius: 12px; /* Updated border-radius */
+            font-weight: 600; font-size: 1em; margin-top: 15px; border: none; cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+        .button-whatsapp:hover { background-color: #1DAE50; }
+        .button-whatsapp i { font-size: 1.2em; }
+
+        #order-status-message {
+            text-align: center; padding: 20px 25px; margin-top: 20px;
+            border-radius: 12px; /* Updated border-radius */
+            font-size: 1.05em; line-height: 1.7;
+        }
+        #order-status-message.success {
+             background-color: #d1e7dd; color: #0f5132; border: 1px solid #badbcc;
+        }
+         #order-status-message.success h4 {
+             margin-top: 0; margin-bottom: 15px; font-size: 1.4em; color: #0a4226; font-weight: 600;
+             display: flex; align-items: center; justify-content: center; gap: 10px;
+         }
+         #order-status-message.success p { margin-bottom: 12px; }
+
+         #order-status-message.error {
+              background-color: #f8d7da; color: #842029; border: 1px solid #f5c2c7;
+         }
+         /* Add info class if needed */
+         #order-status-message.info {
+             background-color: #cff4fc; color: #055160; border: 1px solid #b6effb;
+         }
+
+         /* Utility for icons before text */
+         .icon-before { margin-right: 8px; }
+    </style>
+</head>
+<body>
+    <header>
+        <nav class="container">
+            <div class="logo">
+                <a href="index.html"><img src="https://i.ibb.co/Z6gKD9Rd/1.png" alt="Madhav Multiprint Logo"></a>
+            </div>
+            <div class="nav-links">
+                <a href="index.html">Home</a>
+                <a href="products.html">Products</a>
+                <a href="about.html">About Us</a>
+                <a href="contact.html">Contact</a>
+                <a href="cart.html" class="active"><i class="fas fa-shopping-cart"></i> Cart (<span id="cart-count">0</span>)</a>
+                <a href="/admin/login.html" class="admin-login-link" target="_blank">Admin Login</a>
+            </div>
+             <button class="mobile-menu-toggle" aria-label="Toggle menu"><i class="fas fa-bars"></i></button>
+        </nav>
+    </header>
+
+    <main class="container cart-page">
+        <h1><i class="fas fa-shopping-cart icon-before"></i>Shopping Cart</h1>
+
+        <div id="order-status-message" style="display: none;">
+            </div>
+
+        <div class="cart-layout">
+
+            <div id="cart-items-section" class="cart-column">
+                <h2><i class="fas fa-list-ul icon-before"></i>Items in Your Cart</h2>
+                <div id="cart-items">
+                    <p class="empty-cart-message" style="display: none;">Your cart is currently empty. <a href="products.html">Continue Shopping</a></p>
+                </div>
+                 <div style="text-align: center; margin-top: 20px;">
+                      <a href="products.html" class="button-secondary"><i class="fas fa-arrow-left"></i> Continue Shopping</a>
+                  </div>
+            </div>
+
+            <form id="order-form" class="cart-column">
+                <h2><i class="fas fa-user-edit icon-before"></i>Your Information & Order</h2>
+
+                <div class="form-section">
+                    <h3 class="form-section-title">Contact Information</h3>
+                    <div class="form-group">
+                        <label for="customer-name">Full Name <span class="required">*</span></label>
+                        <input type="text" id="customer-name" name="customerName" required placeholder="Enter your full name">
+                    </div>
+                    <div class="form-group">
+                        <label for="customer-contact">Contact/WhatsApp Number <span class="required">*</span></label>
+                        <input type="tel" id="customer-contact" name="customerContact" required placeholder="Enter your phone or WhatsApp number">
+                    </div>
+                    <div class="form-group">
+                        <label for="customer-address">Full Delivery Address <span class="required">*</span></label>
+                        <textarea id="customer-address" name="customerAddress" rows="1" required placeholder="Enter your complete delivery address"></textarea>
+                    </div>
+                </div>
+
+                <div id="cart-summary" class="form-section cart-summary-box">
+                     <h3 class="form-section-title">Order Summary</h3>
+                     <div class="summary-line">
+                         <span>Subtotal:</span>
+                         <span id="summary-subtotal">₹0.00</span>
+                     </div>
+                     <div class="summary-line total">
+                         <span>Total Amount:</span>
+                         <span id="summary-total">₹0.00</span>
+                     </div>
+                 </div>
+
+                 <button type="submit" id="submit-order-btn" class="button-primary submit-order-button">
+                     <i class="fas fa-check-circle icon-before"></i> Place Your Order
+                 </button>
+
+            </form> </div> <div class="cart-suggestions" style="display: none;">
+            <h3>Explore Our Products</h3>
+            <p>Your cart is empty, but you can find great products here:</p>
+            <a href="products.html" class="button-primary">View All Products</a>
+        </div>
+
+    </main> <footer>
+        <div class="container">
+             <p>&copy; 2025 Madhav Multiprint. All Rights Reserved.</p>
+             <p><a href="#">Privacy Policy</a> | <a href="#">Terms & Conditions</a> | <a href="contact.html">Contact</a></p>
+         </div>
+    </footer>
+
+    <script src="js/firebase-config.js" type="module"></script>
+    <script src="js/main.js" type="module" defer></script>
+    <script src="js/cart-page-logic.js" type="module" defer></script>
+    </body>
+</html>
