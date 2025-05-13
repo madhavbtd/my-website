@@ -30,7 +30,7 @@ const agentStatusSelect = document.getElementById('agentStatus');
 const categoryPermissionsDiv = document.getElementById('categoryPermissionsCheckboxes');
 const selectAllCategoriesBtn = document.getElementById('selectAllCategoriesBtn');
 const deselectAllCategoriesBtn = document.getElementById('deselectAllCategoriesBtn');
-const agentModalError = documentgetElementById('agentModalError');
+const agentModalError = document.getElementById('agentModalError');
 const filterSearchInput = document.getElementById('agentSearch');
 const sortSelect = document.getElementById('sort-agents');
 const clearFiltersBtn = document.getElementById('clearAgentFiltersBtn');
@@ -349,7 +349,7 @@ function applyAgentFilters() {
 // --- Save Agent Function ---
 async function handleSaveAgent(event) {
     event.preventDefault();
-    if (!db || !doc || !addDoc || !updateDoc || !collection || !serverTimestamp) {
+    if (!db || !doc || !addDoc || !updateDoc || !collection || !serverTimestamp || !auth || !createUserWithEmailAndPassword) {
         showModalError("Error: Database functions missing.");
         return;
     }
@@ -361,11 +361,12 @@ async function handleSaveAgent(event) {
     clearModalError();
 
     try {
-        const authUid = authUidInput?.value.trim(); // Authentication User ID
-        const isEditing = !!editAgentIdInput?.value;
+        const agentId = editAgentIdInput?.value;
+        const isEditing = !!agentId;
         const name = agentNameInput?.value.trim();
         const email = agentEmailInput?.value.trim().toLowerCase();
         const contact = agentContactInput?.value.trim() || null;
+        const password = agentPasswordInput?.value;
         const status = agentStatusSelect?.value;
         const canAddCustomers = canAddCustomersCheckbox?.checked;
 
@@ -388,13 +389,12 @@ async function handleSaveAgent(event) {
 
         // --- Validation ---
         if (!name || !email || !status) throw new Error("Agent Name, Email, and Status are required.");
-        if (!authUid) throw new Error("Authentication User ID is required."); // Authentication User ID
+        if (!isEditing && (!password || password.length < 6)) throw new Error("Password is required for new agents (min 6 characters).");
         if (selectedCategories.length === 0) throw new Error("Please select at least one allowed product category.");
         if (!/\S+@\S+\.\S+/.test(email)) throw new Error("Please enter a valid email address.");
         // --------------------
 
         const agentData = {
-            agentId: authUid, // Authentication User ID as agentId
             name: name,
             name_lowercase: name.toLowerCase(),
             email: email,
@@ -409,26 +409,37 @@ async function handleSaveAgent(event) {
         };
 
         if (isEditing) {
-            console.log(`Updating agent: ${authUid}`); // Authentication User ID
-            const agentRef = doc(db, "agents", authUid); // Authentication User ID as document ID
+            console.log(`Updating agent: ${agentId}`);
+            const agentRef = doc(db, "agents", agentId);
             await updateDoc(agentRef, agentData);
             alert(`Agent "${name}" updated successfully!`);
-            updateAgentRowInTable(authUid, agentData); // Authentication User ID
+
         } else {
-            console.log(`Adding new agent with ID: ${authUid}`); // Authentication User ID
+            console.log(`Adding new agent: ${email}`);
             agentData.createdAt = serverTimestamp();
 
-            // Firestore में एजेंट डेटा बनाएँ
+            // Firebase Authentication में यूज़र बनाएँ
             try {
-                // Use setDoc instead of addDoc to use the authUid as the document ID
-                await setDoc(doc(db, "agents", authUid), agentData); // Authentication User ID as document ID
-                console.log("New agent added to Firestore with ID:", authUid); // Authentication User ID
-                alert(`Agent "${name}" added successfully!`);
-                addNewAgentRowToTable(authUid, agentData); // Authentication User ID
-            } catch (firestoreError) {
-                console.error("Error saving agent to Firestore:", firestoreError);
-                showModalError(`Failed to save agent to Firestore: ${firestoreError.message}`);
-                return;
+                const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+                const user = userCredential.user;
+                console.log("New user created in Auth with UID:", user.uid);
+
+                // Firestore में एजेंट डेटा बनाएँ
+                try {
+                    // Use setDoc instead of addDoc to use the user.uid as the document ID
+                    await setDoc(doc(db, "agents", user.uid), agentData);
+                    console.log("New agent added to Firestore with UID:", user.uid);
+                    alert(`Agent "${name}" added successfully!`);
+                } catch (firestoreError) {
+                    console.error("Error saving agent to Firestore:", firestoreError);
+                    showModalError(`Failed to save agent to Firestore: ${firestoreError.message}`);
+                    return; // महत्वपूर्ण: Authentication में बनाने के बाद Firestore में सहेजने में विफल होने पर आगे न बढ़ें
+                }
+
+            } catch (authError) {
+                console.error("Error creating user in Auth:", authError);
+                showModalError(`Failed to create agent: ${authError.message}`);
+                return; // यदि Authentication में यूज़र बनाने में विफलता होती है, तो Firestore में डेटा नहीं बनाएँ
             }
         }
         closeAgentModal();
@@ -442,59 +453,6 @@ async function handleSaveAgent(event) {
             saveAgentBtn.disabled = false;
             if (saveAgentBtnText) saveAgentBtnText.textContent = originalButtonText;
         }
-    }
-}
-
-function addNewAgentRowToTable(agentId, agentData) {
-    if (!agentTableBody) return;
-    const row = agentTableBody.insertRow();
-    row.setAttribute('data-id', agentId);
-
-    const name = escapeHtml(agentData.name || 'N/A');
-    const email = escapeHtml(agentData.email || 'N/A');
-    const contact = escapeHtml(agentData.contact || '-');
-    const status = escapeHtml(agentData.status || 'inactive');
-    const statusClass = getStatusClass(agentData.status);
-    const canAddCustomersText = agentData.permissions?.includes('canAddCustomers') ? '<i class="fas fa-check-circle"></i> Yes' : '<i class="fas fa-times-circle"></i> No';
-
-    const userTypeText = escapeHtml(agentData.userType || 'N/A');
-
-    row.innerHTML = `
-        <td>${name}</td>
-        <td>${email}</td>
-        <td>${contact}</td>
-        <td>${userTypeText}</td>
-        <td style="text-align:center;"><span class="status-badge ${statusClass}">${status}</span></td>
-        <td style="text-align:center;">${canAddCustomersText}</td>
-        <td style="text-align:center;">
-            <div class="action-buttons-container">
-                <button class="button action-button edit-button" data-action="edit" title="Edit Agent & Permissions">
-                    <i class="fas fa-edit"></i> Edit
-                </button>
-                </div>
-        </td>
-    `;
-
-    // Attach event listener specifically to the edit button of this row
-    const editBtn = row.querySelector('button[data-action="edit"]');
-    if (editBtn) {
-        editBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            openAgentModal('edit', { id: agentId, ...agentData });
-        });
-    }
-}
-
-function updateAgentRowInTable(agentId, agentData) {
-    if (!agentTableBody) return;
-    const row = agentTableBody.querySelector(`tr[data-id="${agentId}"]`);
-    if (row) {
-        row.cells[0].textContent = escapeHtml(agentData.name || 'N/A');
-        row.cells[1].textContent = escapeHtml(agentData.email || 'N/A');
-        row.cells[2].textContent = escapeHtml(agentData.contact || '-');
-        row.cells[3].textContent = escapeHtml(agentData.userType || 'N/A');
-        row.cells[4].innerHTML = `<span class="status-badge ${getStatusClass(agentData.status)}">${escapeHtml(agentData.status || 'inactive')}</span>`;
-        row.cells[5].innerHTML = agentData.permissions?.includes('canAddCustomers') ? '<i class="fas fa-check-circle"></i> Yes' : '<i class="fas fa-times-circle"></i> No';
     }
 }
 
