@@ -346,7 +346,7 @@ function applyAgentFilters() {
 // --- Save Agent Function ---
 async function handleSaveAgent(event) {
     event.preventDefault();
-    if (!db || !doc || !addDoc || !updateDoc || !collection || !serverTimestamp || !auth || !createUserWithEmailAndPassword) { // createUserWithEmailAndPassword जोड़ा गया
+    if (!db || !doc || !addDoc || !updateDoc || !collection || !serverTimestamp || !auth || !createUserWithEmailAndPassword) {
         showModalError("Error: Database functions missing.");
         return;
     }
@@ -363,5 +363,4 @@ async function handleSaveAgent(event) {
         const name = agentNameInput?.value.trim();
         const email = agentEmailInput?.value.trim().toLowerCase();
         const contact = agentContactInput?.value.trim() || null;
-        const password = agentPasswordInput?.value;
-        const status = agentStatus
+        const password = agentPassword
