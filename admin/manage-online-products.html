@@ -47,6 +47,10 @@
   } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
  
 
+  // Import the function
+  import { initializeOnlineProductManagement } from './js/manage-online-products.js';
+ 
+
   const firebaseConfig = {
   apiKey: "AIzaSyBQj5rQmE77kKKGYixP8y3Hcimz8tiAqzQ",
   authDomain: "madhav-multyprint.firebaseapp.com",
@@ -106,12 +110,9 @@
   } else if (user) {
   console.log(`User logged in on ${page}. Initializing Online Product Management.`);
   setTimeout(() => {
-  if (typeof initializeOnlineProductManagement === 'function') {
+  // Now you can call it directly because it's imported
   initializeOnlineProductManagement();
   console.log("Called initializeOnlineProductManagement.");
-  } else {
-  console.error("initializeOnlineProductManagement function not found!");
-  }
   }, 250);
   }
   });
