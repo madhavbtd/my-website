@@ -3,7 +3,8 @@
 import { db } from './firebase-init.js';
 import {
     collection, onSnapshot, query, orderBy, doc,
-    updateDoc, getDoc, getDocs, serverTimestamp, where, limit, setDoc
+    updateDoc, getDoc, getDocs, serverTimestamp, where, limit, setDoc,
+    addDoc // अगर आप एजेंट आईडी ऑटो जेनरेट करना चाहते हैं तो addDoc का उपयोग करें
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 // --- DOM Elements ---
@@ -121,7 +122,7 @@ function openAgentModal(mode = 'add', agentData = null) {
         if (agentModalTitle) agentModalTitle.textContent = `Edit Agent: ${agentData.name || ''}`;
         if (saveAgentBtnText) saveAgentBtnText.textContent = 'Update Agent';
         if (editAgentIdInput) editAgentIdInput.value = agentData.id;
-        if (authUidInput) authUidInput.value = agentData.agentId || ''; // Show agentId in authUidInput
+        if (authUidInput) authUidInput.value = agentData.authUid || ''; // Show authUid
         if (agentNameInput) agentNameInput.value = agentData.name || '';
         if (agentEmailInput) agentEmailInput.value = agentData.email || '';
         if (agentContactInput) agentContactInput.value = agentData.contact || '';
@@ -152,11 +153,6 @@ function openAgentModal(mode = 'add', agentData = null) {
                     checkbox.checked = true;
                 }
             });
-        }
-
-        // Set 'Add Customers' checkbox
-        if (canAddCustomersCheckbox) {
-            canAddCustomersCheckbox.checked = agentData.canAddCustomers || false;
         }
 
         // Check allowed categories
@@ -388,7 +384,7 @@ async function handleSaveAgent(event) {
         }
 
         // --- Validation ---
-        if (!authUid || !name || !email || !status) throw new Error("Authentication User ID, Agent Name, Email, and Status are required.");
+        if (!name || !email || !status) throw new Error("Agent Name, Email, and Status are required.");
         if (!isEditing && (!password || password.length < 6)) throw new Error("Password is required for new agents and must be at least 6 characters.");
 
         // Clear previous errors
@@ -438,11 +434,13 @@ async function handleSaveAgent(event) {
             });
             showModalError("Agent updated successfully!");
         } else {
-            await setDoc(doc(db, "agents", authUid), {
+            // Use addDoc for auto-generated ID
+            const newAgentRef = await addDoc(collection(db, "agents"), {
                 ...agentData,
                 createdAt: serverTimestamp(),
                 updatedAt: serverTimestamp()
             });
+            agentData.id = newAgentRef.id; // Get the auto-generated ID
             showModalError("Agent added successfully!");
         }
 
