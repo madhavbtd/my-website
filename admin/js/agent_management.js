@@ -1,7 +1,7 @@
 // /admin/js/agent_management.js
 
 // Firebase फ़ंक्शंस को firebase-init.js से इम्पोर्ट करें
-import { db, auth, createUserWithEmailAndPassword } from './firebase-init.js';
+import { db, auth } from './firebase-init.js'; // createUserWithEmailAndPassword हटाया गया
 import {
     collection, onSnapshot, query, orderBy, doc, addDoc,
     updateDoc, getDoc, getDocs, serverTimestamp, where, limit, setDoc
@@ -20,6 +20,7 @@ const saveAgentBtn = document.getElementById('saveAgentBtn');
 const saveAgentBtnText = document.getElementById('saveAgentBtnText');
 const agentForm = document.getElementById('agentForm');
 const editAgentIdInput = document.getElementById('editAgentId');
+const agentIdInput = document.getElementById('agentIdInput'); // नई इनपुट फ़ील्ड
 const agentNameInput = document.getElementById('agentName');
 const agentEmailInput = document.getElementById('agentEmail');
 const agentContactInput = document.getElementById('agentContact');
@@ -86,6 +87,7 @@ function openAgentModal(mode = 'add', agentData = null) {
     clearModalError();
     agentForm.reset();
     if (editAgentIdInput) editAgentIdInput.value = '';
+    if (agentIdInput) agentIdInput.value = ''; // नई लाइन
 
     if (categoryPermissionsDiv) {
         const checkboxes = categoryPermissionsDiv.querySelectorAll('input[type="checkbox"]');
@@ -108,6 +110,7 @@ function openAgentModal(mode = 'add', agentData = null) {
         if (agentModalTitle) agentModalTitle.textContent = `Edit Agent: ${agentData.name || ''}`;
         if (saveAgentBtnText) saveAgentBtnText.textContent = 'Update Agent';
         if (editAgentIdInput) editAgentIdInput.value = agentData.id;
+        if (agentIdInput) agentIdInput.value = agentData.agentId || '';  // नई लाइन
         if (agentNameInput) agentNameInput.value = agentData.name || '';
         if (agentEmailInput) agentEmailInput.value = agentData.email || '';
         if (agentContactInput) agentContactInput.value = agentData.contact || '';
@@ -155,7 +158,7 @@ function openAgentModal(mode = 'add', agentData = null) {
                     if (checkbox) {
                         checkbox.checked = true;
                     } else {
-                        console.warn(`Category checkbox not found for saved category: ${categoryName} (Selector: input[value="${sanitizedCategoryName}"])`);
+                        console.warn(`Category checkbox not found for saved category: <span class="math-inline">\{categoryName\} \(Selector\: input\[value\="</span>{sanitizedCategoryName}"])`);
                     }
                 } catch (e) {
                     console.error(`Invalid selector for category checkbox: input[value="${sanitizedCategoryName}"]`, e);
@@ -242,11 +245,11 @@ function displayAgentRow(agentId, agentData) {
     //     : 'None';
 
     row.innerHTML = `
-        <td>${name}</td>
-        <td>${email}</td>
-        <td>${contact}</td>
-        <td>${userTypeText}</td>
-        <td style="text-align:center;"><span class="status-badge ${statusClass}">${status}</span></td>
+        <td><span class="math-inline">\{name\}</td\>
+<td\></span>{email}</td>
+        <td><span class="math-inline">\{contact\}</td\>
+<td\></span>{userTypeText}</td>
+        <td style="text-align:center;"><span class="status-badge <span class="math-inline">\{statusClass\}"\></span>{status}</span></td>
         <td style="text-align:center;">${canAddCustomersText}</td>
         <td style="text-align:center;">
             <div class="action-buttons-container">
@@ -346,7 +349,7 @@ function applyAgentFilters() {
 // --- Save Agent Function ---
 async function handleSaveAgent(event) {
     event.preventDefault();
-    if (!db || !doc || !addDoc || !updateDoc || !collection || !serverTimestamp || !auth || !createUserWithEmailAndPassword) {
+    if (!db || !doc || !addDoc || !updateDoc || !collection || !serverTimestamp) {
         showModalError("Error: Database functions missing.");
         return;
     }
@@ -358,139 +361,4 @@ async function handleSaveAgent(event) {
     clearModalError();
 
     try {
-        const agentId = editAgentIdInput?.value;
-        const isEditing = !!agentId;
-        const name = agentNameInput?.value.trim();
-        const email = agentEmailInput?.value.trim().toLowerCase();
-        const contact = agentContactInput?.value.trim() || null;
-        const password = agentPasswordInput?.value;
-        const status = agentStatusSelect?.value;
-        const canAddCustomers = canAddCustomersCheckbox?.checked;
-
-        const selectedCategories = [];
-        if (categoryPermissionsDiv) {
-            const categoryCheckboxes = categoryPermissionsDiv.querySelectorAll('input[type="checkbox"]:checked');
-            categoryCheckboxes.forEach(cb => selectedCategories.push(cb.value));
-        }
-
-        const userType = document.querySelector('input[name="userType"]:checked')?.value;
-        let permissions = [];
-
-        if (userType === 'agent') {
-            const checkedPermissions = document.querySelectorAll('#agentPermissions input[type="checkbox"]:checked');
-            checkedPermissions.forEach(cb => permissions.push(cb.value));
-        } else if (userType === 'wholesale') {
-            const checkedPermissions = document.querySelectorAll('#wholesalePermissions input[type="checkbox"]:checked');
-            checkedPermissions.forEach(cb => permissions.push(cb.value));
-        }
-
-        // --- Validation ---
-        if (!name || !email || !status) throw new Error("Agent Name, Email, and Status are required.");
-        if (!isEditing && (!password || password.length < 6)) throw new Error("Password is required for new agents (min 6 characters).");
-        if (selectedCategories.length === 0) throw new Error("Please select at least one allowed product category.");
-        if (!/\S+@\S+\.\S+/.test(email)) throw new Error("Please enter a valid email address.");
-        // --------------------
-
-        const agentData = {
-            name: name,
-            name_lowercase: name.toLowerCase(),
-            email: email,
-            contact: contact,
-            status: status,
-            canAddCustomers: canAddCustomers,
-            allowedCategories: selectedCategories,
-            userType: userType,
-            permissions: permissions,
-            updatedAt: serverTimestamp(),
-            role: userType === 'agent' ? 'agent' : 'admin' // Ensure role is set correctly
-        };
-
-        if (isEditing) {
-            console.log(`Updating agent: ${agentId}`);
-            const agentRef = doc(db, "agents", agentId);
-            await updateDoc(agentRef, agentData);
-            alert(`Agent "${name}" updated successfully!`);
-
-        } else {
-            console.log(`Adding new agent: ${email}`);
-            agentData.createdAt = serverTimestamp();
-
-            // Firebase Authentication में यूज़र बनाएँ
-            try {
-                const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-                const user = userCredential.user;
-                console.log("New user created in Auth with UID:", user.uid);
-
-                // Firestore में एजेंट डेटा बनाएँ
-                try {
-                    // Use setDoc instead of addDoc to use the user.uid as the document ID
-                    await setDoc(doc(db, "agents", user.uid), agentData);
-                    console.log("New agent added to Firestore with UID:", user.uid);
-                    alert(`Agent "${name}" added successfully!`);
-                } catch (firestoreError) {
-                    console.error("Error saving agent to Firestore:", firestoreError);
-                    showModalError(`Failed to save agent to Firestore: ${firestoreError.message}`);
-                    return; // महत्वपूर्ण: Authentication में बनाने के बाद Firestore में सहेजने में विफल होने पर आगे न बढ़ें
-                }
-
-            } catch (authError) {
-                console.error("Error creating user in Auth:", authError);
-                showModalError(`Failed to create agent: ${authError.message}`);
-                return; // यदि Authentication में यूज़र बनाने में विफलता होती है, तो Firestore में डेटा नहीं बनाएँ
-            }
-        }
-        closeAgentModal();
-        // वापस एडमिन पेज पर रीडायरेक्ट करें या पेज को रीलोड करें
-        window.location.reload(); // सबसे सरल तरीका
-    } catch (error) {
-        console.error("Error saving agent:", error);
-        showModalError(`Failed to save agent: ${error.message}`);
-    } finally {
-        if (saveAgentBtn) {
-            saveAgentBtn.disabled = false;
-            if (saveAgentBtnText) saveAgentBtnText.textContent = originalButtonText;
-        }
-    }
-}
-
-// --- Initialization ---
-document.addEventListener('DOMContentLoaded', () => {
-    console.log("Admin Agent Management JS Initializing...");
-
-    // Attach Static Listeners
-    if (addNewAgentBtn) addNewAgentBtn.addEventListener('click', () => openAgentModal('add'));
-    if (closeAgentModalBtn) closeAgentModalBtn.addEventListener('click', closeAgentModal);
-    if (cancelAgentBtn) cancelAgentBtn.addEventListener('click', closeAgentModal);
-    if (agentForm) agentForm.addEventListener('submit', handleSaveAgent);
-    if (agentModal) agentModal.addEventListener('click', (e) => { if (e.target === agentModal) closeAgentModal(); });
-
-    // Select/Deselect All Categories
-    if (selectAllCategoriesBtn) selectAllCategoriesBtn.addEventListener('click', () => {
-        if (categoryPermissionsDiv) categoryPermissionsDiv.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = true);
-    });
-    if (deselectAllCategoriesBtn) deselectAllCategoriesBtn.addEventListener('click', () => {
-        if (categoryPermissionsDiv) categoryPermissionsDiv.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = false);
-    });
-
-    // Filter/Sort Listeners
-    if (filterSearchInput) filterSearchInput.addEventListener('input', () => { clearTimeout(searchDebounceTimer); searchDebounceTimer = setTimeout(applyAgentFilters, 300); });
-    if (sortSelect) sortSelect.addEventListener('change', loadAgents); // Firestore query handles sorting
-    if (clearFiltersBtn) clearFiltersBtn.addEventListener('click', () => {
-        if (filterSearchInput) filterSearchInput.value = '';
-        if (sortSelect) sortSelect.value = 'createdAt_desc';
-        loadAgents(); // Reload with default sort and no search
-    });
-
-    // Initial Data Load
-    fetchCategories().then(() => {
-        loadAgents();
-    }).catch(err => {
-        console.error("Failed initial category load, attempting to load agents anyway...");
-        loadAgents();
-    });
-
-    console.log("Admin Agent Management JS Initialized.");
-
-    handleUserTypeChange(); // Initialize display on page load - **moved here**
-
-});
+        const agentId = editAgentIdInput?.value || agentIdInput?.value.trim(); // agentIdInput
