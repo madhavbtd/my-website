@@ -1,171 +1,138 @@
-// ज़रूरी मॉड्यूल्स इम्पोर्ट करें
-const functions = require("firebase-functions"); // Firebase Functions SDK
-const admin = require("firebase-admin");      // Firebase Admin SDK
-const otpGenerator = require("otp-generator"); // OTP Generator लाइब्रेरी
-const nodemailer = require("nodemailer");     // Nodemailer ईमेल भेजने के लिए
+const functions = require("firebase-functions");
+const admin = require("firebase-admin");
+const bcrypt = require("bcrypt");
 
-// Firebase एडमिन SDK को शुरू करें (सिर्फ एक बार)
 admin.initializeApp();
 
-// --- OTP रिक्वेस्ट करने के लिए फंक्शन ---
-// यह फंक्शन मानता है कि पासवर्ड क्लाइंट-साइड (login.js) पर पहले ही वेरीफाई हो चुका है।
-// यह उम्मीद करता है कि सफल पासवर्ड चेक के बाद login.js से userId डेटा में भेजा जाएगा।
-exports.requestOtp = functions.https.onCall(async (data, context) => {
+// === Helper Functions ===
 
-  // 1. login.js से भेजे गए डेटा से यूजर ID प्राप्त करें
-  const userId = data.userId;
-  if (!userId) {
-      console.error("अनुरोध डेटा में यूजर ID गायब है।");
-      throw new functions.https.HttpsError('invalid-argument', 'यूजर ID आवश्यक है।');
+// डेटा को सुरक्षित करने के लिए (उदाहरण के लिए, SQL इंजेक्शन से बचाव)
+function escapeString(str) {
+  if (typeof str !== 'string') return str;
+  return str.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&');
+}
+
+// === API Endpoints ===
+
+// 1. एजेंट बनाने के लिए फ़ंक्शन
+exports.createAgent = functions.https.onCall(async (data, context) => {
+  // प्रमाणीकरण की जाँच करें (केवल व्यवस्थापक ही कर सकते हैं)
+  if (!context.auth || context.auth.token.role !== 'admin') {
+    throw new functions.https.HttpsError('permission-denied', 'Only admins can create agents.');
   }
 
-  console.log(`यूजर ID के लिए OTP का अनुरोध: ${userId}`);
+  // डेटा को सुरक्षित करें और मान्य करें
+  const name = escapeString(data.name);
+  const email = escapeString(data.email);
+  const password = data.password;
+  const permissions = data.permissions || [];
+  const userType = data.userType || 'agent'; // Default to 'agent'
+
+  if (!name || !email || !password) {
+    throw new functions.https.HttpsError('invalid-argument', 'Name, email, and password are required.');
+  }
+
+  if (password.length < 6) {
+    throw new functions.https.HttpsError('invalid-argument', 'Password must be at least 6 characters long.');
+  }
 
   try {
-      // 2. एडमिन SDK का उपयोग करके यूजर का ईमेल प्राप्त करें
-      const userRecord = await admin.auth().getUser(userId);
-      const email = userRecord.email;
-      if (!email) {
-          console.error(`यूजर ${userId} के साथ कोई ईमेल एड्रेस संबद्ध नहीं है।`);
-          throw new functions.https.HttpsError('not-found', 'यूजर ईमेल नहीं मिला।');
-      }
-      console.log(`ईमेल मिला: ${email} यूजर के लिए: ${userId}`);
+    // 1. Firebase Authentication में उपयोगकर्ता बनाएँ
+    const userRecord = await admin.auth().createUser({
+      email: email,
+      password: password,
+    });
+    const uid = userRecord.uid;
 
-      // 3. OTP जनरेट करें (6 अंकों का)
-      const otp = otpGenerator.generate(6, {
-          upperCaseAlphabets: false,
-          specialChars: false,
-          lowerCaseAlphabets: false
-      });
-      console.log(`OTP जनरेट हुआ: ${otp} यूजर के लिए: ${userId}`);
+    // 2. पासवर्ड हैश करें (bcrypt का उपयोग करके)
+    const hashedPassword = await bcrypt.hash(password, 10);
 
-      // 4. एक्सपायरी टाइम सेट करें (उदाहरण: अब से 10 मिनट)
-      const expiryTime = Date.now() + 10 * 60 * 1000; // मिलीसेकंड में 10 मिनट
+    // 3. डेटाबेस में एजेंट सहेजें (उदाहरण: Firestore)
+    const agentData = {
+      name: name,
+      email: email,
+      password: hashedPassword,
+      permissions: permissions,
+      userType: userType,
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      firebaseUid: uid, // Firebase UID
+    };
 
-      // 5. OTP को Firestore में स्टोर करें (या Realtime Database)
-      // सुनिश्चित करें कि आपने अपने Firebase प्रोजेक्ट में Firestore इनेबल किया है
-      const db = admin.firestore();
-      await db.collection('otps').doc(userId).set({
-          otp: otp,
-          email: email, // संभावित रीसेंड संदर्भ के लिए ईमेल स्टोर करें
-          expires: expiryTime
-      });
-      console.log(`OTP Firestore में स्टोर किया गया यूजर के लिए: ${userId}`);
+    await admin.firestore().collection('agents').doc(uid).set(agentData);
 
-      // 6. ईमेल ट्रांसपोर्टर कॉन्फ़िगर करें (Nodemailer उदाहरण)
-      // महत्वपूर्ण: क्रेडेंशियल यहाँ हार्डकोड न करें। Firebase Functions Environment कॉन्फ़िगरेशन का उपयोग करें।
-      const gmailEmail = functions.config().nodemailer?.user;
-      const gmailPassword = functions.config().nodemailer?.pass;
-
-      if (!gmailEmail || !gmailPassword) {
-          console.error("Nodemailer कॉन्फ़िगरेशन गायब है। `firebase functions:config:set nodemailer.user=... nodemailer.pass=...` का उपयोग करके सेट करें");
-          throw new functions.https.HttpsError('internal', 'ईमेल कॉन्फ़िगरेशन त्रुटि।');
-      }
-
-      let transporter = nodemailer.createTransport({
-          service: 'gmail', // Gmail का उदाहरण
-          auth: {
-              user: gmailEmail,
-              pass: gmailPassword, // Gmail के लिए App Password का उपयोग करें यदि 2FA सक्षम है
-          },
-      });
-
-      // 7. ईमेल विकल्प
-      const mailOptions = {
-          from: `"Madhav MultyPrint App" <${gmailEmail}>`, // भेजने वाले का पता (ऐप का नाम बदल सकते हैं)
-          to: email, // प्राप्तकर्ता का ईमेल (यूजर का ईमेल)
-          subject: "आपका लॉगिन OTP", // विषय
-          text: `लॉगिन के लिए आपका वन-टाइम पासवर्ड (OTP) है: ${otp}। यह 10 मिनट के लिए वैध है।`, // टेक्स्ट बॉडी
-          html: `<b>लॉगिन के लिए आपका वन-टाइम पासवर्ड (OTP) है: ${otp}</b>। यह 10 मिनट के लिए वैध है।`, // HTML बॉडी
-      };
-
-      // 8. ईमेल भेजें
-      await transporter.sendMail(mailOptions);
-      console.log(`OTP ईमेल सफलतापूर्वक भेजा गया: ${email}`);
-
-      // 9. क्लाइंट (login.js) को सफलता का संदेश भेजें
-      return { status: 'success', message: 'OTP सफलतापूर्वक आपके ईमेल पर भेजा गया।' };
+    return { message: 'Agent created successfully!', uid: uid };
 
   } catch (error) {
-      console.error("requestOtp फंक्शन में त्रुटि:", error);
-      // HttpsError भेजें ताकि क्लाइंट को सार्थक त्रुटि मिले
-      if (error instanceof functions.https.HttpsError) {
-          throw error; // मौजूदा HttpsError को फिर से भेजें
-      } else {
-          throw new functions.https.HttpsError('internal', 'OTP अनुरोध संसाधित करने में विफल।', error.message);
-      }
+    console.error('Error creating agent:', error);
+    // Firebase Authentication त्रुटियों को संभालें
+    if (error.code === 'auth/email-already-exists') {
+      throw new functions.https.HttpsError('already-exists', 'Email address is already in use.');
+    }
+    throw new functions.https.HttpsError('internal', 'Could not create agent.', error);
   }
 });
 
-
-// --- OTP वेरीफाई करने के लिए फंक्शन ---
-exports.verifyOtp = functions.https.onCall(async (data, context) => {
-  const userId = data.userId; // login.js से भेजा गया यूजर ID
-  const userOtp = data.otp;  // login.js से भेजा गया यूजर द्वारा डाला गया OTP
-
-  // बेसिक जांच: userId और otp मौजूद हैं या नहीं
-  if (!userId || !userOtp) {
-    console.error("verifyOtp अनुरोध में userId या OTP गायब है।");
-    throw new functions.https.HttpsError('invalid-argument', 'यूजर ID और OTP आवश्यक हैं।');
+// 2. एजेंट को अपडेट करने के लिए फ़ंक्शन (वैकल्पिक, यदि आपको इसकी आवश्यकता है)
+exports.updateAgent = functions.https.onCall(async (data, context) => {
+  // प्रमाणीकरण और अनुमति जाँचें (केवल व्यवस्थापक या एजेंट स्वयं ही कर सकते हैं)
+  if (!context.auth || (context.auth.token.role !== 'admin' && context.auth.uid !== data.id)) {
+    throw new functions.https.HttpsError('permission-denied', 'You do not have permission to update this agent.');
   }
 
-  console.log(`OTP वेरीफाई किया जा रहा है यूजर ID के लिए: ${userId}, OTP: ${userOtp}`);
+  // डेटा को सुरक्षित करें और मान्य करें
+  const name = escapeString(data.name);
+  const email = escapeString(data.email);
+  const permissions = data.permissions || [];
+  const userType = data.userType || 'agent';
 
-  // Firestore का रेफरेंस लें
-  const db = admin.firestore();
-  const otpRef = db.collection('otps').doc(userId); // Firestore में OTP डॉक्यूमेंट का पाथ
+  if (!name || !email) {
+    throw new functions.https.HttpsError('invalid-argument', 'Name and email are required.');
+  }
 
   try {
-    // Firestore से OTP डॉक्यूमेंट पढ़ें
-    const otpDoc = await otpRef.get();
+    const updateData = {
+      name: name,
+      email: email,
+      permissions: permissions,
+      userType: userType,
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    };
 
-    // जांचें कि डॉक्यूमेंट मिला या नहीं
-    if (!otpDoc.exists) {
-      console.log(`यूजर ID के लिए कोई OTP डॉक्यूमेंट नहीं मिला: ${userId}`);
-      throw new functions.https.HttpsError('not-found', 'OTP नहीं मिला या पहले ही इस्तेमाल हो चुका है। कृपया दोबारा अनुरोध करें।');
-    }
+    await admin.firestore().collection('agents').doc(data.id).update(updateData);
 
-    // डॉक्यूमेंट से स्टोर किया गया OTP और एक्सपायरी टाइम निकालें
-    const storedOtpData = otpDoc.data();
-    const storedOtp = storedOtpData.otp;
-    const expires = storedOtpData.expires;
-
-    // जांचें कि यूजर का OTP स्टोर किए गए OTP से मेल खाता है या नहीं
-    if (storedOtp !== userOtp) {
-      console.log(`यूजर ID के लिए गलत OTP: ${userId}. डाला गया: ${userOtp}, स्टोर किया गया: ${storedOtp}`);
-      // यहाँ चाहें तो गलत प्रयासों को गिनने का लॉजिक जोड़ सकते हैं
-      throw new functions.https.HttpsError('invalid-argument', 'गलत OTP डाला गया है।');
-    }
-
-    // जांचें कि OTP एक्सपायर तो नहीं हो गया
-    if (Date.now() > expires) {
-      console.log(`यूजर ID के लिए OTP एक्सपायर हो गया: ${userId}.`);
-      await otpRef.delete(); // एक्सपायर OTP को डिलीट करें
-      throw new functions.https.HttpsError('deadline-exceeded', 'OTP एक्सपायर हो गया है। कृपया दोबारा अनुरोध करें।');
-    }
-
-    // --- OTP सही है और एक्सपायर नहीं हुआ ---
-    console.log(`यूजर ID के लिए OTP सफलतापूर्वक वेरीफाई हुआ: ${userId}`);
-
-    // अब जब OTP वेरीफाई हो गया है, तो इसे Firestore से डिलीट कर दें
-    await otpRef.delete();
-    console.log(`यूजर ID के लिए OTP डॉक्यूमेंट डिलीट किया गया: ${userId}`);
-
-    // यूजर के लिए कस्टम ऑथेंटिकेशन टोकन जेनरेट करें
-    console.log(`यूजर ID के लिए कस्टम टोकन जेनरेट किया जा रहा है: ${userId}`);
-    const customToken = await admin.auth().createCustomToken(userId);
-
-    // कस्टम टोकन क्लाइंट (login.js) को वापस भेजें
-    return { status: 'success', token: customToken };
+    return { message: 'Agent updated successfully!' };
 
   } catch (error) {
-    console.error(`यूजर ID के लिए OTP वेरीफाई करने में त्रुटि: ${userId}:`, error);
-    // जानी-पहचानी त्रुटियों को वैसे ही भेजें
-    if (error instanceof functions.https.HttpsError) {
-      throw error;
-    } else {
-      // अनजानी त्रुटियों के लिए सामान्य संदेश भेजें
-      throw new functions.https.HttpsError('internal', 'OTP वेरीफाई करने में विफल।', error.message);
-    }
+    console.error('Error updating agent:', error);
+    throw new functions.https.HttpsError('internal', 'Could not update agent.', error);
   }
 });
+
+// 3. एजेंट को हटाने के लिए फ़ंक्शन (सावधानी बरतें)
+exports.deleteAgent = functions.https.onCall(async (data, context) => {
+  // प्रमाणीकरण और अनुमति जाँचें (केवल व्यवस्थापक ही कर सकते हैं)
+  if (!context.auth || context.auth.token.role !== 'admin') {
+    throw new functions.https.HttpsError('permission-denied', 'Only admins can delete agents.');
+  }
+
+  if (!data.id) {
+    throw new functions.https.HttpsError('invalid-argument', 'Agent ID is required.');
+  }
+
+  try {
+    // 1. Firebase Authentication से उपयोगकर्ता को हटाएँ
+    await admin.auth().deleteUser(data.id);
+
+    // 2. डेटाबेस से एजेंट को हटाएँ
+    await admin.firestore().collection('agents').doc(data.id).delete();
+
+    return { message: 'Agent deleted successfully!' };
+
+  } catch (error) {
+    console.error('Error deleting agent:', error);
+    throw new functions.https.HttpsError('internal', 'Could not delete agent.', error);
+  }
+});
+
+// ... अन्य फ़ंक्शन (जैसे OTP, आदि) ...

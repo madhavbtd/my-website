@@ -13,7 +13,6 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 
     <link rel="stylesheet" href="css/agent_index.css">
-
     <link rel="stylesheet" href="css/agent_management.css">
 
 </head>
@@ -82,33 +81,36 @@
                 <div class="form-grid two-columns">
                     <div class="form-group">
                         <label for="agentName">Agent Name <span class="required-asterisk">*</span></label>
-                        <input type="text" id="agentName" required>
+                        <input type="text" id="agentName" name="name" required>
+                        <div class="error-message" id="nameError"></div>
                     </div>
                     <div class="form-group">
                         <label for="agentEmail">Login Email <span class="required-asterisk">*</span></label>
-                        <input type="email" id="agentEmail" required>
+                        <input type="email" id="agentEmail" name="email" required>
+                        <div class="error-message" id="emailError"></div>
                     </div>
                     <div class="form-group">
                         <label for="agentContact">Contact No</label>
-                        <input type="tel" id="agentContact">
+                        <input type="tel" id="agentContact" name="contact">
                     </div>
                     <div class="form-group" id="agentPasswordGroup">
                         <label for="agentPassword">Password <span id="passwordRequiredSpan"
                                 class="required-asterisk">*</span></label>
-                        <input type="password" id="agentPassword" required minlength="6">
+                        <input type="password" id="agentPassword" name="password" required minlength="6">
                         <small id="passwordHelp">Required for new agents (min 6 characters). Leave blank to keep existing
                             password when editing.</small>
+                        <div class="error-message" id="passwordError"></div>
                     </div>
                     <div class="form-group">
                         <label for="agentStatus">Status <span class="required-asterisk">*</span></label>
-                        <select id="agentStatus" required>
+                        <select id="agentStatus" name="status" required>
                             <option value="active" selected>Active</option>
                             <option value="inactive">Inactive</option>
                         </select>
                     </div>
                     <div class="form-group">
                         <label for="authUidInput">Authentication User ID <span class="required-asterisk">*</span></label>
-                        <input type="text" id="authUidInput" class="form-control" placeholder="Enter Authentication User ID"
+                        <input type="text" id="authUidInput" name="authUid" class="form-control" placeholder="Enter Authentication User ID"
                             required>
                     </div>
 
