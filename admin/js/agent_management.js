@@ -40,7 +40,7 @@ const userTypeWholesaleRadio = document.getElementById('userTypeWholesale');
 const agentPermissionsDiv = document.getElementById('agentPermissions');
 const wholesalePermissionsDiv = document.getElementById('wholesalePermissions');
 const canAddCustomersCheckbox = document.getElementById('canAddCustomersCheckbox');
-const agentIdInput = document.getElementById('agentIdInput'); // Manual Agent ID
+const authUidInput = document.getElementById('authUidInput'); // Authentication User ID
 
 // --- Global State ---
 let availableCategories = [];
@@ -87,7 +87,7 @@ function openAgentModal(mode = 'add', agentData = null) {
     clearModalError();
     agentForm.reset();
     if (editAgentIdInput) editAgentIdInput.value = '';
-    if (agentIdInput) agentIdInput.value = ''; // Manual Agent ID
+    if (authUidInput) authUidInput.value = ''; // Authentication User ID
 
     if (categoryPermissionsDiv) {
         const checkboxes = categoryPermissionsDiv.querySelectorAll('input[type="checkbox"]');
@@ -110,7 +110,7 @@ function openAgentModal(mode = 'add', agentData = null) {
         if (agentModalTitle) agentModalTitle.textContent = `Edit Agent: ${agentData.name || ''}`;
         if (saveAgentBtnText) saveAgentBtnText.textContent = 'Update Agent';
         if (editAgentIdInput) editAgentIdInput.value = agentData.id;
-        if (agentIdInput) agentIdInput.value = agentData.agentId || ''; // Manual Agent ID
+        if (authUidInput) authUidInput.value = agentData.authId || ''; // Authentication User ID
         if (agentNameInput) agentNameInput.value = agentData.name || '';
         if (agentEmailInput) agentEmailInput.value = agentData.email || '';
         if (agentContactInput) agentContactInput.value = agentData.contact || '';
@@ -361,8 +361,8 @@ async function handleSaveAgent(event) {
     clearModalError();
 
     try {
-        const agentId = editAgentIdInput?.value || agentIdInput?.value.trim(); // Manual Agent ID
-        const isEditing = !!agentId;
+        const authUid = authUidInput?.value.trim(); // Authentication User ID
+        const isEditing = !!editAgentIdInput?.value;
         const name = agentNameInput?.value.trim();
         const email = agentEmailInput?.value.trim().toLowerCase();
         const contact = agentContactInput?.value.trim() || null;
@@ -388,13 +388,13 @@ async function handleSaveAgent(event) {
 
         // --- Validation ---
         if (!name || !email || !status) throw new Error("Agent Name, Email, and Status are required.");
-        if (!agentId) throw new Error("Agent ID is required."); // Manual Agent ID
+        if (!authUid) throw new Error("Authentication User ID is required."); // Authentication User ID
         if (selectedCategories.length === 0) throw new Error("Please select at least one allowed product category.");
         if (!/\S+@\S+\.\S+/.test(email)) throw new Error("Please enter a valid email address.");
         // --------------------
 
         const agentData = {
-            agentId: agentId, // Manual Agent ID
+            agentId: authUid, // Authentication User ID as agentId
             name: name,
             name_lowercase: name.toLowerCase(),
             email: email,
@@ -409,22 +409,22 @@ async function handleSaveAgent(event) {
         };
 
         if (isEditing) {
-            console.log(`Updating agent: ${agentId}`); // Manual Agent ID
-            const agentRef = doc(db, "agents", agentId); // Manual Agent ID
+            console.log(`Updating agent: ${authUid}`); // Authentication User ID
+            const agentRef = doc(db, "agents", authUid); // Authentication User ID as document ID
             await updateDoc(agentRef, agentData);
             alert(`Agent "${name}" updated successfully!`);
-            updateAgentRowInTable(agentId, agentData);
+            updateAgentRowInTable(authUid, agentData); // Authentication User ID
         } else {
-            console.log(`Adding new agent with ID: ${agentId}`); // Manual Agent ID
+            console.log(`Adding new agent with ID: ${authUid}`); // Authentication User ID
             agentData.createdAt = serverTimestamp();
 
             // Firestore में एजेंट डेटा बनाएँ
             try {
-                // Use setDoc instead of addDoc to use the agentId as the document ID
-                await setDoc(doc(db, "agents", agentId), agentData); // Manual Agent ID
-                console.log("New agent added to Firestore with ID:", agentId); // Manual Agent ID
+                // Use setDoc instead of addDoc to use the authUid as the document ID
+                await setDoc(doc(db, "agents", authUid), agentData); // Authentication User ID as document ID
+                console.log("New agent added to Firestore with ID:", authUid); // Authentication User ID
                 alert(`Agent "${name}" added successfully!`);
-                addNewAgentRowToTable(agentId, agentData);
+                addNewAgentRowToTable(authUid, agentData); // Authentication User ID
             } catch (firestoreError) {
                 console.error("Error saving agent to Firestore:", firestoreError);
                 showModalError(`Failed to save agent to Firestore: ${firestoreError.message}`);
