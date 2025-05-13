@@ -1,7 +1,7 @@
 // /admin/js/agent_management.js
 
 // Firebase फ़ंक्शंस को firebase-init.js से इम्पोर्ट करें
-import { db, auth } from './firebase-init.js'; // createUserWithEmailAndPassword हटाया गया
+import { db, auth, createUserWithEmailAndPassword } from './firebase-init.js';
 import {
     collection, onSnapshot, query, orderBy, doc, addDoc,
     updateDoc, getDoc, getDocs, serverTimestamp, where, limit, setDoc
@@ -20,7 +20,6 @@ const saveAgentBtn = document.getElementById('saveAgentBtn');
 const saveAgentBtnText = document.getElementById('saveAgentBtnText');
 const agentForm = document.getElementById('agentForm');
 const editAgentIdInput = document.getElementById('editAgentId');
-const agentIdInput = document.getElementById('agentIdInput'); // नई इनपुट फ़ील्ड
 const agentNameInput = document.getElementById('agentName');
 const agentEmailInput = document.getElementById('agentEmail');
 const agentContactInput = document.getElementById('agentContact');
@@ -41,6 +40,7 @@ const userTypeWholesaleRadio = document.getElementById('userTypeWholesale');
 const agentPermissionsDiv = document.getElementById('agentPermissions');
 const wholesalePermissionsDiv = document.getElementById('wholesalePermissions');
 const canAddCustomersCheckbox = document.getElementById('canAddCustomersCheckbox');
+const authUidInput = document.getElementById('authUidInput'); // नया फ़ील्ड
 
 // --- Global State ---
 let availableCategories = [];
@@ -87,7 +87,7 @@ function openAgentModal(mode = 'add', agentData = null) {
     clearModalError();
     agentForm.reset();
     if (editAgentIdInput) editAgentIdInput.value = '';
-    if (agentIdInput) agentIdInput.value = ''; // नई लाइन
+    if (authUidInput) authUidInput.value = ''; // नया फ़ील्ड साफ़ करें
 
     if (categoryPermissionsDiv) {
         const checkboxes = categoryPermissionsDiv.querySelectorAll('input[type="checkbox"]');
@@ -110,7 +110,7 @@ function openAgentModal(mode = 'add', agentData = null) {
         if (agentModalTitle) agentModalTitle.textContent = `Edit Agent: ${agentData.name || ''}`;
         if (saveAgentBtnText) saveAgentBtnText.textContent = 'Update Agent';
         if (editAgentIdInput) editAgentIdInput.value = agentData.id;
-        if (agentIdInput) agentIdInput.value = agentData.agentId || '';  // नई लाइन
+        if (authUidInput) authUidInput.value = agentData.authId || ''; // नया फ़ील्ड भरें
         if (agentNameInput) agentNameInput.value = agentData.name || '';
         if (agentEmailInput) agentEmailInput.value = agentData.email || '';
         if (agentContactInput) agentContactInput.value = agentData.contact || '';
@@ -349,7 +349,7 @@ function applyAgentFilters() {
 // --- Save Agent Function ---
 async function handleSaveAgent(event) {
     event.preventDefault();
-    if (!db || !doc || !addDoc || !updateDoc || !collection || !serverTimestamp) {
+    if (!db || !doc || !addDoc || !updateDoc || !collection || !serverTimestamp || !auth || !createUserWithEmailAndPassword) {
         showModalError("Error: Database functions missing.");
         return;
     }
@@ -361,11 +361,12 @@ async function handleSaveAgent(event) {
     clearModalError();
 
     try {
-        const agentId = editAgentIdInput?.value || agentIdInput?.value.trim() || "TEMP_AGENT_ID"; // परिवर्तन यहाँ
-        const isEditing = !!agentId && agentId !== "TEMP_AGENT_ID"; // परिवर्तन यहाँ
+        const authUid = authUidInput?.value.trim(); // नया फ़ील्ड से वैल्यू प्राप्त करें
+        const isEditing = !!editAgentIdInput?.value;
         const name = agentNameInput?.value.trim();
         const email = agentEmailInput?.value.trim().toLowerCase();
-        const contact = agentContactInput?.value.trim() || "";
+        const contact = agentContactInput?.value.trim() || null;
+        const password = agentPasswordInput?.value;
         const status = agentStatusSelect?.value;
         const canAddCustomers = canAddCustomersCheckbox?.checked;
 
@@ -388,13 +389,15 @@ async function handleSaveAgent(event) {
 
         // --- Validation ---
         if (!name || !email || !status) throw new Error("Agent Name, Email, and Status are required.");
-        // हटाएँ: if (!agentId) throw new Error("Agent ID is required.");
+        if (!isEditing && (!password || password.length < 6)) throw new Error("Password is required for new agents (min 6 characters).");
         if (selectedCategories.length === 0) throw new Error("Please select at least one allowed product category.");
         if (!/\S+@\S+\.\S+/.test(email)) throw new Error("Please enter a valid email address.");
+        if (!authUid) throw new Error("Authentication User ID is required."); // नया Validation
         // --------------------
 
         const agentData = {
-            agentId: agentId,
+            agentId: authUid, // authUid का उपयोग करें
+            authId: authUid, // authUid का उपयोग करें
             name: name,
             name_lowercase: name.toLowerCase(),
             email: email,
@@ -405,35 +408,46 @@ async function handleSaveAgent(event) {
             userType: userType,
             permissions: permissions,
             updatedAt: serverTimestamp(),
-            role: userType === 'agent' ? 'agent' : 'admin',
-            authId: "" // authId को खाली रखें
+            role: userType === 'agent' ? 'agent' : 'admin' // Ensure role is set correctly
         };
 
         if (isEditing) {
-            console.log(`Updating agent: ${agentId}`);
-            const agentRef = doc(db, "agents", agentId);
+            console.log(`Updating agent: ${authUid}`);
+            const agentRef = doc(db, "agents", authUid); // authUid का उपयोग करें
             await updateDoc(agentRef, agentData);
             alert(`Agent "${name}" updated successfully!`);
-            updateAgentRowInTable(agentId, agentData);
+
         } else {
-            console.log(`Adding new agent with ID: ${agentId}`);
+            console.log(`Adding new agent: ${email}`);
             agentData.createdAt = serverTimestamp();
 
-            // Firestore में एजेंट डेटा बनाएँ
+            // Firebase Authentication में यूज़र बनाएँ
             try {
-                await setDoc(doc(db, "agents", agentId), agentData);
-                console.log("New agent added to Firestore with ID:", agentId);
-                alert(`Agent "${name}" added successfully!`);
-                addNewAgentRowToTable(agentId, agentData);
-            } catch (firestoreError) {
-                console.error("Error saving agent to Firestore:", firestoreError);
-                showModalError(`Failed to save agent to Firestore: ${firestoreError.message}`);
-                return;
+                const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+                const user = userCredential.user;
+                console.log("New user created in Auth with UID:", user.uid);
+
+                // Firestore में एजेंट डेटा बनाएँ
+                try {
+                    // Use setDoc instead of addDoc to use the user.uid as the document ID
+                    await setDoc(doc(db, "agents", authUid), agentData); // authUid का उपयोग करें
+                    console.log("New agent added to Firestore with UID:", authUid);
+                    alert(`Agent "${name}" added successfully!`);
+                } catch (firestoreError) {
+                    console.error("Error saving agent to Firestore:", firestoreError);
+                    showModalError(`Failed to save agent to Firestore: ${firestoreError.message}`);
+                    return; // महत्वपूर्ण: Authentication में बनाने के बाद Firestore में सहेजने में विफल होने पर आगे न बढ़ें
+                }
+
+            } catch (authError) {
+                console.error("Error creating user in Auth:", authError);
+                showModalError(`Failed to create agent: ${authError.message}`);
+                return; // यदि Authentication में यूज़र बनाने में विफलता होती है, तो Firestore में डेटा नहीं बनाएँ
             }
         }
-
         closeAgentModal();
-        // window.location.reload(); // हटाएँ (यदि आप टेबल को अपडेट करना चाहते हैं)
+        // वापस एडमिन पेज पर रीडायरेक्ट करें या पेज को रीलोड करें
+        window.location.reload(); // सबसे सरल तरीका
     } catch (error) {
         console.error("Error saving agent:", error);
         showModalError(`Failed to save agent: ${error.message}`);
@@ -442,59 +456,6 @@ async function handleSaveAgent(event) {
             saveAgentBtn.disabled = false;
             if (saveAgentBtnText) saveAgentBtnText.textContent = originalButtonText;
         }
-    }
-}
-
-function addNewAgentRowToTable(agentId, agentData) {
-    if (!agentTableBody) return;
-    const row = agentTableBody.insertRow();
-    row.setAttribute('data-id', agentId);
-
-    const name = escapeHtml(agentData.name || 'N/A');
-    const email = escapeHtml(agentData.email || 'N/A');
-    const contact = escapeHtml(agentData.contact || '-');
-    const status = escapeHtml(agentData.status || 'inactive');
-    const statusClass = getStatusClass(agentData.status);
-    const canAddCustomersText = agentData.permissions?.includes('canAddCustomers') ? '<i class="fas fa-check-circle"></i> Yes' : '<i class="fas fa-times-circle"></i> No';
-
-    const userTypeText = escapeHtml(agentData.userType || 'N/A');
-
-    row.innerHTML = `
-        <td>${name}</td>
-        <td>${email}</td>
-        <td>${contact}</td>
-        <td>${userTypeText}</td>
-        <td style="text-align:center;"><span class="status-badge ${statusClass}">${status}</span></td>
-        <td style="text-align:center;">${canAddCustomersText}</td>
-        <td style="text-align:center;">
-            <div class="action-buttons-container">
-                <button class="button action-button edit-button" data-action="edit" title="Edit Agent & Permissions">
-                    <i class="fas fa-edit"></i> Edit
-                </button>
-                </div>
-        </td>
-    `;
-
-    // Attach event listener specifically to the edit button of this row
-    const editBtn = row.querySelector('button[data-action="edit"]');
-    if (editBtn) {
-        editBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            openAgentModal('edit', { id: agentId, ...agentData });
-        });
-    }
-}
-
-function updateAgentRowInTable(agentId, agentData) {
-    if (!agentTableBody) return;
-    const row = agentTableBody.querySelector(`tr[data-id="${agentId}"]`);
-    if (row) {
-        row.cells[0].textContent = escapeHtml(agentData.name || 'N/A');
-        row.cells[1].textContent = escapeHtml(agentData.email || 'N/A');
-        row.cells[2].textContent = escapeHtml(agentData.contact || '-');
-        row.cells[3].textContent = escapeHtml(agentData.userType || 'N/A');
-        row.cells[4].innerHTML = `<span class="status-badge ${getStatusClass(agentData.status)}">${escapeHtml(agentData.status || 'inactive')}</span>`;
-        row.cells[5].innerHTML = agentData.permissions?.includes('canAddCustomers') ? '<i class="fas fa-check-circle"></i> Yes' : '<i class="fas fa-times-circle"></i> No';
     }
 }
 
