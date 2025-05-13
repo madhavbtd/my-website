@@ -361,8 +361,8 @@ async function handleSaveAgent(event) {
     clearModalError();
 
     try {
-        const agentId = editAgentIdInput?.value || agentIdInput?.value.trim();
-        const isEditing = !!agentId;
+        const agentId = editAgentIdInput?.value || agentIdInput?.value.trim() || "TEMP_AGENT_ID"; // परिवर्तन यहाँ
+        const isEditing = !!agentId && agentId !== "TEMP_AGENT_ID"; // परिवर्तन यहाँ
         const name = agentNameInput?.value.trim();
         const email = agentEmailInput?.value.trim().toLowerCase();
         const contact = agentContactInput?.value.trim() || "";
@@ -388,7 +388,7 @@ async function handleSaveAgent(event) {
 
         // --- Validation ---
         if (!name || !email || !status) throw new Error("Agent Name, Email, and Status are required.");
-        if (!agentId) throw new Error("Agent ID is required.");
+        // हटाएँ: if (!agentId) throw new Error("Agent ID is required.");
         if (selectedCategories.length === 0) throw new Error("Please select at least one allowed product category.");
         if (!/\S+@\S+\.\S+/.test(email)) throw new Error("Please enter a valid email address.");
         // --------------------
