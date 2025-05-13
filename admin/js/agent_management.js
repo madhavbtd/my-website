@@ -361,4 +361,6 @@ async function handleSaveAgent(event) {
     clearModalError();
 
     try {
-        const agentId = editAgentIdInput?.value || agentIdInput?.value.trim(); // agentIdInput
+        const agentId = editAgentIdInput?.value || agentIdInput?.value.trim();
+        const isEditing = !!agentId;
+        const name = agentNameInput?.value
