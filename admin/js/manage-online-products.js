@@ -1,6 +1,6 @@
 // js/manage-online-products.js
 // Updated Version: Layout changes + Diagram Upload + Checkbox Lock/Unlock Logic + Fixes + STOCK MANAGEMENT + BULK SELECT (Step 1 & 2 - Bulk Edit Modal UI & Frontend Data Prep)
-// Includes all previous fixes.
+// Includes all previous fixes and ensures helper functions are declared only once.
 
 // --- Firebase Function Availability Check ---
 // Expecting: window.db, window.auth, window.storage, window.collection, window.onSnapshot, etc.
@@ -152,27 +152,8 @@ let selectedProductIds = new Set();
 
 
 // --- Helper Functions ---
-// --- Helper Functions ---
-function formatCurrency(amount) { const num = Number(amount); return isNaN(num) || num === null || num === undefined ? '-' : `₹ ${num.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`; }
-// --- Helper Functions ---
 function formatCurrency(amount) { const num = Number(amount); return isNaN(num) || num === null || num === undefined ? '-' : `₹ ${num.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`; }
 function escapeHtml(unsafe) { if (typeof unsafe !== 'string') { unsafe = String(unsafe || ''); } return unsafe.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;'); }
-function parseNumericInput(value, allowZero = true, isInteger = false) { // Added isInteger for stock
-    if (value === undefined || value === null) return null;
-    const trimmedValue = String(value).trim();
-    if (trimmedValue === '') return null;
-
-    const num = isInteger ? parseInt(trimmedValue, 10) : parseFloat(trimmedValue);
-
-    if (isNaN(num) || (!allowZero && num <= 0) || (allowZero && num < 0)) {
-        return NaN;
-    }
-    if (isInteger && !Number.isInteger(num)) { // Check if it's a whole number after parsing
-        return NaN;
-    }
-    return num;
-}
-function formatFirestoreTimestamp(timestamp) { if (!timestamp || typeof timestamp.toDate !== 'function') { return '-'; } try { const date = timestamp.toDate(); const options = { day: '2-digit', month: 'short', year: 'numeric' }; return date.toLocaleDateString('en-GB', options).replace(/ /g, ' '); } catch (e) { console.error("Error formatting timestamp:", e); return '-'; } }
 function parseNumericInput(value, allowZero = true, isInteger = false) { // Added isInteger for stock
     if (value === undefined || value === null) return null;
     const trimmedValue = String(value).trim();
@@ -729,7 +710,7 @@ async function handleSaveProduct(event) {
     }
     if (isNaN(minStockLevel) && productMinStockLevelInput?.value.trim() !== '') { // Check if NaN but not empty
         showToast("Please enter a valid whole number for Minimum Stock Level.", 5000);
-        if (saveProductBtn) saveProductBtn.disabled = false; if (saveSpinner) saveSpinner.style.display = 'none'; if (saveIcon) saveIcon.style.display = ''; if (saveText) textSpan.textContent = isEditing ? 'Update Product' : 'Save Product';
+        if (saveProductBtn) saveProductBtn.disabled = false; if (saveSpinner) spinner.style.display = 'none'; if (saveIcon) saveIcon.style.display = ''; if (saveText) textSpan.textContent = isEditing ? 'Update Product' : 'Save Product';
         return;
     }
     // END: Get Stock Data
@@ -1028,8 +1009,7 @@ async function handleSaveBulkEdit() {
               const simplifiedExtraChargeAmount = parseNumericInput(bulkExtraChargeAmountInput?.value.trim());
 
               // Include name/amount if user typed something OR if it should default
-              // >>>>>>>> Please check syntax VERY CAREFULLY around this line in your editor <<<<<<<<<<
-              if (simplifiedExtraChargeName !== '' || (bulkExtraChargeAmountInput?.value.trim() !== '' && !isNaN(simplifiedExtraChargeAmount))) { // Added NaN check here
+              if (simplifiedExtraChargeName !== '' || bulkExtraChargeAmountInput?.value.trim() !== '') {
                    simplifiedExtraChargePayload.name = simplifiedExtraChargeName || 'Additional Charge';
                    simplifiedExtraChargePayload.amount = (simplifiedExtraChargeAmount !== null && !isNaN(simplifiedExtraChargeAmount)) ? simplifiedExtraChargeAmount : 0;
                    simplifiedPricingPayload.extraCharge = simplifiedExtraChargePayload;
