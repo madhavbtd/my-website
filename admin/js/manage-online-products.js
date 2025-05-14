@@ -154,7 +154,25 @@ let selectedProductIds = new Set();
 // --- Helper Functions ---
 // --- Helper Functions ---
 function formatCurrency(amount) { const num = Number(amount); return isNaN(num) || num === null || num === undefined ? '-' : `₹ ${num.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`; }
+// --- Helper Functions ---
+function formatCurrency(amount) { const num = Number(amount); return isNaN(num) || num === null || num === undefined ? '-' : `₹ ${num.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`; }
 function escapeHtml(unsafe) { if (typeof unsafe !== 'string') { unsafe = String(unsafe || ''); } return unsafe.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;'); }
+function parseNumericInput(value, allowZero = true, isInteger = false) { // Added isInteger for stock
+    if (value === undefined || value === null) return null;
+    const trimmedValue = String(value).trim();
+    if (trimmedValue === '') return null;
+
+    const num = isInteger ? parseInt(trimmedValue, 10) : parseFloat(trimmedValue);
+
+    if (isNaN(num) || (!allowZero && num <= 0) || (allowZero && num < 0)) {
+        return NaN;
+    }
+    if (isInteger && !Number.isInteger(num)) { // Check if it's a whole number after parsing
+        return NaN;
+    }
+    return num;
+}
+function formatFirestoreTimestamp(timestamp) { if (!timestamp || typeof timestamp.toDate !== 'function') { return '-'; } try { const date = timestamp.toDate(); const options = { day: '2-digit', month: 'short', year: 'numeric' }; return date.toLocaleDateString('en-GB', options).replace(/ /g, ' '); } catch (e) { console.error("Error formatting timestamp:", e); return '-'; } }
 function parseNumericInput(value, allowZero = true, isInteger = false) { // Added isInteger for stock
     if (value === undefined || value === null) return null;
     const trimmedValue = String(value).trim();
