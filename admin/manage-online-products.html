@@ -14,7 +14,7 @@
      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
  
      <script type="module">
-         // Firebase Core and Services
+         // Import Firebase functions
          import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
          import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
          import {
@@ -25,15 +25,17 @@
              getStorage, ref, uploadBytesResumable, getDownloadURL, deleteObject
          } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
  
+         // Firebase configuration
          const firebaseConfig = {
-             apiKey: "AIzaSyBQj5rQmE77kKKGYixP8y3Hcimz8tiAqzQ", // सुनिश्चित करें कि यह सही API Key है
+             apiKey: "AIzaSyBQj5rQmE77kKKGYixP8y3Hcimz8tiAqzQ", // Ensure this is the correct API key
              authDomain: "madhav-multyprint.firebaseapp.com",
              projectId: "madhav-multyprint",
-             storageBucket: "madhav-multyprint.firebasestorage.app", // <<< YAHAN BADLAV KIYA GAYA HAI
+             storageBucket: "madhav-multyprint.firebasestorage.app",
              messagingSenderId: "104988349637",
              appId: "1:104988349637:web:faf045b77c6786a4e70cac"
          };
  
+         // Initialize Firebase
          let app;
          let auth;
          let db;
@@ -48,10 +50,13 @@
                  app = window.firebaseApp;
                  console.log("Firebase already initialized (manage-online-products).");
              }
+ 
+             // InitializeFirebase services
              auth = getAuth(app);
              db = getFirestore(app);
              storage = getStorage(app);
  
+             // Make Firebase services globally available
              window.db = db;
              window.auth = auth;
              window.storage = storage;
@@ -73,20 +78,19 @@
  
              console.log("Firebase services made globally available (manage-online-products).");
  
+             // Set up authentication listener
              onAuthStateChanged(auth, (user) => {
                  const page = window.location.pathname.split('/').pop() || 'index.html';
                  if (!user && !page.toLowerCase().includes('login.html')) {
                      window.location.replace('login.html');
                  } else if (user) {
                      console.log(`User logged in on ${page}. Initializing Online Product Management.`);
-                     setTimeout(() => {
-                         if (typeof window.initializeOnlineProductManagement === 'function') {
-                             window.initializeOnlineProductManagement();
-                             console.log("Called initializeOnlineProductManagement.");
-                         } else {
-                             console.error("initializeOnlineProductManagement function not found!");
-                         }
-                     }, 250);
+                     // Use a more reliable way to ensure initializeOnlineProductManagement is defined
+                     if (typeof window.initializeOnlineProductManagement === 'function') {
+                         window.initializeOnlineProductManagement();
+                     } else {
+                         console.error("initializeOnlineProductManagement function not found!");
+                     }
                  }
              });
          } catch (e) {
