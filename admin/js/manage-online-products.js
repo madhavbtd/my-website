@@ -1,7 +1,6 @@
 // js/manage-online-products.js
 // Updated Version: Layout changes + Diagram Upload + Checkbox Lock/Unlock Logic + Fixes + STOCK MANAGEMENT + BULK SELECT (Step 1 & 2 - Bulk Edit Modal UI & Frontend Data Prep)
-// FIX: Corrected typo (bulkGk_rate -> bulkGstRate), hsnSacCode ID, and extra charge amount input value access
-// FIX: Re-checked syntax around potential error line 157 based on user reports - Please double-check this section in your editor!
+// Includes all previous fixes.
 
 // --- Firebase Function Availability Check ---
 // Expecting: window.db, window.auth, window.storage, window.collection, window.onSnapshot, etc.
@@ -153,7 +152,8 @@ let selectedProductIds = new Set();
 
 
 // --- Helper Functions ---
-function formatCurrency(amount) { const num = Number(amount); return isNaN(num) || num === null || num === undefined ? '-' : ₹ ${num.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}; }
+// --- Helper Functions ---
+function formatCurrency(amount) { const num = Number(amount); return isNaN(num) || num === null || num === undefined ? '-' : `₹ ${num.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`; }
 function escapeHtml(unsafe) { if (typeof unsafe !== 'string') { unsafe = String(unsafe || ''); } return unsafe.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;'); }
 function parseNumericInput(value, allowZero = true, isInteger = false) { // Added isInteger for stock
     if (value === undefined || value === null) return null;
@@ -343,7 +343,6 @@ function listenForOnlineProducts() {
         });
     } catch (error) {
         console.error("Error setting up online product listener:", error);
-        // Colspan updated from 9 to 10
         if (productTableBody) productTableBody.innerHTML = `<tr><td colspan="10" style="color: red; text-align: center;">Error setting up listener.</td></tr>`;
     }
 }
@@ -1115,6 +1114,5 @@ async function handleSaveBulkEdit() {
 
     // TODO (Step 3): Add proper error handling and UI feedback during the actual save process.
 }
-
 
 // --- END ---
