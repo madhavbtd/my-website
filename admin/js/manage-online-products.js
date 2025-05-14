@@ -1466,4 +1466,3 @@ async function handleSaveProduct(event) {
         if (isEditing && productBeingEditedData?.stock?.hasOwnProperty('minStockLevel')) {
             productData.stock.minStockLevel = null; // Or delete productData.stock.minStockLevel;
         }
-    }
