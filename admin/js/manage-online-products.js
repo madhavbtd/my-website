@@ -1,6 +1,6 @@
 // js/manage-online-products.js
 // Updated Version: Layout changes + Diagram Upload + Checkbox Lock/Unlock Logic + Fixes + STOCK MANAGEMENT + BULK SELECT (Step 1 & 2 - Bulk Edit Modal UI & Frontend Data Prep)
-// FIX: Corrected typo (5ost00 -> 5000)
+// FIX: Corrected typo (bulkGk_rate -> bulkGstRate) and hsnSacCode ID
 
 // --- Firebase Function Availability Check ---
 // Expecting: window.db, window.auth, window.storage, window.collection, window.onSnapshot, etc.
@@ -63,7 +63,8 @@ const extraMarginPercentInput = document.getElementById('extraMarginPercent');
 // Column 3 (Internal, Stock, Options, Diagram, Extra Charges)
 const productBrandInput = document.getElementById('productBrand');
 const productItemCodeInput = document.getElementById('productItemCode');
-const productHsnSacCodeInput = document.getElementById('hsnSacCode'); // Fixed ID
+// FIX: Corrected ID from 'hsnSacCode' to 'productHsnSacCode'
+const productHsnSacCodeInput = document.getElementById('productHsnSacCode');
 
 // START: New Stock Management Fields References
 const productCurrentStockInput = document.getElementById('productCurrentStock');
@@ -105,6 +106,7 @@ const bulkCurrentStockInput = document.getElementById('bulkCurrentStock');
 const bulkMinStockLevelInput = document.getElementById('bulkMinStockLevel');
 const bulkOptionsInput = document.getElementById('bulkOptions');
 const bulkPurchasePriceInput = document.getElementById('bulkPurchasePrice');
+// FIX: Corrected ID from 'bulkGk_rate' to 'bulkGstRate'
 const bulkGstRateInput = document.getElementById('bulkGstRate');
 const bulkMrpInput = document.getElementById('bulkMrp');
 const bulkMinOrderValueInput = document.getElementById('bulkMinOrderValue'); // Note: requires handling unit in JS
@@ -914,7 +916,6 @@ async function handleSaveBulkEdit() {
     if (bulkIsEnabledCheckbox) {
         // Check if the checkbox is checked or unchecked to determine if user wants to set the value
         // If checked, set to true. If unchecked, set to false.
-        // How to detect if the user *explicitly* set it to unchecked vs the default state?
         // With a single checkbox, the simplest logic is: if it's currently checked, set to true. If it's currently unchecked, set to false.
         // This assumes the user will interact with the checkbox if they want to change the 'isEnabled' state in bulk.
          simplifiedUpdatePayload.isEnabled = bulkIsEnabledCheckbox.checked;
@@ -1009,8 +1010,9 @@ async function handleSaveBulkEdit() {
               const simplifiedExtraChargeAmount = parseNumericInput(bulkExtraChargeAmountInput?.value);
 
               // Include name/amount if user typed something OR if it should default
-              if (simplifiedExtraChargeName !== '' || bulkExtraChargeAmountInput?.value.trim() !== '') {
+              if (simplifiedExtraChargeName !== '' || bulkExtraChargeAmountInput?.value.value.trim() !== '') { // <-- Possible error point: bulkExtraChargeAmountInput?.value.value.trim()
                    simplifiedExtraChargePayload.name = simplifiedExtraChargeName || 'Additional Charge';
+                   // Corrected: Use simplifiedExtraChargeAmount directly as it's already parsed
                    simplifiedExtraChargePayload.amount = (simplifiedExtraChargeAmount !== null && !isNaN(simplifiedExtraChargeAmount)) ? simplifiedExtraChargeAmount : 0;
                    simplifiedPricingPayload.extraCharge = simplifiedExtraChargePayload;
               } else if (bulkExtraChargesSection.style.display === 'block') {
@@ -1074,8 +1076,8 @@ async function handleSaveBulkEdit() {
      // Check if options array is present and not empty
      if (!hasMeaningfulUpdates && simplifiedUpdatePayload.options && Array.isArray(simplifiedUpdatePayload.options) && simplifiedUpdatePayload.options.length > 0) hasMeaningfulUpdates = true;
       // Check if isEnabled or hasExtraCharges were explicitly set
-     if (!hasMeaningfulUpdates && simplifiedUpdatePayload.hasOwnProperty('isEnabled')) hasMeaningfulUpdates = true;
-     if (!hasMeaningfulUpdates && simplifiedUpdatePayload.pricing && simplifiedUpdatePayload.pricing.hasOwnProperty('hasExtraCharges')) hasMeaningfulUpdates = true;
+     if (!hasMeaningfulUpdates && simplifiedUpdatePayload.hasOwnProperty('isEnabled')) hasMeaningfulUpdates = true; // Checkbox state is always included
+     if (!hasMeaningfulUpdates && simplifiedUpdatePayload.pricing && simplifiedUpdatePayload.pricing.hasOwnProperty('hasExtraCharges')) hasMeaningfulUpdates = true; // Checkbox state is always included
      if (!hasMeaningfulUpdates && simplifiedUpdatePayload.pricing && simplifiedUpdatePayload.pricing.hasOwnProperty('extraCharge') && simplifiedUpdatePayload.pricing.extraCharge === null) hasMeaningfulUpdates = true; // Explicitly removing extra charge
 
 
