@@ -563,8 +563,8 @@
          return;
      }
  
-     for (const productId of selectedProductIds) {
-         try {
+     try {
+         const updatePromises = selectedProductIds.map(async (productId) => {
              const productRef = window.doc(window.db, "onlineProducts", productId);
              const updateData = {};
  
@@ -588,19 +588,19 @@
              if (!isNaN(transportCharge)) updateData['pricing.transportCharge'] = transportCharge;
              if (!isNaN(extraMarginPercent)) updateData['pricing.extraMarginPercent'] = extraMarginPercent;
  
-             await window.updateDoc(productRef, updateData);
-             console.log(`Product ${productId} updated.`);
-         } catch (error) {
-             console.error(`Error updating product ${productId}:`, error);
-             showToast(`Error updating product. Check console.`, 5000);
-             return; // Exit if any update fails (or handle errors individually)
-         }
-     }
+             return window.updateDoc(productRef, updateData);
+         });
  
-     showToast("Selected products updated successfully.", 3000);
-     closeBatchUpdateModal();
-     // Optionally, you might want to refresh the product list here
-     listenForOnlineProducts();
+         await Promise.all(updatePromises);
+         showToast("Selected products updated successfully.", 3000);
+         closeBatchUpdateModal();
+         // Optionally, you might want to refresh the product list here
+         listenForOnlineProducts();
+ 
+     } catch (error) {
+         console.error("Error during batch update:", error);
+         showToast("Error updating products. Check console.", 5000);
+     }
  }
  
  // --- Pricing Tab Functions ---
@@ -709,4 +709,5 @@
  }
  
  function resetApplyCheckboxesAndUnlock() {
-     if
+     if (!applyRateCheckboxesContainer) return;
+     applyRateCheckboxesContainer.querySelectorAll('input
