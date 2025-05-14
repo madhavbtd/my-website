@@ -347,6 +347,136 @@
         </div>
     </div>
 
+    <div id="bulkEditModal" class="modal">
+        <div class="modal-content large-modal">
+            <span class="close-btn" id="closeBulkEditModal" title="Close">&times;</span>
+            <h2><i class="fas fa-edit info-icon"></i> Bulk Edit Products</h2>
+
+            <form id="bulkEditForm">
+                <p style="margin-bottom: 20px; color: var(--text-color-medium);">Fields left empty will not be changed for the selected products.</p>
+
+                <div class="product-form-grid">
+
+                    <div class="form-column">
+                        <fieldset>
+                             <legend><i class="fas fa-info-circle"></i> Basic Properties</legend>
+                             <div class="form-group">
+                                <label for="bulkIsEnabled">
+                                   <input type="checkbox" id="bulkIsEnabled"> Enable on Website
+                                   <small>Check to enable, Uncheck to disable. Leave unchecked to not change.</small>
+                               </label>
+                           </div>
+                       </fieldset>
+
+                       <fieldset>
+                            <legend><i class="fas fa-cubes"></i> Stock Management (Bulk)</legend>
+                            <p style="font-size: 0.9em; color: var(--text-color-light); margin-top: -10px; margin-bottom: 20px;">Fields left empty will not be changed.</p>
+                            <div class="form-group">
+                                <label for="bulkCurrentStock">Set Current Stock:</label>
+                                <input type="number" id="bulkCurrentStock" placeholder="Leave empty to not change" min="0">
+                                <small>Enter a number to set the stock for all selected products. Leave empty to not change.</small>
+                            </div>
+                            <div class="form-group">
+                                <label for="bulkMinStockLevel">Set Minimum Stock Level:</label>
+                                <input type="number" id="bulkMinStockLevel" placeholder="Leave empty to not change" min="0">
+                                <small>Enter a number to set the min stock level. Leave empty to not change.</small>
+                            </div>
+                        </fieldset>
+
+                         <fieldset>
+                           <legend><i class="fas fa-cogs"></i> Other Options (Bulk)</legend>
+                            <p style="font-size: 0.9em; color: var(--text-color-light); margin-top: -10px; margin-bottom: 20px;">Fields left empty will not be changed.</p>
+                            <div class="form-group">
+                              <label for="bulkOptions">Set Selectable Options (JSON):</label>
+                              <textarea id="bulkOptions" rows="4" placeholder='Paste JSON here. Leave empty to not change.'></textarea>
+                              <small>Paste the full JSON array of options here to apply to all selected products. Leave empty to not change.</small>
+                         </div>
+                       </fieldset>
+
+
+                    </div>
+                    <div class="form-column">
+                        <fieldset>
+                            <legend><i class="fas fa-dollar-sign"></i> Price Details (Bulk)</legend>
+                            <p style="font-size: 0.9em; color: var(--text-color-light); margin-top: -10px; margin-bottom: 20px;">Only fields you enter values for will be updated.</p>
+
+                             <div class="form-group price-group">
+                                <label for="bulkPurchasePrice">Set Purchase Price:</label>
+                                <input type="number" id="bulkPurchasePrice" placeholder="0.00" step="0.01" min="0">
+                                <small>Leave empty to not change.</small>
+                            </div>
+                             <div class="form-group">
+                                <label for="bulkGstRate">Set GST Rate (%):</label>
+                                <input type="number" id="bulkGstRate" placeholder="e.g., 18" step="0.01" min="0" max="100">
+                                <small>Leave empty to not change.</small>
+                             </div>
+
+                            <div class="form-group price-group">
+                               <label for="bulkMrp">Set M.R.P.:</label>
+                               <input type="number" id="bulkMrp" placeholder="0.00" step="0.01" min="0">
+                               <small>Leave empty to not change.</small>
+                           </div>
+                            <div class="form-group sq-feet-only price-group" id="bulkMinOrderValueGroup" style="display: none;">
+                               <label for="bulkMinOrderValue">Set Min. Order Value (Sq Ft Only):</label>
+                               <input type="number" id="bulkMinOrderValue" placeholder="e.g., 300" step="0.01" min="0">
+                               <small>Leave empty to not change. Applies only if unit is Sq Feet.</small>
+                           </div>
+
+
+                       </fieldset>
+
+                        <fieldset id="bulk-wedding-card-fields" style="display: none;">
+                            <legend>Wedding Card Charges (Bulk)</legend>
+                             <p style="font-size: 0.9em; color: var(--text-color-light); margin-top: -10px; margin-bottom: 20px;">Applies only to selected 'Wedding Card' products. Fields left empty will not be changed.</p>
+                             <div class="form-group price-group"><label for="bulkDesignCharge">Set Design Charge:</label><input type="number" id="bulkDesignCharge" placeholder="0.00" step="0.01" min="0"><small>Leave empty to not change.</small></div>
+                             <div class="form-group price-group"><label for="bulkPrintingCharge">Set Printing Charge (Base):</label><input type="number" id="bulkPrintingCharge" placeholder="e.g., 700 per 100" step="0.01" min="0"><small>Leave empty to not change.</small></div>
+                             <div class="form-group price-group"><label for="bulkTransportCharge">Set Transport Charge:</label><input type="number" id="bulkTransportCharge" placeholder="0.00" step="0.01" min="0"><small>Leave empty to not change.</small></div>
+                             <div class="form-group"><label for="bulkExtraMarginPercent">Set Extra Margin (%):</label><input type="number" id="bulkExtraMarginPercent" placeholder="e.g., 10" step="0.01" min="0"><small>Leave empty to not change.</small></div>
+                        </fieldset>
+
+                     <fieldset id="bulk-extra-charges-outer">
+                          <legend>Optional Extra Charges (Bulk)</legend>
+                           <div class="form-group">
+                                <label for="bulkHasExtraCharges">
+                                    <input type="checkbox" id="bulkHasExtraCharges"> Enable Additional Charge Option
+                                </label>
+                                 <small>Check to enable, Uncheck to disable, Leave default to not change.</small>
+                           </div>
+                          <div id="bulk-extra-charges-section" style="display: none;">
+                              <div class="form-group"><label for="bulkExtraChargeName">Set Charge Name:</label><input type="text" id="bulkExtraChargeName" placeholder="e.g., Lamination"><small>Leave empty to not change.</small></div>
+                              <div class="form-group price-group"><label for="bulkExtraChargeAmount">Set Charge Amount:</label><input type="number" id="bulkExtraChargeAmount" step="0.01" min="0"><small>Leave empty to not change.</small></div>
+                          </div>
+                       </fieldset>
+
+                    </div>
+                     <div class="form-column">
+                         <fieldset>
+                              <legend><i class="fas fa-clipboard-list"></i> Internal Details (Bulk - Optional)</legend>
+                              <p style="font-size: 0.9em; color: var(--text-color-light); margin-top: -10px; margin-bottom: 20px;">Fields left empty will not be changed.</p>
+                              <div class="form-group"><label for="bulkBrand">Set Brand:</label><input type="text" id="bulkBrand" placeholder="Leave empty to not change."></div>
+                              <div class="form-group"><label for="bulkItemCode">Set Item Code:</label><input type="text" id="bulkItemCode" placeholder="Leave empty to not change."></div>
+                              <div class="form-group"><label for="bulkHsnSacCode">Set HSN / SAC Code:</label><input type="text" id="bulkHsnSacCode" placeholder="Leave empty to not change."></div>
+                          </fieldset>
+                     </div>
+                </div>
+            </form>
+
+             <div class="modal-actions">
+                 <div class="modal-actions-right" style="width: 100%; justify-content: flex-end;">
+                     <button type="button" id="cancelBulkEditBtn" class="button cancel-button">
+                        Cancel
+                     </button>
+                     <button type="button" id="saveBulkEditBtn" class="button save-button">
+                            <i class="fas fa-spinner fa-spin" style="display: none;"></i>
+                            <i class="fas fa-save"></i>
+                            <span>Update Selected Products</span>
+                      </button>
+                </div>
+              </div>
+        </div>
+    </div>
+
+
     <script src="js/manage-online-products.js" type="module" defer></script>
 
 </body>

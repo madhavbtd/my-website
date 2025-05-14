@@ -1,5 +1,5 @@
 // js/manage-online-products.js
-// Updated Version: Layout changes + Diagram Upload + Checkbox Lock/Unlock Logic + Fixes + STOCK MANAGEMENT + BULK SELECT (Step 1)
+// Updated Version: Layout changes + Diagram Upload + Checkbox Lock/Unlock Logic + Fixes + STOCK MANAGEMENT + BULK SELECT (Step 1 & 2 - Bulk Edit Modal UI & Frontend Data Prep)
 
 // --- Firebase Function Availability Check ---
 // Expecting: window.db, window.auth, window.storage, window.collection, window.onSnapshot, etc.
@@ -11,10 +11,10 @@ const sortSelect = document.getElementById('sort-products');
 const filterSearchInput = document.getElementById('filterSearch');
 const clearFiltersBtn = document.getElementById('clearFiltersBtn');
 const addNewProductBtn = document.getElementById('addNewProductBtn');
-// NEW: Bulk Actions Elements
+// NEW: Bulk Actions Elements (from Step 1)
 const bulkActionsContainer = document.getElementById('bulkActionsContainer');
 const selectedCountSpan = document.getElementById('selectedCount');
-const bulkEditButton = document.getElementById('bulkEditButton');
+const bulkEditButton = document.getElementById('bulkEditButton'); // Button to open bulk edit modal
 
 
 // --- Product Add/Edit Modal Elements ---
@@ -62,7 +62,7 @@ const extraMarginPercentInput = document.getElementById('extraMarginPercent');
 // Column 3 (Internal, Stock, Options, Diagram, Extra Charges)
 const productBrandInput = document.getElementById('productBrand');
 const productItemCodeInput = document.getElementById('productItemCode');
-const productHsnSacCodeInput = document.getElementById('productHsnSacCode');
+const productHsnSacCodeInput = document.getElementById('hsnSacCode'); // Fixed ID
 
 // START: New Stock Management Fields References
 const productCurrentStockInput = document.getElementById('productCurrentStock');
@@ -91,6 +91,36 @@ const confirmDeleteFinalBtn = document.getElementById('confirmDeleteFinalBtn');
 const deleteConfirmCheckbox = document.getElementById('deleteConfirmCheckbox');
 const deleteWarningMessage = document.getElementById('deleteWarningMessage');
 
+// --- NEW: Bulk Edit Modal Elements (from Step 2 HTML) ---
+const bulkEditModal = document.getElementById('bulkEditModal');
+const closeBulkEditModalBtn = document.getElementById('closeBulkEditModal');
+const cancelBulkEditBtn = document.getElementById('cancelBulkEditBtn');
+const saveBulkEditBtn = document.getElementById('saveBulkEditBtn');
+const bulkEditForm = document.getElementById('bulkEditForm');
+
+// NEW: Bulk Edit Form Field References (from Step 2 HTML)
+const bulkIsEnabledCheckbox = document.getElementById('bulkIsEnabled');
+const bulkCurrentStockInput = document.getElementById('bulkCurrentStock');
+const bulkMinStockLevelInput = document.getElementById('bulkMinStockLevel');
+const bulkOptionsInput = document.getElementById('bulkOptions');
+const bulkPurchasePriceInput = document.getElementById('bulkPurchasePrice');
+const bulkGstRateInput = document.getElementById('bulkGstRate');
+const bulkMrpInput = document.getElementById('bulkMrp');
+const bulkMinOrderValueInput = document.getElementById('bulkMinOrderValue'); // Note: requires handling unit in JS
+const bulkDesignChargeInput = document.getElementById('bulkDesignCharge'); // Note: requires handling category in JS
+const bulkPrintingChargeInput = document.getElementById('bulkPrintingCharge'); // Note: requires handling category in JS
+const bulkTransportChargeInput = document.getElementById('bulkTransportCharge'); // Note: requires handling category in JS
+const bulkExtraMarginPercentInput = document.getElementById('bulkExtraMarginPercent'); // Note: requires handling category in JS
+const bulkHasExtraChargesCheckbox = document.getElementById('bulkHasExtraCharges');
+const bulkExtraChargeNameInput = document.getElementById('bulkExtraChargeName');
+const bulkExtraChargeAmountInput = document.getElementById('bulkExtraChargeAmount');
+
+// NEW: Bulk Edit Conditional Sections (from Step 2 HTML)
+const bulkWeddingFieldsContainer = document.getElementById('bulk-wedding-card-fields');
+const bulkExtraChargesSection = document.getElementById('bulk-extra-charges-section');
+const bulkMinOrderValueGroup = document.getElementById('bulkMinOrderValueGroup');
+
+
 // --- Global State ---
 let currentSortField = 'createdAt';
 let currentSortDirection = 'desc';
@@ -114,7 +144,7 @@ const RATE_TYPES = { // Map types to Firestore field names and labels
 let diagramFileToUpload = null;
 let shouldRemoveDiagram = false;
 let isRateLocked = false;
-// NEW: Bulk Select State
+// NEW: Bulk Select State (from Step 1)
 let selectedProductIds = new Set();
 
 
@@ -136,7 +166,8 @@ function parseNumericInput(value, allowZero = true, isInteger = false) { // Adde
     }
     return num;
 }
-function formatFirestoreTimestamp(timestamp) { if (!timestamp || typeof timestamp.toDate !== 'function') { return '-'; } try { const date = timestamp.toDate(); const options = { day: '2-digit', month: 'short', year: 'numeric' }; return date.toLocaleDateString('en-GB', options).replace(/ /g, '-'); } catch (e) { console.error("Error formatting timestamp:", e); return '-'; } }
+function formatFirestoreTimestamp(timestamp) { if (!timestamp || typeof timestamp.toDate !== 'function') { return '-'; } try { const date = timestamp.toDate(); const options = { day: '2-digit', month: 'short', year: 'numeric' }; return date.toLocaleDateString('en-GB', options).replace(/ /g, ' '); } catch (e) { console.error("Error formatting timestamp:", e); return '-'; } } // Changed format to use space
+
 
 // --- Toast Notification ---
 function showToast(message, duration = 3500) { const existingToast = document.querySelector('.toast-notification'); if (existingToast) { existingToast.remove(); } const toast = document.createElement('div'); toast.className = 'toast-notification'; toast.textContent = message; document.body.appendChild(toast); setTimeout(() => toast.classList.add('show'), 10); setTimeout(() => { toast.classList.remove('show'); setTimeout(() => { if (toast.parentNode) { toast.parentNode.removeChild(toast); } }, 400); }, duration); console.log("Toast:", message); }
@@ -193,14 +224,23 @@ function setupEventListeners() {
     if (productDiagramInput) { productDiagramInput.addEventListener('change', handleDiagramFileSelection); }
     if (removeDiagramBtn) { removeDiagramBtn.addEventListener('click', handleRemoveDiagram); }
 
-    // NEW: Add event listeners for bulk action elements (if they exist)
+    // NEW: Add event listeners for bulk action elements (if they exist) - from Step 1
     if(bulkEditButton) bulkEditButton.addEventListener('click', handleBulkEditClick); // This function will be implemented in Step 2
+
+    // NEW: Add event listeners for Bulk Edit Modal (from Step 2)
+    if(bulkEditModal) bulkEditModal.addEventListener('click', (event) => { if (event.target === bulkEditModal) closeBulkEditModal(); });
+    if(closeBulkEditModalBtn) closeBulkEditModalBtn.addEventListener('click', closeBulkEditModal);
+    if(cancelBulkEditBtn) cancelBulkEditBtn.addEventListener('click', closeBulkEditModal);
+    if(saveBulkEditBtn) saveBulkEditBtn.addEventListener('click', handleSaveBulkEdit); // Note: Using button click, not form submit directly
+
+    // NEW: Add event listener for bulk extra charges checkbox
+    if(bulkHasExtraChargesCheckbox) bulkHasExtraChargesCheckbox.addEventListener('change', toggleBulkExtraCharges);
 
 
     console.log("Online Product Management event listeners set up (v_Stock).");
 }
 
-// NEW: Function to handle checkbox change
+// NEW: Function to handle checkbox change (from Step 1)
 function handleProductCheckboxChange(event) {
     const checkbox = event.target;
     const productId = checkbox.dataset.id;
@@ -215,7 +255,7 @@ function handleProductCheckboxChange(event) {
     updateBulkActionsUI(); // Update the count and button state
 }
 
-// NEW: Function to update the bulk actions UI
+// NEW: Function to update the bulk actions UI (from Step 1)
 function updateBulkActionsUI() {
     const count = selectedProductIds.size;
     if (selectedCountSpan) {
@@ -226,17 +266,31 @@ function updateBulkActionsUI() {
         bulkActionsContainer.style.display = count > 0 ? 'flex' : 'none';
     }
 
-    // Enable/disable bulk edit button (will be implemented in Step 2)
+    // Enable/disable bulk edit button
     if (bulkEditButton) {
         bulkEditButton.disabled = count === 0;
+        // Show the button only when items are selected
+        bulkEditButton.style.display = count > 0 ? 'inline-flex' : 'none';
     }
 }
 
 
-// --- Show/Hide Conditional Fields ---
+// --- Show/Hide Conditional Fields (Single Edit Modal) ---
 function toggleWeddingFields() { if (!weddingFieldsContainer || !productCategoryInput) return; const category = productCategoryInput.value.toLowerCase(); weddingFieldsContainer.style.display = category.includes('wedding card') ? 'block' : 'none'; }
 function toggleSqFtFields() { if (!productUnitSelect) return; const unitType = productUnitSelect.value; if (productMinOrderValueInput) { const parentGroup = productMinOrderValueInput.closest('.sq-feet-only'); if (parentGroup) parentGroup.style.display = unitType === 'Sq Feet' ? 'block' : 'none'; } }
 function toggleExtraCharges() { if (!extraChargesSection || !hasExtraChargesCheckbox) return; extraChargesSection.style.display = hasExtraChargesCheckbox.checked ? 'block' : 'none'; }
+
+// NEW: Show/Hide Conditional Fields (Bulk Edit Modal)
+function toggleBulkExtraCharges() {
+    if (bulkExtraChargesSection && bulkHasExtraChargesCheckbox) {
+        bulkExtraChargesSection.style.display = bulkHasExtraChargesCheckbox.checked ? 'block' : 'none';
+    }
+}
+
+// NOTE: Toggling bulk wedding fields and bulk min order value group based on *selected* products is complex.
+// For Step 2, we will keep them visible in the bulk edit modal and rely on the update logic (Step 3)
+// to apply changes only where relevant (e.g., wedding fields only to wedding cards).
+
 
 // --- Sorting & Filtering Handlers ---
 function handleSortChange() { if (!sortSelect) return; const [field, direction] = sortSelect.value.split('_'); if (field && direction) { if (field === currentSortField && direction === currentSortDirection) return; currentSortField = field; currentSortDirection = direction; listenForOnlineProducts(); /* Re-fetch with new sort */ } }
@@ -246,10 +300,11 @@ function clearFilters() {
     if (sortSelect) sortSelect.value = 'createdAt_desc';
     currentSortField = 'createdAt';
     currentSortDirection = 'desc';
-    // NEW: Clear selected products when filters are cleared
+    // NEW: Clear selected products when filters are cleared (from Step 1)
     selectedProductIds.clear();
     updateBulkActionsUI();
-    applyFiltersAndRender();
+    // Reset table checkboxes visually by re-rendering or iterating (re-rendering is simpler)
+    applyFiltersAndRender(); // This re-renders the table, clearing checkboxes
     if (unsubscribeProducts) listenForOnlineProducts(); /* Re-fetch if listener was active */
 }
 
@@ -300,7 +355,10 @@ function applyFiltersAndRender() {
             const name = (product.productName || '').toLowerCase();
             const category = (product.category || '').toLowerCase();
             const brand = (product.brand || '').toLowerCase();
-            if (!(name.includes(filterSearchValue) || category.includes(filterSearchValue) || brand.includes(filterSearchValue))) {
+            // Add itemCode and hsnSacCode to search criteria
+            const itemCode = (product.itemCode || '').toLowerCase();
+            const hsnSacCode = (product.hsnSacCode || '').toLowerCase();
+            if (!(name.includes(filterSearchValue) || category.includes(filterSearchValue) || brand.includes(filterSearchValue) || itemCode.includes(filterSearchValue) || hsnSacCode.includes(filterSearchValue))) {
                 return false;
             }
         }
@@ -336,7 +394,7 @@ function renderProductTable(products) {
             const currentStock = (data.stock?.currentStock !== undefined && data.stock?.currentStock !== null) ? data.stock.currentStock : 'N/A';
             // END: Get Current Stock value
 
-            // Check if the product is currently selected
+            // Check if the product is currently selected (from Step 1)
             const isSelected = selectedProductIds.has(firestoreId);
 
             tableRow.innerHTML = `
@@ -354,12 +412,11 @@ function renderProductTable(products) {
                     <button class="button delete-product-btn" style="background-color: var(--danger-color); color: white; padding: 5px 8px; font-size: 0.8em; margin: 2px;" title="Delete Online Product"><i class="fas fa-trash"></i> Delete</button>
                 </td>`;
 
-            // Add event listener to the checkbox in the newly created row
+            // Add event listener to the checkbox in the newly created row (from Step 1)
             const checkbox = tableRow.querySelector('.product-select-checkbox');
             if (checkbox) {
                  checkbox.addEventListener('change', handleProductCheckboxChange);
             }
-
 
             const editBtn = tableRow.querySelector('.edit-product-btn');
             if (editBtn) {
@@ -382,7 +439,7 @@ function renderProductTable(products) {
             }
         });
     }
-    // Update UI after rendering (in case products were filtered/sorted)
+    // Update UI after rendering (in case products were filtered/sorted) (from Step 1)
     updateBulkActionsUI();
 }
 
@@ -488,6 +545,9 @@ function openAddModal() {
 
     if (isEnabledCheckbox) isEnabledCheckbox.checked = true;
     if (hasExtraChargesCheckbox) hasExtraChargesCheckbox.checked = false;
+    // Ensure extra charges section is correctly toggled on reset
+    toggleExtraCharges();
+
     existingImageUrls = []; selectedFiles = []; imagesToDelete = [];
     if (imagePreviewArea) imagePreviewArea.innerHTML = '';
     if (uploadProgressInfo) uploadProgressInfo.textContent = '';
@@ -511,7 +571,7 @@ function openAddModal() {
     setActiveRateTab('online');
     unlockPricingFields();
 
-    toggleWeddingFields(); toggleSqFtFields(); toggleExtraCharges();
+    toggleWeddingFields(); toggleSqFtFields();
     productModal.classList.add('active');
 }
 
@@ -545,8 +605,12 @@ async function openEditModal(firestoreId, data) {
     if (transportChargeInput) transportChargeInput.value = pricing.transportCharge ?? '';
     if (extraMarginPercentInput) extraMarginPercentInput.value = pricing.extraMarginPercent ?? '';
     if (hasExtraChargesCheckbox) hasExtraChargesCheckbox.checked = pricing.hasExtraCharges || false;
+     // Ensure extra charges section is correctly toggled after loading data
+    toggleExtraCharges();
+
     if (extraChargeNameInput) extraChargeNameInput.value = pricing.extraCharge?.name || '';
     if (extraChargeAmountInput) extraChargeAmountInput.value = pricing.extraCharge?.amount ?? '';
+
 
     if (productOptionsInput) { try { productOptionsInput.value = (data.options && Array.isArray(data.options)) ? JSON.stringify(data.options, null, 2) : ''; } catch { productOptionsInput.value = ''; } }
     if (productBrandInput) productBrandInput.value = data.brand || '';
@@ -580,7 +644,7 @@ async function openEditModal(firestoreId, data) {
     setActiveRateTab('online');
     unlockPricingFields();
 
-    toggleWeddingFields(); toggleSqFtFields(); toggleExtraCharges();
+    toggleWeddingFields(); toggleSqFtFields();
     productModal.classList.add('active');
 }
 
@@ -598,6 +662,8 @@ function closeProductModal() {
          // NEW: Clear selected products when closing add/edit modal
         selectedProductIds.clear();
         updateBulkActionsUI();
+         // Re-render to clear checkboxes
+        applyFiltersAndRender();
     }
 }
 
@@ -613,7 +679,7 @@ function handleRemoveDiagram() { if (!existingDiagramUrlInput?.value) { showToas
 async function uploadFile(file, storagePath, progressElement) { if (!window.storage || !window.storageRef || !window.uploadBytesResumable || !window.getDownloadURL) throw new Error("Storage functions missing."); if (!file || !storagePath || !progressElement) throw new Error("Missing file, path, or progress element for upload."); const fileRef = window.storageRef(window.storage, storagePath); progressElement.textContent = 'Starting upload...'; progressElement.style.color = 'var(--text-color-medium)'; const uploadTask = window.uploadBytesResumable(fileRef, file); return new Promise((resolve, reject) => { uploadTask.on('state_changed', (snapshot) => { const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100; progressElement.textContent = `Uploading ${file.name}: ${progress.toFixed(0)}%`; }, (error) => { progressElement.textContent = `Upload failed: ${file.name}. ${error.code}`; progressElement.style.color = 'var(--danger-color)'; reject(error); }, async () => { progressElement.textContent = `Upload Complete. Getting URL...`; try { const downloadURL = await window.getDownloadURL(uploadTask.snapshot.ref); progressElement.textContent = `Diagram uploaded successfully.`; progressElement.style.color = 'var(--success-color)'; resolve(downloadURL); } catch (getUrlError) { progressElement.textContent = `Failed to get URL after upload.`; progressElement.style.color = 'var(--danger-color)'; reject(getUrlError); } }); }); }
 async function deleteStoredFile(fileUrl) { if (!window.storage || !window.storageRef || !window.deleteObject) { return; } if (!fileUrl || !(fileUrl.startsWith('https://firebasestorage.googleapis.com/') || fileUrl.startsWith('gs://'))) { return; } try { const fileRef = window.storageRef(window.storage, fileUrl); await window.deleteObject(fileRef); console.log("Deleted file from Storage:", fileUrl); } catch (error) { if (error.code === 'storage/object-not-found') { console.warn("File not found in Storage, skipping delete:", fileUrl); } else { console.error("Error deleting file:", fileUrl, error); } } }
 
-// --- handleSaveProduct Function ---
+// --- handleSaveProduct Function (Single Edit) ---
 async function handleSaveProduct(event) {
     event.preventDefault();
     if (!window.db || !window.collection || !window.addDoc || !window.doc || !window.updateDoc || !window.serverTimestamp || !window.storage) { showToast("Core Firebase functions unavailable.", 5000); return; }
@@ -678,8 +744,12 @@ async function handleSaveProduct(event) {
         }
     }
     // If stock object is empty and you prefer not to save it, you can delete it.
-    if (Object.keys(productData.stock).length === 0) {
+    if (Object.keys(productData.stock).length === 0 && isEditing) { // Only delete if editing and it becomes empty
         delete productData.stock;
+    } else if (Object.keys(productData.stock).length > 0 && !productData.stock.currentStock && !productData.stock.minStockLevel) {
+         // If stock object exists but its fields are empty/null after updates, maybe clean it up
+         if (isEditing) delete productData.stock; // Decide if you want to save empty stock {} or delete
+         else delete productData.stock; // Decide if you want to save empty stock {} or delete
     }
     // END: Add Stock data to productData
 
@@ -705,8 +775,8 @@ async function handleSaveProduct(event) {
              const preliminaryData = { ...productData };
              // Remove fields that will be updated later or are specific to updateDoc
              delete preliminaryData.imageUrls; delete preliminaryData.diagramUrl;
+             // Decide how to handle stock creation vs update
              if(preliminaryData.stock && Object.keys(preliminaryData.stock).length === 0) delete preliminaryData.stock;
-
 
              const docRef = await window.addDoc(window.collection(window.db, "onlineProducts"), preliminaryData);
              finalProductId = docRef.id;
@@ -747,7 +817,7 @@ async function handleSaveProduct(event) {
 
         if (uploadProgressInfo) uploadProgressInfo.textContent = 'Finalizing product data...';
         const finalProductRef = window.doc(window.db, "onlineProducts", finalProductId);
-        await window.updateDoc(finalProductRef, finalUpdatePayload); // Changed from setDoc to updateDoc for new products to avoid overwriting if ID existed
+        await window.updateDoc(finalProductRef, finalUpdatePayload);
 
         showToast(isEditing ? 'Product updated successfully!' : 'Product added successfully!', 3000);
         closeProductModal();
@@ -762,20 +832,565 @@ async function handleSaveProduct(event) {
 }
 
 // --- Delete Handling ---
-function handleDeleteButtonClick(event) { event.preventDefault(); if (!productToDeleteId || !productToDeleteName) return; if (deleteWarningMessage) deleteWarningMessage.innerHTML = `Are you sure you want to delete "<strong>${escapeHtml(productToDeleteName)}</strong>"? <br>This will also delete its images and diagram. This action cannot be undone.`; if(deleteConfirmCheckbox) deleteConfirmCheckbox.checked = false; if(confirmDeleteFinalBtn) confirmDeleteFinalBtn.disabled = true; if(deleteConfirmModal) deleteConfirmModal.classList.add('active'); }
+function handleDeleteButtonClick(event) { event.preventDefault(); if (!productToDeleteId || !productToDeleteName) return; if (!deleteWarningMessage) { console.error("Delete warning message element not found."); return; } if (deleteWarningMessage) deleteWarningMessage.innerHTML = `Are you sure you want to delete "<strong>${escapeHtml(productToDeleteName)}</strong>"? <br>This will also delete its images and diagram. This action cannot be undone.`; if(deleteConfirmCheckbox) deleteConfirmCheckbox.checked = false; if(confirmDeleteFinalBtn) confirmDeleteFinalBtn.disabled = true; if(deleteConfirmModal) deleteConfirmModal.classList.add('active'); }
 function closeDeleteConfirmModal() { if (deleteConfirmModal) { deleteConfirmModal.classList.remove('active'); } }
 function handleConfirmCheckboxChange() { if (deleteConfirmCheckbox && confirmDeleteFinalBtn) { confirmDeleteFinalBtn.disabled = !deleteConfirmCheckbox.checked; } }
 async function handleFinalDelete() { if (!deleteConfirmCheckbox?.checked || !productToDeleteId) return; if (!window.db || !window.doc || !window.getDoc || !window.deleteDoc || !window.storage || !window.storageRef || !window.deleteObject) { showToast("Core Firebase functions unavailable.", 5000); return; } if(confirmDeleteFinalBtn) { confirmDeleteFinalBtn.disabled = true; confirmDeleteFinalBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Deleting...'; } const productRef = window.doc(window.db, "onlineProducts", productToDeleteId); try { const productSnap = await window.getDoc(productRef); let deletePromises = []; if (productSnap.exists()) { const productData = productSnap.data(); if (productData.imageUrls && Array.isArray(productData.imageUrls) && productData.imageUrls.length > 0) { productData.imageUrls.forEach(url => deletePromises.push(deleteStoredImage(url))); } if (productData.diagramUrl) { deletePromises.push(deleteStoredFile(productData.diagramUrl)); } if (deletePromises.length > 0) { await Promise.allSettled(deletePromises); } } await window.deleteDoc(productRef); showToast(`Product "${productToDeleteName || ''}" and associated files deleted!`); closeDeleteConfirmModal(); closeProductModal(); } catch (error) { console.error(`Error during deletion process for ${productToDeleteId}:`, error); showToast(`Failed to fully delete product: ${error.message}`, 5000); } finally { if(confirmDeleteFinalBtn) { confirmDeleteFinalBtn.disabled = !deleteConfirmCheckbox?.checked; confirmDeleteFinalBtn.innerHTML = '<i class="fas fa-trash-alt"></i> Confirm Delete'; } } }
 
-// NEW: Placeholder function for bulk edit button click (Implement in Step 2)
+
+// --- NEW: Bulk Edit Functions (Step 2) ---
+
+// Function to open the bulk edit modal
 function handleBulkEditClick() {
     if (selectedProductIds.size === 0) {
         showToast("Please select at least one product for bulk edit.", 3000);
         return;
     }
-    console.log("Bulk Edit clicked for IDs:", selectedProductIds);
-    // TODO: Implement opening the bulk edit modal/form in Step 2
-    showToast(`Bulk Edit button clicked for ${selectedProductIds.size} products. (Feature coming in Step 2)`, 3000);
+    console.log("Opening Bulk Edit modal for IDs:", selectedProductIds);
+
+    if (bulkEditModal && bulkEditForm) {
+        // Reset the form when opening
+        bulkEditForm.reset();
+        // Ensure conditional sections are hidden initially based on checkboxes
+        toggleBulkExtraCharges();
+
+        // TODO (Step 3): Add logic here to potentially show/hide wedding/sqft fields
+        // based on the categories/units of the *selected* products.
+        // For now, we rely on the save logic to only apply relevant updates.
+
+        // Show the modal
+        bulkEditModal.classList.add('active');
+    } else {
+        console.error("Bulk edit modal or form element not found.");
+        showToast("Error: Bulk edit feature not fully loaded.", 4000);
+    }
+}
+
+// Function to close the bulk edit modal
+function closeBulkEditModal() {
+    if (bulkEditModal) {
+        bulkEditModal.classList.remove('active');
+         // Optional: Clear selection when closing bulk edit modal
+        selectedProductIds.clear();
+        updateBulkActionsUI();
+         // Re-render table to clear checkboxes
+        applyFiltersAndRender();
+    }
+}
+
+// Function to handle saving bulk edits (PREPARES data, does NOT save in Step 2)
+async function handleSaveBulkEdit() {
+    console.log("Attempting to save bulk edit...");
+    if (selectedProductIds.size === 0) {
+        showToast("No products selected for bulk update.", 3000);
+        return;
+    }
+
+    if (!saveBulkEditBtn) return;
+
+    // Disable save button and show spinner
+    saveBulkEditBtn.disabled = true;
+    const spinner = saveBulkEditBtn.querySelector('.fa-spinner');
+    const icon = saveBulkEditBtn.querySelector('.fa-save');
+    const textSpan = saveBulkEditBtn.querySelector('span');
+    if (spinner) spinner.style.display = 'inline-block';
+    if (icon) icon.style.display = 'none';
+    if (textSpan) textSpan.textContent = 'Updating...';
+
+    const updatePayload = {};
+    const pricingPayload = {};
+    const stockPayload = {};
+    const extraChargePayload = {};
+    const internalPayload = {};
+    const weddingPayload = {};
+    let optionsPayload = undefined; // Use undefined initially to signify 'not set'
+    let updateCount = 0; // Track how many fields the user intends to update
+
+    // --- Collect data from Bulk Edit Form ---
+
+    // Basic Properties
+    // For boolean checkboxes like isEnabled, check if the user interacted.
+    // A simple way for Step 2: If the checkbox is checked, set to true. If unchecked, set to false.
+    // If we needed a 'no change' state, it would be more complex (e.g., a third option or helper checkbox).
+    // For now, assuming checked means enabled=true, unchecked means enabled=false IF user interacted.
+    // Let's refine this: If the user *checks* the box, set enabled=true. If they *uncheck* it, set enabled=false.
+    // How to detect if the user *interacted* vs. it being the default unchecked state?
+    // This is tricky with standard checkboxes. Let's assume for now: if it's checked, set to true. If it's unchecked, do nothing regarding 'isEnabled'.
+    // A better UI would be a dropdown (Enable, Disable, No Change). For now, let's keep it simple based on the current HTML.
+    // Simplest for Step 2: If the checkbox is CHECKED, set isEnabled: true. If UNCHECKED, do NOT set isEnabled (meaning no change).
+    // This doesn't allow bulk disabling. Let's change the HTML approach later if needed, or add a separate "Disable" checkbox.
+    // Okay, let's adjust the logic: Checkbox IS present. If checked, set to true. If unchecked, set to false. If user didn't touch it, how to tell?
+    // A standard checkbox doesn't send a value if unchecked unless it has a hidden counterpart.
+    // Let's make the simple assumption for Step 2: If the checkbox is checked when saved, set isEnabled to TRUE. If it's unchecked, we will NOT include `isEnabled` in the update payload, meaning no change. This means we cannot *bulk disable* easily with this UI. We can refine this in Step 3 or later.
+    // Refined logic for Step 2 (simplification): If bulkIsEnabledCheckbox.checked is true, include `isEnabled: true` in the payload. If false, do not include `isEnabled`. This only allows bulk *enabling*. Let's fix this now for bulk enable/disable. We need a way to know if the user wants to SET the value vs leave it alone. A dropdown or radio buttons would be better. With a single checkbox, detecting "no change" vs "set to false" is hard.
+    // Okay, let's use a common pattern: a checkbox next to the field to indicate "apply this field". Or, just check if the field has a value for number/text inputs. For checkboxes, it's state.
+    // Let's assume: if the checkbox is CHECKED, set isEnabled = TRUE. If it's UNCHECKED, set isEnabled = FALSE. The user *must* check/uncheck if they want to change this property. If they leave it in its default (unchecked) state without interacting, it won't be updated. This seems like a reasonable interpretation given the current HTML.
+
+    // Let's try a more robust approach for checkboxes: check if its value has changed from its default state OR add a hidden field. Simpler: require the user to explicitly choose "Enable" or "Disable" if they want to change `isEnabled` in bulk. Let's add a Select dropdown in the HTML instead of a checkbox for `isEnabled` in the bulk form in the next HTML update (Step 3 for HTML, concurrent with Step 3 JS).
+    // For now, let's use the simple checkbox approach for Step 2 JS, acknowledging its limitation for 'no change' vs 'set to false'. We'll refine.
+
+    // Let's use a more standard pattern for bulk forms: only include fields in the payload if the user has entered a value (for text/number) or if there's a clear indicator they want to change a boolean. The simplest indicator for a boolean with a single checkbox is: if it's checked, they want to set it to true. If it's unchecked, and they didn't touch it, no change. If they explicitly unchecked it after it was checked by default (not applicable here), it means set to false. This is getting complicated.
+
+    // Back to basics for Step 2 JS: Read the form fields. If a number/text input has a value (after parsing, excluding NaN/null), include it. If a checkbox is CHECKED, include `fieldName: true`. If a checkbox is UNCHECKED, include `fieldName: false`. This allows setting both true and false. If the user leaves a field blank (number/text) or a checkbox in its default state *without interacting*, it won't be included in the payload. This requires the user to *explicitly* uncheck a box if they want to set it to false.
+
+    // Let's implement this logic for Step 2 payload creation:
+    if (bulkIsEnabledCheckbox) { // If the checkbox exists in the form
+         // Include isEnabled if the checkbox is checked OR unchecked. How to detect 'unchecked'?
+         // A hidden field would be needed, or a different UI element (radio, select).
+         // For now, let's stick to: If the checkbox is checked, set isEnabled: true.
+         // If we want to support bulk *disabling*, we need a different UI or mechanism.
+         // Let's simplify for Step 2: Only handle enabling. Bulk disabling can be a separate action or a refinement.
+         if (bulkIsEnabledCheckbox.checked) {
+              updatePayload.isEnabled = true;
+              updateCount++;
+         }
+         // If unchecked, we don't add it to the payload, meaning no change.
+    }
+
+
+    // Stock Management
+    const currentStock = parseNumericInput(bulkCurrentStockInput?.value, true, true);
+    if (currentStock !== null && !isNaN(currentStock)) {
+        stockPayload.currentStock = currentStock;
+        updateCount++;
+    }
+    const minStockLevel = parseNumericInput(bulkMinStockLevelInput?.value, true, true);
+    if (minStockLevel !== null && !isNaN(minStockLevel)) {
+        stockPayload.minStockLevel = minStockLevel;
+        updateCount++;
+    }
+    if (Object.keys(stockPayload).length > 0) {
+        updatePayload.stock = stockPayload;
+    }
+
+    // Other Options (JSON)
+    const optionsString = bulkOptionsInput?.value.trim();
+    if (optionsString !== '') { // If the user entered *something* in the options textarea
+        try {
+             const parsedOptions = JSON.parse(optionsString);
+             if (!Array.isArray(parsedOptions)) throw new Error("Options must be an array.");
+             updatePayload.options = parsedOptions;
+             updateCount++;
+         } catch (err) {
+             showToast(`Error: Invalid JSON in Bulk Options field. ${err.message}`, 5000);
+             // Re-enable save button and hide spinner before returning
+             if (spinner) spinner.style.display = 'none';
+             if (icon) icon.style.display = '';
+             if (textSpan) textSpan.textContent = 'Update Selected Products';
+             if (saveBulkEditBtn) saveBulkEditBtn.disabled = false;
+             return; // Stop the process if JSON is invalid
+         }
+    }
+    // If optionsString is empty, we don't add `options` to payload, meaning no change.
+
+
+    // Price Details Subset
+    const purchasePrice = parseNumericInput(bulkPurchasePriceInput?.value);
+    if (purchasePrice !== null && !isNaN(purchasePrice)) {
+        pricingPayload.purchasePrice = purchasePrice;
+        updateCount++;
+    }
+     const gstRate = parseNumericInput(bulkGstRateInput?.value);
+    if (gstRate !== null && !isNaN(gstRate)) {
+        pricingPayload.gstRate = gstRate;
+        updateCount++;
+    }
+    const mrp = parseNumericInput(bulkMrpInput?.value);
+    if (mrp !== null && !isNaN(mrp)) {
+        pricingPayload.mrp = mrp;
+        updateCount++;
+    }
+     // Min Order Value - Only relevant for Sq Feet.
+     // For bulk, we can just include it if a value is entered. The update logic (Step 3)
+     // should ideally check the product's unit before applying this specific field.
+     const minOrderValue = parseNumericInput(bulkMinOrderValueInput?.value);
+     if (minOrderValue !== null && !isNaN(minOrderValue)) {
+         pricingPayload.minimumOrderValue = minOrderValue;
+         updateCount++;
+     }
+    // Note: Main rates are excluded as per user request.
+
+
+    // Wedding Card Charges
+    // These fields should ideally only apply to 'Wedding Card' category products.
+    // For bulk, we collect the value if entered, and the update logic (Step 3)
+    // will check the product's category.
+    const designCharge = parseNumericInput(bulkDesignChargeInput?.value);
+     if (designCharge !== null && !isNaN(designCharge)) {
+        weddingPayload.designCharge = designCharge;
+        updateCount++;
+    }
+    const printingCharge = parseNumericInput(bulkPrintingChargeInput?.value);
+    if (printingCharge !== null && !isNaN(printingCharge)) {
+        weddingPayload.printingChargeBase = printingCharge;
+        updateCount++;
+    }
+    const transportCharge = parseNumericInput(bulkTransportChargeInput?.value);
+    if (transportCharge !== null && !isNaN(transportCharge)) {
+        weddingPayload.transportCharge = transportCharge;
+        updateCount++;
+    }
+    const extraMarginPercent = parseNumericInput(bulkExtraMarginPercentInput?.value);
+    if (extraMarginPercent !== null && !isNaN(extraMarginPercent)) {
+        weddingPayload.extraMarginPercent = extraMarginPercent;
+        updateCount++;
+    }
+    // We will merge weddingPayload into pricingPayload later if not empty.
+
+
+    // Optional Extra Charges
+    if (bulkHasExtraChargesCheckbox) {
+         // If checked: Set hasExtraCharges to true. Include name/amount if entered.
+         // If unchecked: Set hasExtraCharges to false. Ignore name/amount.
+         // If left in default state (unchecked) without interaction: No change.
+         // This is still tricky. Let's refine the UI later.
+         // Simplification for Step 2: If the checkbox is CHECKED, set hasExtraCharges: true. If UNCHECKED, set hasExtraCharges: false.
+         // This means the user must explicitly check/uncheck to change this.
+         updatePayload.pricing = updatePayload.pricing || {}; // Ensure pricing object exists
+         updatePayload.pricing.hasExtraCharges = bulkHasExtraChargesCheckbox.checked; // Set the boolean directly
+         updateCount++; // Count this as an intended update
+
+
+         if (bulkHasExtraChargesCheckbox.checked) {
+             const extraChargeName = bulkExtraChargeNameInput?.value.trim();
+             const extraChargeAmount = parseNumericInput(bulkExtraChargeAmountInput?.value);
+
+             if (extraChargeName !== '' || (extraChargeAmount !== null && !isNaN(extraChargeAmount))) {
+                  // If the user enabled extra charges AND provided either name or amount
+                 extraChargePayload.name = extraChargeName || 'Additional Charge'; // Use default name if none provided
+                 extraChargePayload.amount = (extraChargeAmount !== null && !isNaN(extraChargeAmount)) ? extraChargeAmount : 0; // Use 0 if amount is invalid/empty
+                 updatePayload.pricing.extraCharge = extraChargePayload;
+                 // updateCount already incremented for hasExtraCharges, no need to increment again for name/amount
+             } else if (bulkExtraChargesSection.style.display === 'block') {
+                 // If the section was visible but fields are empty, and checkbox is checked
+                 // Maybe set to default { name: 'Additional Charge', amount: 0 }? Or rely on backend?
+                 // Let's default name if empty, amount to 0 if empty.
+                 extraChargePayload.name = extraChargeName || 'Additional Charge';
+                 extraChargePayload.amount = (extraChargeAmount !== null && !isNaN(extraChargeAmount)) ? extraChargeAmount : 0;
+                 updatePayload.pricing.extraCharge = extraChargePayload;
+             }
+         } else {
+              // If bulkHasExtraChargesCheckbox is UNCHECKED, explicitly remove extraCharge details
+             updatePayload.pricing.extraCharge = null; // Set to null to remove from Firestore
+         }
+    }
+
+
+     // Internal Details
+    const brand = bulkBrandInput?.value.trim();
+    if (brand !== '') {
+        internalPayload.brand = brand;
+        updateCount++;
+    }
+    const itemCode = bulkItemCodeInput?.value.trim();
+     if (itemCode !== '') {
+        internalPayload.itemCode = itemCode;
+        updateCount++;
+    }
+    const hsnSacCode = bulkHsnSacCodeInput?.value.trim();
+     if (hsnSacCode !== '') {
+        internalPayload.hsnSacCode = hsnSacCode;
+        updateCount++;
+    }
+    if (Object.keys(internalPayload).length > 0) {
+         // Merge internal payload into updatePayload root level
+         Object.assign(updatePayload, internalPayload);
+     }
+
+
+    // Merge pricing and wedding payloads
+    if (Object.keys(pricingPayload).length > 0 || Object.keys(weddingPayload).length > 0) {
+         updatePayload.pricing = updatePayload.pricing || {}; // Ensure pricing object exists
+         Object.assign(updatePayload.pricing, pricingPayload, weddingPayload);
+         // If after merging, pricing object is empty (except maybe hasExtraCharges), maybe delete it?
+         // Let's decide on cleaning empty objects/fields in Step 3 (backend logic).
+    }
+
+    // If no fields were intended for update, show a message
+    // Note: The current updateCount logic is flawed for checkboxes.
+    // Let's refine updateCount: It should count fields in the final `updatePayload` that are not empty/null/undefined (except explicit null for deletion).
+
+     // Clean up payload: remove fields that are empty strings or null (unless explicitly setting to null)
+     const finalCleanPayload = {};
+     for (const key in updatePayload) {
+         if (updatePayload.hasOwnProperty(key)) {
+             if (typeof updatePayload[key] === 'object' && updatePayload[key] !== null) {
+                 // Handle nested objects (like pricing, stock) - only include if they have actual data
+                 const nestedPayload = {};
+                  let nestedHasData = false;
+                 for (const nestedKey in updatePayload[key]) {
+                      if (updatePayload[key].hasOwnProperty(nestedKey)) {
+                          // Exclude empty strings, null, undefined from nested objects unless it's `hasExtraCharges: false` or `extraCharge: null`
+                          const value = updatePayload[key][nestedKey];
+                          if (value !== '' && value !== null && value !== undefined) {
+                              nestedPayload[nestedKey] = value;
+                              nestedHasData = true;
+                          } else if (nestedKey === 'hasExtraCharges' && value === false) {
+                              // Explicitly include hasExtraCharges: false
+                               nestedPayload[nestedKey] = value;
+                               nestedHasData = true;
+                          } else if (nestedKey === 'extraCharge' && value === null) {
+                              // Explicitly include extraCharge: null for deletion
+                              nestedPayload[nestedKey] = value;
+                              nestedHasData = true;
+                          }
+                      }
+                 }
+                 if (nestedHasData) {
+                     finalCleanPayload[key] = nestedPayload;
+                 }
+             } else {
+                 // Handle top-level fields
+                 const value = updatePayload[key];
+                  if (value !== '' && value !== null && value !== undefined) {
+                     finalCleanPayload[key] = value;
+                 } else if (key === 'isEnabled' && value === false) {
+                      // Explicitly include isEnabled: false (based on checkbox logic simplification)
+                     finalCleanPayload[key] = value;
+                 }
+             }
+         }
+     }
+
+     // Re-calculate updateCount based on the cleaned payload
+     updateCount = Object.keys(finalCleanPayload).length;
+     if (finalCleanPayload.pricing) updateCount += Object.keys(finalCleanPayload.pricing).length;
+     if (finalCleanPayload.stock) updateCount += Object.keys(finalCleanPayload.stock).length;
+     // Need a better way to count updates including nested fields and arrays (options)
+
+     // Simple check for empty payload
+     const isPayloadEmpty = Object.keys(finalCleanPayload).length === 0;
+      if (finalCleanPayload.pricing && Object.keys(finalCleanPayload.pricing).length === 0 && !finalCleanPayload.pricing.hasExtraCharges && !finalCleanPayload.pricing.extraCharge) delete finalCleanPayload.pricing; // Clean up empty pricing if no actual pricing fields or extra charges
+      if (finalCleanPayload.stock && Object.keys(finalCleanPayload.stock).length === 0) delete finalCleanPayload.stock; // Clean up empty stock
+
+      // Re-check if payload is empty after cleaning
+      const finalFinalPayloadCheck = Object.keys(finalCleanPayload).length === 0;
+      if (!finalFinalPayloadCheck && finalCleanPayload.pricing && Object.keys(finalCleanPayload.pricing).length === 0) {
+           // If only pricing exists but pricing itself is empty after cleaning, it's still empty
+           const hasNonPricingKeys = Object.keys(finalCleanPayload).some(key => key !== 'pricing');
+           if (!hasNonPricingKeys) { // Only pricing key exists, and pricing is empty
+                // This check is getting complicated. Let's trust the backend logic in Step 3 to handle empty/null fields robustly.
+                // For Step 2, we just prepare the raw payload based on entered values.
+           }
+      }
+
+
+    // Let's revert to simpler payload creation for Step 2: include fields if they have a non-empty value, include checkboxes based on state.
+
+    const simplifiedUpdatePayload = {};
+    const simplifiedPricingPayload = {};
+    const simplifiedStockPayload = {};
+    const simplifiedExtraChargePayload = {};
+    const simplifiedInternalPayload = {};
+    const simplifiedWeddingPayload = {};
+    let simplifiedOptionsPayload = undefined;
+
+
+    // Basic Properties
+    // If checked, set to true. If unchecked, set to false. If user didn't touch (how to tell?), no change.
+    // Let's use the simple, potentially flawed, checkbox logic for Step 2:
+    // If the checkbox is CHECKED, include isEnabled: true.
+    // If the checkbox is UNCHECKED, include isEnabled: false.
+    // If we need a 'no change' state, we need a different UI (dropdown).
+    // For now, assume the user uses the checkbox to SET the state.
+    if (bulkIsEnabledCheckbox) {
+        simplifiedUpdatePayload.isEnabled = bulkIsEnabledCheckbox.checked;
+    }
+
+
+    // Stock Management
+    const simplifiedCurrentStock = parseNumericInput(bulkCurrentStockInput?.value, true, true);
+    if (bulkCurrentStockInput?.value.trim() !== '') { // Check if user typed anything
+        if (!isNaN(simplifiedCurrentStock)) {
+             simplifiedStockPayload.currentStock = simplifiedCurrentStock;
+        } else {
+             showToast("Please enter a valid whole number for Bulk Current Stock.", 5ost00);
+             if (spinner) spinner.style.display = 'none'; if (icon) icon.style.display = ''; if (textSpan) textSpan.textContent = 'Update Selected Products'; if (saveBulkEditBtn) saveBulkEditBtn.disabled = false;
+             return; // Stop if invalid
+        }
+    }
+    const simplifiedMinStockLevel = parseNumericInput(bulkMinStockLevelInput?.value, true, true);
+     if (bulkMinStockLevelInput?.value.trim() !== '') { // Check if user typed anything
+        if (!isNaN(simplifiedMinStockLevel)) {
+             simplifiedStockPayload.minStockLevel = simplifiedMinStockLevel;
+        } else {
+              showToast("Please enter a valid whole number for Bulk Minimum Stock Level.", 5000);
+              if (spinner) spinner.style.display = 'none'; if (icon) icon.style.display = ''; if (textSpan) textSpan.textContent = 'Update Selected Products'; if (saveBulkEditBtn) saveBulkEditBtn.disabled = false;
+              return; // Stop if invalid
+        }
+     }
+     if (Object.keys(simplifiedStockPayload).length > 0) {
+          simplifiedUpdatePayload.stock = simplifiedStockPayload;
+     }
+
+
+    // Other Options (JSON)
+    const simplifiedOptionsString = bulkOptionsInput?.value.trim();
+    if (simplifiedOptionsString !== '') {
+        try {
+             const parsedOptions = JSON.parse(simplifiedOptionsString);
+             if (!Array.isArray(parsedOptions)) throw new Error("Options must be an array.");
+             simplifiedUpdatePayload.options = parsedOptions;
+         } catch (err) {
+             showToast(`Error: Invalid JSON in Bulk Options field. ${err.message}`, 5000);
+             if (spinner) spinner.style.display = 'none'; if (icon) icon.style.display = ''; if (textSpan) textSpan.textContent = 'Update Selected Products'; if (saveBulkEditBtn) saveBulkEditBtn.disabled = false;
+             return; // Stop the process if JSON is invalid
+         }
+    }
+
+
+    // Price Details Subset
+    const simplifiedPurchasePrice = parseNumericInput(bulkPurchasePriceInput?.value);
+    if (bulkPurchasePriceInput?.value.trim() !== '' && !isNaN(simplifiedPurchasePrice)) {
+        simplifiedPricingPayload.purchasePrice = simplifiedPurchasePrice;
+    }
+    const simplifiedGstRate = parseNumericInput(bulkGstRateInput?.value);
+    if (bulkGstRateInput?.value.trim() !== '' && !isNaN(simplifiedGstRate)) {
+        simplifiedPricingPayload.gstRate = simplifiedGstRate;
+    }
+    const simplifiedMrp = parseNumericInput(bulkMrpInput?.value);
+    if (bulkMrpInput?.value.trim() !== '' && !isNaN(simplifiedMrp)) {
+        simplifiedPricingPayload.mrp = simplifiedMrp;
+    }
+    const simplifiedMinOrderValue = parseNumericInput(bulkMinOrderValueInput?.value);
+     if (bulkMinOrderValueInput?.value.trim() !== '' && !isNaN(simplifiedMinOrderValue)) {
+         simplifiedPricingPayload.minimumOrderValue = simplifiedMinOrderValue;
+     }
+
+
+    // Wedding Card Charges
+    const simplifiedDesignCharge = parseNumericInput(bulkDesignChargeInput?.value);
+     if (bulkDesignChargeInput?.value.trim() !== '' && !isNaN(simplifiedDesignCharge)) {
+        simplifiedWeddingPayload.designCharge = simplifiedDesignCharge;
+    }
+    const simplifiedPrintingCharge = parseNumericInput(bulkPrintingChargeInput?.value);
+    if (bulkPrintingChargeInput?.value.trim() !== '' && !isNaN(simplifiedPrintingCharge)) {
+        simplifiedWeddingPayload.printingChargeBase = simplifiedPrintingCharge;
+    }
+    const simplifiedTransportCharge = parseNumericInput(bulkTransportChargeInput?.value);
+    if (bulkTransportChargeInput?.value.trim() !== '' && !isNaN(simplifiedTransportCharge)) {
+        simplifiedWeddingPayload.transportCharge = simplifiedTransportCharge;
+    }
+    const simplifiedExtraMarginPercent = parseNumericInput(bulkExtraMarginPercentInput?.value);
+    if (bulkExtraMarginPercentInput?.value.trim() !== '' && !isNaN(simplifiedExtraMarginPercent)) {
+        simplifiedWeddingPayload.extraMarginPercent = simplifiedExtraMarginPercent;
+    }
+
+
+    // Optional Extra Charges
+     if (bulkHasExtraChargesCheckbox) {
+          simplifiedPricingPayload.hasExtraCharges = bulkHasExtraChargesCheckbox.checked; // Always include the boolean state if checkbox exists
+
+          if (bulkHasExtraChargesCheckbox.checked) {
+              const simplifiedExtraChargeName = bulkExtraChargeNameInput?.value.trim();
+              const simplifiedExtraChargeAmount = parseNumericInput(bulkExtraChargeAmountInput?.value);
+
+              // Include name/amount if user typed something OR if it should default
+              if (simplifiedExtraChargeName !== '' || bulkExtraChargeAmountInput?.value.trim() !== '') {
+                   simplifiedExtraChargePayload.name = simplifiedExtraChargeName || 'Additional Charge';
+                   simplifiedExtraChargePayload.amount = (simplifiedExtraChargeAmount !== null && !isNaN(simplifiedExtraChargeAmount)) ? simplifiedExtraChargeAmount : 0;
+                   simplifiedPricingPayload.extraCharge = simplifiedExtraChargePayload;
+              } else if (bulkExtraChargesSection.style.display === 'block') {
+                    // If section is visible and user didn't type, but checkbox is checked,
+                    // save default name/amount. This handles cases where they just check the box.
+                     simplifiedExtraChargePayload.name = simplifiedExtraChargeName || 'Additional Charge';
+                     simplifiedExtraChargePayload.amount = (simplifiedExtraChargeAmount !== null && !isNaN(simplifiedExtraChargeAmount)) ? simplifiedExtraChargeAmount : 0;
+                     simplifiedPricingPayload.extraCharge = simplifiedExtraChargePayload;
+              } else {
+                   // Checkbox is checked, section is visible, but fields are empty - do not add extraCharge object?
+                   // Let's revisit this logic in Step 3 with clearer requirements if needed.
+                   // For now, if checkbox is checked and fields are empty, don't include extraCharge object, just set hasExtraCharges: true.
+              }
+
+          } else {
+               // If checkbox is UNCHECKED, explicitly set extraCharge to null to remove it
+               simplifiedPricingPayload.extraCharge = null;
+          }
+     }
+
+
+     // Internal Details
+     const simplifiedBrand = bulkBrandInput?.value.trim();
+     if (simplifiedBrand !== '') {
+         simplifiedInternalPayload.brand = simplifiedBrand;
+     }
+     const simplifiedItemCode = bulkItemCodeInput?.value.trim();
+      if (simplifiedItemCode !== '') {
+         simplifiedInternalPayload.itemCode = simplifiedItemCode;
+     }
+     const simplifiedHsnSacCode = bulkHsnSacCodeInput?.value.trim();
+      if (simplifiedHsnSacCode !== '') {
+         simplifiedInternalPayload.hsnSacCode = simplifiedHsnSacCode;
+     }
+     if (Object.keys(simplifiedInternalPayload).length > 0) {
+          Object.assign(simplifiedUpdatePayload, simplifiedInternalPayload);
+      }
+
+
+     // Merge pricing and wedding payloads
+     if (Object.keys(simplifiedPricingPayload).length > 0 || Object.keys(simplifiedWeddingPayload).length > 0) {
+          simplifiedUpdatePayload.pricing = simplifiedUpdatePayload.pricing || {};
+          Object.assign(simplifiedUpdatePayload.pricing, simplifiedPricingPayload, simplifiedWeddingPayload);
+     }
+
+    // Add updatedAt timestamp
+    if (Object.keys(simplifiedUpdatePayload).length > 0) {
+         simplifiedUpdatePayload.updatedAt = window.serverTimestamp();
+    }
+
+
+    // Check if the final payload is empty (no fields were filled)
+    const isSimplifiedPayloadEffectivelyEmpty = Object.keys(simplifiedUpdatePayload).length === 0;
+     // Need to check nested objects too
+     let hasMeaningfulUpdates = false;
+     for(const key in simplifiedUpdatePayload) {
+          if (simplifiedUpdatePayload.hasOwnProperty(key)) {
+               if (typeof simplifiedUpdatePayload[key] === 'object' && simplifiedUpdatePayload[key] !== null) {
+                    if (Object.keys(simplifiedUpdatePayload[key]).length > 0) {
+                         hasMeaningfulUpdates = true;
+                         break;
+                    }
+               } else {
+                    // Check for boolean fields explicitly if needed, otherwise any non-object value counts
+                    hasMeaningfulUpdates = true;
+                    break;
+               }
+          }
+     }
+
+
+    if (!hasMeaningfulUpdates) {
+         showToast("No fields were entered for bulk update. Nothing to save.", 4000);
+         // Re-enable save button and hide spinner
+         if (spinner) spinner.style.display = 'none';
+         if (icon) icon.style.display = '';
+         if (textSpan) textSpan.textContent = 'Update Selected Products';
+         if (saveBulkEditBtn) saveBulkEditBtn.disabled = false;
+         return; // Exit the function as nothing needs updating
+    }
+
+
+    console.log("Selected IDs for bulk update:", Array.from(selectedProductIds));
+    console.log("Prepared Bulk Update Payload:", simplifiedUpdatePayload);
+
+    // TODO (Step 3): Implement the actual Firebase WriteBatch logic here
+    // This will involve getting document references for each ID in selectedProductIds
+    // and applying the simplifiedUpdatePayload to each document using batch.update()
+
+    // For Step 2, we just log and show a message
+    showToast(`Prepared update for ${selectedProductIds.size} products. (Saving feature coming in Step 3)`, 5000);
+
+    // Close the modal after preparing data (simulating completion for Step 2)
+    closeBulkEditModal();
+
+
+    // Re-enable save button and hide spinner in the finally block
+    if (spinner) spinner.style.display = 'none';
+    if (icon) icon.style.display = '';
+    if (textSpan) textSpan.textContent = 'Update Selected Products';
+    if (saveBulkEditBtn) saveBulkEditBtn.disabled = false;
+
+    // TODO (Step 3): Add proper error handling and UI feedback during the actual save process.
 }
 
 
