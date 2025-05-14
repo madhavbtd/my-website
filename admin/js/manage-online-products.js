@@ -2,10 +2,14 @@
 // Updated Version: Layout changes + Diagram Upload + Checkbox Lock/Unlock Logic + Fixes + STOCK MANAGEMENT + BULK SELECT (Step 1)
 // Added: BULK UPDATE MODAL UI CONTROL (Step 2 Frontend Logic - Part 1)
 // FIX: Resolved Syntax Error & Moved onAuthStateChanged listener from HTML
+// FIX: Corrected TypeError by importing Auth functions directly
 
 // --- Firebase Function Availability Check ---
-// Expecting: window.db, window.auth, window.storage, window.collection, window.onSnapshot, etc.
-// Firebase app initialization and exposing services to window is done in manage-online-products.html
+// Expecting: window.db, window.storage, window.collection, window.onSnapshot, etc. from HTML setup script
+// Importing Auth functions directly here:
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { getApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js"; // Import getApp
+
 
 // --- DOM Elements ---
 const productTableBody = document.getElementById('productTableBody');
@@ -129,7 +133,7 @@ const bulkPurchasePriceInput = document.getElementById('bulkPurchasePrice');
 const bulkMrpCheckbox = document.getElementById('bulkMrpCheckbox');
 const bulkMrpInput = document.getElementById('bulkMrp');
 const bulkGstRateCheckbox = document.getElementById('bulkGstRateCheckbox');
-const bulkGstRateInput = document.getElementById('bulkGstRate'); // Corrected ID
+const bulkGstRateInput = document.getElementById('bulkGstRate');
 const bulkMinOrderValueCheckbox = document.getElementById('bulkMinOrderValueCheckbox');
 const bulkMinOrderValueInput = document.getElementById('bulkMinOrderValue');
 
@@ -140,19 +144,19 @@ const bulkPrintingChargeInput = document.getElementById('bulkPrintingCharge');
 const bulkTransportChargeCheckbox = document.getElementById('bulkTransportChargeCheckbox');
 const bulkTransportChargeInput = document.getElementById('bulkTransportCharge');
 const bulkExtraMarginPercentCheckbox = document.getElementById('bulkExtraMarginPercentCheckbox');
-const bulkExtraMarginPercentInput = document.getElementById('bulkExtraMarginPercent'); // Corrected ID
+const bulkExtraMarginPercentInput = document.getElementById('bulkExtraMarginPercent');
 
 const bulkBrandCheckbox = document.getElementById('bulkBrandCheckbox');
 const bulkBrandInput = document.getElementById('bulkBrand');
 const bulkItemCodeCheckbox = document.getElementById('bulkItemCodeCheckbox');
 const bulkItemCodeInput = document.getElementById('bulkItemCode');
 const bulkHsnSacCodeCheckbox = document.getElementById('bulkHsnSacCodeCheckbox');
-const bulkHsnSacCodeInput = document.getElementById('bulkHsnSacCode'); // Corrected ID
+const bulkHsnSacCodeInput = document.getElementById('bulkHsnSacCode');
 
 const bulkCurrentStockCheckbox = document.getElementById('bulkCurrentStockCheckbox');
 const bulkCurrentStockInput = document.getElementById('bulkCurrentStock');
 const bulkMinStockLevelCheckbox = document.getElementById('bulkMinStockLevelCheckbox');
-const bulkMinStockLevelInput = document.getElementById('bulkMinStockLevel'); // Corrected ID
+const bulkMinStockLevelInput = document.getElementById('bulkMinStockLevel');
 
 const bulkOptionsInput = document.getElementById('bulkOptions'); // No individual checkbox, controlled by section checkbox
 
@@ -161,7 +165,7 @@ const bulkHasExtraChargesSelect = document.getElementById('bulkHasExtraCharges')
 const bulkExtraChargeNameCheckbox = document.getElementById('bulkExtraChargeNameCheckbox');
 const bulkExtraChargeNameInput = document.getElementById('bulkExtraChargeName');
 const bulkExtraChargeAmountCheckbox = document.getElementById('bulkExtraChargeAmountCheckbox');
-const bulkExtraChargeAmountInput = document.getElementById('bulkExtraChargeAmount'); // Corrected ID
+const bulkExtraChargeAmountInput = document.getElementById('bulkExtraChargeAmount');
 
 // Map individual field checkboxes to their corresponding input/select elements
 const bulkFieldMap = {
@@ -253,35 +257,41 @@ function showToast(message, duration = 3500) { const existingToast = document.qu
 // --- Initialization ---
 // This function is now called from the onAuthStateChanged listener within this file
 const initializeOnlineProductManagement = () => { // Made const
-    console.log("Online Product Management Initializing (v_Bulk_Edit_UI_Logic_Fix)..."); // Updated version log
+    console.log("Online Product Management Initializing (v_Bulk_Edit_UI_Logic_Fix2)..."); // Updated version log
     // Firebase services are assumed to be available globally from the HTML setup script
-    if (!window.db || !window.auth || !window.storage) { console.error("Firebase services not available on window."); alert("Error initializing page: Firebase not available."); return; }
-    console.log("Firebase services confirmed.");
+    if (!window.db || !window.storage || !window.collection || !window.onSnapshot || !window.orderBy || !getAuth || !onAuthStateChanged) { // Check for imported auth functions too
+         console.error("Required Firebase functions not available.");
+         alert("Error initializing page: Firebase services not fully available.");
+         // Display a message in the table
+         const colspan = productTableBody?.querySelector('tr th')?.parentElement?.children?.length || 10;
+         if (productTableBody) productTableBody.innerHTML = `<tr><td colspan="${colspan}" style="color: red; text-align: center;">Initialization Error: Firebase services not fully loaded.</td></tr>`;
+         return;
+     }
+    console.log("Firebase services and Auth functions confirmed.");
     listenForOnlineProducts();
     setupEventListeners();
-    console.log("Online Product Management Initialized (v_Bulk_Edit_UI_Logic_Fix)."); // Updated version log
+    console.log("Online Product Management Initialized (v_Bulk_Edit_UI_Logic_Fix2)."); // Updated version log
 };
 
-// --- START: Firebase Authentication State Listener (Moved from HTML) ---
-// Ensure this runs only once and after Firebase is initialized in the HTML
-if (window.auth) { // Check if auth is available (set in HTML)
-     window.onAuthStateChanged(window.auth, (user) => {
+// --- START: Firebase Authentication State Listener (Handled within this file) ---
+// Get the Firebase App instance from the globally exposed variable
+const app = window.firebaseApp;
+if (app) {
+     const auth = getAuth(app); // Get Auth instance using the app
+     onAuthStateChanged(auth, (user) => { // Use the imported onAuthStateChanged
          const page = window.location.pathname.split('/').pop() || 'index.html';
           if (!user && !page.toLowerCase().includes('login.html')) {
              window.location.replace('login.html');
          } else if (user) {
              console.log(`User logged in on ${page}. Triggering Online Product Management initialization.`);
-             // DOMContentLoaded is handled by 'defer' script loading,
-             // Firebase services are exposed on window in the HTML script.
-             // Now we just need to ensure the function is called when the user is logged in.
-             // A slight delay can still help ensure all DOM elements are ready,
-             // although 'defer' usually handles this before script execution.
-             // A simpler call without setTimeout is often sufficient with 'defer'.
-              initializeOnlineProductManagement(); // Call initialization directly
+             initializeOnlineProductManagement(); // Call initialization
          }
      });
 } else {
-     console.error("Firebase Auth not available on window. Cannot set up auth state listener.");
+     console.error("Firebase App instance not available on window. Cannot set up auth state listener.");
+      // Display an error message if Firebase App is not available
+      const colspan = productTableBody?.querySelector('tr th')?.parentElement?.children?.length || 10;
+      if (productTableBody) productTableBody.innerHTML = `<tr><td colspan="${colspan}" style="color: red; text-align: center;">Initialization Error: Firebase App not available.</td></tr>`;
 }
 // --- END: Firebase Authentication State Listener ---
 
@@ -371,7 +381,7 @@ function setupEventListeners() {
     // --- END: NEW Bulk Update Modal Event Listeners ---
 
 
-    console.log("Online Product Management event listeners set up (v_Bulk_Edit_UI_Logic_Fix)."); // Updated version log
+    console.log("Online Product Management event listeners set up (v_Bulk_Edit_UI_Logic_Fix2)."); // Updated version log
 }
 
 // NEW: Function to handle product checkbox change (already existed, but adding comment)
@@ -657,7 +667,7 @@ function resetApplyCheckboxesAndUnlock() {
 // --- Modal Handling (Add/Edit Single Product) ---
 function openAddModal() {
     if (!productModal || !productForm) return;
-    console.log("Opening modal to add new ONLINE product (v_Bulk_Edit_UI_Logic_Fix)."); // Updated version log
+    console.log("Opening modal to add new ONLINE product (v_Bulk_Edit_UI_Logic_Fix2)."); // Updated version log
     // Clear any selected products when opening add/edit modal
     selectedProductIds.clear();
     updateBulkActionsUI();
@@ -697,7 +707,7 @@ function openAddModal() {
 
 async function openEditModal(firestoreId, data) {
     if (!productModal || !productForm || !data) return;
-    console.log("Opening modal to edit ONLINE product (v_Bulk_Edit_UI_Logic_Fix):", firestoreId); // Updated version log
+    console.log("Opening modal to edit ONLINE product (v_Bulk_Edit_UI_Logic_Fix2):", firestoreId); // Updated version log
     // Clear any selected products when opening add/edit modal
     selectedProductIds.clear();
     updateBulkActionsUI();
@@ -896,7 +906,7 @@ function handleBulkSectionCheckboxChange(checkbox) {
     if (checkbox.checked) {
         fieldsContainer.style.display = 'block'; // Show the fields
 
-        // Enable inputs within this section
+        // Enable inputs within this section that have an individual checkbox, or are directly controlled
         inputs.forEach(input => {
              // Find the corresponding individual checkbox if it exists for this input
              let individualCheckbox = null;
@@ -939,6 +949,12 @@ function handleBulkSectionCheckboxChange(checkbox) {
         // Disable all inputs within this section, regardless of individual checkbox state
         inputs.forEach(input => {
              input.disabled = true;
+             // Clear the input value when it becomes disabled due to section being unchecked
+             if (input.type === 'checkbox' || input.tagName === 'SELECT') {
+                  input.value = ''; // Reset select/checkbox state
+             } else {
+                  input.value = ''; // Clear text/number input
+             }
         });
     }
 }
@@ -1052,8 +1068,12 @@ async function handleBulkUpdate(event) {
 
 // --- Image Handling (Single Edit Modal) ---
 function handleFileSelection(event) { if (!imagePreviewArea || !productImagesInput) return; const files = Array.from(event.target.files); let currentImageCount = existingImageUrls.filter(url => !imagesToDelete.includes(url)).length + selectedFiles.length; const availableSlots = 4 - currentImageCount; if (files.length > availableSlots) { alert(`Max 4 images allowed. You have ${currentImageCount}, tried to add ${files.length}.`); productImagesInput.value = null; return; } files.forEach(file => { if (file.type.startsWith('image/')) { if (selectedFiles.length + existingImageUrls.filter(url => !imagesToDelete.includes(url)).length < 4) { selectedFiles.push(file); displayImagePreview(file, null); } } }); productImagesInput.value = null; }
-function displayImagePreview(fileObject, existingUrl = null) { if (!imagePreviewArea) return; const previewId = existingUrl || `new-${fileObject.name}-${Date.now()}`; const previewWrapper = document.createElement('div'); previewWrapper.className = 'image-preview-item'; previewWrapper.setAttribute('data-preview-id', previewId); const img = document.createElement('img'); const removeBtn = document.createElement('button'); removeBtn.type = 'button'; removeBtn.className = 'remove-image-btn'; removeBtn.innerHTML = '&times;'; removeBtn.title = 'Remove image'; const progressBar = document.createElement('div'); progressBar.className = 'upload-progress-bar'; const progressFill = document.createElement('div'); progressBar.appendChild(progressFill); progressBar.style.display = 'none'; if (existingUrl) { img.src = existingUrl; img.onerror = () => { img.src = 'images/placeholder.png'; }; previewWrapper.imageUrl = existingUrl; removeBtn.onclick = () => { if (!imagesToDelete.includes(existingUrl)) imagesToDelete.push(existingUrl); previewWrapper.style.display = 'none'; }; } // Corrected: Removed extra semicolon here
-    else if (fileObject) { const reader = new FileReader(); reader.onload = (e) => { img.src = e.target.result; }; reader.readAsDataURL(fileObject); previewWrapper.fileData = fileObject; removeBtn.onclick = () => { selectedFiles = selectedFiles.filter(f => f !== fileObject); previewWrapper.remove(); }; } previewWrapper.appendChild(img); previewWrapper.appendChild(removeBtn); previewWrapper.appendChild(progressBar); imagePreviewArea.appendChild(previewWrapper); }
+function displayImagePreview(fileObject, existingUrl = null) { if (!imagePreviewArea) return; const previewId = existingUrl || `new-${fileObject.name}-${Date.now()}`; const previewWrapper = document.createElement('div'); previewWrapper.className = 'image-preview-item'; previewWrapper.setAttribute('data-preview-id', previewId); const img = document.createElement('img'); const removeBtn = document.createElement('button'); removeBtn.type = 'button'; removeBtn.className = 'remove-image-btn'; removeBtn.innerHTML = '&times;'; removeBtn.title = 'Remove image'; const progressBar = document.createElement('div'); progressBar.className = 'upload-progress-bar'; const progressFill = progressBar?.querySelector('div'); // Safely access querySelector
+    if (progressBar) progressBar.style.display = 'none'; // Initially hidden
+    if (existingUrl) { img.src = existingUrl; img.onerror = () => { img.src = 'images/placeholder.png'; }; previewWrapper.imageUrl = existingUrl; removeBtn.onclick = () => { if (!imagesToDelete.includes(existingUrl)) imagesToDelete.push(existingUrl); previewWrapper.style.display = 'none'; }; }
+    else if (fileObject) { const reader = new FileReader(); reader.onload = (e) => { img.src = e.target.result; }; reader.readAsDataURL(fileObject); previewWrapper.fileData = fileObject; removeBtn.onclick = () => { selectedFiles = selectedFiles.filter(f => f !== fileObject); previewWrapper.remove(); }; }
+    previewWrapper.appendChild(img); previewWrapper.appendChild(removeBtn); previewWrapper.appendChild(progressBar); imagePreviewArea.appendChild(previewWrapper);
+}
 async function uploadImage(file, productId, index) { if (!window.storage || !window.storageRef || !window.uploadBytesResumable || !window.getDownloadURL) throw new Error("Storage functions missing."); const previewWrapper = [...imagePreviewArea.querySelectorAll('.image-preview-item')].find(el => el.fileData === file); const progressBar = previewWrapper?.querySelector('.upload-progress-bar'); const progressFill = progressBar?.querySelector('div'); const timestamp = Date.now(); const uniqueFileName = `${timestamp}-image${index}-${file.name.replace(/[^a-zA-Z0-9.]/g, '_')}`; const filePath = `onlineProductImages/${productId}/${uniqueFileName}`; const fileRef = window.storageRef(window.storage, filePath); if (progressBar) progressBar.style.display = 'block'; if (progressFill) progressFill.style.width = '0%'; const uploadTask = window.uploadBytesResumable(fileRef, file); return new Promise((resolve, reject) => { uploadTask.on('state_changed', (snapshot) => { const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100; if (progressFill) progressFill.style.width = `${progress}%`; if (uploadProgressInfo) uploadProgressInfo.textContent = `Uploading ${file.name}: ${progress.toFixed(0)}%`; }, (error) => { if (progressBar) progressBar.style.backgroundColor = 'red'; if (uploadProgressInfo) uploadProgressInfo.textContent = `Upload failed: ${file.name}.`; reject(error); }, async () => { if (progressBar) progressBar.style.backgroundColor = 'var(--success-color)'; if (uploadProgressInfo) uploadProgressInfo.textContent = `Getting URL...`; try { const downloadURL = await window.getDownloadURL(uploadTask.snapshot.ref); resolve(downloadURL); } catch (error) { if (progressBar) progressBar.style.backgroundColor = 'red'; if (uploadProgressInfo) uploadProgressInfo.textContent = `Failed to get URL.`; reject(error); } }); }); }
 async function deleteStoredImage(imageUrl) { if (!window.storage || !window.storageRef || !window.deleteObject) return; if (!imageUrl || !(imageUrl.startsWith('https://firebasestorage.googleapis.com/') || imageUrl.startsWith('gs://'))) return; try { const imageRef = window.storageRef(window.storage, imageUrl); await window.deleteObject(imageRef); console.log("Deleted image from Storage:", imageUrl); } catch (error) { if (error.code === 'storage/object-not-found') console.warn("Image not found:", imageUrl); else console.error("Error deleting image:", imageUrl, error); } }
 
