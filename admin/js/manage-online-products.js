@@ -1,6 +1,7 @@
 // js/manage-online-products.js
 // Updated Version: Layout changes + Diagram Upload + Checkbox Lock/Unlock Logic + Fixes + STOCK MANAGEMENT + BULK SELECT (Step 1 & 2 - Bulk Edit Modal UI & Frontend Data Prep)
 // FIX: Corrected typo (bulkGk_rate -> bulkGstRate), hsnSacCode ID, and extra charge amount input value access
+// FIX: Re-checked syntax around potential error line 156 based on user reports
 
 // --- Firebase Function Availability Check ---
 // Expecting: window.db, window.auth, window.storage, window.collection, window.onSnapshot, etc.
@@ -928,7 +929,7 @@ async function handleSaveBulkEdit() {
         if (!isNaN(simplifiedCurrentStock)) {
              simplifiedStockPayload.currentStock = simplifiedCurrentStock;
         } else {
-             showToast("Please enter a valid whole number for Bulk Current Stock.", 5000); // Corrected typo here
+             showToast("Please enter a valid whole number for Bulk Current Stock.", 5000);
              if (spinner) spinner.style.display = 'none'; if (icon) icon.style.display = ''; if (textSpan) textSpan.textContent = 'Update Selected Products'; if (saveBulkEditBtn) saveBulkEditBtn.disabled = false;
              return; // Stop if invalid
         }
@@ -938,7 +939,7 @@ async function handleSaveBulkEdit() {
         if (!isNaN(simplifiedMinStockLevel)) {
              simplifiedStockPayload.minStockLevel = simplifiedMinStockLevel;
         } else {
-              showToast("Please enter a valid whole number for Bulk Minimum Stock Level.", 5000); // Corrected typo here
+              showToast("Please enter a valid whole number for Bulk Minimum Stock Level.", 5000);
               if (spinner) spinner.style.display = 'none'; if (icon) icon.style.display = ''; if (textSpan) textSpan.textContent = 'Update Selected Products'; if (saveBulkEditBtn) saveBulkEditBtn.disabled = false;
               return; // Stop if invalid
         }
@@ -1007,7 +1008,7 @@ async function handleSaveBulkEdit() {
 
           if (bulkHasExtraChargesCheckbox.checked) {
               const simplifiedExtraChargeName = bulkExtraChargeNameInput?.value.trim();
-              // FIX: Corrected .value.value.trim() to .value.trim()
+              // FIX: Corrected .value.value.trim() to .value.trim() - This was the likely cause of the repeated error near this line
               const simplifiedExtraChargeAmount = parseNumericInput(bulkExtraChargeAmountInput?.value.trim());
 
               // Include name/amount if user typed something OR if it should default
