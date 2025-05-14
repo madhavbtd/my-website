@@ -137,6 +137,9 @@
                      <i class="fas fa-times"></i> Clear
                  </button>
              </div>
+             <div class="filter-group">
+                 <button id="openBatchUpdateModalBtn" class="button">Batch Update</button>
+             </div>
          </div>
  
          <div class="table-container">
@@ -144,6 +147,9 @@
                  <table id="productTable">
                      <thead>
                          <tr>
+                             <th style="width: 2%;">
+                                 <input type="checkbox" id="selectAllProducts">
+                             </th>
                              <th style="width: 18%;">Name</th>
                              <th style="width: 12%;">Category</th>
                              <th style="width: 11%;">Brand</th>
@@ -161,7 +167,7 @@
                  <table id="productTable">
                      <tbody id="productTableBody">
                          <tr>
-                             <td colspan="9" id="loadingMessage">Loading online products...</td>
+                             <td colspan="10" id="loadingMessage">Loading online products...</td>
                          </tr>
                      </tbody>
                  </table>
@@ -438,6 +444,80 @@
                  <button type="button" id="confirmDeleteFinalBtn" class="button delete-confirm-button" disabled>
                      <i class="fas fa-trash-alt"></i> Confirm Delete
                  </button>
+             </div>
+         </div>
+     </div>
+ 
+     <div id="batchUpdateModal" class="modal">
+         <div class="modal-content small-modal">
+             <span class="close-btn" id="closeBatchUpdateModal">&times;</span>
+             <h2>
+                 <i class="fas fa-edit"></i> Batch Update Products
+             </h2>
+             <form id="batchUpdateForm">
+                 <fieldset>
+                     <legend>
+                         <i class="fas fa-dollar-sign"></i> Price Details
+                     </legend>
+                     <div class="form-group price-group">
+                         <label for="batchPurchasePrice">Purchase Price:</label>
+                         <input type="number" id="batchPurchasePrice" placeholder="0.00" step="0.01" min="0">
+                     </div>
+                     <div class="form-group">
+                         <label for="batchGstRate">GST Rate (%):</label>
+                         <input type="number" id="batchGstRate" placeholder="e.g., 18" step="0.01" min="0" max="100">
+                     </div>
+                 </fieldset>
+ 
+                 <fieldset id="batch-wedding-card-fields" style="display: none;">
+                     <legend>Wedding Card Charges</legend>
+                     <div class="form-group price-group">
+                         <label for="batchDesignCharge">Design Charge:</label>
+                         <input type="number" id="batchDesignCharge" placeholder="0.00" step="0.01" min="0">
+                     </div>
+                     <div class="form-group price-group">
+                         <label for="batchPrintingCharge">Printing Charge (Base):</label>
+                         <input type="number" id="batchPrintingCharge" placeholder="e.g., 700 per 100" step="0.01"
+                             min="0">
+                     </div>
+                     <div class="form-group price-group">
+                         <label for="batchTransportCharge">Transport Charge:</label>
+                         <input type="number" id="batchTransportCharge" placeholder="0.00" step="0.01" min="0">
+                     </div>
+                     <div class="form-group">
+                         <label for="batchExtraMarginPercent">Extra Margin (%):</label>
+                         <input type="number" id="batchExtraMarginPercent" placeholder="e.g., 10" step="0.01" min="0">
+                     </div>
+                 </fieldset>
+ 
+                 <fieldset>
+                     <legend>
+                         <i class="fas fa-cubes"></i> Stock Management
+                     </legend>
+                     </fieldset>
+ 
+                 <fieldset>
+                     <legend>Optional Extra Charges</legend>
+                     <div class="form-group">
+                         <label for="batchHasExtraCharges">
+                             <input type="checkbox" id="batchHasExtraCharges"> Enable Additional Charge Option
+                         </label>
+                     </div>
+                     <div id="batch-extra-charges-section" style="display: none;">
+                         <div class="form-group">
+                             <label for="batchExtraChargeName">Charge Name:</label>
+                             <input type="text" id="batchExtraChargeName" placeholder="e.g., Lamination">
+                         </div>
+                         <div class="form-group price-group">
+                             <label for="batchExtraChargeAmount">Charge Amount:</label>
+                             <input type="number" id="batchExtraChargeAmount" step="0.01" min="0">
+                         </div>
+                     </div>
+                 </fieldset>
+             </form>
+             <div class="modal-actions">
+                 <button type="button" id="cancelBatchUpdateBtn" class="button cancel-button">Cancel</button>
+                 <button type="button" id="saveBatchUpdateBtn" class="button save-button">Save Changes</button>
              </div>
          </div>
      </div>

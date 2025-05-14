@@ -110,6 +110,27 @@
  let shouldRemoveDiagram = false;
  let isRateLocked = false;
  
+ // --- Batch Update State ---
+ let selectedProductIds = [];
+ const selectAllProductsCheckbox = document.getElementById('selectAllProducts');
+ const openBatchUpdateModalBtn = document.getElementById('openBatchUpdateModalBtn');
+ const batchUpdateModal = document.getElementById('batchUpdateModal');
+ const closeBatchUpdateModalBtn = document.getElementById('closeBatchUpdateModal');
+ const cancelBatchUpdateBtn = document.getElementById('cancelBatchUpdateBtn');
+ const saveBatchUpdateBtn = document.getElementById('saveBatchUpdateBtn');
+ const batchUpdateForm = document.getElementById('batchUpdateForm');
+ const batchWeddingCardFields = document.getElementById('batch-wedding-card-fields');
+ const batchHasExtraChargesCheckbox = document.getElementById('batchHasExtraCharges');
+ const batchExtraChargesSection = document.getElementById('batch-extra-charges-section');
+ const batchPurchasePrice = document.getElementById('batchPurchasePrice');
+ const batchGstRate = document.getElementById('batchGstRate');
+ const batchDesignCharge = document.getElementById('batchDesignCharge');
+ const batchPrintingCharge = document.getElementById('batchPrintingCharge');
+ const batchTransportCharge = document.getElementById('batchTransportCharge');
+ const batchExtraMarginPercent = document.getElementById('batchExtraMarginPercent');
+ const batchExtraChargeName = document.getElementById('batchExtraChargeName');
+ const batchExtraChargeAmount = document.getElementById('batchExtraChargeAmount');
+ 
  
  // --- Helper Functions ---
  function formatCurrency(amount) {
@@ -251,6 +272,15 @@
          removeDiagramBtn.addEventListener('click', handleRemoveDiagram);
      }
  
+     // Batch Update Listeners
+     if (selectAllProductsCheckbox) selectAllProductsCheckbox.addEventListener('change', handleSelectAllProducts);
+     if (openBatchUpdateModalBtn) openBatchUpdateModalBtn.addEventListener('click', openBatchUpdateModal);
+     if (closeBatchUpdateModalBtn) closeBatchUpdateModalBtn.addEventListener('click', closeBatchUpdateModal);
+     if (cancelBatchUpdateBtn) cancelBatchUpdateBtn.addEventListener('click', closeBatchUpdateModal);
+     if (saveBatchUpdateBtn) saveBatchUpdateBtn.addEventListener('click', handleBatchUpdate);
+     if (batchHasExtraChargesCheckbox) batchHasExtraChargesCheckbox.addEventListener('change', toggleBatchExtraCharges);
+     if (productCategoryInput) productCategoryInput.addEventListener('input', toggleWeddingFields);
+ 
      console.log("Online Product Management event listeners set up (v_Stock).");
  }
  
@@ -259,6 +289,9 @@
      if (!weddingFieldsContainer || !productCategoryInput) return;
      const category = productCategoryInput.value.toLowerCase();
      weddingFieldsContainer.style.display = category.includes('wedding card') ? 'block' : 'none';
+     if (batchWeddingCardFields) {
+         batchWeddingCardFields.style.display = category.includes('wedding card') ? 'block' : 'none';
+     }
  }
  
  function toggleSqFtFields() {
@@ -273,6 +306,11 @@
  function toggleExtraCharges() {
      if (!extraChargesSection || !hasExtraChargesCheckbox) return;
      extraChargesSection.style.display = hasExtraChargesCheckbox.checked ? 'block' : 'none';
+ }
+ 
+ function toggleBatchExtraCharges() {
+     if (!batchExtraChargesSection || !batchHasExtraChargesCheckbox) return;
+     batchExtraChargesSection.style.display = batchHasExtraChargesCheckbox.checked ? 'block' : 'none';
  }
  
  // --- Sorting & Filtering Handlers ---
@@ -371,7 +409,7 @@
  function renderProductTable(products) {
      if (!productTableBody) return;
      productTableBody.innerHTML = '';
-     const expectedColumns = 9; // START: Updated to 9
+     const expectedColumns = 10; // START: Updated to 10 (including checkbox)
      if (products.length === 0) {
          productTableBody.innerHTML =
              `<tr><td colspan="${expectedColumns}" id="noProductsMessage" style="text-align: center;">No online products found matching criteria.</td></tr>`;
@@ -395,7 +433,7 @@
              // END: Get Current Stock value
  
              tableRow.innerHTML = `
-                 <td>${escapeHtml(name)}</td>
+                 <td><input type="checkbox" class="product-checkbox" value="${firestoreId}"></td>  <td>${escapeHtml(name)}</td>
                  <td>${escapeHtml(category)}</td>
                  <td>${escapeHtml(brand)}</td>
                  <td style="text-align: right;">${rate}</td>
@@ -432,8 +470,137 @@
                      if (deleteConfirmModal) deleteConfirmModal.classList.add('active');
                  });
              }
+             const checkbox = tableRow.querySelector('.product-checkbox');
+             if (checkbox) {
+                 checkbox.addEventListener('change', handleProductCheckboxChange);
+             }
          });
      }
+ }
+ 
+ // --- Checkbox Handling ---
+ function handleSelectAllProducts() {
+     const checkboxes = document.querySelectorAll('.product-checkbox');
+     checkboxes.forEach(checkbox => {
+         checkbox.checked = selectAllProductsCheckbox.checked;
+     });
+     updateSelectedProductIds();
+ }
+ 
+ function handleProductCheckboxChange() {
+     updateSelectedProductIds();
+ }
+ 
+ function updateSelectedProductIds() {
+     selectedProductIds = Array.from(document.querySelectorAll('.product-checkbox:checked'))
+         .map(checkbox => checkbox.value);
+     console.log("Selected Product IDs:", selectedProductIds);
+ }
+ 
+ // --- Batch Update Modal Functions ---
+ function openBatchUpdateModal() {
+     if (selectedProductIds.length === 0) {
+         showToast("Please select at least one product to update.", 3000);
+         return;
+     }
+ 
+     if (!batchUpdateModal) return;
+     batchUpdateModal.classList.add('active');
+ 
+     // Populate modal fields (optional - populate with data from the first selected product)
+     if (selectedProductIds.length > 0) {
+         const firstProductId = selectedProductIds[0];
+         const firstProduct = allProductsCache.find(product => product.id === firstProductId);
+         if (firstProduct) {
+             // Assuming you have these input fields in your batchUpdateModal
+             if (batchPurchasePrice) batchPurchasePrice.value = firstProduct?.pricing?.purchasePrice || '';
+             if (batchGstRate) batchGstRate.value = firstProduct?.pricing?.gstRate || '';
+             // ... populate other fields ...
+             if (batchHasExtraChargesCheckbox) batchHasExtraChargesCheckbox.checked = firstProduct?.pricing?.hasExtraCharges || false;
+             if (batchExtraChargesSection) batchExtraChargesSection.style.display = batchHasExtraChargesCheckbox?.checked ? 'block' : 'none';
+             if (batchWeddingCardFields) batchWeddingCardFields.style.display = firstProduct?.category.toLowerCase().includes('wedding card') ? 'block' : 'none';
+             if (batchDesignCharge) batchDesignCharge.value = firstProduct?.pricing?.designCharge || '';
+             if (batchPrintingCharge) batchPrintingCharge.value = firstProduct?.pricing?.printingChargeBase || '';
+             if (batchTransportCharge) batchTransportCharge.value = firstProduct?.pricing?.transportCharge || '';
+             if (batchExtraMarginPercent) batchExtraMarginPercent.value = firstProduct?.pricing?.extraMarginPercent || '';
+             if (batchExtraChargeName) batchExtraChargeName.value = firstProduct?.pricing?.extraCharge?.name || '';
+             if (batchExtraChargeAmount) batchExtraChargeAmount.value = firstProduct?.pricing?.extraCharge?.amount || '';
+         }
+     }
+ }
+ 
+ function closeBatchUpdateModal() {
+     if (batchUpdateModal) batchUpdateModal.classList.remove('active');
+     if (batchUpdateForm) batchUpdateForm.reset();
+ }
+ 
+ // --- Batch Update Logic ---
+ async function handleBatchUpdate() {
+     if (!window.db || !window.doc || !window.updateDoc) {
+         showToast("Firestore functions unavailable.", 5000);
+         return;
+     }
+ 
+     if (selectedProductIds.length === 0) {
+         showToast("No products selected for update.", 3000);
+         return;
+     }
+ 
+     const purchasePrice = parseNumericInput(batchPurchasePrice?.value);
+     const gstRate = parseNumericInput(batchGstRate?.value);
+     // ... get other field values from the modal ...
+     const hasExtraCharges = batchHasExtraChargesCheckbox?.checked || false;
+     const extraChargeName = batchExtraChargeName?.value.trim() || 'Additional Charge';
+     const extraChargeAmount = parseNumericInput(batchExtraChargeAmount?.value);
+ 
+     const designCharge = parseNumericInput(batchDesignCharge?.value);
+     const printingCharge = parseNumericInput(batchPrintingCharge?.value);
+     const transportCharge = parseNumericInput(batchTransportCharge?.value);
+     const extraMarginPercent = parseNumericInput(batchExtraMarginPercent?.value);
+ 
+     if ([purchasePrice, gstRate, designCharge, printingCharge, transportCharge, extraMarginPercent, extraChargeAmount].some(isNaN)) {
+         showToast("Please enter valid numbers.", 5000);
+         return;
+     }
+ 
+     for (const productId of selectedProductIds) {
+         try {
+             const productRef = window.doc(window.db, "onlineProducts", productId);
+             const updateData = {};
+ 
+             // Update only the fields you want to change in bulk
+             if (!isNaN(purchasePrice)) updateData['pricing.purchasePrice'] = purchasePrice;
+             if (!isNaN(gstRate)) updateData['pricing.gstRate'] = gstRate;
+             // ... update other fields ...
+             if (hasExtraCharges) {
+                 updateData['pricing.hasExtraCharges'] = true;
+                 updateData['pricing.extraCharge'] = {
+                     name: extraChargeName,
+                     amount: extraChargeAmount
+                 };
+             } else {
+                 updateData['pricing.hasExtraCharges'] = false;
+                 updateData['pricing.extraCharge'] = null;
+             }
+ 
+             if (!isNaN(designCharge)) updateData['pricing.designCharge'] = designCharge;
+             if (!isNaN(printingCharge)) updateData['pricing.printingChargeBase'] = printingCharge;
+             if (!isNaN(transportCharge)) updateData['pricing.transportCharge'] = transportCharge;
+             if (!isNaN(extraMarginPercent)) updateData['pricing.extraMarginPercent'] = extraMarginPercent;
+ 
+             await window.updateDoc(productRef, updateData);
+             console.log(`Product ${productId} updated.`);
+         } catch (error) {
+             console.error(`Error updating product ${productId}:`, error);
+             showToast(`Error updating product. Check console.`, 5000);
+             return; // Exit if any update fails (or handle errors individually)
+         }
+     }
+ 
+     showToast("Selected products updated successfully.", 3000);
+     closeBatchUpdateModal();
+     // Optionally, you might want to refresh the product list here
+     listenForOnlineProducts();
  }
  
  // --- Pricing Tab Functions ---
@@ -542,176 +709,4 @@
  }
  
  function resetApplyCheckboxesAndUnlock() {
-     if (!applyRateCheckboxesContainer) return;
-     applyRateCheckboxesContainer.querySelectorAll('input[name="applyRateTo"]:checked').forEach(cb => cb.checked =
-         false);
-     unlockPricingFields();
- }
- 
- // --- Modal Handling (Add/Edit) ---
- function openAddModal() {
-     if (!productModal || !productForm) return;
-     console.log("Opening modal to add new ONLINE product (v_Stock).");
-     if (modalTitle) modalTitle.innerHTML = '<i class="fas fa-plus-circle success-icon"></i> Add New Online Product';
-     if (editProductIdInput) editProductIdInput.value = '';
-     productForm.reset();
-     productBeingEditedData = {
-         pricing: {},
-         stock: {}
-     }; // Initialize with stock object
- 
-     if (isEnabledCheckbox) isEnabledCheckbox.checked = true;
-     if (hasExtraChargesCheckbox) hasExtraChargesCheckbox.checked = false;
-     existingImageUrls = [];
-     selectedFiles = [];
-     imagesToDelete = [];
-     if (imagePreviewArea) imagePreviewArea.innerHTML = '';
-     if (uploadProgressInfo) uploadProgressInfo.textContent = '';
-     if (existingImageUrlsInput) existingImageUrlsInput.value = '[]';
-     if (saveProductBtn) saveProductBtn.disabled = false;
-     if (saveSpinner) saveSpinner.style.display = 'none';
-     if (saveIcon) saveIcon.style.display = '';
-     if (saveText) saveText.textContent = 'Save Product';
-     if (deleteProductBtn) deleteProductBtn.style.display = 'none';
- 
-     diagramFileToUpload = null;
-     shouldRemoveDiagram = false;
-     if (productDiagramInput) productDiagramInput.value = null;
-     if (diagramLinkArea) diagramLinkArea.style.display = 'none';
-     if (viewDiagramLink) viewDiagramLink.href = '#';
-     if (diagramUploadProgress) diagramUploadProgress.textContent = '';
-     if (existingDiagramUrlInput) existingDiagramUrlInput.value = '';
- 
-     // START: Reset Stock fields for Add Modal
-     if (productCurrentStockInput) productCurrentStockInput.value = ''; // Or '0' if you prefer default
-     if (productMinStockLevelInput) productMinStockLevelInput.value = '';
-     // END: Reset Stock fields
- 
-     setActiveRateTab('online');
-     unlockPricingFields();
- 
-     toggleWeddingFields();
-     toggleSqFtFields();
-     toggleExtraCharges();
-     productModal.classList.add('active');
- }
- 
- async function openEditModal(firestoreId, data) {
-     if (!productModal || !productForm || !data) return;
-     console.log("Opening modal to edit ONLINE product (v_Stock):", firestoreId);
-     if (modalTitle) modalTitle.innerHTML = '<i class="fas fa-edit info-icon"></i> Edit Online Product';
-     productForm.reset();
-     productBeingEditedData = JSON.parse(JSON.stringify(data));
-     if (!productBeingEditedData.pricing) productBeingEditedData.pricing = {};
-     if (!productBeingEditedData.stock) productBeingEditedData.stock = {}; // Ensure stock object exists
- 
-     if (editProductIdInput) editProductIdInput.value = firestoreId;
-     if (productNameInput) productNameInput.value = data.productName || '';
-     if (productCategoryInput) productCategoryInput.value = data.category || '';
-     if (productUnitSelect) productUnitSelect.value = data.unit || 'Qty';
-     if (productDescInput) productDescInput.value = data.description || '';
-     if (isEnabledCheckbox) isEnabledCheckbox.checked = data.isEnabled !== undefined ? data.isEnabled : true;
- 
-     const pricing = data.pricing || {};
-     if (productMinOrderValueInput) productMinOrderValueInput.value = pricing.minimumOrderValue ?? '';
-     if (productPurchasePriceInput) productPurchasePriceInput.value = pricing.purchasePrice ?? '';
-     if (productMrpInput) productMrpInput.value = pricing.mrp ?? '';
-     if (productGstRateInput) productGstRateInput.value = pricing.gstRate ?? '';
-     if (designChargeInput) designChargeInput.value = pricing.designCharge ?? '';
-     if (printingChargeInput) printingChargeInput.value = pricing.printingChargeBase ?? '';
-     if (transportChargeInput) transportChargeInput.value = pricing.transportCharge ?? '';
-     if (extraMarginPercentInput) extraMarginPercentInput.value = pricing.extraMarginPercent ?? '';
-     if (hasExtraChargesCheckbox) hasExtraChargesCheckbox.checked = pricing.hasExtraCharges || false;
-     if (extraChargeNameInput) extraChargeNameInput.value = pricing.extraCharge?.name || '';
-     if (extraChargeAmountInput) extraChargeAmountInput.value = pricing.extraCharge?.amount ?? '';
- 
-     if (productOptionsInput) {
-         try {
-             productOptionsInput.value = (data.options && Array.isArray(data.options)) ?
-                 JSON.stringify(data.options, null, 2) : '';
-         } catch {
-             productOptionsInput.value = '';
-         }
-     }
-     if (productBrandInput) productBrandInput.value = data.brand || '';
-     if (productItemCodeInput) productItemCodeInput.value = data.itemCode || '';
-     if (productHsnSacCodeInput) productHsnSacCodeInput.value = data.hsnSacCode || '';
- 
-     // START: Load Stock fields for Edit Modal
-     const stock = data.stock || {};
-     if (productCurrentStockInput) productCurrentStockInput.value = stock.currentStock ?? '';
-     if (productMinStockLevelInput) productMinStockLevelInput.value = stock.minStockLevel ?? '';
-     // END: Load Stock fields
- 
-     selectedFiles = [];
-     imagesToDelete = [];
-     if (imagePreviewArea) imagePreviewArea.innerHTML = '';
-     existingImageUrls = data.imageUrls || [];
-     if (existingImageUrlsInput) existingImageUrlsInput.value = JSON.stringify(existingImageUrls);
-     existingImageUrls.forEach(url => displayImagePreview(null, url));
-     if (uploadProgressInfo) uploadProgressInfo.textContent = '';
- 
-     diagramFileToUpload = null;
-     shouldRemoveDiagram = false;
-     const currentDiagramUrl = data.diagramUrl || '';
-     if (productDiagramInput) productDiagramInput.value = null;
-     if (existingDiagramUrlInput) existingDiagramUrlInput.value = currentDiagramUrl;
-     if (diagramLinkArea && viewDiagramLink) {
-         if (currentDiagramUrl) {
-             viewDiagramLink.href = currentDiagramUrl;
-             diagramLinkArea.style.display = 'block';
-         } else {
-             diagramLinkArea.style.display = 'none';
-         }
-     }
-     if (diagramUploadProgress) diagramUploadProgress.textContent = '';
- 
-     if (saveProductBtn) saveProductBtn.disabled = false;
-     if (saveSpinner) saveSpinner.style.display = 'none';
-     if (saveIcon) saveIcon.style.display = '';
-     if (saveText) saveText.textContent = 'Update Product';
-     if (deleteProductBtn) deleteProductBtn.style.display = 'inline-flex';
- 
-     productToDeleteId = firestoreId;
-     productToDeleteName = data.productName || 'this online product';
- 
-     setActiveRateTab('online');
-     unlockPricingFields();
- 
-     toggleWeddingFields();
-     toggleSqFtFields();
-     toggleExtraCharges();
-     productModal.classList.add('active');
- }
- 
- function closeProductModal() {
-     if (productModal) {
-         productModal.classList.remove('active');
-         productToDeleteId = null;
-         productToDeleteName = null;
-         if (productImagesInput) productImagesInput.value = null;
-         selectedFiles = [];
-         imagesToDelete = [];
-         productBeingEditedData = {};
-         currentActiveRateType = 'online';
-         diagramFileToUpload = null;
-         shouldRemoveDiagram = false;
-         if (productDiagramInput) productDiagramInput.value = null;
-         unlockPricingFields();
-     }
- }
- 
- // --- Image Handling ---
- function handleFileSelection(event) {
-     if (!imagePreviewArea || !productImagesInput) return;
-     const files = Array.from(event.target.files);
-     let currentImageCount = existingImageUrls.filter(url => !imagesToDelete.includes(url)).length + selectedFiles.length;
-     const availableSlots = 4 - currentImageCount;
-     if (files.length > availableSlots) {
-         alert(`Max 4 images allowed. You have ${currentImageCount}, tried to add ${files.length}.`);
-         productImagesInput.value = null;
-         return;
-     }
-     files.forEach(file => {
-         if (file.type.startsWith('image/')) {
-             if (selectedFiles.length + existingImageUrls.filter(url => !imagesToDelete.includes(url)).length < 4
+     if
