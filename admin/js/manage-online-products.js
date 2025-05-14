@@ -1,6 +1,6 @@
 // js/manage-online-products.js
 // Updated Version: Layout changes + Diagram Upload + Checkbox Lock/Unlock Logic + Fixes + STOCK MANAGEMENT + BULK SELECT (Step 1 & 2 - Bulk Edit Modal UI & Frontend Data Prep)
-// FIX: Corrected typo (bulkGk_rate -> bulkGstRate) and hsnSacCode ID
+// FIX: Corrected typo (bulkGk_rate -> bulkGstRate), hsnSacCode ID, and extra charge amount input value access
 
 // --- Firebase Function Availability Check ---
 // Expecting: window.db, window.auth, window.storage, window.collection, window.onSnapshot, etc.
@@ -665,7 +665,7 @@ function closeProductModal() {
          // NEW: Clear selected products when closing add/edit modal
         selectedProductIds.clear();
         updateBulkActionsUI();
-         // Re-render to clear checkboxes
+         // Re-render table to clear checkboxes
         applyFiltersAndRender();
     }
 }
@@ -1007,10 +1007,11 @@ async function handleSaveBulkEdit() {
 
           if (bulkHasExtraChargesCheckbox.checked) {
               const simplifiedExtraChargeName = bulkExtraChargeNameInput?.value.trim();
-              const simplifiedExtraChargeAmount = parseNumericInput(bulkExtraChargeAmountInput?.value);
+              // FIX: Corrected .value.value.trim() to .value.trim()
+              const simplifiedExtraChargeAmount = parseNumericInput(bulkExtraChargeAmountInput?.value.trim());
 
               // Include name/amount if user typed something OR if it should default
-              if (simplifiedExtraChargeName !== '' || bulkExtraChargeAmountInput?.value.value.trim() !== '') { // <-- Possible error point: bulkExtraChargeAmountInput?.value.value.trim()
+              if (simplifiedExtraChargeName !== '' || bulkExtraChargeAmountInput?.value.trim() !== '') {
                    simplifiedExtraChargePayload.name = simplifiedExtraChargeName || 'Additional Charge';
                    // Corrected: Use simplifiedExtraChargeAmount directly as it's already parsed
                    simplifiedExtraChargePayload.amount = (simplifiedExtraChargeAmount !== null && !isNaN(simplifiedExtraChargeAmount)) ? simplifiedExtraChargeAmount : 0;
