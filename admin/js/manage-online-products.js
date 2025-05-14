@@ -1,5 +1,6 @@
 // js/manage-online-products.js
 // Updated Version: Layout changes + Diagram Upload + Checkbox Lock/Unlock Logic + Fixes + STOCK MANAGEMENT + BULK SELECT (Step 1)
+// Added: BULK UPDATE MODAL UI CONTROL (Step 2 Frontend Logic - Part 1)
 
 // --- Firebase Function Availability Check ---
 // Expecting: window.db, window.auth, window.storage, window.collection, window.onSnapshot, etc.
@@ -11,7 +12,7 @@ const sortSelect = document.getElementById('sort-products');
 const filterSearchInput = document.getElementById('filterSearch');
 const clearFiltersBtn = document.getElementById('clearFiltersBtn');
 const addNewProductBtn = document.getElementById('addNewProductBtn');
-// NEW: Bulk Actions Elements
+// Bulk Actions Elements
 const bulkActionsContainer = document.getElementById('bulkActionsContainer');
 const selectedCountSpan = document.getElementById('selectedCount');
 const bulkEditButton = document.getElementById('bulkEditButton');
@@ -46,10 +47,10 @@ const existingImageUrlsInput = document.getElementById('existingImageUrls');
 // Column 2 (Pricing)
 const productPurchasePriceInput = document.getElementById('productPurchasePrice');
 const productGstRateInput = document.getElementById('productGstRate');
-const priceTabsContainer = document.getElementById('priceTabsContainer');
-const currentRateInput = document.getElementById('currentRateInput');
-const currentRateLabel = document.getElementById('currentRateLabel');
-const applyRateCheckboxesContainer = document.getElementById('applyRateCheckboxesContainer');
+const priceTabsContainer = document.getElementById('priceTabsContainer'); // Single edit modal price tabs
+const currentRateInput = document.getElementById('currentRateInput'); // Single edit modal current rate input
+const currentRateLabel = document.getElementById('currentRateLabel'); // Single edit modal current rate label
+const applyRateCheckboxesContainer = document.getElementById('applyRateCheckboxesContainer'); // Single edit modal apply to others
 const productMinOrderValueInput = document.getElementById('productMinOrderValue');
 const productMrpInput = document.getElementById('productMrp');
 // Wedding Fields
@@ -64,10 +65,9 @@ const productBrandInput = document.getElementById('productBrand');
 const productItemCodeInput = document.getElementById('productItemCode');
 const productHsnSacCodeInput = document.getElementById('productHsnSacCode');
 
-// START: New Stock Management Fields References
+// Stock Management Fields References
 const productCurrentStockInput = document.getElementById('productCurrentStock');
 const productMinStockLevelInput = document.getElementById('productMinStockLevel');
-// END: New Stock Management Fields References
 
 const productOptionsInput = document.getElementById('productOptions');
 // Diagram Elements
@@ -91,6 +91,111 @@ const confirmDeleteFinalBtn = document.getElementById('confirmDeleteFinalBtn');
 const deleteConfirmCheckbox = document.getElementById('deleteConfirmCheckbox');
 const deleteWarningMessage = document.getElementById('deleteWarningMessage');
 
+// --- START: NEW Bulk Update Modal Elements ---
+const bulkUpdateModal = document.getElementById('bulkUpdateModal');
+const closeBulkUpdateModalBtn = document.getElementById('closeBulkUpdateModal');
+const cancelBulkUpdateBtn = document.getElementById('cancelBulkUpdateBtn');
+const applyBulkUpdateBtn = document.getElementById('applyBulkUpdateBtn');
+const bulkUpdateForm = document.getElementById('bulkUpdateForm');
+
+// Bulk Form Fields (Section Checkboxes)
+const bulkUpdateEnabledCheckbox = document.getElementById('bulkUpdateEnabledCheckbox');
+const bulkUpdatePricingCheckbox = document.getElementById('bulkUpdatePricingCheckbox');
+const bulkUpdateWeddingCheckbox = document.getElementById('bulkUpdateWeddingCheckbox');
+const bulkUpdateInternalCheckbox = document.getElementById('bulkUpdateInternalCheckbox');
+const bulkUpdateStockCheckbox = document.getElementById('bulkUpdateStockCheckbox');
+const bulkUpdateOptionsCheckbox = document.getElementById('bulkUpdateOptionsCheckbox');
+const bulkUpdateExtraChargesCheckbox = document.getElementById('bulkUpdateExtraChargesCheckbox');
+
+// Bulk Form Fields (Controlled Containers)
+const bulkBasicFields = document.getElementById('bulk-basic-fields');
+const bulkPricingFields = document.getElementById('bulk-pricing-fields');
+const bulkWeddingChargeFields = document.getElementById('bulk-wedding-charge-fields');
+const bulkInternalFields = document.getElementById('bulk-internal-fields');
+const bulkStockFields = document.getElementById('bulk-stock-fields');
+const bulkOptionsFields = document.getElementById('bulk-options-fields');
+const bulkExtraChargesFields = document.getElementById('bulk-extra-charges-fields');
+
+// Bulk Form Fields (Individual Inputs and their Checkboxes)
+const bulkIsEnabledSelect = document.getElementById('bulkIsEnabled'); // No individual checkbox, controlled by section checkbox
+const bulkPriceTabsContainer = document.getElementById('bulkPriceTabsContainer'); // Bulk edit modal price tabs
+const bulkCurrentRateInput = document.getElementById('bulkCurrentRateInput'); // Bulk edit modal current rate input
+const bulkCurrentRateLabel = document.getElementById('bulkCurrentRateLabel'); // Bulk edit modal current rate label
+
+const bulkPurchasePriceCheckbox = document.getElementById('bulkPurchasePriceCheckbox');
+const bulkPurchasePriceInput = document.getElementById('bulkPurchasePrice');
+const bulkMrpCheckbox = document.getElementById('bulkMrpCheckbox');
+const bulkMrpInput = document.getElementById('bulkMrp');
+const bulkGstRateCheckbox = document.getElementById('bulkGstRateCheckbox');
+const bulkGstRateInput = document.getElementById('bulkGstRateInput');
+const bulkMinOrderValueCheckbox = document.getElementById('bulkMinOrderValueCheckbox');
+const bulkMinOrderValueInput = document.getElementById('bulkMinOrderValue');
+
+const bulkDesignChargeCheckbox = document.getElementById('bulkDesignChargeCheckbox');
+const bulkDesignChargeInput = document.getElementById('bulkDesignCharge');
+const bulkPrintingChargeCheckbox = document.getElementById('bulkPrintingChargeCheckbox');
+const bulkPrintingChargeInput = document.getElementById('bulkPrintingCharge');
+const bulkTransportChargeCheckbox = document.getElementById('bulkTransportChargeCheckbox');
+const bulkTransportChargeInput = document.getElementById('bulkTransportCharge');
+const bulkExtraMarginPercentCheckbox = document.getElementById('bulkExtraMarginPercentCheckbox');
+const bulkExtraMarginPercentInput = document.getElementById('bulkExtraMarginPercentInput');
+
+const bulkBrandCheckbox = document.getElementById('bulkBrandCheckbox');
+const bulkBrandInput = document.getElementById('bulkBrand');
+const bulkItemCodeCheckbox = document.getElementById('bulkItemCodeCheckbox');
+const bulkItemCodeInput = document.getElementById('bulkItemCode');
+const bulkHsnSacCodeCheckbox = document.getElementById('bulkHsnSacCodeCheckbox');
+const bulkHsnSacCodeInput = document.getElementById('bulkHsnSacCodeInput');
+
+const bulkCurrentStockCheckbox = document.getElementById('bulkCurrentStockCheckbox');
+const bulkCurrentStockInput = document.getElementById('bulkCurrentStock');
+const bulkMinStockLevelCheckbox = document.getElementById('bulkMinStockLevelCheckbox');
+const bulkMinStockLevelInput = document.getElementById('bulkMinStockLevelInput');
+
+const bulkOptionsInput = document.getElementById('bulkOptions'); // No individual checkbox, controlled by section checkbox
+
+const bulkHasExtraChargesCheckbox = document.getElementById('bulkHasExtraChargesCheckbox');
+const bulkHasExtraChargesSelect = document.getElementById('bulkHasExtraCharges');
+const bulkExtraChargeNameCheckbox = document.getElementById('bulkExtraChargeNameCheckbox');
+const bulkExtraChargeNameInput = document.getElementById('bulkExtraChargeName');
+const bulkExtraChargeAmountCheckbox = document.getElementById('bulkExtraChargeAmountCheckbox');
+const bulkExtraChargeAmountInput = document.getElementById('bulkExtraChargeAmountInput');
+
+// Map individual field checkboxes to their corresponding input/select elements
+const bulkFieldMap = {
+    bulkPurchasePriceCheckbox: bulkPurchasePriceInput,
+    bulkMrpCheckbox: bulkMrpInput,
+    bulkGstRateCheckbox: bulkGstRateInput,
+    bulkMinOrderValueCheckbox: bulkMinOrderValueInput,
+    bulkDesignChargeCheckbox: bulkDesignChargeInput,
+    bulkPrintingChargeCheckbox: bulkPrintingChargeInput,
+    bulkTransportChargeCheckbox: bulkTransportChargeInput,
+    bulkExtraMarginPercentCheckbox: bulkExtraMarginPercentInput,
+    bulkBrandCheckbox: bulkBrandInput,
+    bulkItemCodeCheckbox: bulkItemCodeInput,
+    bulkHsnSacCodeCheckbox: bulkHsnSacCodeInput,
+    bulkCurrentStockCheckbox: bulkCurrentStockInput,
+    bulkMinStockLevelCheckbox: bulkMinStockLevelInput,
+    bulkHasExtraChargesCheckbox: bulkHasExtraChargesSelect,
+    bulkExtraChargeNameCheckbox: bulkExtraChargeNameInput,
+    bulkExtraChargeAmountCheckbox: bulkExtraChargeAmountInput,
+};
+
+// Map section checkboxes to the div containing their fields
+const bulkSectionFieldContainers = {
+     bulkUpdateEnabledCheckbox: bulkBasicFields,
+     bulkUpdatePricingCheckbox: bulkPricingFields,
+     bulkUpdateWeddingCheckbox: bulkWeddingChargeFields,
+     bulkUpdateInternalCheckbox: bulkInternalFields,
+     bulkUpdateStockCheckbox: bulkStockFields,
+     bulkUpdateOptionsCheckbox: bulkOptionsFields,
+     bulkUpdateExtraChargesCheckbox: bulkExtraChargesFields,
+};
+
+
+// --- END: NEW Bulk Update Modal Elements ---
+
+
 // --- Global State ---
 let currentSortField = 'createdAt';
 let currentSortDirection = 'desc';
@@ -103,7 +208,7 @@ let selectedFiles = []; // For product images
 let imagesToDelete = [];
 let existingImageUrls = [];
 let productBeingEditedData = {}; // Store all pricing data when editing
-let currentActiveRateType = 'online'; // Default active tab/rate type
+let currentActiveRateType = 'online'; // Default active tab/rate type for SINGLE edit modal
 const RATE_TYPES = { // Map types to Firestore field names and labels
     online: { field: 'rate', label: 'Online Customer Rate' },
     retail: { field: 'retailRate', label: 'Retail Shop Rate' },
@@ -114,8 +219,10 @@ const RATE_TYPES = { // Map types to Firestore field names and labels
 let diagramFileToUpload = null;
 let shouldRemoveDiagram = false;
 let isRateLocked = false;
-// NEW: Bulk Select State
+// Bulk Select State
 let selectedProductIds = new Set();
+// Bulk Update State
+let currentBulkRateType = 'online'; // Default active tab/rate type for BULK edit modal
 
 
 // --- Helper Functions ---
@@ -143,12 +250,12 @@ function showToast(message, duration = 3500) { const existingToast = document.qu
 
 // --- Initialization ---
 window.initializeOnlineProductManagement = () => {
-    console.log("Online Product Management Initializing (v_Stock)...");
+    console.log("Online Product Management Initializing (v_Bulk_Edit_UI_Logic)..."); // Updated version log
     if (!window.db || !window.auth || !window.storage) { console.error("Firebase services not available."); alert("Error initializing page."); return; }
     console.log("Firebase services confirmed.");
     listenForOnlineProducts();
     setupEventListeners();
-    console.log("Online Product Management Initialized (v_Stock).");
+    console.log("Online Product Management Initialized (v_Bulk_Edit_UI_Logic)."); // Updated version log
 };
 
 // --- Setup Event Listeners ---
@@ -157,22 +264,18 @@ function setupEventListeners() {
     if (filterSearchInput) filterSearchInput.addEventListener('input', handleSearchInput);
     if (clearFiltersBtn) clearFiltersBtn.addEventListener('click', clearFilters);
     if (addNewProductBtn) addNewProductBtn.addEventListener('click', openAddModal);
+
+    // Single Product Modal Listeners
     if (closeProductModalBtn) closeProductModalBtn.addEventListener('click', closeProductModal);
     if (cancelProductBtn) cancelProductBtn.addEventListener('click', closeProductModal);
     if (productModal) productModal.addEventListener('click', (event) => { if (event.target === productModal) closeProductModal(); });
     if (productForm) productForm.addEventListener('submit', handleSaveProduct);
     if (deleteProductBtn) deleteProductBtn.addEventListener('click', handleDeleteButtonClick);
-    if (closeDeleteConfirmModalBtn) closeDeleteConfirmModalBtn.addEventListener('click', closeDeleteConfirmModal);
-    if (cancelDeleteFinalBtn) cancelDeleteFinalBtn.addEventListener('click', closeDeleteConfirmModal);
-    if (deleteConfirmModal) deleteConfirmModal.addEventListener('click', (event) => { if (event.target === deleteConfirmModal) closeDeleteConfirmModal(); });
-    if (deleteConfirmCheckbox) deleteConfirmCheckbox.addEventListener('change', handleConfirmCheckboxChange);
-    if (confirmDeleteFinalBtn) confirmDeleteFinalBtn.addEventListener('click', handleFinalDelete);
     if (productImagesInput) productImagesInput.addEventListener('change', handleFileSelection);
-    if (hasExtraChargesCheckbox) hasExtraChargesCheckbox.addEventListener('change', toggleExtraCharges);
-    if (productCategoryInput) productCategoryInput.addEventListener('input', toggleWeddingFields);
-    if (productUnitSelect) productUnitSelect.addEventListener('input', toggleSqFtFields);
-
-    if (priceTabsContainer) {
+    if (hasExtraChargesCheckbox) hasExtraChargesCheckbox.addEventListener('change', toggleExtraCharges); // Single edit
+    if (productCategoryInput) productCategoryInput.addEventListener('input', toggleWeddingFields); // Single edit
+    if (productUnitSelect) productUnitSelect.addEventListener('input', toggleSqFtFields); // Single edit
+    if (priceTabsContainer) { // Single edit price tabs
         priceTabsContainer.addEventListener('click', (event) => {
             const button = event.target.closest('.price-tab-btn');
             if (button && (!isRateLocked || button.classList.contains('active'))) {
@@ -184,23 +287,66 @@ function setupEventListeners() {
                 showToast("Uncheck 'Apply to all' checkboxes below to change rate type.", 3000);
             }
         });
-    } else { console.error("Price tabs container (#priceTabsContainer) not found!"); }
-
-    if (currentRateInput) {
-        currentRateInput.addEventListener('input', handleRateInputChange);
-    } else { console.error("Current rate input (#currentRateInput) not found!"); }
-
+    } else { console.error("Price tabs container (#priceTabsContainer) not found!"); } // Single edit
+    if (currentRateInput) { currentRateInput.addEventListener('input', handleRateInputChange); } else { console.error("Current rate input (#currentRateInput) not found!"); } // Single edit
     if (productDiagramInput) { productDiagramInput.addEventListener('change', handleDiagramFileSelection); }
     if (removeDiagramBtn) { removeDiagramBtn.addEventListener('click', handleRemoveDiagram); }
 
-    // NEW: Add event listeners for bulk action elements (if they exist)
-    if(bulkEditButton) bulkEditButton.addEventListener('click', handleBulkEditClick); // This function will be implemented in Step 2
+    // Delete Confirmation Modal Listeners
+    if (closeDeleteConfirmModalBtn) closeDeleteConfirmModalBtn.addEventListener('click', closeDeleteConfirmModal);
+    if (cancelDeleteFinalBtn) cancelDeleteFinalBtn.addEventListener('click', closeDeleteConfirmModal);
+    if (deleteConfirmModal) deleteConfirmModal.addEventListener('click', (event) => { if (event.target === deleteConfirmModal) closeDeleteConfirmModal(); });
+    if (deleteConfirmCheckbox) deleteConfirmCheckbox.addEventListener('change', handleConfirmCheckboxChange);
+    if (confirmDeleteFinalBtn) confirmDeleteFinalBtn.addEventListener('click', handleFinalDelete);
 
 
-    console.log("Online Product Management event listeners set up (v_Stock).");
+    // --- START: NEW Bulk Update Modal Event Listeners ---
+    if(bulkEditButton) bulkEditButton.addEventListener('click', handleBulkEditClick); // Bulk edit button click
+
+    // Close bulk update modal listeners
+    if(closeBulkUpdateModalBtn) closeBulkUpdateModalBtn.addEventListener('click', closeBulkUpdateModal);
+    if(cancelBulkUpdateBtn) cancelBulkUpdateBtn.addEventListener('click', closeBulkUpdateModal);
+    if(bulkUpdateModal) bulkUpdateModal.addEventListener('click', (event) => { if (event.target === bulkUpdateModal) closeBulkUpdateModal(); });
+
+    // Section checkbox listeners to show/hide fields
+    for (const checkboxId in bulkSectionFieldContainers) {
+        const checkbox = document.getElementById(checkboxId);
+        if (checkbox) {
+            checkbox.addEventListener('change', (event) => handleBulkSectionCheckboxChange(event.target));
+        }
+    }
+
+    // Individual field checkbox listeners to enable/disable inputs
+    for (const checkboxId in bulkFieldMap) {
+        const checkbox = document.getElementById(checkboxId);
+        if (checkbox) {
+            checkbox.addEventListener('change', (event) => handleBulkFieldCheckboxChange(event.target));
+        }
+    }
+
+    // Bulk Price Tabs listener
+    if (bulkPriceTabsContainer) {
+         bulkPriceTabsContainer.addEventListener('click', (event) => {
+             const button = event.target.closest('.price-tab-btn');
+             if (button) {
+                 const rateType = button.dataset.rateType;
+                 if (rateType) {
+                     setBulkActiveRateTab(rateType);
+                 }
+             }
+         });
+     } else { console.error("Bulk Price tabs container (#bulkPriceTabsContainer) not found!"); }
+
+    // Bulk Update Form Submission Listener (Placeholder)
+    if(bulkUpdateForm) bulkUpdateForm.addEventListener('submit', handleBulkUpdate); // This function will be implemented later
+
+    // --- END: NEW Bulk Update Modal Event Listeners ---
+
+
+    console.log("Online Product Management event listeners set up (v_Bulk_Edit_UI_Logic)."); // Updated version log
 }
 
-// NEW: Function to handle checkbox change
+// NEW: Function to handle product checkbox change (already existed, but adding comment)
 function handleProductCheckboxChange(event) {
     const checkbox = event.target;
     const productId = checkbox.dataset.id;
@@ -215,7 +361,7 @@ function handleProductCheckboxChange(event) {
     updateBulkActionsUI(); // Update the count and button state
 }
 
-// NEW: Function to update the bulk actions UI
+// NEW: Function to update the bulk actions UI (already existed, but adding comment)
 function updateBulkActionsUI() {
     const count = selectedProductIds.size;
     if (selectedCountSpan) {
@@ -223,17 +369,24 @@ function updateBulkActionsUI() {
     }
 
     if (bulkActionsContainer) {
+        // Show bulk actions container if at least one item is selected
         bulkActionsContainer.style.display = count > 0 ? 'flex' : 'none';
     }
 
-    // Enable/disable bulk edit button (will be implemented in Step 2)
+    // Enable/disable bulk edit button
     if (bulkEditButton) {
         bulkEditButton.disabled = count === 0;
+         // If button is enabled, show it (it's initially hidden by default CSS)
+         if (count > 0) {
+              bulkEditButton.style.display = '';
+         } else {
+              bulkEditButton.style.display = 'none';
+         }
     }
 }
 
 
-// --- Show/Hide Conditional Fields ---
+// --- Show/Hide Conditional Fields (Single Edit Modal) ---
 function toggleWeddingFields() { if (!weddingFieldsContainer || !productCategoryInput) return; const category = productCategoryInput.value.toLowerCase(); weddingFieldsContainer.style.display = category.includes('wedding card') ? 'block' : 'none'; }
 function toggleSqFtFields() { if (!productUnitSelect) return; const unitType = productUnitSelect.value; if (productMinOrderValueInput) { const parentGroup = productMinOrderValueInput.closest('.sq-feet-only'); if (parentGroup) parentGroup.style.display = unitType === 'Sq Feet' ? 'block' : 'none'; } }
 function toggleExtraCharges() { if (!extraChargesSection || !hasExtraChargesCheckbox) return; extraChargesSection.style.display = hasExtraChargesCheckbox.checked ? 'block' : 'none'; }
@@ -246,9 +399,9 @@ function clearFilters() {
     if (sortSelect) sortSelect.value = 'createdAt_desc';
     currentSortField = 'createdAt';
     currentSortDirection = 'desc';
-    // NEW: Clear selected products when filters are cleared
+    // Clear selected products when filters are cleared
     selectedProductIds.clear();
-    updateBulkActionsUI();
+    updateBulkActionsUI(); // Update UI after clearing selection
     applyFiltersAndRender();
     if (unsubscribeProducts) listenForOnlineProducts(); /* Re-fetch if listener was active */
 }
@@ -258,12 +411,12 @@ function listenForOnlineProducts() {
     if (unsubscribeProducts) { unsubscribeProducts(); unsubscribeProducts = null; }
     if (!window.db || !window.collection || !window.query || !window.onSnapshot || !window.orderBy) {
         console.error("Firestore functions unavailable!");
-        // Colspan updated from 9 to 10
-        if (productTableBody) productTableBody.innerHTML = `<tr><td colspan="10" style="color: red; text-align: center;">Error: DB Connection Failed.</td></tr>`;
+        let colspan = productTableBody?.querySelector('tr th')?.parentElement?.children?.length || 10;
+        if (productTableBody) productTableBody.innerHTML = `<tr><td colspan="${colspan}" style="color: red; text-align: center;">Error: DB Connection Failed.</td></tr>`;
         return;
     }
-    // Colspan updated from 9 to 10
-    if (productTableBody) productTableBody.innerHTML = `<tr><td colspan="10" id="loadingMessage" style="text-align: center;">Loading online products...</td></tr>`;
+    let colspan = productTableBody?.querySelector('tr th')?.parentElement?.children?.length || 10;
+    if (productTableBody) productTableBody.innerHTML = `<tr><td colspan="${colspan}" id="loadingMessage" style="text-align: center;">Loading online products...</td></tr>`;
     try {
         console.log(`Setting up Firestore listener for 'onlineProducts' with sort: ${currentSortField}_${currentSortDirection}`);
         const productsRef = window.collection(window.db, "onlineProducts");
@@ -274,8 +427,7 @@ function listenForOnlineProducts() {
             applyFiltersAndRender();
         }, (error) => {
             console.error("Error fetching online products snapshot:", error);
-            // Colspan updated from 9 to 10
-            let colspan = 10;
+            let colspan = productTableBody?.querySelector('tr th')?.parentElement?.children?.length || 10;
             if (error.code === 'permission-denied') {
                 if (productTableBody) productTableBody.innerHTML = `<tr><td colspan="${colspan}" style="color: red; text-align: center;">Error loading products: Insufficient permissions. Check Firestore rules.</td></tr>`;
             } else {
@@ -284,8 +436,8 @@ function listenForOnlineProducts() {
         });
     } catch (error) {
         console.error("Error setting up online product listener:", error);
-        // Colspan updated from 9 to 10
-        if (productTableBody) productTableBody.innerHTML = `<tr><td colspan="10" style="color: red; text-align: center;">Error setting up listener.</td></tr>`;
+        let colspan = productTableBody?.querySelector('tr th')?.parentElement?.children?.length || 10;
+        if (productTableBody) productTableBody.innerHTML = `<tr><td colspan="${colspan}" style="color: red; text-align: center;">Error setting up listener.</td></tr>`;
     }
 }
 
@@ -300,7 +452,9 @@ function applyFiltersAndRender() {
             const name = (product.productName || '').toLowerCase();
             const category = (product.category || '').toLowerCase();
             const brand = (product.brand || '').toLowerCase();
-            if (!(name.includes(filterSearchValue) || category.includes(filterSearchValue) || brand.includes(filterSearchValue))) {
+             const itemCode = (product.itemCode || '').toLowerCase(); // Added itemCode for search
+             const hsnSacCode = (product.hsnSacCode || '').toLowerCase(); // Added hsnSacCode for search
+            if (!(name.includes(filterSearchValue) || category.includes(filterSearchValue) || brand.includes(filterSearchValue) || itemCode.includes(filterSearchValue) || hsnSacCode.includes(filterSearchValue))) { // Updated search filter
                 return false;
             }
         }
@@ -314,7 +468,6 @@ function applyFiltersAndRender() {
 function renderProductTable(products) {
     if (!productTableBody) return;
     productTableBody.innerHTML = '';
-    // Colspan updated from 9 to 10
     const expectedColumns = 10;
     if (products.length === 0) {
         productTableBody.innerHTML = `<tr><td colspan="${expectedColumns}" id="noProductsMessage" style="text-align: center;">No online products found matching criteria.</td></tr>`;
@@ -332,11 +485,10 @@ function renderProductTable(products) {
             const unit = data.unit || '-';
             const enabled = data.isEnabled ? 'Yes' : 'No';
             const dateAdded = formatFirestoreTimestamp(data.createdAt);
-            // START: Get Current Stock value
             const currentStock = (data.stock?.currentStock !== undefined && data.stock?.currentStock !== null) ? data.stock.currentStock : 'N/A';
-            // END: Get Current Stock value
 
-            // Check if the product is currently selected
+
+            // Check if the product is currently selected for bulk edit
             const isSelected = selectedProductIds.has(firestoreId);
 
             tableRow.innerHTML = `
@@ -386,11 +538,11 @@ function renderProductTable(products) {
     updateBulkActionsUI();
 }
 
-// --- Pricing Tab Functions ---
+// --- Pricing Tab Functions (Single Edit Modal) ---
 function setActiveRateTab(rateType) {
     unlockPricingFields();
     if (!RATE_TYPES[rateType] || !priceTabsContainer || !currentRateInput || !currentRateLabel || !applyRateCheckboxesContainer) {
-        console.error("Cannot set active rate tab - required elements missing.");
+        console.error("Cannot set active rate tab - required elements missing for single edit.");
         return;
     }
     currentActiveRateType = rateType;
@@ -473,11 +625,12 @@ function resetApplyCheckboxesAndUnlock() {
     unlockPricingFields();
 }
 
-// --- Modal Handling (Add/Edit) ---
+
+// --- Modal Handling (Add/Edit Single Product) ---
 function openAddModal() {
     if (!productModal || !productForm) return;
-    console.log("Opening modal to add new ONLINE product (v_Stock).");
-    // NEW: Clear any selected products when opening add/edit modal
+    console.log("Opening modal to add new ONLINE product (v_Bulk_Edit_UI_Logic)."); // Updated version log
+    // Clear any selected products when opening add/edit modal
     selectedProductIds.clear();
     updateBulkActionsUI();
 
@@ -503,13 +656,12 @@ function openAddModal() {
     if(diagramUploadProgress) diagramUploadProgress.textContent = '';
     if(existingDiagramUrlInput) existingDiagramUrlInput.value = '';
 
-    // START: Reset Stock fields for Add Modal
+    // Reset Stock fields for Add Modal
     if (productCurrentStockInput) productCurrentStockInput.value = ''; // Or '0' if you prefer default
     if (productMinStockLevelInput) productMinStockLevelInput.value = '';
-    // END: Reset Stock fields
 
-    setActiveRateTab('online');
-    unlockPricingFields();
+    setActiveRateTab('online'); // Ensure online tab is active for new product
+    unlockPricingFields(); // Ensure pricing fields are unlocked for new product
 
     toggleWeddingFields(); toggleSqFtFields(); toggleExtraCharges();
     productModal.classList.add('active');
@@ -517,8 +669,8 @@ function openAddModal() {
 
 async function openEditModal(firestoreId, data) {
     if (!productModal || !productForm || !data) return;
-    console.log("Opening modal to edit ONLINE product (v_Stock):", firestoreId);
-    // NEW: Clear any selected products when opening add/edit modal
+    console.log("Opening modal to edit ONLINE product (v_Bulk_Edit_UI_Logic):", firestoreId); // Updated version log
+    // Clear any selected products when opening add/edit modal
     selectedProductIds.clear();
     updateBulkActionsUI();
 
@@ -553,11 +705,10 @@ async function openEditModal(firestoreId, data) {
     if (productItemCodeInput) productItemCodeInput.value = data.itemCode || '';
     if (productHsnSacCodeInput) productHsnSacCodeInput.value = data.hsnSacCode || '';
 
-    // START: Load Stock fields for Edit Modal
+    // Load Stock fields for Edit Modal
     const stock = data.stock || {};
     if (productCurrentStockInput) productCurrentStockInput.value = stock.currentStock ?? '';
     if (productMinStockLevelInput) productMinStockLevelInput.value = stock.minStockLevel ?? '';
-    // END: Load Stock fields
 
     selectedFiles = []; imagesToDelete = [];
     if (imagePreviewArea) imagePreviewArea.innerHTML = '';
@@ -577,8 +728,14 @@ async function openEditModal(firestoreId, data) {
 
     productToDeleteId = firestoreId; productToDeleteName = data.productName || 'this online product';
 
-    setActiveRateTab('online');
-    unlockPricingFields();
+    // Determine which price tab should be active based on available data, default to online
+    let initialRateType = 'online';
+     if (pricing.rate !== undefined) initialRateType = 'online';
+     else if (pricing.retailRate !== undefined) initialRateType = 'retail';
+     else if (pricing.agentRate !== undefined) initialRateType = 'agent';
+     else if (pricing.resellerRate !== undefined) initialRateType = 'reseller';
+    setActiveRateTab(initialRateType); // Set active tab and load rate
+    unlockPricingFields(); // Ensure pricing fields are unlocked for editing
 
     toggleWeddingFields(); toggleSqFtFields(); toggleExtraCharges();
     productModal.classList.add('active');
@@ -591,29 +748,247 @@ function closeProductModal() {
         if (productImagesInput) productImagesInput.value = null;
         selectedFiles = []; imagesToDelete = [];
         productBeingEditedData = {};
-        currentActiveRateType = 'online';
+        currentActiveRateType = 'online'; // Reset active rate type for single modal
         diagramFileToUpload = null; shouldRemoveDiagram = false;
         if (productDiagramInput) productDiagramInput.value = null;
         unlockPricingFields();
-         // NEW: Clear selected products when closing add/edit modal
+         // Clear selected products when closing add/edit modal
         selectedProductIds.clear();
-        updateBulkActionsUI();
+        updateBulkActionsUI(); // Update UI after clearing selection
     }
 }
 
-// --- Image Handling ---
+// --- START: NEW Bulk Update Modal Handling ---
+
+// Placeholder function for bulk edit button click
+function handleBulkEditClick() {
+    if (selectedProductIds.size === 0) {
+        showToast("Please select at least one product for bulk edit.", 3000);
+        return;
+    }
+    console.log("Bulk Edit clicked for IDs:", selectedProductIds);
+    openBulkUpdateModal(); // Call the function to open the bulk edit modal
+}
+
+// Function to open the bulk update modal
+function openBulkUpdateModal() {
+    if (!bulkUpdateModal || !bulkUpdateForm) return;
+    console.log("Opening Bulk Update Modal.");
+
+    // Reset the form state
+    bulkUpdateForm.reset();
+    resetBulkFormState(); // Reset checkboxes and disabled fields
+
+    // Set the default active price tab in bulk modal
+    setBulkActiveRateTab('online');
+
+    bulkUpdateModal.classList.add('active'); // Show the modal
+}
+
+// Function to close the bulk update modal
+function closeBulkUpdateModal() {
+    if (bulkUpdateModal) {
+        bulkUpdateModal.classList.remove('active'); // Hide the modal
+        // Optionally reset form state here as well, or let open handle it
+         resetBulkFormState();
+         // Keep selectedProductIds as is, the user might want to do another bulk action
+         // If you want to clear selection on modal close, uncomment the next two lines:
+         // selectedProductIds.clear();
+         // updateBulkActionsUI();
+    }
+}
+
+// Function to reset the state of the bulk update form (uncheck checkboxes, disable fields)
+function resetBulkFormState() {
+     // Reset section checkboxes and hide fields
+     for (const checkboxId in bulkSectionFieldContainers) {
+         const checkbox = document.getElementById(checkboxId);
+         const fieldsContainer = bulkSectionFieldContainers[checkboxId];
+         if (checkbox) checkbox.checked = false;
+         if (fieldsContainer) fieldsContainer.style.display = 'none';
+     }
+
+     // Reset individual field checkboxes and disable fields
+     for (const checkboxId in bulkFieldMap) {
+         const checkbox = document.getElementById(checkboxId);
+         const fieldInput = bulkFieldMap[checkboxId];
+         if (checkbox) checkbox.checked = false;
+         if (fieldInput) fieldInput.disabled = true;
+     }
+
+     // Reset specific inputs that don't follow the checkbox pattern directly
+     if (bulkIsEnabledSelect) bulkIsEnabledSelect.disabled = true; // Controlled by bulkUpdateEnabledCheckbox
+     if (bulkOptionsInput) bulkOptionsInput.disabled = true; // Controlled by bulkUpdateOptionsCheckbox
+     if (bulkCurrentRateInput) bulkCurrentRateInput.disabled = true; // Controlled by bulkUpdatePricingCheckbox
+
+     // Reset price tabs state in bulk modal
+      if (bulkPriceTabsContainer) {
+          bulkPriceTabsContainer.querySelectorAll('.price-tab-btn').forEach(btn => {
+              btn.classList.remove('active');
+          });
+      }
+      // Set default active tab visually, input is handled by section checkbox
+      setBulkActiveRateTab('online');
+}
+
+
+// Handle change on section checkboxes (show/hide fields, enable/disable inputs within section)
+function handleBulkSectionCheckboxChange(checkbox) {
+    const sectionId = checkbox.dataset.section;
+    const fieldsContainer = bulkSectionFieldContainers[checkbox.id];
+
+    if (!fieldsContainer) {
+        console.error("Bulk fields container not found for section:", sectionId);
+        return;
+    }
+
+    if (checkbox.checked) {
+        fieldsContainer.style.display = 'block'; // Show the fields
+        // Enable inputs within this section that have an individual checkbox, or are directly controlled
+        const inputs = fieldsContainer.querySelectorAll('input, select, textarea');
+        inputs.forEach(input => {
+            // Find the corresponding individual checkbox if it exists
+            let individualCheckbox = null;
+            if (input.id) {
+                 for (const cbId in bulkFieldMap) {
+                     if (bulkFieldMap[cbId] === input) {
+                         individualCheckbox = document.getElementById(cbId);
+                         break;
+                     }
+                 }
+            }
+
+            // Enable the input ONLY if there is no individual checkbox for it, OR if the individual checkbox IS checked
+             if (!individualCheckbox || individualCheckbox.checked) {
+                input.disabled = false;
+             }
+        });
+
+         // Special handling for the rate input within pricing, options textarea, and enabled select
+         if (checkbox.id === 'bulkUpdatePricingCheckbox' && bulkCurrentRateInput) { bulkCurrentRateInput.disabled = false; }
+         if (checkbox.id === 'bulkUpdateOptionsCheckbox' && bulkOptionsInput) { bulkOptionsInput.disabled = false; }
+         if (checkbox.id === 'bulkUpdateEnabledCheckbox' && bulkIsEnabledSelect) { bulkIsEnabledSelect.disabled = false; }
+
+
+    } else {
+        fieldsContainer.style.display = 'none'; // Hide the fields
+        // Disable all inputs within this section
+        const inputs = fieldsContainer.querySelectorAll('input, select, textarea');
+        inputs.forEach(input => {
+             input.disabled = true;
+        });
+    }
+}
+
+// Handle change on individual field checkboxes (enable/disable corresponding input)
+function handleBulkFieldCheckboxChange(checkbox) {
+    const fieldInput = bulkFieldMap[checkbox.id];
+    const sectionCheckboxId = checkbox.closest('fieldset')?.querySelector('input[type="checkbox"][data-section]')?.id;
+    const sectionCheckbox = sectionCheckboxId ? document.getElementById(sectionCheckboxId) : null;
+
+    if (!fieldInput) {
+        console.error("Corresponding input field not found for checkbox:", checkbox.id);
+        return;
+    }
+
+    // The input should be enabled ONLY if its individual checkbox IS checked AND its section checkbox IS checked (if it belongs to a section)
+    const isSectionChecked = sectionCheckbox ? sectionCheckbox.checked : true; // Assume true if not in a section
+
+    if (checkbox.checked && isSectionChecked) {
+        fieldInput.disabled = false;
+    } else {
+        fieldInput.disabled = true;
+    }
+}
+
+// Function to set the active rate tab in the bulk update modal
+function setBulkActiveRateTab(rateType) {
+    if (!RATE_TYPES[rateType] || !bulkPriceTabsContainer || !bulkCurrentRateInput || !bulkCurrentRateLabel) {
+        console.error("Cannot set active rate tab - required elements missing for bulk edit.");
+        return;
+    }
+    currentBulkRateType = rateType; // Update the state variable for bulk modal
+    bulkPriceTabsContainer.querySelectorAll('.price-tab-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.rateType === rateType);
+    });
+    bulkCurrentRateLabel.textContent = `${RATE_TYPES[rateType].label}*:`;
+    // Note: The input field value is NOT loaded from existing product data in bulk edit.
+    // The input field (bulkCurrentRateInput) state (enabled/disabled) is controlled by the bulkUpdatePricingCheckbox.
+}
+
+
+// Placeholder function to handle bulk update form submission (Will be implemented in a later step)
+async function handleBulkUpdate(event) {
+    event.preventDefault();
+    console.log("Bulk Update form submitted.");
+
+    // TODO: Implement logic to collect data from the bulk update form
+    // TODO: Validate the collected data
+    // TODO: Prepare the update payload using selectedProductIds and the collected data
+    // TODO: Call a new backend function to perform the WriteBatch update
+
+    showToast("Bulk Update feature is not fully implemented yet. (Logic coming soon!)", 4000);
+
+    // Example of how you might access selected IDs:
+    // const productIdsToUpdate = Array.from(selectedProductIds);
+    // console.log("Product IDs selected for update:", productIdsToUpdate);
+
+    // Example of how you might check which fields are selected for update:
+    // if (bulkUpdatePricingCheckbox.checked) {
+    //     console.log("Update Pricing is checked.");
+    //     if (bulkCurrentRateInput.disabled === false) { // Check if input is enabled by section checkbox
+    //          console.log(`New ${currentBulkRateType} Rate:`, bulkCurrentRateInput.value);
+    //     }
+    //     if (bulkPurchasePriceCheckbox.checked && bulkPurchasePriceInput.disabled === false) {
+    //          console.log("New Purchase Price:", bulkPurchasePriceInput.value);
+    //     }
+    //     // ... check other pricing fields
+    // }
+    // if (bulkUpdateStockCheckbox.checked) {
+    //      console.log("Update Stock is checked.");
+    //      if (bulkCurrentStockCheckbox.checked && bulkCurrentStockInput.disabled === false) {
+    //          console.log("New Current Stock:", bulkCurrentStockInput.value);
+    //      }
+    //      // ... check other stock fields
+    // }
+    // ... and so on for other sections
+
+     // Simulating success/failure for now
+     // const success = Math.random() > 0.5; // Simulate success 50% of the time
+     // if (success) {
+     //     showToast("Simulated: Bulk Update successful!", 3000);
+     //     closeBulkUpdateModal();
+     // } else {
+     //      showToast("Simulated: Bulk Update failed. Check console.", 5000);
+     // }
+
+     // IMPORTANT: Re-enable the button and hide spinner in finally block or after async operation
+     // if (applyBulkUpdateBtn) applyBulkUpdateBtn.disabled = false;
+     // const spinner = applyBulkUpdateBtn?.querySelector('.fa-spinner');
+     // const icon = applyBulkUpdateBtn?.querySelector('.fa-save');
+     // const text = applyBulkUpdateBtn?.querySelector('span');
+     // if (spinner) spinner.style.display = 'none';
+     // if (icon) icon.style.display = '';
+     // if (text) text.textContent = 'Apply Updates';
+}
+
+// --- END: NEW Bulk Update Modal Handling ---
+
+
+// --- Image Handling (Single Edit Modal) ---
 function handleFileSelection(event) { if (!imagePreviewArea || !productImagesInput) return; const files = Array.from(event.target.files); let currentImageCount = existingImageUrls.filter(url => !imagesToDelete.includes(url)).length + selectedFiles.length; const availableSlots = 4 - currentImageCount; if (files.length > availableSlots) { alert(`Max 4 images allowed. You have ${currentImageCount}, tried to add ${files.length}.`); productImagesInput.value = null; return; } files.forEach(file => { if (file.type.startsWith('image/')) { if (selectedFiles.length + existingImageUrls.filter(url => !imagesToDelete.includes(url)).length < 4) { selectedFiles.push(file); displayImagePreview(file, null); } } }); productImagesInput.value = null; }
-function displayImagePreview(fileObject, existingUrl = null) { if (!imagePreviewArea) return; const previewId = existingUrl || `new-${fileObject.name}-${Date.now()}`; const previewWrapper = document.createElement('div'); previewWrapper.className = 'image-preview-item'; previewWrapper.setAttribute('data-preview-id', previewId); const img = document.createElement('img'); const removeBtn = document.createElement('button'); removeBtn.type = 'button'; removeBtn.className = 'remove-image-btn'; removeBtn.innerHTML = '&times;'; removeBtn.title = 'Remove image'; const progressBar = document.createElement('div'); progressBar.className = 'upload-progress-bar'; const progressFill = document.createElement('div'); progressBar.appendChild(progressFill); progressBar.style.display = 'none'; if (existingUrl) { img.src = existingUrl; img.onerror = () => { img.src = 'images/placeholder.png'; }; previewWrapper.imageUrl = existingUrl; removeBtn.onclick = () => { if (!imagesToDelete.includes(existingUrl)) imagesToDelete.push(existingUrl); previewWrapper.style.display = 'none'; }; } else if (fileObject) { const reader = new FileReader(); reader.onload = (e) => { img.src = e.target.result; }; reader.readAsDataURL(fileObject); previewWrapper.fileData = fileObject; removeBtn.onclick = () => { selectedFiles = selectedFiles.filter(f => f !== fileObject); previewWrapper.remove(); }; } previewWrapper.appendChild(img); previewWrapper.appendChild(removeBtn); previewWrapper.appendChild(progressBar); imagePreviewArea.appendChild(previewWrapper); }
+function displayImagePreview(fileObject, existingUrl = null) { if (!imagePreviewArea) return; const previewId = existingUrl || `new-${fileObject.name}-${Date.now()}`; const previewWrapper = document.createElement('div'); previewWrapper.className = 'image-preview-item'; previewWrapper.setAttribute('data-preview-id', previewId); const img = document.createElement('img'); const removeBtn = document.createElement('button'); removeBtn.type = 'button'; removeBtn.className = 'remove-image-btn'; removeBtn.innerHTML = '&times;'; removeBtn.title = 'Remove image'; const progressBar = document.createElement('div'); progressBar.className = 'upload-progress-bar'; const progressFill = document.createElement('div'); progressBar.appendChild(progressFill); progressBar.style.display = 'none'; if (existingUrl) { img.src = existingUrl; img.onerror = () => { img.src = 'images/placeholder.png'; }; previewWrapper.imageUrl = existingUrl; removeBtn.onclick = () => { if (!imagesToDelete.includes(existingUrl)) imagesToDelete.push(existingUrl); previewWrapper.style.display = 'none'; }; }; } else if (fileObject) { const reader = new FileReader(); reader.onload = (e) => { img.src = e.target.result; }; reader.readAsDataURL(fileObject); previewWrapper.fileData = fileObject; removeBtn.onclick = () => { selectedFiles = selectedFiles.filter(f => f !== fileObject); previewWrapper.remove(); }; }; } previewWrapper.appendChild(img); previewWrapper.appendChild(removeBtn); previewWrapper.appendChild(progressBar); imagePreviewArea.appendChild(previewWrapper); }
 async function uploadImage(file, productId, index) { if (!window.storage || !window.storageRef || !window.uploadBytesResumable || !window.getDownloadURL) throw new Error("Storage functions missing."); const previewWrapper = [...imagePreviewArea.querySelectorAll('.image-preview-item')].find(el => el.fileData === file); const progressBar = previewWrapper?.querySelector('.upload-progress-bar'); const progressFill = progressBar?.querySelector('div'); const timestamp = Date.now(); const uniqueFileName = `${timestamp}-image${index}-${file.name.replace(/[^a-zA-Z0-9.]/g, '_')}`; const filePath = `onlineProductImages/${productId}/${uniqueFileName}`; const fileRef = window.storageRef(window.storage, filePath); if (progressBar) progressBar.style.display = 'block'; if (progressFill) progressFill.style.width = '0%'; const uploadTask = window.uploadBytesResumable(fileRef, file); return new Promise((resolve, reject) => { uploadTask.on('state_changed', (snapshot) => { const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100; if (progressFill) progressFill.style.width = `${progress}%`; if (uploadProgressInfo) uploadProgressInfo.textContent = `Uploading ${file.name}: ${progress.toFixed(0)}%`; }, (error) => { if (progressBar) progressBar.style.backgroundColor = 'red'; if (uploadProgressInfo) uploadProgressInfo.textContent = `Upload failed: ${file.name}.`; reject(error); }, async () => { if (progressBar) progressBar.style.backgroundColor = 'var(--success-color)'; if (uploadProgressInfo) uploadProgressInfo.textContent = `Getting URL...`; try { const downloadURL = await window.getDownloadURL(uploadTask.snapshot.ref); resolve(downloadURL); } catch (error) { if (progressBar) progressBar.style.backgroundColor = 'red'; if (uploadProgressInfo) uploadProgressInfo.textContent = `Failed to get URL.`; reject(error); } }); }); }
 async function deleteStoredImage(imageUrl) { if (!window.storage || !window.storageRef || !window.deleteObject) return; if (!imageUrl || !(imageUrl.startsWith('https://firebasestorage.googleapis.com/') || imageUrl.startsWith('gs://'))) return; try { const imageRef = window.storageRef(window.storage, imageUrl); await window.deleteObject(imageRef); console.log("Deleted image from Storage:", imageUrl); } catch (error) { if (error.code === 'storage/object-not-found') console.warn("Image not found:", imageUrl); else console.error("Error deleting image:", imageUrl, error); } }
 
-// --- Diagram File Handling ---
+// --- Diagram File Handling (Single Edit Modal) ---
 function handleDiagramFileSelection(event) { const file = event.target.files[0]; if (file) { const allowedTypes = ['application/pdf', 'image/png', 'image/jpeg', 'image/webp']; if (!allowedTypes.includes(file.type)) { showToast("Invalid diagram file type. Please use PDF, PNG, JPG, or WEBP.", 4000); event.target.value = null; diagramFileToUpload = null; return; } diagramFileToUpload = file; shouldRemoveDiagram = false; if(diagramUploadProgress) diagramUploadProgress.textContent = `Selected: ${file.name}`; if(diagramLinkArea) diagramLinkArea.style.display = 'none'; } else { diagramFileToUpload = null; if(diagramUploadProgress) diagramUploadProgress.textContent = ''; } }
 function handleRemoveDiagram() { if (!existingDiagramUrlInput?.value) { showToast("No diagram currently saved to remove.", 3000); return; } if (confirm("Are you sure you want to remove the current diagram? This will delete the file permanently when you save.")) { shouldRemoveDiagram = true; diagramFileToUpload = null; if(productDiagramInput) productDiagramInput.value = null; if(diagramLinkArea) diagramLinkArea.style.display = 'none'; if(diagramUploadProgress) diagramUploadProgress.textContent = 'Diagram marked for removal.'; showToast("Diagram marked for removal. Click Save Product to confirm.", 4000); } }
 async function uploadFile(file, storagePath, progressElement) { if (!window.storage || !window.storageRef || !window.uploadBytesResumable || !window.getDownloadURL) throw new Error("Storage functions missing."); if (!file || !storagePath || !progressElement) throw new Error("Missing file, path, or progress element for upload."); const fileRef = window.storageRef(window.storage, storagePath); progressElement.textContent = 'Starting upload...'; progressElement.style.color = 'var(--text-color-medium)'; const uploadTask = window.uploadBytesResumable(fileRef, file); return new Promise((resolve, reject) => { uploadTask.on('state_changed', (snapshot) => { const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100; progressElement.textContent = `Uploading ${file.name}: ${progress.toFixed(0)}%`; }, (error) => { progressElement.textContent = `Upload failed: ${file.name}. ${error.code}`; progressElement.style.color = 'var(--danger-color)'; reject(error); }, async () => { progressElement.textContent = `Upload Complete. Getting URL...`; try { const downloadURL = await window.getDownloadURL(uploadTask.snapshot.ref); progressElement.textContent = `Diagram uploaded successfully.`; progressElement.style.color = 'var(--success-color)'; resolve(downloadURL); } catch (getUrlError) { progressElement.textContent = `Failed to get URL after upload.`; progressElement.style.color = 'var(--danger-color)'; reject(getUrlError); } }); }); }
 async function deleteStoredFile(fileUrl) { if (!window.storage || !window.storageRef || !window.deleteObject) { return; } if (!fileUrl || !(fileUrl.startsWith('https://firebasestorage.googleapis.com/') || fileUrl.startsWith('gs://'))) { return; } try { const fileRef = window.storageRef(window.storage, fileUrl); await window.deleteObject(fileRef); console.log("Deleted file from Storage:", fileUrl); } catch (error) { if (error.code === 'storage/object-not-found') { console.warn("File not found in Storage, skipping delete:", fileUrl); } else { console.error("Error deleting file:", fileUrl, error); } } }
 
-// --- handleSaveProduct Function ---
+
+// --- handleSaveProduct Function (Single Product) ---
 async function handleSaveProduct(event) {
     event.preventDefault();
     if (!window.db || !window.collection || !window.addDoc || !window.doc || !window.updateDoc || !window.serverTimestamp || !window.storage) { showToast("Core Firebase functions unavailable.", 5000); return; }
@@ -631,7 +1006,7 @@ async function handleSaveProduct(event) {
     if (currentRateValue === null || isNaN(currentRateValue)) { const activeLabel = RATE_TYPES[currentActiveRateType]?.label || 'Current Price'; showToast(`Please enter a valid ${activeLabel}.`, 5000); if (saveProductBtn) saveProductBtn.disabled = false; if (saveSpinner) saveSpinner.style.display = 'none'; if (saveIcon) saveIcon.style.display = ''; if (saveText) saveText.textContent = isEditing ? 'Update Product' : 'Save Product'; return; }
     if ([purchasePrice, mrp, gstRate, minOrderValue, designCharge, printingCharge, transportCharge, extraMarginPercent, extraChargeAmount].some(isNaN)) { showToast("Please enter valid numbers for optional prices/charges.", 5000); if (saveProductBtn) saveProductBtn.disabled = false; if (saveSpinner) saveSpinner.style.display = 'none'; if (saveIcon) saveIcon.style.display = ''; if (saveText) saveText.textContent = isEditing ? 'Update Product' : 'Save Product'; return; }
 
-    // START: Get Stock Data
+    // Get Stock Data
     const currentStock = parseNumericInput(productCurrentStockInput?.value, true, true); // true for allowZero, true for isInteger
     const minStockLevel = parseNumericInput(productMinStockLevelInput?.value, true, true); // true for allowZero, true for isInteger
 
@@ -645,7 +1020,6 @@ async function handleSaveProduct(event) {
         if (saveProductBtn) saveProductBtn.disabled = false; if (saveSpinner) saveSpinner.style.display = 'none'; if (saveIcon) saveIcon.style.display = ''; if (saveText) saveText.textContent = isEditing ? 'Update Product' : 'Save Product';
         return;
     }
-    // END: Get Stock Data
 
     const productData = {
         productName: productName, productName_lowercase: productName.toLowerCase(),
@@ -657,11 +1031,11 @@ async function handleSaveProduct(event) {
         hsnSacCode: productHsnSacCodeInput?.value.trim() || null,
         updatedAt: window.serverTimestamp(),
         pricing: { ...(productBeingEditedData?.pricing || {}) },
-        stock: { ...(productBeingEditedData?.stock || {}) } // START: Initialize stock object
+        stock: { ...(productBeingEditedData?.stock || {}) } // Initialize with stock object
     };
     if (!isEditing) { productData.createdAt = window.serverTimestamp(); productData.imageUrls = []; productData.diagramUrl = null; }
 
-    // START: Add Stock data to productData
+    // Add Stock data to productData
     if (currentStock !== null && !isNaN(currentStock)) {
         productData.stock.currentStock = currentStock;
     } else {
@@ -678,10 +1052,9 @@ async function handleSaveProduct(event) {
         }
     }
     // If stock object is empty and you prefer not to save it, you can delete it.
-    if (Object.keys(productData.stock).length === 0) {
+    if (productData.stock && Object.keys(productData.stock).length === 0) {
         delete productData.stock;
     }
-    // END: Add Stock data to productData
 
 
     const activeField = RATE_TYPES[currentActiveRateType].field;
@@ -765,18 +1138,7 @@ async function handleSaveProduct(event) {
 function handleDeleteButtonClick(event) { event.preventDefault(); if (!productToDeleteId || !productToDeleteName) return; if (deleteWarningMessage) deleteWarningMessage.innerHTML = `Are you sure you want to delete "<strong>${escapeHtml(productToDeleteName)}</strong>"? <br>This will also delete its images and diagram. This action cannot be undone.`; if(deleteConfirmCheckbox) deleteConfirmCheckbox.checked = false; if(confirmDeleteFinalBtn) confirmDeleteFinalBtn.disabled = true; if(deleteConfirmModal) deleteConfirmModal.classList.add('active'); }
 function closeDeleteConfirmModal() { if (deleteConfirmModal) { deleteConfirmModal.classList.remove('active'); } }
 function handleConfirmCheckboxChange() { if (deleteConfirmCheckbox && confirmDeleteFinalBtn) { confirmDeleteFinalBtn.disabled = !deleteConfirmCheckbox.checked; } }
-async function handleFinalDelete() { if (!deleteConfirmCheckbox?.checked || !productToDeleteId) return; if (!window.db || !window.doc || !window.getDoc || !window.deleteDoc || !window.storage || !window.storageRef || !window.deleteObject) { showToast("Core Firebase functions unavailable.", 5000); return; } if(confirmDeleteFinalBtn) { confirmDeleteFinalBtn.disabled = true; confirmDeleteFinalBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Deleting...'; } const productRef = window.doc(window.db, "onlineProducts", productToDeleteId); try { const productSnap = await window.getDoc(productRef); let deletePromises = []; if (productSnap.exists()) { const productData = productSnap.data(); if (productData.imageUrls && Array.isArray(productData.imageUrls) && productData.imageUrls.length > 0) { productData.imageUrls.forEach(url => deletePromises.push(deleteStoredImage(url))); } if (productData.diagramUrl) { deletePromises.push(deleteStoredFile(productData.diagramUrl)); } if (deletePromises.length > 0) { await Promise.allSettled(deletePromises); } } await window.deleteDoc(productRef); showToast(`Product "${productToDeleteName || ''}" and associated files deleted!`); closeDeleteConfirmModal(); closeProductModal(); } catch (error) { console.error(`Error during deletion process for ${productToDeleteId}:`, error); showToast(`Failed to fully delete product: ${error.message}`, 5000); } finally { if(confirmDeleteFinalBtn) { confirmDeleteFinalBtn.disabled = !deleteConfirmCheckbox?.checked; confirmDeleteFinalBtn.innerHTML = '<i class="fas fa-trash-alt"></i> Confirm Delete'; } } }
-
-// NEW: Placeholder function for bulk edit button click (Implement in Step 2)
-function handleBulkEditClick() {
-    if (selectedProductIds.size === 0) {
-        showToast("Please select at least one product for bulk edit.", 3000);
-        return;
-    }
-    console.log("Bulk Edit clicked for IDs:", selectedProductIds);
-    // TODO: Implement opening the bulk edit modal/form in Step 2
-    showToast(`Bulk Edit button clicked for ${selectedProductIds.size} products. (Feature coming in Step 2)`, 3000);
-}
+async function handleFinalDelete() { if (!deleteConfirmCheckbox?.checked || !productToDeleteId) return; if (!window.db || !window.doc || !window.getDoc || !window.deleteDoc || !window.storage || !window.storageRef || !window.deleteObject) { showToast("Core Firebase functions unavailable.", 5000); return; } if(confirmDeleteFinalBtn) { confirmDeleteFinalBtn.disabled = true; confirmDeleteFinalBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Deleting...'; } const productRef = window.doc(window.db, "onlineProducts", productToDeleteId); try { const productSnap = await window.getDoc(productRef); let deletePromises = []; if (productSnap.exists()) { const productData = productSnap.data(); if (productData.imageUrls && Array.isArray(productData.imageUrls) && productData.imageUrls.length > 0) { productData.imageUrls.forEach(url => deleteStoredImage(url)); } if (productData.diagramUrl) { deletePromises.push(deleteStoredFile(productData.diagramUrl)); } if (deletePromises.length > 0) { await Promise.allSettled(deletePromises); } } await window.deleteDoc(productRef); showToast(`Product "${productToDeleteName || ''}" and associated files deleted!`); closeDeleteConfirmModal(); closeProductModal(); } catch (error) { console.error(`Error during deletion process for ${productToDeleteId}:`, error); showToast(`Failed to fully delete product: ${error.message}`, 5000); } finally { if(confirmDeleteFinalBtn) { confirmDeleteFinalBtn.disabled = !deleteConfirmCheckbox?.checked; confirmDeleteFinalBtn.innerHTML = '<i class="fas fa-trash-alt"></i> Confirm Delete'; } } }
 
 
 // --- END ---
