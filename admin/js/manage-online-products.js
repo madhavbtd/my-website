@@ -5,6 +5,7 @@
 // Added: FIREBASE WRITEBATCH IMPLEMENTATION FOR BULK UPDATE (Step 3 Firebase/Backend Logic)
 // FIX: Resolved Syntax Error in displayImagePreview & Corrected TypeErrors
 // FIX: Resolved Syntax Error (Unexpected comma) in uploadImage function
+// FIX: Corrected incomplete handleSaveProduct function causing Unexpected token '}'
 
 // --- Firebase Function Availability Check ---
 // Expecting: window.db, window.storage, window.collection, window.onSnapshot, etc. from HTML setup script
@@ -261,7 +262,7 @@ function showToast(message, duration = 3500) { const existingToast = document.qu
 // --- Initialization ---
 // This function is now called from the onAuthStateChanged listener within this file
 const initializeOnlineProductManagement = () => { // Made const
-    console.log("Online Product Management Initializing (v_Bulk_WriteBatch_Fix2)..."); // Updated version log
+    console.log("Online Product Management Initializing (v_Bulk_WriteBatch_Fix3)..."); // Updated version log
     // Firebase services are assumed to be available globally from the HTML setup script
     if (!window.db || !window.storage || !window.collection || !window.onSnapshot || !window.orderBy || !getAuth || !onAuthStateChanged || !window.writeBatch) { // Check for imported auth functions and writeBatch
          console.error("Required Firebase functions not available.");
@@ -274,7 +275,7 @@ const initializeOnlineProductManagement = () => { // Made const
     console.log("Firebase services, Auth functions, and WriteBatch confirmed."); // Updated log
     listenForOnlineProducts();
     setupEventListeners();
-    console.log("Online Product Management Initialized (v_Bulk_WriteBatch_Fix2)."); // Updated version log
+    console.log("Online Product Management Initialized (v_Bulk_WriteBatch_Fix3)."); // Updated version log
 };
 
 // --- START: Firebase Authentication State Listener (Handled within this file) ---
@@ -388,7 +389,7 @@ function setupEventListeners() {
     // --- END: NEW Bulk Update Modal Event Listeners ---
 
 
-    console.log("Online Product Management event listeners set up (v_Bulk_WriteBatch_Fix2)."); // Updated version log
+    console.log("Online Product Management event listeners set up (v_Bulk_WriteBatch_Fix3)."); // Updated version log
 }
 
 // NEW: Function to handle product checkbox change (already existed, but adding comment)
@@ -630,7 +631,7 @@ function handleApplyRateCheckboxChange() { checkAndApplyLockState(); }
 function handleRateInputChange() { if (!currentRateInput.disabled) { resetApplyCheckboxesAndUnlock(); } }
 function checkAndApplyLockState() {
     const checkboxes = applyRateCheckboxesContainer?.querySelectorAll('input[name="applyRateTo"]') ?? [];
-    const checkedCheckboxes = applyRateCheckboxesContainer?.querySelectorAll('input[name="applyRateTo"]:checked') ?? [];
+    const checkedCheckboxes = applyRateCheckboxesContainer?.querySelectorAll('input[name="applyRateTo']:checked') ?? [];
     if (checkboxes.length > 0 && checkedCheckboxes.length === checkboxes.length) {
         applyRateToAllOthers();
         lockPricingFields();
@@ -674,7 +675,7 @@ function resetApplyCheckboxesAndUnlock() {
 // --- Modal Handling (Add/Edit Single Product) ---
 function openAddModal() {
     if (!productModal || !productForm) return;
-    console.log("Opening modal to add new ONLINE product (v_Bulk_WriteBatch_Fix2)."); // Updated version log
+    console.log("Opening modal to add new ONLINE product (v_Bulk_WriteBatch_Fix3)."); // Updated version log
     // Clear any selected products when opening add/edit modal
     selectedProductIds.clear();
     updateBulkActionsUI();
@@ -714,7 +715,7 @@ function openAddModal() {
 
 async function openEditModal(firestoreId, data) {
     if (!productModal || !productForm || !data) return;
-    console.log("Opening modal to edit ONLINE product (v_Bulk_WriteBatch_Fix2):", firestoreId); // Updated version log
+    console.log("Opening modal to edit ONLINE product (v_Bulk_WriteBatch_Fix3):", firestoreId); // Updated version log
     // Clear any selected products when opening add/edit modal
     selectedProductIds.clear();
     updateBulkActionsUI();
@@ -1012,7 +1013,7 @@ function setBulkActiveRateTab(rateType) {
     bulkPriceTabsContainer.querySelectorAll('.price-tab-btn').forEach(btn => {
         btn.classList.toggle('active', btn.dataset.rateType === rateType);
     });
-    bulkCurrentRateLabel.textContent = `${RATE_TYPES[rateType].label}*:`;
+    bulkCurrentRateLabel.textContent = `${RATE_TYPES[currentBulkRateType].label}*:`;
     // Note: The input field value is NOT loaded from existing product data in bulk edit.
     // The input field (bulkCurrentRateInput) state (enabled/disabled) is controlled by the bulkUpdatePricingCheckbox.
 }
@@ -1125,7 +1126,7 @@ async function handleBulkUpdate(event) {
 
         // Add collected pricing updates to main payload if any were collected
         // Note: pricingUpdates might be empty if only the rate was collected and added directly
-        if (Object.keys(pricingUpdates).length > 0 || updatePayload.pricing?.[RATE_TYPES[currentBulkRateType].field] !== undefined) {
+        if (Object.keys(pricingUpdates).length > 0 || updatePayload.hasOwnProperty('pricing') && updatePayload.pricing.hasOwnProperty(RATE_TYPES[currentBulkRateType].field)) { // Check if rate was added
              // Merge collected individual pricing updates into the pricing object in updatePayload
              updatePayload.pricing = { ...(updatePayload.pricing || {}), ...pricingUpdates };
          } else if (bulkUpdatePricingCheckbox?.checked) {
@@ -1276,31 +1277,23 @@ async function handleBulkUpdate(event) {
                  console.log("Payload: pricing.hasExtraCharges =", updatePayload['pricing.hasExtraCharges']);
 
                  if (value === 'true') { // If enabling Extra Charges
-                      const extraChargeUpdates = {}; // Collect name/amount updates
-
+                      // Only collect name/amount if their individual checkboxes are checked AND their inputs are enabled
                       if (bulkExtraChargeNameCheckbox?.checked && bulkExtraChargeNameInput?.disabled === false) {
-                           extraChargeUpdates.name = bulkExtraChargeNameInput.value.trim() || 'Additional Charge'; // Default name if empty
-                           console.log("Payload: pricing.extraCharge.name =", extraChargeUpdates.name);
+                           const nameValue = bulkExtraChargeNameInput.value.trim() || 'Additional Charge'; // Default name if empty
+                           updatePayload['pricing.extraCharge.name'] = nameValue; // Add name directly with dot notation
+                           console.log("Payload: pricing.extraCharge.name =", nameValue);
                        } else if (bulkExtraChargeNameCheckbox?.checked) { validationErrors.push("Charge Name checkbox checked, but input is disabled."); }
+
 
                        if (bulkExtraChargeAmountCheckbox?.checked && bulkExtraChargeAmountInput?.disabled === false) {
                             const amountValue = parseNumericInput(bulkExtraChargeAmountInput.value);
                             if (amountValue !== null && !isNaN(amountValue)) {
-                                 extraChargeUpdates.amount = amountValue;
-                                 console.log("Payload: pricing.extraCharge.amount =", extraChargeUpdates.amount);
+                                 updatePayload['pricing.extraCharge.amount'] = amountValue; // Add amount directly with dot notation
+                                 console.log("Payload: pricing.extraCharge.amount =", amountValue);
                             } else { validationErrors.push("Please enter a valid number for Charge Amount."); }
                        } else if (bulkExtraChargeAmountCheckbox?.checked) { validationErrors.push("Charge Amount checkbox checked, but input is disabled."); }
 
-                       // Only add pricing.extraCharge if name OR amount was collected/validated
-                       if (extraChargeUpdates.hasOwnProperty('name') || extraChargeUpdates.hasOwnProperty('amount')) {
-                           // Merge into pricing object in updatePayload
-                           // Use dot notation to specifically target the extraCharge subfield within pricing
-                            if(extraChargeUpdates.hasOwnProperty('name')) updatePayload['pricing.extraCharge.name'] = extraChargeUpdates.name;
-                            if(extraChargeUpdates.hasOwnProperty('amount')) updatePayload['pricing.extraCharge.amount'] = extraChargeUpdates.amount;
-                       } else if (bulkExtraChargeNameCheckbox?.checked || bulkExtraChargeAmountCheckbox?.checked) {
-                            // If name/amount were checked but not collected due to validation
-                            // The individual errors are already pushed, so no need for a general one here
-                       }
+                       // No extra validation needed here for enabling; individual field validation handles errors
 
                  } else { // If disabling Extra Charges (value is 'false')
                      // When disabling, we want to explicitly remove the extraCharge subfield
@@ -1334,17 +1327,21 @@ async function handleBulkUpdate(event) {
     }
 
     // Check if any fields were selected for update and successfully validated
-     if (Object.keys(updatePayload).length === 0 || (Object.keys(updatePayload).length === 1 && updatePayload.hasOwnProperty('pricing') && Object.keys(updatePayload.pricing).length === 0 && !updatePayload.hasOwnProperty('stock') && !updatePayload.hasOwnProperty('options') && !updatePayload.hasOwnProperty('brand') && !updatePayload.hasOwnProperty('itemCode') && !updatePayload.hasOwnProperty('hsnSacCode') && !updatePayload.hasOwnProperty('isEnabled'))) {
-         // Check if payload is empty, or only contains an empty 'pricing' object and no other top-level fields
-         // This is a more robust check for an effectively empty payload
-         showToast("No valid fields selected for update.", 3000);
-          // Reset button state
-          if (applyBulkUpdateBtn) applyBulkUpdateBtn.disabled = false;
-          if (spinner) spinner.style.display = 'none';
-          if (icon) icon.style.display = '';
-          if (text) text.textContent = 'Apply Updates';
-         return; // Stop the submission process
-     }
+     // Count the number of keys in updatePayload, considering nested objects if they are the only keys
+     const hasUpdateFields = Object.keys(updatePayload).length > 0;
+     const hasOnlyEmptyPricing = Object.keys(updatePayload).length === 1 && updatePayload.hasOwnProperty('pricing') && Object.keys(updatePayload.pricing).length === 0;
+     const hasOnlyPricingWithOnlyEmptyExtraCharge = Object.keys(updatePayload).length === 1 && updatePayload.hasOwnProperty('pricing') && Object.keys(updatePayload.pricing).length === 1 && updatePayload.pricing.hasOwnProperty('extraCharge') && Object.keys(updatePayload.pricing.extraCharge).length === 0;
+
+
+     if (!hasUpdateFields || hasOnlyEmptyPricing || hasOnlyPricingWithOnlyEmptyExtraCharge) {
+          showToast("No valid fields selected for update.", 3000);
+           // Reset button state
+           if (applyBulkUpdateBtn) applyBulkUpdateBtn.disabled = false;
+           if (spinner) spinner.style.display = 'none';
+           if (icon) icon.style.display = '';
+           if (text) text.textContent = 'Apply Updates';
+          return; // Stop the submission process
+      }
 
 
     // --- If validation passes and payload is not empty, proceed to Firebase WriteBatch update ---
@@ -1355,7 +1352,7 @@ async function handleBulkUpdate(event) {
 
     try {
         // Get a new write batch
-        // Use the imported firestoreWriteBatch function instead of window.writeBatch
+        // Use the imported firestoreWriteBatch function
         const batch = firestoreWriteBatch(window.db);
 
         // Add update operations for each selected product to the batch
@@ -1394,7 +1391,7 @@ function displayImagePreview(fileObject, existingUrl = null) { if (!imagePreview
     else if (fileObject) { const reader = new FileReader(); reader.onload = (e) => { img.src = e.target.result; }; reader.readAsDataURL(fileObject); previewWrapper.fileData = fileObject; removeBtn.onclick = () => { selectedFiles = selectedFiles.filter(f => f !== fileObject); previewWrapper.remove(); }; }
     previewWrapper.appendChild(img); previewWrapper.appendChild(removeBtn); previewWrapper.appendChild(progressBar); imagePreviewArea.appendChild(previewWrapper);
 }
-async function uploadImage(file, productId, index) { if (!window.storage || !window.storageRef || !window.uploadBytesResumable || !window.getDownloadURL) throw new Error("Storage functions missing."); const previewWrapper = [...imagePreviewArea.querySelectorAll('.image-preview-item')].find(el => el.fileData === file); const progressBar = previewWrapper?.querySelector('.upload-progress-bar'); const progressFill = progressBar?.querySelector('div'); const timestamp = Date.now(); const uniqueFileName = `${timestamp}-image${index}-${file.name.replace(/[^a-zA-Z0-9.]/g, '_')}`; const filePath = `onlineProductImages/${productId}/${uniqueFileName}`; const fileRef = window.storageRef(window.storage, filePath); if (progressBar) progressBar.style.display = 'block'; if (progressFill) progressFill.style.width = '0%'; const uploadTask = window.uploadBytesResumable(fileRef, file); return new Promise((resolve, reject) => { uploadTask.on('state_changed', (snapshot) => { const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100; if (progressFill) progressFill.style.width = `${progress}%`; if (uploadProgressInfo) uploadProgressInfo.textContent = `Uploading ${file.name}: ${progress.toFixed(0)}%`; }, (error) => { progressElement.textContent = `Upload failed: ${file.name}. ${error.code}`; progressElement.style.color = 'var(--danger-color)'; reject(error); }, async () => { progressElement.textContent = `Upload Complete. Getting URL...`; try { const downloadURL = await window.getDownloadURL(uploadTask.snapshot.ref); resolve(downloadURL); } catch (getUrlError) { progressElement.textContent = `Failed to get URL after upload.`; progressElement.style.color = 'var(--danger-color)'; reject(getUrlError); } }); }); } // Removed extra comma here
+async function uploadImage(file, productId, index) { if (!window.storage || !window.storageRef || !window.uploadBytesResumable || !window.getDownloadURL) throw new Error("Storage functions missing."); const previewWrapper = [...imagePreviewArea.querySelectorAll('.image-preview-item')].find(el => el.fileData === file); const progressBar = previewWrapper?.querySelector('.upload-progress-bar'); const progressFill = progressBar?.querySelector('div'); const timestamp = Date.now(); const uniqueFileName = `${timestamp}-image${index}-${file.name.replace(/[^a-zA-Z0-9.]/g, '_')}`; const filePath = `onlineProductImages/${productId}/${uniqueFileName}`; const fileRef = window.storageRef(window.storage, filePath); if (progressBar) progressBar.style.display = 'block'; if (progressFill) progressFill.style.width = `${progress}%`; if (uploadProgressInfo) uploadProgressInfo.textContent = `Uploading ${file.name}: ${progress.toFixed(0)}%`; }, (error) => { progressElement.textContent = `Upload failed: ${file.name}. ${error.code}`; progressElement.style.color = 'var(--danger-color)'; reject(error); }, async () => { progressElement.textContent = `Upload Complete. Getting URL...`; try { const downloadURL = await window.getDownloadURL(uploadTask.snapshot.ref); resolve(downloadURL); } catch (getUrlError) { progressElement.textContent = `Failed to get URL after upload.`; progressElement.style.color = 'var(--danger-color)'; reject(getUrlError); } }); }); } // Corrected: Removed extra comma here
 async function deleteStoredImage(imageUrl) { if (!window.storage || !window.storageRef || !window.deleteObject) return; if (!imageUrl || !(imageUrl.startsWith('https://firebasestorage.googleapis.com/') || imageUrl.startsWith('gs://'))) return; try { const imageRef = window.storageRef(window.storage, imageUrl); await window.deleteObject(imageRef); console.log("Deleted image from Storage:", imageUrl); } catch (error) { if (error.code === 'storage/object-not-found') console.warn("Image not found:", imageUrl); else console.error("Error deleting image:", imageUrl, error); } }
 
 // --- Diagram File Handling (Single Edit Modal) ---
@@ -1466,3 +1463,95 @@ async function handleSaveProduct(event) {
         if (isEditing && productBeingEditedData?.stock?.hasOwnProperty('minStockLevel')) {
             productData.stock.minStockLevel = null; // Or delete productData.stock.minStockLevel;
         }
+    }
+    // If stock object is empty and you prefer not to save it, you can delete it.
+    if (productData.stock && Object.keys(productData.stock).length === 0) {
+        delete productData.stock;
+    }
+
+
+    const activeField = RATE_TYPES[currentActiveRateType].field;
+    productData.pricing[activeField] = currentRateValue;
+    if (purchasePrice !== null) productData.pricing.purchasePrice = purchasePrice; else delete productData.pricing.purchasePrice;
+    if (mrp !== null) productData.pricing.mrp = mrp; else delete productData.pricing.mrp;
+    if (gstRate !== null) productData.pricing.gstRate = gstRate; else delete productData.pricing.gstRate;
+    if (unit === 'Sq Feet' && minOrderValue !== null) productData.pricing.minimumOrderValue = minOrderValue; else delete productData.pricing.minimumOrderValue;
+    if (category.toLowerCase().includes('wedding card')) { if (designCharge !== null) productData.pricing.designCharge = designCharge; else delete productData.pricing.designCharge; if (printingCharge !== null) productData.pricing.printingChargeBase = printingCharge; else delete productData.pricing.printingChargeBase; if (transportCharge !== null) productData.pricing.transportCharge = transportCharge; else delete productData.pricing.transportCharge; if (extraMarginPercent !== null) productData.pricing.extraMarginPercent = extraMarginPercent; else delete productData.pricing.extraMarginPercent; } else { delete productData.pricing.designCharge; delete productData.pricing.printingChargeBase; delete productData.pricing.transportCharge; delete productData.pricing.extraMarginPercent; }
+    productData.pricing.hasExtraCharges = hasExtraChargesCheckbox?.checked ?? false; if (productData.pricing.hasExtraCharges) { productData.pricing.extraCharge = { name: extraChargeNameInput?.value.trim() || 'Additional Charge', amount: extraChargeAmount ?? 0 }; } else { delete productData.pricing.extraCharge; }
+
+    const optionsString = productOptionsInput?.value.trim();
+    if (optionsString) { try { const parsedOptions = JSON.parse(optionsString); if (!Array.isArray(parsedOptions)) throw new Error("Options must be an array."); productData.options = parsedOptions; } catch (err) { showToast(`Error: Invalid JSON in Options field. ${err.message}`, 5000); if (saveProductBtn) saveProductBtn.disabled = false; if (saveSpinner) saveSpinner.style.display = 'none'; if (saveIcon) saveIcon.style.display = ''; if (saveText) saveText.textContent = isEditing ? 'Update Product' : 'Save Product'; return; } }
+    else { productData.options = []; }
+
+    productData.diagramUrl = isEditing ? (productBeingEditedData?.diagramUrl || null) : null;
+
+    try {
+        if (!isEditing) {
+             if (uploadProgressInfo) uploadProgressInfo.textContent = 'Creating product entry...';
+             const preliminaryData = { ...productData };
+             // Remove fields that will be updated later or are specific to updateDoc
+             delete preliminaryData.imageUrls; delete preliminaryData.diagramUrl;
+             if(preliminaryData.stock && Object.keys(preliminaryData.stock).length === 0) delete preliminaryData.stock;
+
+
+             const docRef = await window.addDoc(window.collection(window.db, "onlineProducts"), preliminaryData);
+             finalProductId = docRef.id;
+             productData.id = finalProductId; // Add ID to productData for subsequent operations
+        } else { finalProductId = editingProductId; }
+        if (!finalProductId) throw new Error("Could not establish Product ID.");
+
+        let newDiagramUrl = productData.diagramUrl;
+        const existingDiagramUrl = isEditing ? (productBeingEditedData?.diagramUrl || null) : null;
+        if (shouldRemoveDiagram && existingDiagramUrl) {
+            if (diagramUploadProgress) diagramUploadProgress.textContent = 'Removing existing diagram...';
+            await deleteStoredFile(existingDiagramUrl);
+            newDiagramUrl = null;
+        } else if (diagramFileToUpload) {
+            if (uploadProgressInfo) uploadProgressInfo.textContent = 'Processing diagram...';
+             if (isEditing && existingDiagramUrl) {
+                 if (diagramUploadProgress) diagramUploadProgress.textContent = 'Replacing existing diagram...';
+                 await deleteStoredFile(existingDiagramUrl);
+             }
+            const diagramFileName = `diagram-${Date.now()}-${diagramFileToUpload.name.replace(/[^a-zA-Z0-9.]/g, '_')}`;
+            const diagramPath = `productDiagrams/${finalProductId}/${diagramFileName}`;
+            newDiagramUrl = await uploadFile(diagramFileToUpload, diagramPath, diagramUploadProgress);
+        }
+        productData.diagramUrl = newDiagramUrl;
+
+        let uploadedImageUrls = [];
+        let currentExistingUrls = isEditing ? (productBeingEditedData?.imageUrls || []) : [];
+        if (isEditing && imagesToDelete.length > 0) { if (uploadProgressInfo) uploadProgressInfo.textContent = 'Deleting images...'; const deletePromises = imagesToDelete.map(url => deleteStoredImage(url)); await Promise.allSettled(deletePromises); currentExistingUrls = currentExistingUrls.filter(url => !imagesToDelete.includes(url)); }
+        if (selectedFiles.length > 0) { if (uploadProgressInfo) uploadProgressInfo.textContent = `Uploading ${selectedFiles.length} images...`; const uploadPromises = selectedFiles.map((file, index) => uploadImage(file, finalProductId, index)); const uploadResults = await Promise.allSettled(uploadPromises); uploadedImageUrls = []; let uploadErrorOccurred = false; uploadResults.forEach((result) => { if (result.status === 'fulfilled') { uploadedImageUrls.push(result.value); } else { uploadErrorOccurred = true; } }); if (uploadErrorOccurred) { showToast("Some images failed upload.", 5000); } else { if (uploadProgressInfo) uploadProgressInfo.textContent = 'Images uploaded!'; } }
+
+        const finalImageUrls = [...currentExistingUrls, ...uploadedImageUrls];
+        const finalUpdatePayload = {
+             ...productData,
+             imageUrls: finalImageUrls,
+             updatedAt: window.serverTimestamp()
+        };
+        if (isEditing) { delete finalUpdatePayload.createdAt; delete finalUpdatePayload.id; /* ID is in doc ref */ }
+
+        if (uploadProgressInfo) uploadProgressInfo.textContent = 'Finalizing product data...';
+        const finalProductRef = window.doc(window.db, "onlineProducts", finalProductId);
+        await window.updateDoc(finalProductRef, finalUpdatePayload); // Changed from setDoc to updateDoc for new products to avoid overwriting if ID existed
+
+        showToast(isEditing ? 'Product updated successfully!' : 'Product added successfully!', 3000);
+        closeProductModal();
+
+    } catch (error) {
+        console.error("Save/upload error:", error);
+        showToast(`Error saving product: ${error.message || 'Unknown error'}. Check console.`, 5000);
+         if (!isEditing && finalProductId && error.message !== "Could not establish Product ID.") { try { await window.deleteDoc(window.doc(window.db, "onlineProducts", finalProductId)); console.log("Partial product entry cleaned up."); } catch (cleanupError) { console.error("Failed to cleanup partial product entry:", cleanupError); } }
+    } finally {
+        if (saveProductBtn) saveProductBtn.disabled = false; if (saveSpinner) saveSpinner.style.display = 'none'; if (saveIcon) saveIcon.style.display = ''; if (saveText) saveText.textContent = isEditing ? 'Update Product' : 'Save Product'; if (uploadProgressInfo) setTimeout(() => { if (uploadProgressInfo) uploadProgressInfo.textContent = ''; }, 3000); if (diagramUploadProgress) setTimeout(() => { if (diagramUploadProgress) diagramUploadProgress.textContent = ''; }, 3000);
+    }
+}
+
+// --- Delete Handling ---
+function handleDeleteButtonClick(event) { event.preventDefault(); if (!productToDeleteId || !productToDeleteName) return; if (deleteWarningMessage) deleteWarningMessage.innerHTML = `Are you sure you want to delete "<strong>${escapeHtml(productToDeleteName)}</strong>"? <br>This will also delete its images and diagram. This action cannot be undone.`; if(deleteConfirmCheckbox) deleteConfirmCheckbox.checked = false; if(confirmDeleteFinalBtn) confirmDeleteFinalBtn.disabled = true; if(deleteConfirmModal) deleteConfirmModal.classList.add('active'); }
+function closeDeleteConfirmModal() { if (deleteConfirmModal) { deleteConfirmModal.classList.remove('active'); } }
+function handleConfirmCheckboxChange() { if (deleteConfirmCheckbox && confirmDeleteFinalBtn) { confirmDeleteFinalBtn.disabled = !deleteConfirmCheckbox.checked; } }
+async function handleFinalDelete() { if (!deleteConfirmCheckbox?.checked || !productToDeleteId) return; if (!window.db || !window.doc || !window.getDoc || !window.deleteDoc || !window.storage || !window.storageRef || !window.deleteObject) { showToast("Core Firebase functions unavailable.", 5000); return; } if(confirmDeleteFinalBtn) { confirmDeleteFinalBtn.disabled = true; confirmDeleteFinalBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Deleting...'; } const productRef = window.doc(window.db, "onlineProducts", productToDeleteId); try { const productSnap = await window.getDoc(productRef); let deletePromises = []; if (productSnap.exists()) { const productData = productSnap.data(); if (productData.imageUrls && Array.isArray(productData.imageUrls) && productData.imageUrls.length > 0) { productData.imageUrls.forEach(url => deleteStoredImage(url)); } if (productData.diagramUrl) { deletePromises.push(deleteStoredFile(productData.diagramUrl)); } if (deletePromises.length > 0) { await Promise.allSettled(deletePromises); } } await window.deleteDoc(productRef); showToast(`Product "${productToDeleteName || ''}" and associated files deleted!`); closeDeleteConfirmModal(); closeProductModal(); } catch (error) { console.error(`Error during deletion process for ${productToDeleteId}:`, error); showToast(`Failed to fully delete product: ${error.message}`, 5000); } finally { if(confirmDeleteFinalBtn) { confirmDeleteFinalBtn.disabled = !deleteConfirmCheckbox?.checked; confirmDeleteFinalBtn.innerHTML = '<i class="fas fa-trash-alt"></i> Confirm Delete'; } } }
+
+
+// --- END ---
