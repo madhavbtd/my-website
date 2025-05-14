@@ -3,7 +3,7 @@
 // Added: BULK UPDATE MODAL UI CONTROL (Step 2 Frontend Logic - Part 1)
 // Added: BULK UPDATE DATA COLLECTION AND VALIDATION (Step 2 Frontend Logic - Part 2)
 // Added: FIREBASE WRITEBATCH IMPLEMENTATION FOR BULK UPDATE (Step 3 Firebase/Backend Logic)
-// FIX: Resolved persistent Syntax Error in uploadImage function
+// FIX: Addressed problems with bulk update incorrectly setting other fields to 0 & single edit rate resetting
 
 // --- Firebase Function Availability Check ---
 // Expecting: window.db, window.storage, window.collection, window.onSnapshot, etc. from HTML setup script
@@ -260,7 +260,7 @@ function showToast(message, duration = 3500) { const existingToast = document.qu
 // --- Initialization ---
 // This function is now called from the onAuthStateChanged listener within this file
 const initializeOnlineProductManagement = () => { // Made const
-    console.log("Online Product Management Initializing (v_Bulk_WriteBatch_Fix4)..."); // Updated version log
+    console.log("Online Product Management Initializing (v_Bulk_WriteBatch_Fix5)..."); // Updated version log
     // Firebase services are assumed to be available globally from the HTML setup script
     if (!window.db || !window.storage || !window.collection || !window.onSnapshot || !window.orderBy || !getAuth || !onAuthStateChanged || !window.writeBatch) { // Check for imported auth functions and writeBatch
          console.error("Required Firebase functions not available.");
@@ -273,7 +273,7 @@ const initializeOnlineProductManagement = () => { // Made const
     console.log("Firebase services, Auth functions, and WriteBatch confirmed."); // Updated log
     listenForOnlineProducts();
     setupEventListeners();
-    console.log("Online Product Management Initialized (v_Bulk_WriteBatch_Fix4)."); // Updated version log
+    console.log("Online Product Management Initialized (v_Bulk_WriteBatch_Fix5)."); // Updated version log
 };
 
 // --- START: Firebase Authentication State Listener (Handled within this file) ---
@@ -387,7 +387,7 @@ function setupEventListeners() {
     // --- END: NEW Bulk Update Modal Event Listeners ---
 
 
-    console.log("Online Product Management event listeners set up (v_Bulk_WriteBatch_Fix4)."); // Updated version log
+    console.log("Online Product Management event listeners set up (v_Bulk_WriteBatch_Fix5)."); // Updated version log
 }
 
 // NEW: Function to handle product checkbox change (already existed, but adding comment)
@@ -673,7 +673,7 @@ function resetApplyCheckboxesAndUnlock() {
 // --- Modal Handling (Add/Edit Single Product) ---
 function openAddModal() {
     if (!productModal || !productForm) return;
-    console.log("Opening modal to add new ONLINE product (v_Bulk_WriteBatch_Fix4)."); // Updated version log
+    console.log("Opening modal to add new ONLINE product (v_Bulk_WriteBatch_Fix5)."); // Updated version log
     // Clear any selected products when opening add/edit modal
     selectedProductIds.clear();
     updateBulkActionsUI();
@@ -690,7 +690,7 @@ function openAddModal() {
     if (uploadProgressInfo) uploadProgressInfo.textContent = '';
     if (existingImageUrlsInput) existingImageUrlsInput.value = '[]';
     if (saveProductBtn) saveProductBtn.disabled = false;
-    if (saveSpinner) saveSpinner.style.display = 'none'; if (saveIcon) saveIcon.style.display = ''; if (saveText) saveText.textContent = 'Save Product';
+    if (saveSpinner) saveSpinner.style.display = 'inline-block'; if (saveIcon) saveIcon.style.display = ''; if (saveText) saveText.textContent = 'Save Product';
     if (deleteProductBtn) deleteProductBtn.style.display = 'none';
 
     diagramFileToUpload = null; shouldRemoveDiagram = false;
@@ -713,13 +713,16 @@ function openAddModal() {
 
 async function openEditModal(firestoreId, data) {
     if (!productModal || !productForm || !data) return;
-    console.log("Opening modal to edit ONLINE product (v_Bulk_WriteBatch_Fix4):", firestoreId); // Updated version log
+    console.log("Opening modal to edit ONLINE product (v_Bulk_WriteBatch_Fix5):", firestoreId); // Updated version log
+    console.log("Original product data for edit:", data); // Added log for debugging Problem 2
+
     // Clear any selected products when opening add/edit modal
     selectedProductIds.clear();
     updateBulkActionsUI();
 
     if (modalTitle) modalTitle.innerHTML = '<i class="fas fa-edit info-icon"></i> Edit Online Product';
     productForm.reset();
+    // Create a deep copy of the data to avoid modifying cache directly
     productBeingEditedData = JSON.parse(JSON.stringify(data));
     if (!productBeingEditedData.pricing) productBeingEditedData.pricing = {};
     if (!productBeingEditedData.stock) productBeingEditedData.stock = {}; // Ensure stock object exists
@@ -774,10 +777,12 @@ async function openEditModal(firestoreId, data) {
 
     // Determine which price tab should be active based on available data, default to online
     let initialRateType = 'online';
-     if (pricing.rate !== undefined) initialRateType = 'online';
-     else if (pricing.retailRate !== undefined) initialRateType = 'retail';
-     else if (pricing.agentRate !== undefined) initialRateType = 'agent';
-     else if (pricing.resellerRate !== undefined) initialRateType = 'reseller';
+     console.log("openEditModal: Determining initial rate type. Pricing data:", pricing); // Added log for Problem 2
+     if (pricing && pricing.rate !== undefined) initialRateType = 'online';
+     else if (pricing && pricing.retailRate !== undefined) initialRateType = 'retail';
+     else if (pricing && pricing.agentRate !== undefined) initialRateType = 'agent';
+     else if (pricing && pricing.resellerRate !== undefined) initialRateType = 'reseller';
+     console.log("openEditModal: Initial rate type determined:", initialRateType); // Added log for Problem 2
     setActiveRateTab(initialRateType); // Set active tab and load rate
     unlockPricingFields(); // Ensure pricing fields are unlocked for editing
 
@@ -1032,344 +1037,367 @@ async function handleBulkUpdate(event) {
     if (icon) icon.style.display = 'none';
     if (text) text.textContent = 'Applying...'; // Indicate process is starting
 
-    // 1. Get selected product IDs
-    const productIdsToUpdate = Array.from(selectedProductIds);
-    if (productIdsToUpdate.length === 0) {
-        showToast("No products selected for bulk update.", 3000);
-         // Reset button state
-         if (applyBulkUpdateBtn) applyBulkUpdateBtn.disabled = false;
-         if (spinner) spinner.style.display = 'none';
-         if (icon) icon.style.display = '';
-         if (text) text.textContent = 'Apply Updates';
-        return;
-    }
-    console.log("Product IDs selected for update:", productIdsToUpdate);
 
-    // 2. Initialize update payload
-    const updatePayload = {};
-    let validationErrors = []; // Array to collect validation errors
-
-    // --- 3. Collect and Validate Data ---
-
-    // Basic Details Section (isEnabled status)
-    if (bulkUpdateEnabledCheckbox?.checked) {
-        const enabledValue = bulkIsEnabledSelect?.value;
-        if (bulkIsEnabledSelect?.disabled === false) { // Check if input is enabled by section checkbox
-             if (enabledValue !== "") { // Check if a state is actually selected
-                 updatePayload.isEnabled = enabledValue === 'true'; // Convert string to boolean
-                 console.log("Payload: isEnabled =", updatePayload.isEnabled);
-             } else {
-                  validationErrors.push("Please select a state (Yes/No) for 'Show on Website' if you want to update it.");
-             }
-        } else if (bulkUpdateEnabledCheckbox?.checked) {
-             validationErrors.push("'Show on Website' section checked, but input is disabled.");
+    try { // Main try block for the entire async function
+        // 1. Get selected product IDs
+        const productIdsToUpdate = Array.from(selectedProductIds);
+        if (productIdsToUpdate.length === 0) {
+            showToast("No products selected for bulk update.", 3000);
+             // Reset button state handled in finally block
+            return;
         }
-    }
+        console.log("Product IDs selected for update:", productIdsToUpdate);
 
-    // Pricing Details Section
-    if (bulkUpdatePricingCheckbox?.checked) {
-        const pricingUpdates = {}; // Collect pricing updates in a sub-object
+        // 2. Initialize update payload
+        const updatePayload = {};
+        let validationErrors = []; // Array to collect validation errors
 
-        // Bulk Rate (controlled by pricing section checkbox)
-        const rateValue = parseNumericInput(bulkCurrentRateInput?.value);
-        if (bulkCurrentRateInput?.disabled === false) { // Check if the input is enabled by the section checkbox
-            if (rateValue !== null && !isNaN(rateValue)) {
-                const rateField = RATE_TYPES[currentBulkRateType].field;
-                pricingUpdates[rateField] = rateValue;
-                 console.log(`Payload: pricing.${rateField} =`, rateValue);
-            } else {
-                validationErrors.push(`Please enter a valid number for '${RATE_TYPES[currentBulkRateType].label}'.`);
+        // --- 3. Collect and Validate Data ---
+
+        // Basic Details Section (isEnabled status)
+        if (bulkUpdateEnabledCheckbox?.checked) {
+            const enabledValue = bulkIsEnabledSelect?.value;
+            if (bulkIsEnabledSelect?.disabled === false) { // Check if input is enabled by section checkbox
+                 if (enabledValue !== "") { // Check if a state is actually selected
+                     updatePayload.isEnabled = enabledValue === 'true'; // Convert string to boolean
+                     console.log("Payload: isEnabled =", updatePayload.isEnabled);
+                 } else {
+                      validationErrors.push("Please select a state (Yes/No) for 'Show on Website' if you want to update it.");
+                 }
+            } else if (bulkUpdateEnabledCheckbox?.checked) {
+                 validationErrors.push("'Show on Website' section checked, but input is disabled.");
             }
-        } else if (bulkUpdatePricingCheckbox?.checked && bulkCurrentRateInput) {
-             // If pricing section checked, but rate input is disabled
-             // This case is less likely if section checkbox correctly enables, but good to have a check
-              if(!bulkCurrentRateInput.disabled) { /* do nothing if it's correctly enabled */ }
-              else { validationErrors.push("Pricing Details section checked, but active Rate input is disabled."); }
+        }
+
+        // Pricing Details Section
+        if (bulkUpdatePricingCheckbox?.checked) {
+            const pricingUpdates = {}; // Collect pricing updates in a sub-object
+
+            // Bulk Rate (controlled by pricing section checkbox)
+            const rateValue = parseNumericInput(bulkCurrentRateInput?.value);
+            if (bulkCurrentRateInput?.disabled === false) { // Check if the input is enabled by the section checkbox
+                if (rateValue !== null && !isNaN(rateValue)) {
+                    const rateField = RATE_TYPES[currentBulkRateType].field;
+                    pricingUpdates[rateField] = rateValue; // Add to pricingUpdates sub-object
+                     console.log(`Payload: pricing.${rateField} =`, rateValue);
+                } else {
+                    validationErrors.push(`Please enter a valid number for '${RATE_TYPES[currentBulkRateType].label}'.`);
+                }
+            } else if (bulkUpdatePricingCheckbox?.checked && bulkCurrentRateInput) {
+                 // If pricing section checked, but rate input is disabled
+                 // This case is less likely if section checkbox correctly enables, but good to have a check
+                  if(!bulkCurrentRateInput.disabled) { /* do nothing if it's correctly enabled */ }
+                  else { validationErrors.push("Pricing Details section checked, but active Rate input is disabled."); }
+            }
+
+
+            // Individual Pricing Fields (controlled by individual checkboxes)
+            if (bulkPurchasePriceCheckbox?.checked && bulkPurchasePriceInput?.disabled === false) {
+                const value = parseNumericInput(bulkPurchasePriceInput.value);
+                if (value !== null && !isNaN(value)) {
+                     pricingUpdates.purchasePrice = value; // Add to pricingUpdates sub-object
+                     console.log("Payload: pricing.purchasePrice =", value);
+                } else { validationErrors.push("Please enter a valid number for Purchase Price."); }
+            } else if (bulkPurchasePriceCheckbox?.checked) { validationErrors.push("Purchase Price checkbox checked, but input is disabled."); }
+
+             if (bulkMrpCheckbox?.checked && bulkMrpInput?.disabled === false) {
+                 const value = parseNumericInput(bulkMrpInput.value);
+                 if (value !== null && !isNaN(value)) {
+                      pricingUpdates.mrp = value; // Add to pricingUpdates sub-object
+                      console.log("Payload: pricing.mrp =", value);
+                 } else { validationErrors.push("Please enter a valid number for M.R.P."); }
+             } else if (bulkMrpCheckbox?.checked) { validationErrors.push("M.R.P. checkbox checked, but input is disabled."); }
+
+             if (bulkGstRateCheckbox?.checked && bulkGstRateInput?.disabled === false) {
+                  const value = parseNumericInput(bulkGstRateInput.value);
+                  if (value !== null && !isNaN(value)) {
+                       pricingUpdates.gstRate = value; // Add to pricingUpdates sub-object
+                       console.log("Payload: pricing.gstRate =", value);
+                  } else { validationErrors.push("Please enter a valid number for GST Rate."); }
+              } else if (bulkGstRateCheckbox?.checked) { validationErrors.push("GST Rate checkbox checked, but input is disabled."); }
+
+              if (bulkMinOrderValueCheckbox?.checked && bulkMinOrderValueInput?.disabled === false) {
+                   const value = parseNumericInput(bulkMinOrderValueInput.value);
+                   if (value !== null && !isNaN(value)) {
+                        pricingUpdates.minimumOrderValue = value; // Add to pricingUpdates sub-object
+                        console.log("Payload: pricing.minimumOrderValue =", value);
+                   } else { validationErrors.push("Please enter a valid number for Min. Order Value."); }
+               } else if (bulkMinOrderValueCheckbox?.checked) { validationErrors.push("Min. Order Value checkbox checked, but input is disabled."); }
+
+
+            // If any pricing updates were collected (either rate or individual fields), add them to the main payload
+            if (Object.keys(pricingUpdates).length > 0) {
+                // Add collected pricing updates to the main updatePayload using dot notation for each field
+                // This avoids sending an empty 'pricing' object if only some nested fields are selected
+                 for (const key in pricingUpdates) {
+                     updatePayload[`pricing.${key}`] = pricingUpdates[key]; // Use dot notation
+                 }
+            } else if (bulkUpdatePricingCheckbox?.checked) {
+                 // If the section checkbox was checked but no fields within it were selected or valid
+                 validationErrors.push("Pricing Details section checked, but no specific pricing fields selected or values are invalid.");
+            }
+        }
+
+        // Wedding Card Charges Section (Nested under pricing in Firestore)
+        if (bulkUpdateWeddingCheckbox?.checked) {
+             const weddingUpdates = {}; // Collect wedding updates
+
+             if (bulkDesignChargeCheckbox?.checked && bulkDesignChargeInput?.disabled === false) {
+                  const value = parseNumericInput(bulkDesignChargeInput.value);
+                  if (value !== null && !isNaN(value)) {
+                       weddingUpdates.designCharge = value; // Add to weddingUpdates sub-object
+                       console.log("Payload: pricing.designCharge =", value);
+                  } else { validationErrors.push("Please enter a valid number for Design Charge."); }
+              } else if (bulkDesignChargeCheckbox?.checked) { validationErrors.push("Design Charge checkbox checked, but input is disabled."); }
+
+             if (bulkPrintingChargeCheckbox?.checked && bulkPrintingChargeInput?.disabled === false) {
+                  const value = parseNumericInput(bulkPrintingChargeInput.value);
+                  if (value !== null && !isNaN(value)) {
+                       weddingUpdates.printingChargeBase = value; // Add to weddingUpdates sub-object
+                       console.log("Payload: pricing.printingChargeBase =", value);
+                  } else { validationErrors.push("Please enter a valid number for Printing Charge."); }
+              } else if (bulkPrintingChargeCheckbox?.checked) { validationErrors.push("Printing Charge checkbox checked, but input is disabled."); }
+
+             if (bulkTransportChargeCheckbox?.checked && bulkTransportChargeInput?.disabled === false) {
+                  const value = parseNumericInput(bulkTransportChargeInput.value);
+                  if (value !== null && !isNaN(value)) {
+                       weddingUpdates.transportCharge = value; // Add to weddingUpdates sub-object
+                       console.log("Payload: pricing.transportCharge =", value);
+                  } else { validationErrors.push("Please enter a valid number for Transport Charge."); }
+               } else if (bulkTransportChargeCheckbox?.checked) { validationErrors.push("Transport Charge checkbox checked, but input is disabled."); }
+
+             if (bulkExtraMarginPercentCheckbox?.checked && bulkExtraMarginPercentInput?.disabled === false) {
+                   const value = parseNumericInput(bulkExtraMarginPercentInput.value);
+                  if (value !== null && !isNaN(value)) {
+                       weddingUpdates.extraMarginPercent = value; // Add to weddingUpdates sub-object
+                       console.log("Payload: pricing.extraMarginPercent =", value);
+                  } else { validationErrors.push("Please enter a valid number for Extra Margin."); }
+              } else if (bulkExtraMarginPercentCheckbox?.checked) { validationErrors.push("Extra Margin checkbox checked, but input is disabled."); }
+
+              // If any wedding updates were collected, add them to the main payload (under pricing)
+             if (Object.keys(weddingUpdates).length > 0) {
+                 // Add collected wedding updates to the main updatePayload using dot notation for each field
+                  for (const key in weddingUpdates) {
+                      updatePayload[`pricing.${key}`] = weddingUpdates[key]; // Use dot notation
+                  }
+             } else if (bulkUpdateWeddingCheckbox?.checked) {
+                  validationErrors.push("Wedding Card Charges section checked, but no specific fields selected or values are invalid.");
+             }
         }
 
 
-        // Individual Pricing Fields (controlled by individual checkboxes)
-        if (bulkPurchasePriceCheckbox?.checked && bulkPurchasePriceInput?.disabled === false) {
-            const value = parseNumericInput(bulkPurchasePriceInput.value);
-            if (value !== null && !isNaN(value)) {
-                 pricingUpdates.purchasePrice = value;
-                 console.log("Payload: pricing.purchasePrice =", value);
-            } else { validationErrors.push("Please enter a valid number for Purchase Price."); }
-        } else if (bulkPurchasePriceCheckbox?.checked) { validationErrors.push("Purchase Price checkbox checked, but input is disabled."); }
+        // Internal Details Section (Top-level fields)
+         if (bulkUpdateInternalCheckbox?.checked) {
+             if (bulkBrandCheckbox?.checked && bulkBrandInput?.disabled === false) {
+                  const value = bulkBrandInput.value.trim();
+                  updatePayload.brand = value === '' ? null : value; // Save as null if empty string
+                  console.log("Payload: brand =", updatePayload.brand);
+              } else if (bulkBrandCheckbox?.checked) { validationErrors.push("Brand checkbox checked, but input is disabled."); }
 
-         if (bulkMrpCheckbox?.checked && bulkMrpInput?.disabled === false) {
-             const value = parseNumericInput(bulkMrpInput.value);
-             if (value !== null && !isNaN(value)) {
-                  pricingUpdates.mrp = value;
-                  console.log("Payload: pricing.mrp =", value);
-             } else { validationErrors.push("Please enter a valid number for M.R.P."); }
-         } else if (bulkMrpCheckbox?.checked) { validationErrors.push("M.R.P. checkbox checked, but input is disabled."); }
+             if (bulkItemCodeCheckbox?.checked && bulkItemCodeInput?.disabled === false) {
+                  const value = bulkItemCodeInput.value.trim();
+                  updatePayload.itemCode = value === '' ? null : value; // Save as null if empty string
+                  console.log("Payload: itemCode =", updatePayload.itemCode);
+               } else if (bulkItemCodeCheckbox?.checked) { validationErrors.push("Item Code checkbox checked, but input is disabled."); }
 
-         if (bulkGstRateCheckbox?.checked && bulkGstRateInput?.disabled === false) {
-              const value = parseNumericInput(bulkGstRateInput.value);
-              if (value !== null && !isNaN(value)) {
-                   pricingUpdates.gstRate = value;
-                   console.log("Payload: pricing.gstRate =", value);
-              } else { validationErrors.push("Please enter a valid number for GST Rate."); }
-          } else if (bulkGstRateCheckbox?.checked) { validationErrors.push("GST Rate checkbox checked, but input is disabled."); }
-
-          if (bulkMinOrderValueCheckbox?.checked && bulkMinOrderValueInput?.disabled === false) {
-               const value = parseNumericInput(bulkMinOrderValueInput.value);
-               if (value !== null && !isNaN(value)) {
-                    pricingUpdates.minimumOrderValue = value;
-                    console.log("Payload: pricing.minimumOrderValue =", value);
-               } else { validationErrors.push("Please enter a valid number for Min. Order Value."); }
-           } else if (bulkMinOrderValueCheckbox?.checked) { validationErrors.push("Min. Order Value checkbox checked, but input is disabled."); }
-
-
-        // Add collected pricing updates to main payload if any were collected or rate was added
-        if (Object.keys(pricingUpdates).length > 0 || (updatePayload.hasOwnProperty('pricing') && updatePayload.pricing.hasOwnProperty(RATE_TYPES[currentBulkRateType].field))) {
-             // Merge collected individual pricing updates into the pricing object in updatePayload
-             updatePayload.pricing = { ...(updatePayload.pricing || {}), ...pricingUpdates };
-         } else if (bulkUpdatePricingCheckbox?.checked) {
-              // If the section checkbox was checked but no fields within it were selected or valid
-              validationErrors.push("Pricing Details section checked, but no specific pricing fields selected or values are invalid.");
+             if (bulkHsnSacCodeCheckbox?.checked && bulkHsnSacCodeInput?.disabled === false) {
+                   const value = bulkHsnSacCodeInput.value.trim();
+                   updatePayload.hsnSacCode = value === '' ? null : value; // Save as null if empty string
+                   console.log("Payload: hsnSacCode =", updatePayload.hsnSacCode);
+                } else if (bulkHsnSacCodeCheckbox?.checked) { validationErrors.push("HSN / SAC Code checkbox checked, but input is disabled."); }
          }
-    }
 
-    // Wedding Card Charges Section (Nested under pricing in Firestore)
-    if (bulkUpdateWeddingCheckbox?.checked) {
-         const weddingUpdates = {}; // Collect wedding updates
 
-         if (bulkDesignChargeCheckbox?.checked && bulkDesignChargeInput?.disabled === false) {
-              const value = parseNumericInput(bulkDesignChargeInput.value);
-              if (value !== null && !isNaN(value)) {
-                   weddingUpdates.designCharge = value;
-                   console.log("Payload: pricing.designCharge =", value);
-              } else { validationErrors.push("Please enter a valid number for Design Charge."); }
-          } else if (bulkDesignChargeCheckbox?.checked) { validationErrors.push("Design Charge checkbox checked, but input is disabled."); }
+        // Stock Management Section (Nested under stock in Firestore)
+         if (bulkUpdateStockCheckbox?.checked) {
+              const stockUpdates = {}; // Collect stock updates
 
-         if (bulkPrintingChargeCheckbox?.checked && bulkPrintingChargeInput?.disabled === false) {
-              const value = parseNumericInput(bulkPrintingChargeInput.value);
-              if (value !== null && !isNaN(value)) {
-                   weddingUpdates.printingChargeBase = value;
-                   console.log("Payload: pricing.printingChargeBase =", value);
-              } else { validationErrors.push("Please enter a valid number for Printing Charge."); }
-          } else if (bulkPrintingChargeCheckbox?.checked) { validationErrors.push("Printing Charge checkbox checked, but input is disabled."); }
+             if (bulkCurrentStockCheckbox?.checked && bulkCurrentStockInput?.disabled === false) {
+                  const value = parseNumericInput(bulkCurrentStockInput.value, true, true); // Allow zero, require integer
+                  if (value !== null && !isNaN(value)) {
+                       stockUpdates.currentStock = value; // Add to stockUpdates sub-object
+                       console.log("Payload: stock.currentStock =", value);
+                  } else { validationErrors.push("Please enter a valid whole number for Current Stock."); }
+               } else if (bulkCurrentStockCheckbox?.checked) { validationErrors.push("Current Stock checkbox checked, but input is disabled."); }
 
-         if (bulkTransportChargeCheckbox?.checked && bulkTransportChargeInput?.disabled === false) {
-              const value = parseNumericInput(bulkTransportChargeInput.value);
-              if (value !== null && !isNaN(value)) {
-                   weddingUpdates.transportCharge = value;
-                   console.log("Payload: pricing.transportCharge =", value);
-              } else { validationErrors.push("Please enter a valid number for Transport Charge."); }
-           } else if (bulkTransportChargeCheckbox?.checked) { validationErrors.push("Transport Charge checkbox checked, but input is disabled."); }
+             if (bulkMinStockLevelCheckbox?.checked && bulkMinStockLevelInput?.disabled === false) {
+                   const value = parseNumericInput(bulkMinStockLevelInput.value, true, true); // Allow zero, require integer
+                   if (value !== null && !isNaN(value)) {
+                        stockUpdates.minStockLevel = value; // Add to stockUpdates sub-object
+                        console.log("Payload: stock.minStockLevel =", value);
+                   } else { validationErrors.push("Please enter a valid whole number for Minimum Stock Level."); }
+                } else if (bulkMinStockLevelCheckbox?.checked) { validationErrors.push("Minimum Stock Level checkbox checked, but input is disabled."); }
 
-         if (bulkExtraMarginPercentCheckbox?.checked && bulkExtraMarginPercentInput?.disabled === false) {
-               const value = parseNumericInput(bulkExtraMarginPercentInput.value);
-              if (value !== null && !isNaN(value)) {
-                   weddingUpdates.extraMarginPercent = value;
-                   console.log("Payload: pricing.extraMarginPercent =", value);
-              } else { validationErrors.push("Please enter a valid number for Extra Margin."); }
-          } else if (bulkExtraMarginPercentCheckbox?.checked) { validationErrors.push("Extra Margin checkbox checked, but input is disabled."); }
-
-          // Add collected wedding updates to pricing payload if any were collected
-         if (Object.keys(weddingUpdates).length > 0) {
-             // Merge wedding updates into the pricing object in updatePayload
-             updatePayload.pricing = { ...(updatePayload.pricing || {}), ...weddingUpdates };
-         } else if (bulkUpdateWeddingCheckbox?.checked) {
-              validationErrors.push("Wedding Card Charges section checked, but no specific fields selected or values are invalid.");
+              // Add collected stock updates to main payload if any were collected
+             if (Object.keys(stockUpdates).length > 0) {
+                 // Add collected stock updates to the main updatePayload using dot notation for each field
+                  for (const key in stockUpdates) {
+                      updatePayload[`stock.${key}`] = stockUpdates[key]; // Use dot notation
+                  }
+             } else if (bulkUpdateStockCheckbox?.checked) {
+                   validationErrors.push("Stock Management section checked, but no specific fields selected or values are invalid.");
+              }
          }
-    }
 
-
-    // Internal Details Section (Top-level fields)
-     if (bulkUpdateInternalCheckbox?.checked) {
-         if (bulkBrandCheckbox?.checked && bulkBrandInput?.disabled === false) {
-              const value = bulkBrandInput.value.trim();
-              updatePayload.brand = value === '' ? null : value; // Save as null if empty string
-              console.log("Payload: brand =", updatePayload.brand);
-          } else if (bulkBrandCheckbox?.checked) { validationErrors.push("Brand checkbox checked, but input is disabled."); }
-
-         if (bulkItemCodeCheckbox?.checked && bulkItemCodeInput?.disabled === false) {
-              const value = bulkItemCodeInput.value.trim();
-              updatePayload.itemCode = value === '' ? null : value; // Save as null if empty string
-              console.log("Payload: itemCode =", updatePayload.itemCode);
-           } else if (bulkItemCodeCheckbox?.checked) { validationErrors.push("Item Code checkbox checked, but input is disabled."); }
-
-         if (bulkHsnSacCodeCheckbox?.checked && bulkHsnSacCodeInput?.disabled === false) {
-               const value = bulkHsnSacCodeInput.value.trim();
-               updatePayload.hsnSacCode = value === '' ? null : value; // Save as null if empty string
-               console.log("Payload: hsnSacCode =", updatePayload.hsnSacCode);
-            } else if (bulkHsnSacCodeCheckbox?.checked) { validationErrors.push("HSN / SAC Code checkbox checked, but input is disabled."); }
-     }
-
-
-    // Stock Management Section (Nested under stock in Firestore)
-     if (bulkUpdateStockCheckbox?.checked) {
-          const stockUpdates = {}; // Collect stock updates
-
-         if (bulkCurrentStockCheckbox?.checked && bulkCurrentStockInput?.disabled === false) {
-              const value = parseNumericInput(bulkCurrentStockInput.value, true, true); // Allow zero, require integer
-              if (value !== null && !isNaN(value)) {
-                   stockUpdates.currentStock = value;
-                   console.log("Payload: stock.currentStock =", value);
-              } else { validationErrors.push("Please enter a valid whole number for Current Stock."); }
-           } else if (bulkCurrentStockCheckbox?.checked) { validationErrors.push("Current Stock checkbox checked, but input is disabled."); }
-
-         if (bulkMinStockLevelCheckbox?.checked && bulkMinStockLevelInput?.disabled === false) {
-               const value = parseNumericInput(bulkMinStockLevelInput.value, true, true); // Allow zero, require integer
-               if (value !== null && !isNaN(value)) {
-                    stockUpdates.minStockLevel = value;
-                    console.log("Payload: stock.minStockLevel =", value);
-               } else { validationErrors.push("Please enter a valid whole number for Minimum Stock Level."); }
-            } else if (bulkMinStockLevelCheckbox?.checked) { validationErrors.push("Minimum Stock Level checkbox checked, but input is disabled."); }
-
-          // Add collected stock updates to main payload if any were collected
-         if (Object.keys(stockUpdates).length > 0) {
-             updatePayload.stock = stockUpdates;
-         } else if (bulkUpdateStockCheckbox?.checked) {
-               validationErrors.push("Stock Management section checked, but no specific fields selected or values are invalid.");
-          }
-     }
-
-    // Other Options Section (JSON - Top-level field)
-     if (bulkUpdateOptionsCheckbox?.checked) {
-          const optionsString = bulkOptionsInput?.value.trim();
-         if (bulkOptionsInput?.disabled === false) { // Check if the input is enabled by the section checkbox
-             if (optionsString === '') {
-                  // Allow clearing options by providing empty string
-                  updatePayload.options = [];
-                   console.log("Payload: options = [] (cleared)");
-             } else {
-                 try {
-                      const parsedOptions = JSON.parse(optionsString);
-                      if (Array.isArray(parsedOptions)) {
-                           // Basic check: ensure each item is an object with name and values array
-                           const isValid = parsedOptions.every(item =>
-                               typeof item === 'object' && item !== null &&
-                               typeof item.name === 'string' && Array.isArray(item.values)
-                           );
-                           if (isValid) {
-                                updatePayload.options = parsedOptions;
-                                console.log("Payload: options =", updatePayload.options);
-                           } else {
-                                validationErrors.push("Invalid format for Options JSON. Each item must be an object with 'name' (string) and 'values' (array).");
-                           }
-                      } else {
-                          validationErrors.push("Options must be a valid JSON array.");
-                      }
-                 } catch (err) {
-                      validationErrors.push(`Invalid JSON in Options field: ${err.message}`);
+        // Other Options Section (JSON - Top-level field)
+         if (bulkUpdateOptionsCheckbox?.checked) {
+              const optionsString = bulkOptionsInput?.value.trim();
+             if (bulkOptionsInput?.disabled === false) { // Check if the input is enabled by the section checkbox
+                 if (optionsString === '') {
+                      // Allow clearing options by providing empty string
+                      updatePayload.options = [];
+                       console.log("Payload: options = [] (cleared)");
+                 } else {
+                     try {
+                          const parsedOptions = JSON.parse(optionsString);
+                          if (Array.isArray(parsedOptions)) {
+                               // Basic check: ensure each item is an object with name and values array
+                               const isValid = parsedOptions.every(item =>
+                                   typeof item === 'object' && item !== null &&
+                                   typeof item.name === 'string' && Array.isArray(item.values)
+                               );
+                               if (isValid) {
+                                    updatePayload.options = parsedOptions;
+                                    console.log("Payload: options =", updatePayload.options);
+                               } else {
+                                    validationErrors.push("Invalid format for Options JSON. Each item must be an object with 'name' (string) and 'values' (array).");
+                               }
+                          } else {
+                              validationErrors.push("Options must be a valid JSON array.");
+                          }
+                     } catch (err) {
+                          validationErrors.push(`Invalid JSON in Options field: ${err.message}`);
+                     }
                  }
+             } else if (bulkUpdateOptionsCheckbox?.checked) {
+                  validationErrors.push("Options (JSON) section checked, but input is disabled.");
              }
-         } else if (bulkUpdateOptionsCheckbox?.checked) {
-              validationErrors.push("Options (JSON) section checked, but input is disabled.");
          }
-     }
 
 
-    // Optional Extra Charges Section (Nested under pricing in Firestore)
-    if (bulkUpdateExtraChargesCheckbox?.checked) {
-        // Handle 'Enable Additional Charge Option' (select field) - This is the primary control for this section
-        if (bulkHasExtraChargesCheckbox?.checked && bulkHasExtraChargesSelect?.disabled === false) {
-             const value = bulkHasExtraChargesSelect.value;
-             if (value !== "") {
-                 updatePayload['pricing.hasExtraCharges'] = value === 'true'; // Use dot notation for direct update
-                 console.log("Payload: pricing.hasExtraCharges =", updatePayload['pricing.hasExtraCharges']);
+        // Optional Extra Charges Section (Nested under pricing in Firestore)
+        if (bulkUpdateExtraChargesCheckbox?.checked) {
+            // Handle 'Enable Additional Charge Option' (select field) - This is the primary control for this section
+            if (bulkHasExtraChargesCheckbox?.checked && bulkHasExtraChargesSelect?.disabled === false) {
+                 const value = bulkHasExtraChargesSelect.value;
+                 if (value !== "") {
+                     updatePayload['pricing.hasExtraCharges'] = value === 'true'; // Use dot notation for direct update
+                     console.log("Payload: pricing.hasExtraCharges =", updatePayload['pricing.hasExtraCharges']);
 
-                 if (value === 'true') { // If enabling Extra Charges
-                      // Only collect name/amount if their individual checkboxes are checked AND their inputs are enabled
-                      if (bulkExtraChargeNameCheckbox?.checked && bulkExtraChargeNameInput?.disabled === false) {
-                           const nameValue = bulkExtraChargeNameInput.value.trim() || 'Additional Charge'; // Default name if empty
-                           updatePayload['pricing.extraCharge.name'] = nameValue; // Add name directly with dot notation
-                           console.log("Payload: pricing.extraCharge.name =", nameValue);
-                       } else if (bulkExtraChargeNameCheckbox?.checked) { validationErrors.push("Charge Name checkbox checked, but input is disabled."); }
+                     if (value === 'true') { // If enabling Extra Charges
+                          // Only collect name/amount if their individual checkboxes are checked AND their inputs are enabled
+                          if (bulkExtraChargeNameCheckbox?.checked && bulkExtraChargeNameInput?.disabled === false) {
+                               const nameValue = bulkExtraChargeNameInput.value.trim() || 'Additional Charge'; // Default name if empty
+                               updatePayload['pricing.extraCharge.name'] = nameValue; // Add name directly with dot notation
+                               console.log("Payload: pricing.extraCharge.name =", nameValue);
+                           } else if (bulkExtraChargeNameCheckbox?.checked) { validationErrors.push("Charge Name checkbox checked, but input is disabled."); }
 
 
-                       if (bulkExtraChargeAmountCheckbox?.checked && bulkExtraChargeAmountInput?.disabled === false) {
-                            const amountValue = parseNumericInput(bulkExtraChargeAmountInput.value);
-                            if (amountValue !== null && !isNaN(amountValue)) {
-                                 updatePayload['pricing.extraCharge.amount'] = amountValue; // Add amount directly with dot notation
-                                 console.log("Payload: pricing.extraCharge.amount =", amountValue);
-                            } else { validationErrors.push("Please enter a valid number for Charge Amount."); }
-                       } else if (bulkExtraChargeAmountCheckbox?.checked) { validationErrors.push("Charge Amount checkbox checked, but input is disabled."); }
+                           if (bulkExtraChargeAmountCheckbox?.checked && bulkExtraChargeAmountInput?.disabled === false) {
+                                const amountValue = parseNumericInput(bulkExtraChargeAmountInput.value);
+                                if (amountValue !== null && !isNaN(amountValue)) {
+                                     updatePayload['pricing.extraCharge.amount'] = amountValue; // Add amount directly with dot notation
+                                     console.log("Payload: pricing.extraCharge.amount =", amountValue);
+                                } else { validationErrors.push("Please enter a valid number for Charge Amount."); }
+                           } else if (bulkExtraChargeAmountCheckbox?.checked) { validationErrors.push("Charge Amount checkbox checked, but input is disabled."); }
 
-                       // No extra validation needed here for enabling; individual field validation handles errors
+                           // No extra validation needed here for enabling; individual field validation handles errors
 
-                 } else { // If disabling Extra Charges (value is 'false')
-                     // When disabling, we want to explicitly remove the extraCharge subfield
-                     // Setting to null with dot notation explicitly deletes the field in Firestore
-                     updatePayload['pricing.extraCharge'] = null;
-                     console.log("Payload: pricing.extraCharge = null (disabling)");
+                     } else { // If disabling Extra Charges (value is 'false')
+                         // When disabling, we want to explicitly remove the extraCharge subfield
+                         // Setting to null with dot notation explicitly deletes the field in Firestore
+                         updatePayload['pricing.extraCharge'] = null;
+                         console.log("Payload: pricing.extraCharge = null (disabling)");
+                     }
+
+                 } else { // If the select value is empty
+                     validationErrors.push("Please select 'Yes' or 'No' for 'Enable Additional Charge Option' if you want to update it.");
                  }
+             } else if (bulkUpdateExtraChargesCheckbox?.checked) {
+                   validationErrors.push("Optional Extra Charges section checked, but 'Enable Additional Charge Option' checkbox is not checked or input is disabled.");
+              }
+        }
 
-             } else { // If the select value is empty
-                 validationErrors.push("Please select 'Yes' or 'No' for 'Enable Additional Charge Option' if you want to update it.");
-             }
-         } else if (bulkUpdateExtraChargesCheckbox?.checked) {
-               validationErrors.push("Optional Extra Charges section checked, but 'Enable Additional Charge Option' checkbox is not checked or input is disabled.");
+
+        // --- Validation Summary and Proceed ---
+
+        if (validationErrors.length > 0) {
+            // Display all validation errors
+            validationErrors.forEach(error => showToast(`Validation Error: ${error}`, 5000));
+            console.error("Validation Errors:", validationErrors);
+
+             // Re-enable button state
+             if (applyBulkUpdateBtn) applyBulkUpdateBtn.disabled = false;
+             if (spinner) spinner.style.display = 'none';
+             if (icon) icon.style.display = '';
+             if (text) text.textContent = 'Apply Updates';
+
+            return; // Stop the submission process
+        }
+
+        // Check if any fields were selected for update and successfully validated
+         // Count the number of keys in updatePayload, considering nested objects if they are the only keys
+         const hasUpdateFields = Object.keys(updatePayload).length > 0;
+         // Check if the only key is 'pricing' and it's empty
+         const hasOnlyEmptyPricing = Object.keys(updatePayload).length === 1 && updatePayload.hasOwnProperty('pricing') && Object.keys(updatePayload.pricing).length === 0;
+         // Check if the only key is 'pricing' and it contains only a null 'extraCharge'
+         const hasOnlyPricingWithOnlyNullExtraCharge = Object.keys(updatePayload).length === 1 && updatePayload.hasOwnProperty('pricing') && Object.keys(updatePayload.pricing).length === 1 && updatePayload.pricing.hasOwnProperty('extraCharge') && updatePayload.pricing.extraCharge === null;
+         // Check if the only key is 'stock' and it's empty
+         const hasOnlyEmptyStock = Object.keys(updatePayload).length === 1 && updatePayload.hasOwnProperty('stock') && Object.keys(updatePayload.stock).length === 0;
+          // Check if the only keys are 'pricing' (empty) and 'stock' (empty)
+         const hasOnlyEmptyPricingAndStock = Object.keys(updatePayload).length === 2 && updatePayload.hasOwnProperty('pricing') && Object.keys(updatePayload.pricing).length === 0 && updatePayload.hasOwnProperty('stock') && Object.keys(updatePayload.stock).length === 0;
+
+
+         if (!hasUpdateFields || hasOnlyEmptyPricing || hasOnlyPricingWithOnlyNullExtraCharge || hasOnlyEmptyStock || hasOnlyEmptyPricingAndStock) {
+              showToast("No valid fields selected for update.", 3000);
+               // Re-enable button state
+               if (applyBulkUpdateBtn) applyBulkUpdateBtn.disabled = false;
+               if (spinner) spinner.style.display = 'none';
+               if (icon) icon.style.display = '';
+               if (text) text.textContent = 'Apply Updates';
+              return; // Stop the submission process
           }
-    }
 
 
-    // --- Validation Summary and Proceed ---
+        // --- If validation passes and payload is not empty, proceed to Firebase WriteBatch update ---
 
-    if (validationErrors.length > 0) {
-        // Display all validation errors
-        validationErrors.forEach(error => showToast(`Validation Error: ${error}`, 5000));
-        console.error("Validation Errors:", validationErrors);
-
-        // Reset button state
-         if (applyBulkUpdateBtn) applyBulkUpdateBtn.disabled = false;
-         if (spinner) spinner.style.display = 'none';
-         if (icon) icon.style.display = '';
-         if (text) text.textContent = 'Apply Updates';
-        return; // Stop the submission process
-    }
-
-    // Check if any fields were selected for update and successfully validated
-     // Count the number of keys in updatePayload, considering nested objects if they are the only keys
-     const hasUpdateFields = Object.keys(updatePayload).length > 0;
-     const hasOnlyEmptyPricing = Object.keys(updatePayload).length === 1 && updatePayload.hasOwnProperty('pricing') && Object.keys(updatePayload.pricing).length === 0;
-     const hasOnlyPricingWithOnlyNullExtraCharge = Object.keys(updatePayload).length === 1 && updatePayload.hasOwnProperty('pricing') && Object.keys(updatePayload.pricing).length === 1 && updatePayload.pricing.hasOwnProperty('extraCharge') && updatePayload.pricing.extraCharge === null;
+        console.log("Validation successful. Final Update Payload:", updatePayload);
+        if (text) text.textContent = 'Updating...'; // Change text to indicate database update
 
 
-     if (!hasUpdateFields || hasOnlyEmptyPricing || hasOnlyPricingWithOnlyNullExtraCharge) {
-          showToast("No valid fields selected for update.", 3000);
-           // Reset button state
-           if (applyBulkUpdateBtn) applyBulkUpdateBtn.disabled = false;
-           if (spinner) spinner.style.display = 'none';
-           if (icon) icon.style.display = '';
-           if (text) text.textContent = 'Apply Updates';
-          return; // Stop the submission process
-      }
+        try {
+            // Get a new write batch
+            // Use the imported firestoreWriteBatch function
+            const batch = firestoreWriteBatch(window.db);
 
+            // Add update operations for each selected product to the batch
+            productIdsToUpdate.forEach(productId => {
+                const productRef = window.doc(window.db, "onlineProducts", productId); // Use globally exposed doc
+                batch.update(productRef, updatePayload); // Use the collected and validated updatePayload
+            });
 
-    // --- If validation passes and payload is not empty, proceed to Firebase WriteBatch update ---
+            // Commit the batch
+            await batch.commit();
 
-    console.log("Validation successful. Final Update Payload:", updatePayload);
-    if (text) text.textContent = 'Updating...'; // Change text to indicate database update
+            console.log(`Successfully updated ${productIdsToUpdate.length} products.`);
+            showToast(`Successfully updated ${productIdsToUpdate.length} products!`, 3000);
+            closeBulkUpdateModal(); // Close modal on successful update
 
+        } catch (error) {
+            console.error("Error performing bulk update:", error);
+            showToast(`Bulk Update failed: ${error.message || 'Unknown error'}. Check console.`, 5000);
+        } finally {
+             // Re-enable the button and hide spinner after commit (success or failure)
+             if (applyBulkUpdateBtn) applyBulkUpdateBtn.disabled = false;
+             if (spinner) spinner.style.display = 'none';
+             if (icon) icon.style.display = '';
+             if (text) text.textContent = 'Apply Updates';
+        }
 
-    try {
-        // Get a new write batch
-        // Use the imported firestoreWriteBatch function
-        const batch = firestoreWriteBatch(window.db);
-
-        // Add update operations for each selected product to the batch
-        productIdsToUpdate.forEach(productId => {
-            const productRef = window.doc(window.db, "onlineProducts", productId); // Use globally exposed doc
-            batch.update(productRef, updatePayload); // Use the collected and validated updatePayload
-        });
-
-        // Commit the batch
-        await batch.commit();
-
-        console.log(`Successfully updated ${productIdsToUpdate.length} products.`);
-        showToast(`Successfully updated ${productIdsToUpdate.length} products!`, 3000);
-        closeBulkUpdateModal(); // Close modal on successful update
-
-    } catch (error) {
-        console.error("Error performing bulk update:", error);
-        showToast(`Bulk Update failed: ${error.message || 'Unknown error'}. Check console.`, 5000);
-    } finally {
-         // Re-enable the button and hide spinner after commit (success or failure)
+    } catch (e) { // Catch any unexpected errors during data collection or before batch commit
+        console.error("An unexpected error occurred during bulk update process:", e);
+        showToast(`An unexpected error occurred: ${e.message || 'Unknown error'}. Check console.`, 5000);
+         // Ensure button state is reset even for unexpected errors
          if (applyBulkUpdateBtn) applyBulkUpdateBtn.disabled = false;
          if (spinner) spinner.style.display = 'none';
          if (icon) icon.style.display = '';
@@ -1388,7 +1416,60 @@ function displayImagePreview(fileObject, existingUrl = null) { if (!imagePreview
     else if (fileObject) { const reader = new FileReader(); reader.onload = (e) => { img.src = e.target.result; }; reader.readAsDataURL(fileObject); previewWrapper.fileData = fileObject; removeBtn.onclick = () => { selectedFiles = selectedFiles.filter(f => f !== fileObject); previewWrapper.remove(); }; }
     previewWrapper.appendChild(img); previewWrapper.appendChild(removeBtn); previewWrapper.appendChild(progressBar); imagePreviewArea.appendChild(previewWrapper);
 }
-async function uploadImage(file, productId, index) { if (!window.storage || !window.storageRef || !window.uploadBytesResumable || !window.getDownloadURL) throw new Error("Storage functions missing."); const previewWrapper = [...imagePreviewArea.querySelectorAll('.image-preview-item')].find(el => el.fileData === file); const progressBar = previewWrapper?.querySelector('.upload-progress-bar'); const progressFill = progressBar?.querySelector('div'); const timestamp = Date.now(); const uniqueFileName = `${timestamp}-image${index}-${file.name.replace(/[^a-zA-Z0-9.]/g, '_')}`; const filePath = `onlineProductImages/${productId}/${uniqueFileName}`; const fileRef = window.storageRef(window.storage, filePath); if (progressBar) progressBar.style.display = 'block'; if (progressFill) progressFill.style.width = `${progress}%`; const uploadTask = window.uploadBytesResumable(fileRef, file); return new Promise((resolve, reject) => { uploadTask.on('state_changed', (snapshot) => { const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100; if (uploadProgressInfo) uploadProgressInfo.textContent = `Uploading ${file.name}: ${progress.toFixed(0)}%`; if (progressFill) progressFill.style.width = `${progress}%`; }, (error) => { console.error("Upload Error:", error); if (uploadProgressInfo) uploadProgressInfo.textContent = `Upload failed: ${file.name}. ${error.code}`; if (progressBar) progressBar.style.backgroundColor = 'var(--danger-color)'; reject(error); }, async () => { if (uploadProgressInfo) uploadProgressInfo.textContent = `Upload Complete. Getting URL...`; if (progressBar) progressBar.style.backgroundColor = 'var(--success-color)'; try { const downloadURL = await window.getDownloadURL(uploadTask.snapshot.ref); resolve(downloadURL); } catch (getUrlError) { console.error("Get Download URL Error:", getUrlError); if (uploadProgressInfo) uploadProgressInfo.textContent = `Failed to get URL.`; if (progressBar) progressBar.style.backgroundColor = 'var(--danger-color)'; reject(getUrlError); } }); }); }
+async function uploadImage(file, productId, index) {
+    console.log("Starting uploadImage for file:", file.name, "to product:", productId); // Added log
+    if (!window.storage || !window.storageRef || !window.uploadBytesResumable || !window.getDownloadURL) {
+        console.error("Storage functions missing for upload."); // Added log
+        throw new Error("Storage functions missing.");
+    }
+    const previewWrapper = [...imagePreviewArea.querySelectorAll('.image-preview-item')].find(el => el.fileData === file);
+    const progressBar = previewWrapper?.querySelector('.upload-progress-bar');
+    const progressFill = progressBar?.querySelector('div');
+    const timestamp = Date.now();
+    const uniqueFileName = `${timestamp}-image${index}-${file.name.replace(/[^a-zA-Z0-9.]/g, '_')}`;
+    const filePath = `onlineProductImages/${productId}/${uniqueFileName}`;
+    const fileRef = window.storageRef(window.storage, filePath);
+
+    if (progressBar) progressBar.style.display = 'block';
+    if (progressFill) progressFill.style.width = '0%';
+    if (uploadProgressInfo) uploadProgressInfo.textContent = `Preparing upload for ${file.name}...`; // Added log
+
+    const uploadTask = window.uploadBytesResumable(fileRef, file);
+
+    return new Promise((resolve, reject) => {
+        uploadTask.on('state_changed',
+            (snapshot) => { // Progress callback
+                const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+                // Use uploadProgressInfo and progressFill here
+                if (uploadProgressInfo) uploadProgressInfo.textContent = `Uploading ${file.name}: ${progress.toFixed(0)}%`;
+                if (progressFill) progressFill.style.width = `${progress}%`;
+                 console.log(`Upload progress for ${file.name}: ${progress.toFixed(0)}%`); // Added log
+            }, // End of progress callback
+            (error) => { // Error callback
+                console.error("Upload Error:", error); // Added log
+                if (uploadProgressInfo) uploadProgressInfo.textContent = `Upload failed: ${file.name}. ${error.code}`;
+                if (progressBar) progressBar.style.backgroundColor = 'var(--danger-color)';
+                reject(error);
+            }, // End of error callback
+            async () => { // Completion callback
+                console.log(`Upload of ${file.name} complete.`); // Added log
+                if (uploadProgressInfo) uploadProgressInfo.textContent = `Upload Complete. Getting URL for ${file.name}...`;
+                if (progressBar) progressBar.style.backgroundColor = 'var(--success-color)';
+                try {
+                    const downloadURL = await window.getDownloadURL(uploadTask.snapshot.ref);
+                    console.log(`Download URL for ${file.name}: ${downloadURL}`); // Added log
+                    if (uploadProgressInfo) uploadProgressInfo.textContent = `Finished ${file.name}`; // Final status
+                    resolve(downloadURL);
+                } catch (getUrlError) {
+                    console.error("Get Download URL Error:", getUrlError); // Added log
+                    if (uploadProgressInfo) uploadProgressInfo.textContent = `Failed to get URL for ${file.name}.`;
+                    if (progressBar) progressBar.style.backgroundColor = 'var(--danger-color)';
+                    reject(getUrlError);
+                }
+            } // End of completion callback
+        ); // End of uploadTask.on call
+    }); // End of Promise constructor callback
+} // End of uploadImage function
 async function deleteStoredImage(imageUrl) { if (!window.storage || !window.storageRef || !window.deleteObject) return; if (!imageUrl || !(imageUrl.startsWith('https://firebasestorage.googleapis.com/') || imageUrl.startsWith('gs://'))) return; try { const imageRef = window.storageRef(window.storage, imageUrl); await window.deleteObject(imageRef); console.log("Deleted image from Storage:", imageUrl); } catch (error) { if (error.code === 'storage/object-not-found') console.warn("Image not found:", imageUrl); else console.error("Error deleting image:", imageUrl, error); } }
 
 // --- Diagram File Handling (Single Edit Modal) ---
@@ -1401,6 +1482,7 @@ async function deleteStoredFile(fileUrl) { if (!window.storage || !window.storag
 // --- handleSaveProduct Function (Single Product) ---
 async function handleSaveProduct(event) {
     event.preventDefault();
+    console.log("handleSaveProduct called"); // Added log for debugging Problem 2
     if (!window.db || !window.collection || !window.addDoc || !window.doc || !window.updateDoc || !window.serverTimestamp || !window.storage) { showToast("Core Firebase functions unavailable.", 5000); return; }
     if (saveProductBtn) saveProductBtn.disabled = true; if (saveSpinner) saveSpinner.style.display = 'inline-block'; if (saveIcon) saveIcon.style.display = 'none'; if (saveText) saveText.textContent = 'Saving...'; if (uploadProgressInfo) uploadProgressInfo.textContent = 'Preparing data...'; if (diagramUploadProgress) diagramUploadProgress.textContent = '';
 
@@ -1440,28 +1522,74 @@ async function handleSaveProduct(event) {
         itemCode: productItemCodeInput?.value.trim() || null,
         hsnSacCode: productHsnSacCodeInput?.value.trim() || null,
         updatedAt: window.serverTimestamp(),
-        pricing: { ...(productBeingEditedData?.pricing || {}) },
-        stock: { ...(productBeingEditedData?.stock || {}) } // Initialize with stock object
+        pricing: { ...(productBeingEditedData?.pricing || {}) }, // Start with existing pricing data
+        stock: { ...(productBeingEditedData?.stock || {}) } // Start with existing stock data
     };
-    if (!isEditing) { productData.createdAt = window.serverTimestamp(); productData.imageUrls = []; productData.diagramUrl = null; }
+    if (!isEditing) {
+         productData.createdAt = window.serverTimestamp();
+         productData.imageUrls = []; // New product has no images initially
+         productData.diagramUrl = null; // New product has no diagram initially
+    }
 
-    // Add Stock data to productData
+    // Apply collected pricing fields to productData.pricing
+    const activeField = RATE_TYPES[currentActiveRateType].field;
+    productData.pricing[activeField] = currentRateValue; // Set the rate for the active tab
+
+    if (purchasePrice !== null) productData.pricing.purchasePrice = purchasePrice; else delete productData.pricing.purchasePrice;
+    if (mrp !== null) productData.pricing.mrp = mrp; else delete productData.pricing.mrp;
+    if (gstRate !== null) productData.pricing.gstRate = gstRate; else delete productData.pricing.gstRate;
+    // Only include minimumOrderValue if unit is Sq Feet
+    if (unit === 'Sq Feet' && minOrderValue !== null) productData.pricing.minimumOrderValue = minOrderValue; else delete productData.pricing.minimumOrderValue;
+
+    // Apply collected wedding fields to productData.pricing if category is wedding card
+    if (category.toLowerCase().includes('wedding card')) {
+        if (designCharge !== null) productData.pricing.designCharge = designCharge; else delete productData.pricing.designCharge;
+        if (printingCharge !== null) productData.pricing.printingChargeBase = printingCharge; else delete productData.pricing.printingChargeBase;
+        if (transportCharge !== null) productData.pricing.transportCharge = transportCharge; else delete productData.pricing.transportCharge;
+        if (extraMarginPercent !== null) productData.pricing.extraMarginPercent = extraMarginPercent; else delete productData.pricing.extraMarginPercent;
+    } else {
+        // If category is not wedding card, ensure these fields are removed from pricing
+        delete productData.pricing.designCharge;
+        delete productData.pricing.printingChargeBase;
+        delete productData.pricing.transportCharge;
+        delete productData.pricing.extraMarginPercent;
+    }
+
+    // Apply collected extra charges fields to productData.pricing
+    productData.pricing.hasExtraCharges = hasExtraChargesCheckbox?.checked ?? false;
+    if (productData.pricing.hasExtraCharges) {
+        // Ensure extraCharge object exists if hasExtraCharges is true and add name/amount if provided
+        productData.pricing.extraCharge = productData.pricing.extraCharge || {}; // Initialize if it doesn't exist
+        productData.pricing.extraCharge.name = extraChargeNameInput?.value.trim() || 'Additional Charge'; // Default name if empty
+        productData.pricing.extraCharge.amount = extraChargeAmount ?? 0; // Default amount if not provided or invalid
+    } else {
+         // If hasExtraCharges is false, explicitly remove the extraCharge subfield
+        delete productData.pricing.extraCharge;
+    }
+
+
+    // Apply collected stock fields to productData.stock
     if (currentStock !== null && !isNaN(currentStock)) {
-        productData.stock.currentStock = currentStock;
-    } else {
-        // If editing and field was cleared, explicitly set to null or remove
-        if (isEditing && productBeingEditedData?.stock?.hasOwnProperty('currentStock')) {
-            productData.stock.currentStock = null; // Or delete productData.stock.currentStock;
-        }
-    }
-    if (minStockLevel !== null && !isNaN(minStockLevel)) {
-        productData.stock.minStockLevel = minStockLevel;
-    } else {
-        if (isEditing && productBeingEditedData?.stock?.hasOwnProperty('minStockLevel')) {
-            productData.stock.minStockLevel = null; // Or delete productData.stock.minStockLevel;
-        }
-    }
-    // If stock object is empty and you prefer not to save it, you can delete it.
+         productData.stock.currentStock = currentStock;
+     } else {
+         // If editing and field was cleared, set to null
+         if (isEditing && productBeingEditedData?.stock?.hasOwnProperty('currentStock')) {
+             productData.stock.currentStock = null;
+         } else {
+             delete productData.stock.currentStock; // If not editing and field is empty, delete
+         }
+     }
+     if (minStockLevel !== null && !isNaN(minStockLevel)) {
+         productData.stock.minStockLevel = minStockLevel;
+     } else {
+          // If editing and field was cleared, set to null
+         if (isEditing && productBeingEditedData?.stock?.hasOwnProperty('minStockLevel')) {
+             productData.stock.minStockLevel = null;
+         } else {
+             delete productData.stock.minStockLevel; // If not editing and field is empty, delete
+         }
+     }
+    // If stock object is empty after collecting fields, delete it
     if (productData.stock && Object.keys(productData.stock).length === 0) {
         delete productData.stock;
     }
@@ -1471,7 +1599,6 @@ async function handleSaveProduct(event) {
     if (optionsString) { try { const parsedOptions = JSON.parse(optionsString); if (!Array.isArray(parsedOptions)) throw new Error("Options must be an array."); productData.options = parsedOptions; } catch (err) { showToast(`Error: Invalid JSON in Options field. ${err.message}`, 5000); if (saveProductBtn) saveProductBtn.disabled = false; if (saveSpinner) saveSpinner.style.display = 'none'; if (saveIcon) saveIcon.style.display = ''; if (saveText) saveText.textContent = isEditing ? 'Update Product' : 'Save Product'; return; } }
     else { productData.options = []; }
 
-    productData.diagramUrl = isEditing ? (productBeingEditedData?.diagramUrl || null) : null;
 
     try {
         if (!isEditing) {
@@ -1479,8 +1606,8 @@ async function handleSaveProduct(event) {
              const preliminaryData = { ...productData };
              // Remove fields that will be updated later or are specific to updateDoc
              delete preliminaryData.imageUrls; delete preliminaryData.diagramUrl;
+             // Stock might be deleted if empty, handle this
              if(preliminaryData.stock && Object.keys(preliminaryData.stock).length === 0) delete preliminaryData.stock;
-
 
              const docRef = await window.addDoc(window.collection(window.db, "onlineProducts"), preliminaryData);
              finalProductId = docRef.id;
