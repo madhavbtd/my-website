@@ -1,6 +1,5 @@
 // js/manage-online-products.js
-// Updated Version: Layout changes + Diagram Upload + Checkbox Lock/Unlock Logic + Fixes + STOCK MANAGEMENT + BULK SELECT (Step 1 & 2 - Bulk Edit Modal UI & Frontend Data Prep)
-// FIX: Corrected typo (bulkGk_rate -> bulkGstRate), hsnSacCode ID, and extra charge amount input value access
+// Updated Version: Layout changes + Diagram Upload + Checkbox Lock/Unlock Logic + Fixes + STOCK MANAGEMENT + BULK SELECT (Step 1)
 
 // --- Firebase Function Availability Check ---
 // Expecting: window.db, window.auth, window.storage, window.collection, window.onSnapshot, etc.
@@ -12,10 +11,10 @@ const sortSelect = document.getElementById('sort-products');
 const filterSearchInput = document.getElementById('filterSearch');
 const clearFiltersBtn = document.getElementById('clearFiltersBtn');
 const addNewProductBtn = document.getElementById('addNewProductBtn');
-// NEW: Bulk Actions Elements (from Step 1)
+// NEW: Bulk Actions Elements
 const bulkActionsContainer = document.getElementById('bulkActionsContainer');
 const selectedCountSpan = document.getElementById('selectedCount');
-const bulkEditButton = document.getElementById('bulkEditButton'); // Button to open bulk edit modal
+const bulkEditButton = document.getElementById('bulkEditButton');
 
 
 // --- Product Add/Edit Modal Elements ---
@@ -63,7 +62,6 @@ const extraMarginPercentInput = document.getElementById('extraMarginPercent');
 // Column 3 (Internal, Stock, Options, Diagram, Extra Charges)
 const productBrandInput = document.getElementById('productBrand');
 const productItemCodeInput = document.getElementById('productItemCode');
-// FIX: Corrected ID from 'hsnSacCode' to 'productHsnSacCode'
 const productHsnSacCodeInput = document.getElementById('productHsnSacCode');
 
 // START: New Stock Management Fields References
@@ -93,37 +91,6 @@ const confirmDeleteFinalBtn = document.getElementById('confirmDeleteFinalBtn');
 const deleteConfirmCheckbox = document.getElementById('deleteConfirmCheckbox');
 const deleteWarningMessage = document.getElementById('deleteWarningMessage');
 
-// --- NEW: Bulk Edit Modal Elements (from Step 2 HTML) ---
-const bulkEditModal = document.getElementById('bulkEditModal');
-const closeBulkEditModalBtn = document.getElementById('closeBulkEditModal');
-const cancelBulkEditBtn = document.getElementById('cancelBulkEditBtn');
-const saveBulkEditBtn = document.getElementById('saveBulkEditBtn');
-const bulkEditForm = document.getElementById('bulkEditForm');
-
-// NEW: Bulk Edit Form Field References (from Step 2 HTML)
-const bulkIsEnabledCheckbox = document.getElementById('bulkIsEnabled');
-const bulkCurrentStockInput = document.getElementById('bulkCurrentStock');
-const bulkMinStockLevelInput = document.getElementById('bulkMinStockLevel');
-const bulkOptionsInput = document.getElementById('bulkOptions');
-const bulkPurchasePriceInput = document.getElementById('bulkPurchasePrice');
-// FIX: Corrected ID from 'bulkGk_rate' to 'bulkGstRate'
-const bulkGstRateInput = document.getElementById('bulkGstRate');
-const bulkMrpInput = document.getElementById('bulkMrp');
-const bulkMinOrderValueInput = document.getElementById('bulkMinOrderValue'); // Note: requires handling unit in JS
-const bulkDesignChargeInput = document.getElementById('bulkDesignCharge'); // Note: requires handling category in JS
-const bulkPrintingChargeInput = document.getElementById('bulkPrintingCharge'); // Note: requires handling category in JS
-const bulkTransportChargeInput = document.getElementById('bulkTransportCharge'); // Note: requires handling category in JS
-const bulkExtraMarginPercentInput = document.getElementById('bulkExtraMarginPercent'); // Note: requires handling category in JS
-const bulkHasExtraChargesCheckbox = document.getElementById('bulkHasExtraCharges');
-const bulkExtraChargeNameInput = document.getElementById('bulkExtraChargeName');
-const bulkExtraChargeAmountInput = document.getElementById('bulkExtraChargeAmount');
-
-// NEW: Bulk Edit Conditional Sections (from Step 2 HTML)
-const bulkWeddingFieldsContainer = document.getElementById('bulk-wedding-card-fields');
-const bulkExtraChargesSection = document.getElementById('bulk-extra-charges-section');
-const bulkMinOrderValueGroup = document.getElementById('bulkMinOrderValueGroup');
-
-
 // --- Global State ---
 let currentSortField = 'createdAt';
 let currentSortDirection = 'desc';
@@ -147,13 +114,13 @@ const RATE_TYPES = { // Map types to Firestore field names and labels
 let diagramFileToUpload = null;
 let shouldRemoveDiagram = false;
 let isRateLocked = false;
-// NEW: Bulk Select State (from Step 1)
+// NEW: Bulk Select State
 let selectedProductIds = new Set();
 
 
 // --- Helper Functions ---
-function formatCurrency(amount) { const num = Number(amount); return isNaN(num) || num === null || num === undefined ? '-' : `₹ ${num.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
-function escapeHtml(unsafe) { if (typeof unsafe !== 'string') { unsafe = String(unsafe || ''); } return unsafe.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;'); } // <--- यह लाइन ठीक कर दी गई है
+function formatCurrency(amount) { const num = Number(amount); return isNaN(num) || num === null || num === undefined ? '-' : `₹ ${num.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`; }
+function escapeHtml(unsafe) { if (typeof unsafe !== 'string') { unsafe = String(unsafe || ''); } return unsafe.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;"); }
 function parseNumericInput(value, allowZero = true, isInteger = false) { // Added isInteger for stock
     if (value === undefined || value === null) return null;
     const trimmedValue = String(value).trim();
@@ -169,8 +136,7 @@ function parseNumericInput(value, allowZero = true, isInteger = false) { // Adde
     }
     return num;
 }
-function formatFirestoreTimestamp(timestamp) { if (!timestamp || typeof timestamp.toDate !== 'function') { return '-'; } try { const date = timestamp.toDate(); const options = { day: '2-digit', month: 'short', year: 'numeric' }; return date.toLocaleDateString('en-GB', options).replace(/ /g, ' '); } catch (e) { console.error("Error formatting timestamp:", e); return '-'; } }
-
+function formatFirestoreTimestamp(timestamp) { if (!timestamp || typeof timestamp.toDate !== 'function') { return '-'; } try { const date = timestamp.toDate(); const options = { day: '2-digit', month: 'short', year: 'numeric' }; return date.toLocaleDateString('en-GB', options).replace(/ /g, '-'); } catch (e) { console.error("Error formatting timestamp:", e); return '-'; } }
 
 // --- Toast Notification ---
 function showToast(message, duration = 3500) { const existingToast = document.querySelector('.toast-notification'); if (existingToast) { existingToast.remove(); } const toast = document.createElement('div'); toast.className = 'toast-notification'; toast.textContent = message; document.body.appendChild(toast); setTimeout(() => toast.classList.add('show'), 10); setTimeout(() => { toast.classList.remove('show'); setTimeout(() => { if (toast.parentNode) { toast.parentNode.removeChild(toast); } }, 400); }, duration); console.log("Toast:", message); }
@@ -225,25 +191,16 @@ function setupEventListeners() {
     } else { console.error("Current rate input (#currentRateInput) not found!"); }
 
     if (productDiagramInput) { productDiagramInput.addEventListener('change', handleDiagramFileSelection); }
-    if (removeDiagramBtn) { handleRemoveDiagramBtn.addEventListener('click', handleRemoveDiagram); } // Fixed ID
+    if (removeDiagramBtn) { removeDiagramBtn.addEventListener('click', handleRemoveDiagram); }
 
-    // NEW: Add event listeners for bulk action elements (if they exist) - from Step 1
+    // NEW: Add event listeners for bulk action elements (if they exist)
     if(bulkEditButton) bulkEditButton.addEventListener('click', handleBulkEditClick); // This function will be implemented in Step 2
-
-    // NEW: Add event listeners for Bulk Edit Modal (from Step 2)
-    if(bulkEditModal) bulkEditModal.addEventListener('click', (event) => { if (event.target === bulkEditModal) closeBulkEditModal(); });
-    if(closeBulkEditModalBtn) closeBulkEditModalBtn.addEventListener('click', closeBulkEditModal);
-    if(cancelBulkEditBtn) cancelBulkEditBtn.addEventListener('click', closeBulkEditModal);
-    if(saveBulkEditBtn) saveBulkEditBtn.addEventListener('click', handleSaveBulkEdit); // Note: Using button click, not form submit directly
-
-    // NEW: Add event listener for bulk extra charges checkbox
-    if(bulkHasExtraChargesCheckbox) bulkHasExtraChargesCheckbox.addEventListener('change', toggleBulkExtraCharges);
 
 
     console.log("Online Product Management event listeners set up (v_Stock).");
 }
 
-// NEW: Function to handle checkbox change (from Step 1)
+// NEW: Function to handle checkbox change
 function handleProductCheckboxChange(event) {
     const checkbox = event.target;
     const productId = checkbox.dataset.id;
@@ -258,7 +215,7 @@ function handleProductCheckboxChange(event) {
     updateBulkActionsUI(); // Update the count and button state
 }
 
-// NEW: Function to update the bulk actions UI (from Step 1)
+// NEW: Function to update the bulk actions UI
 function updateBulkActionsUI() {
     const count = selectedProductIds.size;
     if (selectedCountSpan) {
@@ -269,31 +226,17 @@ function updateBulkActionsUI() {
         bulkActionsContainer.style.display = count > 0 ? 'flex' : 'none';
     }
 
-    // Enable/disable bulk edit button
+    // Enable/disable bulk edit button (will be implemented in Step 2)
     if (bulkEditButton) {
         bulkEditButton.disabled = count === 0;
-        // Show the button only when items are selected
-        bulkEditButton.style.display = count > 0 ? 'inline-flex' : 'none';
     }
 }
 
 
-// --- Show/Hide Conditional Fields (Single Edit Modal) ---
+// --- Show/Hide Conditional Fields ---
 function toggleWeddingFields() { if (!weddingFieldsContainer || !productCategoryInput) return; const category = productCategoryInput.value.toLowerCase(); weddingFieldsContainer.style.display = category.includes('wedding card') ? 'block' : 'none'; }
 function toggleSqFtFields() { if (!productUnitSelect) return; const unitType = productUnitSelect.value; if (productMinOrderValueInput) { const parentGroup = productMinOrderValueInput.closest('.sq-feet-only'); if (parentGroup) parentGroup.style.display = unitType === 'Sq Feet' ? 'block' : 'none'; } }
 function toggleExtraCharges() { if (!extraChargesSection || !hasExtraChargesCheckbox) return; extraChargesSection.style.display = hasExtraChargesCheckbox.checked ? 'block' : 'none'; }
-
-// NEW: Show/Hide Conditional Fields (Bulk Edit Modal)
-function toggleBulkExtraCharges() {
-    if (bulkExtraChargesSection && bulkHasExtraChargesCheckbox) {
-        bulkExtraChargesSection.style.display = bulkHasExtraChargesCheckbox.checked ? 'block' : 'none';
-    }
-}
-
-// NOTE: Toggling bulk wedding fields and bulk min order value group based on *selected* products is complex.
-// For Step 2, we will keep them visible in the bulk edit modal and rely on the update logic (Step 3)
-// to apply changes only where relevant (e.g., wedding fields only to wedding cards).
-
 
 // --- Sorting & Filtering Handlers ---
 function handleSortChange() { if (!sortSelect) return; const [field, direction] = sortSelect.value.split('_'); if (field && direction) { if (field === currentSortField && direction === currentSortDirection) return; currentSortField = field; currentSortDirection = direction; listenForOnlineProducts(); /* Re-fetch with new sort */ } }
@@ -303,11 +246,10 @@ function clearFilters() {
     if (sortSelect) sortSelect.value = 'createdAt_desc';
     currentSortField = 'createdAt';
     currentSortDirection = 'desc';
-    // NEW: Clear selected products when filters are cleared (from Step 1)
+    // NEW: Clear selected products when filters are cleared
     selectedProductIds.clear();
     updateBulkActionsUI();
-    // Reset table checkboxes visually by re-rendering or iterating (re-rendering is simpler)
-    applyFiltersAndRender(); // This re-renders the table, clearing checkboxes
+    applyFiltersAndRender();
     if (unsubscribeProducts) listenForOnlineProducts(); /* Re-fetch if listener was active */
 }
 
@@ -358,10 +300,7 @@ function applyFiltersAndRender() {
             const name = (product.productName || '').toLowerCase();
             const category = (product.category || '').toLowerCase();
             const brand = (product.brand || '').toLowerCase();
-            // Add itemCode and hsnSacCode to search criteria
-            const itemCode = (product.itemCode || '').toLowerCase();
-            const hsnSacCode = (product.hsnSacCode || '').toLowerCase();
-            if (!(name.includes(filterSearchValue) || category.includes(filterSearchValue) || brand.includes(filterSearchValue) || itemCode.includes(filterSearchValue) || hsnSacCode.includes(filterSearchValue))) {
+            if (!(name.includes(filterSearchValue) || category.includes(filterSearchValue) || brand.includes(filterSearchValue))) {
                 return false;
             }
         }
@@ -397,7 +336,7 @@ function renderProductTable(products) {
             const currentStock = (data.stock?.currentStock !== undefined && data.stock?.currentStock !== null) ? data.stock.currentStock : 'N/A';
             // END: Get Current Stock value
 
-            // Check if the product is currently selected (from Step 1)
+            // Check if the product is currently selected
             const isSelected = selectedProductIds.has(firestoreId);
 
             tableRow.innerHTML = `
@@ -415,11 +354,12 @@ function renderProductTable(products) {
                     <button class="button delete-product-btn" style="background-color: var(--danger-color); color: white; padding: 5px 8px; font-size: 0.8em; margin: 2px;" title="Delete Online Product"><i class="fas fa-trash"></i> Delete</button>
                 </td>`;
 
-            // Add event listener to the checkbox in the newly created row (from Step 1)
+            // Add event listener to the checkbox in the newly created row
             const checkbox = tableRow.querySelector('.product-select-checkbox');
             if (checkbox) {
                  checkbox.addEventListener('change', handleProductCheckboxChange);
             }
+
 
             const editBtn = tableRow.querySelector('.edit-product-btn');
             if (editBtn) {
@@ -442,7 +382,7 @@ function renderProductTable(products) {
             }
         });
     }
-    // Update UI after rendering (in case products were filtered/sorted) (from Step 1)
+    // Update UI after rendering (in case products were filtered/sorted)
     updateBulkActionsUI();
 }
 
@@ -548,9 +488,6 @@ function openAddModal() {
 
     if (isEnabledCheckbox) isEnabledCheckbox.checked = true;
     if (hasExtraChargesCheckbox) hasExtraChargesCheckbox.checked = false;
-    // Ensure extra charges section is correctly toggled on reset
-    toggleExtraCharges();
-
     existingImageUrls = []; selectedFiles = []; imagesToDelete = [];
     if (imagePreviewArea) imagePreviewArea.innerHTML = '';
     if (uploadProgressInfo) uploadProgressInfo.textContent = '';
@@ -574,7 +511,7 @@ function openAddModal() {
     setActiveRateTab('online');
     unlockPricingFields();
 
-    toggleWeddingFields(); toggleSqFtFields();
+    toggleWeddingFields(); toggleSqFtFields(); toggleExtraCharges();
     productModal.classList.add('active');
 }
 
@@ -608,12 +545,8 @@ async function openEditModal(firestoreId, data) {
     if (transportChargeInput) transportChargeInput.value = pricing.transportCharge ?? '';
     if (extraMarginPercentInput) extraMarginPercentInput.value = pricing.extraMarginPercent ?? '';
     if (hasExtraChargesCheckbox) hasExtraChargesCheckbox.checked = pricing.hasExtraCharges || false;
-     // Ensure extra charges section is correctly toggled after loading data
-    toggleExtraCharges();
-
     if (extraChargeNameInput) extraChargeNameInput.value = pricing.extraCharge?.name || '';
     if (extraChargeAmountInput) extraChargeAmountInput.value = pricing.extraCharge?.amount ?? '';
-
 
     if (productOptionsInput) { try { productOptionsInput.value = (data.options && Array.isArray(data.options)) ? JSON.stringify(data.options, null, 2) : ''; } catch { productOptionsInput.value = ''; } }
     if (productBrandInput) productBrandInput.value = data.brand || '';
@@ -647,7 +580,7 @@ async function openEditModal(firestoreId, data) {
     setActiveRateTab('online');
     unlockPricingFields();
 
-    toggleWeddingFields(); toggleSqFtFields();
+    toggleWeddingFields(); toggleSqFtFields(); toggleExtraCharges();
     productModal.classList.add('active');
 }
 
@@ -665,15 +598,13 @@ function closeProductModal() {
          // NEW: Clear selected products when closing add/edit modal
         selectedProductIds.clear();
         updateBulkActionsUI();
-         // Re-render table to clear checkboxes
-        applyFiltersAndRender();
     }
 }
 
 // --- Image Handling ---
 function handleFileSelection(event) { if (!imagePreviewArea || !productImagesInput) return; const files = Array.from(event.target.files); let currentImageCount = existingImageUrls.filter(url => !imagesToDelete.includes(url)).length + selectedFiles.length; const availableSlots = 4 - currentImageCount; if (files.length > availableSlots) { alert(`Max 4 images allowed. You have ${currentImageCount}, tried to add ${files.length}.`); productImagesInput.value = null; return; } files.forEach(file => { if (file.type.startsWith('image/')) { if (selectedFiles.length + existingImageUrls.filter(url => !imagesToDelete.includes(url)).length < 4) { selectedFiles.push(file); displayImagePreview(file, null); } } }); productImagesInput.value = null; }
 function displayImagePreview(fileObject, existingUrl = null) { if (!imagePreviewArea) return; const previewId = existingUrl || `new-${fileObject.name}-${Date.now()}`; const previewWrapper = document.createElement('div'); previewWrapper.className = 'image-preview-item'; previewWrapper.setAttribute('data-preview-id', previewId); const img = document.createElement('img'); const removeBtn = document.createElement('button'); removeBtn.type = 'button'; removeBtn.className = 'remove-image-btn'; removeBtn.innerHTML = '&times;'; removeBtn.title = 'Remove image'; const progressBar = document.createElement('div'); progressBar.className = 'upload-progress-bar'; const progressFill = document.createElement('div'); progressBar.appendChild(progressFill); progressBar.style.display = 'none'; if (existingUrl) { img.src = existingUrl; img.onerror = () => { img.src = 'images/placeholder.png'; }; previewWrapper.imageUrl = existingUrl; removeBtn.onclick = () => { if (!imagesToDelete.includes(existingUrl)) imagesToDelete.push(existingUrl); previewWrapper.style.display = 'none'; }; } else if (fileObject) { const reader = new FileReader(); reader.onload = (e) => { img.src = e.target.result; }; reader.readAsDataURL(fileObject); previewWrapper.fileData = fileObject; removeBtn.onclick = () => { selectedFiles = selectedFiles.filter(f => f !== fileObject); previewWrapper.remove(); }; } previewWrapper.appendChild(img); previewWrapper.appendChild(removeBtn); previewWrapper.appendChild(progressBar); imagePreviewArea.appendChild(previewWrapper); }
-async function uploadImage(file, productId, index) { if (!window.storage || !window.storageRef || !window.uploadBytesResumable || !window.getDownloadURL) throw new Error("Storage functions missing."); const previewWrapper = [...imagePreviewArea.querySelectorAll('.image-preview-item')].find(el => el.fileData === file); const progressBar = previewWrapper?.querySelector('.upload-progress-bar'); const progressFill = progressBar?.querySelector('div'); const timestamp = Date.now(); const uniqueFileName = `${timestamp}-image${index}-${file.name.replace(/[^a-zA-Z0-9.]/g, '_')}`; const filePath = `onlineProductImages/${productId}/${uniqueFileName}`; const fileRef = window.storageRef(window.storage, filePath); if (progressBar) progressBar.style.display = 'block'; if (progressFill) progressFill.style.width = '0%'; const uploadTask = window.uploadBytesResumable(fileRef, file); return new Promise((resolve, reject) => { uploadTask.on('state_changed', (snapshot) => { const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100; if (progressFill) progressFill.style.width = `${progress}%`; if (uploadProgressInfo) uploadProgressInfo.textContent = `Uploading ${file.name}: ${progress.toFixed(0)}%`; }, (error) => { if (progressBar) progressBar.style.backgroundColor = 'red'; if (uploadProgressInfo) uploadProgressInfo.textContent = `Upload failed: ${file.name}.`; reject(error); }, async () => { if (progressBar) progressBar.style.backgroundColor = 'var(--success-color)'; if (uploadProgressInfo) uploadProgressInfo.textContent = 'Getting URL...'; try { const downloadURL = await window.getDownloadURL(uploadTask.snapshot.ref); resolve(downloadURL); } catch (error) { if (progressBar) progressBar.style.backgroundColor = 'red'; if (uploadProgressInfo) uploadProgressInfo.textContent = `Failed to get URL.`; reject(error); } }); }); }
+async function uploadImage(file, productId, index) { if (!window.storage || !window.storageRef || !window.uploadBytesResumable || !window.getDownloadURL) throw new Error("Storage functions missing."); const previewWrapper = [...imagePreviewArea.querySelectorAll('.image-preview-item')].find(el => el.fileData === file); const progressBar = previewWrapper?.querySelector('.upload-progress-bar'); const progressFill = progressBar?.querySelector('div'); const timestamp = Date.now(); const uniqueFileName = `${timestamp}-image${index}-${file.name.replace(/[^a-zA-Z0-9.]/g, '_')}`; const filePath = `onlineProductImages/${productId}/${uniqueFileName}`; const fileRef = window.storageRef(window.storage, filePath); if (progressBar) progressBar.style.display = 'block'; if (progressFill) progressFill.style.width = '0%'; const uploadTask = window.uploadBytesResumable(fileRef, file); return new Promise((resolve, reject) => { uploadTask.on('state_changed', (snapshot) => { const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100; if (progressFill) progressFill.style.width = `${progress}%`; if (uploadProgressInfo) uploadProgressInfo.textContent = `Uploading ${file.name}: ${progress.toFixed(0)}%`; }, (error) => { if (progressBar) progressBar.style.backgroundColor = 'red'; if (uploadProgressInfo) uploadProgressInfo.textContent = `Upload failed: ${file.name}.`; reject(error); }, async () => { if (progressBar) progressBar.style.backgroundColor = 'var(--success-color)'; if (uploadProgressInfo) uploadProgressInfo.textContent = `Getting URL...`; try { const downloadURL = await window.getDownloadURL(uploadTask.snapshot.ref); resolve(downloadURL); } catch (error) { if (progressBar) progressBar.style.backgroundColor = 'red'; if (uploadProgressInfo) uploadProgressInfo.textContent = `Failed to get URL.`; reject(error); } }); }); }
 async function deleteStoredImage(imageUrl) { if (!window.storage || !window.storageRef || !window.deleteObject) return; if (!imageUrl || !(imageUrl.startsWith('https://firebasestorage.googleapis.com/') || imageUrl.startsWith('gs://'))) return; try { const imageRef = window.storageRef(window.storage, imageUrl); await window.deleteObject(imageRef); console.log("Deleted image from Storage:", imageUrl); } catch (error) { if (error.code === 'storage/object-not-found') console.warn("Image not found:", imageUrl); else console.error("Error deleting image:", imageUrl, error); } }
 
 // --- Diagram File Handling ---
@@ -682,7 +613,7 @@ function handleRemoveDiagram() { if (!existingDiagramUrlInput?.value) { showToas
 async function uploadFile(file, storagePath, progressElement) { if (!window.storage || !window.storageRef || !window.uploadBytesResumable || !window.getDownloadURL) throw new Error("Storage functions missing."); if (!file || !storagePath || !progressElement) throw new Error("Missing file, path, or progress element for upload."); const fileRef = window.storageRef(window.storage, storagePath); progressElement.textContent = 'Starting upload...'; progressElement.style.color = 'var(--text-color-medium)'; const uploadTask = window.uploadBytesResumable(fileRef, file); return new Promise((resolve, reject) => { uploadTask.on('state_changed', (snapshot) => { const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100; progressElement.textContent = `Uploading ${file.name}: ${progress.toFixed(0)}%`; }, (error) => { progressElement.textContent = `Upload failed: ${file.name}. ${error.code}`; progressElement.style.color = 'var(--danger-color)'; reject(error); }, async () => { progressElement.textContent = `Upload Complete. Getting URL...`; try { const downloadURL = await window.getDownloadURL(uploadTask.snapshot.ref); progressElement.textContent = `Diagram uploaded successfully.`; progressElement.style.color = 'var(--success-color)'; resolve(downloadURL); } catch (getUrlError) { progressElement.textContent = `Failed to get URL after upload.`; progressElement.style.color = 'var(--danger-color)'; reject(getUrlError); } }); }); }
 async function deleteStoredFile(fileUrl) { if (!window.storage || !window.storageRef || !window.deleteObject) { return; } if (!fileUrl || !(fileUrl.startsWith('https://firebasestorage.googleapis.com/') || fileUrl.startsWith('gs://'))) { return; } try { const fileRef = window.storageRef(window.storage, fileUrl); await window.deleteObject(fileRef); console.log("Deleted file from Storage:", fileUrl); } catch (error) { if (error.code === 'storage/object-not-found') { console.warn("File not found in Storage, skipping delete:", fileUrl); } else { console.error("Error deleting file:", fileUrl, error); } } }
 
-// --- handleSaveProduct Function (Single Edit) ---
+// --- handleSaveProduct Function ---
 async function handleSaveProduct(event) {
     event.preventDefault();
     if (!window.db || !window.collection || !window.addDoc || !window.doc || !window.updateDoc || !window.serverTimestamp || !window.storage) { showToast("Core Firebase functions unavailable.", 5000); return; }
@@ -711,7 +642,7 @@ async function handleSaveProduct(event) {
     }
     if (isNaN(minStockLevel) && productMinStockLevelInput?.value.trim() !== '') { // Check if NaN but not empty
         showToast("Please enter a valid whole number for Minimum Stock Level.", 5000);
-        if (saveProductBtn) saveProductBtn.disabled = false; if (saveSpinner) saveSpinner.style.display = 'none'; if (saveIcon) saveIcon.style.display = ''; if (saveText) textSpan.textContent = isEditing ? 'Update Product' : 'Save Product';
+        if (saveProductBtn) saveProductBtn.disabled = false; if (saveSpinner) saveSpinner.style.display = 'none'; if (saveIcon) saveIcon.style.display = ''; if (saveText) saveText.textContent = isEditing ? 'Update Product' : 'Save Product';
         return;
     }
     // END: Get Stock Data
@@ -747,12 +678,8 @@ async function handleSaveProduct(event) {
         }
     }
     // If stock object is empty and you prefer not to save it, you can delete it.
-    if (Object.keys(productData.stock).length === 0 && isEditing) { // Only delete if editing and it becomes empty
+    if (Object.keys(productData.stock).length === 0) {
         delete productData.stock;
-    } else if (Object.keys(productData.stock).length > 0 && !productData.stock.currentStock && !productData.stock.minStockLevel) {
-         // If stock object exists but its fields are empty/null after updates, maybe clean it up
-         if (isEditing) delete productData.stock; // Decide if you want to save empty stock {} or delete
-         else delete productData.stock; // Decide if you want to save empty stock {} or delete
     }
     // END: Add Stock data to productData
 
@@ -778,8 +705,8 @@ async function handleSaveProduct(event) {
              const preliminaryData = { ...productData };
              // Remove fields that will be updated later or are specific to updateDoc
              delete preliminaryData.imageUrls; delete preliminaryData.diagramUrl;
-             // Decide how to handle stock creation vs update
              if(preliminaryData.stock && Object.keys(preliminaryData.stock).length === 0) delete preliminaryData.stock;
+
 
              const docRef = await window.addDoc(window.collection(window.db, "onlineProducts"), preliminaryData);
              finalProductId = docRef.id;
@@ -820,7 +747,7 @@ async function handleSaveProduct(event) {
 
         if (uploadProgressInfo) uploadProgressInfo.textContent = 'Finalizing product data...';
         const finalProductRef = window.doc(window.db, "onlineProducts", finalProductId);
-        await window.updateDoc(finalProductRef, finalUpdatePayload);
+        await window.updateDoc(finalProductRef, finalUpdatePayload); // Changed from setDoc to updateDoc for new products to avoid overwriting if ID existed
 
         showToast(isEditing ? 'Product updated successfully!' : 'Product added successfully!', 3000);
         closeProductModal();
@@ -835,285 +762,20 @@ async function handleSaveProduct(event) {
 }
 
 // --- Delete Handling ---
-function handleDeleteButtonClick(event) { event.preventDefault(); if (!productToDeleteId || !productToDeleteName) return; if (!deleteWarningMessage) { console.error("Delete warning message element not found."); return; } if (deleteWarningMessage) deleteWarningMessage.innerHTML = `Are you sure you want to delete "<strong>${escapeHtml(productToDeleteName)}</strong>"? <br>This will also delete its images and diagram. This action cannot be undone.`; if(deleteConfirmCheckbox) deleteConfirmCheckbox.checked = false; if(confirmDeleteFinalBtn) confirmDeleteFinalBtn.disabled = true; if(deleteConfirmModal) deleteConfirmModal.classList.add('active'); }
+function handleDeleteButtonClick(event) { event.preventDefault(); if (!productToDeleteId || !productToDeleteName) return; if (deleteWarningMessage) deleteWarningMessage.innerHTML = `Are you sure you want to delete "<strong>${escapeHtml(productToDeleteName)}</strong>"? <br>This will also delete its images and diagram. This action cannot be undone.`; if(deleteConfirmCheckbox) deleteConfirmCheckbox.checked = false; if(confirmDeleteFinalBtn) confirmDeleteFinalBtn.disabled = true; if(deleteConfirmModal) deleteConfirmModal.classList.add('active'); }
 function closeDeleteConfirmModal() { if (deleteConfirmModal) { deleteConfirmModal.classList.remove('active'); } }
 function handleConfirmCheckboxChange() { if (deleteConfirmCheckbox && confirmDeleteFinalBtn) { confirmDeleteFinalBtn.disabled = !deleteConfirmCheckbox.checked; } }
 async function handleFinalDelete() { if (!deleteConfirmCheckbox?.checked || !productToDeleteId) return; if (!window.db || !window.doc || !window.getDoc || !window.deleteDoc || !window.storage || !window.storageRef || !window.deleteObject) { showToast("Core Firebase functions unavailable.", 5000); return; } if(confirmDeleteFinalBtn) { confirmDeleteFinalBtn.disabled = true; confirmDeleteFinalBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Deleting...'; } const productRef = window.doc(window.db, "onlineProducts", productToDeleteId); try { const productSnap = await window.getDoc(productRef); let deletePromises = []; if (productSnap.exists()) { const productData = productSnap.data(); if (productData.imageUrls && Array.isArray(productData.imageUrls) && productData.imageUrls.length > 0) { productData.imageUrls.forEach(url => deletePromises.push(deleteStoredImage(url))); } if (productData.diagramUrl) { deletePromises.push(deleteStoredFile(productData.diagramUrl)); } if (deletePromises.length > 0) { await Promise.allSettled(deletePromises); } } await window.deleteDoc(productRef); showToast(`Product "${productToDeleteName || ''}" and associated files deleted!`); closeDeleteConfirmModal(); closeProductModal(); } catch (error) { console.error(`Error during deletion process for ${productToDeleteId}:`, error); showToast(`Failed to fully delete product: ${error.message}`, 5000); } finally { if(confirmDeleteFinalBtn) { confirmDeleteFinalBtn.disabled = !deleteConfirmCheckbox?.checked; confirmDeleteFinalBtn.innerHTML = '<i class="fas fa-trash-alt"></i> Confirm Delete'; } } }
 
-
-// --- NEW: Bulk Edit Functions (Step 2) ---
-
-// Function to open the bulk edit modal
+// NEW: Placeholder function for bulk edit button click (Implement in Step 2)
 function handleBulkEditClick() {
     if (selectedProductIds.size === 0) {
         showToast("Please select at least one product for bulk edit.", 3000);
         return;
     }
-    console.log("Opening Bulk Edit modal for IDs:", selectedProductIds);
-
-    if (bulkEditModal && bulkEditForm) {
-        // Reset the form when opening
-        bulkEditForm.reset();
-        // Ensure conditional sections are hidden initially based on checkboxes state after reset
-        toggleBulkExtraCharges();
-
-        // TODO (Step 3): Add logic here to potentially show/hide wedding/sqft fields
-        // based on the categories/units of the *selected* products.
-        // For now, we rely on the save logic to only apply relevant updates.
-
-        // Show the modal
-        bulkEditModal.classList.add('active');
-    } else {
-        console.error("Bulk edit modal or form element not found.");
-        showToast("Error: Bulk edit feature not fully loaded.", 4000);
-    }
-}
-
-// Function to close the bulk edit modal
-function closeBulkEditModal() {
-    if (bulkEditModal) {
-        bulkEditModal.classList.remove('active');
-         // Optional: Clear selection when closing bulk edit modal
-        selectedProductIds.clear();
-        updateBulkActionsUI();
-         // Re-render table to clear checkboxes
-        applyFiltersAndRender();
-    }
-}
-
-// Function to handle saving bulk edits (PREPARES data, does NOT save in Step 2)
-async function handleSaveBulkEdit() {
-    console.log("Attempting to save bulk edit...");
-    if (selectedProductIds.size === 0) {
-        showToast("No products selected for bulk update.", 3000);
-        return;
-    }
-
-    if (!saveBulkEditBtn) return;
-
-    // Disable save button and show spinner
-    saveBulkEditBtn.disabled = true;
-    const spinner = saveBulkEditBtn.querySelector('.fa-spinner');
-    const icon = saveBulkEditBtn.querySelector('.fa-save');
-    const textSpan = saveBulkEditBtn.querySelector('span');
-    if (spinner) spinner.style.display = 'inline-block';
-    if (icon) icon.style.display = 'none';
-    if (textSpan) textSpan.textContent = 'Updating...';
-
-
-    // Let's use a simpler payload creation for Step 2: include fields if they have a non-empty value, include checkboxes based on state.
-
-    const simplifiedUpdatePayload = {};
-    const simplifiedPricingPayload = {};
-    const simplifiedStockPayload = {};
-    const simplifiedExtraChargePayload = {};
-    const simplifiedInternalPayload = {};
-    const simplifiedWeddingPayload = {};
-
-
-    // Basic Properties
-    // If checked, set to true. If unchecked, set to false.
-    if (bulkIsEnabledCheckbox) {
-        // Check if the checkbox is checked or unchecked to determine if user wants to set the value
-        // If checked, set to true. If unchecked, set to false.
-        // With a single checkbox, the simplest logic is: if it's currently checked, set to true. If it's currently unchecked, set to false.
-        // This assumes the user will interact with the checkbox if they want to change the 'isEnabled' state in bulk.
-         simplifiedUpdatePayload.isEnabled = bulkIsEnabledCheckbox.checked;
-    }
-
-
-    // Stock Management
-    const simplifiedCurrentStock = parseNumericInput(bulkCurrentStockInput?.value, true, true);
-    if (bulkCurrentStockInput?.value.trim() !== '') { // Check if user typed anything
-        if (!isNaN(simplifiedCurrentStock)) {
-             simplifiedStockPayload.currentStock = simplifiedCurrentStock;
-        } else {
-             showToast("Please enter a valid whole number for Bulk Current Stock.", 5000); // Corrected typo here
-             if (spinner) spinner.style.display = 'none'; if (icon) icon.style.display = ''; if (textSpan) textSpan.textContent = 'Update Selected Products'; if (saveBulkEditBtn) saveBulkEditBtn.disabled = false;
-             return; // Stop if invalid
-        }
-    }
-    const simplifiedMinStockLevel = parseNumericInput(bulkMinStockLevelInput?.value, true, true);
-     if (bulkMinStockLevelInput?.value.trim() !== '') { // Check if user typed anything
-        if (!isNaN(simplifiedMinStockLevel)) {
-             simplifiedStockPayload.minStockLevel = simplifiedMinStockLevel;
-        } else {
-              showToast("Please enter a valid whole number for Bulk Minimum Stock Level.", 5000); // Corrected typo here
-              if (spinner) spinner.style.display = 'none'; if (icon) icon.style.display = ''; if (textSpan) textSpan.textContent = 'Update Selected Products'; if (saveBulkEditBtn) saveBulkEditBtn.disabled = false;
-              return; // Stop if invalid
-        }
-     }
-     if (Object.keys(simplifiedStockPayload).length > 0) {
-          simplifiedUpdatePayload.stock = simplifiedStockPayload;
-     }
-
-
-    // Other Options (JSON)
-    const simplifiedOptionsString = bulkOptionsInput?.value.trim();
-    if (simplifiedOptionsString !== '') {
-        try {
-             const parsedOptions = JSON.parse(simplifiedOptionsString);
-             if (!Array.isArray(parsedOptions)) throw new Error("Options must be an array.");
-             simplifiedUpdatePayload.options = parsedOptions;
-         } catch (err) {
-             showToast(`Error: Invalid JSON in Bulk Options field. ${err.message}`, 5000);
-             if (spinner) spinner.style.display = 'none'; if (icon) icon.style.display = ''; if (textSpan) textSpan.textContent = 'Update Selected Products'; if (saveBulkEditBtn) saveBulkEditBtn.disabled = false;
-             return; // Stop the process if JSON is invalid
-         }
-    }
-
-
-    // Price Details Subset
-    const simplifiedPurchasePrice = parseNumericInput(bulkPurchasePriceInput?.value);
-    if (bulkPurchasePriceInput?.value.trim() !== '' && !isNaN(simplifiedPurchasePrice)) {
-        simplifiedPricingPayload.purchasePrice = simplifiedPurchasePrice;
-    }
-    const simplifiedGstRate = parseNumericInput(bulkGstRateInput?.value);
-    if (bulkGstRateInput?.value.trim() !== '' && !isNaN(simplifiedGstRate)) {
-        simplifiedPricingPayload.gstRate = simplifiedGstRate;
-    }
-    const simplifiedMrp = parseNumericInput(bulkMrpInput?.value);
-    if (bulkMrpInput?.value.trim() !== '' && !isNaN(simplifiedMrp)) {
-        simplifiedPricingPayload.mrp = simplifiedMrp;
-    }
-    const simplifiedMinOrderValue = parseNumericInput(bulkMinOrderValueInput?.value);
-     if (bulkMinOrderValueInput?.value.trim() !== '' && !isNaN(simplifiedMinOrderValue)) {
-         simplifiedPricingPayload.minimumOrderValue = simplifiedMinOrderValue;
-     }
-
-
-    // Wedding Card Charges
-    const simplifiedDesignCharge = parseNumericInput(bulkDesignChargeInput?.value);
-     if (bulkDesignChargeInput?.value.trim() !== '' && !isNaN(simplifiedDesignCharge)) {
-        simplifiedWeddingPayload.designCharge = simplifiedDesignCharge;
-    }
-    const simplifiedPrintingCharge = parseNumericInput(bulkPrintingChargeInput?.value);
-    if (bulkPrintingChargeInput?.value.trim() !== '' && !isNaN(simplifiedPrintingCharge)) {
-        simplifiedWeddingPayload.printingChargeBase = simplifiedPrintingCharge;
-    }
-    const simplifiedTransportCharge = parseNumericInput(bulkTransportChargeInput?.value);
-    if (bulkTransportChargeInput?.value.trim() !== '' && !isNaN(simplifiedTransportCharge)) {
-        simplifiedWeddingPayload.transportCharge = simplifiedTransportCharge;
-    }
-    const simplifiedExtraMarginPercent = parseNumericInput(bulkExtraMarginPercentInput?.value);
-    if (bulkExtraMarginPercentInput?.value.trim() !== '' && !isNaN(simplifiedExtraMarginPercent)) {
-        simplifiedWeddingPayload.extraMarginPercent = simplifiedExtraMarginPercent;
-    }
-
-
-    // Optional Extra Charges
-     if (bulkHasExtraChargesCheckbox) {
-          simplifiedPricingPayload.hasExtraCharges = bulkHasExtraChargesCheckbox.checked; // Always include the boolean state if checkbox exists
-
-          if (bulkHasExtraChargesCheckbox.checked) {
-              const simplifiedExtraChargeName = bulkExtraChargeNameInput?.value.trim();
-              // FIX: Corrected .value.value.trim() to .value.trim()
-              const simplifiedExtraChargeAmount = parseNumericInput(bulkExtraChargeAmountInput?.value.trim());
-
-              // Include name/amount if user typed something OR if it should default
-              if (simplifiedExtraChargeName !== '' || bulkExtraChargeAmountInput?.value.trim() !== '') {
-                   simplifiedExtraChargePayload.name = simplifiedExtraChargeName || 'Additional Charge';
-                   // Corrected: Use simplifiedExtraChargeAmount directly as it's already parsed
-                   simplifiedExtraChargePayload.amount = (simplifiedExtraChargeAmount !== null && !isNaN(simplifiedExtraChargeAmount)) ? simplifiedExtraChargeAmount : 0;
-                   simplifiedPricingPayload.extraCharge = simplifiedExtraChargePayload;
-              } else if (bulkExtraChargesSection.style.display === 'block') {
-                    // If section is visible and user didn't type, but checkbox is checked,
-                    // save default name/amount. This handles cases where they just check the box.
-                     simplifiedExtraChargePayload.name = simplifiedExtraChargeName || 'Additional Charge';
-                     simplifiedExtraChargePayload.amount = (simplifiedExtraChargeAmount !== null && !isNaN(simplifiedExtraChargeAmount)) ? simplifiedExtraChargeAmount : 0;
-                     simplifiedPricingPayload.extraCharge = simplifiedExtraChargePayload;
-              } else {
-                   // Checkbox is checked, section is visible, but fields are empty - do not add extraCharge object?
-                   // Let's revisit this logic in Step 3 with clearer requirements if needed.
-                   // For now, if checkbox is checked and fields are empty, don't include extraCharge object, just set hasExtraCharges: true.
-              }
-
-          } else {
-               // If checkbox is UNCHECKED, explicitly set extraCharge to null to remove it
-               simplifiedPricingPayload.extraCharge = null;
-          }
-     }
-
-
-     // Internal Details
-     const simplifiedBrand = bulkBrandInput?.value.trim();
-     if (simplifiedBrand !== '') {
-         simplifiedInternalPayload.brand = simplifiedBrand;
-     }
-     const simplifiedItemCode = bulkItemCodeInput?.value.trim();
-      if (simplifiedItemCode !== '') {
-         simplifiedInternalPayload.itemCode = simplifiedItemCode;
-     }
-     const simplifiedHsnSacCode = bulkHsnSacCodeInput?.value.trim();
-      if (simplifiedHsnSacCode !== '') {
-         simplifiedInternalPayload.hsnSacCode = simplifiedHsnSacCode;
-     }
-     if (Object.keys(simplifiedInternalPayload).length > 0) {
-          Object.assign(simplifiedUpdatePayload, simplifiedInternalPayload);
-      }
-
-
-     // Merge pricing and wedding payloads
-     if (Object.keys(simplifiedPricingPayload).length > 0 || Object.keys(simplifiedWeddingPayload).length > 0) {
-          simplifiedUpdatePayload.pricing = simplifiedUpdatePayload.pricing || {};
-          Object.assign(simplifiedUpdatePayload.pricing, simplifiedPricingPayload, simplifiedWeddingPayload);
-     }
-
-    // Add updatedAt timestamp if there are any updates
-    if (Object.keys(simplifiedUpdatePayload).length > 0 || (simplifiedUpdatePayload.pricing && Object.keys(simplifiedUpdatePayload.pricing).length > 0) || (simplifiedUpdatePayload.stock && Object.keys(simplifiedUpdatePayload.stock).length > 0)) {
-        // Refined check: include timestamp if any top-level, pricing, or stock fields are being updated.
-         simplifiedUpdatePayload.updatedAt = window.serverTimestamp();
-    }
-
-
-    // Check if the final payload has any updates after considering nested objects
-    let hasMeaningfulUpdates = false;
-     if (Object.keys(simplifiedUpdatePayload).length > 0) {
-          hasMeaningfulUpdates = true;
-     }
-     // Further check nested objects if they exist but are empty in the first check
-     if (!hasMeaningfulUpdates && simplifiedUpdatePayload.pricing && Object.keys(simplifiedUpdatePayload.pricing).length > 0) hasMeaningfulUpdates = true;
-     if (!hasMeaningfulUpdates && simplifiedUpdatePayload.stock && Object.keys(simplifiedUpdatePayload.stock).length > 0) hasMeaningfulUpdates = true;
-     // Check if options array is present and not empty
-     if (!hasMeaningfulUpdates && simplifiedUpdatePayload.options && Array.isArray(simplifiedUpdatePayload.options) && simplifiedUpdatePayload.options.length > 0) hasMeaningfulUpdates = true;
-      // Check if isEnabled or hasExtraCharges were explicitly set
-     if (!hasMeaningfulUpdates && simplifiedUpdatePayload.hasOwnProperty('isEnabled')) hasMeaningfulUpdates = true; // Checkbox state is always included
-     if (!hasMeaningfulUpdates && simplifiedUpdatePayload.pricing && simplifiedUpdatePayload.pricing.hasOwnProperty('hasExtraCharges')) hasMeaningfulUpdates = true; // Checkbox state is always included
-     if (!hasMeaningfulUpdates && simplifiedUpdatePayload.pricing && simplifiedUpdatePayload.pricing.hasOwnProperty('extraCharge') && simplifiedUpdatePayload.pricing.extraCharge === null) hasMeaningfulUpdates = true; // Explicitly removing extra charge
-
-
-    if (!hasMeaningfulUpdates) {
-         showToast("No fields were entered for bulk update. Nothing to save.", 4000);
-         // Re-enable save button and hide spinner
-         if (spinner) spinner.style.display = 'none';
-         if (icon) icon.style.display = '';
-         if (textSpan) textSpan.textContent = 'Update Selected Products';
-         if (saveBulkEditBtn) saveBulkEditBtn.disabled = false;
-         return; // Exit the function as nothing needs updating
-    }
-
-
-    console.log("Selected IDs for bulk update:", Array.from(selectedProductIds));
-    console.log("Prepared Bulk Update Payload:", simplifiedUpdatePayload);
-
-    // TODO (Step 3): Implement the actual Firebase WriteBatch logic here
-    // This will involve getting document references for each ID in selectedProductIds
-    // and applying the simplifiedUpdatePayload to each document using batch.update()
-
-    // For Step 2, we just log and show a message
-    showToast(`Prepared update for ${selectedProductIds.size} products. (Saving feature coming in Step 3)`, 5000);
-
-    // Close the modal after preparing data (simulating completion for Step 2)
-    closeBulkEditModal();
-
-
-    // Re-enable save button and hide spinner in the finally block
-    if (spinner) spinner.style.display = 'none';
-    if (icon) icon.style.display = '';
-    if (textSpan) textSpan.textContent = 'Update Selected Products';
-    if (saveBulkEditBtn) saveBulkEditBtn.disabled = false;
-
-    // TODO (Step 3): Add proper error handling and UI feedback during the actual save process.
+    console.log("Bulk Edit clicked for IDs:", selectedProductIds);
+    // TODO: Implement opening the bulk edit modal/form in Step 2
+    showToast(`Bulk Edit button clicked for ${selectedProductIds.size} products. (Feature coming in Step 2)`, 3000);
 }
 
 
