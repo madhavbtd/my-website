@@ -2,6 +2,7 @@
 /* == manage-online-products.css                           == */
 /* == UPDATED Version: Styles for Pricing Tabs, Checkboxes, Diagram == */
 /* == Added Styles for Bulk Select Checkbox (Step 1) == */
+/* == Added Styles for Bulk Update Modal (Step 1 UI Completion) == */
 /* ============================================================== */
 
 /* --- CSS Variables --- */
@@ -143,15 +144,17 @@ body {
 .modal-content h2 .warning-icon { color: var(--danger-color); }
 .close-btn { color: #aaa; position: absolute; top: 15px; right: 25px; font-size: 30px; font-weight: bold; cursor: pointer; line-height: 1; background: none; border: none; padding: 0; transition: color 0.2s ease; z-index: 10; }
 .close-btn:hover, .close-btn:focus { color: #333; }
-#productForm { padding: 25px 30px; overflow-y: auto; flex-grow: 1; }
-.product-form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 25px 35px; }
-#productForm .form-group { margin-bottom: 22px; }
-#productForm label { display: block; font-weight: 500; margin-bottom: 8px; font-size: 0.95em; color: var(--text-color-medium); }
-#productForm label input[type="checkbox"] { margin-right: 10px; width: 16px; height: 16px; accent-color: var(--primary-color); cursor: pointer; vertical-align: middle; }
-#productForm input[type="text"], #productForm input[type="number"], #productForm input[type="file"], #productForm select, #productForm textarea { width: 100%; padding: 12px 16px; border: 1px solid var(--border-color); border-radius: var(--border-radius-md); font-size: 1em; font-family: var(--base-font-family); background-color: #fff; transition: border-color 0.2s ease, box-shadow 0.2s ease; box-sizing: border-box; color: var(--text-color-dark); }
-#productForm ::placeholder { color: #aaa; opacity: 1; }
-#productForm input:focus, #productForm select:focus, #productForm textarea:focus { border-color: var(--primary-color); box-shadow: 0 0 0 3px var(--focus-shadow-color); outline: none; }
-#productForm textarea { min-height: 100px; resize: vertical; }
+#productForm, #bulkUpdateForm { padding: 25px 30px; overflow-y: auto; flex-grow: 1; }
+.product-form-grid, .bulk-form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 25px 35px; }
+#productForm .form-group, #bulkUpdateForm .form-group { margin-bottom: 22px; }
+#productForm label, #bulkUpdateForm label { display: block; font-weight: 500; margin-bottom: 8px; font-size: 0.95em; color: var(--text-color-medium); }
+#productForm label input[type="checkbox"], #bulkUpdateForm label input[type="checkbox"] { margin-right: 10px; width: 16px; height: 16px; accent-color: var(--primary-color); cursor: pointer; vertical-align: middle; }
+#productForm input[type="text"], #productForm input[type="number"], #productForm input[type="file"], #productForm select, #productForm textarea,
+#bulkUpdateForm input[type="text"], #bulkUpdateForm input[type="number"], #bulkUpdateForm select, #bulkUpdateForm textarea { width: 100%; padding: 12px 16px; border: 1px solid var(--border-color); border-radius: var(--border-radius-md); font-size: 1em; font-family: var(--base-font-family); background-color: #fff; transition: border-color 0.2s ease, box-shadow 0.2s ease; box-sizing: border-box; color: var(--text-color-dark); }
+#productForm ::placeholder, #bulkUpdateForm ::placeholder { color: #aaa; opacity: 1; }
+#productForm input:focus, #productForm select:focus, #productForm textarea:focus,
+#bulkUpdateForm input:focus, #bulkUpdateForm select:focus, #bulkUpdateForm textarea:focus { border-color: var(--primary-color); box-shadow: 0 0 0 3px var(--focus-shadow-color); outline: none; }
+#productForm textarea, #bulkUpdateForm textarea { min-height: 100px; resize: vertical; }
 #productForm .required { color: var(--danger-color); margin-left: 4px; font-weight: bold; }
 #productForm input[type="file"] { padding: 10px 12px; background-color: var(--body-bg); cursor: pointer; }
 #productForm input[type="file"]::file-selector-button { padding: 9px 16px; border: none; background-color: var(--secondary-color); color: white; border-radius: var(--border-radius-sm); cursor: pointer; margin-right: 12px; font-family: var(--base-font-family); font-weight: 500; transition: background-color 0.2s ease; }
@@ -159,12 +162,12 @@ body {
 .price-group { position: relative; }
 .price-group input[type="number"] { padding-left: 32px !important; }
 .price-group::before { content: '₹'; position: absolute; left: 13px; top: 50%; transform: translateY(-50%); color: var(--text-color-light); font-size: 1em; z-index: 2; pointer-events: none; }
-#productForm .form-group label + .price-group::before { top: calc(50% + 12px); /* Adjust if label is above */ }
-#productForm fieldset { border: 1px solid #e0e0e0; border-radius: var(--border-radius-md); padding: 25px 30px 30px 30px; margin-top: 20px; margin-bottom: 20px; background-color: #fdfdff; }
-#productForm fieldset:first-of-type { margin-top: 0; }
-#productForm legend { font-weight: 600; color: var(--primary-color); padding: 0 10px; font-size: 1.2em; margin-left: 5px; display: inline-flex; align-items: center; gap: 10px; }
-#productForm legend i { font-size: 0.9em; }
-#productForm small { display: block; margin-top: 6px; font-size: 0.85em; color: var(--text-color-light); }
+#productForm .form-group label + .price-group::before, #bulkUpdateForm .form-group label + .price-group::before { top: calc(50% + 12px); /* Adjust if label is above */ }
+#productForm fieldset, #bulkUpdateForm fieldset { border: 1px solid #e0e0e0; border-radius: var(--border-radius-md); padding: 25px 30px 30px 30px; margin-top: 20px; margin-bottom: 20px; background-color: #fdfdff; }
+#productForm fieldset:first-of-type, #bulkUpdateForm fieldset:first-of-type { margin-top: 0; }
+#productForm legend, #bulkUpdateForm legend { font-weight: 600; color: var(--primary-color); padding: 0 10px; font-size: 1.2em; margin-left: 5px; display: inline-flex; align-items: center; gap: 10px; }
+#productForm legend i, #bulkUpdateForm legend i { font-size: 0.9em; }
+#productForm small, #bulkUpdateForm small { display: block; margin-top: 6px; font-size: 0.85em; color: var(--text-color-light); }
 #image-upload-section { margin-top: 25px; padding-top: 0; border-top: none; }
 #image-upload-section h3 { font-size: 1.2em; font-weight: 600; color: var(--primary-color); margin-top: 25px; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 2px solid var(--primary-color); display: flex; align-items: center; gap: 10px; }
 #image-upload-section h3 i { font-size: 0.9em; }
@@ -190,7 +193,7 @@ body {
 .cancel-button:hover:not(:disabled) { background-color: var(--secondary-color-dark); transform: none; box-shadow: none; }
 .delete-button-modal { background-color: transparent; color: var(--danger-color); border: 1px solid var(--danger-color); box-shadow: none; padding: 11px 28px; }
 .delete-button-modal:hover:not(:disabled) { background-color: var(--danger-color); color: white; transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); }
-#saveProductBtn .fa-spinner { margin-right: 8px; }
+#saveProductBtn .fa-spinner, #applyBulkUpdateBtn .fa-spinner { margin-right: 8px; }
 .add-new-button { background-color: var(--primary-color); color: white; padding: 10px 20px; font-size: 0.95em;}
 .add-new-button:hover:not(:disabled) { background-color: var(--primary-color-dark); }
 .clear-filters-button { background-color: var(--secondary-color); color: white; padding: 10px 20px; font-size: 0.95em;}
@@ -235,21 +238,21 @@ body {
 .toast-notification { position: fixed; bottom: -100px; left: 50%; transform: translateX(-50%); background-color: rgba(52, 58, 64, 0.9); color: white; padding: 14px 28px; border-radius: 25px; z-index: 1100; font-size: 1em; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2); opacity: 0; transition: opacity 0.4s ease, bottom 0.4s ease; white-space: nowrap; }
 .toast-notification.show { opacity: 1; bottom: 30px; }
 
-/* --- NEW: Pricing Tab & Checkbox Styles --- */
+/* --- Pricing Tab & Checkbox Styles (Applied to both modals) --- */
 .price-tabs { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 18px; padding-bottom: 10px; border-bottom: 1px solid #eee; }
 .price-tab-btn { padding: 8px 14px; font-size: 0.9em; font-weight: 500; border: 1px solid var(--border-color); background-color: #f8f9fa; color: var(--text-color-medium); border-radius: var(--border-radius-md); cursor: pointer; transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease; flex-grow: 1; text-align: center; box-shadow: none; white-space: nowrap; line-height: 1.4; -webkit-appearance: none; -moz-appearance: none; appearance: none; }
 .price-tab-btn:hover:not(.active):not(:disabled) { background-color: #e9ecef; border-color: #adb5bd; color: var(--text-color-dark); transform: none; box-shadow: none; }
 .price-tab-btn.active { background-color: var(--primary-color); color: white; border-color: var(--primary-color); font-weight: 600; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); transform: none; }
-#currentRateLabel { font-weight: 600; margin-bottom: 10px; }
-#currentRateInput { margin-bottom: 15px; }
-.apply-rate-checkboxes { margin-top: 0; /* Reset top margin as it's below input now */ padding: 15px; border: 1px solid #f0f0f0; border-radius: var(--border-radius-sm); background-color: #fdfdfd; margin-bottom: 15px; /* Add space below checkboxes */ }
+#productForm #currentRateLabel, #bulkUpdateForm #bulkCurrentRateLabel { font-weight: 600; margin-bottom: 10px; }
+#productForm #currentRateInput, #bulkUpdateForm #bulkCurrentRateInput { margin-bottom: 15px; }
+#productForm .apply-rate-checkboxes, #bulkUpdateForm .apply-rate-checkboxes { margin-top: 0; /* Reset top margin as it's below input now */ padding: 15px; border: 1px solid #f0f0f0; border-radius: var(--border-radius-sm); background-color: #fdfdfd; margin-bottom: 15px; /* Add space below checkboxes */ }
 .checkbox-container-title { display: block; font-weight: 500; font-size: 0.9em; color: var(--text-color-medium); margin-bottom: 12px; }
-.apply-rate-checkboxes .checkbox-wrapper { display: flex; align-items: center; margin-bottom: 8px; }
-.apply-rate-checkboxes .checkbox-wrapper:last-child { margin-bottom: 0; }
-.apply-rate-checkboxes input[type="checkbox"] { margin-right: 8px; width: 15px; height: 15px; accent-color: var(--primary-color); cursor: pointer; flex-shrink: 0; vertical-align: middle; }
-.apply-rate-checkboxes label { font-weight: normal; font-size: 0.9em; color: var(--text-color-medium); margin-bottom: 0; cursor: pointer; line-height: 1.3; display: inline-block; vertical-align: middle; }
+#productForm .apply-rate-checkboxes .checkbox-wrapper, #bulkUpdateForm .apply-rate-checkboxes .checkbox-wrapper { display: flex; align-items: center; margin-bottom: 8px; }
+#productForm .apply-rate-checkboxes .checkbox-wrapper:last-child, #bulkUpdateForm .apply-rate-checkboxes .checkbox-wrapper:last-child { margin-bottom: 0; }
+#productForm .apply-rate-checkboxes input[type="checkbox"], #bulkUpdateForm .apply-rate-checkboxes input[type="checkbox"] { margin-right: 8px; width: 15px; height: 15px; accent-color: var(--primary-color); cursor: pointer; flex-shrink: 0; vertical-align: middle; }
+#productForm .apply-rate-checkboxes label, #bulkUpdateForm .apply-rate-checkboxes label { font-weight: normal; font-size: 0.9em; color: var(--text-color-medium); margin-bottom: 0; cursor: pointer; line-height: 1.3; display: inline-block; vertical-align: middle; }
 
-/* --- NEW: Diagram Section Styles --- */
+/* --- Diagram Section Styles --- */
 #diagram-link-area {
     font-size: 0.9em;
     display: flex;
@@ -282,26 +285,124 @@ body {
     transition: color 0.3s ease;
 }
 
-/* --- END: NEW Styles --- */
+/* --- New Bulk Update Modal Specific Styles --- */
+
+/* Icon color for the bulk update modal header */
+#bulkUpdateModal .modal-content h2 i {
+    color: var(--info-color); /* Example: Use info color for edit icon */
+}
+
+/* Style for the checkboxes that toggle sections (e.g., Update Pricing Details) */
+#bulkUpdateForm fieldset .form-group > label {
+    /* Ensure this label uses the default form label styles */
+     font-weight: 500;
+     color: var(--text-color-medium);
+     margin-bottom: 8px; /* Keep space below the section label */
+}
+
+/* Style for the container div holding fields that are shown/hidden */
+#bulkUpdateForm .bulk-fields {
+    margin-top: 15px; /* Space below the section checkbox label */
+    padding-top: 15px;
+    border-top: 1px dashed #ddd; /* Separator line for visual grouping */
+    /* display: none; controlled by JS based on checkbox state */
+}
+
+/* Style for individual field checkboxes (e.g., next to Purchase Price) */
+#bulkUpdateForm .bulk-fields .form-group label {
+     /* Override display:block from default label to align checkbox inline */
+     display: flex;
+     align-items: center;
+     margin-bottom: 8px; /* Space between field labels */
+     font-weight: normal; /* Make label text next to checkbox less bold */
+}
+
+#bulkUpdateForm .bulk-fields .form-group label input[type="checkbox"][data-field] {
+     margin-right: 8px; /* Space between checkbox and label text */
+     vertical-align: middle; /* Align checkbox with label text */
+     width: 16px; /* Standard checkbox size */
+     height: 16px;
+     accent-color: var(--primary-color); /* Or any preferred color */
+     cursor: pointer;
+     flex-shrink: 0; /* Prevent checkbox from shrinking */
+}
+
+/* Style disabled inputs within bulk fields */
+#bulkUpdateForm .bulk-fields input:disabled,
+#bulkUpdateForm .bulk-fields select:disabled,
+#bulkUpdateForm .bulk-fields textarea:disabled {
+    background-color: #e9ecef; /* Light grey background */
+    cursor: not-allowed;
+    border-color: #ced4da;
+    /* Ensure it doesn't get focus outline when disabled */
+    box-shadow: none;
+}
+
+/* Ensure price currency symbol aligns correctly within bulk fields */
+#bulkUpdateForm .bulk-fields .price-group::before {
+     /* Inherits from general price-group styles, but double-check specific position */
+     left: 13px; /* Example left padding */
+     /* Vertical alignment should work with flex on label */
+}
+
+/* If label is above input in bulk fields, adjust symbol position */
+#bulkUpdateForm .bulk-fields .form-group label + .price-group input[type="number"] {
+     /* Input padding should handle space for symbol */
+     padding-left: 32px !important;
+}
+#bulkUpdateForm .bulk-fields .form-group label + .price-group::before {
+     top: calc(50% + 12px); /* Adjust if label is above, same as single modal */
+}
 
 
-/* --- Responsive Adjustments --- */
-@media (max-width: 1200px) { .modal-content.large-modal { max-width: 95%; } }
-@media (max-width: 992px) { .product-form-grid { grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); } .price-tabs { gap: 5px; } .price-tab-btn { padding: 7px 10px; } }
-@media (max-width: 767px) { body { font-size: 14px; } .container { padding: 20px 15px; margin: 15px 0; } .header { padding: 15px; margin: -20px -15px 25px -15px; } .header h1 { font-size: 1.1em; } .filter-bar { flex-direction: column; align-items: stretch; padding: 15px; gap: 15px; margin-bottom: 25px; } .filter-group { min-width: 100%; } .filter-group .button { align-self: stretch; } #productTable { font-size: 0.9em; table-layout: auto; } #productTable th, #productTable td { padding: 12px 10px; } #productTable td:last-child { white-space: normal; } #productTable td:last-child .button { margin-bottom: 5px; display: flex; width: auto; } .modal-content { width: 96%; max-height: 95vh; } .modal-content.large-modal { max-width: 96%; } #productForm { padding: 20px; } .modal-content h2 { padding: 15px 20px; font-size: 1.4em; } .modal-actions { padding: 15px 20px; flex-direction: column-reverse; align-items: stretch; } .modal-actions-right { flex-direction: column-reverse; width: 100%; } .delete-button-modal { margin-right: 0; margin-bottom: 10px; width: 100%; } .modal-actions .button { width: 100%; padding: 12px 20px; } .product-form-grid { grid-template-columns: 1fr; gap: 15px 0; } #productForm fieldset { padding: 20px; } #productForm legend { font-size: 1.1em; } .price-tabs { gap: 5px; } .price-tab-btn { padding: 8px 10px; font-size: 0.85em; } .apply-rate-checkboxes { padding: 10px; } .apply-rate-checkboxes .checkbox-wrapper { flex-basis: 100%; }
-/* NEW: Responsive adjustments for bulk actions container */
+/* --- Responsive Adjustments (Apply to both modals) --- */
+@media (max-width: 1200px) {
+    .modal-content.large-modal { max-width: 95%; }
+}
+@media (max-width: 992px) {
+    .product-form-grid, .bulk-form-grid { grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 25px 25px; }
+    .price-tabs { gap: 5px; }
+    .price-tab-btn { padding: 7px 10px; }
+}
 @media (max-width: 767px) {
-     #bulkActionsContainer {
-          flex-direction: column;
-          align-items: stretch;
-          gap: 10px;
-     }
-     #bulkActionsContainer #selectedCount {
-          text-align: center;
-     }
-     #bulkActionsContainer button {
-          width: 100%;
-     }
+    body { font-size: 14px; }
+    .container { padding: 20px 15px; margin: 15px 0; }
+    .header { padding: 15px; margin: -20px -15px 25px -15px; }
+    .header h1 { font-size: 1.1em; }
+    .filter-bar { flex-direction: column; align-items: stretch; padding: 15px; gap: 15px; margin-bottom: 25px; }
+    .filter-group { min-width: 100%; }
+    .filter-group .button { align-self: stretch; }
+    #productTable { font-size: 0.9em; table-layout: auto; }
+    #productTable th, #productTable td { padding: 12px 10px; }
+    #productTable td:last-child { white-space: normal; }
+    #productTable td:last-child .button { margin-bottom: 5px; display: flex; width: auto; }
+    .modal-content { width: 96%; max-height: 95vh; }
+    .modal-content.large-modal { max-width: 96%; }
+    #productForm, #bulkUpdateForm { padding: 20px; }
+    .modal-content h2 { padding: 15px 20px; font-size: 1.4em; }
+    .modal-actions { padding: 15px 20px; flex-direction: column-reverse; align-items: stretch; }
+    .modal-actions-right { flex-direction: column-reverse; width: 100%; }
+    .delete-button-modal { margin-right: 0; margin-bottom: 10px; width: 100%; }
+    .modal-actions .button { width: 100%; padding: 12px 20px; }
+    .product-form-grid, .bulk-form-grid { grid-template-columns: 1fr; gap: 15px 0; }
+    #productForm fieldset, #bulkUpdateForm fieldset { padding: 20px; }
+    #productForm legend, #bulkUpdateForm legend { font-size: 1.1em; }
+    .price-tabs { gap: 5px; }
+    .price-tab-btn { padding: 8px 10px; font-size: 0.85em; }
+    .apply-rate-checkboxes { padding: 10px; }
+    .apply-rate-checkboxes .checkbox-wrapper { flex-basis: 100%; }
+    /* NEW: Responsive adjustments for bulk actions container */
+    #bulkActionsContainer {
+         flex-direction: column;
+         align-items: stretch;
+         gap: 10px;
+    }
+    #bulkActionsContainer #selectedCount {
+         text-align: center;
+    }
+    #bulkActionsContainer button {
+         width: 100%;
+    }
 }
 
 /* ============================================================== */

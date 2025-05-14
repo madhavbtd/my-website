@@ -347,6 +347,237 @@
         </div>
     </div>
 
+    <div id="bulkUpdateModal" class="modal">
+        <div class="modal-content large-modal">
+            <span class="close-btn" id="closeBulkUpdateModal" title="Close">&times;</span>
+            <h2><i class="fas fa-edit info-icon"></i> Bulk Edit Products</h2>
+
+            <form id="bulkUpdateForm">
+                <div class="bulk-form-grid product-form-grid"> <div class="form-column">
+                        <fieldset>
+                            <legend><i class="fas fa-info-circle"></i> Basic Details</legend>
+                            <div class="form-group">
+                                <label for="bulkUpdateEnabledCheckbox">
+                                    <input type="checkbox" id="bulkUpdateEnabledCheckbox" data-section="basic"> Update 'Show on Website (Enabled)'
+                                </label>
+                                <div class="bulk-fields" id="bulk-basic-fields" style="display: none;">
+                                    <div class="form-group">
+                                        <label for="bulkIsEnabled">Set 'Show on Website' to:</label>
+                                        <select id="bulkIsEnabled">
+                                            <option value="">-- Select State --</option>
+                                            <option value="true">Yes (Enable)</option>
+                                            <option value="false">No (Disable)</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            </fieldset>
+
+                        <fieldset>
+                            <legend><i class="fas fa-dollar-sign"></i> Price Details</legend>
+                            <div class="form-group">
+                                <label for="bulkUpdatePricingCheckbox">
+                                    <input type="checkbox" id="bulkUpdatePricingCheckbox" data-section="pricing"> Update Pricing Details
+                                </label>
+                                <div class="bulk-fields" id="bulk-pricing-fields" style="display: none;">
+                                    <div id="bulkPriceTabsContainer" class="price-tabs">
+                                         <button type="button" class="price-tab-btn active" data-rate-type="online">Online Rate</button>
+                                         <button type="button" class="price-tab-btn" data-rate-type="retail">Retail Rate</button>
+                                         <button type="button" class="price-tab-btn" data-rate-type="agent">Agent Rate</button>
+                                         <button type="button" class="price-tab-btn" data-rate-type="reseller">Wholesale Rate</button>
+                                    </div>
+                                     <div class="form-group price-group">
+                                         <label for="bulkCurrentRateInput" id="bulkCurrentRateLabel">Rate for selected type:</label>
+                                         <input type="number" id="bulkCurrentRateInput" placeholder="0.00" step="0.01" min="0">
+                                         <small>This rate will be applied to the type selected above.</small>
+                                     </div>
+
+                                    <div class="form-group price-group">
+                                        <label for="bulkPurchasePriceCheckbox">
+                                             <input type="checkbox" id="bulkPurchasePriceCheckbox" data-field="pricing.purchasePrice"> Purchase Price:
+                                         </label>
+                                         <input type="number" id="bulkPurchasePrice" placeholder="0.00" step="0.01" min="0" disabled>
+                                    </div>
+                                     <div class="form-group price-group">
+                                         <label for="bulkMrpCheckbox">
+                                              <input type="checkbox" id="bulkMrpCheckbox" data-field="pricing.mrp"> M.R.P.:
+                                          </label>
+                                          <input type="number" id="bulkMrp" placeholder="0.00" step="0.01" min="0" disabled>
+                                      </div>
+                                      <div class="form-group">
+                                          <label for="bulkGstRateCheckbox">
+                                               <input type="checkbox" id="bulkGstRateCheckbox" data-field="pricing.gstRate"> GST Rate (%):
+                                           </label>
+                                           <input type="number" id="bulkGstRate" placeholder="e.g., 18" step="0.01" min="0" max="100" disabled>
+                                       </div>
+                                       <div class="form-group price-group sq-feet-only"> <label for="bulkMinOrderValueCheckbox">
+                                                <input type="checkbox" id="bulkMinOrderValueCheckbox" data-field="pricing.minimumOrderValue"> Min. Order Value (Sq Ft Only):
+                                            </label>
+                                            <input type="number" id="bulkMinOrderValue" placeholder="e.g., 300" step="0.01" min="0" disabled>
+                                        </div>
+                                </div>
+                            </div>
+                        </fieldset>
+
+                        <fieldset id="bulk-wedding-fields">
+                             <legend>Wedding Card Charges</legend>
+                             <div class="form-group">
+                                 <label for="bulkUpdateWeddingCheckbox">
+                                     <input type="checkbox" id="bulkUpdateWeddingCheckbox" data-section="wedding"> Update Wedding Card Charges
+                                 </label>
+                                 <div class="bulk-fields" id="bulk-wedding-charge-fields" style="display: none;">
+                                     <div class="form-group price-group">
+                                         <label for="bulkDesignChargeCheckbox">
+                                             <input type="checkbox" id="bulkDesignChargeCheckbox" data-field="pricing.designCharge"> Design Charge:
+                                         </label>
+                                         <input type="number" id="bulkDesignCharge" placeholder="0.00" step="0.01" min="0" disabled>
+                                     </div>
+                                     <div class="form-group price-group">
+                                         <label for="bulkPrintingChargeCheckbox">
+                                              <input type="checkbox" id="bulkPrintingChargeCheckbox" data-field="pricing.printingChargeBase"> Printing Charge (Base):
+                                          </label>
+                                          <input type="number" id="bulkPrintingCharge" placeholder="e.g., 700 per 100" step="0.01" min="0" disabled>
+                                       </div>
+                                     <div class="form-group price-group">
+                                         <label for="bulkTransportChargeCheckbox">
+                                              <input type="checkbox" id="bulkTransportChargeCheckbox" data-field="pricing.transportCharge"> Transport Charge:
+                                          </label>
+                                           <input type="number" id="bulkTransportCharge" placeholder="0.00" step="0.01" min="0" disabled>
+                                        </div>
+                                     <div class="form-group">
+                                         <label for="bulkExtraMarginPercentCheckbox">
+                                              <input type="checkbox" id="bulkExtraMarginPercentCheckbox" data-field="pricing.extraMarginPercent"> Extra Margin (%):
+                                          </label>
+                                          <input type="number" id="bulkExtraMarginPercent" placeholder="e.g., 10" step="0.01" min="0" disabled>
+                                        </div>
+                                 </div>
+                             </div>
+                         </fieldset>
+
+                    </div>
+
+                    <div class="form-column">
+                        <fieldset>
+                            <legend><i class="fas fa-clipboard-list"></i> Internal Details</legend>
+                             <div class="form-group">
+                                <label for="bulkUpdateInternalCheckbox">
+                                    <input type="checkbox" id="bulkUpdateInternalCheckbox" data-section="internal"> Update Internal Details
+                                </label>
+                                 <div class="bulk-fields" id="bulk-internal-fields" style="display: none;">
+                                     <div class="form-group">
+                                         <label for="bulkBrandCheckbox">
+                                             <input type="checkbox" id="bulkBrandCheckbox" data-field="brand"> Brand:
+                                         </label>
+                                         <input type="text" id="bulkBrand" disabled>
+                                     </div>
+                                     <div class="form-group">
+                                          <label for="bulkItemCodeCheckbox">
+                                              <input type="checkbox" id="bulkItemCodeCheckbox" data-field="itemCode"> Item Code:
+                                          </label>
+                                           <input type="text" id="bulkItemCode" disabled>
+                                        </div>
+                                     <div class="form-group">
+                                         <label for="bulkHsnSacCodeCheckbox">
+                                              <input type="checkbox" id="bulkHsnSacCodeCheckbox" data-field="hsnSacCode"> HSN / SAC Code:
+                                          </label>
+                                          <input type="text" id="bulkHsnSacCode" disabled>
+                                        </div>
+                                 </div>
+                             </div>
+                         </fieldset>
+
+                        <fieldset>
+                             <legend><i class="fas fa-cubes"></i> Stock Management</legend>
+                             <div class="form-group">
+                                 <label for="bulkUpdateStockCheckbox">
+                                     <input type="checkbox" id="bulkUpdateStockCheckbox" data-section="stock"> Update Stock
+                                 </label>
+                                  <div class="bulk-fields" id="bulk-stock-fields" style="display: none;">
+                                      <div class="form-group">
+                                          <label for="bulkCurrentStockCheckbox">
+                                              <input type="checkbox" id="bulkCurrentStockCheckbox" data-field="stock.currentStock"> Current Stock:
+                                          </label>
+                                          <input type="number" id="bulkCurrentStock" placeholder="0" min="0" disabled>
+                                          <small>Enter the new current available quantity.</small>
+                                      </div>
+                                      <div class="form-group">
+                                          <label for="bulkMinStockLevelCheckbox">
+                                              <input type="checkbox" id="bulkMinStockLevelCheckbox" data-field="stock.minStockLevel"> Minimum Stock Level (Optional):
+                                          </label>
+                                          <input type="number" id="bulkMinStockLevel" placeholder="e.g., 10" min="0" disabled>
+                                          <small>Optional threshold for low stock alerts.</small>
+                                      </div>
+                                  </div>
+                              </div>
+                         </fieldset>
+
+                         <fieldset>
+                           <legend><i class="fas fa-cogs"></i> Other Options</legend>
+                            <div class="form-group">
+                              <label for="bulkUpdateOptionsCheckbox">
+                                  <input type="checkbox" id="bulkUpdateOptionsCheckbox" data-section="options"> Update Selectable Options (JSON)
+                              </label>
+                               <div class="bulk-fields" id="bulk-options-fields" style="display: none;">
+                                   <div class="form-group">
+                                       <label for="bulkOptions">Options (JSON):</label>
+                                       <textarea id="bulkOptions" rows="4" placeholder='[{"name":"Size","values":["A4","A5"]},{"name":"Paper","values":["Glossy","Matt"]}]' disabled></textarea>
+                                       <small>Existing options will be replaced. Format: [{"name":"Option Name", "values":["Val1", "Val2"]}]</small>
+                                  </div>
+                              </div>
+                         </div>
+                       </fieldset>
+
+                       <fieldset id="bulk-extra-charges-outer">
+                             <legend>Optional Extra Charges</legend>
+                             <div class="form-group">
+                                 <label for="bulkUpdateExtraChargesCheckbox">
+                                     <input type="checkbox" id="bulkUpdateExtraChargesCheckbox" data-section="extraCharges"> Update Optional Extra Charges
+                                 </label>
+                                  <div class="bulk-fields" id="bulk-extra-charges-fields" style="display: none;">
+                                      <div class="form-group">
+                                          <label for="bulkHasExtraChargesCheckbox">
+                                              <input type="checkbox" id="bulkHasExtraChargesCheckbox" data-field="pricing.hasExtraCharges"> Enable Additional Charge Option:
+                                          </label>
+                                          <select id="bulkHasExtraCharges" disabled>
+                                              <option value="">-- Select State --</option>
+                                              <option value="true">Yes</option>
+                                              <option value="false">No</option>
+                                          </select>
+                                      </div>
+                                     <div class="form-group">
+                                         <label for="bulkExtraChargeNameCheckbox">
+                                             <input type="checkbox" id="bulkExtraChargeNameCheckbox" data-field="pricing.extraCharge.name"> Charge Name:
+                                         </label>
+                                          <input type="text" id="bulkExtraChargeName" placeholder="e.g., Lamination" disabled>
+                                        </div>
+                                     <div class="form-group price-group">
+                                         <label for="bulkExtraChargeAmountCheckbox">
+                                             <input type="checkbox" id="bulkExtraChargeAmountCheckbox" data-field="pricing.extraCharge.amount"> Charge Amount:
+                                         </label>
+                                          <input type="number" id="bulkExtraChargeAmount" step="0.01" min="0" disabled>
+                                        </div>
+                                  </div>
+                              </div>
+                         </fieldset>
+
+                    </div>
+                </div>
+            </form>
+
+             <div class="modal-actions">
+                 <div class="modal-actions-right" style="width: 100%; justify-content: flex-end;">
+                     <button type="button" id="cancelBulkUpdateBtn" class="button cancel-button">
+                        Cancel
+                     </button>
+                     <button type="submit" form="bulkUpdateForm" id="applyBulkUpdateBtn" class="button save-button">
+                            <i class="fas fa-spinner fa-spin" style="display: none;"></i>
+                            <i class="fas fa-save"></i>
+                            <span>Apply Updates</span>
+                      </button>
+                </div>
+              </div>
+        </div>
+    </div>
     <script src="js/manage-online-products.js" type="module" defer></script>
 
 </body>
