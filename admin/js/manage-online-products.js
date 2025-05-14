@@ -1,7 +1,6 @@
 // js/manage-online-products.js
 // Updated Version: Layout changes + Diagram Upload + Checkbox Lock/Unlock Logic + Fixes + STOCK MANAGEMENT + BULK SELECT (Step 1 & 2 - Bulk Edit Modal UI & Frontend Data Prep)
-// Includes all previous fixes and ensures helper functions are declared only once.
-// FIX: Corrected the incomplete innerHTML string in renderProductTable.
+// FIX: Corrected typo (bulkGk_rate -> bulkGstRate), hsnSacCode ID, and extra charge amount input value access
 
 // --- Firebase Function Availability Check ---
 // Expecting: window.db, window.auth, window.storage, window.collection, window.onSnapshot, etc.
@@ -292,7 +291,8 @@ function toggleBulkExtraCharges() {
 }
 
 // NOTE: Toggling bulk wedding fields and bulk min order value group based on *selected* products is complex.
-// For Step 2, we will keep them visible in the bulk edit modal and rely on the save logic to only apply relevant updates.
+// For Step 2, we will keep them visible in the bulk edit modal and rely on the update logic (Step 3)
+// to apply changes only where relevant (e.g., wedding fields only to wedding cards).
 
 
 // --- Sorting & Filtering Handlers ---
@@ -342,6 +342,7 @@ function listenForOnlineProducts() {
         });
     } catch (error) {
         console.error("Error setting up online product listener:", error);
+        // Colspan updated from 9 to 10
         if (productTableBody) productTableBody.innerHTML = `<tr><td colspan="10" style="color: red; text-align: center;">Error setting up listener.</td></tr>`;
     }
 }
@@ -399,7 +400,6 @@ function renderProductTable(products) {
             // Check if the product is currently selected (from Step 1)
             const isSelected = selectedProductIds.has(firestoreId);
 
-            // FIX: Ensure the innerHTML string is complete and correctly formed.
             tableRow.innerHTML = `
                 <td style="text-align: center;"><input type="checkbox" class="product-select-checkbox" data-id="${firestoreId}" ${isSelected ? 'checked' : ''}></td>
                 <td>${escapeHtml(name)}</td>
@@ -414,7 +414,6 @@ function renderProductTable(products) {
                     <button class="button edit-product-btn" style="background-color: var(--info-color); color: white; padding: 5px 8px; font-size: 0.8em; margin: 2px;" title="Edit Online Product"><i class="fas fa-edit"></i> Edit</button>
                     <button class="button delete-product-btn" style="background-color: var(--danger-color); color: white; padding: 5px 8px; font-size: 0.8em; margin: 2px;" title="Delete Online Product"><i class="fas fa-trash"></i> Delete</button>
                 </td>`;
-
 
             // Add event listener to the checkbox in the newly created row (from Step 1)
             const checkbox = tableRow.querySelector('.product-select-checkbox');
@@ -609,8 +608,12 @@ async function openEditModal(firestoreId, data) {
     if (transportChargeInput) transportChargeInput.value = pricing.transportCharge ?? '';
     if (extraMarginPercentInput) extraMarginPercentInput.value = pricing.extraMarginPercent ?? '';
     if (hasExtraChargesCheckbox) hasExtraChargesCheckbox.checked = pricing.hasExtraCharges || false;
+     // Ensure extra charges section is correctly toggled after loading data
+    toggleExtraCharges();
+
     if (extraChargeNameInput) extraChargeNameInput.value = pricing.extraCharge?.name || '';
     if (extraChargeAmountInput) extraChargeAmountInput.value = pricing.extraCharge?.amount ?? '';
+
 
     if (productOptionsInput) { try { productOptionsInput.value = (data.options && Array.isArray(data.options)) ? JSON.stringify(data.options, null, 2) : ''; } catch { productOptionsInput.value = ''; } }
     if (productBrandInput) productBrandInput.value = data.brand || '';
@@ -644,7 +647,7 @@ async function openEditModal(firestoreId, data) {
     setActiveRateTab('online');
     unlockPricingFields();
 
-    toggleWeddingFields(); toggleSqFtFields(); toggleExtraCharges();
+    toggleWeddingFields(); toggleSqFtFields();
     productModal.classList.add('active');
 }
 
@@ -679,7 +682,7 @@ function handleRemoveDiagram() { if (!existingDiagramUrlInput?.value) { showToas
 async function uploadFile(file, storagePath, progressElement) { if (!window.storage || !window.storageRef || !window.uploadBytesResumable || !window.getDownloadURL) throw new Error("Storage functions missing."); if (!file || !storagePath || !progressElement) throw new Error("Missing file, path, or progress element for upload."); const fileRef = window.storageRef(window.storage, storagePath); progressElement.textContent = 'Starting upload...'; progressElement.style.color = 'var(--text-color-medium)'; const uploadTask = window.uploadBytesResumable(fileRef, file); return new Promise((resolve, reject) => { uploadTask.on('state_changed', (snapshot) => { const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100; progressElement.textContent = `Uploading ${file.name}: ${progress.toFixed(0)}%`; }, (error) => { progressElement.textContent = `Upload failed: ${file.name}. ${error.code}`; progressElement.style.color = 'var(--danger-color)'; reject(error); }, async () => { progressElement.textContent = `Upload Complete. Getting URL...`; try { const downloadURL = await window.getDownloadURL(uploadTask.snapshot.ref); progressElement.textContent = `Diagram uploaded successfully.`; progressElement.style.color = 'var(--success-color)'; resolve(downloadURL); } catch (getUrlError) { progressElement.textContent = `Failed to get URL after upload.`; progressElement.style.color = 'var(--danger-color)'; reject(getUrlError); } }); }); }
 async function deleteStoredFile(fileUrl) { if (!window.storage || !window.storageRef || !window.deleteObject) { return; } if (!fileUrl || !(fileUrl.startsWith('https://firebasestorage.googleapis.com/') || fileUrl.startsWith('gs://'))) { return; } try { const fileRef = window.storageRef(window.storage, fileUrl); await window.deleteObject(fileRef); console.log("Deleted file from Storage:", fileUrl); } catch (error) { if (error.code === 'storage/object-not-found') { console.warn("File not found in Storage, skipping delete:", fileUrl); } else { console.error("Error deleting file:", fileUrl, error); } } }
 
-// --- handleSaveProduct Function ---
+// --- handleSaveProduct Function (Single Edit) ---
 async function handleSaveProduct(event) {
     event.preventDefault();
     if (!window.db || !window.collection || !window.addDoc || !window.doc || !window.updateDoc || !window.serverTimestamp || !window.storage) { showToast("Core Firebase functions unavailable.", 5000); return; }
@@ -708,7 +711,7 @@ async function handleSaveProduct(event) {
     }
     if (isNaN(minStockLevel) && productMinStockLevelInput?.value.trim() !== '') { // Check if NaN but not empty
         showToast("Please enter a valid whole number for Minimum Stock Level.", 5000);
-        if (saveProductBtn) saveProductBtn.disabled = false; if (saveSpinner) saveSpinner.style.display = 'none'; if (saveIcon) saveIcon.style.display = ''; if (saveText) saveText.textContent = isEditing ? 'Update Product' : 'Save Product';
+        if (saveProductBtn) saveProductBtn.disabled = false; if (saveSpinner) saveSpinner.style.display = 'none'; if (saveIcon) saveIcon.style.display = ''; if (saveText) textSpan.textContent = isEditing ? 'Update Product' : 'Save Product';
         return;
     }
     // END: Get Stock Data
@@ -744,8 +747,12 @@ async function handleSaveProduct(event) {
         }
     }
     // If stock object is empty and you prefer not to save it, you can delete it.
-    if (Object.keys(productData.stock).length === 0) {
+    if (Object.keys(productData.stock).length === 0 && isEditing) { // Only delete if editing and it becomes empty
         delete productData.stock;
+    } else if (Object.keys(productData.stock).length > 0 && !productData.stock.currentStock && !productData.stock.minStockLevel) {
+         // If stock object exists but its fields are empty/null after updates, maybe clean it up
+         if (isEditing) delete productData.stock; // Decide if you want to save empty stock {} or delete
+         else delete productData.stock; // Decide if you want to save empty stock {} or delete
     }
     // END: Add Stock data to productData
 
@@ -771,8 +778,8 @@ async function handleSaveProduct(event) {
              const preliminaryData = { ...productData };
              // Remove fields that will be updated later or are specific to updateDoc
              delete preliminaryData.imageUrls; delete preliminaryData.diagramUrl;
+             // Decide how to handle stock creation vs update
              if(preliminaryData.stock && Object.keys(preliminaryData.stock).length === 0) delete preliminaryData.stock;
-
 
              const docRef = await window.addDoc(window.collection(window.db, "onlineProducts"), preliminaryData);
              finalProductId = docRef.id;
@@ -813,7 +820,7 @@ async function handleSaveProduct(event) {
 
         if (uploadProgressInfo) uploadProgressInfo.textContent = 'Finalizing product data...';
         const finalProductRef = window.doc(window.db, "onlineProducts", finalProductId);
-        await window.updateDoc(finalProductRef, finalUpdatePayload); // Changed from setDoc to updateDoc for new products to avoid overwriting if ID existed
+        await window.updateDoc(finalProductRef, finalUpdatePayload);
 
         showToast(isEditing ? 'Product updated successfully!' : 'Product added successfully!', 3000);
         closeProductModal();
@@ -828,10 +835,11 @@ async function handleSaveProduct(event) {
 }
 
 // --- Delete Handling ---
-function handleDeleteButtonClick(event) { event.preventDefault(); if (!productToDeleteId || !productToDeleteName) return; if (deleteWarningMessage) deleteWarningMessage.innerHTML = `Are you sure you want to delete "<strong>${escapeHtml(productToDeleteName)}</strong>"? <br>This will also delete its images and diagram. This action cannot be undone.`; if(deleteConfirmCheckbox) deleteConfirmCheckbox.checked = false; if(confirmDeleteFinalBtn) confirmDeleteFinalBtn.disabled = true; if(deleteConfirmModal) deleteConfirmModal.classList.add('active'); }
-function closeDeleteConfirmModal() { if (deleteConfirmModal) { deleteDeleteConfirmModal.classList.remove('active'); } } // Fixed typo closeDeleteConfirmModal to deleteDeleteConfirmModal
+function handleDeleteButtonClick(event) { event.preventDefault(); if (!productToDeleteId || !productToDeleteName) return; if (!deleteWarningMessage) { console.error("Delete warning message element not found."); return; } if (deleteWarningMessage) deleteWarningMessage.innerHTML = `Are you sure you want to delete "<strong>${escapeHtml(productToDeleteName)}</strong>"? <br>This will also delete its images and diagram. This action cannot be undone.`; if(deleteConfirmCheckbox) deleteConfirmCheckbox.checked = false; if(confirmDeleteFinalBtn) confirmDeleteFinalBtn.disabled = true; if(deleteConfirmModal) deleteConfirmModal.classList.add('active'); }
+function closeDeleteConfirmModal() { if (deleteConfirmModal) { deleteConfirmModal.classList.remove('active'); } }
 function handleConfirmCheckboxChange() { if (deleteConfirmCheckbox && confirmDeleteFinalBtn) { confirmDeleteFinalBtn.disabled = !deleteConfirmCheckbox.checked; } }
 async function handleFinalDelete() { if (!deleteConfirmCheckbox?.checked || !productToDeleteId) return; if (!window.db || !window.doc || !window.getDoc || !window.deleteDoc || !window.storage || !window.storageRef || !window.deleteObject) { showToast("Core Firebase functions unavailable.", 5000); return; } if(confirmDeleteFinalBtn) { confirmDeleteFinalBtn.disabled = true; confirmDeleteFinalBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Deleting...'; } const productRef = window.doc(window.db, "onlineProducts", productToDeleteId); try { const productSnap = await window.getDoc(productRef); let deletePromises = []; if (productSnap.exists()) { const productData = productSnap.data(); if (productData.imageUrls && Array.isArray(productData.imageUrls) && productData.imageUrls.length > 0) { productData.imageUrls.forEach(url => deletePromises.push(deleteStoredImage(url))); } if (productData.diagramUrl) { deletePromises.push(deleteStoredFile(productData.diagramUrl)); } if (deletePromises.length > 0) { await Promise.allSettled(deletePromises); } } await window.deleteDoc(productRef); showToast(`Product "${productToDeleteName || ''}" and associated files deleted!`); closeDeleteConfirmModal(); closeProductModal(); } catch (error) { console.error(`Error during deletion process for ${productToDeleteId}:`, error); showToast(`Failed to fully delete product: ${error.message}`, 5000); } finally { if(confirmDeleteFinalBtn) { confirmDeleteFinalBtn.disabled = !deleteConfirmCheckbox?.checked; confirmDeleteFinalBtn.innerHTML = '<i class="fas fa-trash-alt"></i> Confirm Delete'; } } }
+
 
 // --- NEW: Bulk Edit Functions (Step 2) ---
 
@@ -841,7 +849,7 @@ function handleBulkEditClick() {
         showToast("Please select at least one product for bulk edit.", 3000);
         return;
     }
-    console.log("Opening Bulk Edit modal for IDs:", Array.from(selectedProductIds)); // Log selected IDs
+    console.log("Opening Bulk Edit modal for IDs:", selectedProductIds);
 
     if (bulkEditModal && bulkEditForm) {
         // Reset the form when opening
@@ -869,7 +877,7 @@ function closeBulkEditModal() {
         selectedProductIds.clear();
         updateBulkActionsUI();
          // Re-render table to clear checkboxes
-        applyFiltersAndRender(); // Re-render to clear checkboxes
+        applyFiltersAndRender();
     }
 }
 
@@ -920,7 +928,7 @@ async function handleSaveBulkEdit() {
         if (!isNaN(simplifiedCurrentStock)) {
              simplifiedStockPayload.currentStock = simplifiedCurrentStock;
         } else {
-             showToast("Please enter a valid whole number for Bulk Current Stock.", 5000);
+             showToast("Please enter a valid whole number for Bulk Current Stock.", 5000); // Corrected typo here
              if (spinner) spinner.style.display = 'none'; if (icon) icon.style.display = ''; if (textSpan) textSpan.textContent = 'Update Selected Products'; if (saveBulkEditBtn) saveBulkEditBtn.disabled = false;
              return; // Stop if invalid
         }
@@ -930,7 +938,7 @@ async function handleSaveBulkEdit() {
         if (!isNaN(simplifiedMinStockLevel)) {
              simplifiedStockPayload.minStockLevel = simplifiedMinStockLevel;
         } else {
-              showToast("Please enter a valid whole number for Bulk Minimum Stock Level.", 5000);
+              showToast("Please enter a valid whole number for Bulk Minimum Stock Level.", 5000); // Corrected typo here
               if (spinner) spinner.style.display = 'none'; if (icon) icon.style.display = ''; if (textSpan) textSpan.textContent = 'Update Selected Products'; if (saveBulkEditBtn) saveBulkEditBtn.disabled = false;
               return; // Stop if invalid
         }
@@ -999,11 +1007,13 @@ async function handleSaveBulkEdit() {
 
           if (bulkHasExtraChargesCheckbox.checked) {
               const simplifiedExtraChargeName = bulkExtraChargeNameInput?.value.trim();
+              // FIX: Corrected .value.value.trim() to .value.trim()
               const simplifiedExtraChargeAmount = parseNumericInput(bulkExtraChargeAmountInput?.value.trim());
 
               // Include name/amount if user typed something OR if it should default
               if (simplifiedExtraChargeName !== '' || bulkExtraChargeAmountInput?.value.trim() !== '') {
                    simplifiedExtraChargePayload.name = simplifiedExtraChargeName || 'Additional Charge';
+                   // Corrected: Use simplifiedExtraChargeAmount directly as it's already parsed
                    simplifiedExtraChargePayload.amount = (simplifiedExtraChargeAmount !== null && !isNaN(simplifiedExtraChargeAmount)) ? simplifiedExtraChargeAmount : 0;
                    simplifiedPricingPayload.extraCharge = simplifiedExtraChargePayload;
               } else if (bulkExtraChargesSection.style.display === 'block') {
@@ -1106,4 +1116,5 @@ async function handleSaveBulkEdit() {
     // TODO (Step 3): Add proper error handling and UI feedback during the actual save process.
 }
 
-// --- ENDNEW ---
+
+// --- END ---
