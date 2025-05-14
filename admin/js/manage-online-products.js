@@ -1,5 +1,5 @@
 // js/manage-online-products.js
-// Updated Version: Layout changes + Diagram Upload + Checkbox Lock/Unlock Logic + Fixes + STOCK MANAGEMENT
+// Updated Version: Layout changes + Diagram Upload + Checkbox Lock/Unlock Logic + Fixes + STOCK MANAGEMENT + BULK SELECT (Step 1)
 
 // --- Firebase Function Availability Check ---
 // Expecting: window.db, window.auth, window.storage, window.collection, window.onSnapshot, etc.
@@ -11,6 +11,11 @@ const sortSelect = document.getElementById('sort-products');
 const filterSearchInput = document.getElementById('filterSearch');
 const clearFiltersBtn = document.getElementById('clearFiltersBtn');
 const addNewProductBtn = document.getElementById('addNewProductBtn');
+// NEW: Bulk Actions Elements
+const bulkActionsContainer = document.getElementById('bulkActionsContainer');
+const selectedCountSpan = document.getElementById('selectedCount');
+const bulkEditButton = document.getElementById('bulkEditButton');
+
 
 // --- Product Add/Edit Modal Elements ---
 const productModal = document.getElementById('productModal');
@@ -109,6 +114,8 @@ const RATE_TYPES = { // Map types to Firestore field names and labels
 let diagramFileToUpload = null;
 let shouldRemoveDiagram = false;
 let isRateLocked = false;
+// NEW: Bulk Select State
+let selectedProductIds = new Set();
 
 
 // --- Helper Functions ---
@@ -186,8 +193,45 @@ function setupEventListeners() {
     if (productDiagramInput) { productDiagramInput.addEventListener('change', handleDiagramFileSelection); }
     if (removeDiagramBtn) { removeDiagramBtn.addEventListener('click', handleRemoveDiagram); }
 
+    // NEW: Add event listeners for bulk action elements (if they exist)
+    if(bulkEditButton) bulkEditButton.addEventListener('click', handleBulkEditClick); // This function will be implemented in Step 2
+
+
     console.log("Online Product Management event listeners set up (v_Stock).");
 }
+
+// NEW: Function to handle checkbox change
+function handleProductCheckboxChange(event) {
+    const checkbox = event.target;
+    const productId = checkbox.dataset.id;
+
+    if (checkbox.checked) {
+        selectedProductIds.add(productId);
+    } else {
+        selectedProductIds.delete(productId);
+    }
+
+    console.log("Selected Product IDs:", selectedProductIds); // Log for testing
+    updateBulkActionsUI(); // Update the count and button state
+}
+
+// NEW: Function to update the bulk actions UI
+function updateBulkActionsUI() {
+    const count = selectedProductIds.size;
+    if (selectedCountSpan) {
+        selectedCountSpan.textContent = `${count} selected`;
+    }
+
+    if (bulkActionsContainer) {
+        bulkActionsContainer.style.display = count > 0 ? 'flex' : 'none';
+    }
+
+    // Enable/disable bulk edit button (will be implemented in Step 2)
+    if (bulkEditButton) {
+        bulkEditButton.disabled = count === 0;
+    }
+}
+
 
 // --- Show/Hide Conditional Fields ---
 function toggleWeddingFields() { if (!weddingFieldsContainer || !productCategoryInput) return; const category = productCategoryInput.value.toLowerCase(); weddingFieldsContainer.style.display = category.includes('wedding card') ? 'block' : 'none'; }
@@ -197,17 +241,29 @@ function toggleExtraCharges() { if (!extraChargesSection || !hasExtraChargesChec
 // --- Sorting & Filtering Handlers ---
 function handleSortChange() { if (!sortSelect) return; const [field, direction] = sortSelect.value.split('_'); if (field && direction) { if (field === currentSortField && direction === currentSortDirection) return; currentSortField = field; currentSortDirection = direction; listenForOnlineProducts(); /* Re-fetch with new sort */ } }
 function handleSearchInput() { clearTimeout(searchDebounceTimer); searchDebounceTimer = setTimeout(applyFiltersAndRender, 300); }
-function clearFilters() { if (filterSearchInput) filterSearchInput.value = ''; if (sortSelect) sortSelect.value = 'createdAt_desc'; currentSortField = 'createdAt'; currentSortDirection = 'desc'; applyFiltersAndRender(); if (unsubscribeProducts) listenForOnlineProducts(); /* Re-fetch if listener was active */ }
+function clearFilters() {
+    if (filterSearchInput) filterSearchInput.value = '';
+    if (sortSelect) sortSelect.value = 'createdAt_desc';
+    currentSortField = 'createdAt';
+    currentSortDirection = 'desc';
+    // NEW: Clear selected products when filters are cleared
+    selectedProductIds.clear();
+    updateBulkActionsUI();
+    applyFiltersAndRender();
+    if (unsubscribeProducts) listenForOnlineProducts(); /* Re-fetch if listener was active */
+}
 
 // --- Firestore Listener ---
 function listenForOnlineProducts() {
     if (unsubscribeProducts) { unsubscribeProducts(); unsubscribeProducts = null; }
     if (!window.db || !window.collection || !window.query || !window.onSnapshot || !window.orderBy) {
         console.error("Firestore functions unavailable!");
-        if (productTableBody) productTableBody.innerHTML = `<tr><td colspan="9" style="color: red; text-align: center;">Error: DB Connection Failed.</td></tr>`; // Colspan updated to 9
+        // Colspan updated from 9 to 10
+        if (productTableBody) productTableBody.innerHTML = `<tr><td colspan="10" style="color: red; text-align: center;">Error: DB Connection Failed.</td></tr>`;
         return;
     }
-    if (productTableBody) productTableBody.innerHTML = `<tr><td colspan="9" id="loadingMessage" style="text-align: center;">Loading online products...</td></tr>`; // Colspan updated to 9
+    // Colspan updated from 9 to 10
+    if (productTableBody) productTableBody.innerHTML = `<tr><td colspan="10" id="loadingMessage" style="text-align: center;">Loading online products...</td></tr>`;
     try {
         console.log(`Setting up Firestore listener for 'onlineProducts' with sort: ${currentSortField}_${currentSortDirection}`);
         const productsRef = window.collection(window.db, "onlineProducts");
@@ -218,7 +274,8 @@ function listenForOnlineProducts() {
             applyFiltersAndRender();
         }, (error) => {
             console.error("Error fetching online products snapshot:", error);
-            let colspan = 9; // Colspan updated to 9
+            // Colspan updated from 9 to 10
+            let colspan = 10;
             if (error.code === 'permission-denied') {
                 if (productTableBody) productTableBody.innerHTML = `<tr><td colspan="${colspan}" style="color: red; text-align: center;">Error loading products: Insufficient permissions. Check Firestore rules.</td></tr>`;
             } else {
@@ -227,7 +284,8 @@ function listenForOnlineProducts() {
         });
     } catch (error) {
         console.error("Error setting up online product listener:", error);
-        if (productTableBody) productTableBody.innerHTML = `<tr><td colspan="9" style="color: red; text-align: center;">Error setting up listener.</td></tr>`; // Colspan updated to 9
+        // Colspan updated from 9 to 10
+        if (productTableBody) productTableBody.innerHTML = `<tr><td colspan="10" style="color: red; text-align: center;">Error setting up listener.</td></tr>`;
     }
 }
 
@@ -256,7 +314,8 @@ function applyFiltersAndRender() {
 function renderProductTable(products) {
     if (!productTableBody) return;
     productTableBody.innerHTML = '';
-    const expectedColumns = 9; // START: Updated to 9
+    // Colspan updated from 9 to 10
+    const expectedColumns = 10;
     if (products.length === 0) {
         productTableBody.innerHTML = `<tr><td colspan="${expectedColumns}" id="noProductsMessage" style="text-align: center;">No online products found matching criteria.</td></tr>`;
     } else {
@@ -277,7 +336,11 @@ function renderProductTable(products) {
             const currentStock = (data.stock?.currentStock !== undefined && data.stock?.currentStock !== null) ? data.stock.currentStock : 'N/A';
             // END: Get Current Stock value
 
+            // Check if the product is currently selected
+            const isSelected = selectedProductIds.has(firestoreId);
+
             tableRow.innerHTML = `
+                <td style="text-align: center;"><input type="checkbox" class="product-select-checkbox" data-id="${firestoreId}" ${isSelected ? 'checked' : ''}></td>
                 <td>${escapeHtml(name)}</td>
                 <td>${escapeHtml(category)}</td>
                 <td>${escapeHtml(brand)}</td>
@@ -290,6 +353,13 @@ function renderProductTable(products) {
                     <button class="button edit-product-btn" style="background-color: var(--info-color); color: white; padding: 5px 8px; font-size: 0.8em; margin: 2px;" title="Edit Online Product"><i class="fas fa-edit"></i> Edit</button>
                     <button class="button delete-product-btn" style="background-color: var(--danger-color); color: white; padding: 5px 8px; font-size: 0.8em; margin: 2px;" title="Delete Online Product"><i class="fas fa-trash"></i> Delete</button>
                 </td>`;
+
+            // Add event listener to the checkbox in the newly created row
+            const checkbox = tableRow.querySelector('.product-select-checkbox');
+            if (checkbox) {
+                 checkbox.addEventListener('change', handleProductCheckboxChange);
+            }
+
 
             const editBtn = tableRow.querySelector('.edit-product-btn');
             if (editBtn) {
@@ -312,6 +382,8 @@ function renderProductTable(products) {
             }
         });
     }
+    // Update UI after rendering (in case products were filtered/sorted)
+    updateBulkActionsUI();
 }
 
 // --- Pricing Tab Functions ---
@@ -405,6 +477,10 @@ function resetApplyCheckboxesAndUnlock() {
 function openAddModal() {
     if (!productModal || !productForm) return;
     console.log("Opening modal to add new ONLINE product (v_Stock).");
+    // NEW: Clear any selected products when opening add/edit modal
+    selectedProductIds.clear();
+    updateBulkActionsUI();
+
     if (modalTitle) modalTitle.innerHTML = '<i class="fas fa-plus-circle success-icon"></i> Add New Online Product';
     if (editProductIdInput) editProductIdInput.value = '';
     productForm.reset();
@@ -442,6 +518,10 @@ function openAddModal() {
 async function openEditModal(firestoreId, data) {
     if (!productModal || !productForm || !data) return;
     console.log("Opening modal to edit ONLINE product (v_Stock):", firestoreId);
+    // NEW: Clear any selected products when opening add/edit modal
+    selectedProductIds.clear();
+    updateBulkActionsUI();
+
     if (modalTitle) modalTitle.innerHTML = '<i class="fas fa-edit info-icon"></i> Edit Online Product';
     productForm.reset();
     productBeingEditedData = JSON.parse(JSON.stringify(data));
@@ -515,6 +595,9 @@ function closeProductModal() {
         diagramFileToUpload = null; shouldRemoveDiagram = false;
         if (productDiagramInput) productDiagramInput.value = null;
         unlockPricingFields();
+         // NEW: Clear selected products when closing add/edit modal
+        selectedProductIds.clear();
+        updateBulkActionsUI();
     }
 }
 
@@ -683,5 +766,17 @@ function handleDeleteButtonClick(event) { event.preventDefault(); if (!productTo
 function closeDeleteConfirmModal() { if (deleteConfirmModal) { deleteConfirmModal.classList.remove('active'); } }
 function handleConfirmCheckboxChange() { if (deleteConfirmCheckbox && confirmDeleteFinalBtn) { confirmDeleteFinalBtn.disabled = !deleteConfirmCheckbox.checked; } }
 async function handleFinalDelete() { if (!deleteConfirmCheckbox?.checked || !productToDeleteId) return; if (!window.db || !window.doc || !window.getDoc || !window.deleteDoc || !window.storage || !window.storageRef || !window.deleteObject) { showToast("Core Firebase functions unavailable.", 5000); return; } if(confirmDeleteFinalBtn) { confirmDeleteFinalBtn.disabled = true; confirmDeleteFinalBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Deleting...'; } const productRef = window.doc(window.db, "onlineProducts", productToDeleteId); try { const productSnap = await window.getDoc(productRef); let deletePromises = []; if (productSnap.exists()) { const productData = productSnap.data(); if (productData.imageUrls && Array.isArray(productData.imageUrls) && productData.imageUrls.length > 0) { productData.imageUrls.forEach(url => deletePromises.push(deleteStoredImage(url))); } if (productData.diagramUrl) { deletePromises.push(deleteStoredFile(productData.diagramUrl)); } if (deletePromises.length > 0) { await Promise.allSettled(deletePromises); } } await window.deleteDoc(productRef); showToast(`Product "${productToDeleteName || ''}" and associated files deleted!`); closeDeleteConfirmModal(); closeProductModal(); } catch (error) { console.error(`Error during deletion process for ${productToDeleteId}:`, error); showToast(`Failed to fully delete product: ${error.message}`, 5000); } finally { if(confirmDeleteFinalBtn) { confirmDeleteFinalBtn.disabled = !deleteConfirmCheckbox?.checked; confirmDeleteFinalBtn.innerHTML = '<i class="fas fa-trash-alt"></i> Confirm Delete'; } } }
+
+// NEW: Placeholder function for bulk edit button click (Implement in Step 2)
+function handleBulkEditClick() {
+    if (selectedProductIds.size === 0) {
+        showToast("Please select at least one product for bulk edit.", 3000);
+        return;
+    }
+    console.log("Bulk Edit clicked for IDs:", selectedProductIds);
+    // TODO: Implement opening the bulk edit modal/form in Step 2
+    showToast(`Bulk Edit button clicked for ${selectedProductIds.size} products. (Feature coming in Step 2)`, 3000);
+}
+
 
 // --- END ---

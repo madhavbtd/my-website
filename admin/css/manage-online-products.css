@@ -1,6 +1,7 @@
 /* ============================================================== */
 /* == manage-online-products.css                           == */
 /* == UPDATED Version: Styles for Pricing Tabs, Checkboxes, Diagram == */
+/* == Added Styles for Bulk Select Checkbox (Step 1) == */
 /* ============================================================== */
 
 /* --- CSS Variables --- */
@@ -70,6 +71,25 @@ body {
 .filter-group input[type="text"], .filter-group select { padding: 10px 15px; border: 1px solid var(--border-color); border-radius: var(--border-radius-sm); font-size: 1em; height: 42px; background-color: #fff; box-sizing: border-box; width: 100%; transition: border-color 0.2s ease, box-shadow 0.2s ease; }
 .filter-group input:focus, .filter-group select:focus { border-color: var(--input-border-focus); outline: 0; box-shadow: 0 0 0 3px var(--focus-shadow-color); }
 
+/* NEW: Bulk Actions Container Styling (Step 1 & 2) */
+#bulkActionsContainer {
+    display: flex; /* Initially flex, JS will hide it */
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 20px;
+    padding: 15px;
+    border: 1px solid #eee;
+    border-radius: var(--border-radius-md);
+    background-color: #f9f9f9;
+    flex-wrap: wrap; /* Allow wrapping on small screens */
+}
+#selectedCount {
+    font-weight: bold;
+    color: var(--text-color-dark);
+    font-size: 1em;
+}
+
+
 /* --- Table Styles --- */
 .table-container { width: 100%; overflow-x: auto; border: 1px solid var(--table-border-color); border-radius: var(--border-radius-md); background-color: var(--container-bg); margin-bottom: 30px; box-shadow: var(--box-shadow-light); }
 #productTable { width: 100%; border-collapse: collapse; font-size: 1em; table-layout: fixed; word-wrap: break-word; }
@@ -79,11 +99,34 @@ body {
 #productTable tbody tr:nth-child(even) { background-color: var(--table-row-even-bg); }
 #productTable tbody tr:hover { background-color: var(--table-row-hover-bg); }
 #productTable td { padding: 15px 14px; vertical-align: middle; color: var(--text-color-medium); line-height: 1.6; }
-#productTable th:nth-child(4), #productTable td:nth-child(4) { text-align: right; } /* Rate */
-#productTable th:nth-child(5), #productTable td:nth-child(5) { text-align: center; } /* Unit */
-#productTable th:nth-child(6), #productTable td:nth-child(6) { text-align: center; } /* Enabled */
-#productTable th:nth-child(7), #productTable td:nth-child(7) { text-align: center; } /* Date Added */
-#productTable th:last-child, #productTable td:last-child { text-align: center; } /* Actions */
+
+/* NEW: Style for the Select column header and data cells */
+#productTable th:first-child,
+#productTable td:first-child {
+    text-align: center;
+    padding-left: 10px; /* Adjust padding */
+    padding-right: 10px; /* Adjust padding */
+}
+
+/* Ensure checkbox within td doesn't cause overflow */
+#productTable td:first-child input[type="checkbox"] {
+    margin: 0;
+    vertical-align: middle;
+    width: 16px; /* Standard checkbox size */
+    height: 16px;
+    accent-color: var(--primary-color); /* Or any preferred color */
+    cursor: pointer;
+}
+
+
+#productTable th:nth-child(5), #productTable td:nth-child(5) { text-align: right; } /* Rate - now 5th child */
+#productTable th:nth-child(6), #productTable td:nth-child(6) { text-align: center; } /* Unit - now 6th child */
+#productTable th:nth-child(7), #productTable td:nth-child(7) { text-align: center; } /* Enabled - now 7th child */
+#productTable th:nth-child(8), #productTable td:nth-child(8) { text-align: center; } /* Date Added - now 8th child */
+#productTable th:nth-child(9), #productTable td:nth-child(9) { text-align: right; } /* Current Stock - now 9th child */
+#productTable th:last-child, #productTable td:last-child { text-align: center; } /* Actions - still last child */
+
+
 #loadingMessage, #noProductsMessage { text-align: center; color: var(--text-color-light); font-style: italic; padding: 40px !important; font-size: 1.1em; }
 #productTable td:last-child { white-space: nowrap; text-align: center; }
 #productTable td:last-child .button { margin: 0 4px; padding: 6px 12px; font-size: 0.9em; vertical-align: middle; }
@@ -146,7 +189,7 @@ body {
 .cancel-button { background-color: var(--secondary-color); color: white; box-shadow: none; }
 .cancel-button:hover:not(:disabled) { background-color: var(--secondary-color-dark); transform: none; box-shadow: none; }
 .delete-button-modal { background-color: transparent; color: var(--danger-color); border: 1px solid var(--danger-color); box-shadow: none; padding: 11px 28px; }
-.delete-button-modal:hover:not(:disabled) { background-color: var(--danger-color); color: white; transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+.delete-button-modal:hover:not(:disabled) { background-color: var(--danger-color); color: white; transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); }
 #saveProductBtn .fa-spinner { margin-right: 8px; }
 .add-new-button { background-color: var(--primary-color); color: white; padding: 10px 20px; font-size: 0.95em;}
 .add-new-button:hover:not(:disabled) { background-color: var(--primary-color-dark); }
@@ -168,6 +211,15 @@ body {
      background-color: var(--danger-color);
      color: white;
 }
+/* NEW: Secondary button style */
+.button.secondary-button {
+     background-color: var(--secondary-color);
+     color: white;
+}
+.button.secondary-button:hover:not(:disabled) {
+     background-color: var(--secondary-color-dark);
+}
+
 
 /* Delete Confirmation Modal */
 .confirmation-modal .modal-content { padding: 30px 35px; }
@@ -236,7 +288,22 @@ body {
 /* --- Responsive Adjustments --- */
 @media (max-width: 1200px) { .modal-content.large-modal { max-width: 95%; } }
 @media (max-width: 992px) { .product-form-grid { grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); } .price-tabs { gap: 5px; } .price-tab-btn { padding: 7px 10px; } }
-@media (max-width: 767px) { body { font-size: 14px; } .container { padding: 20px 15px; margin: 15px 0; } .header { padding: 15px; margin: -20px -15px 25px -15px; } .header h1 { font-size: 1.1em; } .filter-bar { flex-direction: column; align-items: stretch; padding: 15px; gap: 15px; margin-bottom: 25px; } .filter-group { min-width: 100%; } .filter-group .button { align-self: stretch; } #productTable { font-size: 0.9em; table-layout: auto; } #productTable th, #productTable td { padding: 12px 10px; } #productTable td:last-child { white-space: normal; } #productTable td:last-child .button { margin-bottom: 5px; display: flex; width: auto; } .modal-content { width: 96%; max-height: 95vh; } .modal-content.large-modal { max-width: 96%; } #productForm { padding: 20px; } .modal-content h2 { padding: 15px 20px; font-size: 1.4em; } .modal-actions { padding: 15px 20px; flex-direction: column-reverse; align-items: stretch; } .modal-actions-right { flex-direction: column-reverse; width: 100%; } .delete-button-modal { margin-right: 0; margin-bottom: 10px; width: 100%; } .modal-actions .button { width: 100%; padding: 12px 20px; } .product-form-grid { grid-template-columns: 1fr; gap: 15px 0; } #productForm fieldset { padding: 20px; } #productForm legend { font-size: 1.1em; } .price-tabs { gap: 5px; } .price-tab-btn { padding: 8px 10px; font-size: 0.85em; } .apply-rate-checkboxes { padding: 10px; } .apply-rate-checkboxes .checkbox-wrapper { flex-basis: 100%; } }
+@media (max-width: 767px) { body { font-size: 14px; } .container { padding: 20px 15px; margin: 15px 0; } .header { padding: 15px; margin: -20px -15px 25px -15px; } .header h1 { font-size: 1.1em; } .filter-bar { flex-direction: column; align-items: stretch; padding: 15px; gap: 15px; margin-bottom: 25px; } .filter-group { min-width: 100%; } .filter-group .button { align-self: stretch; } #productTable { font-size: 0.9em; table-layout: auto; } #productTable th, #productTable td { padding: 12px 10px; } #productTable td:last-child { white-space: normal; } #productTable td:last-child .button { margin-bottom: 5px; display: flex; width: auto; } .modal-content { width: 96%; max-height: 95vh; } .modal-content.large-modal { max-width: 96%; } #productForm { padding: 20px; } .modal-content h2 { padding: 15px 20px; font-size: 1.4em; } .modal-actions { padding: 15px 20px; flex-direction: column-reverse; align-items: stretch; } .modal-actions-right { flex-direction: column-reverse; width: 100%; } .delete-button-modal { margin-right: 0; margin-bottom: 10px; width: 100%; } .modal-actions .button { width: 100%; padding: 12px 20px; } .product-form-grid { grid-template-columns: 1fr; gap: 15px 0; } #productForm fieldset { padding: 20px; } #productForm legend { font-size: 1.1em; } .price-tabs { gap: 5px; } .price-tab-btn { padding: 8px 10px; font-size: 0.85em; } .apply-rate-checkboxes { padding: 10px; } .apply-rate-checkboxes .checkbox-wrapper { flex-basis: 100%; }
+/* NEW: Responsive adjustments for bulk actions container */
+@media (max-width: 767px) {
+     #bulkActionsContainer {
+          flex-direction: column;
+          align-items: stretch;
+          gap: 10px;
+     }
+     #bulkActionsContainer #selectedCount {
+          text-align: center;
+     }
+     #bulkActionsContainer button {
+          width: 100%;
+     }
+}
+
 /* ============================================================== */
 /* == END CSS                                                == */
 /* ============================================================== */

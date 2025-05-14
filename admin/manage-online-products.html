@@ -117,24 +117,31 @@
             </div>
         </div>
 
+        <div id="bulkActionsContainer" style="margin-bottom: 20px; padding: 15px; border: 1px solid #eee; border-radius: 8px; background-color: #f9f9f9; display: none; align-items: center; gap: 15px;">
+             <span id="selectedCount" style="font-weight: bold; color: var(--text-color-dark);">0 selected</span>
+            <button id="bulkEditButton" class="button secondary-button" style="display: none;"><i class="fas fa-edit"></i> Bulk Edit</button>
+        </div>
+
+
         <div class="table-container">
             <table id="productTable">
                 <thead>
                      <tr>
-                        <th style="width: 18%;">Name</th>
-                        <th style="width: 12%;">Category</th>
-                        <th style="width: 11%;">Brand</th>
+                        <th style="width: 4%; text-align: center;">Select</th>
+                        <th style="width: 17%;">Name</th>
+                        <th style="width: 11%;">Category</th>
+                        <th style="width: 10%;">Brand</th>
                         <th style="text-align: right; width: 8%;">Rate</th>
                         <th style="text-align: center; width: 7%;">Unit</th>
                         <th style="text-align: center; width: 7%;">Enabled</th>
-                        <th style="text-align: center; width: 10%;">Date Added</th>
+                        <th style="text-align: center; width: 9%;">Date Added</th>
                         <th style="text-align: right; width: 9%;">Current Stock</th>
                         <th style="text-align: center; width: 18%;">Actions</th>
                     </tr>
                  </thead>
                 <tbody id="productTableBody">
                     <tr>
-                        <td colspan="9" id="loadingMessage">Loading online products...</td>
+                        <td colspan="10" id="loadingMessage">Loading online products...</td>
                     </tr>
                  </tbody>
             </table>
