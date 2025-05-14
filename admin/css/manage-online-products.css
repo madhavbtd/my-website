@@ -64,9 +64,28 @@ body {
 .breadcrumb-container a { color: var(--primary-color); text-decoration: none; font-weight: 500; }
 .breadcrumb-container a:hover { text-decoration: underline; color: var(--primary-color-dark); }
 .breadcrumb-container span::before { content: "/"; margin: 0 8px; color: #aaa; }
-.filter-bar { display: flex; flex-wrap: wrap; gap: 20px 25px; padding: 20px 25px; background-color: var(--filter-bg); border: 1px solid var(--filter-border); border-radius: var(--border-radius-md); margin-bottom: 30px; align-items: flex-end; box-shadow: var(--box-shadow-light); }
-.filter-group { display: flex; flex-direction: column; gap: 8px; flex-grow: 1; min-width: 180px; }
-.filter-group.filter-sort { min-width: 220px; }
+.filter-bar {
+    display: flex;
+    flex-wrap: wrap;
+    /* बीच के स्क्रीन साइज़ पर इस गैप को एडजस्ट करने की आवश्यकता हो सकती है */
+    gap: 20px 25px;
+    padding: 20px 25px;
+    background-color: var(--filter-bg);
+    border: 1px solid var(--filter-border);
+    border-radius: var(--border-radius-md);
+    margin-bottom: 30px;
+    align-items: flex-end;
+    box-shadow: var(--box-shadow-light);
+}
+.filter-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    flex-grow: 1;
+    /* बीच के स्क्रीन साइज़ पर इस min-width को एडजस्ट करने की आवश्यकता हो सकती है */
+    min-width: 180px;
+}
+.filter-group.filter-sort { min-width: 220px; /* इसे भी एडजस्ट किया जा सकता है */ }
 .filter-group label { font-size: 0.9em; font-weight: 600; color: var(--text-color-medium); text-transform: uppercase; letter-spacing: 0.5px; }
 .filter-group label i { margin-right: 6px; color: var(--primary-color); }
 .filter-group input[type="text"], .filter-group select { padding: 10px 15px; border: 1px solid var(--border-color); border-radius: var(--border-radius-sm); font-size: 1em; height: 42px; background-color: #fff; box-sizing: border-box; width: 100%; transition: border-color 0.2s ease, box-shadow 0.2s ease; }
@@ -93,13 +112,49 @@ body {
 
 /* --- Table Styles --- */
 .table-container { width: 100%; overflow-x: auto; border: 1px solid var(--table-border-color); border-radius: var(--border-radius-md); background-color: var(--container-bg); margin-bottom: 30px; box-shadow: var(--box-shadow-light); }
-#productTable { width: 100%; border-collapse: collapse; font-size: 1em; table-layout: fixed; word-wrap: break-word; }
-#productTable thead th { background-color: var(--table-header-bg); padding: 16px 14px; text-align: left; font-weight: 600; color: var(--text-color-dark); border-bottom: 2px solid var(--table-border-color); white-space: nowrap; text-transform: uppercase; font-size: 0.9em; letter-spacing: 0.6px; }
+#productTable {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 1em;
+    /*
+       यह table-layout: fixed; छोटे स्क्रीन साइज़ पर कॉलम को स्क्वीज़ कर सकता है।
+       बीच के स्क्रीन साइज़ के लिए @media queries में इसे एडजस्ट करने पर विचार करें।
+       बहुत छोटी बीच की स्क्रीन पर auto; करने पर भी विचार कर सकते हैं।
+    */
+    table-layout: fixed;
+    word-wrap: break-word;
+}
+#productTable thead th {
+    background-color: var(--table-header-bg);
+    padding: 16px 14px;
+    text-align: left;
+    font-weight: 600;
+    color: var(--text-color-dark);
+    border-bottom: 2px solid var(--table-border-color);
+    white-space: nowrap;
+    text-transform: uppercase;
+    font-size: 0.9em;
+    letter-spacing: 0.6px;
+    /*
+       यहां कॉलम की चौड़ाई (%) तय की गई है।
+       बीच के स्क्रीन साइज़ के लिए @media queries में इन चौड़ाई को एडजस्ट करने की आवश्यकता हो सकती है।
+       उदाहरण के लिए, "Name" या "Actions" जैसे कॉलम को छोटी स्क्रीन पर ज़्यादा जगह दें।
+    */
+}
 #productTable tbody tr { border-bottom: 1px solid #f1f3f5; transition: background-color 0.15s ease; }
 #productTable tbody tr:last-child { border-bottom: none; }
 #productTable tbody tr:nth-child(even) { background-color: var(--table-row-even-bg); }
 #productTable tbody tr:hover { background-color: var(--table-row-hover-bg); }
-#productTable td { padding: 15px 14px; vertical-align: middle; color: var(--text-color-medium); line-height: 1.6; }
+#productTable td {
+    padding: 15px 14px;
+    vertical-align: middle;
+    color: var(--text-color-medium);
+    line-height: 1.6;
+    /*
+       td के लिए भी padding और text-align यहाँ सेट हैं।
+       @media queries में padding कम करने पर विचार कर सकते हैं।
+    */
+}
 
 /* NEW: Style for the Select column header and data cells */
 #productTable th:first-child,
@@ -119,7 +174,11 @@ body {
     cursor: pointer;
 }
 
-
+/* यहां कॉलम की चौड़ाई इंडेक्स के अनुसार सेट हैं।
+   आपको Select (1st), Name (2nd), Category (3rd) आदि के लिए
+   @media queries में इन चौड़ाई को एडजस्ट करना होगा।
+   उदाहरन: #productTable th:nth-child(2), #productTable td:nth-child(2) { width: 25%; } छोटे स्क्रीन के लिए।
+*/
 #productTable th:nth-child(5), #productTable td:nth-child(5) { text-align: right; } /* Rate - now 5th child */
 #productTable th:nth-child(6), #productTable td:nth-child(6) { text-align: center; } /* Unit - now 6th child */
 #productTable th:nth-child(7), #productTable td:nth-child(7) { text-align: center; } /* Enabled - now 7th child */
@@ -145,7 +204,15 @@ body {
 .close-btn { color: #aaa; position: absolute; top: 15px; right: 25px; font-size: 30px; font-weight: bold; cursor: pointer; line-height: 1; background: none; border: none; padding: 0; transition: color 0.2s ease; z-index: 10; }
 .close-btn:hover, .close-btn:focus { color: #333; }
 #productForm, #bulkUpdateForm { padding: 25px 30px; overflow-y: auto; flex-grow: 1; }
-.product-form-grid, .bulk-form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 25px 35px; }
+.product-form-grid, .bulk-form-grid {
+    display: grid;
+    /*
+       बीच के स्क्रीन साइज़ पर grid-template-columns में minmax() की 300px वैल्यू को एडजस्ट करने की आवश्यकता हो सकती है।
+       @media queries में 992px या 1200px के नीचे इस 300px वैल्यू को कम करने पर विचार करें (जैसे 280px या 250px)।
+    */
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 25px 35px; /* gap को भी @media queries में एडजस्ट किया जा सकता है */
+}
 #productForm .form-group, #bulkUpdateForm .form-group { margin-bottom: 22px; }
 #productForm label, #bulkUpdateForm label { display: block; font-weight: 500; margin-bottom: 8px; font-size: 0.95em; color: var(--text-color-medium); }
 #productForm label input[type="checkbox"], #bulkUpdateForm label input[type="checkbox"] { margin-right: 10px; width: 16px; height: 16px; accent-color: var(--primary-color); cursor: pointer; vertical-align: middle; }
@@ -356,14 +423,88 @@ body {
 
 
 /* --- Responsive Adjustments (Apply to both modals) --- */
+/*
+   यह @media query 1200px से नीचे की स्क्रीन के लिए है।
+   यहां टेबल कॉलम की चौड़ाई, filter-bar का gap, filter-group का min-width,
+   और product-form-grid में minmax(300px, 1fr) की 300px वैल्यू को एडजस्ट करने पर विचार करें।
+*/
 @media (max-width: 1200px) {
     .modal-content.large-modal { max-width: 95%; }
+    /*
+       सुझाव: यहां टेबल कॉलम की चौड़ाई को % में एडजस्ट करें।
+       जैसे:
+       #productTable th:nth-child(2), #productTable td:nth-child(2) { width: 20%; }
+       #productTable th:last-child, #productTable td:last-child { width: 15%; }
+    */
+
+    /* सुझाव: filter-bar और filter-group के gap और min-width को एडजस्ट करें */
+    .filter-bar {
+        gap: 15px 20px; /* उदाहरण: गैप कम किया */
+    }
+    .filter-group {
+        min-width: 160px; /* उदाहरण: min-width कम किया */
+    }
+
+    /* सुझाव: product-form-grid में minmax() की वैल्यू को कम करें */
+    .product-form-grid, .bulk-form-grid {
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); /* उदाहरण: 300px से 280px किया */
+        gap: 20px 30px; /* उदाहरण: गैप कम किया */
+    }
 }
+
+/*
+   यह @media query 992px से नीचे की स्क्रीन के लिए है।
+   यह एक महत्वपूर्ण ब्रेकपॉइंट हो सकता है जहां आपको लेआउट को
+   खास तौर पर बीच के स्क्रीन साइज़ के लिए ठीक करना होगा।
+   टेबल, filter-bar, और form-grid के स्टाइल यहां एडजस्ट करें।
+*/
 @media (max-width: 992px) {
-    .product-form-grid, .bulk-form-grid { grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 25px 25px; }
+    /*
+       सुझाव: यहां टेबल कॉलम की चौड़ाई को और ज़्यादा एडजस्ट करें।
+       अगर Table Layout fixed होने पर भी समस्या आ रही है, तो 767px वाले
+       @media block की तरह table-layout: auto; करने पर विचार कर सकते हैं,
+       लेकिन इसके लिए स्टाइलिंग में ज़्यादा बदलाव लगेंगे।
+    */
+     #productTable {
+        /* table-layout: auto;  // अगर fixed से काम नहीं चल रहा तो इसे uncomment करके टेस्ट करें */
+     }
+     #productTable th, #productTable td {
+         /* padding: 12px; // Padding कम करने पर विचार करें */
+     }
+     /*
+        कॉलम की चौड़ाई यहां एडजस्ट करें।
+        उदाहरन:
+        #productTable th:nth-child(2), #productTable td:nth-child(2) { width: 25%; }
+        #productTable th:last-child, #productTable td:last-child { width: 20%; }
+     */
+
+
+    .product-form-grid, .bulk-form-grid {
+        /*
+           992px के नीचे minmax वैल्यू को थोड़ा और कम करने पर विचार करें,
+           या gap को कम करें।
+        */
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); /* उदाहरण: 280px से 250px किया */
+        gap: 20px 20px; /* उदाहरण: horizontal gap कम किया */
+    }
     .price-tabs { gap: 5px; }
     .price-tab-btn { padding: 7px 10px; }
+
+    /* सुझाव: filter-bar और filter-group के gap और min-width को एडजस्ट करें */
+    .filter-bar {
+         gap: 15px; /* उदाहरण: गैप और कम किया */
+    }
+    .filter-group {
+         min-width: 150px; /* उदाहरण: min-width और कम किया */
+    }
 }
+
+/*
+   यह @media query 767px से नीचे की स्क्रीन के लिए है (आमतौर पर मोबाइल)।
+   आपके अनुसार यह हिस्सा सही काम कर रहा है।
+   आप यहां किए गए स्टाइल को देखकर सीख सकते हैं कि छोटे स्क्रीन के लिए
+   कैसे बड़े बदलाव किए जाते हैं (जैसे table-layout: auto; और grid-template-columns: 1fr;)।
+*/
 @media (max-width: 767px) {
     body { font-size: 14px; }
     .container { padding: 20px 15px; margin: 15px 0; }
@@ -372,7 +513,10 @@ body {
     .filter-bar { flex-direction: column; align-items: stretch; padding: 15px; gap: 15px; margin-bottom: 25px; }
     .filter-group { min-width: 100%; }
     .filter-group .button { align-self: stretch; }
-    #productTable { font-size: 0.9em; table-layout: auto; }
+    #productTable {
+       font-size: 0.9em;
+       table-layout: auto; /* यहां टेबल लेआउट auto किया गया है */
+    }
     #productTable th, #productTable td { padding: 12px 10px; }
     #productTable td:last-child { white-space: normal; }
     #productTable td:last-child .button { margin-bottom: 5px; display: flex; width: auto; }
@@ -384,7 +528,10 @@ body {
     .modal-actions-right { flex-direction: column-reverse; width: 100%; }
     .delete-button-modal { margin-right: 0; margin-bottom: 10px; width: 100%; }
     .modal-actions .button { width: 100%; padding: 12px 20px; }
-    .product-form-grid, .bulk-form-grid { grid-template-columns: 1fr; gap: 15px 0; }
+    .product-form-grid, .bulk-form-grid {
+       grid-template-columns: 1fr; /* यहां grid को 1 कॉलम कर दिया गया है */
+       gap: 15px 0;
+    }
     #productForm fieldset, #bulkUpdateForm fieldset { padding: 20px; }
     #productForm legend, #bulkUpdateForm legend { font-size: 1.1em; }
     .price-tabs { gap: 5px; }
