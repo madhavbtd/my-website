@@ -1,9 +1,11 @@
 // js/manage-online-products.js
 // Updated Version: Layout changes + Diagram Upload + Checkbox Lock/Unlock Logic + Fixes + STOCK MANAGEMENT + BULK SELECT (Step 1)
 // Added: BULK UPDATE MODAL UI CONTROL (Step 2 Frontend Logic - Part 1)
+// FIX: Resolved Syntax Error & Moved onAuthStateChanged listener from HTML
 
 // --- Firebase Function Availability Check ---
 // Expecting: window.db, window.auth, window.storage, window.collection, window.onSnapshot, etc.
+// Firebase app initialization and exposing services to window is done in manage-online-products.html
 
 // --- DOM Elements ---
 const productTableBody = document.getElementById('productTableBody');
@@ -31,7 +33,7 @@ const saveText = saveProductBtn?.querySelector('span');
 const editProductIdInput = document.getElementById('editProductId');
 const deleteProductBtn = document.getElementById('deleteProductBtn');
 
-// --- Modal Form Field References ---
+// --- Modal Form Field References (Single Product) ---
 // Column 1
 const productNameInput = document.getElementById('productName');
 const productCategoryInput = document.getElementById('productCategory');
@@ -127,7 +129,7 @@ const bulkPurchasePriceInput = document.getElementById('bulkPurchasePrice');
 const bulkMrpCheckbox = document.getElementById('bulkMrpCheckbox');
 const bulkMrpInput = document.getElementById('bulkMrp');
 const bulkGstRateCheckbox = document.getElementById('bulkGstRateCheckbox');
-const bulkGstRateInput = document.getElementById('bulkGstRateInput');
+const bulkGstRateInput = document.getElementById('bulkGstRate'); // Corrected ID
 const bulkMinOrderValueCheckbox = document.getElementById('bulkMinOrderValueCheckbox');
 const bulkMinOrderValueInput = document.getElementById('bulkMinOrderValue');
 
@@ -138,19 +140,19 @@ const bulkPrintingChargeInput = document.getElementById('bulkPrintingCharge');
 const bulkTransportChargeCheckbox = document.getElementById('bulkTransportChargeCheckbox');
 const bulkTransportChargeInput = document.getElementById('bulkTransportCharge');
 const bulkExtraMarginPercentCheckbox = document.getElementById('bulkExtraMarginPercentCheckbox');
-const bulkExtraMarginPercentInput = document.getElementById('bulkExtraMarginPercentInput');
+const bulkExtraMarginPercentInput = document.getElementById('bulkExtraMarginPercent'); // Corrected ID
 
 const bulkBrandCheckbox = document.getElementById('bulkBrandCheckbox');
 const bulkBrandInput = document.getElementById('bulkBrand');
 const bulkItemCodeCheckbox = document.getElementById('bulkItemCodeCheckbox');
 const bulkItemCodeInput = document.getElementById('bulkItemCode');
 const bulkHsnSacCodeCheckbox = document.getElementById('bulkHsnSacCodeCheckbox');
-const bulkHsnSacCodeInput = document.getElementById('bulkHsnSacCodeInput');
+const bulkHsnSacCodeInput = document.getElementById('bulkHsnSacCode'); // Corrected ID
 
 const bulkCurrentStockCheckbox = document.getElementById('bulkCurrentStockCheckbox');
 const bulkCurrentStockInput = document.getElementById('bulkCurrentStock');
 const bulkMinStockLevelCheckbox = document.getElementById('bulkMinStockLevelCheckbox');
-const bulkMinStockLevelInput = document.getElementById('bulkMinStockLevelInput');
+const bulkMinStockLevelInput = document.getElementById('bulkMinStockLevel'); // Corrected ID
 
 const bulkOptionsInput = document.getElementById('bulkOptions'); // No individual checkbox, controlled by section checkbox
 
@@ -159,7 +161,7 @@ const bulkHasExtraChargesSelect = document.getElementById('bulkHasExtraCharges')
 const bulkExtraChargeNameCheckbox = document.getElementById('bulkExtraChargeNameCheckbox');
 const bulkExtraChargeNameInput = document.getElementById('bulkExtraChargeName');
 const bulkExtraChargeAmountCheckbox = document.getElementById('bulkExtraChargeAmountCheckbox');
-const bulkExtraChargeAmountInput = document.getElementById('bulkExtraChargeAmountInput');
+const bulkExtraChargeAmountInput = document.getElementById('bulkExtraChargeAmount'); // Corrected ID
 
 // Map individual field checkboxes to their corresponding input/select elements
 const bulkFieldMap = {
@@ -249,14 +251,40 @@ function formatFirestoreTimestamp(timestamp) { if (!timestamp || typeof timestam
 function showToast(message, duration = 3500) { const existingToast = document.querySelector('.toast-notification'); if (existingToast) { existingToast.remove(); } const toast = document.createElement('div'); toast.className = 'toast-notification'; toast.textContent = message; document.body.appendChild(toast); setTimeout(() => toast.classList.add('show'), 10); setTimeout(() => { toast.classList.remove('show'); setTimeout(() => { if (toast.parentNode) { toast.parentNode.removeChild(toast); } }, 400); }, duration); console.log("Toast:", message); }
 
 // --- Initialization ---
-window.initializeOnlineProductManagement = () => {
-    console.log("Online Product Management Initializing (v_Bulk_Edit_UI_Logic)..."); // Updated version log
-    if (!window.db || !window.auth || !window.storage) { console.error("Firebase services not available."); alert("Error initializing page."); return; }
+// This function is now called from the onAuthStateChanged listener within this file
+const initializeOnlineProductManagement = () => { // Made const
+    console.log("Online Product Management Initializing (v_Bulk_Edit_UI_Logic_Fix)..."); // Updated version log
+    // Firebase services are assumed to be available globally from the HTML setup script
+    if (!window.db || !window.auth || !window.storage) { console.error("Firebase services not available on window."); alert("Error initializing page: Firebase not available."); return; }
     console.log("Firebase services confirmed.");
     listenForOnlineProducts();
     setupEventListeners();
-    console.log("Online Product Management Initialized (v_Bulk_Edit_UI_Logic)."); // Updated version log
+    console.log("Online Product Management Initialized (v_Bulk_Edit_UI_Logic_Fix)."); // Updated version log
 };
+
+// --- START: Firebase Authentication State Listener (Moved from HTML) ---
+// Ensure this runs only once and after Firebase is initialized in the HTML
+if (window.auth) { // Check if auth is available (set in HTML)
+     window.onAuthStateChanged(window.auth, (user) => {
+         const page = window.location.pathname.split('/').pop() || 'index.html';
+          if (!user && !page.toLowerCase().includes('login.html')) {
+             window.location.replace('login.html');
+         } else if (user) {
+             console.log(`User logged in on ${page}. Triggering Online Product Management initialization.`);
+             // DOMContentLoaded is handled by 'defer' script loading,
+             // Firebase services are exposed on window in the HTML script.
+             // Now we just need to ensure the function is called when the user is logged in.
+             // A slight delay can still help ensure all DOM elements are ready,
+             // although 'defer' usually handles this before script execution.
+             // A simpler call without setTimeout is often sufficient with 'defer'.
+              initializeOnlineProductManagement(); // Call initialization directly
+         }
+     });
+} else {
+     console.error("Firebase Auth not available on window. Cannot set up auth state listener.");
+}
+// --- END: Firebase Authentication State Listener ---
+
 
 // --- Setup Event Listeners ---
 function setupEventListeners() {
@@ -343,7 +371,7 @@ function setupEventListeners() {
     // --- END: NEW Bulk Update Modal Event Listeners ---
 
 
-    console.log("Online Product Management event listeners set up (v_Bulk_Edit_UI_Logic)."); // Updated version log
+    console.log("Online Product Management event listeners set up (v_Bulk_Edit_UI_Logic_Fix)."); // Updated version log
 }
 
 // NEW: Function to handle product checkbox change (already existed, but adding comment)
@@ -629,7 +657,7 @@ function resetApplyCheckboxesAndUnlock() {
 // --- Modal Handling (Add/Edit Single Product) ---
 function openAddModal() {
     if (!productModal || !productForm) return;
-    console.log("Opening modal to add new ONLINE product (v_Bulk_Edit_UI_Logic)."); // Updated version log
+    console.log("Opening modal to add new ONLINE product (v_Bulk_Edit_UI_Logic_Fix)."); // Updated version log
     // Clear any selected products when opening add/edit modal
     selectedProductIds.clear();
     updateBulkActionsUI();
@@ -669,7 +697,7 @@ function openAddModal() {
 
 async function openEditModal(firestoreId, data) {
     if (!productModal || !productForm || !data) return;
-    console.log("Opening modal to edit ONLINE product (v_Bulk_Edit_UI_Logic):", firestoreId); // Updated version log
+    console.log("Opening modal to edit ONLINE product (v_Bulk_Edit_UI_Logic_Fix):", firestoreId); // Updated version log
     // Clear any selected products when opening add/edit modal
     selectedProductIds.clear();
     updateBulkActionsUI();
@@ -773,13 +801,13 @@ function handleBulkEditClick() {
 // Function to open the bulk update modal
 function openBulkUpdateModal() {
     if (!bulkUpdateModal || !bulkUpdateForm) return;
-    console.log("Opening Bulk Update Modal.");
+    console.log(`Opening Bulk Update Modal for ${selectedProductIds.size} products.`);
 
     // Reset the form state
     bulkUpdateForm.reset();
     resetBulkFormState(); // Reset checkboxes and disabled fields
 
-    // Set the default active price tab in bulk modal
+    // Set the default active price tab in bulk modal visually
     setBulkActiveRateTab('online');
 
     bulkUpdateModal.classList.add('active'); // Show the modal
@@ -813,67 +841,102 @@ function resetBulkFormState() {
          const checkbox = document.getElementById(checkboxId);
          const fieldInput = bulkFieldMap[checkboxId];
          if (checkbox) checkbox.checked = false;
-         if (fieldInput) fieldInput.disabled = true;
+         if (fieldInput) {
+             fieldInput.disabled = true;
+             // Also clear input values when resetting form
+             if (fieldInput.type === 'checkbox' || fieldInput.tagName === 'SELECT') {
+                  fieldInput.value = ''; // Reset select/checkbox state
+             } else {
+                  fieldInput.value = ''; // Clear text/number input
+             }
+         }
      }
 
      // Reset specific inputs that don't follow the checkbox pattern directly
-     if (bulkIsEnabledSelect) bulkIsEnabledSelect.disabled = true; // Controlled by bulkUpdateEnabledCheckbox
-     if (bulkOptionsInput) bulkOptionsInput.disabled = true; // Controlled by bulkUpdateOptionsCheckbox
-     if (bulkCurrentRateInput) bulkCurrentRateInput.disabled = true; // Controlled by bulkUpdatePricingCheckbox
+     if (bulkIsEnabledSelect) {
+          bulkIsEnabledSelect.disabled = true; // Controlled by bulkUpdateEnabledCheckbox
+          bulkIsEnabledSelect.value = ''; // Clear value
+     }
+     if (bulkOptionsInput) {
+          bulkOptionsInput.disabled = true; // Controlled by bulkUpdateOptionsCheckbox
+          bulkOptionsInput.value = ''; // Clear value
+     }
+     if (bulkCurrentRateInput) {
+          bulkCurrentRateInput.disabled = true; // Controlled by bulkUpdatePricingCheckbox
+          bulkCurrentRateInput.value = ''; // Clear value
+     }
 
-     // Reset price tabs state in bulk modal
-      if (bulkPriceTabsContainer) {
-          bulkPriceTabsContainer.querySelectorAll('.price-tab-btn').forEach(btn => {
-              btn.classList.remove('active');
-          });
-      }
-      // Set default active tab visually, input is handled by section checkbox
+
+     // Reset price tabs state in bulk modal - visually set active, input is controlled by checkbox
       setBulkActiveRateTab('online');
+
+      // Hide spinner and reset button text
+      const spinner = applyBulkUpdateBtn?.querySelector('.fa-spinner');
+      const icon = applyBulkUpdateBtn?.querySelector('.fa-save');
+      const text = applyBulkUpdateBtn?.querySelector('span');
+      if (applyBulkUpdateBtn) applyBulkUpdateBtn.disabled = false;
+      if (spinner) spinner.style.display = 'none';
+      if (icon) icon.style.display = '';
+      if (text) text.textContent = 'Apply Updates';
 }
 
 
 // Handle change on section checkboxes (show/hide fields, enable/disable inputs within section)
 function handleBulkSectionCheckboxChange(checkbox) {
-    const sectionId = checkbox.dataset.section;
+    // Get the container of fields controlled by this checkbox
     const fieldsContainer = bulkSectionFieldContainers[checkbox.id];
 
     if (!fieldsContainer) {
-        console.error("Bulk fields container not found for section:", sectionId);
+        console.error("Bulk fields container not found for section checkbox:", checkbox.id);
         return;
     }
 
+    const inputs = fieldsContainer.querySelectorAll('input, select, textarea');
+
     if (checkbox.checked) {
         fieldsContainer.style.display = 'block'; // Show the fields
-        // Enable inputs within this section that have an individual checkbox, or are directly controlled
-        const inputs = fieldsContainer.querySelectorAll('input, select, textarea');
+
+        // Enable inputs within this section
         inputs.forEach(input => {
-            // Find the corresponding individual checkbox if it exists
-            let individualCheckbox = null;
-            if (input.id) {
-                 for (const cbId in bulkFieldMap) {
-                     if (bulkFieldMap[cbId] === input) {
-                         individualCheckbox = document.getElementById(cbId);
-                         break;
-                     }
+             // Find the corresponding individual checkbox if it exists for this input
+             let individualCheckbox = null;
+             // Iterate through bulkFieldMap to find the checkbox that points to this input
+             for (const cbId in bulkFieldMap) {
+                 if (bulkFieldMap[cbId] === input) {
+                      individualCheckbox = document.getElementById(cbId);
+                      break; // Found the checkbox, no need to continue loop
+                 }
+             }
+
+            // Enable the input ONLY if there is NO individual checkbox controlling it (like bulkIsEnabledSelect, bulkOptionsInput, bulkCurrentRateInput), OR if there IS an individual checkbox AND it IS checked.
+            if (!individualCheckbox) {
+                 // This input is directly controlled by the section checkbox
+                 input.disabled = false;
+            } else {
+                 // This input is controlled by its own checkbox
+                 // Its disabled state depends only on its OWN checkbox,
+                 // but the section checkbox controls its *visibility* via the container.
+                 // We don't change the individual input's disabled state here,
+                 // the handleBulkFieldCheckboxChange handles that when its own checkbox is clicked.
+                 // However, if the section is checked, inputs with checked individual checkboxes should *now* become enabled.
+                 if(individualCheckbox.checked) {
+                     input.disabled = false;
+                 } else {
+                     input.disabled = true; // Keep disabled if individual checkbox is not checked
                  }
             }
-
-            // Enable the input ONLY if there is no individual checkbox for it, OR if the individual checkbox IS checked
-             if (!individualCheckbox || individualCheckbox.checked) {
-                input.disabled = false;
-             }
         });
 
-         // Special handling for the rate input within pricing, options textarea, and enabled select
+         // Special handling for specific inputs controlled directly by section checkbox
          if (checkbox.id === 'bulkUpdatePricingCheckbox' && bulkCurrentRateInput) { bulkCurrentRateInput.disabled = false; }
          if (checkbox.id === 'bulkUpdateOptionsCheckbox' && bulkOptionsInput) { bulkOptionsInput.disabled = false; }
          if (checkbox.id === 'bulkUpdateEnabledCheckbox' && bulkIsEnabledSelect) { bulkIsEnabledSelect.disabled = false; }
 
 
-    } else {
+    } else { // Section checkbox is UNCHECKED
         fieldsContainer.style.display = 'none'; // Hide the fields
-        // Disable all inputs within this section
-        const inputs = fieldsContainer.querySelectorAll('input, select, textarea');
+
+        // Disable all inputs within this section, regardless of individual checkbox state
         inputs.forEach(input => {
              input.disabled = true;
         });
@@ -883,21 +946,27 @@ function handleBulkSectionCheckboxChange(checkbox) {
 // Handle change on individual field checkboxes (enable/disable corresponding input)
 function handleBulkFieldCheckboxChange(checkbox) {
     const fieldInput = bulkFieldMap[checkbox.id];
-    const sectionCheckboxId = checkbox.closest('fieldset')?.querySelector('input[type="checkbox"][data-section]')?.id;
-    const sectionCheckbox = sectionCheckboxId ? document.getElementById(sectionCheckboxId) : null;
 
     if (!fieldInput) {
         console.error("Corresponding input field not found for checkbox:", checkbox.id);
         return;
     }
 
-    // The input should be enabled ONLY if its individual checkbox IS checked AND its section checkbox IS checked (if it belongs to a section)
-    const isSectionChecked = sectionCheckbox ? sectionCheckbox.checked : true; // Assume true if not in a section
+    // Find the parent section checkbox
+    const sectionCheckbox = checkbox.closest('fieldset')?.querySelector('input[type="checkbox"][data-section]');
+    const isSectionChecked = sectionCheckbox ? sectionCheckbox.checked : true; // Assume true if not in a section with a data-section checkbox
 
+    // The input should be enabled ONLY if its individual checkbox IS checked AND its parent section (if applicable) IS checked
     if (checkbox.checked && isSectionChecked) {
         fieldInput.disabled = false;
     } else {
         fieldInput.disabled = true;
+         // Clear the input value when it becomes disabled
+         if (fieldInput.type === 'checkbox' || fieldInput.tagName === 'SELECT') {
+              fieldInput.value = ''; // Reset select/checkbox state
+         } else {
+              fieldInput.value = ''; // Clear text/number input
+         }
     }
 }
 
@@ -922,6 +991,16 @@ async function handleBulkUpdate(event) {
     event.preventDefault();
     console.log("Bulk Update form submitted.");
 
+    // Show loading spinner and disable button
+    const spinner = applyBulkUpdateBtn?.querySelector('.fa-spinner');
+    const icon = applyBulkUpdateBtn?.querySelector('.fa-save');
+    const text = applyBulkUpdateBtn?.querySelector('span');
+    if (applyBulkUpdateBtn) applyBulkUpdateBtn.disabled = true;
+    if (spinner) spinner.style.display = 'inline-block';
+    if (icon) icon.style.display = 'none';
+    if (text) text.textContent = 'Applying...';
+
+
     // TODO: Implement logic to collect data from the bulk update form
     // TODO: Validate the collected data
     // TODO: Prepare the update payload using selectedProductIds and the collected data
@@ -929,47 +1008,43 @@ async function handleBulkUpdate(event) {
 
     showToast("Bulk Update feature is not fully implemented yet. (Logic coming soon!)", 4000);
 
-    // Example of how you might access selected IDs:
-    // const productIdsToUpdate = Array.from(selectedProductIds);
-    // console.log("Product IDs selected for update:", productIdsToUpdate);
-
-    // Example of how you might check which fields are selected for update:
-    // if (bulkUpdatePricingCheckbox.checked) {
-    //     console.log("Update Pricing is checked.");
-    //     if (bulkCurrentRateInput.disabled === false) { // Check if input is enabled by section checkbox
-    //          console.log(`New ${currentBulkRateType} Rate:`, bulkCurrentRateInput.value);
-    //     }
-    //     if (bulkPurchasePriceCheckbox.checked && bulkPurchasePriceInput.disabled === false) {
-    //          console.log("New Purchase Price:", bulkPurchasePriceInput.value);
-    //     }
-    //     // ... check other pricing fields
-    // }
-    // if (bulkUpdateStockCheckbox.checked) {
-    //      console.log("Update Stock is checked.");
-    //      if (bulkCurrentStockCheckbox.checked && bulkCurrentStockInput.disabled === false) {
-    //          console.log("New Current Stock:", bulkCurrentStockInput.value);
-    //      }
-    //      // ... check other stock fields
-    // }
-    // ... and so on for other sections
-
      // Simulating success/failure for now
-     // const success = Math.random() > 0.5; // Simulate success 50% of the time
-     // if (success) {
-     //     showToast("Simulated: Bulk Update successful!", 3000);
-     //     closeBulkUpdateModal();
-     // } else {
-     //      showToast("Simulated: Bulk Update failed. Check console.", 5000);
-     // }
+     const success = Math.random() > 0.5; // Simulate success 50% of the time
 
-     // IMPORTANT: Re-enable the button and hide spinner in finally block or after async operation
-     // if (applyBulkUpdateBtn) applyBulkUpdateBtn.disabled = false;
-     // const spinner = applyBulkUpdateBtn?.querySelector('.fa-spinner');
-     // const icon = applyBulkUpdateBtn?.querySelector('.fa-save');
-     // const text = applyBulkUpdateBtn?.querySelector('span');
-     // if (spinner) spinner.style.display = 'none';
-     // if (icon) icon.style.display = '';
-     // if (text) text.textContent = 'Apply Updates';
+     // --- Placeholder for actual update logic ---
+     // try {
+     //     // Example: await window.performBulkUpdate(Array.from(selectedProductIds), updatePayload);
+     //     // Replace with actual call to your backend function
+     //      success = true; // Set success based on actual operation result
+     // } catch (error) {
+     //      console.error("Bulk update failed:", error);
+     //      showToast(`Bulk Update failed: ${error.message || 'Unknown error'}. Check console.`, 5000);
+     //      success = false; // Indicate failure
+     // }
+     // --- End Placeholder ---
+
+
+     setTimeout(() => { // Simulate network delay for placeholder
+         if (success) {
+             showToast("Simulated: Bulk Update successful!", 3000);
+             closeBulkUpdateModal();
+         } else {
+              // Error message already shown in catch block above if using actual logic
+              // If using simulation, show generic error
+              if (text && text.textContent === 'Applying...') { // Avoid showing multiple errors
+                   showToast("Simulated: Bulk Update failed. Check console.", 5000);
+              }
+         }
+
+          // Re-enable the button and hide spinner
+          if (applyBulkUpdateBtn) applyBulkUpdateBtn.disabled = false;
+          if (spinner) spinner.style.display = 'none';
+          if (icon) icon.style.display = '';
+          if (text) text.textContent = 'Apply Updates';
+
+     }, 1500); // Simulate delay
+
+
 }
 
 // --- END: NEW Bulk Update Modal Handling ---
@@ -977,7 +1052,8 @@ async function handleBulkUpdate(event) {
 
 // --- Image Handling (Single Edit Modal) ---
 function handleFileSelection(event) { if (!imagePreviewArea || !productImagesInput) return; const files = Array.from(event.target.files); let currentImageCount = existingImageUrls.filter(url => !imagesToDelete.includes(url)).length + selectedFiles.length; const availableSlots = 4 - currentImageCount; if (files.length > availableSlots) { alert(`Max 4 images allowed. You have ${currentImageCount}, tried to add ${files.length}.`); productImagesInput.value = null; return; } files.forEach(file => { if (file.type.startsWith('image/')) { if (selectedFiles.length + existingImageUrls.filter(url => !imagesToDelete.includes(url)).length < 4) { selectedFiles.push(file); displayImagePreview(file, null); } } }); productImagesInput.value = null; }
-function displayImagePreview(fileObject, existingUrl = null) { if (!imagePreviewArea) return; const previewId = existingUrl || `new-${fileObject.name}-${Date.now()}`; const previewWrapper = document.createElement('div'); previewWrapper.className = 'image-preview-item'; previewWrapper.setAttribute('data-preview-id', previewId); const img = document.createElement('img'); const removeBtn = document.createElement('button'); removeBtn.type = 'button'; removeBtn.className = 'remove-image-btn'; removeBtn.innerHTML = '&times;'; removeBtn.title = 'Remove image'; const progressBar = document.createElement('div'); progressBar.className = 'upload-progress-bar'; const progressFill = document.createElement('div'); progressBar.appendChild(progressFill); progressBar.style.display = 'none'; if (existingUrl) { img.src = existingUrl; img.onerror = () => { img.src = 'images/placeholder.png'; }; previewWrapper.imageUrl = existingUrl; removeBtn.onclick = () => { if (!imagesToDelete.includes(existingUrl)) imagesToDelete.push(existingUrl); previewWrapper.style.display = 'none'; }; }; } else if (fileObject) { const reader = new FileReader(); reader.onload = (e) => { img.src = e.target.result; }; reader.readAsDataURL(fileObject); previewWrapper.fileData = fileObject; removeBtn.onclick = () => { selectedFiles = selectedFiles.filter(f => f !== fileObject); previewWrapper.remove(); }; }; } previewWrapper.appendChild(img); previewWrapper.appendChild(removeBtn); previewWrapper.appendChild(progressBar); imagePreviewArea.appendChild(previewWrapper); }
+function displayImagePreview(fileObject, existingUrl = null) { if (!imagePreviewArea) return; const previewId = existingUrl || `new-${fileObject.name}-${Date.now()}`; const previewWrapper = document.createElement('div'); previewWrapper.className = 'image-preview-item'; previewWrapper.setAttribute('data-preview-id', previewId); const img = document.createElement('img'); const removeBtn = document.createElement('button'); removeBtn.type = 'button'; removeBtn.className = 'remove-image-btn'; removeBtn.innerHTML = '&times;'; removeBtn.title = 'Remove image'; const progressBar = document.createElement('div'); progressBar.className = 'upload-progress-bar'; const progressFill = document.createElement('div'); progressBar.appendChild(progressFill); progressBar.style.display = 'none'; if (existingUrl) { img.src = existingUrl; img.onerror = () => { img.src = 'images/placeholder.png'; }; previewWrapper.imageUrl = existingUrl; removeBtn.onclick = () => { if (!imagesToDelete.includes(existingUrl)) imagesToDelete.push(existingUrl); previewWrapper.style.display = 'none'; }; } // Corrected: Removed extra semicolon here
+    else if (fileObject) { const reader = new FileReader(); reader.onload = (e) => { img.src = e.target.result; }; reader.readAsDataURL(fileObject); previewWrapper.fileData = fileObject; removeBtn.onclick = () => { selectedFiles = selectedFiles.filter(f => f !== fileObject); previewWrapper.remove(); }; } previewWrapper.appendChild(img); previewWrapper.appendChild(removeBtn); previewWrapper.appendChild(progressBar); imagePreviewArea.appendChild(previewWrapper); }
 async function uploadImage(file, productId, index) { if (!window.storage || !window.storageRef || !window.uploadBytesResumable || !window.getDownloadURL) throw new Error("Storage functions missing."); const previewWrapper = [...imagePreviewArea.querySelectorAll('.image-preview-item')].find(el => el.fileData === file); const progressBar = previewWrapper?.querySelector('.upload-progress-bar'); const progressFill = progressBar?.querySelector('div'); const timestamp = Date.now(); const uniqueFileName = `${timestamp}-image${index}-${file.name.replace(/[^a-zA-Z0-9.]/g, '_')}`; const filePath = `onlineProductImages/${productId}/${uniqueFileName}`; const fileRef = window.storageRef(window.storage, filePath); if (progressBar) progressBar.style.display = 'block'; if (progressFill) progressFill.style.width = '0%'; const uploadTask = window.uploadBytesResumable(fileRef, file); return new Promise((resolve, reject) => { uploadTask.on('state_changed', (snapshot) => { const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100; if (progressFill) progressFill.style.width = `${progress}%`; if (uploadProgressInfo) uploadProgressInfo.textContent = `Uploading ${file.name}: ${progress.toFixed(0)}%`; }, (error) => { if (progressBar) progressBar.style.backgroundColor = 'red'; if (uploadProgressInfo) uploadProgressInfo.textContent = `Upload failed: ${file.name}.`; reject(error); }, async () => { if (progressBar) progressBar.style.backgroundColor = 'var(--success-color)'; if (uploadProgressInfo) uploadProgressInfo.textContent = `Getting URL...`; try { const downloadURL = await window.getDownloadURL(uploadTask.snapshot.ref); resolve(downloadURL); } catch (error) { if (progressBar) progressBar.style.backgroundColor = 'red'; if (uploadProgressInfo) uploadProgressInfo.textContent = `Failed to get URL.`; reject(error); } }); }); }
 async function deleteStoredImage(imageUrl) { if (!window.storage || !window.storageRef || !window.deleteObject) return; if (!imageUrl || !(imageUrl.startsWith('https://firebasestorage.googleapis.com/') || imageUrl.startsWith('gs://'))) return; try { const imageRef = window.storageRef(window.storage, imageUrl); await window.deleteObject(imageRef); console.log("Deleted image from Storage:", imageUrl); } catch (error) { if (error.code === 'storage/object-not-found') console.warn("Image not found:", imageUrl); else console.error("Error deleting image:", imageUrl, error); } }
 
