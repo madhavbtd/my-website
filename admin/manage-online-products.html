@@ -80,8 +80,8 @@
                  } else if (user) {
                      console.log(`User logged in on ${page}. Initializing Online Product Management.`);
                      setTimeout(() => {
-                         if (typeof initializeOnlineProductManagement === 'function') {
-                             initializeOnlineProductManagement();
+                         if (typeof window.initializeOnlineProductManagement === 'function') {
+                             window.initializeOnlineProductManagement();
                              console.log("Called initializeOnlineProductManagement.");
                          } else {
                              console.error("initializeOnlineProductManagement function not found!");
