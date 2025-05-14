@@ -1,5 +1,6 @@
 // js/manage-online-products.js
 // Updated Version: Layout changes + Diagram Upload + Checkbox Lock/Unlock Logic + Fixes + STOCK MANAGEMENT + BULK SELECT (Step 1 & 2 - Bulk Edit Modal UI & Frontend Data Prep)
+// FIX: Corrected typo (5ost00 -> 5000)
 
 // --- Firebase Function Availability Check ---
 // Expecting: window.db, window.auth, window.storage, window.collection, window.onSnapshot, etc.
@@ -150,7 +151,7 @@ let selectedProductIds = new Set();
 
 // --- Helper Functions ---
 function formatCurrency(amount) { const num = Number(amount); return isNaN(num) || num === null || num === undefined ? '-' : `₹ ${num.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`; }
-function escapeHtml(unsafe) { if (typeof unsafe !== 'string') { unsafe = String(unsafe || ''); } return unsafe.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;"); }
+function escapeHtml(unsafe) { if (typeof unsafe !== 'string') { unsafe = String(unsafe || ''); } return unsafe.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;'); }
 function parseNumericInput(value, allowZero = true, isInteger = false) { // Added isInteger for stock
     if (value === undefined || value === null) return null;
     const trimmedValue = String(value).trim();
@@ -166,7 +167,7 @@ function parseNumericInput(value, allowZero = true, isInteger = false) { // Adde
     }
     return num;
 }
-function formatFirestoreTimestamp(timestamp) { if (!timestamp || typeof timestamp.toDate !== 'function') { return '-'; } try { const date = timestamp.toDate(); const options = { day: '2-digit', month: 'short', year: 'numeric' }; return date.toLocaleDateString('en-GB', options).replace(/ /g, ' '); } catch (e) { console.error("Error formatting timestamp:", e); return '-'; } } // Changed format to use space
+function formatFirestoreTimestamp(timestamp) { if (!timestamp || typeof timestamp.toDate !== 'function') { return '-'; } try { const date = timestamp.toDate(); const options = { day: '2-digit', month: 'short', year: 'numeric' }; return date.toLocaleDateString('en-GB', options).replace(/ /g, ' '); } catch (e) { console.error("Error formatting timestamp:", e); return '-'; } }
 
 
 // --- Toast Notification ---
@@ -708,7 +709,7 @@ async function handleSaveProduct(event) {
     }
     if (isNaN(minStockLevel) && productMinStockLevelInput?.value.trim() !== '') { // Check if NaN but not empty
         showToast("Please enter a valid whole number for Minimum Stock Level.", 5000);
-        if (saveProductBtn) saveProductBtn.disabled = false; if (saveSpinner) saveSpinner.style.display = 'none'; if (saveIcon) saveIcon.style.display = ''; if (saveText) saveText.textContent = isEditing ? 'Update Product' : 'Save Product';
+        if (saveProductBtn) saveProductBtn.disabled = false; if (saveSpinner) saveSpinner.style.display = 'none'; if (saveIcon) saveIcon.style.display = ''; if (saveText) textSpan.textContent = isEditing ? 'Update Product' : 'Save Product';
         return;
     }
     // END: Get Stock Data
@@ -851,7 +852,7 @@ function handleBulkEditClick() {
     if (bulkEditModal && bulkEditForm) {
         // Reset the form when opening
         bulkEditForm.reset();
-        // Ensure conditional sections are hidden initially based on checkboxes
+        // Ensure conditional sections are hidden initially based on checkboxes state after reset
         toggleBulkExtraCharges();
 
         // TODO (Step 3): Add logic here to potentially show/hide wedding/sqft fields
@@ -897,285 +898,8 @@ async function handleSaveBulkEdit() {
     if (icon) icon.style.display = 'none';
     if (textSpan) textSpan.textContent = 'Updating...';
 
-    const updatePayload = {};
-    const pricingPayload = {};
-    const stockPayload = {};
-    const extraChargePayload = {};
-    const internalPayload = {};
-    const weddingPayload = {};
-    let optionsPayload = undefined; // Use undefined initially to signify 'not set'
-    let updateCount = 0; // Track how many fields the user intends to update
 
-    // --- Collect data from Bulk Edit Form ---
-
-    // Basic Properties
-    // For boolean checkboxes like isEnabled, check if the user interacted.
-    // A simple way for Step 2: If the checkbox is checked, set to true. If unchecked, set to false.
-    // If we needed a 'no change' state, it would be more complex (e.g., a third option or helper checkbox).
-    // For now, assuming checked means enabled=true, unchecked means enabled=false IF user interacted.
-    // Let's refine this: If the user *checks* the box, set enabled=true. If they *uncheck* it, set enabled=false.
-    // How to detect if the user *interacted* vs. it being the default unchecked state?
-    // This is tricky with standard checkboxes. Let's assume for now: if it's checked, set to true. If it's unchecked, do nothing regarding 'isEnabled'.
-    // A better UI would be a dropdown (Enable, Disable, No Change). For now, let's keep it simple based on the current HTML.
-    // Simplest for Step 2: If the checkbox is CHECKED, set isEnabled: true. If UNCHECKED, do NOT set isEnabled (meaning no change).
-    // This doesn't allow bulk disabling. Let's change the HTML approach later if needed, or add a separate "Disable" checkbox.
-    // Okay, let's adjust the logic: Checkbox IS present. If checked, set to true. If unchecked, set to false. If user didn't touch it, how to tell?
-    // A standard checkbox doesn't send a value if unchecked unless it has a hidden counterpart.
-    // Let's make the simple assumption for Step 2: If the checkbox is checked when saved, set isEnabled to TRUE. If it's unchecked, we will NOT include `isEnabled` in the update payload, meaning no change. This means we cannot *bulk disable* easily with this UI. We can refine this in Step 3 or later.
-    // Refined logic for Step 2 (simplification): If bulkIsEnabledCheckbox.checked is true, include `isEnabled: true` in the payload. If false, do not include `isEnabled`. This only allows bulk *enabling*. Let's fix this now for bulk enable/disable. We need a way to know if the user wants to SET the value vs leave it alone. A dropdown or radio buttons would be better. With a single checkbox, detecting "no change" vs "set to false" is hard.
-    // Okay, let's use a common pattern: a checkbox next to the field to indicate "apply this field". Or, just check if the field has a value for number/text inputs. For checkboxes, it's state.
-    // Let's assume: if the checkbox is CHECKED, set isEnabled = TRUE. If it's UNCHECKED, set isEnabled = FALSE. The user *must* check/uncheck if they want to change this property. If they leave it in its default (unchecked) state without interacting, it won't be updated. This seems like a reasonable interpretation given the current HTML.
-
-    // Let's try a more robust approach for checkboxes: check if its value has changed from its default state OR add a hidden field. Simpler: require the user to explicitly choose "Enable" or "Disable" if they want to change `isEnabled` in bulk. Let's add a Select dropdown in the HTML instead of a checkbox for `isEnabled` in the bulk form in the next HTML update (Step 3 for HTML, concurrent with Step 3 JS).
-    // For now, let's use the simple checkbox approach for Step 2 JS, acknowledging its limitation for 'no change' vs 'set to false'. We'll refine.
-
-    // Let's use a more standard pattern for bulk forms: only include fields in the payload if the user has entered a value (for text/number) or if there's a clear indicator they want to change a boolean. The simplest indicator for a boolean with a single checkbox is: if it's checked, they want to set it to true. If it's unchecked, and they didn't touch it, no change. If they explicitly unchecked it after it was checked by default (not applicable here), it means set to false. This is getting complicated.
-
-    // Back to basics for Step 2 JS: Read the form fields. If a number/text input has a value (after parsing, excluding NaN/null), include it. If a checkbox is CHECKED, include `fieldName: true`. If a checkbox is UNCHECKED, include `fieldName: false`. This allows setting both true and false. If the user leaves a field blank (number/text) or a checkbox in its default state *without interacting*, it won't be included in the payload. This requires the user to *explicitly* uncheck a box if they want to set it to false.
-
-    // Let's implement this logic for Step 2 payload creation:
-    if (bulkIsEnabledCheckbox) { // If the checkbox exists in the form
-         // Include isEnabled if the checkbox is checked OR unchecked. How to detect 'unchecked'?
-         // A hidden field would be needed, or a different UI element (radio, select).
-         // For now, let's stick to: If the checkbox is checked, set isEnabled: true.
-         // If we want to support bulk *disabling*, we need a different UI or mechanism.
-         // Let's simplify for Step 2: Only handle enabling. Bulk disabling can be a separate action or a refinement.
-         if (bulkIsEnabledCheckbox.checked) {
-              updatePayload.isEnabled = true;
-              updateCount++;
-         }
-         // If unchecked, we don't add it to the payload, meaning no change.
-    }
-
-
-    // Stock Management
-    const currentStock = parseNumericInput(bulkCurrentStockInput?.value, true, true);
-    if (currentStock !== null && !isNaN(currentStock)) {
-        stockPayload.currentStock = currentStock;
-        updateCount++;
-    }
-    const minStockLevel = parseNumericInput(bulkMinStockLevelInput?.value, true, true);
-    if (minStockLevel !== null && !isNaN(minStockLevel)) {
-        stockPayload.minStockLevel = minStockLevel;
-        updateCount++;
-    }
-    if (Object.keys(stockPayload).length > 0) {
-        updatePayload.stock = stockPayload;
-    }
-
-    // Other Options (JSON)
-    const optionsString = bulkOptionsInput?.value.trim();
-    if (optionsString !== '') { // If the user entered *something* in the options textarea
-        try {
-             const parsedOptions = JSON.parse(optionsString);
-             if (!Array.isArray(parsedOptions)) throw new Error("Options must be an array.");
-             updatePayload.options = parsedOptions;
-             updateCount++;
-         } catch (err) {
-             showToast(`Error: Invalid JSON in Bulk Options field. ${err.message}`, 5000);
-             // Re-enable save button and hide spinner before returning
-             if (spinner) spinner.style.display = 'none';
-             if (icon) icon.style.display = '';
-             if (textSpan) textSpan.textContent = 'Update Selected Products';
-             if (saveBulkEditBtn) saveBulkEditBtn.disabled = false;
-             return; // Stop the process if JSON is invalid
-         }
-    }
-    // If optionsString is empty, we don't add `options` to payload, meaning no change.
-
-
-    // Price Details Subset
-    const purchasePrice = parseNumericInput(bulkPurchasePriceInput?.value);
-    if (purchasePrice !== null && !isNaN(purchasePrice)) {
-        pricingPayload.purchasePrice = purchasePrice;
-        updateCount++;
-    }
-     const gstRate = parseNumericInput(bulkGstRateInput?.value);
-    if (gstRate !== null && !isNaN(gstRate)) {
-        pricingPayload.gstRate = gstRate;
-        updateCount++;
-    }
-    const mrp = parseNumericInput(bulkMrpInput?.value);
-    if (mrp !== null && !isNaN(mrp)) {
-        pricingPayload.mrp = mrp;
-        updateCount++;
-    }
-     // Min Order Value - Only relevant for Sq Feet.
-     // For bulk, we can just include it if a value is entered. The update logic (Step 3)
-     // should ideally check the product's unit before applying this specific field.
-     const minOrderValue = parseNumericInput(bulkMinOrderValueInput?.value);
-     if (minOrderValue !== null && !isNaN(minOrderValue)) {
-         pricingPayload.minimumOrderValue = minOrderValue;
-         updateCount++;
-     }
-    // Note: Main rates are excluded as per user request.
-
-
-    // Wedding Card Charges
-    // These fields should ideally only apply to 'Wedding Card' category products.
-    // For bulk, we collect the value if entered, and the update logic (Step 3)
-    // will check the product's category.
-    const designCharge = parseNumericInput(bulkDesignChargeInput?.value);
-     if (designCharge !== null && !isNaN(designCharge)) {
-        weddingPayload.designCharge = designCharge;
-        updateCount++;
-    }
-    const printingCharge = parseNumericInput(bulkPrintingChargeInput?.value);
-    if (printingCharge !== null && !isNaN(printingCharge)) {
-        weddingPayload.printingChargeBase = printingCharge;
-        updateCount++;
-    }
-    const transportCharge = parseNumericInput(bulkTransportChargeInput?.value);
-    if (transportCharge !== null && !isNaN(transportCharge)) {
-        weddingPayload.transportCharge = transportCharge;
-        updateCount++;
-    }
-    const extraMarginPercent = parseNumericInput(bulkExtraMarginPercentInput?.value);
-    if (extraMarginPercent !== null && !isNaN(extraMarginPercent)) {
-        weddingPayload.extraMarginPercent = extraMarginPercent;
-        updateCount++;
-    }
-    // We will merge weddingPayload into pricingPayload later if not empty.
-
-
-    // Optional Extra Charges
-    if (bulkHasExtraChargesCheckbox) {
-         // If checked: Set hasExtraCharges to true. Include name/amount if entered.
-         // If unchecked: Set hasExtraCharges to false. Ignore name/amount.
-         // If left in default state (unchecked) without interaction: No change.
-         // This is still tricky. Let's refine the UI later.
-         // Simplification for Step 2: If the checkbox is CHECKED, set hasExtraCharges: true. If UNCHECKED, set hasExtraCharges: false.
-         // This means the user must explicitly check/uncheck to change this.
-         updatePayload.pricing = updatePayload.pricing || {}; // Ensure pricing object exists
-         updatePayload.pricing.hasExtraCharges = bulkHasExtraChargesCheckbox.checked; // Set the boolean directly
-         updateCount++; // Count this as an intended update
-
-
-         if (bulkHasExtraChargesCheckbox.checked) {
-             const extraChargeName = bulkExtraChargeNameInput?.value.trim();
-             const extraChargeAmount = parseNumericInput(bulkExtraChargeAmountInput?.value);
-
-             if (extraChargeName !== '' || (extraChargeAmount !== null && !isNaN(extraChargeAmount))) {
-                  // If the user enabled extra charges AND provided either name or amount
-                 extraChargePayload.name = extraChargeName || 'Additional Charge'; // Use default name if none provided
-                 extraChargePayload.amount = (extraChargeAmount !== null && !isNaN(extraChargeAmount)) ? extraChargeAmount : 0; // Use 0 if amount is invalid/empty
-                 updatePayload.pricing.extraCharge = extraChargePayload;
-                 // updateCount already incremented for hasExtraCharges, no need to increment again for name/amount
-             } else if (bulkExtraChargesSection.style.display === 'block') {
-                 // If the section was visible but fields are empty, and checkbox is checked
-                 // Maybe set to default { name: 'Additional Charge', amount: 0 }? Or rely on backend?
-                 // Let's default name if empty, amount to 0 if empty.
-                 extraChargePayload.name = extraChargeName || 'Additional Charge';
-                 extraChargePayload.amount = (extraChargeAmount !== null && !isNaN(extraChargeAmount)) ? extraChargeAmount : 0;
-                 updatePayload.pricing.extraCharge = extraChargePayload;
-             }
-         } else {
-              // If bulkHasExtraChargesCheckbox is UNCHECKED, explicitly remove extraCharge details
-             updatePayload.pricing.extraCharge = null; // Set to null to remove from Firestore
-         }
-    }
-
-
-     // Internal Details
-    const brand = bulkBrandInput?.value.trim();
-    if (brand !== '') {
-        internalPayload.brand = brand;
-        updateCount++;
-    }
-    const itemCode = bulkItemCodeInput?.value.trim();
-     if (itemCode !== '') {
-        internalPayload.itemCode = itemCode;
-        updateCount++;
-    }
-    const hsnSacCode = bulkHsnSacCodeInput?.value.trim();
-     if (hsnSacCode !== '') {
-        internalPayload.hsnSacCode = hsnSacCode;
-        updateCount++;
-    }
-    if (Object.keys(internalPayload).length > 0) {
-         // Merge internal payload into updatePayload root level
-         Object.assign(updatePayload, internalPayload);
-     }
-
-
-    // Merge pricing and wedding payloads
-    if (Object.keys(pricingPayload).length > 0 || Object.keys(weddingPayload).length > 0) {
-         updatePayload.pricing = updatePayload.pricing || {}; // Ensure pricing object exists
-         Object.assign(updatePayload.pricing, pricingPayload, weddingPayload);
-         // If after merging, pricing object is empty (except maybe hasExtraCharges), maybe delete it?
-         // Let's decide on cleaning empty objects/fields in Step 3 (backend logic).
-    }
-
-    // If no fields were intended for update, show a message
-    // Note: The current updateCount logic is flawed for checkboxes.
-    // Let's refine updateCount: It should count fields in the final `updatePayload` that are not empty/null/undefined (except explicit null for deletion).
-
-     // Clean up payload: remove fields that are empty strings or null (unless explicitly setting to null)
-     const finalCleanPayload = {};
-     for (const key in updatePayload) {
-         if (updatePayload.hasOwnProperty(key)) {
-             if (typeof updatePayload[key] === 'object' && updatePayload[key] !== null) {
-                 // Handle nested objects (like pricing, stock) - only include if they have actual data
-                 const nestedPayload = {};
-                  let nestedHasData = false;
-                 for (const nestedKey in updatePayload[key]) {
-                      if (updatePayload[key].hasOwnProperty(nestedKey)) {
-                          // Exclude empty strings, null, undefined from nested objects unless it's `hasExtraCharges: false` or `extraCharge: null`
-                          const value = updatePayload[key][nestedKey];
-                          if (value !== '' && value !== null && value !== undefined) {
-                              nestedPayload[nestedKey] = value;
-                              nestedHasData = true;
-                          } else if (nestedKey === 'hasExtraCharges' && value === false) {
-                              // Explicitly include hasExtraCharges: false
-                               nestedPayload[nestedKey] = value;
-                               nestedHasData = true;
-                          } else if (nestedKey === 'extraCharge' && value === null) {
-                              // Explicitly include extraCharge: null for deletion
-                              nestedPayload[nestedKey] = value;
-                              nestedHasData = true;
-                          }
-                      }
-                 }
-                 if (nestedHasData) {
-                     finalCleanPayload[key] = nestedPayload;
-                 }
-             } else {
-                 // Handle top-level fields
-                 const value = updatePayload[key];
-                  if (value !== '' && value !== null && value !== undefined) {
-                     finalCleanPayload[key] = value;
-                 } else if (key === 'isEnabled' && value === false) {
-                      // Explicitly include isEnabled: false (based on checkbox logic simplification)
-                     finalCleanPayload[key] = value;
-                 }
-             }
-         }
-     }
-
-     // Re-calculate updateCount based on the cleaned payload
-     updateCount = Object.keys(finalCleanPayload).length;
-     if (finalCleanPayload.pricing) updateCount += Object.keys(finalCleanPayload.pricing).length;
-     if (finalCleanPayload.stock) updateCount += Object.keys(finalCleanPayload.stock).length;
-     // Need a better way to count updates including nested fields and arrays (options)
-
-     // Simple check for empty payload
-     const isPayloadEmpty = Object.keys(finalCleanPayload).length === 0;
-      if (finalCleanPayload.pricing && Object.keys(finalCleanPayload.pricing).length === 0 && !finalCleanPayload.pricing.hasExtraCharges && !finalCleanPayload.pricing.extraCharge) delete finalCleanPayload.pricing; // Clean up empty pricing if no actual pricing fields or extra charges
-      if (finalCleanPayload.stock && Object.keys(finalCleanPayload.stock).length === 0) delete finalCleanPayload.stock; // Clean up empty stock
-
-      // Re-check if payload is empty after cleaning
-      const finalFinalPayloadCheck = Object.keys(finalCleanPayload).length === 0;
-      if (!finalFinalPayloadCheck && finalCleanPayload.pricing && Object.keys(finalCleanPayload.pricing).length === 0) {
-           // If only pricing exists but pricing itself is empty after cleaning, it's still empty
-           const hasNonPricingKeys = Object.keys(finalCleanPayload).some(key => key !== 'pricing');
-           if (!hasNonPricingKeys) { // Only pricing key exists, and pricing is empty
-                // This check is getting complicated. Let's trust the backend logic in Step 3 to handle empty/null fields robustly.
-                // For Step 2, we just prepare the raw payload based on entered values.
-           }
-      }
-
-
-    // Let's revert to simpler payload creation for Step 2: include fields if they have a non-empty value, include checkboxes based on state.
+    // Let's use a simpler payload creation for Step 2: include fields if they have a non-empty value, include checkboxes based on state.
 
     const simplifiedUpdatePayload = {};
     const simplifiedPricingPayload = {};
@@ -1183,18 +907,17 @@ async function handleSaveBulkEdit() {
     const simplifiedExtraChargePayload = {};
     const simplifiedInternalPayload = {};
     const simplifiedWeddingPayload = {};
-    let simplifiedOptionsPayload = undefined;
 
 
     // Basic Properties
-    // If checked, set to true. If unchecked, set to false. If user didn't touch (how to tell?), no change.
-    // Let's use the simple, potentially flawed, checkbox logic for Step 2:
-    // If the checkbox is CHECKED, include isEnabled: true.
-    // If the checkbox is UNCHECKED, include isEnabled: false.
-    // If we need a 'no change' state, we need a different UI (dropdown).
-    // For now, assume the user uses the checkbox to SET the state.
+    // If checked, set to true. If unchecked, set to false.
     if (bulkIsEnabledCheckbox) {
-        simplifiedUpdatePayload.isEnabled = bulkIsEnabledCheckbox.checked;
+        // Check if the checkbox is checked or unchecked to determine if user wants to set the value
+        // If checked, set to true. If unchecked, set to false.
+        // How to detect if the user *explicitly* set it to unchecked vs the default state?
+        // With a single checkbox, the simplest logic is: if it's currently checked, set to true. If it's currently unchecked, set to false.
+        // This assumes the user will interact with the checkbox if they want to change the 'isEnabled' state in bulk.
+         simplifiedUpdatePayload.isEnabled = bulkIsEnabledCheckbox.checked;
     }
 
 
@@ -1204,7 +927,7 @@ async function handleSaveBulkEdit() {
         if (!isNaN(simplifiedCurrentStock)) {
              simplifiedStockPayload.currentStock = simplifiedCurrentStock;
         } else {
-             showToast("Please enter a valid whole number for Bulk Current Stock.", 5ost00);
+             showToast("Please enter a valid whole number for Bulk Current Stock.", 5000); // Corrected typo here
              if (spinner) spinner.style.display = 'none'; if (icon) icon.style.display = ''; if (textSpan) textSpan.textContent = 'Update Selected Products'; if (saveBulkEditBtn) saveBulkEditBtn.disabled = false;
              return; // Stop if invalid
         }
@@ -1214,7 +937,7 @@ async function handleSaveBulkEdit() {
         if (!isNaN(simplifiedMinStockLevel)) {
              simplifiedStockPayload.minStockLevel = simplifiedMinStockLevel;
         } else {
-              showToast("Please enter a valid whole number for Bulk Minimum Stock Level.", 5000);
+              showToast("Please enter a valid whole number for Bulk Minimum Stock Level.", 5000); // Corrected typo here
               if (spinner) spinner.style.display = 'none'; if (icon) icon.style.display = ''; if (textSpan) textSpan.textContent = 'Update Selected Products'; if (saveBulkEditBtn) saveBulkEditBtn.disabled = false;
               return; // Stop if invalid
         }
@@ -1333,30 +1056,27 @@ async function handleSaveBulkEdit() {
           Object.assign(simplifiedUpdatePayload.pricing, simplifiedPricingPayload, simplifiedWeddingPayload);
      }
 
-    // Add updatedAt timestamp
-    if (Object.keys(simplifiedUpdatePayload).length > 0) {
+    // Add updatedAt timestamp if there are any updates
+    if (Object.keys(simplifiedUpdatePayload).length > 0 || (simplifiedUpdatePayload.pricing && Object.keys(simplifiedUpdatePayload.pricing).length > 0) || (simplifiedUpdatePayload.stock && Object.keys(simplifiedUpdatePayload.stock).length > 0)) {
+        // Refined check: include timestamp if any top-level, pricing, or stock fields are being updated.
          simplifiedUpdatePayload.updatedAt = window.serverTimestamp();
     }
 
 
-    // Check if the final payload is empty (no fields were filled)
-    const isSimplifiedPayloadEffectivelyEmpty = Object.keys(simplifiedUpdatePayload).length === 0;
-     // Need to check nested objects too
-     let hasMeaningfulUpdates = false;
-     for(const key in simplifiedUpdatePayload) {
-          if (simplifiedUpdatePayload.hasOwnProperty(key)) {
-               if (typeof simplifiedUpdatePayload[key] === 'object' && simplifiedUpdatePayload[key] !== null) {
-                    if (Object.keys(simplifiedUpdatePayload[key]).length > 0) {
-                         hasMeaningfulUpdates = true;
-                         break;
-                    }
-               } else {
-                    // Check for boolean fields explicitly if needed, otherwise any non-object value counts
-                    hasMeaningfulUpdates = true;
-                    break;
-               }
-          }
+    // Check if the final payload has any updates after considering nested objects
+    let hasMeaningfulUpdates = false;
+     if (Object.keys(simplifiedUpdatePayload).length > 0) {
+          hasMeaningfulUpdates = true;
      }
+     // Further check nested objects if they exist but are empty in the first check
+     if (!hasMeaningfulUpdates && simplifiedUpdatePayload.pricing && Object.keys(simplifiedUpdatePayload.pricing).length > 0) hasMeaningfulUpdates = true;
+     if (!hasMeaningfulUpdates && simplifiedUpdatePayload.stock && Object.keys(simplifiedUpdatePayload.stock).length > 0) hasMeaningfulUpdates = true;
+     // Check if options array is present and not empty
+     if (!hasMeaningfulUpdates && simplifiedUpdatePayload.options && Array.isArray(simplifiedUpdatePayload.options) && simplifiedUpdatePayload.options.length > 0) hasMeaningfulUpdates = true;
+      // Check if isEnabled or hasExtraCharges were explicitly set
+     if (!hasMeaningfulUpdates && simplifiedUpdatePayload.hasOwnProperty('isEnabled')) hasMeaningfulUpdates = true;
+     if (!hasMeaningfulUpdates && simplifiedUpdatePayload.pricing && simplifiedUpdatePayload.pricing.hasOwnProperty('hasExtraCharges')) hasMeaningfulUpdates = true;
+     if (!hasMeaningfulUpdates && simplifiedUpdatePayload.pricing && simplifiedUpdatePayload.pricing.hasOwnProperty('extraCharge') && simplifiedUpdatePayload.pricing.extraCharge === null) hasMeaningfulUpdates = true; // Explicitly removing extra charge
 
 
     if (!hasMeaningfulUpdates) {
