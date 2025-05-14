@@ -1467,4 +1467,3 @@ async function handleSaveProduct(event) {
             productData.stock.minStockLevel = null; // Or delete productData.stock.minStockLevel;
         }
     }
-    // If stock object is empty and you prefer not
