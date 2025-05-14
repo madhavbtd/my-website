@@ -1,7 +1,7 @@
 // js/manage-online-products.js
 // Updated Version: Layout changes + Diagram Upload + Checkbox Lock/Unlock Logic + Fixes + STOCK MANAGEMENT + BULK SELECT (Step 1 & 2 - Bulk Edit Modal UI & Frontend Data Prep)
 // FIX: Corrected typo (bulkGk_rate -> bulkGstRate), hsnSacCode ID, and extra charge amount input value access
-// FIX: Re-checked syntax around potential error line 156 based on user reports
+// FIX: Re-checked syntax around potential error line 157 based on user reports - Please double-check this section in your editor!
 
 // --- Firebase Function Availability Check ---
 // Expecting: window.db, window.auth, window.storage, window.collection, window.onSnapshot, etc.
@@ -1008,13 +1008,12 @@ async function handleSaveBulkEdit() {
 
           if (bulkHasExtraChargesCheckbox.checked) {
               const simplifiedExtraChargeName = bulkExtraChargeNameInput?.value.trim();
-              // FIX: Corrected .value.value.trim() to .value.trim() - This was the likely cause of the repeated error near this line
               const simplifiedExtraChargeAmount = parseNumericInput(bulkExtraChargeAmountInput?.value.trim());
 
               // Include name/amount if user typed something OR if it should default
-              if (simplifiedExtraChargeName !== '' || bulkExtraChargeAmountInput?.value.trim() !== '') {
+              // >>>>>>>> Please check syntax VERY CAREFULLY around this line in your editor <<<<<<<<<<
+              if (simplifiedExtraChargeName !== '' || (bulkExtraChargeAmountInput?.value.trim() !== '' && !isNaN(simplifiedExtraChargeAmount))) { // Added NaN check here
                    simplifiedExtraChargePayload.name = simplifiedExtraChargeName || 'Additional Charge';
-                   // Corrected: Use simplifiedExtraChargeAmount directly as it's already parsed
                    simplifiedExtraChargePayload.amount = (simplifiedExtraChargeAmount !== null && !isNaN(simplifiedExtraChargeAmount)) ? simplifiedExtraChargeAmount : 0;
                    simplifiedPricingPayload.extraCharge = simplifiedExtraChargePayload;
               } else if (bulkExtraChargesSection.style.display === 'block') {
