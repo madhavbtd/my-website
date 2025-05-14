@@ -115,7 +115,7 @@
  const selectAllProductsCheckbox = document.getElementById('selectAllProducts');
  const openBatchUpdateModalBtn = document.getElementById('openBatchUpdateModalBtn');
  const batchUpdateModal = document.getElementById('batchUpdateModal');
- const closeBatchUpdateModalBtn = documentgetElementById('closeBatchUpdateModal');
+ const closeBatchUpdateModalBtn = document.getElementById('closeBatchUpdateModal');
  const cancelBatchUpdateBtn = document.getElementById('cancelBatchUpdateBtn');
  const saveBatchUpdateBtn = document.getElementById('saveBatchUpdateBtn');
  const batchUpdateForm = document.getElementById('batchUpdateForm');
@@ -687,20 +687,4 @@
      }
  }
  
- function lockPricingFields() {
-     if (!currentRateInput || !applyRateCheckboxesContainer || !priceTabsContainer) return;
-     isRateLocked = true;
-     currentRateInput.disabled = true;
-     applyRateCheckboxesContainer.querySelectorAll('input[name="applyRateTo"]').forEach(cb => cb.disabled = true);
-     priceTabsContainer.querySelectorAll('.price-tab-btn').forEach(btn => {
-         if (btn.dataset.rateType !== currentActiveRateType) {
-             btn.disabled = true;
-         }
-     });
- }
- 
- function unlockPricingFields() {
-     if (!currentRateInput || !applyRateCheckboxesContainer || !priceTabsContainer) return;
-     isRateLocked = false;
-     currentRateInput.disabled = false;
-     applyRateCheckboxesContainer.querySelectorAll('input[name="applyRate
+ function lockPricingFields()
