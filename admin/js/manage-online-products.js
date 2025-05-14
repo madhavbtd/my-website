@@ -5,6 +5,7 @@
 // Added: FIREBASE WRITEBATCH IMPLEMENTATION FOR BULK UPDATE (Step 3 Firebase/Backend Logic)
 // FIX: Addressed problems with bulk update incorrectly setting other fields to 0 & single edit rate resetting
 // FIX: Resolved FirebaseError: Unsupported field value: undefined (found in field diagramUrl)
+// FIX: Addressed specific issue with Wedding Card Charges not updating in bulk (Added debug logs)
 
 // --- Firebase Function Availability Check ---
 // Expecting: window.db, window.storage, window.collection, window.onSnapshot, etc. from HTML setup script
@@ -261,7 +262,7 @@ function showToast(message, duration = 3500) { const existingToast = document.qu
 // --- Initialization ---
 // This function is now called from the onAuthStateChanged listener within this file
 const initializeOnlineProductManagement = () => { // Made const
-    console.log("Online Product Management Initializing (v_Bulk_WriteBatch_Fix6)..."); // Updated version log
+    console.log("Online Product Management Initializing (v_Bulk_WriteBatch_Fix8)..."); // Updated version log
     // Firebase services are assumed to be available globally from the HTML setup script
     if (!window.db || !window.storage || !window.collection || !window.onSnapshot || !window.orderBy || !getAuth || !onAuthStateChanged || !window.writeBatch) { // Check for imported auth functions and writeBatch
          console.error("Required Firebase functions not available.");
@@ -274,7 +275,7 @@ const initializeOnlineProductManagement = () => { // Made const
     console.log("Firebase services, Auth functions, and WriteBatch confirmed."); // Updated log
     listenForOnlineProducts();
     setupEventListeners();
-    console.log("Online Product Management Initialized (v_Bulk_WriteBatch_Fix6)."); // Updated version log
+    console.log("Online Product Management Initialized (v_Bulk_WriteBatch_Fix8)."); // Updated version log
 };
 
 // --- START: Firebase Authentication State Listener (Handled within this file) ---
@@ -388,7 +389,7 @@ function setupEventListeners() {
     // --- END: NEW Bulk Update Modal Event Listeners ---
 
 
-    console.log("Online Product Management event listeners set up (v_Bulk_WriteBatch_Fix5)."); // Updated version log
+    console.log("Online Product Management event listeners set up (v_Bulk_WriteBatch_Fix7)."); // Updated version log
 }
 
 // NEW: Function to handle product checkbox change (already existed, but adding comment)
@@ -674,7 +675,7 @@ function resetApplyCheckboxesAndUnlock() {
 // --- Modal Handling (Add/Edit Single Product) ---
 function openAddModal() {
     if (!productModal || !productForm) return;
-    console.log("Opening modal to add new ONLINE product (v_Bulk_WriteBatch_Fix6)."); // Updated version log
+    console.log("Opening modal to add new ONLINE product (v_Bulk_WriteBatch_Fix7)..."); // Updated version log
     // Clear any selected products when opening add/edit modal
     selectedProductIds.clear();
     updateBulkActionsUI();
@@ -714,7 +715,7 @@ function openAddModal() {
 
 async function openEditModal(firestoreId, data) {
     if (!productModal || !productForm || !data) return;
-    console.log("Opening modal to edit ONLINE product (v_Bulk_WriteBatch_Fix6):", firestoreId); // Updated version log
+    console.log("Opening modal to edit ONLINE product (v_Bulk_WriteBatch_Fix7):", firestoreId); // Updated version log
     console.log("Original product data for edit:", data); // Added log for debugging Problem 2
 
     // Clear any selected products when opening add/edit modal
@@ -1054,14 +1055,16 @@ async function handleBulkUpdate(event) {
         let validationErrors = []; // Array to collect validation errors
 
         // --- 3. Collect and Validate Data ---
+        console.log("Bulk Update: Starting data collection and validation..."); // Debug log
 
         // Basic Details Section (isEnabled status)
         if (bulkUpdateEnabledCheckbox?.checked) {
+            console.log("Bulk Update: 'Show on Website' checkbox is checked."); // Debug log
             const enabledValue = bulkIsEnabledSelect?.value;
             if (bulkIsEnabledSelect?.disabled === false) { // Check if input is enabled by section checkbox
                  if (enabledValue !== "") { // Check if a state is actually selected
                      updatePayload.isEnabled = enabledValue === 'true'; // Convert string to boolean
-                     console.log("Payload: isEnabled =", updatePayload.isEnabled);
+                     console.log("Bulk Update: Payload - isEnabled =", updatePayload.isEnabled); // Debug log
                  } else {
                       validationErrors.push("Please select a state (Yes/No) for 'Show on Website' if you want to update it.");
                  }
@@ -1072,16 +1075,17 @@ async function handleBulkUpdate(event) {
 
         // Pricing Details Section
         if (bulkUpdatePricingCheckbox?.checked) {
-            // Note: pricingUpdates sub-object is NOT used directly in the final payload.
-            // Fields are added to the main updatePayload using dot notation.
+            console.log("Bulk Update: Pricing Details checkbox is checked."); // Debug log
+            // Note: We collect pricing fields and add directly to updatePayload using dot notation
 
             // Bulk Rate (controlled by pricing section checkbox)
             const rateValue = parseNumericInput(bulkCurrentRateInput?.value);
+            console.log(`Bulk Update: Active Rate Type: ${currentBulkRateType}, Input Value: ${bulkCurrentRateInput?.value}, Parsed Value: ${rateValue}`); // Debug log
             if (bulkCurrentRateInput?.disabled === false) { // Check if the input is enabled by the section checkbox
                 if (rateValue !== null && !isNaN(rateValue)) {
                     const rateField = RATE_TYPES[currentBulkRateType].field;
                     updatePayload[`pricing.${rateField}`] = rateValue; // Add directly with dot notation
-                     console.log(`Payload: pricing.${rateField} =`, rateValue);
+                     console.log(`Bulk Update: Payload - pricing.${rateField} =`, rateValue); // Debug log
                 } else {
                     validationErrors.push(`Please enter a valid number for '${RATE_TYPES[currentBulkRateType].label}'.`);
                 }
@@ -1096,164 +1100,148 @@ async function handleBulkUpdate(event) {
             // Individual Pricing Fields (controlled by individual checkboxes) - Add directly with dot notation
             if (bulkPurchasePriceCheckbox?.checked && bulkPurchasePriceInput?.disabled === false) {
                 const value = parseNumericInput(bulkPurchasePriceInput.value);
+                 console.log(`Bulk Update: Purchase Price checkbox checked, Input Value: ${bulkPurchasePriceInput.value}, Parsed Value: ${value}`); // Debug log
                 if (value !== null && !isNaN(value)) {
                      updatePayload['pricing.purchasePrice'] = value; // Add directly with dot notation
-                     console.log("Payload: pricing.purchasePrice =", value);
+                     console.log("Bulk Update: Payload - pricing.purchasePrice =", value); // Debug log
                 } else { validationErrors.push("Please enter a valid number for Purchase Price."); }
-            } else if (bulkPurchasePriceCheckbox?.checked) { validationErrors.push("Purchase Price checkbox checked, but input is disabled."); }
+            } else if (bulkPurchasePriceCheckbox?.checked) { console.log("Bulk Update: Purchase Price checkbox checked, but input is disabled."); validationErrors.push("Purchase Price checkbox checked, but input is disabled."); } // Debug log
 
              if (bulkMrpCheckbox?.checked && bulkMrpInput?.disabled === false) {
                  const value = parseNumericInput(bulkMrpInput.value);
+                 console.log(`Bulk Update: MRP checkbox checked, Input Value: ${bulkMrpInput.value}, Parsed Value: ${value}`); // Debug log
                  if (value !== null && !isNaN(value)) {
                       updatePayload['pricing.mrp'] = value; // Add directly with dot notation
-                      console.log("Payload: pricing.mrp =", value);
+                      console.log("Bulk Update: Payload - pricing.mrp =", value); // Debug log
                  } else { validationErrors.push("Please enter a valid number for M.R.P."); }
-             } else if (bulkMrpCheckbox?.checked) { validationErrors.push("M.R.P. checkbox checked, but input is disabled."); }
+             } else if (bulkMrpCheckbox?.checked) { console.log("Bulk Update: MRP checkbox checked, but input is disabled."); validationErrors.push("M.R.P. checkbox checked, but input is disabled."); } // Debug log
 
              if (bulkGstRateCheckbox?.checked && bulkGstRateInput?.disabled === false) {
                   const value = parseNumericInput(bulkGstRateInput.value);
+                  console.log(`Bulk Update: GST Rate checkbox checked, Input Value: ${bulkGstRateInput.value}, Parsed Value: ${value}`); // Debug log
                   if (value !== null && !isNaN(value)) {
                        updatePayload['pricing.gstRate'] = value; // Add directly with dot notation
-                       console.log("Payload: pricing.gstRate =", value);
+                       console.log("Bulk Update: Payload - pricing.gstRate =", value); // Debug log
                   } else { validationErrors.push("Please enter a valid number for GST Rate."); }
-              } else if (bulkGstRateCheckbox?.checked) { validationErrors.push("GST Rate checkbox checked, but input is disabled."); }
+              } else if (bulkGstRateCheckbox?.checked) { console.log("Bulk Update: GST Rate checkbox checked, but input is disabled."); validationErrors.push("GST Rate checkbox checked, but input is disabled."); } // Debug log
 
               if (bulkMinOrderValueCheckbox?.checked && bulkMinOrderValueInput?.disabled === false) {
                    const value = parseNumericInput(bulkMinOrderValueInput.value);
+                   console.log(`Bulk Update: Min Order Value checkbox checked, Input Value: ${bulkMinOrderValueInput.value}, Parsed Value: ${value}`); // Debug log
                    if (value !== null && !isNaN(value)) {
                         updatePayload['pricing.minimumOrderValue'] = value; // Add directly with dot notation
-                        console.log("Payload: pricing.minimumOrderValue =", value);
+                        console.log("Bulk Update: Payload - pricing.minimumOrderValue =", value); // Debug log
                    } else { validationErrors.push("Please enter a valid number for Min. Order Value."); }
-               } else if (bulkMinOrderValueCheckbox?.checked) { validationErrors.push("Min. Order Value checkbox checked, but input is disabled."); }
-
-            // Wedding Card Charges Section (Nested under pricing) - Add directly with dot notation
-            if (bulkUpdateWeddingCheckbox?.checked) { // Check if wedding section is selected
-                 if (bulkDesignChargeCheckbox?.checked && bulkDesignChargeInput?.disabled === false) {
-                      const value = parseNumericInput(bulkDesignChargeInput.value);
-                      if (value !== null && !isNaN(value)) {
-                           updatePayload['pricing.designCharge'] = value; // Add directly with dot notation
-                           console.log("Payload: pricing.designCharge =", value);
-                      } else { validationErrors.push("Please enter a valid number for Design Charge."); }
-                   } else if (bulkDesignChargeCheckbox?.checked) { validationErrors.push("Design Charge checkbox checked, but input is disabled."); }
-
-                 if (bulkPrintingChargeCheckbox?.checked && bulkPrintingChargeInput?.disabled === false) {
-                      const value = parseNumericInput(bulkPrintingChargeInput.value);
-                      if (value !== null && !isNaN(value)) {
-                           updatePayload['pricing.printingChargeBase'] = value; // Add directly with dot notation
-                           console.log("Payload: pricing.printingChargeBase =", value);
-                      } else { validationErrors.push("Please enter a valid number for Printing Charge."); }
-                   } else if (bulkPrintingChargeCheckbox?.checked) { validationErrors.push("Printing Charge checkbox checked, but input is disabled."); }
-
-                 if (bulkTransportChargeCheckbox?.checked && bulkTransportChargeInput?.disabled === false) {
-                      const value = parseNumericInput(bulkTransportChargeInput.value);
-                      if (value !== null && !isNaN(value)) {
-                           updatePayload['pricing.transportCharge'] = value; // Add directly with dot notation
-                           console.log("Payload: pricing.transportCharge =", value);
-                      } else { validationErrors.push("Please enter a valid number for Transport Charge."); }
-                   } else if (bulkTransportChargeCheckbox?.checked) { validationErrors.push("Transport Charge checkbox checked, but input is disabled."); }
-
-                 if (bulkExtraMarginPercentCheckbox?.checked && bulkExtraMarginPercentInput?.disabled === false) {
-                       const value = parseNumericInput(bulkExtraMarginPercentInput.value);
-                      if (value !== null && !isNaN(value)) {
-                           updatePayload['pricing.extraMarginPercent'] = value; // Add directly with dot notation
-                           console.log("Payload: pricing.extraMarginPercent =", value);
-                      } else { validationErrors.push("Please enter a valid number for Extra Margin."); }
-                   } else if (bulkExtraMarginPercentCheckbox?.checked) { validationErrors.push("Extra Margin checkbox checked, but input is disabled."); }
-
-                 // No general validation error for wedding section needed here, individual field checks are sufficient.
-            }
-
-             // Optional Extra Charges Section (Nested under pricing) - Add directly with dot notation
-             if (bulkUpdateExtraChargesCheckbox?.checked) { // Check if extra charges section is selected
-                 // Handle 'Enable Additional Charge Option' (select field)
-                 if (bulkHasExtraChargesCheckbox?.checked && bulkHasExtraChargesSelect?.disabled === false) {
-                      const value = bulkHasExtraChargesSelect.value;
-                      if (value !== "") {
-                          updatePayload['pricing.hasExtraCharges'] = value === 'true'; // Use dot notation
-                          console.log("Payload: pricing.hasExtraCharges =", updatePayload['pricing.hasExtraCharges']);
-
-                          if (value === 'true') { // If enabling Extra Charges
-                               if (bulkExtraChargeNameCheckbox?.checked && bulkExtraChargeNameInput?.disabled === false) {
-                                    const nameValue = bulkExtraChargeNameInput.value.trim() || 'Additional Charge'; // Default name if empty
-                                    updatePayload['pricing.extraCharge.name'] = nameValue; // Add name with dot notation
-                                    console.log("Payload: pricing.extraCharge.name =", nameValue);
-                                } else if (bulkExtraChargeNameCheckbox?.checked) { validationErrors.push("Charge Name checkbox checked, but input is disabled."); }
+               } else if (bulkMinOrderValueCheckbox?.checked) { console.log("Bulk Update: Min Order Value checkbox checked, but input is disabled."); validationErrors.push("Min. Order Value checkbox checked, but input is disabled."); } // Debug log
 
 
-                               if (bulkExtraChargeAmountCheckbox?.checked && bulkExtraChargeAmountInput?.disabled === false) {
-                                    const amountValue = parseNumericInput(bulkExtraChargeAmountInput.value);
-                                    if (amountValue !== null && !isNaN(amountValue)) {
-                                         updatePayload['pricing.extraCharge.amount'] = amountValue; // Add amount with dot notation
-                                         console.log("Payload: pricing.extraCharge.amount =", amountValue);
-                                    } else { validationErrors.push("Please enter a valid number for Charge Amount."); }
-                               } else if (bulkExtraChargeAmountCheckbox?.checked) { validationErrors.push("Charge Amount checkbox checked, but input is disabled."); }
+            // No general validation error for pricing section needed here, individual field checks are sufficient.
+        }
 
-                          } else { // If disabling Extra Charges (value is 'false')
-                              // Explicitly remove the extraCharge subfield by setting to null with dot notation
-                              updatePayload['pricing.extraCharge'] = null;
-                              console.log("Payload: pricing.extraCharge = null (disabling)");
-                          }
+        // Wedding Card Charges Section (Nested under pricing in Firestore)
+        if (bulkUpdateWeddingCheckbox?.checked) {
+             console.log("Bulk Update: Wedding Card Charges checkbox is checked."); // Debug log
+             // Note: We collect wedding fields and add directly to updatePayload using dot notation
 
-                      } else { // If the select value is empty
-                          validationErrors.push("Please select 'Yes' or 'No' for 'Enable Additional Charge Option' if you want to update it.");
-                      }
-                 } else if (bulkUpdateExtraChargesCheckbox?.checked) { validationErrors.push("Optional Extra Charges section checked, but 'Enable Additional Charge Option' checkbox is not checked or input is disabled."); }
-            }
+             if (bulkDesignChargeCheckbox?.checked && bulkDesignChargeInput?.disabled === false) {
+                  const value = parseNumericInput(bulkDesignChargeInput.value);
+                  console.log(`Bulk Update: Design Charge checkbox checked, Input Value: ${bulkDesignChargeInput.value}, Parsed Value: ${value}`); // Debug log
+                  if (value !== null && !isNaN(value)) {
+                       updatePayload['pricing.designCharge'] = value; // Add directly with dot notation
+                       console.log("Bulk Update: Payload - pricing.designCharge =", value); // Debug log
+                  } else { validationErrors.push("Please enter a valid number for Design Charge."); }
+              } else if (bulkDesignChargeCheckbox?.checked) { console.log("Bulk Update: Design Charge checkbox checked, but input is disabled."); validationErrors.push("Design Charge checkbox checked, but input is disabled."); } // Debug log
+
+             if (bulkPrintingChargeCheckbox?.checked && bulkPrintingChargeInput?.disabled === false) {
+                  const value = parseNumericInput(bulkPrintingChargeInput.value);
+                  console.log(`Bulk Update: Printing Charge checkbox checked, Input Value: ${bulkPrintingChargeInput.value}, Parsed Value: ${value}`); // Debug log
+                  if (value !== null && !isNaN(value)) {
+                       updatePayload['pricing.printingChargeBase'] = value; // Add directly with dot notation
+                       console.log("Bulk Update: Payload - pricing.printingChargeBase =", value); // Debug log
+                  } else { validationErrors.push("Please enter a valid number for Printing Charge."); }
+              } else if (bulkPrintingChargeCheckbox?.checked) { console.log("Bulk Update: Printing Charge checkbox checked, but input is disabled."); validationErrors.push("Printing Charge checkbox checked, but input is disabled."); } // Debug log
+
+             if (bulkTransportChargeCheckbox?.checked && bulkTransportChargeInput?.disabled === false) {
+                  const value = parseNumericInput(bulkTransportChargeInput.value);
+                  console.log(`Bulk Update: Transport Charge checkbox checked, Input Value: ${bulkTransportChargeInput.value}, Parsed Value: ${value}`); // Debug log
+                  if (value !== null && !isNaN(value)) {
+                       updatePayload['pricing.transportCharge'] = value; // Add directly with dot notation
+                       console.log("Bulk Update: Payload - pricing.transportCharge =", value); // Debug log
+                  } else { validationErrors.push("Please enter a valid number for Transport Charge."); }
+               } else if (bulkTransportChargeCheckbox?.checked) { console.log("Bulk Update: Transport Charge checkbox checked, but input is disabled."); validationErrors.push("Transport Charge checkbox checked, but input is disabled."); } // Debug log
+
+             if (bulkExtraMarginPercentCheckbox?.checked && bulkExtraMarginPercentInput?.disabled === false) {
+                   const value = parseNumericInput(bulkExtraMarginPercentInput.value);
+                   console.log(`Bulk Update: Extra Margin checkbox checked, Input Value: ${bulkExtraMarginPercentInput.value}, Parsed Value: ${value}`); // Debug log
+                  if (value !== null && !isNaN(value)) {
+                       updatePayload['pricing.extraMarginPercent'] = value; // Add directly with dot notation
+                       console.log("Bulk Update: Payload - pricing.extraMarginPercent =", value); // Debug log
+                  } else { validationErrors.push("Please enter a valid number for Extra Margin."); }
+              } else if (bulkExtraMarginPercentCheckbox?.checked) { console.log("Bulk Update: Extra Margin checkbox checked, but input is disabled."); validationErrors.push("Extra Margin checkbox checked, but input is disabled."); } // Debug log
+
+             // No general validation error for wedding section needed here, individual field checks are sufficient.
         }
 
 
         // Internal Details Section (Top-level fields) - Add directly with dot notation
          if (bulkUpdateInternalCheckbox?.checked) {
+             console.log("Bulk Update: Internal Details checkbox is checked."); // Debug log
              if (bulkBrandCheckbox?.checked && bulkBrandInput?.disabled === false) {
                   const value = bulkBrandInput.value.trim();
                   updatePayload.brand = value === '' ? null : value; // Save as null if empty string
-                  console.log("Payload: brand =", updatePayload.brand);
-              } else if (bulkBrandCheckbox?.checked) { validationErrors.push("Brand checkbox checked, but input is disabled."); }
+                  console.log("Payload: brand =", updatePayload.brand); // Debug log
+              } else if (bulkBrandCheckbox?.checked) { console.log("Bulk Update: Brand checkbox checked, but input is disabled."); validationErrors.push("Brand checkbox checked, but input is disabled."); } // Debug log
 
              if (bulkItemCodeCheckbox?.checked && bulkItemCodeInput?.disabled === false) {
                   const value = bulkItemCodeInput.value.trim();
                   updatePayload.itemCode = value === '' ? null : value; // Save as null if empty string
-                  console.log("Payload: itemCode =", updatePayload.itemCode);
-               } else if (bulkItemCodeCheckbox?.checked) { validationErrors.push("Item Code checkbox checked, but input is disabled."); }
+                  console.log("Payload: itemCode =", updatePayload.itemCode); // Debug log
+               } else if (bulkItemCodeCheckbox?.checked) { console.log("Bulk Update: Item Code checkbox checked, but input is disabled."); validationErrors.push("Item Code checkbox checked, but input is disabled."); } // Debug log
 
              if (bulkHsnSacCodeCheckbox?.checked && bulkHsnSacCodeInput?.disabled === false) {
                    const value = bulkHsnSacCodeInput.value.trim();
                    updatePayload.hsnSacCode = value === '' ? null : value; // Save as null if empty string
-                   console.log("Payload: hsnSacCode =", updatePayload.hsnSacCode);
-                } else if (bulkHsnSacCodeCheckbox?.checked) { validationErrors.push("HSN / SAC Code checkbox checked, but input is disabled."); }
+                   console.log("Payload: hsnSacCode =", updatePayload.hsnSacCode); // Debug log
+                } else if (bulkHsnSacCodeCheckbox?.checked) { console.log("Bulk Update: HSN / SAC Code checkbox checked, but input is disabled."); validationErrors.push("HSN / SAC Code checkbox checked, but input is disabled."); } // Debug log
          }
 
 
         // Stock Management Section (Nested under stock) - Add directly with dot notation
          if (bulkUpdateStockCheckbox?.checked) {
+             console.log("Bulk Update: Stock Management checkbox is checked."); // Debug log
              if (bulkCurrentStockCheckbox?.checked && bulkCurrentStockInput?.disabled === false) {
                   const value = parseNumericInput(bulkCurrentStockInput.value, true, true); // Allow zero, require integer
+                  console.log(`Bulk Update: Current Stock checkbox checked, Input Value: ${bulkCurrentStockInput.value}, Parsed Value: ${value}`); // Debug log
                   if (value !== null && !isNaN(value)) {
                        updatePayload['stock.currentStock'] = value; // Add with dot notation
-                       console.log("Payload: stock.currentStock =", value);
+                       console.log("Payload: stock.currentStock =", value); // Debug log
                   } else { validationErrors.push("Please enter a valid whole number for Current Stock."); }
-               } else if (bulkCurrentStockCheckbox?.checked) { validationErrors.push("Current Stock checkbox checked, but input is disabled."); }
+               } else if (bulkCurrentStockCheckbox?.checked) { console.log("Bulk Update: Current Stock checkbox checked, but input is disabled."); validationErrors.push("Current Stock checkbox checked, but input is disabled."); } // Debug log
 
              if (bulkMinStockLevelCheckbox?.checked && bulkMinStockLevelInput?.disabled === false) {
                    const value = parseNumericInput(bulkMinStockLevelInput.value, true, true); // Allow zero, require integer
+                   console.log(`Bulk Update: Min Stock Level checkbox checked, Input Value: ${bulkMinStockLevelInput.value}, Parsed Value: ${value}`); // Debug log
                    if (value !== null && !isNaN(value)) {
                         updatePayload['stock.minStockLevel'] = value; // Add with dot notation
-                        console.log("Payload: stock.minStockLevel =", value);
+                        console.log("Payload: stock.minStockLevel =", value); // Debug log
                    } else { validationErrors.push("Please enter a valid whole number for Minimum Stock Level."); }
-                } else if (bulkMinStockLevelCheckbox?.checked) { validationErrors.push("Minimum Stock Level checkbox checked, but input is disabled."); }
+                } else if (bulkMinStockLevelCheckbox?.checked) { console.log("Bulk Update: Min Stock Level checkbox checked, but input is disabled."); validationErrors.push("Minimum Stock Level checkbox checked, but input is disabled."); } // Debug log
          }
 
         // Other Options Section (JSON - Top-level field)
          if (bulkUpdateOptionsCheckbox?.checked) {
+              console.log("Bulk Update: Other Options checkbox is checked."); // Debug log
               const optionsString = bulkOptionsInput?.value.trim();
              if (bulkOptionsInput?.disabled === false) { // Check if the input is enabled by the section checkbox
+                 console.log(`Bulk Update: Options JSON Input Value: "${optionsString}"`); // Debug log
                  if (optionsString === '') {
                       // Allow clearing options by providing empty string
                       updatePayload.options = []; // Top-level field
-                       console.log("Payload: options = [] (cleared)");
+                       console.log("Bulk Update: Payload - options = [] (cleared)"); // Debug log
                  } else {
                      try {
                           const parsedOptions = JSON.parse(optionsString);
+                           console.log("Bulk Update: Parsed Options JSON:", parsedOptions); // Debug log
                           if (Array.isArray(parsedOptions)) {
                                // Basic check: ensure each item is an object with name and values array
                                const isValid = parsedOptions.every(item =>
@@ -1262,7 +1250,7 @@ async function handleBulkUpdate(event) {
                                );
                                if (isValid) {
                                     updatePayload.options = parsedOptions; // Top-level field
-                                    console.log("Payload: options =", updatePayload.options);
+                                    console.log("Bulk Update: Payload - options =", updatePayload.options); // Debug log
                                } else {
                                     validationErrors.push("Invalid format for Options JSON. Each item must be an object with 'name' (string) and 'values' (array).");
                                }
@@ -1270,16 +1258,63 @@ async function handleBulkUpdate(event) {
                               validationErrors.push("Options must be a valid JSON array.");
                           }
                      } catch (err) {
+                          console.error("Bulk Update: JSON Parse Error:", err); // Debug log
                           validationErrors.push(`Invalid JSON in Options field: ${err.message}`);
                      }
                  }
-             } else if (bulkUpdateOptionsCheckbox?.checked) {
-                  validationErrors.push("Options (JSON) section checked, but input is disabled.");
-             }
+             } else if (bulkUpdateOptionsCheckbox?.checked) { console.log("Bulk Update: Options JSON checkbox checked, but input is disabled."); validationErrors.push("Options (JSON) section checked, but input is disabled."); } // Debug log
          }
 
 
+        // Optional Extra Charges Section (Nested under pricing in Firestore)
+        if (bulkUpdateExtraChargesCheckbox?.checked) {
+            console.log("Bulk Update: Optional Extra Charges checkbox is checked."); // Debug log
+            // Handle 'Enable Additional Charge Option' (select field) - This is the primary control for this section
+            if (bulkHasExtraChargesCheckbox?.checked && bulkHasExtraChargesSelect?.disabled === false) {
+                 const value = bulkHasExtraChargesSelect.value;
+                 console.log("Bulk Update: Enable Extra Charges Select Value:", value); // Debug log
+                 if (value !== "") {
+                     updatePayload['pricing.hasExtraCharges'] = value === 'true'; // Use dot notation
+                     console.log("Bulk Update: Payload - pricing.hasExtraCharges =", updatePayload['pricing.hasExtraCharges']); // Debug log
+
+                     if (value === 'true') { // If enabling Extra Charges
+                          // Only collect name/amount if their individual checkboxes are checked AND their inputs are enabled
+                          if (bulkExtraChargeNameCheckbox?.checked && bulkExtraChargeNameInput?.disabled === false) {
+                               const nameValue = bulkExtraChargeNameInput.value.trim() || 'Additional Charge'; // Default name if empty
+                               updatePayload['pricing.extraCharge.name'] = nameValue; // Add name with dot notation
+                               console.log("Bulk Update: Payload - pricing.extraCharge.name =", nameValue); // Debug log
+                           } else if (bulkExtraChargeNameCheckbox?.checked) { console.log("Bulk Update: Charge Name checkbox checked, but input is disabled."); validationErrors.push("Charge Name checkbox checked, but input is disabled."); } // Debug log
+
+
+                           if (bulkExtraChargeAmountCheckbox?.checked && bulkExtraChargeAmountInput?.disabled === false) {
+                                const amountValue = parseNumericInput(bulkExtraChargeAmountInput.value);
+                                console.log(`Bulk Update: Charge Amount checkbox checked, Input Value: ${bulkExtraChargeAmountInput.value}, Parsed Value: ${amountValue}`); // Debug log
+                                if (amountValue !== null && !isNaN(amountValue)) {
+                                     updatePayload['pricing.extraCharge.amount'] = amountValue; // Add amount with dot notation
+                                     console.log("Bulk Update: Payload - pricing.extraCharge.amount =", amountValue); // Debug log
+                                } else { validationErrors.push("Please enter a valid number for Charge Amount."); }
+                           } else if (bulkExtraChargeAmountCheckbox?.checked) { console.log("Bulk Update: Charge Amount checkbox checked, but input is disabled."); validationErrors.push("Charge Amount checkbox checked, but input is disabled."); } // Debug log
+
+                           // No extra validation needed here for enabling; individual field validation handles errors
+
+                     } else { // If disabling Extra Charges (value is 'false')
+                         // When disabling, we want to explicitly remove the extraCharge subfield
+                         // Setting to null with dot notation explicitly deletes the field in Firestore
+                         updatePayload['pricing.extraCharge'] = null;
+                         console.log("Bulk Update: Payload - pricing.extraCharge = null (disabling)"); // Debug log
+                     }
+
+                 } else { // If the select value is empty
+                     validationErrors.push("Please select 'Yes' or 'No' for 'Enable Additional Charge Option' if you want to update it.");
+                 }
+             } else if (bulkUpdateExtraChargesCheckbox?.checked) {
+                   validationErrors.push("Optional Extra Charges section checked, but 'Enable Additional Charge Option' checkbox is not checked or input is disabled.");
+              }
+        }
+
+
         // --- Validation Summary and Proceed ---
+        console.log("Bulk Update: Validation complete. Errors:", validationErrors); // Debug log
 
         if (validationErrors.length > 0) {
             // Display all validation errors
@@ -1296,7 +1331,10 @@ async function handleBulkUpdate(event) {
         }
 
         // Check if any valid fields were selected for update
-         if (Object.keys(updatePayload).length === 0) {
+         // Count the number of keys in updatePayload, considering nested objects if they are the only keys
+         const hasUpdateFields = Object.keys(updatePayload).length > 0;
+
+         if (!hasUpdateFields) {
               showToast("No valid fields selected for update.", 3000);
                // Re-enable button state
                if (applyBulkUpdateBtn) applyBulkUpdateBtn.disabled = false;
@@ -1309,7 +1347,7 @@ async function handleBulkUpdate(event) {
 
         // --- If validation passes and payload is not empty, proceed to Firebase WriteBatch update ---
 
-        console.log("Validation successful. Final Update Payload:", updatePayload);
+        console.log("Bulk Update: Validation successful. Final Update Payload:", updatePayload);
         if (text) text.textContent = 'Updating...'; // Change text to indicate database update
 
 
@@ -1580,7 +1618,7 @@ async function handleSaveProduct(event) {
             newDiagramUrl = await uploadFile(diagramFileToUpload, diagramPath, diagramUploadProgress);
         }
         // Ensure diagramUrl is null if no diagram is present or being saved
-        productData.diagramUrl = newDiagramUrl === undefined ? null : newDiagramUrl;
+        productData.diagramUrl = (diagramFileToUpload || existingDiagramUrl) ? newDiagramUrl : (shouldRemoveDiagram ? null : null);
 
 
         let uploadedImageUrls = [];
