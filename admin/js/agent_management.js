@@ -1,16 +1,16 @@
 // /admin/js/agent_management.js
 
-import { db } from './firebase-init.js';
+// firebase-init.js से db, auth, और functions इम्पोर्ट करें
+import { db, auth, functions } from './firebase-init.js';
+
+// Firestore SDK से बाकी आवश्यक फंक्शन्स
 import {
     collection, onSnapshot, query, orderBy, doc,
-    updateDoc, getDoc, getDocs, serverTimestamp, where, limit, setDoc,
-    addDoc
+    updateDoc, getDoc, getDocs, serverTimestamp, where, limit, setDoc, addDoc
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-// --- Firebase Functions SDK इम्पोर्ट करें ---
-import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-functions.js";
-// getAuth अभी भी एडमिन को जानने के लिए या अन्य क्लाइंट-साइड Auth ऑपरेशन के लिए उपयोगी हो सकता है
-import { getAuth } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+// Functions SDK से httpsCallable इम्पोर्ट करें
+import { httpsCallable } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-functions.js";
 
 // --- DOM Elements ---
 const addNewAgentBtn = document.getElementById('addNewAgentBtn');
@@ -224,12 +224,12 @@ async function fetchCategories() {
         return;
     }
     try {
-        const productsRef = collection(db, "onlineProducts"); // आपके प्रोडक्ट कलेक्शन का नाम
-        const q = query(productsRef, where("isEnabled", "==", true)); // केवल सक्रिय प्रोडक्ट से श्रेणियां लें
+        const productsRef = collection(db, "onlineProducts");
+        const q = query(productsRef, where("isEnabled", "==", true));
         const snapshot = await getDocs(q);
         const categories = new Set();
         snapshot.docs.forEach(doc => {
-            const category = doc.data()?.category; // आपके प्रोडक्ट डेटा में 'category' फ़ील्ड
+            const category = doc.data()?.category;
             if (category) {
                 categories.add(String(category).trim());
             }
@@ -359,11 +359,11 @@ function applyAgentFilters() {
         return nameMatch || emailMatch || contactMatch;
     });
 
-    const currentTableRows = agentTableBody.querySelectorAll('tr:not(#loadingAgentMessage)'); // noAgentsMessage को यहाँ से हटाएं
+    const currentTableRows = agentTableBody.querySelectorAll('tr:not(#loadingAgentMessage)');
     currentTableRows.forEach(row => row.remove());
 
     if (filteredAgents.length === 0) {
-        noAgentsMessage.style.display = 'table-row'; // यदि table-row के रूप में दिखाना है
+        noAgentsMessage.style.display = 'table-row';
     } else {
         noAgentsMessage.style.display = 'none';
         filteredAgents.forEach(agent => {
@@ -427,7 +427,7 @@ async function handleSaveAgent(event) {
         isValid = false;
     }
     if (!userType) {
-        showModalError('Please select a User Type.'); // या विशिष्ट फ़ील्ड एरर दिखाएं
+        showModalError('Please select a User Type.');
         isValid = false;
     }
 
@@ -470,7 +470,7 @@ async function handleSaveAgent(event) {
         }
     } else {
         // --- नया एजेंट बनाने के लिए Cloud Function कॉल करें ---
-        const functions = getFunctions(undefined, "us-central1"); // सुनिश्चित करें कि रीजन सही है
+        // 'functions' इंस्टेंस का उपयोग करें जो firebase-init.js से इम्पोर्ट किया गया है
         const createAgentUserCallable = httpsCallable(functions, 'createAgentUser');
 
         const agentPayload = {
@@ -486,7 +486,16 @@ async function handleSaveAgent(event) {
         };
 
         try {
-            console.log("Calling createAgentUser Cloud Function with payload:", agentPayload);
+            // सुनिश्चित करें कि एडमिन लॉग इन है, इससे पहले कि आप फंक्शन कॉल करें
+            if (!auth.currentUser) {
+                showModalError("Admin is not authenticated. Please login again.");
+                saveAgentBtn.disabled = false;
+                if (saveAgentBtnText) saveAgentBtnText.textContent = 'Save Agent';
+                console.warn("Admin not authenticated before calling Cloud Function.");
+                return;
+            }
+
+            console.log("Calling createAgentUser Cloud Function with payload by admin:", auth.currentUser.uid, agentPayload);
             const result = await createAgentUserCallable(agentPayload);
 
             console.log("Cloud function 'createAgentUser' result:", result);
@@ -512,7 +521,7 @@ async function handleSaveAgent(event) {
 if (addNewAgentBtn) addNewAgentBtn.addEventListener('click', () => openAgentModal('add'));
 if (closeAgentModalBtn) closeAgentModalBtn.addEventListener('click', closeAgentModal);
 if (cancelAgentBtn) cancelAgentBtn.addEventListener('click', closeAgentModal);
-if (agentForm) agentForm.addEventListener('submit', handleSaveAgent); // फॉर्म सबमिशन पर
+if (agentForm) agentForm.addEventListener('submit', handleSaveAgent);
 
 if (userTypeAgentRadio) userTypeAgentRadio.addEventListener('change', handleUserTypeChange);
 if (userTypeWholesaleRadio) userTypeWholesaleRadio.addEventListener('change', handleUserTypeChange);
@@ -542,7 +551,7 @@ if (clearFiltersBtn) clearFiltersBtn.addEventListener('click', () => {
 
 // --- Initialization ---
 document.addEventListener('DOMContentLoaded', () => {
-    fetchCategories();
-    loadAgents();
-    handleUserTypeChange();
+    if (typeof fetchCategories === "function") fetchCategories();
+    if (typeof loadAgents === "function") loadAgents();
+    if (typeof handleUserTypeChange === "function") handleUserTypeChange();
 });
