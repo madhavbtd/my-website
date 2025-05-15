@@ -1,8 +1,33 @@
 {
   "functions": [
+    // {
+    //   "source": "functions",
+    //   "codebase": "default",
+    //   "ignore": [
+    //     "node_modules",
+    //     ".git",
+    //     "firebase-debug.log",
+    //     "firebase-debug.*.log",
+    //     "*.local"
+    //   ],
+    //   "predeploy": [],
+    //   "runtime": "nodejs18" // अपने default codebase का runtime यहाँ डालें
+    // },
+    // {
+    //   "source": "stockfunctions",
+    //   "codebase": "stockfunctions",
+    //   "ignore": [
+    //     "node_modules",
+    //     ".git",
+    //     "firebase-debug.log",
+    //     "firebase-debug.*.log",
+    //     "*.local"
+    //   ],
+    //   "runtime": "nodejs18" // अपने stockfunctions codebase का runtime यहाँ डालें
+    // },
     {
-      "source": "functions",
-      "codebase": "default",
+      "source": "agentfunctions",
+      "codebase": "agentfunctions",
       "ignore": [
         "node_modules",
         ".git",
@@ -10,18 +35,17 @@
         "firebase-debug.*.log",
         "*.local"
       ],
-      "predeploy": []
-    },
-    {
-      "source": "stockfunctions",
-      "codebase": "stockfunctions",
-      "ignore": [
-        "node_modules",
-        ".git",
-        "firebase-debug.log",
-        "firebase-debug.*.log",
-        "*.local"
-      ]
+      "runtime": "nodejs18", // यह आपके agentfunctions/package.json में engines.node से मेल खाना चाहिए
+      "region": "asia-south1" // हमने रीजन को यहाँ निर्दिष्ट किया है
     }
-  ]
+  ],
+  "hosting": {
+    "public": "public", // ----> सुनिश्चित करें कि यह आपके होस्टिंग फ़ोल्डर का सही नाम है, या इसे हटा दें यदि आप Firebase होस्टिंग का उपयोग नहीं कर रहे हैं
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ]
+    // यदि आपके पास rewrites या redirects हैं, तो वे यहाँ रहेंगे
+  }
 }

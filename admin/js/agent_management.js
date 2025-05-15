@@ -7,9 +7,10 @@ import {
     addDoc
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-// --- Firebase Authentication के लिए नया इम्पोर्ट ---
-import { getAuth, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-// --- ---
+// --- Firebase Functions SDK इम्पोर्ट करें ---
+import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-functions.js";
+// getAuth अभी भी एडमिन को जानने के लिए या अन्य क्लाइंट-साइड Auth ऑपरेशन के लिए उपयोगी हो सकता है
+import { getAuth } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
 // --- DOM Elements ---
 const addNewAgentBtn = document.getElementById('addNewAgentBtn');
@@ -44,9 +45,8 @@ const userTypeWholesaleRadio = document.getElementById('userTypeWholesale');
 const agentPermissionsDiv = document.getElementById('agentPermissions');
 const wholesalePermissionsDiv = document.getElementById('wholesalePermissions');
 const canAddCustomersCheckbox = document.getElementById('canAddCustomersCheckbox');
-const authUidInput = document.getElementById('authUidInput'); // Authentication User ID
+const authUidInput = document.getElementById('authUidInput');
 
-// New error message elements
 const nameError = document.getElementById('nameError');
 const emailError = document.getElementById('emailError');
 const passwordError = document.getElementById('passwordError');
@@ -97,12 +97,13 @@ function getStatusClass(status) {
 }
 
 function handleUserTypeChange() {
-    if (userTypeAgentRadio && userTypeAgentRadio.checked) {
-        if (agentPermissionsDiv) agentPermissionsDiv.style.display = 'block';
-        if (wholesalePermissionsDiv) wholesalePermissionsDiv.style.display = 'none';
-    } else if (userTypeWholesaleRadio && userTypeWholesaleRadio.checked) {
-        if (agentPermissionsDiv) agentPermissionsDiv.style.display = 'none';
-        if (wholesalePermissionsDiv) wholesalePermissionsDiv.style.display = 'block';
+    if (!userTypeAgentRadio || !userTypeWholesaleRadio || !agentPermissionsDiv || !wholesalePermissionsDiv) return;
+    if (userTypeAgentRadio.checked) {
+        agentPermissionsDiv.style.display = 'block';
+        wholesalePermissionsDiv.style.display = 'none';
+    } else if (userTypeWholesaleRadio.checked) {
+        agentPermissionsDiv.style.display = 'none';
+        wholesalePermissionsDiv.style.display = 'block';
     }
 }
 
@@ -123,6 +124,10 @@ function openAgentModal(mode = 'add', agentData = null) {
     }
     if (agentEmailInput) {
         agentEmailInput.readOnly = false;
+        agentEmailInput.placeholder = 'Enter login email';
+    }
+    if(agentPasswordInput) {
+        agentPasswordInput.placeholder = 'Required (min 6 characters)';
     }
 
 
@@ -144,9 +149,6 @@ function openAgentModal(mode = 'add', agentData = null) {
         handleUserTypeChange();
 
         if (authUidFieldGroup) authUidFieldGroup.style.display = 'none';
-        if (agentPasswordInput) agentPasswordInput.placeholder = 'Required (min 6 characters)';
-        if (agentEmailInput) agentEmailInput.placeholder = 'Enter login email';
-
 
     } else if (mode === 'edit' && agentData) {
         if (agentModalTitle) agentModalTitle.textContent = `Edit Agent: ${escapeHtml(agentData.name || '')}`;
@@ -162,7 +164,7 @@ function openAgentModal(mode = 'add', agentData = null) {
         if (agentNameInput) agentNameInput.value = agentData.name || '';
         if (agentEmailInput) {
              agentEmailInput.value = agentData.email || '';
-             agentEmailInput.readOnly = true; // ईमेल को एडिट मोड में readonly, क्योंकि Auth User इससे लिंक है
+             agentEmailInput.readOnly = true;
              agentEmailInput.placeholder = '';
         }
         if (agentContactInput) agentContactInput.value = agentData.contact || '';
@@ -171,7 +173,7 @@ function openAgentModal(mode = 'add', agentData = null) {
 
         if (agentPasswordInput) {
             agentPasswordInput.required = false;
-            if (agentPasswordGroup) agentPasswordGroup.style.display = ''; // सुनिश्चित करें कि यह दिख रहा है
+            if (agentPasswordGroup) agentPasswordGroup.style.display = '';
             if (passwordRequiredSpan) passwordRequiredSpan.style.display = 'none';
             agentPasswordInput.value = '';
             agentPasswordInput.placeholder = 'Leave blank to keep current password';
@@ -187,9 +189,7 @@ function openAgentModal(mode = 'add', agentData = null) {
         if (agentData.permissions && Array.isArray(agentData.permissions)) {
             agentData.permissions.forEach(permission => {
                 const checkbox = document.querySelector(`#agentPermissions input[value="${permission}"], #wholesalePermissions input[value="${permission}"]`);
-                if (checkbox) {
-                    checkbox.checked = true;
-                }
+                if (checkbox) checkbox.checked = true;
             });
         }
 
@@ -197,9 +197,7 @@ function openAgentModal(mode = 'add', agentData = null) {
             agentData.allowedCategories.forEach(categoryName => {
                 try {
                     const checkbox = categoryPermissionsDiv.querySelector(`input[value="${escapeHtml(categoryName)}"]`);
-                    if (checkbox) {
-                        checkbox.checked = true;
-                    }
+                    if (checkbox) checkbox.checked = true;
                 } catch (e) {
                     console.error(`Error finding checkbox for category: ${categoryName}`, e);
                 }
@@ -226,12 +224,12 @@ async function fetchCategories() {
         return;
     }
     try {
-        const productsRef = collection(db, "onlineProducts");
-        const q = query(productsRef, where("isEnabled", "==", true));
+        const productsRef = collection(db, "onlineProducts"); // आपके प्रोडक्ट कलेक्शन का नाम
+        const q = query(productsRef, where("isEnabled", "==", true)); // केवल सक्रिय प्रोडक्ट से श्रेणियां लें
         const snapshot = await getDocs(q);
         const categories = new Set();
         snapshot.docs.forEach(doc => {
-            const category = doc.data()?.category;
+            const category = doc.data()?.category; // आपके प्रोडक्ट डेटा में 'category' फ़ील्ड
             if (category) {
                 categories.add(String(category).trim());
             }
@@ -258,7 +256,7 @@ function populateCategoryCheckboxes() {
         const checkbox = document.createElement('input');
         checkbox.type = 'checkbox';
         checkbox.id = checkboxId;
-        checkbox.value = category; // Raw category value
+        checkbox.value = category;
         checkbox.name = 'allowedCategories';
         label.appendChild(checkbox);
         label.appendChild(document.createTextNode(` ${escapeHtml(category)}`));
@@ -350,7 +348,7 @@ function loadAgents() {
 }
 
 function applyAgentFilters() {
-    if (!agentTableBody) return;
+    if (!agentTableBody || !noAgentsMessage) return;
     const searchTerm = filterSearchInput ? filterSearchInput.value.trim().toLowerCase() : '';
 
     const filteredAgents = currentAgents.filter(agent => {
@@ -361,126 +359,124 @@ function applyAgentFilters() {
         return nameMatch || emailMatch || contactMatch;
     });
 
-    const currentTableRows = agentTableBody.querySelectorAll('tr:not(#loadingAgentMessage):not(#noAgentsMessage)');
+    const currentTableRows = agentTableBody.querySelectorAll('tr:not(#loadingAgentMessage)'); // noAgentsMessage को यहाँ से हटाएं
     currentTableRows.forEach(row => row.remove());
 
     if (filteredAgents.length === 0) {
-        if (noAgentsMessage) noAgentsMessage.style.display = 'table-row';
+        noAgentsMessage.style.display = 'table-row'; // यदि table-row के रूप में दिखाना है
     } else {
-        if (noAgentsMessage) noAgentsMessage.style.display = 'none';
+        noAgentsMessage.style.display = 'none';
         filteredAgents.forEach(agent => {
             displayAgentRow(agent.id, agent);
         });
     }
 }
 
-// --- Save Agent Function ---
+// --- Save Agent Function (Cloud Function का उपयोग करके) ---
 async function handleSaveAgent(event) {
     event.preventDefault();
-    if (!db || !doc || !setDoc || !updateDoc || !collection || !serverTimestamp || !getAuth || !createUserWithEmailAndPassword) {
-        showModalError("Error: Database or Authentication functions missing.");
-        return;
-    }
     if (!saveAgentBtn) return;
+
+    const agentId = editAgentIdInput?.value;
+    const isEditing = !!agentId;
 
     saveAgentBtn.disabled = true;
     const originalButtonText = saveAgentBtnText.textContent;
-    if (saveAgentBtnText) saveAgentBtnText.textContent = (editAgentIdInput?.value ? 'Updating...' : 'Saving...');
+    if (saveAgentBtnText) saveAgentBtnText.textContent = (isEditing ? 'Updating...' : 'Saving...');
     clearModalError();
     clearFieldErrors();
 
-    const auth = getAuth();
+    const name = agentNameInput?.value.trim();
+    const email = agentEmailInput?.value.trim().toLowerCase();
+    const password = agentPasswordInput?.value;
+    const contact = agentContactInput?.value.trim() || null;
+    const status = agentStatusSelect?.value;
+    const userType = document.querySelector('input[name="userType"]:checked')?.value;
+    const canAddCustomers = canAddCustomersCheckbox ? canAddCustomersCheckbox.checked : false;
 
-    try {
-        const agentId = editAgentIdInput?.value;
-        const isEditing = !!agentId;
+    const selectedCategories = [];
+    if (categoryPermissionsDiv) {
+        const categoryCheckboxes = categoryPermissionsDiv.querySelectorAll('input[type="checkbox"]:checked');
+        categoryCheckboxes.forEach(cb => selectedCategories.push(cb.value));
+    }
 
-        const name = agentNameInput?.value.trim();
-        const email = agentEmailInput?.value.trim().toLowerCase();
-        const contact = agentContactInput?.value.trim() || null;
-        const password = agentPasswordInput?.value;
-        const status = agentStatusSelect?.value;
-        const canAddCustomers = canAddCustomersCheckbox ? canAddCustomersCheckbox.checked : false;
+    let permissions = [];
+    if (userType === 'agent') {
+        const checkedPermissions = document.querySelectorAll('#agentPermissions input[type="checkbox"]:checked');
+        checkedPermissions.forEach(cb => permissions.push(cb.value));
+    } else if (userType === 'wholesale') {
+        const checkedPermissions = document.querySelectorAll('#wholesalePermissions input[type="checkbox"]:checked');
+        checkedPermissions.forEach(cb => permissions.push(cb.value));
+    }
 
-        const selectedCategories = [];
-        if (categoryPermissionsDiv) {
-            const categoryCheckboxes = categoryPermissionsDiv.querySelectorAll('input[type="checkbox"]:checked');
-            categoryCheckboxes.forEach(cb => selectedCategories.push(cb.value));
-        }
+    // --- क्लाइंट-साइड वैलिडेशन ---
+    let isValid = true;
+    if (!name) {
+        showFieldError('name', 'Agent Name is required.');
+        isValid = false;
+    }
+    if (!email) {
+        showFieldError('email', 'Login Email is required.');
+        isValid = false;
+    } else if (!isValidEmail(email)) {
+        showFieldError('email', 'Invalid email format.');
+        isValid = false;
+    }
+    if (!isEditing && (!password || password.length < 6)) {
+        showFieldError('password', 'Password is required for new agents (min 6 characters).');
+        isValid = false;
+    }
+    if (!userType) {
+        showModalError('Please select a User Type.'); // या विशिष्ट फ़ील्ड एरर दिखाएं
+        isValid = false;
+    }
 
-        const userType = document.querySelector('input[name="userType"]:checked')?.value;
-        let permissions = [];
+    if (!isValid) {
+        saveAgentBtn.disabled = false;
+        if (saveAgentBtnText) saveAgentBtnText.textContent = (isEditing ? 'Update Agent' : 'Save Agent');
+        return;
+    }
 
-        if (userType === 'agent') {
-            const checkedPermissions = document.querySelectorAll('#agentPermissions input[type="checkbox"]:checked');
-            checkedPermissions.forEach(cb => permissions.push(cb.value));
-        } else if (userType === 'wholesale') {
-            const checkedPermissions = document.querySelectorAll('#wholesalePermissions input[type="checkbox"]:checked');
-            checkedPermissions.forEach(cb => permissions.push(cb.value));
-        }
+    if (isEditing) {
+        // --- मौजूदा एजेंट को अपडेट करने का लॉजिक ---
+        try {
+            if (!db || !doc || !updateDoc || !serverTimestamp) {
+                 showModalError("Error: Firestore functions for update missing.");
+                 throw new Error("Firestore functions for update missing.");
+            }
+            const agentDataToUpdate = {
+                name: name,
+                name_lowercase: name.toLowerCase(),
+                contact: contact,
+                status: status,
+                userType: userType,
+                permissions: permissions,
+                allowedCategories: selectedCategories,
+                canAddCustomers: canAddCustomers,
+                updatedAt: serverTimestamp()
+            };
 
-        let isValid = true;
-        if (!name) {
-            showFieldError('name', 'Agent Name is required.');
-            isValid = false;
-        }
-        if (!email) {
-            showFieldError('email', 'Login Email is required.');
-            isValid = false;
-        } else if (!isValidEmail(email)) {
-            showFieldError('email', 'Invalid email format.');
-            isValid = false;
-        }
-
-        if (!isEditing && agentPasswordInput.required && (!password || password.length < 6)) {
-            showFieldError('password', 'Password is required for new agents (min 6 characters).');
-            isValid = false;
-        }
-
-        if (!isValid) {
+            await updateDoc(doc(db, "agents", agentId), agentDataToUpdate);
+            showModalError("Agent updated successfully!");
+            agentForm.reset();
+            setTimeout(closeAgentModal, 1500);
+            loadAgents();
+        } catch (error) {
+            console.error("Error updating agent in Firestore:", error);
+            showModalError("Error updating agent: " + error.message);
+        } finally {
             saveAgentBtn.disabled = false;
-            if (saveAgentBtnText) saveAgentBtnText.textContent = originalButtonText;
-            return;
+            if (saveAgentBtnText) saveAgentBtnText.textContent = 'Update Agent';
         }
+    } else {
+        // --- नया एजेंट बनाने के लिए Cloud Function कॉल करें ---
+        const functions = getFunctions(undefined, "us-central1"); // सुनिश्चित करें कि रीजन सही है
+        const createAgentUserCallable = httpsCallable(functions, 'createAgentUser');
 
-        let currentAuthUid = null;
-
-        if (isEditing) {
-            currentAuthUid = authUidInput?.value.trim();
-            if (!currentAuthUid) {
-                showModalError("Authentication User ID is missing for editing. Cannot update.");
-                saveAgentBtn.disabled = false;
-                if (saveAgentBtnText) saveAgentBtnText.textContent = originalButtonText;
-                return;
-            }
-        } else {
-            try {
-                const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-                currentAuthUid = userCredential.user.uid;
-                console.log("Firebase Auth user created successfully:", currentAuthUid);
-            } catch (authError) {
-                console.error("Error creating Firebase Auth user:", authError);
-                if (authError.code === 'auth/email-already-in-use') {
-                    showFieldError('email', 'This email is already registered for authentication.');
-                    showModalError("This email is already in use. Please use a different email.");
-                } else if (authError.code === 'auth/weak-password') {
-                    showFieldError('password', 'The password is too weak.');
-                    showModalError("The password is too weak. Please use a stronger password (at least 6 characters).");
-                } else {
-                     showFieldError('email', `Auth error: ${authError.code}`); // सामान्य ईमेल फ़ील्ड में त्रुटि दिखाएं
-                    showModalError("Error creating authentication user: " + authError.message);
-                }
-                saveAgentBtn.disabled = false;
-                if (saveAgentBtnText) saveAgentBtnText.textContent = originalButtonText;
-                return;
-            }
-        }
-
-        const agentData = {
-            authUid: currentAuthUid,
-            name: name,
-            name_lowercase: name.toLowerCase(),
+        const agentPayload = {
             email: email,
+            password: password,
+            name: name,
             contact: contact,
             status: status,
             userType: userType,
@@ -489,34 +485,25 @@ async function handleSaveAgent(event) {
             canAddCustomers: canAddCustomers
         };
 
-        if (isEditing) {
-            await updateDoc(doc(db, "agents", agentId), {
-                ...agentData,
-                updatedAt: serverTimestamp()
-            });
-            showModalError("Agent updated successfully!");
-        } else {
-            await addDoc(collection(db, "agents"), {
-                ...agentData,
-                createdAt: serverTimestamp(),
-                updatedAt: serverTimestamp()
-            });
-            showModalError("Agent added successfully (Auth & Firestore)!");
-        }
+        try {
+            console.log("Calling createAgentUser Cloud Function with payload:", agentPayload);
+            const result = await createAgentUserCallable(agentPayload);
 
-        agentForm.reset();
-        setTimeout(closeAgentModal, 1500);
-        // loadAgents(); // यह सुनिश्चित करें कि यह कॉल हो रहा है
-    } catch (error) {
-        console.error("Error saving agent data to Firestore:", error);
-        showModalError("Error saving agent data: " + error.message);
-    } finally {
-        saveAgentBtn.disabled = false;
-        if (saveAgentBtnText) saveAgentBtnText.textContent = originalButtonText;
-        if (!isEditing && !editAgentIdInput?.value) { // यदि नया एजेंट सफलतापूर्वक जोड़ा गया है, तो सूची पुनः लोड करें
-            loadAgents();
-        } else if (isEditing) { // यदि संपादन सफल रहा
-            loadAgents();
+            console.log("Cloud function 'createAgentUser' result:", result);
+            if (result.data.success) {
+                showModalError(result.data.message || "Agent created successfully!");
+                agentForm.reset();
+                setTimeout(closeAgentModal, 1500);
+                loadAgents();
+            } else {
+                showModalError(result.data.message || "Failed to create agent (server validation).");
+            }
+        } catch (error) {
+            console.error("Error calling 'createAgentUser' Cloud Function:", error);
+            showModalError(`Error: ${error.message || "Could not connect to agent creation service."}`);
+        } finally {
+            saveAgentBtn.disabled = false;
+            if (saveAgentBtnText) saveAgentBtnText.textContent = 'Save Agent';
         }
     }
 }
@@ -525,20 +512,19 @@ async function handleSaveAgent(event) {
 if (addNewAgentBtn) addNewAgentBtn.addEventListener('click', () => openAgentModal('add'));
 if (closeAgentModalBtn) closeAgentModalBtn.addEventListener('click', closeAgentModal);
 if (cancelAgentBtn) cancelAgentBtn.addEventListener('click', closeAgentModal);
-// if (saveAgentBtn) saveAgentBtn.addEventListener('click', handleSaveAgent); // इसे हटा दें क्योंकि फॉर्म सबमिट इसे हैंडल करेगा
-if (agentForm) agentForm.addEventListener('submit', handleSaveAgent); // फॉर्म सबमिशन पर handleSaveAgent को कॉल करें
+if (agentForm) agentForm.addEventListener('submit', handleSaveAgent); // फॉर्म सबमिशन पर
 
 if (userTypeAgentRadio) userTypeAgentRadio.addEventListener('change', handleUserTypeChange);
 if (userTypeWholesaleRadio) userTypeWholesaleRadio.addEventListener('change', handleUserTypeChange);
 
 if (selectAllCategoriesBtn) selectAllCategoriesBtn.addEventListener('click', () => {
-    if (categoryPermissionsDiv) {
+    if(categoryPermissionsDiv) {
         const checkboxes = categoryPermissionsDiv.querySelectorAll('input[type="checkbox"]');
         checkboxes.forEach(cb => { if (cb) cb.checked = true; });
     }
 });
 if (deselectAllCategoriesBtn) deselectAllCategoriesBtn.addEventListener('click', () => {
-    if (categoryPermissionsDiv) {
+    if(categoryPermissionsDiv) {
         const checkboxes = categoryPermissionsDiv.querySelectorAll('input[type="checkbox"]');
         checkboxes.forEach(cb => { if (cb) cb.checked = false; });
     }
@@ -550,7 +536,7 @@ if (filterSearchInput) filterSearchInput.addEventListener('input', () => {
 if (sortSelect) sortSelect.addEventListener('change', loadAgents);
 if (clearFiltersBtn) clearFiltersBtn.addEventListener('click', () => {
     if (filterSearchInput) filterSearchInput.value = '';
-    if (sortSelect) sortSelect.value = 'createdAt_desc'; // डिफ़ॉल्ट सॉर्ट पर रीसेट करें
+    if (sortSelect) sortSelect.value = 'createdAt_desc';
     loadAgents();
 });
 
@@ -558,5 +544,5 @@ if (clearFiltersBtn) clearFiltersBtn.addEventListener('click', () => {
 document.addEventListener('DOMContentLoaded', () => {
     fetchCategories();
     loadAgents();
-    handleUserTypeChange(); // प्रारंभिक स्थिति के लिए कॉल करें
+    handleUserTypeChange();
 });
