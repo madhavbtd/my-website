@@ -218,7 +218,6 @@ function closeAgentModal() {
 
 // --- Category Handling ---
 async function fetchCategories() {
-    // ... (आपका मौजूदा fetchCategories कोड वैसा ही रहेगा) ...
     if (!db || !collection || !getDocs) {
         console.error("Firestore functions not available for fetching categories.");
         if (categoryPermissionsDiv) categoryPermissionsDiv.innerHTML = '<p style="color: red;">Error loading categories (DB functions missing).</p>';
@@ -244,7 +243,6 @@ async function fetchCategories() {
 }
 
 function populateCategoryCheckboxes() {
-    // ... (आपका मौजूदा populateCategoryCheckboxes कोड वैसा ही रहेगा) ...
     if (!categoryPermissionsDiv) return;
     categoryPermissionsDiv.innerHTML = '';
     if (availableCategories.length === 0) {
@@ -268,7 +266,6 @@ function populateCategoryCheckboxes() {
 
 // --- Agent Data Handling ---
 function displayAgentRow(agentId, agentData) {
-    // ... (आपका मौजूदा displayAgentRow कोड वैसा ही रहेगा) ...
     if (!agentTableBody) return;
     const row = agentTableBody.insertRow();
     row.setAttribute('data-id', agentId);
@@ -307,7 +304,6 @@ function displayAgentRow(agentId, agentData) {
 }
 
 function loadAgents() {
-    // ... (आपका मौजूदा loadAgents कोड वैसा ही रहेगा) ...
     if (!db || !collection || !onSnapshot || !query || !orderBy || !agentTableBody || !loadingAgentMessage || !noAgentsMessage) {
         console.error("Required Firestore functions or DOM elements missing for loadAgents.");
         if (agentTableBody) agentTableBody.innerHTML = '<tr><td colspan="7" style="color:red; text-align:center;">Error loading agents (dependencies missing).</td></tr>';
@@ -352,7 +348,6 @@ function loadAgents() {
 }
 
 function applyAgentFilters() {
-    // ... (आपका मौजूदा applyAgentFilters कोड वैसा ही रहेगा) ...
     if (!agentTableBody || !noAgentsMessage) return;
     const searchTerm = filterSearchInput ? filterSearchInput.value.trim().toLowerCase() : '';
 
@@ -490,25 +485,28 @@ async function handleSaveAgent(event) {
         };
 
         try {
+            // सुनिश्चित करें कि एडमिन लॉग इन है
             if (!auth.currentUser) {
                 showModalError("Admin is not authenticated. Please login again.");
                 saveAgentBtn.disabled = false;
                 if (saveAgentBtnText) saveAgentBtnText.textContent = 'Save Agent';
-                console.warn("Admin not authenticated before calling Cloud Function.");
+                console.warn("Admin not authenticated before calling createAgentUser Cloud Function.");
                 return;
             }
 
+            // **** ID टोकन को बलपूर्वक रिफ्रेश करें ****
             try {
-                console.log("Forcing token refresh for admin:", auth.currentUser.uid);
-                await auth.currentUser.getIdToken(true);
-                console.log("Token refreshed successfully before calling function.");
+                console.log("Forcing token refresh for admin (createAgentUser):", auth.currentUser.uid);
+                await auth.currentUser.getIdToken(true); // true का मतलब है बलपूर्वक रिफ्रेश
+                console.log("Token refreshed successfully before calling createAgentUser function.");
             } catch (tokenError) {
-                console.error("Error forcing token refresh:", tokenError);
+                console.error("Error forcing token refresh (createAgentUser):", tokenError);
                 showModalError("Authentication token refresh failed. Please try again or re-login.");
                 saveAgentBtn.disabled = false;
                 if (saveAgentBtnText) saveAgentBtnText.textContent = 'Save Agent';
-                return;
+                return; // टोकन रिफ्रेश विफल होने पर रुकें
             }
+            // **** बदलाव समाप्त ****
 
             console.log("Calling createAgentUser Cloud Function with payload by admin:", auth.currentUser.uid, agentPayload);
             const result = await createAgentUserCallable(agentPayload);
@@ -523,7 +521,7 @@ async function handleSaveAgent(event) {
                 showModalError(result.data.message || "Failed to create agent (server validation).");
             }
         } catch (error) {
-            console.error("Error calling 'createAgentUser' Cloud Function:", error);
+            console.error("Error calling 'createAgentUser' Cloud Function:", error.code, error.message, error.details);
             showModalError(`Error: ${error.message || "Could not connect to agent creation service."}`);
         } finally {
             saveAgentBtn.disabled = false;
@@ -572,30 +570,33 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // ---- सरलतम टेस्ट फंक्शन कॉल ----
     if (auth && functions) {
-        await new Promise(resolve => setTimeout(resolve, 3000)); // 3 सेकंड प्रतीक्षा करें
+        // onAuthStateChanged को अपना काम करने के लिए थोड़ा समय दें
+        // और यह सुनिश्चित करें कि auth.currentUser उपलब्ध हो।
+        auth.onAuthStateChanged(async (user) => {
+            if (user) {
+                console.log("DOMContentLoaded: User is signed in, attempting simpleAuthTest for:", user.email);
+                const simpleTestCallable = httpsCallable(functions, 'simpleAuthTest');
+                try {
+                    // ID टोकन को यहाँ भी रिफ्रेश करने का प्रयास करें
+                    console.log("Forcing token refresh for simpleAuthTest call (DOMContentLoaded):", user.uid);
+                    await user.getIdToken(true);
+                    console.log("Token refreshed for simpleAuthTest call (DOMContentLoaded).");
 
-        if (auth.currentUser) {
-            console.log("Attempting to call simpleAuthTest as user:", auth.currentUser.email);
-            const simpleTestCallable = httpsCallable(functions, 'simpleAuthTest'); // 'simpleAuthTest' फंक्शन आपके Cloud Functions में होना चाहिए
-            try {
-                // ID टोकन को यहाँ भी रिफ्रेश करने का प्रयास करें
-                await auth.currentUser.getIdToken(true);
-                console.log("Token refreshed for simpleAuthTest call.");
-
-                const result = await simpleTestCallable({ testPayload: "Hello from client" });
-                console.log("SUCCESS from simpleAuthTest:", result.data);
-                // alert("Simple Auth Test SUCCESSFUL: " + JSON.stringify(result.data)); // अलर्ट को अस्थायी रूप से हटा दें
-            } catch (error) {
-                console.error("ERROR from simpleAuthTest:", error);
-                // alert("Simple Auth Test FAILED: " + error.message); // अलर्ट को अस्थायी रूप से हटा दें
+                    const result = await simpleTestCallable({ testPayload: "Hello from client on DOMContentLoaded" });
+                    console.log("SUCCESS from simpleAuthTest (DOMContentLoaded):", result.data);
+                    // alert("Simple Auth Test SUCCESSFUL: " + JSON.stringify(result.data)); // उत्पादन में अलर्ट हटा दें
+                } catch (error) {
+                    console.error("ERROR from simpleAuthTest (DOMContentLoaded):", error.code, error.message, error.details);
+                    // alert("Simple Auth Test FAILED: " + error.message); // उत्पादन में अलर्ट हटा दें
+                }
+            } else {
+                console.warn("simpleAuthTest (DOMContentLoaded): No authenticated user found. Test call skipped.");
+                // alert("Simple Auth Test SKIPPED (DOMContentLoaded): No authenticated user. Please log in."); // उत्पादन में अलर्ट हटा दें
             }
-        } else {
-            console.warn("simpleAuthTest: No authenticated user found when DOMContentLoaded fired and delay passed.");
-            // alert("Simple Auth Test SKIPPED: No authenticated user. Please log in."); // अलर्ट को अस्थायी रूप से हटा दें
-        }
+        });
     } else {
-        console.error("simpleAuthTest: Firebase auth or functions service not initialized.");
-        // alert("Simple Auth Test SKIPPED: Firebase services not ready."); // अलर्ट को अस्थायी रूप से हटा दें
+        console.error("simpleAuthTest (DOMContentLoaded): Firebase auth or functions service not initialized.");
+        // alert("Simple Auth Test SKIPPED (DOMContentLoaded): Firebase services not ready."); // उत्पादन में अलर्ट हटा दें
     }
     // ---- टेस्ट समाप्त ----
 });

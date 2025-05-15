@@ -1,4 +1,4 @@
-// functions/index.js (यह C:\Users\MADHAV OFFSET\Desktop\Madhav_Multy_Print\agentfunctions\index.js फाइल है)
+// functions/index.js (C:\Users\MADHAV OFFSET\Desktop\Madhav_Multy_Print\agentfunctions\index.js)
 
 const functions = require("firebase-functions");
 const admin = require("firebase-admin");
@@ -9,8 +9,8 @@ admin.initializeApp();
 /**
  * HTTPs Callable Function: एक नया एजेंट Auth यूजर और Firestore रिकॉर्ड बनाता है।
  */
-exports.createAgentUser = functions.region("us-central1") // सुनिश्चित करें कि यह रीजन सही है
-    .https.onCall(async (data, context) => {
+// .region("us-central1") को यहाँ से हटा दिया गया है
+exports.createAgentUser = functions.https.onCall(async (data, context) => {
     // स्टेप 1: सुनिश्चित करें कि कॉल करने वाला यूजर प्रमाणित है
     if (!context.auth) {
         console.error("createAgentUser: Unauthenticated call detected.");
@@ -98,7 +98,7 @@ exports.createAgentUser = functions.region("us-central1") // सुनिश्�
         return { success: true, message: "Agent created successfully!", uid: newAgentAuthUid };
 
     } catch (error) {
-        console.error("createAgentUser: Error during agent creation process for " + email + ":", JSON.stringify(error));
+        console.error("createAgentUser: Error during agent creation process for " + (data.email || 'unknown email') + ":", JSON.stringify(error));
         if (error.code === "auth/email-already-exists") {
             throw new functions.https.HttpsError("already-exists", `The email address ${email} is already in use by another account.`);
         }
@@ -110,8 +110,8 @@ exports.createAgentUser = functions.region("us-central1") // सुनिश्�
 });
 
 // ---- यह नया simpleAuthTest फंक्शन है ----
-exports.simpleAuthTest = functions.region("us-central1") // सुनिश्चित करें कि रीजन सही है
-    .https.onCall((data, context) => {
+// .region("us-central1") को यहाँ से भी हटा दिया गया है, इसे firebase.json में निर्दिष्ट किया जाएगा
+exports.simpleAuthTest = functions.https.onCall((data, context) => {
     // यह लॉग महत्वपूर्ण है यह देखने के लिए कि क्या context.auth सर्वर पर पहुँच रहा है
     console.log("simpleAuthTest: Received call. Context auth UID:", context.auth ? context.auth.uid : "No auth context");
     console.log("simpleAuthTest: Data received:", data);
