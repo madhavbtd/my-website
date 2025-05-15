@@ -218,6 +218,7 @@ function closeAgentModal() {
 
 // --- Category Handling ---
 async function fetchCategories() {
+    // ... (आपका मौजूदा fetchCategories कोड वैसा ही रहेगा) ...
     if (!db || !collection || !getDocs) {
         console.error("Firestore functions not available for fetching categories.");
         if (categoryPermissionsDiv) categoryPermissionsDiv.innerHTML = '<p style="color: red;">Error loading categories (DB functions missing).</p>';
@@ -243,6 +244,7 @@ async function fetchCategories() {
 }
 
 function populateCategoryCheckboxes() {
+    // ... (आपका मौजूदा populateCategoryCheckboxes कोड वैसा ही रहेगा) ...
     if (!categoryPermissionsDiv) return;
     categoryPermissionsDiv.innerHTML = '';
     if (availableCategories.length === 0) {
@@ -266,6 +268,7 @@ function populateCategoryCheckboxes() {
 
 // --- Agent Data Handling ---
 function displayAgentRow(agentId, agentData) {
+    // ... (आपका मौजूदा displayAgentRow कोड वैसा ही रहेगा) ...
     if (!agentTableBody) return;
     const row = agentTableBody.insertRow();
     row.setAttribute('data-id', agentId);
@@ -304,6 +307,7 @@ function displayAgentRow(agentId, agentData) {
 }
 
 function loadAgents() {
+    // ... (आपका मौजूदा loadAgents कोड वैसा ही रहेगा) ...
     if (!db || !collection || !onSnapshot || !query || !orderBy || !agentTableBody || !loadingAgentMessage || !noAgentsMessage) {
         console.error("Required Firestore functions or DOM elements missing for loadAgents.");
         if (agentTableBody) agentTableBody.innerHTML = '<tr><td colspan="7" style="color:red; text-align:center;">Error loading agents (dependencies missing).</td></tr>';
@@ -348,6 +352,7 @@ function loadAgents() {
 }
 
 function applyAgentFilters() {
+    // ... (आपका मौजूदा applyAgentFilters कोड वैसा ही रहेगा) ...
     if (!agentTableBody || !noAgentsMessage) return;
     const searchTerm = filterSearchInput ? filterSearchInput.value.trim().toLowerCase() : '';
 
@@ -485,7 +490,6 @@ async function handleSaveAgent(event) {
         };
 
         try {
-            // सुनिश्चित करें कि एडमिन लॉग इन है
             if (!auth.currentUser) {
                 showModalError("Admin is not authenticated. Please login again.");
                 saveAgentBtn.disabled = false;
@@ -494,19 +498,17 @@ async function handleSaveAgent(event) {
                 return;
             }
 
-            // **** ID टोकन को बलपूर्वक रिफ्रेश करें ****
             try {
                 console.log("Forcing token refresh for admin:", auth.currentUser.uid);
-                await auth.currentUser.getIdToken(true); // true का मतलब है बलपूर्वक रिफ्रेश
+                await auth.currentUser.getIdToken(true);
                 console.log("Token refreshed successfully before calling function.");
             } catch (tokenError) {
                 console.error("Error forcing token refresh:", tokenError);
                 showModalError("Authentication token refresh failed. Please try again or re-login.");
                 saveAgentBtn.disabled = false;
                 if (saveAgentBtnText) saveAgentBtnText.textContent = 'Save Agent';
-                return; // टोकन रिफ्रेश विफल होने पर रुकें
+                return;
             }
-            // **** बदलाव समाप्त ****
 
             console.log("Calling createAgentUser Cloud Function with payload by admin:", auth.currentUser.uid, agentPayload);
             const result = await createAgentUserCallable(agentPayload);
@@ -562,9 +564,38 @@ if (clearFiltersBtn) clearFiltersBtn.addEventListener('click', () => {
     loadAgents();
 });
 
-// --- Initialization ---
-document.addEventListener('DOMContentLoaded', () => {
+// --- Initialization and Simple Auth Test ---
+document.addEventListener('DOMContentLoaded', async () => {
     if (typeof fetchCategories === "function") fetchCategories();
     if (typeof loadAgents === "function") loadAgents();
     if (typeof handleUserTypeChange === "function") handleUserTypeChange();
+
+    // ---- सरलतम टेस्ट फंक्शन कॉल ----
+    if (auth && functions) {
+        await new Promise(resolve => setTimeout(resolve, 3000)); // 3 सेकंड प्रतीक्षा करें
+
+        if (auth.currentUser) {
+            console.log("Attempting to call simpleAuthTest as user:", auth.currentUser.email);
+            const simpleTestCallable = httpsCallable(functions, 'simpleAuthTest'); // 'simpleAuthTest' फंक्शन आपके Cloud Functions में होना चाहिए
+            try {
+                // ID टोकन को यहाँ भी रिफ्रेश करने का प्रयास करें
+                await auth.currentUser.getIdToken(true);
+                console.log("Token refreshed for simpleAuthTest call.");
+
+                const result = await simpleTestCallable({ testPayload: "Hello from client" });
+                console.log("SUCCESS from simpleAuthTest:", result.data);
+                // alert("Simple Auth Test SUCCESSFUL: " + JSON.stringify(result.data)); // अलर्ट को अस्थायी रूप से हटा दें
+            } catch (error) {
+                console.error("ERROR from simpleAuthTest:", error);
+                // alert("Simple Auth Test FAILED: " + error.message); // अलर्ट को अस्थायी रूप से हटा दें
+            }
+        } else {
+            console.warn("simpleAuthTest: No authenticated user found when DOMContentLoaded fired and delay passed.");
+            // alert("Simple Auth Test SKIPPED: No authenticated user. Please log in."); // अलर्ट को अस्थायी रूप से हटा दें
+        }
+    } else {
+        console.error("simpleAuthTest: Firebase auth or functions service not initialized.");
+        // alert("Simple Auth Test SKIPPED: Firebase services not ready."); // अलर्ट को अस्थायी रूप से हटा दें
+    }
+    // ---- टेस्ट समाप्त ----
 });
