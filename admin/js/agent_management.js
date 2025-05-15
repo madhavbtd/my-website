@@ -470,7 +470,6 @@ async function handleSaveAgent(event) {
         }
     } else {
         // --- नया एजेंट बनाने के लिए Cloud Function कॉल करें ---
-        // 'functions' इंस्टेंस का उपयोग करें जो firebase-init.js से इम्पोर्ट किया गया है
         const createAgentUserCallable = httpsCallable(functions, 'createAgentUser');
 
         const agentPayload = {
@@ -486,7 +485,7 @@ async function handleSaveAgent(event) {
         };
 
         try {
-            // सुनिश्चित करें कि एडमिन लॉग इन है, इससे पहले कि आप फंक्शन कॉल करें
+            // सुनिश्चित करें कि एडमिन लॉग इन है
             if (!auth.currentUser) {
                 showModalError("Admin is not authenticated. Please login again.");
                 saveAgentBtn.disabled = false;
@@ -494,6 +493,20 @@ async function handleSaveAgent(event) {
                 console.warn("Admin not authenticated before calling Cloud Function.");
                 return;
             }
+
+            // **** ID टोकन को बलपूर्वक रिफ्रेश करें ****
+            try {
+                console.log("Forcing token refresh for admin:", auth.currentUser.uid);
+                await auth.currentUser.getIdToken(true); // true का मतलब है बलपूर्वक रिफ्रेश
+                console.log("Token refreshed successfully before calling function.");
+            } catch (tokenError) {
+                console.error("Error forcing token refresh:", tokenError);
+                showModalError("Authentication token refresh failed. Please try again or re-login.");
+                saveAgentBtn.disabled = false;
+                if (saveAgentBtnText) saveAgentBtnText.textContent = 'Save Agent';
+                return; // टोकन रिफ्रेश विफल होने पर रुकें
+            }
+            // **** बदलाव समाप्त ****
 
             console.log("Calling createAgentUser Cloud Function with payload by admin:", auth.currentUser.uid, agentPayload);
             const result = await createAgentUserCallable(agentPayload);
