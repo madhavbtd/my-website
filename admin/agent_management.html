@@ -65,41 +65,38 @@
                             <i class="fas fa-spinner fa-spin"></i> Loading agents...
                         </td>
                     </tr>
-                </tbody>
+                    </tbody>
             </table>
         </div>
-        <p id="noAgentsMessage" class="info-message" style="display: none; text-align:center;">No agents found.</p>
+        <p id="noAgentsMessage" class="info-message" style="display: none; text-align:center; padding: 15px;">No agents found matching your criteria.</p>
     </div>
 
     <div id="agentModal" class="modal">
         <div class="modal-content large-modal">
             <span class="close-btn" id="closeAgentModal" title="Close">&times;</span>
             <h2 id="agentModalTitle">Add New Agent</h2>
-            <div id="agentModalError" class="error-message" style="display: none;"></div>
-            <form id="agentForm" novalidate>
-                <input type="hidden" id="editAgentId">
+            <div id="agentModalError" class="error-message global-error-message" style="display: none; margin-bottom: 15px; padding: 10px; background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; border-radius: var(--border-radius);"></div>
+            <form id="agentForm"> <input type="hidden" id="editAgentId">
                 <div class="form-grid two-columns">
                     <div class="form-group">
                         <label for="agentName">Agent Name <span class="required-asterisk">*</span></label>
                         <input type="text" id="agentName" name="name" required>
-                        <div class="error-message" id="nameError"></div>
+                        <div class="error-message field-error" id="nameError"></div>
                     </div>
                     <div class="form-group">
                         <label for="agentEmail">Login Email <span class="required-asterisk">*</span></label>
-                        <input type="email" id="agentEmail" name="email" required>
-                        <div class="error-message" id="emailError"></div>
+                        <input type="email" id="agentEmail" name="email" required placeholder="Enter login email">
+                        <div class="error-message field-error" id="emailError"></div>
                     </div>
                     <div class="form-group">
                         <label for="agentContact">Contact No</label>
-                        <input type="tel" id="agentContact" name="contact">
+                        <input type="tel" id="agentContact" name="contact" placeholder="Enter contact number">
                     </div>
                     <div class="form-group" id="agentPasswordGroup">
-                        <label for="agentPassword">Password <span id="passwordRequiredSpan"
-                                class="required-asterisk">*</span></label>
-                        <input type="password" id="agentPassword" name="password" required minlength="6">
-                        <small id="passwordHelp">Required for new agents (min 6 characters). Leave blank to keep existing
-                            password when editing.</small>
-                        <div class="error-message" id="passwordError"></div>
+                        <label for="agentPassword">Password <span id="passwordRequiredSpan" class="required-asterisk">*</span></label>
+                        <input type="password" id="agentPassword" name="password" required minlength="6" placeholder="Required (min 6 characters)">
+                        <small id="passwordHelp">For new agents: min 6 characters. For editing: leave blank to keep current password.</small>
+                        <div class="error-message field-error" id="passwordError"></div>
                     </div>
                     <div class="form-group">
                         <label for="agentStatus">Status <span class="required-asterisk">*</span></label>
@@ -108,21 +105,17 @@
                             <option value="inactive">Inactive</option>
                         </select>
                     </div>
-                    <div class="form-group">
-                        <label for="authUidInput">Authentication User ID <span class="required-asterisk">*</span></label>
-                        <input type="text" id="authUidInput" name="authUid" class="form-control" placeholder="Enter Authentication User ID"
-                            required>
-                    </div>
-
+                    <div class="form-group"> <label for="authUidInput">Authentication User ID</label> <input type="text" id="authUidInput" name="authUid" class="form-control" placeholder="Generated for new / Readonly for existing">
+                        </div>
                 </div>
 
                 <div class="form-group">
-                    <label>User Type</label>
+                    <label>User Type <span class="required-asterisk">*</span></label>
                     <div class="user-type-toggle">
-                        <input type="radio" id="userTypeAgent" name="userType" value="agent" checked>
+                        <input type="radio" id="userTypeAgent" name="userType" value="agent" checked required>
                         <label for="userTypeAgent" class="user-type-label agent-type">Agent</label>
 
-                        <input type="radio" id="userTypeWholesale" name="userType" value="wholesale">
+                        <input type="radio" id="userTypeWholesale" name="userType" value="wholesale" required>
                         <label for="userTypeWholesale" class="user-type-label wholesale-type">Wholesale</label>
                     </div>
                 </div>
@@ -130,24 +123,15 @@
                 <div id="agentPermissions" class="form-section-permissions" style="display: block;">
                     <label>Agent Permissions</label>
                     <div class="checkbox-grid">
-                        <label><input type="checkbox" name="agentPermission" value="canAddCustomers"
-                                id="canAddCustomersCheckbox">Add Customers</label>
-                        <label><input type="checkbox" name="agentPermission" value="canViewAddedCustomers">View
-                            Customers</label>
-                        <label><input type="checkbox" name="agentPermission" value="canShowCommissionReport">Show
-                            Commission</label>
-                        <label><input type="checkbox" name="agentPermission" value="canShowAccountLedgerReport">Show
-                            Ledger</label>
-                        <label><input type="checkbox" name="agentPermission" value="canShowOrderHistory">Show Order
-                            History</label>
-                        <label><input type="checkbox" name="agentPermission" value="canAddPaymentRequest">Add Payment
-                            Request</label>
-                        <label><input type="checkbox" name="agentPermission" value="canSendOrderToAdmin">Send Customer
-                            SMS</label>
-                        <label><input type="checkbox" name="agentPermission" value="canSendOrderStatusUpdate">Send Order
-                            Status</label>
-                        <label><input type="checkbox" name="agentPermission" value="canRequestOrderCorrection">Request Order
-                            C</label>
+                        <label><input type="checkbox" name="agentPermission" value="canAddCustomers" id="canAddCustomersCheckbox">Add Customers</label>
+                        <label><input type="checkbox" name="agentPermission" value="canViewAddedCustomers">View Customers</label>
+                        <label><input type="checkbox" name="agentPermission" value="canShowCommissionReport">Show Commission</label>
+                        <label><input type="checkbox" name="agentPermission" value="canShowAccountLedgerReport">Show Ledger</label>
+                        <label><input type="checkbox" name="agentPermission" value="canShowOrderHistory">Show Order History</label>
+                        <label><input type="checkbox" name="agentPermission" value="canAddPaymentRequest">Add Payment Request</label>
+                        <label><input type="checkbox" name="agentPermission" value="canSendOrderToAdmin">Send Customer SMS</label>
+                        <label><input type="checkbox" name="agentPermission" value="canSendOrderStatusUpdate">Send Order Status</label>
+                        <label><input type="checkbox" name="agentPermission" value="canRequestOrderCorrection">Request Order Correction</label>
                         <label><input type="checkbox" name="agentPermission" value="canAddOrder">New Order</label>
                         <label><input type="checkbox" name="agentPermission" value="canViewOrder">View Order</label>
                     </div>
@@ -158,16 +142,13 @@
                     <div class="checkbox-grid">
                         <label><input type="checkbox" name="wholesalePermission" value="canViewStock">View Stock</label>
                         <label><input type="checkbox" name="wholesalePermission" value="canPlaceBulkOrder">Place Order</label>
-                        <label><input type="checkbox" name="wholesalePermission" value="canViewWholesalePricing">View
-                            Pricing</label>
+                        <label><input type="checkbox" name="wholesalePermission" value="canViewWholesalePricing">View Pricing</label>
                     </div>
                 </div>
 
                 <div class="form-section-permissions">
-                    <label>Allowed Product Categories <span class="required-asterisk">*</span></label>
-                    <div id="categoryPermissionsCheckboxes" class="checkbox-grid">
-                        <p>Loading categories...</p>
-                    </div>
+                    <label>Allowed Product Categories <span class="required-asterisk">*</span></label> <div id="categoryPermissionsCheckboxes" class="checkbox-grid">
+                        <p>Loading categories...</p> </div>
                     <div class="permission-actions">
                         <button type="button" id="selectAllCategoriesBtn" class="button-link">Select All</button>
                         <button type="button" id="deselectAllCategoriesBtn" class="button-link">Deselect All</button>
@@ -175,8 +156,8 @@
                 </div>
                 <div class="modal-actions">
                     <button type="button" id="cancelAgentBtn" class="button cancel-button">Cancel</button>
-                    <button type="submit" id="saveAgentBtn" class="button save-button"> <i class="fas fa-save"></i> <span
-                            id="saveAgentBtnText">Save Agent</span>
+                    <button type="submit" id="saveAgentBtn" class="button save-button">
+                        <i class="fas fa-save"></i> <span id="saveAgentBtnText">Save Agent</span>
                     </button>
                 </div>
             </form>
